@@ -1,11 +1,11 @@
-/**
+﻿/**
  * POST /api/install
  * 一键初始化系统（幂等）：
  *   1. 建表（表不存在才建）
  *   2. 写入固定分类"全部"（空时才写）
- *   3. 不写入任何示例商品（管理员自行添加）
+ *   3. 不写入任何示例资源（管理员自行添加）
  *   4. 创建默认管理员（账号 1747358258，带随机盐，无法注册）
- *   5. 写入默认店铺设置
+ *   5. 写入默认平台设置
  * 部署后打开管理后台，点"初始化系统"即可调用。
  */
 import { json, hashPasswordWithSalt, randomSalt } from '../_utils.js';
@@ -105,7 +105,7 @@ const DEFAULT_CATEGORIES = [
 // 默认管理员（无法注册，仅此一个入口）
 const DEFAULT_ADMIN = { username: '1747358421', password: 'myb775825825148' };
 
-// 默认店铺设置
+// 默认平台设置
 const DEFAULT_SETTINGS = [
   { key: 'shop_name', value: '万能资源圈' },
   { key: 'shop_logo', value: 'assets/images/logo.png' },
@@ -139,7 +139,7 @@ export async function onRequestPost(context) {
     }
   }
 
-  // 3. 不写入示例商品（留空，管理员自行添加）
+  // 3. 不写入示例资源（留空，管理员自行添加）
 
   // 4. 默认管理员（带随机盐）
   const adm = await env.DB.prepare('SELECT COUNT(*) AS n FROM admins').first();
@@ -150,7 +150,7 @@ export async function onRequestPost(context) {
       .bind(DEFAULT_ADMIN.username, hash, salt).run();
   }
 
-  // 5. 默认店铺设置
+  // 5. 默认平台设置
   const st = await env.DB.prepare('SELECT COUNT(*) AS n FROM settings').first();
   if (!st || st.n === 0) {
     for (const s of DEFAULT_SETTINGS) {

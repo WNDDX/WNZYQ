@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 中间件：为所有 API 统一处理 OPTIONS 预检 + 附加 CORS 头
  */
 import { corsHeaders, handleOptions } from './_utils.js';

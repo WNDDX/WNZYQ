@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/admin/password
  * 修改管理员密码（需登录），生成新盐
  * body: { oldPassword, newPassword }

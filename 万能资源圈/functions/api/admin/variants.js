@@ -1,6 +1,6 @@
-/**
- * 商品类型管理（需登录）
- * GET  /api/admin/variants?product_id=xxx  → 某商品的类型列表
+﻿/**
+ * 资源类型管理（需登录）
+ * GET  /api/admin/variants?product_id=xxx  → 某资源的类型列表
  * POST /api/admin/variants                   → 新增类型
  * body: { productId, name, desc, img, video, contactUrl, sort }
  */
@@ -30,7 +30,7 @@ export async function onRequestPost(context) {
   const b = await readJSON(request);
   const productId = Number(b.productId) || 0;
   const name = String(b.name || '').trim();
-  if (!productId) return json({ ok: false, msg: '缺少商品 id' }, 400);
+  if (!productId) return json({ ok: false, msg: '缺少资源 id' }, 400);
   if (!name) return json({ ok: false, msg: '请填写类型名称' }, 400);
 
   const r = await env.DB.prepare(

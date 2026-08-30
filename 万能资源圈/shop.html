@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>万能资源圈</title>
-  <meta name="description" content="万能资源圈・导航，优质虚拟资源导航商城，汇聚学习资源、软件工具、设计素材，展示即下单。">
-  <meta name="keywords" content="万能资源圈,资源导航,虚拟商品,学习资源,软件工具">
+  <title>万能资源圈 · 资源</title>
+  <meta name="description" content="万能资源圈・导航，优质虚拟资源导航平台，汇聚学习资源、软件工具、设计素材，展示即下单。">
+  <meta name="keywords" content="万能资源圈,资源导航,虚拟资源,学习资源,软件工具">
   <meta property="og:title" content="万能资源圈">
-  <meta property="og:description" content="优质虚拟资源导航商城，一键获取学习资源、软件工具、设计素材">
+  <meta property="og:description" content="优质虚拟资源导航平台，一键获取学习资源、软件工具、设计素材">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/images/logo.png">
   <meta property="og:url" content="">
@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <style>
     /* ============================================
-       万能资源圈 · 商品展示前台
+       万能资源圈 · 资源展示前台
        风格与引导页统一：蓝色渐变 + 白圆角 + 红关闭
        ============================================ */
     * {
@@ -102,17 +102,6 @@
       font-weight: 700;
       letter-spacing: 1.5px;
       white-space: nowrap;
-    }
-    .shop-name-link {
-      text-decoration: none;
-      color: inherit;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .shop-name-link:hover .shop-name {
-      opacity: 0.85;
-    }
-    .shop-name-link:active .shop-name {
-      transform: scale(0.95);
     }
     .shop-brand {
       display: flex;
@@ -290,7 +279,7 @@
       box-shadow: 0 3px 10px rgba(30,136,229,0.3);
     }
 
-    /* ---------- 商品网格 ---------- */
+    /* ---------- 资源网格 ---------- */
     .product-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -373,37 +362,6 @@
       color: #999;
     }
 
-    /* ---------- 骨架屏 ---------- */
-    .skeleton-card {
-      background: #fff;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    .skeleton-img {
-      width: 100%;
-      padding-top: 75%;
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: skeleton-loading 1.5s infinite;
-    }
-    .skeleton-body {
-      padding: 12px;
-    }
-    .skeleton-line {
-      height: 12px;
-      border-radius: 6px;
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: skeleton-loading 1.5s infinite;
-      margin-bottom: 8px;
-    }
-    .skeleton-line.short { width: 60%; }
-    @keyframes skeleton-loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
     /* ---------- 下拉刷新 ---------- */
     .pull-refresh {
       position: fixed;
@@ -419,6 +377,8 @@
       z-index: 99;
       transition: height 0.2s ease;
       pointer-events: none;
+      background: #f5f7fa;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .pull-refresh.show {
       height: 50px;
@@ -820,29 +780,6 @@
     .toast.show { opacity: 1; }
     .toast.success { background: rgba(40,167,69,0.92); }
 
-    /* 骨架屏加载 */
-    .skeleton-card {
-      background: #fff; border-radius: 12px; overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    .skeleton-img {
-      width: 100%; aspect-ratio: 4/3;
-      background: linear-gradient(90deg, #eef2f7 25%, #f7f9fc 50%, #eef2f7 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-    .skeleton-text {
-      height: 14px; margin: 10px 14px;
-      background: linear-gradient(90deg, #eef2f7 25%, #f7f9fc 50%, #eef2f7 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-      border-radius: 4px;
-    }
-    .skeleton-text.short { width: 60%; }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
 
     /* 分类栏 */
     .category-bar-wrap {
@@ -1040,9 +977,7 @@
         <a class="shop-logo-link" href="admin" title="进入管理后台">
           <img class="shop-logo" id="shopLogo" alt="Logo" />
         </a>
-        <a class="shop-name-link" href="admin" title="进入管理后台">
-          <div class="shop-name" id="shopName">万能资源圈</div>
-        </a>
+        <div class="shop-name" id="shopName">万能资源圈</div>
       </div>
       <div class="topbar-actions">
         <button class="top-btn" id="topContact" title="联系客服">
@@ -1067,7 +1002,7 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input class="search-input" id="searchInput" placeholder="搜索商品..." />
+        <input class="search-input" id="searchInput" placeholder="搜索资源" />
         <button class="search-clear" id="searchClear" title="清空">✕</button>
       </div>
     </div>
@@ -1089,12 +1024,12 @@
     </button>
   </div>
 
-  <!-- ============ 商品网格 ============ -->
+  <!-- ============ 资源网格 ============ -->
   <main class="product-grid" id="productGrid"></main>
   <div class="empty-tip" id="emptyTip">
     <div class="empty-icon">📦</div>
-    <div class="empty-title" id="emptyTitle">暂无商品</div>
-    <div class="empty-desc" id="emptyDesc">该分类下暂无商品，看看其他分类吧</div>
+    <div class="empty-title" id="emptyTitle">暂无资源</div>
+    <div class="empty-desc" id="emptyDesc">该分类下暂无资源，看看其他分类吧</div>
   </div>
 
   <!-- ============ 详情弹窗 ============ -->
@@ -1225,17 +1160,6 @@
       if (!src) { img.src = IMG_PLACEHOLDER; img.style.display = 'block'; }
     }
 
-    // 骨架屏：显示加载占位（首屏加载时使用，提升感知速度）
-    function showSkeleton() {
-      productGrid.innerHTML = '';
-      for (var i = 0; i < 8; i++) {
-        var card = document.createElement('div');
-        card.className = 'skeleton-card';
-        card.innerHTML = '<div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>';
-        productGrid.appendChild(card);
-      }
-    }
-
     // 价格格式化：0 或空返回 ''（免费不显示），整数显示 ¥99，小数显示 ¥99.00
     function formatPrice(price) {
       var p = Number(price) || 0;
@@ -1245,7 +1169,7 @@
     }
 
     // HTML 安全过滤：只允许安全标签和属性，移除 script/事件/javascript: 协议
-    // 用于商品描述和类型描述，支持 <a href="...">超链接</a>
+    // 用于资源描述和类型描述，支持 <a href="...">超链接</a>
     function sanitizeHTML(html) {
       if (!html) return '';
       var allowed = { A:1, BR:1, P:1, STRONG:1, EM:1, B:1, I:1, U:1, SPAN:1, DIV:1,
@@ -1283,7 +1207,7 @@
       }
     }
 
-    // 数据统计：记录商品浏览/联系客服/资源码解锁事件，发送到后端
+    // 数据统计：记录资源浏览/联系客服/资源码解锁事件，发送到后端
     // 仅在使用远程 API 时记录，本地环境不记录
     function track(pid, type) {
       if (!usingRemote || !pid) return;
@@ -1296,22 +1220,22 @@
       } catch (e) { /* 忽略统计错误，不影响用户体验 */ }
     }
 
-    // ---------- 渲染店铺信息 ----------
+    // ---------- 渲染平台信息 ----------
     function renderShopInfo() {
       var cfg = (typeof SHOP_CONFIG !== 'undefined') ? SHOP_CONFIG : null;
       // 先显示 config.js 兜底
       shopNameEl.textContent = (cfg && cfg.shopName) || '万能资源圈';
-      document.title = shopNameEl.textContent;
+      document.title = shopNameEl.textContent + ' · 资源';
       var logo = (cfg && cfg.shopLogo) || '';
       if (logo) loadImg(shopLogo, logo);
       else shopLogo.style.display = 'none';
 
-      // 部署后从 API 获取店铺设置（后台可修改）
+      // 部署后从 API 获取平台设置（后台可修改）
       if (usingRemote) {
         fetch('api/settings').then(function (r) { return r.json(); }).then(function (res) {
           if (res && res.ok && res.settings) {
             var s = res.settings;
-            if (s.shop_name) { shopNameEl.textContent = s.shop_name; document.title = s.shop_name; }
+            if (s.shop_name) { shopNameEl.textContent = s.shop_name; document.title = s.shop_name + ' · 资源'; }
             if (s.shop_logo) loadImg(shopLogo, s.shop_logo);
             // 全局客服链接存在 window 上，供联系客服按钮使用
             window._globalContact = s.contact_url || getDefaultContact();
@@ -1437,7 +1361,7 @@
       }, 50);
     }
 
-    // ---------- 筛选商品（支持两级分类） ----------
+    // ---------- 筛选资源（支持两级分类） ----------
     function getFilteredProducts() {
       var kw = searchInput.value.trim().toLowerCase();
       // 找出当前一级分类下的所有二级分类 id（用于一级分类筛选）
@@ -1451,10 +1375,10 @@
         // 分类筛选
         if (currentCat !== 0) {
           if (currentSubCat !== 0) {
-            // 选中二级分类：只显示该二级分类下的商品
+            // 选中二级分类：只显示该二级分类下的资源
             if (Number(p.cid) !== currentSubCat) return false;
           } else {
-            // 只选中一级分类：显示该一级分类及其所有子分类下的商品
+            // 只选中一级分类：显示该一级分类及其所有子分类下的资源
             var cid = Number(p.cid);
             if (cid !== currentCat && subCatIds.indexOf(cid) === -1) return false;
           }
@@ -1464,7 +1388,7 @@
       });
     }
 
-    // ---------- 渲染商品网格 ----------
+    // ---------- 渲染资源网格 ----------
     var currentPage = 1;
     var PAGE_SIZE = 20;
 
@@ -1483,14 +1407,14 @@
         var emptyDesc = document.getElementById('emptyDesc');
         var kw = searchInput.value.trim();
         if (kw) {
-          emptyTitle.textContent = '没有找到相关商品';
+          emptyTitle.textContent = '没有找到相关资源';
           emptyDesc.textContent = '换个关键词试试，或浏览其他分类';
         } else if (currentCat !== 0) {
-          emptyTitle.textContent = '该分类暂无商品';
+          emptyTitle.textContent = '该分类暂无资源';
           emptyDesc.textContent = '看看其他分类吧，更多精彩等你发现';
         } else {
-          emptyTitle.textContent = '暂无商品';
-          emptyDesc.textContent = '店铺正在上新中，敬请期待';
+          emptyTitle.textContent = '暂无资源';
+          emptyDesc.textContent = '平台正在上新中，敬请期待';
         }
         return;
       }
@@ -1603,7 +1527,7 @@
         modalMedia.appendChild(v);
       });
 
-      // 商品类型（按 sort 字段从小到大排序）
+      // 资源类型（按 sort 字段从小到大排序）
       var variants = (p.variants || []).slice().sort(function (a, b) {
         return (a.sort || 0) - (b.sort || 0);
       });
@@ -1638,14 +1562,14 @@
       updatePrice();
       updateContactBtn();
 
-      // 资源码区域初始化（基于当前选中的类型，没有类型则用商品级资源码）
+      // 资源码区域初始化（基于当前选中的类型，没有类型则用资源级资源码）
       initResourceCodeSection();
 
       modalMask.classList.add('open');
       document.body.style.overflow = 'hidden';
     }
 
-    // 获取当前应使用的资源码（优先类型级，其次商品级）
+    // 获取当前应使用的资源码（优先类型级，其次资源级）
     // 获取当前类型的资源码（只在类型里配置，没有类型或类型没配置则不显示资源码）
     function getCurrentResourceCode() {
       if (currentVariant && currentVariant.resourceCode && currentVariant.resourceCode.trim()) {
@@ -1708,7 +1632,7 @@
       resourceContent.style.animation = 'none';
       void resourceContent.offsetWidth;
       resourceContent.style.animation = '';
-      // 统计解锁（记录商品ID和类型ID，30天内有效）
+      // 统计解锁（记录资源ID和类型ID，30天内有效）
       var variantId = currentVariant ? currentVariant.id : 0;
       track(currentProduct.id, 'resource_unlock', {variant_id: variantId});
     }
@@ -1768,14 +1692,14 @@
       }
     }
 
-    // 价格显示：选中类型→类型价格；无类型商品→商品价格；多类型未选择→不显示
+    // 价格显示：选中类型→类型价格；无类型资源→资源价格；多类型未选择→不显示
     function updatePrice() {
       var price = 0;
       if (currentVariant) {
         // 已选中类型，显示该类型价格
         price = Number(currentVariant.price) || 0;
       } else {
-        // 未选中类型：只有无类型商品才显示商品价格，多类型未选择时不显示
+        // 未选中类型：只有无类型资源才显示资源价格，多类型未选择时不显示
         var variantCount = (currentProduct && currentProduct.variants) ? currentProduct.variants.length : 0;
         if (variantCount === 0 && currentProduct) {
           price = Number(currentProduct.price) || 0;
@@ -1790,7 +1714,7 @@
       }
     }
 
-    // 联系客服按钮：优先类型链接 → 商品链接 → 全局默认
+    // 联系客服按钮：优先类型链接 → 资源链接 → 全局默认
     function updateContactBtn() {
       var url = '';
       if (currentVariant && currentVariant.contactUrl) url = currentVariant.contactUrl;
@@ -1826,7 +1750,7 @@
       if (resourceDirectRow) resourceDirectRow.style.display = 'none';
     }
 
-    // ---------- 移动端手势：弹窗内左右滑动切换商品类型 ----------
+    // ---------- 移动端手势：弹窗内左右滑动切换资源类型 ----------
     var modalBox = document.getElementById('modalBox');
     var touchStartX = 0;
     var touchStartY = 0;
@@ -2049,8 +1973,6 @@
     }
 
     function fetchRemote() {
-      // 本地无数据时显示骨架屏
-      if (!DATA.products || DATA.products.length === 0) showSkeleton();
       function withTimeout(p, ms) {
         return Promise.race([
           p,
@@ -2070,7 +1992,7 @@
             localStorage.setItem('wnzyq_shop_data', JSON.stringify({ products: DATA.products, categories: DATA.categories }));
           } catch (e) {}
         }
-        // 无论成功失败，都渲染一次（隐藏骨架屏，显示商品或空状态）
+        // 无论成功失败，都渲染一次（隐藏骨架屏，显示资源或空状态）
         renderAll();
       }).catch(function () {
         // 请求异常时也渲染一次（隐藏骨架屏，显示本地数据或空状态）
@@ -2174,7 +2096,7 @@
         if (currentPage < totalPages) {
           window.__loadingNextPage = true;
           currentPage++;
-          // 追加下一页商品，不重新渲染全部
+          // 追加下一页资源，不重新渲染全部
           var start = (currentPage - 1) * PAGE_SIZE;
           var pageList = list.slice(start, start + PAGE_SIZE);
           var frag = document.createDocumentFragment();

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>万能资源圈・管理系统</title>
-  <meta name="description" content="万能资源圈管理后台，商品管理、分类管理、数据统计。">
+  <title>万能资源圈 · 管理</title>
+  <meta name="description" content="万能资源圈管理后台，资源管理、分类管理、数据统计。">
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}</script>
@@ -116,12 +116,6 @@
       color: #fff; font-size: 16px; font-weight: 600;
       letter-spacing: 1px; margin-bottom: 10px;
     }
-    .btn-init {
-      width: 100%; height: 42px;
-      border: 1px solid var(--green); border-radius: 8px;
-      background: #fff; color: var(--green);
-      font-size: 14px; margin-bottom: 10px;
-    }
     .login-foot { font-size: 12px; color: #bbb; line-height: 1.6; }
 
     /* ---------- 主视图 ---------- */
@@ -216,7 +210,7 @@
       box-shadow: 0 0 0 3px rgba(30,136,229,0.1);
     }
 
-    /* ---------- 商品列表 ---------- */
+    /* ---------- 资源列表 ---------- */
     .product-row {
       background: #fff; border-radius: 12px;
       padding: 12px 14px; margin-bottom: 10px;
@@ -311,7 +305,7 @@
     .cat-row .c-count { color: #999; font-size: 13px; }
     .cat-row .c-sort { color: #bbb; font-size: 12px; min-width: 50px; }
 
-    /* ---------- 商品类型列表（编辑弹窗内） ---------- */
+    /* ---------- 资源类型列表（编辑弹窗内） ---------- */
     .variant-section {
       margin-top: 16px; padding-top: 14px;
       border-top: 1px dashed #e0e0e0;
@@ -401,10 +395,10 @@
       background-color: var(--red); color: #fff; border: none;
       padding: 0 24px; border-radius: 8px; font-size: 16px;
     }
-    .modal-inner-btn, .modal-close, .btn-blue, .btn-init, .tab, .mini-btn, .row-btn, .switch, .variant-add {
+    .modal-inner-btn, .modal-close, .btn-blue, .tab, .mini-btn, .row-btn, .switch, .variant-add {
       transition: all 0.10s ease;
     }
-    .modal-inner-btn:active, .modal-close:active, .btn-blue:active, .btn-init:active,
+    .modal-inner-btn:active, .modal-close:active, .btn-blue:active,
     .tab:active, .mini-btn:active, .row-btn:active, .switch:active, .variant-add:active {
       transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
     }
@@ -435,7 +429,7 @@
     }
     .batch-btn.danger { color: var(--red); border-color: #ffc8c8; }
 
-    /* 隐藏商品 badge */
+    /* 隐藏资源 badge */
     .badge.hidden { background: #fff3cd; color: #856404; }
 
     /* 图片预览 */
@@ -446,7 +440,7 @@
     }
     .img-preview.show { display: block; }
 
-    /* 店铺设置表单 */
+    /* 平台设置表单 */
     .setting-group {
       background: #fff; border-radius: 12px; padding: 20px;
       margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
@@ -510,7 +504,7 @@
       .container { padding: 12px; }
       .toolbar { flex-wrap: wrap; gap: 8px; }
       .admin-search { max-width: 100%; flex-basis: 100%; order: 3; }
-      /* 商品卡片式布局 */
+      /* 资源卡片式布局 */
       .product-row {
         flex-wrap: wrap;
         flex-direction: column;
@@ -562,7 +556,7 @@
   <!-- ============ 登录视图 ============ -->
   <div id="loginView" class="login-view">
     <div class="login-card">
-      <a class="login-logo-link" href="shop" title="回到商品首页">
+      <a class="login-logo-link" href="shop" title="回到资源首页">
         <div class="login-logo">
           <img src="assets/images/logo.png" alt="万能资源圈" onerror="this.style.display='none';this.parentNode.textContent='圈';" />
         </div>
@@ -572,7 +566,7 @@
       <input id="loginUser" class="input" placeholder="账号" autocomplete="off" />
       <input id="loginPass" class="input" type="password" placeholder="密码" />
       <button class="btn-blue" id="loginBtn">登 录</button>
-      <p class="login-foot">万能资源圈 · 管理系统</p>
+      <p class="login-foot">万能资源圈 · 管理</p>
     </div>
   </div>
 
@@ -581,16 +575,16 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="topbar-brand">
-          <a class="topbar-logo-link" href="shop" title="回到商品首页">
+          <a class="topbar-logo-link" href="shop" title="回到资源首页">
             <img class="topbar-logo" src="assets/images/logo.png" alt="" onerror="this.style.display='none'" />
           </a>
           <span>万能资源圈 · 管理后台</span>
         </div>
         <div class="tabs">
-          <button class="tab active" data-tab="products">商品管理</button>
+          <button class="tab active" data-tab="products">资源管理</button>
           <button class="tab" data-tab="stats">数据统计</button>
           <button class="tab" data-tab="categories">分类管理</button>
-          <button class="tab" data-tab="settings">店铺设置</button>
+          <button class="tab" data-tab="settings">平台设置</button>
         </div>
         <div class="topbar-right">
           <span id="adminName"></span>
@@ -602,15 +596,15 @@
 
     <main class="container">
 
-      <!-- 商品管理 -->
+      <!-- 资源管理 -->
       <section id="panel-products">
         <div class="toolbar">
-          <button class="btn-blue" id="addProductBtn">＋ 新增商品</button>
+          <button class="btn-blue" id="addProductBtn">＋ 新增资源</button>
           <button class="btn-cyan" id="importProductBtn" style="background:#008C8C;">⇪ 批量导入</button>
           <input type="file" id="importFileInput" accept=".csv" style="display:none;" />
           <div class="admin-search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="adminSearch" placeholder="搜索商品名称..." />
+            <input type="text" id="adminSearch" placeholder="搜索资源名称..." />
           </div>
           <select id="filterCat" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;">
             <option value="">全部分类</option>
@@ -637,7 +631,7 @@
           <button class="batch-btn danger" data-action="delete">批量删除</button>
         </div>
         <div id="productList"></div>
-        <div class="empty" id="productEmpty" style="display:none">暂无商品，点"＋ 新增商品"添加</div>
+        <div class="empty" id="productEmpty" style="display:none">暂无资源，点"＋ 新增资源"添加</div>
       </section>
 
       <!-- 数据统计 -->
@@ -657,7 +651,7 @@
                 <input type="date" id="statEndDate" style="padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
                 <button class="time-btn" id="statCustomBtn" style="padding:5px 12px;">应用</button>
               </div>
-              <button class="export-btn" id="exportBtn">导出商品 CSV</button>
+              <button class="export-btn" id="exportBtn">导出资源 CSV</button>
               <button class="export-btn" id="exportResourceBtn" style="margin-left:8px;background:#4CAF50;">导出解锁记录</button>
             </div>
           </div>
@@ -681,21 +675,21 @@
         <div class="stat-table-wrap" style="margin-bottom:14px;">
           <h3>按分类统计</h3>
           <table class="stat-table">
-            <thead><tr><th>分类</th><th>商品数</th><th>总浏览</th></tr></thead>
+            <thead><tr><th>分类</th><th>资源数</th><th>总浏览</th></tr></thead>
             <tbody id="statCatRows"></tbody>
           </table>
         </div>
         <div class="stat-table-wrap" style="margin-bottom:14px;">
-          <h3>商品明细（30天内）</h3>
+          <h3>资源明细（30天内）</h3>
           <table class="stat-table">
-            <thead><tr><th>商品</th><th>状态</th><th>浏览</th><th>联系客服</th><th>资源码解锁</th></tr></thead>
+            <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>联系客服</th><th>资源码解锁</th></tr></thead>
             <tbody id="statRows"></tbody>
           </table>
         </div>
         <div class="stat-table-wrap">
           <h3>最近浏览记录（20条）</h3>
           <table class="stat-table">
-            <thead><tr><th>时间</th><th>类型</th><th>商品</th></tr></thead>
+            <thead><tr><th>时间</th><th>类型</th><th>资源</th></tr></thead>
             <tbody id="statRecentRows"></tbody>
           </table>
         </div>
@@ -710,27 +704,27 @@
         <div id="catList"></div>
       </section>
 
-      <!-- 店铺设置 -->
+      <!-- 平台设置 -->
       <section id="panel-settings" style="display:none">
         <div class="setting-group">
           <h3>基本信息</h3>
           <div class="setting-row">
-            <label>店铺名称</label>
+            <label>平台名称</label>
             <input class="input" id="setShopName" />
           </div>
           <div class="setting-row">
-            <label>店铺 Logo（本地路径，如 assets/images/logo.png）</label>
+            <label>平台 Logo（本地路径，如 assets/images/logo.png）</label>
             <input class="input" id="setShopLogo" />
           </div>
           <div class="setting-row">
-            <label>全局客服链接（商品没填专属链接时用这个）</label>
+            <label>全局客服链接（资源没填专属链接时用这个）</label>
             <input class="input" id="setContactUrl" />
           </div>
           <button class="btn-blue" id="saveSettingsBtn" style="width:auto;padding:0 28px;">保存设置</button>
         </div>
         <div class="setting-group">
           <h3>数据备份</h3>
-          <p style="font-size:13px;color:#666;margin-bottom:12px;">导出全部商品+分类数据为 JSON 文件，可用于本地备份或迁移。</p>
+          <p style="font-size:13px;color:#666;margin-bottom:12px;">导出全部资源+分类数据为 JSON 文件，可用于本地备份或迁移。</p>
           <button class="btn-blue" id="exportBackupBtn" style="width:auto;padding:0 28px;background:#4CAF50;">导出数据备份</button>
         </div>
       </section>
@@ -738,18 +732,18 @@
     </main>
   </div>
 
-  <!-- ============ 商品编辑弹窗 ============ -->
+  <!-- ============ 资源编辑弹窗 ============ -->
   <div class="modal-mask" id="editMask">
     <div class="modal-box modal-wide">
-      <h2 class="modal-title" id="editTitle">编辑商品</h2>
+      <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
-        <label>标题 *</label><input id="fTitle" placeholder="商品标题" />
+        <label>标题 *</label><input id="fTitle" placeholder="资源标题" />
         <label>分类</label><select id="fCid"></select>
         <label>简介（列表卡片上显示）</label><input id="fDesc" placeholder="一句话简介" />
         <label>详细描述（换行用回车，支持超链接）</label>
-        <textarea id="fDetail" rows="3" placeholder="商品详细描述，每行一条"></textarea>
+        <textarea id="fDetail" rows="3" placeholder="资源详细描述，每行一条"></textarea>
         <div style="margin-top:4px"><button type="button" class="insert-link-btn" id="insertDetailLink">插入超链接</button></div>
-        <label>商品封面图 URL</label><input id="fImg" placeholder="https://... 或 assets/images/xx.jpg" />
+        <label>资源封面图 URL</label><input id="fImg" placeholder="https://... 或 assets/images/xx.jpg" />
         <div style="font-size:11px;color:#999;margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" />
         <label>详情多图（每行一个图片 URL，可不填）</label>
@@ -768,10 +762,10 @@
         <label>定时下架（可不填，到时间自动下架）</label>
         <input id="fScheduleOff" type="datetime-local" />
 
-        <!-- 商品类型管理 -->
+        <!-- 资源类型管理 -->
         <div class="variant-section">
           <h4>
-            <span>商品类型 / 套餐（点击切换查看，可不设置）</span>
+            <span>资源类型 / 套餐（点击切换查看，可不设置）</span>
             <button class="variant-add" id="addVariantBtn">＋ 添加类型</button>
           </h4>
           <div id="variantList"></div>
@@ -814,7 +808,7 @@
     </div>
   </div>
 
-  <!-- ============ 商品类型编辑弹窗 ============ -->
+  <!-- ============ 资源类型编辑弹窗 ============ -->
   <div class="modal-mask" id="variantMask">
     <div class="modal-box modal-wide">
       <h2 class="modal-title" id="variantModalTitle">添加类型</h2>
@@ -824,8 +818,8 @@
         <label>类型图片 URL（可不填）</label><input id="vImg" placeholder="https://... 或 assets/images/xx.jpg" />
         <label>类型视频 URL（可不填）</label><input id="vVideo" placeholder="https://.../xx.mp4" />
         <label>该类型专属客服链接（可不填）</label><input id="vContactUrl" placeholder="https://..." />
-        <label>类型价格（元，不填或 0 = 用商品价格）</label>
-        <input id="vPrice" type="number" step="0.01" min="0" placeholder="如 99，不填则用商品价格" />
+        <label>类型价格（元，不填或 0 = 用资源价格）</label>
+        <input id="vPrice" type="number" step="0.01" min="0" placeholder="如 99，不填则用资源价格" />
         <label>排序（越小越靠前）</label><input id="vSort" type="number" value="0" />
         <label>资源码（可不填，不填则该类型无资源码功能）</label>
         <input id="vResourceCode" placeholder="如 JC2026，买家联系客服交易后获取" />
@@ -864,7 +858,7 @@
     </div>
   </div>
 
-  <!-- ============ 商品预览弹窗（前台效果） ============ -->
+  <!-- ============ 资源预览弹窗（前台效果） ============ -->
   <div class="modal-mask" id="previewMask">
     <div class="modal-box preview-box" style="max-width:520px;padding:0;overflow:hidden;">
       <button class="modal-close-x preview-close-x" id="previewCloseX">✕</button>
@@ -900,7 +894,7 @@
     var logoutBtn = document.getElementById('logoutBtn');
     var pwdBtn    = document.getElementById('pwdBtn');
 
-    // 商品编辑弹窗
+    // 资源编辑弹窗
     var editMask = document.getElementById('editMask');
     var editTitle = document.getElementById('editTitle');
     var fTitle = document.getElementById('fTitle');
@@ -958,7 +952,7 @@
       products: [],
       editingId: null,
       editingProduct: null,
-      variants: [],          // 当前编辑商品的类型列表
+      variants: [],          // 当前编辑资源的类型列表
       editingVariantId: null,
       catEditingId: null,
       statsDays: 7,          // 统计时间筛选天数（默认7天，最大可查30天）
@@ -1026,7 +1020,7 @@
       });
     }
 
-    // 清除商品和分类的 API 缓存（管理员修改后调用，不阻塞主流程）
+    // 清除资源和分类的 API 缓存（管理员修改后调用，不阻塞主流程）
     function clearCache() {
       api('admin/clear-cache', { method: 'POST' }).catch(function () {});
     }
@@ -1054,21 +1048,12 @@
       // 本地环境（file:// 或 localhost）不发起 API 请求，避免 404 报错
       var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (!isLocal) {
+        // 静默检测并自动初始化，失败不显示错误（避免500报错影响用户体验）
         api('health').then(function (h) {
           if (h && h.ok && !h.ready) {
-            // 数据库未初始化，自动初始化
-            loginTip.textContent = '系统初始化中，请稍候...';
-            api('install', { method: 'POST' }).then(function (res) {
-              if (res.ok) {
-                loginTip.textContent = '初始化完成，请登录';
-              } else {
-                loginTip.textContent = res.msg || '初始化失败，请刷新重试';
-              }
-            }).catch(function () {
-              loginTip.textContent = '初始化失败，请刷新重试';
-            });
+            api('install', { method: 'POST' }).catch(function () {});
           }
-        });
+        }).catch(function () {});
       }
       var token = localStorage.getItem(TOKEN_KEY);
       if (token && !isLocal) {
@@ -1110,7 +1095,7 @@
       if (name === 'settings') loadSettings();
     }
 
-    // ---------- 店铺设置 ----------
+    // ---------- 平台设置 ----------
     function loadSettings() {
       api('admin/settings').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
@@ -1133,7 +1118,7 @@
       });
     });
 
-    // 数据备份导出：导出全部商品+分类数据为 JSON
+    // 数据备份导出：导出全部资源+分类数据为 JSON
     document.getElementById('exportBackupBtn').addEventListener('click', function () {
       Promise.all([
         api('admin/products').catch(function () { return null; }),
@@ -1197,7 +1182,7 @@
         });
     }
 
-    // ---------- 商品管理 ----------
+    // ---------- 资源管理 ----------
     function loadProducts() {
       var ensureCat = state.categories.length
         ? Promise.resolve()
@@ -1383,7 +1368,7 @@
         var copyBtn = document.createElement('button');
         copyBtn.className = 'row-btn';
         copyBtn.textContent = '复制';
-        copyBtn.title = '复制此商品为新商品';
+        copyBtn.title = '复制此资源为新资源';
         copyBtn.addEventListener('click', function () { copyProduct(p); });
         var delBtn = document.createElement('button');
         delBtn.className = 'row-btn danger';
@@ -1431,9 +1416,9 @@
       updateBatchBar();
     }
 
-    // ---------- 复制商品 ----------
+    // ---------- 复制资源 ----------
     function copyProduct(p) {
-      if (!confirm('确定复制商品「' + (p.title || '未命名') + '」？\n将创建一个内容相同的新商品（默认下架）。')) return;
+      if (!confirm('确定复制资源「' + (p.title || '未命名') + '」？\n将创建一个内容相同的新资源（默认下架）。')) return;
       var newProduct = {
         cid: p.cid,
         title: (p.title || '未命名') + '（副本）',
@@ -1451,7 +1436,7 @@
       };
       api('admin/products', { method: 'POST', body: JSON.stringify(newProduct) }).then(function (res) {
         if (res.ok) {
-          alert('复制成功！新商品已创建（默认下架状态）');
+          alert('复制成功！新资源已创建（默认下架状态）');
           loadProducts();
         } else {
           alert(res.msg || '复制失败');
@@ -1505,11 +1490,11 @@
       if (ids.length === 0) return;
       var actionNames = { online: '批量上架', offline: '批量下架', hide: '批量隐藏', show: '取消隐藏', delete: '批量删除', changeCat: '批量改分类', changePrice: '批量改价格' };
       var msgs = {
-        online: '确定上架选中的 ' + ids.length + ' 个商品？',
-        offline: '确定下架选中的 ' + ids.length + ' 个商品？下架后前台不显示。',
-        hide: '确定隐藏选中的 ' + ids.length + ' 个商品？',
-        show: '确定取消隐藏选中的 ' + ids.length + ' 个商品？',
-        delete: '确定删除选中的 ' + ids.length + ' 个商品？其类型和统计数据也会一并删除，不可恢复。'
+        online: '确定上架选中的 ' + ids.length + ' 个资源？',
+        offline: '确定下架选中的 ' + ids.length + ' 个资源？下架后前台不显示。',
+        hide: '确定隐藏选中的 ' + ids.length + ' 个资源？',
+        show: '确定取消隐藏选中的 ' + ids.length + ' 个资源？',
+        delete: '确定删除选中的 ' + ids.length + ' 个资源？其类型和统计数据也会一并删除，不可恢复。'
       };
 
       // 改分类：弹出分类选择
@@ -1519,7 +1504,7 @@
         if (!catInput) return;
         var newCid = Number(catInput);
         if (isNaN(newCid)) { toast('请输入有效的分类ID', 'error'); return; }
-        if (!confirm('确定将选中的 ' + ids.length + ' 个商品分类改为 ID=' + newCid + '？')) return;
+        if (!confirm('确定将选中的 ' + ids.length + ' 个资源分类改为 ID=' + newCid + '？')) return;
         api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
           if (res.ok) { toast('批量改分类成功（' + res.count + '项）', 'success'); loadProducts(); }
           else toast(res.msg || '操作失败', 'error');
@@ -1533,7 +1518,7 @@
         if (priceInput === null) return;
         var newPrice = Number(priceInput);
         if (isNaN(newPrice) || newPrice < 0) { toast('请输入有效的价格', 'error'); return; }
-        if (!confirm('确定将选中的 ' + ids.length + ' 个商品价格改为 ' + newPrice + '？')) return;
+        if (!confirm('确定将选中的 ' + ids.length + ' 个资源价格改为 ' + newPrice + '？')) return;
         api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changePrice', price: newPrice }) }).then(function (res) {
           if (res.ok) { toast('批量改价格成功（' + res.count + '项）', 'success'); clearCache(); loadProducts(); }
           else toast(res.msg || '操作失败', 'error');
@@ -1554,7 +1539,7 @@
       });
     }
 
-    // 批量更新商品字段（逐个调用 PUT API）
+    // 批量更新资源字段（逐个调用 PUT API）
     function batchUpdateFields(ids, fields, label) {
       var done = 0;
       var fail = 0;
@@ -1596,17 +1581,17 @@
     }
 
     function delProduct(id) {
-      if (!confirm('确定删除该商品？其类型和统计数据也会一并删除。')) return;
+      if (!confirm('确定删除该资源？其类型和统计数据也会一并删除。')) return;
       api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
         if (res.ok) { toast('已删除', 'success'); clearCache(); loadProducts(); }
         else toast(res.msg || '删除失败', 'error');
       });
     }
 
-    // ---------- 编辑 / 新增商品弹窗 ----------
+    // ---------- 编辑 / 新增资源弹窗 ----------
     document.getElementById('addProductBtn').addEventListener('click', function () { openEdit(null); });
 
-    // ---------- 批量导入商品（CSV） ----------
+    // ---------- 批量导入资源（CSV） ----------
     var importFileInput = document.getElementById('importFileInput');
     document.getElementById('importProductBtn').addEventListener('click', function () {
       importFileInput.value = '';
@@ -1622,7 +1607,7 @@
         if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
         var items = parseCSV(text);
         if (items.length === 0) { toast('CSV 文件为空或格式错误', 'error'); return; }
-        if (!confirm('解析到 ' + items.length + ' 个商品，确认导入？\n\nCSV 列：title, desc, detail, img, cid, price, is_online, sort')) return;
+        if (!confirm('解析到 ' + items.length + ' 个资源，确认导入？\n\nCSV 列：title, desc, detail, img, cid, price, is_online, sort')) return;
         api('admin/import', { method: 'POST', body: JSON.stringify({ items: items }) }).then(function (res) {
           if (res.ok) {
             toast(res.message, res.fail > 0 ? 'error' : 'success');
@@ -1689,7 +1674,7 @@
     function openEdit(p) {
       state.editingId = p ? p.id : null;
       state.editingProduct = p;
-      editTitle.textContent = p ? '编辑商品' : '新增商品';
+      editTitle.textContent = p ? '编辑资源' : '新增资源';
       fillCidSelect(p ? p.cid : 0);
       fTitle.value = p ? (p.title || '') : '';
       fDesc.value = p ? (p.desc || '') : '';
@@ -1707,7 +1692,7 @@
       editMask.classList.add('open');
       // 图片预览
       updateImgPreview();
-      // 加载该商品的类型列表
+      // 加载该资源的类型列表
       state.variants = [];
       renderVariants();
       if (p && p.id) loadVariants(p.id);
@@ -1854,8 +1839,8 @@
         schedule_on: fScheduleOn.value || '',
         schedule_off: fScheduleOff.value || ''
       };
-      if (!validateField(fTitle, '请填写商品标题')) return;
-      if (!data.cid) { toast('请选择商品分类', 'error'); fCid.style.borderColor = '#ff4444'; return; }
+      if (!validateField(fTitle, '请填写资源标题')) return;
+      if (!data.cid) { toast('请选择资源分类', 'error'); fCid.style.borderColor = '#ff4444'; return; }
 
       var req = state.editingId
         ? api('admin/products/' + state.editingId, { method: 'PUT', body: JSON.stringify(data) })
@@ -1877,7 +1862,7 @@
       });
     }
 
-    // ---------- 商品类型管理 ----------
+    // ---------- 资源类型管理 ----------
     function loadVariants(productId) {
       api('admin/variants?product_id=' + productId).then(function (res) {
         if (res.ok) {
@@ -1985,7 +1970,7 @@
 
     addVariantBtn.addEventListener('click', function () {
       if (!state.editingId) {
-        alert('请先保存商品，再添加类型');
+        alert('请先保存资源，再添加类型');
         return;
       }
       openVariantEdit(null);
@@ -2009,7 +1994,7 @@
     variantOk.addEventListener('click', function () {
       if (!validateField(vName, '请填写类型名称')) return;
       var name = vName.value.trim();
-      if (!state.editingId) { alert('请先保存商品'); return; }
+      if (!state.editingId) { alert('请先保存资源'); return; }
       var data = {
         productId: state.editingId,
         name: name,
@@ -2103,7 +2088,7 @@
 
     // ---------- 导出 CSV ----------
     function exportCSV() {
-      var rows = [['商品名称', '分类', '状态', '浏览量', '联系客服', '简短描述']];
+      var rows = [['资源名称', '分类', '状态', '浏览量', '联系客服', '简短描述']];
       var catName = {};
       state.categories.forEach(function (c) { catName[c.id] = c.name; });
       state.products.forEach(function (p) {
@@ -2122,7 +2107,7 @@
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');
       a.href = url;
-      a.download = '万能资源圈_商品数据_' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.download = '万能资源圈_资源数据_' + new Date().toISOString().slice(0, 10) + '.csv';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -2130,7 +2115,7 @@
       toast('导出成功', 'success');
     }
 
-    // 导出资源码解锁记录（30天内，按日期和商品统计）
+    // 导出资源码解锁记录（30天内，按日期和资源统计）
     function exportResourceUnlockCSV() {
       var trend = state.statsTrend || [];
       var byProduct = state.statsByProduct || [];
@@ -2139,8 +2124,8 @@
         rows.push([d.day || '', d.views || 0, d.contacts || 0, d.resource_unlocks || 0]);
       });
       rows.push([]);
-      rows.push(['按商品统计（30天内）']);
-      rows.push(['商品名称', '浏览量', '联系客服', '资源码解锁']);
+      rows.push(['按资源统计（30天内）']);
+      rows.push(['资源名称', '浏览量', '联系客服', '资源码解锁']);
       byProduct.forEach(function (p) {
         rows.push([
           '"' + String(p.title || '').replace(/"/g, '""') + '"',
@@ -2173,7 +2158,7 @@
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var ov = res.overview || {};
         var cards = [
-          { label: '商品总数', num: ov.products || 0 },
+          { label: '资源总数', num: ov.products || 0 },
           { label: '在售中', num: ov.online || 0 },
           { label: '已隐藏', num: ov.hidden || 0 },
           { label: '总浏览', num: ov.views || 0 },
@@ -2242,7 +2227,7 @@
           catTbody.appendChild(tr);
         });
 
-        // 商品明细
+        // 资源明细
         var tbody = document.getElementById('statRows');
         tbody.innerHTML = '';
         (res.byProduct || []).forEach(function (r) {
@@ -2326,7 +2311,7 @@
 
         var cnt = document.createElement('span');
         cnt.className = 'c-count';
-        cnt.textContent = (c.cnt || 0) + ' 件商品';
+        cnt.textContent = (c.cnt || 0) + ' 件资源';
 
         row.appendChild(name);
         row.appendChild(levelBadge);
@@ -2342,7 +2327,7 @@
           delBtn.className = 'row-btn danger';
           delBtn.textContent = '删除';
           delBtn.addEventListener('click', function () {
-            if (!confirm('删除该分类？其下商品将归入"全部"，子分类也会一并删除。')) return;
+            if (!confirm('删除该分类？其下资源将归入"全部"，子分类也会一并删除。')) return;
             api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
               if (res.ok) { toast('已删除', 'success'); clearCache(); loadCategories(); }
               else toast(res.msg || '删除失败', 'error');
@@ -2450,7 +2435,7 @@
       });
     });
 
-    // ---------- 商品搜索 ----------
+    // ---------- 资源搜索 ----------
     document.getElementById('adminSearch').addEventListener('input', function () {
       renderProducts();
     });
@@ -2499,7 +2484,7 @@
     var exportResourceBtn = document.getElementById('exportResourceBtn');
     if (exportResourceBtn) exportResourceBtn.addEventListener('click', exportResourceUnlockCSV);
 
-    // ---------- 商品预览 ----------
+    // ---------- 资源预览 ----------
     document.getElementById('previewProductBtn').addEventListener('click', function () {
       document.getElementById('previewTitle').textContent = fTitle.value || '(未填写标题)';
       document.getElementById('previewDesc').textContent = fDesc.value || '';
@@ -2531,7 +2516,7 @@
         var masks = document.querySelectorAll('.modal-mask.open, .preview-mask.open');
         masks.forEach(function (m) { m.classList.remove('open'); });
       }
-      // Ctrl+S 保存商品
+      // Ctrl+S 保存资源
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         var saveBtn = document.getElementById('saveProductBtn');

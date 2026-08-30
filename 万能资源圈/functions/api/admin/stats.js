@@ -1,10 +1,10 @@
-/**
+﻿/**
  * GET /api/admin/stats
  * 数据统计（需登录）：
- *   overview   → 商品总数 / 在售数 / 总浏览 / 总联系客服
- *   byProduct  → 每个商品的浏览 / 联系次数
+ *   overview   → 资源总数 / 在售数 / 总浏览 / 总联系客服
+ *   byProduct  → 每个资源的浏览 / 联系次数
  *   trend      → 最近 7 天浏览 / 联系趋势
- *   byCategory → 按分类统计商品数和浏览量
+ *   byCategory → 按分类统计资源数和浏览量
  *   recent     → 最近 20 条浏览记录
  */
 import { json, requireAuth } from '../../_utils.js';
@@ -37,7 +37,7 @@ export async function onRequestGet(context) {
     dateFilter = ` AND created_at >= datetime('now', '-30 days')`;
   }
 
-  // 1. 总览（商品总数不受时间限制，浏览/联系/资源码解锁受30天限制）
+  // 1. 总览（资源总数不受时间限制，浏览/联系/资源码解锁受30天限制）
   const overview = {
     products: await count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
     online: await count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1'),
@@ -47,7 +47,7 @@ export async function onRequestGet(context) {
     resource_unlocks: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE type = 'resource_unlock'${dateFilter}`),
   };
 
-  // 2. 按商品统计（仅统计30天内的数据）
+  // 2. 按资源统计（仅统计30天内的数据）
   const { results: byProduct } = await env.DB.prepare(
     `SELECT p.id, p.title, p.is_online, p.is_hidden,
             COALESCE(SUM(CASE WHEN s.type='view' THEN 1 ELSE 0 END),0) AS views,

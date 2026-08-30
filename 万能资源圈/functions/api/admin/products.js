@@ -1,6 +1,6 @@
-/**
- * GET  /api/admin/products        → 全部商品列表（含下架），管理后台用
- * POST /api/admin/products        → 新增商品（需登录）
+﻿/**
+ * GET  /api/admin/products        → 全部资源列表（含下架），管理后台用
+ * POST /api/admin/products        → 新增资源（需登录）
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  */
 import { json, requireAuth, readJSON, cleanProduct } from '../../_utils.js';
@@ -46,7 +46,7 @@ export async function onRequestPost(context) {
   if (auth instanceof Response) return auth;
 
   const b = await readJSON(request);
-  if (!String(b.title || '').trim()) return json({ ok: false, msg: '请填写商品标题' }, 400);
+  if (!String(b.title || '').trim()) return json({ ok: false, msg: '请填写资源标题' }, 400);
 
   const detailImages = JSON.stringify(Array.isArray(b.detailImages) ? b.detailImages : []);
   const detailVideos = JSON.stringify(Array.isArray(b.detailVideos) ? b.detailVideos : []);

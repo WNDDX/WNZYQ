@@ -1,6 +1,6 @@
-/**
+﻿/**
  * POST /api/admin/batch
- * 批量操作商品（需登录）
+ * 批量操作资源（需登录）
  * body: { ids: [1,2,3], action: 'online'|'offline'|'hide'|'show'|'delete'|'changeCat'|'changePrice', cid?: number, price?: number }
  *   online      批量上架
  *   offline     批量下架
@@ -21,7 +21,7 @@ export async function onRequestPost(context) {
   const ids = Array.isArray(b.ids) ? b.ids.map(Number).filter(Boolean) : [];
   const action = String(b.action || '');
 
-  if (ids.length === 0) return json({ ok: false, msg: '请选择商品' }, 400);
+  if (ids.length === 0) return json({ ok: false, msg: '请选择资源' }, 400);
   if (!['online', 'offline', 'hide', 'show', 'delete', 'changeCat', 'changePrice'].includes(action)) {
     return json({ ok: false, msg: '未知操作' }, 400);
   }

@@ -1,6 +1,6 @@
-/**
- * PUT    /api/admin/products/:id   → 更新商品（含上下架 is_online）
- * DELETE /api/admin/products/:id   → 删除商品（同时删其类型和统计）
+﻿/**
+ * PUT    /api/admin/products/:id   → 更新资源（含上下架 is_online）
+ * DELETE /api/admin/products/:id   → 删除资源（同时删其类型和统计）
  * 均需登录
  */
 import { json, requireAuth, readJSON } from '../../../_utils.js';
@@ -11,7 +11,7 @@ export async function onRequestPut(context) {
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);
-  if (!id) return json({ ok: false, msg: '缺少商品 id' }, 400);
+  if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
 
   const b = await readJSON(request);
   const detailImages = JSON.stringify(Array.isArray(b.detailImages) ? b.detailImages : []);
@@ -51,7 +51,7 @@ export async function onRequestDelete(context) {
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);
-  if (!id) return json({ ok: false, msg: '缺少商品 id' }, 400);
+  if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
 
   await env.DB.prepare('DELETE FROM products WHERE id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM product_variants WHERE product_id = ?').bind(id).run();

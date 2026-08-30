@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 分类管理（带 id），需登录
  * PUT    /api/admin/categories/:id    → 修改分类  body: { name, sort, parent_id, is_hidden }
  * DELETE /api/admin/categories/:id    → 删除分类（id=0"全部"不可删，同时删其子分类）

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 共享工具函数（被各个 API 引用）
  */
 
@@ -126,7 +126,7 @@ export function cleanProduct(p) {
   };
 }
 
-// 把数据库行转成商品类型字段
+// 把数据库行转成资源类型字段
 export function cleanVariant(v) {
   return {
     id: v.id,
@@ -136,7 +136,7 @@ export function cleanVariant(v) {
     img: v.img,
     video: v.video,
     contactUrl: v.contact_url,
-    price: v.price || 0,            // 类型价格（0=不显示，用商品价格）
+    price: v.price || 0,            // 类型价格（0=不显示，用资源价格）
     sort: v.sort,
   };
 }

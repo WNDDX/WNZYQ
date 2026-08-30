@@ -1,6 +1,6 @@
-/**
- * GET  /api/admin/settings   → 获取全部店铺设置（需登录）
- * PUT  /api/admin/settings   → 批量更新店铺设置（需登录）
+﻿/**
+ * GET  /api/admin/settings   → 获取全部平台设置（需登录）
+ * PUT  /api/admin/settings   → 批量更新平台设置（需登录）
  * body (PUT): { shop_name, shop_logo, contact_url, ... }
  */
 import { json, requireAuth, readJSON } from '../../_utils.js';

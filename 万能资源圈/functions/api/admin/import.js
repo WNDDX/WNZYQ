@@ -1,6 +1,6 @@
-/**
+﻿/**
  * POST /api/admin/import
- * 批量导入商品（CSV 格式）
+ * 批量导入资源（CSV 格式）
  * CSV 列：title, desc, detail, img, cid, price, is_online, sort
  * 需要管理员登录
  */
@@ -13,8 +13,8 @@ export async function onRequestPost(context) {
 
   const b = await readJSON(request);
   const items = Array.isArray(b.items) ? b.items : [];
-  if (items.length === 0) return json({ ok: false, msg: '没有可导入的商品' }, 400);
-  if (items.length > 100) return json({ ok: false, msg: '单次最多导入 100 个商品' }, 400);
+  if (items.length === 0) return json({ ok: false, msg: '没有可导入的资源' }, 400);
+  if (items.length > 100) return json({ ok: false, msg: '单次最多导入 100 个资源' }, 400);
 
   let success = 0;
   let fail = 0;

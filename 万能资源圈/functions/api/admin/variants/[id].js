@@ -1,5 +1,5 @@
-/**
- * 商品类型的更新/删除（需登录）
+﻿/**
+ * 资源类型的更新/删除（需登录）
  * PUT    /api/admin/variants/:id   → 更新类型
  * DELETE /api/admin/variants/:id   → 删除类型
  */

@@ -1,6 +1,6 @@
-/**
+﻿/**
  * 分类管理（需登录），支持两级分类（parent_id）和隐藏（is_hidden）
- * GET    /api/admin/categories        → 分类列表（含每个分类的商品数），按 sort 排序
+ * GET    /api/admin/categories        → 分类列表（含每个分类的资源数），按 sort 排序
  * POST   /api/admin/categories        → 新增分类  body: { name, sort, parent_id, is_hidden }
  * PUT    /api/admin/categories/:id    → 修改分类（见 categories/[id].js）
  * DELETE /api/admin/categories/:id    → 删除分类（见 categories/[id].js）
