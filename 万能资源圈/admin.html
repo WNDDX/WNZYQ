@@ -548,6 +548,30 @@
       .time-filter { flex: 1; }
       .time-btn { flex: 1; padding: 6px 8px; font-size: 12px; }
     }
+
+    /* ========== 统一按钮动画（跟商品页一致） ========== */
+    .btn-blue, .btn-cyan, .mini-btn, .tab, .export-btn, .batch-btn,
+    .variant-add, .insert-link-btn, .time-btn, .cat-toggle, .modal-inner-btn,
+    .modal-close, .preview-btn, .confirm-ok, .confirm-cancel {
+      transition: all 0.10s ease;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-blue:hover, .btn-cyan:hover, .mini-btn:hover, .tab:hover,
+    .export-btn:hover, .batch-btn:hover, .variant-add:hover, .insert-link-btn:hover,
+    .time-btn:hover, .cat-toggle:hover, .modal-inner-btn:hover, .modal-close:hover,
+    .preview-btn:hover, .confirm-ok:hover, .confirm-cancel:hover {
+      transform: scale(0.96);
+      opacity: 0.9;
+    }
+    .btn-blue:active, .btn-cyan:active, .mini-btn:active, .tab:active,
+    .export-btn:active, .batch-btn:active, .variant-add:active, .insert-link-btn:active,
+    .time-btn:active, .cat-toggle:active, .modal-inner-btn:active, .modal-close:active,
+    .preview-btn:active, .confirm-ok:active, .confirm-cancel:active {
+      transform: scale(0.92);
+      opacity: 0.8;
+      filter: brightness(0.9);
+    }
   </style>
 </head>
 
@@ -582,13 +606,11 @@
         </div>
         <div class="tabs">
           <button class="tab active" data-tab="products">资源管理</button>
-          <button class="tab" data-tab="stats">数据统计</button>
           <button class="tab" data-tab="categories">分类管理</button>
+          <button class="tab" data-tab="stats">数据统计</button>
           <button class="tab" data-tab="settings">平台设置</button>
         </div>
         <div class="topbar-right">
-          <span id="adminName"></span>
-          <button class="mini-btn" id="pwdBtn">改密码</button>
           <button class="mini-btn" id="logoutBtn">退出</button>
         </div>
       </div>
@@ -599,13 +621,7 @@
       <!-- 资源管理 -->
       <section id="panel-products">
         <div class="toolbar">
-          <button class="btn-blue" id="addProductBtn">＋ 新增资源</button>
-          <button class="btn-cyan" id="importProductBtn" style="background:#008C8C;">⇪ 批量导入</button>
-          <input type="file" id="importFileInput" accept=".csv" style="display:none;" />
-          <div class="admin-search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="adminSearch" placeholder="搜索资源名称..." />
-          </div>
+          <button class="btn-blue" id="addProductBtn">新增资源</button>
           <select id="filterCat" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;">
             <option value="">全部分类</option>
           </select>
@@ -618,7 +634,10 @@
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#666;cursor:pointer;">
             <input type="checkbox" id="selectAll" /> 全选
           </label>
-          <span class="toolbar-hint">点击开关即可上架 / 下架</span>
+          <div class="admin-search" style="margin-left:auto;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="adminSearch" placeholder="搜索资源" />
+          </div>
         </div>
         <div class="batch-bar" id="batchBar">
           已选 <span class="batch-count" id="batchCount">0</span> 项
@@ -651,7 +670,7 @@
                 <input type="date" id="statEndDate" style="padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
                 <button class="time-btn" id="statCustomBtn" style="padding:5px 12px;">应用</button>
               </div>
-              <button class="export-btn" id="exportBtn">导出资源 CSV</button>
+              <button class="export-btn" id="exportBtn">导出资源数据</button>
               <button class="export-btn" id="exportResourceBtn" style="margin-left:8px;background:#4CAF50;">导出解锁记录</button>
             </div>
           </div>
@@ -698,7 +717,7 @@
       <!-- 分类管理 -->
       <section id="panel-categories" style="display:none">
         <div class="toolbar">
-          <button class="btn-blue" id="addCatBtn">＋ 新增分类</button>
+          <button class="btn-blue" id="addCatBtn">新增分类</button>
           <span class="toolbar-hint">"全部"为固定分类，不可修改删除；排序值越小越靠前</span>
         </div>
         <div id="catList"></div>
@@ -707,25 +726,32 @@
       <!-- 平台设置 -->
       <section id="panel-settings" style="display:none">
         <div class="setting-group">
-          <h3>基本信息</h3>
-          <div class="setting-row">
-            <label>平台名称</label>
-            <input class="input" id="setShopName" />
-          </div>
-          <div class="setting-row">
-            <label>平台 Logo（本地路径，如 assets/images/logo.png）</label>
-            <input class="input" id="setShopLogo" />
-          </div>
+          <h3>基本设置</h3>
           <div class="setting-row">
             <label>全局客服链接（资源没填专属链接时用这个）</label>
             <input class="input" id="setContactUrl" />
           </div>
+          <div class="setting-row">
+            <label>平台公告（显示在资源页顶部，支持HTML）</label>
+            <textarea class="input" id="setAnnouncement" rows="3" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></textarea>
+          </div>
           <button class="btn-blue" id="saveSettingsBtn" style="width:auto;padding:0 28px;">保存设置</button>
         </div>
         <div class="setting-group">
-          <h3>数据备份</h3>
-          <p style="font-size:13px;color:#666;margin-bottom:12px;">导出全部资源+分类数据为 JSON 文件，可用于本地备份或迁移。</p>
-          <button class="btn-blue" id="exportBackupBtn" style="width:auto;padding:0 28px;background:#4CAF50;">导出数据备份</button>
+          <h3>修改密码</h3>
+          <div class="setting-row">
+            <label>原密码</label>
+            <input class="input" id="oldPwd" type="password" placeholder="请输入原密码" />
+          </div>
+          <div class="setting-row">
+            <label>新密码</label>
+            <input class="input" id="newPwd" type="password" placeholder="请输入新密码" />
+          </div>
+          <div class="setting-row">
+            <label>确认新密码</label>
+            <input class="input" id="confirmPwd" type="password" placeholder="请再次输入新密码" />
+          </div>
+          <button class="btn-blue" id="changePwdBtn" style="width:auto;padding:0 28px;background:#4CAF50;">确认修改</button>
         </div>
       </section>
 
@@ -737,26 +763,26 @@
     <div class="modal-box modal-wide">
       <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
-        <label>标题 *</label><input id="fTitle" placeholder="资源标题" />
+        <label>标题</label><input id="fTitle" placeholder="资源标题" />
         <label>分类</label><select id="fCid"></select>
         <label>简介（列表卡片上显示）</label><input id="fDesc" placeholder="一句话简介" />
-        <label>详细描述（换行用回车，支持超链接）</label>
-        <textarea id="fDetail" rows="3" placeholder="资源详细描述，每行一条"></textarea>
-        <div style="margin-top:4px"><button type="button" class="insert-link-btn" id="insertDetailLink">插入超链接</button></div>
+        <label>详细描述（支持文字、图片、视频混排，像文章一样）</label>
+        <textarea id="fDetail" rows="5" placeholder="在这里输入详细描述，可以插入图片和视频链接，内容会像文章一样展示"></textarea>
+        <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="insert-link-btn" id="insertDetailLink">插入超链接</button>
+          <button type="button" class="insert-link-btn" id="insertDetailImg">插入图片</button>
+          <button type="button" class="insert-link-btn" id="insertDetailVideo">插入视频</button>
+        </div>
         <label>资源封面图 URL</label><input id="fImg" placeholder="https://... 或 assets/images/xx.jpg" />
         <div style="font-size:11px;color:#999;margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" />
-        <label>详情多图（每行一个图片 URL，可不填）</label>
-        <textarea id="fDetailImages" rows="2" placeholder="https://.../1.jpg&#10;https://.../2.jpg"></textarea>
-        <label>详情多视频（每行一个视频 URL，可不填）</label>
-        <textarea id="fDetailVideos" rows="2" placeholder="https://.../1.mp4"></textarea>
         <label>联系客服链接（可不填，没填则用全局默认）</label>
         <input id="fContactUrl" placeholder="https://work.weixin.qq.com/..." />
         <label>价格（元，不填或 0 = 免费，免费不显示价格）</label>
         <input id="fPrice" type="number" step="0.01" min="0" placeholder="如 99 或 99.00，不填则免费" />
         <label>排序（越小越靠前）</label><input id="fSort" type="number" value="0" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 上架中</label>
-        <label class="checkbox-row"><input type="checkbox" id="fHidden" /> 隐藏（前台不显示，仅后台可见）</label>
+        <label class="checkbox-row"><input type="checkbox" id="fHidden" /> 隐藏（资源页不显示，仅后台可见）</label>
         <label>定时上架（可不填，到时间自动上架）</label>
         <input id="fScheduleOn" type="datetime-local" />
         <label>定时下架（可不填，到时间自动下架）</label>
@@ -766,7 +792,7 @@
         <div class="variant-section">
           <h4>
             <span>资源类型 / 套餐（点击切换查看，可不设置）</span>
-            <button class="variant-add" id="addVariantBtn">＋ 添加类型</button>
+            <button class="variant-add" id="addVariantBtn">添加类型</button>
           </h4>
           <div id="variantList"></div>
         </div>
@@ -808,6 +834,19 @@
     </div>
   </div>
 
+  <!-- ============ 通用输入弹窗 ============ -->
+  <div class="modal-mask" id="inputMask">
+    <div class="modal-box" style="max-width:400px;">
+      <h2 class="modal-title" id="inputTitle">请输入</h2>
+      <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
+      <input class="input" id="inputValue" placeholder="请输入..." style="margin-bottom:16px;" />
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="inputOk">确定</button>
+        <button class="modal-close" id="inputCancel">取消</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ 资源类型编辑弹窗 ============ -->
   <div class="modal-mask" id="variantMask">
     <div class="modal-box modal-wide">
@@ -829,19 +868,6 @@
       <div class="modal-footer">
         <button class="modal-inner-btn" id="variantOk">确定</button>
         <button class="modal-close" id="variantCancel">取消</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============ 改密码弹窗 ============ -->
-  <div class="modal-mask" id="pwdMask">
-    <div class="modal-box">
-      <h2 class="modal-title">修改密码</h2>
-      <input id="pOld" type="password" class="input" placeholder="原密码" style="margin-bottom:10px" />
-      <input id="pNew" type="password" class="input" placeholder="新密码（至少 6 位）" />
-      <div class="modal-footer">
-        <button class="modal-inner-btn" id="pwdOk">确定</button>
-        <button class="modal-close" id="pwdCancel">取消</button>
       </div>
     </div>
   </div>
@@ -890,9 +916,7 @@
     var loginPass = document.getElementById('loginPass');
     var loginBtn  = document.getElementById('loginBtn');
     var loginTip  = document.getElementById('loginTip');
-    var adminNameEl = document.getElementById('adminName');
     var logoutBtn = document.getElementById('logoutBtn');
-    var pwdBtn    = document.getElementById('pwdBtn');
 
     // 资源编辑弹窗
     var editMask = document.getElementById('editMask');
@@ -902,8 +926,6 @@
     var fDesc  = document.getElementById('fDesc');
     var fDetail = document.getElementById('fDetail');
     var fImg   = document.getElementById('fImg');
-    var fDetailImages = document.getElementById('fDetailImages');
-    var fDetailVideos = document.getElementById('fDetailVideos');
     var fContactUrl = document.getElementById('fContactUrl');
     var fPrice = document.getElementById('fPrice');
     var fSort  = document.getElementById('fSort');
@@ -924,6 +946,41 @@
     var catOk = document.getElementById('catOk');
     var catCancel = document.getElementById('catCancel');
 
+    // 通用输入弹窗
+    var inputMask = document.getElementById('inputMask');
+    var inputTitle = document.getElementById('inputTitle');
+    var inputTip = document.getElementById('inputTip');
+    var inputValue = document.getElementById('inputValue');
+    var inputOk = document.getElementById('inputOk');
+    var inputCancel = document.getElementById('inputCancel');
+    var inputCallback = null;
+
+    function showInput(title, tip, placeholder, callback, defaultValue) {
+      inputTitle.textContent = title || '请输入';
+      inputTip.innerHTML = tip || '';
+      inputValue.placeholder = placeholder || '请输入...';
+      inputValue.value = defaultValue || '';
+      inputCallback = callback;
+      inputMask.classList.add('open');
+      setTimeout(function () { inputValue.focus(); }, 100);
+    }
+
+    inputOk.addEventListener('click', function () {
+      var val = inputValue.value;
+      inputMask.classList.remove('open');
+      if (inputCallback) { var cb = inputCallback; inputCallback = null; cb(val); }
+    });
+    inputCancel.addEventListener('click', function () {
+      inputMask.classList.remove('open');
+      inputCallback = null;
+    });
+    inputMask.addEventListener('click', function (e) {
+      if (e.target === this) { this.classList.remove('open'); inputCallback = null; }
+    });
+    inputValue.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') inputOk.click();
+    });
+
     // 类型编辑弹窗
     var variantMask = document.getElementById('variantMask');
     var variantModalTitle = document.getElementById('variantModalTitle');
@@ -938,12 +995,6 @@
     var variantCancel = document.getElementById('variantCancel');
 
     // 改密码弹窗
-    var pwdMask = document.getElementById('pwdMask');
-    var pOld = document.getElementById('pOld');
-    var pNew = document.getElementById('pNew');
-    var pwdOk = document.getElementById('pwdOk');
-    var pwdCancel = document.getElementById('pwdCancel');
-
     var TOKEN_KEY = 'wnzyq_token';
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
     var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect fill="%23eef4fb" width="400" height="300"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="140" r="32"/%3E%3Cpath d="M200 120c-11 0-20 9-20 20s9 20 20 20 20-9 20-20-9-20-20-20zm0 32c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z"/%3E%3Cpath d="M140 180h120v-8c0-8.8-7.2-16-16-16h-88c-8.8 0-16 7.2-16 16v8zm160 0h-16v-8c0-17.7-14.3-32-32-32h-96c-17.7 0-32 14.3-32 32v8H100c-11 0-20 9-20 20v60c0 11 9 20 20 20h200c11 0 20-9 20-20v-60c0-11-9-20-20-20z" opacity="0.6"/%3E%3C/g%3E%3C/svg%3E';
@@ -1071,7 +1122,6 @@
     function showMain(username) {
       loginView.style.display = 'none';
       mainView.style.display = 'block';
-      adminNameEl.textContent = username || '';
       loadCategories();
       switchTab('products');
     }
@@ -1100,49 +1150,19 @@
       api('admin/settings').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var s = res.settings || {};
-        document.getElementById('setShopName').value = s.shop_name || '';
-        document.getElementById('setShopLogo').value = s.shop_logo || '';
         document.getElementById('setContactUrl').value = s.contact_url || '';
+        document.getElementById('setAnnouncement').value = s.announcement || '';
       });
     }
 
     document.getElementById('saveSettingsBtn').addEventListener('click', function () {
       var data = {
-        shop_name: document.getElementById('setShopName').value.trim(),
-        shop_logo: document.getElementById('setShopLogo').value.trim(),
         contact_url: document.getElementById('setContactUrl').value.trim(),
+        announcement: document.getElementById('setAnnouncement').value
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
         if (res.ok) toast('设置已保存', 'success');
         else toast(res.msg || '保存失败', 'error');
-      });
-    });
-
-    // 数据备份导出：导出全部资源+分类数据为 JSON
-    document.getElementById('exportBackupBtn').addEventListener('click', function () {
-      Promise.all([
-        api('admin/products').catch(function () { return null; }),
-        api('admin/categories').catch(function () { return null; }),
-        api('admin/settings').catch(function () { return null; })
-      ]).then(function (res) {
-        var backup = {
-          export_time: new Date().toISOString(),
-          version: '1.0',
-          products: res[0] && res[0].ok ? (res[0].list || []) : [],
-          categories: res[1] && res[1].ok ? (res[1].list || []) : [],
-          settings: res[2] && res[2].ok ? (res[2].settings || {}) : {}
-        };
-        var json = JSON.stringify(backup, null, 2);
-        var blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = '万能资源圈_数据备份_' + new Date().toISOString().slice(0, 10) + '.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        toast('备份导出成功', 'success');
       });
     });
 
@@ -1205,7 +1225,7 @@
         }
         return api('admin/products');
       }).then(function (res) {
-        if (!res.ok) { alert(res.msg || '加载失败'); return; }
+        if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         state.products = res.list || [];
         renderProducts();
       });
@@ -1418,29 +1438,30 @@
 
     // ---------- 复制资源 ----------
     function copyProduct(p) {
-      if (!confirm('确定复制资源「' + (p.title || '未命名') + '」？\n将创建一个内容相同的新资源（默认下架）。')) return;
-      var newProduct = {
-        cid: p.cid,
-        title: (p.title || '未命名') + '（副本）',
-        desc: p.desc || '',
-        detail: p.detail || '',
-        img: p.img || '',
-        detailImages: p.detailImages || [],
-        detailVideos: p.detailVideos || [],
-        contactUrl: p.contactUrl || '',
-        price: p.price || 0,
-        variants: p.variants ? JSON.parse(JSON.stringify(p.variants)) : [],
+      showConfirm('复制资源', '确定复制资源「' + (p.title || '未命名') + '」？将创建一个内容相同的新资源（默认下架）。', function () {
+        var newProduct = {
+          cid: p.cid,
+          title: (p.title || '未命名') + '（副本）',
+          desc: p.desc || '',
+          detail: p.detail || '',
+          img: p.img || '',
+          detailImages: p.detailImages || [],
+          detailVideos: p.detailVideos || [],
+          contactUrl: p.contactUrl || '',
+          price: p.price || 0,
+          variants: p.variants ? JSON.parse(JSON.stringify(p.variants)) : [],
         is_online: false,
         is_hidden: 0,
         sort: (state.products.length + 1) * 10
       };
       api('admin/products', { method: 'POST', body: JSON.stringify(newProduct) }).then(function (res) {
         if (res.ok) {
-          alert('复制成功！新资源已创建（默认下架状态）');
+          toast('复制成功！新资源已创建（默认下架状态）', 'success');
           loadProducts();
         } else {
-          alert(res.msg || '复制失败');
+          toast(res.msg || '复制失败', 'error');
         }
+      });
       });
     }
 
@@ -1499,29 +1520,33 @@
 
       // 改分类：弹出分类选择
       if (action === 'changeCat') {
-        var catOptions = state.categories.map(function (c) { return c.id + ' - ' + c.name; }).join('\n');
-        var catInput = prompt('请输入目标分类ID（可用数字）：\n\n' + catOptions);
-        if (!catInput) return;
-        var newCid = Number(catInput);
-        if (isNaN(newCid)) { toast('请输入有效的分类ID', 'error'); return; }
-        if (!confirm('确定将选中的 ' + ids.length + ' 个资源分类改为 ID=' + newCid + '？')) return;
-        api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
-          if (res.ok) { toast('批量改分类成功（' + res.count + '项）', 'success'); loadProducts(); }
-          else toast(res.msg || '操作失败', 'error');
+        var catOptions = state.categories.map(function (c) { return c.id + ' - ' + c.name; }).join('<br>');
+        showInput('批量改分类', '可用分类：<br>' + catOptions, '请输入目标分类ID', function (catInput) {
+          if (!catInput) return;
+          var newCid = Number(catInput);
+          if (isNaN(newCid)) { toast('请输入有效的分类ID', 'error'); return; }
+          showConfirm('批量改分类', '确定将选中的 ' + ids.length + ' 个资源分类改为 ID=' + newCid + '？', function () {
+            api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
+              if (res.ok) { toast('批量改分类成功（' + res.count + '项）', 'success'); loadProducts(); }
+              else toast(res.msg || '操作失败', 'error');
+            });
+          });
         });
         return;
       }
 
       // 改价格：弹出价格输入
       if (action === 'changePrice') {
-        var priceInput = prompt('请输入新价格（数字，0表示免费）：');
-        if (priceInput === null) return;
-        var newPrice = Number(priceInput);
-        if (isNaN(newPrice) || newPrice < 0) { toast('请输入有效的价格', 'error'); return; }
-        if (!confirm('确定将选中的 ' + ids.length + ' 个资源价格改为 ' + newPrice + '？')) return;
-        api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changePrice', price: newPrice }) }).then(function (res) {
-          if (res.ok) { toast('批量改价格成功（' + res.count + '项）', 'success'); clearCache(); loadProducts(); }
-          else toast(res.msg || '操作失败', 'error');
+        showInput('批量改价格', '输入新价格（数字，0表示免费）', '请输入新价格', function (priceInput) {
+          if (priceInput === null || priceInput === '') return;
+          var newPrice = Number(priceInput);
+          if (isNaN(newPrice) || newPrice < 0) { toast('请输入有效的价格', 'error'); return; }
+          showConfirm('批量改价格', '确定将选中的 ' + ids.length + ' 个资源价格改为 ' + newPrice + '？', function () {
+            api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changePrice', price: newPrice }) }).then(function (res) {
+              if (res.ok) { toast('批量改价格成功（' + res.count + '项）', 'success'); clearCache(); loadProducts(); }
+              else toast(res.msg || '操作失败', 'error');
+            });
+          });
         });
         return;
       }
@@ -1581,95 +1606,16 @@
     }
 
     function delProduct(id) {
-      if (!confirm('确定删除该资源？其类型和统计数据也会一并删除。')) return;
-      api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
-        if (res.ok) { toast('已删除', 'success'); clearCache(); loadProducts(); }
-        else toast(res.msg || '删除失败', 'error');
+      showConfirm('删除资源', '确定删除该资源？其类型和统计数据也会一并删除。', function () {
+        api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
+          if (res.ok) { toast('已删除', 'success'); clearCache(); loadProducts(); }
+          else toast(res.msg || '删除失败', 'error');
+        });
       });
     }
 
     // ---------- 编辑 / 新增资源弹窗 ----------
     document.getElementById('addProductBtn').addEventListener('click', function () { openEdit(null); });
-
-    // ---------- 批量导入资源（CSV） ----------
-    var importFileInput = document.getElementById('importFileInput');
-    document.getElementById('importProductBtn').addEventListener('click', function () {
-      importFileInput.value = '';
-      importFileInput.click();
-    });
-    importFileInput.addEventListener('change', function (e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        var text = ev.target.result;
-        // 处理 BOM
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-        var items = parseCSV(text);
-        if (items.length === 0) { toast('CSV 文件为空或格式错误', 'error'); return; }
-        if (!confirm('解析到 ' + items.length + ' 个资源，确认导入？\n\nCSV 列：title, desc, detail, img, cid, price, is_online, sort')) return;
-        api('admin/import', { method: 'POST', body: JSON.stringify({ items: items }) }).then(function (res) {
-          if (res.ok) {
-            toast(res.message, res.fail > 0 ? 'error' : 'success');
-            if (res.errors && res.errors.length > 0) {
-              console.log('导入失败详情：', res.errors);
-            }
-            clearCache();
-            loadProducts();
-          } else {
-            toast(res.msg || '导入失败', 'error');
-          }
-        });
-      };
-      reader.readAsText(file, 'UTF-8');
-    });
-
-    // 简单 CSV 解析（支持引号包裹、逗号、换行）
-    function parseCSV(text) {
-      var lines = text.split(/\r?\n/);
-      if (lines.length < 2) return [];
-      // 第一行是表头，跳过
-      var items = [];
-      for (var i = 1; i < lines.length; i++) {
-        var line = lines[i].trim();
-        if (!line) continue;
-        var fields = parseCSVLine(line);
-        if (fields.length < 1) continue;
-        items.push({
-          title: fields[0] || '',
-          desc: fields[1] || '',
-          detail: fields[2] || '',
-          img: fields[3] || '',
-          cid: Number(fields[4]) || 0,
-          price: Number(fields[5]) || 0,
-          is_online: fields[6] === '0' ? 0 : 1,
-          sort: Number(fields[7]) || 0
-        });
-      }
-      return items;
-    }
-    function parseCSVLine(line) {
-      var result = [];
-      var current = '';
-      var inQuotes = false;
-      for (var i = 0; i < line.length; i++) {
-        var ch = line[i];
-        if (inQuotes) {
-          if (ch === '"') {
-            if (line[i + 1] === '"') { current += '"'; i++; }
-            else { inQuotes = false; }
-          } else {
-            current += ch;
-          }
-        } else {
-          if (ch === '"') { inQuotes = true; }
-          else if (ch === ',') { result.push(current); current = ''; }
-          else { current += ch; }
-        }
-      }
-      result.push(current);
-      return result;
-    }
 
     function openEdit(p) {
       state.editingId = p ? p.id : null;
@@ -1680,8 +1626,6 @@
       fDesc.value = p ? (p.desc || '') : '';
       fDetail.value = p ? (p.detail || '') : '';
       fImg.value = p ? (p.img || '') : '';
-      fDetailImages.value = p ? arrayToLines(p.detailImages) : '';
-      fDetailVideos.value = p ? arrayToLines(p.detailVideos) : '';
       fContactUrl.value = p ? (p.contactUrl || '') : '';
       fPrice.value = p ? (p.price || '') : '';
       fSort.value = p ? (p.sort || 0) : 0;
@@ -1709,14 +1653,14 @@
     function getFormState() {
       return {
         title: fTitle.value, desc: fDesc.value, detail: fDetail.value,
-        img: fImg.value, detailImages: fDetailImages.value, detailVideos: fDetailVideos.value,
+        img: fImg.value, detailImages: [], detailVideos: [],
         contactUrl: fContactUrl.value, price: fPrice.value, sort: fSort.value,
         cid: fCid.value, online: fOnline.checked, hidden: fHidden.checked
       };
     }
     function applyFormState(s) {
       fTitle.value = s.title; fDesc.value = s.desc; fDetail.value = s.detail;
-      fImg.value = s.img; fDetailImages.value = s.detailImages; fDetailVideos.value = s.detailVideos;
+      fImg.value = s.img;
       fContactUrl.value = s.contactUrl; fPrice.value = s.price; fSort.value = s.sort;
       fCid.value = s.cid; fOnline.checked = s.online; fHidden.checked = s.hidden;
       updateImgPreview();
@@ -1822,15 +1766,17 @@
       });
     }
 
+    var saving = false;
     function saveProduct() {
+      if (saving) return; // 防重复提交
       var data = {
         cid: Number(fCid.value) || 0,
         title: fTitle.value.trim(),
         desc: fDesc.value.trim(),
         detail: fDetail.value,
         img: fImg.value.trim(),
-        detailImages: linesToArray(fDetailImages.value),
-        detailVideos: linesToArray(fDetailVideos.value),
+        detailImages: [],
+        detailVideos: [],
         contactUrl: fContactUrl.value.trim(),
         price: Number(fPrice.value) || 0,
         sort: Number(fSort.value) || 0,
@@ -1842,11 +1788,18 @@
       if (!validateField(fTitle, '请填写资源标题')) return;
       if (!data.cid) { toast('请选择资源分类', 'error'); fCid.style.borderColor = '#ff4444'; return; }
 
+      saving = true;
+      saveProductBtn.disabled = true;
+      saveProductBtn.style.opacity = '0.6';
+
       var req = state.editingId
         ? api('admin/products/' + state.editingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/products', { method: 'POST', body: JSON.stringify(data) });
 
       req.then(function (res) {
+        saving = false;
+        saveProductBtn.disabled = false;
+        saveProductBtn.style.opacity = '';
         if (res.ok) {
           // 如果是新增，拿到新 id 后刷新类型列表（类型可能已在编辑时添加）
           if (!state.editingId && res.id) {
@@ -1859,6 +1812,11 @@
         } else {
           toast(res.msg || '保存失败', 'error');
         }
+      }).catch(function () {
+        saving = false;
+        saveProductBtn.disabled = false;
+        saveProductBtn.style.opacity = '';
+        toast('保存失败，请重试', 'error');
       });
     }
 
@@ -1959,18 +1917,21 @@
 
     // 详细描述：插入超链接按钮
     document.getElementById('insertDetailLink').addEventListener('click', function () {
-      var url = prompt('请输入链接地址（https://...）：');
-      if (!url) return;
-      url = url.trim();
-      var text = prompt('请输入链接显示文字：', '点击查看');
-      text = (text && text.trim()) ? text.trim() : url;
-      var html = '<a href="' + url.replace(/"/g, '&quot;') + '">' + text + '</a>';
-      insertAtCursor(fDetail, html);
+      showInput('插入超链接', '请输入链接地址', 'https://...', function (url) {
+        if (!url) return;
+        url = url.trim();
+        showInput('插入超链接', '请输入链接显示文字', '点击查看', function (text) {
+          text = (text && text.trim()) ? text.trim() : url;
+          var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
+          insertAtCursor(fDetail, html);
+          toast('超链接已插入', 'success');
+        }, '点击查看');
+      });
     });
 
     addVariantBtn.addEventListener('click', function () {
       if (!state.editingId) {
-        alert('请先保存资源，再添加类型');
+        toast('请先保存资源，再添加类型', 'error');
         return;
       }
       openVariantEdit(null);
@@ -1994,7 +1955,7 @@
     variantOk.addEventListener('click', function () {
       if (!validateField(vName, '请填写类型名称')) return;
       var name = vName.value.trim();
-      if (!state.editingId) { alert('请先保存资源'); return; }
+      if (!state.editingId) { toast('请先保存资源', 'error'); return; }
       var data = {
         productId: state.editingId,
         name: name,
@@ -2013,18 +1974,20 @@
       req.then(function (res) {
         if (res.ok) {
           variantMask.classList.remove('open');
+          toast('保存成功', 'success');
           loadVariants(state.editingId);
         } else {
-          alert(res.msg || '保存失败');
+          toast(res.msg || '保存失败', 'error');
         }
       });
     });
 
     function delVariant(id) {
-      if (!confirm('确定删除该类型？')) return;
-      api('admin/variants/' + id, { method: 'DELETE' }).then(function (res) {
-        if (res.ok) loadVariants(state.editingId);
-        else alert(res.msg || '删除失败');
+      showConfirm('删除类型', '确定删除该类型？', function () {
+        api('admin/variants/' + id, { method: 'DELETE' }).then(function (res) {
+          if (res.ok) { toast('已删除', 'success'); loadVariants(state.editingId); }
+          else toast(res.msg || '删除失败', 'error');
+        });
       });
     }
 
@@ -2253,7 +2216,7 @@
     // ---------- 分类管理 ----------
     function loadCategories() {
       api('admin/categories').then(function (res) {
-        if (!res.ok) { alert(res.msg || '加载失败'); return; }
+        if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         state.categories = (res.list || []).map(function (c) { return { id: c.id, name: c.name }; });
         renderCategories(res.list || []);
       });
@@ -2327,10 +2290,11 @@
           delBtn.className = 'row-btn danger';
           delBtn.textContent = '删除';
           delBtn.addEventListener('click', function () {
-            if (!confirm('删除该分类？其下资源将归入"全部"，子分类也会一并删除。')) return;
-            api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
-              if (res.ok) { toast('已删除', 'success'); clearCache(); loadCategories(); }
-              else toast(res.msg || '删除失败', 'error');
+            showConfirm('删除分类', '删除该分类？其下资源将归入"全部"，子分类也会一并删除。', function () {
+              api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
+                if (res.ok) { toast('已删除', 'success'); clearCache(); loadCategories(); }
+                else toast(res.msg || '删除失败', 'error');
+              });
             });
           });
           row.appendChild(editBtn);
@@ -2380,7 +2344,9 @@
       });
     });
 
+    var catSaving = false;
     catOk.addEventListener('click', function () {
+      if (catSaving) return; // 防重复提交
       var name = catName.value.trim();
       var sort = Number(catSort.value) || 0;
       var isChild = document.querySelector('input[name="catLevel"]:checked').value === '1';
@@ -2392,7 +2358,15 @@
       var req = state.catEditingId
         ? api('admin/categories/' + state.catEditingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/categories', { method: 'POST', body: JSON.stringify(data) });
+
+      catSaving = true;
+      catOk.disabled = true;
+      catOk.style.opacity = '0.6';
+
       req.then(function (res) {
+        catSaving = false;
+        catOk.disabled = false;
+        catOk.style.opacity = '';
         if (res.ok) {
           catMask.classList.remove('open');
           toast('保存成功', 'success');
@@ -2401,30 +2375,36 @@
         } else {
           toast(res.msg || '保存失败', 'error');
         }
+      }).catch(function () {
+        catSaving = false;
+        catOk.disabled = false;
+        catOk.style.opacity = '';
+        toast('保存失败，请重试', 'error');
       });
     });
 
     catCancel.addEventListener('click', function () { catMask.classList.remove('open'); });
     catMask.addEventListener('click', function (e) { if (e.target === catMask) catMask.classList.remove('open'); });
 
-    // ---------- 改密码 ----------
-    pwdBtn.addEventListener('click', function () {
-      pOld.value = '';
-      pNew.value = '';
-      pwdMask.classList.add('open');
-    });
-    pwdOk.addEventListener('click', function () {
-      var o = pOld.value;
-      var n = pNew.value;
-      if (!o || !n) { alert('请填写原密码和新密码'); return; }
-      api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: o, newPassword: n }) })
+    // ---------- 平台设置：修改密码 ----------
+    document.getElementById('changePwdBtn').addEventListener('click', function () {
+      var oldPwd = document.getElementById('oldPwd').value;
+      var newPwd = document.getElementById('newPwd').value;
+      var confirmPwd = document.getElementById('confirmPwd').value;
+      if (!oldPwd || !newPwd || !confirmPwd) { toast('请填写完整密码信息', 'error'); return; }
+      if (newPwd !== confirmPwd) { toast('两次输入的新密码不一致', 'error'); return; }
+      api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
         .then(function (res) {
-          if (res.ok) { alert('密码已修改'); pwdMask.classList.remove('open'); }
-          else alert(res.msg || '修改失败');
+          if (res.ok) {
+            toast('密码修改成功', 'success');
+            document.getElementById('oldPwd').value = '';
+            document.getElementById('newPwd').value = '';
+            document.getElementById('confirmPwd').value = '';
+          } else {
+            toast(res.msg || '修改失败', 'error');
+          }
         });
     });
-    pwdCancel.addEventListener('click', function () { pwdMask.classList.remove('open'); });
-    pwdMask.addEventListener('click', function (e) { if (e.target === pwdMask) pwdMask.classList.remove('open'); });
 
     // ---------- 退出 ----------
     logoutBtn.addEventListener('click', function () {
