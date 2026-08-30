@@ -1,18 +1,13 @@
 # ============================================
 #  万能资源圈 · Cloudflare Pages Functions 配置
-#  部署时需要在 Cloudflare 面板把 database_id 替换成你自己的 D1 数据库 ID
-#  更推荐的方式：直接在 Cloudflare 面板 Pages 项目里绑定 D1（见 README）
+#  数据库绑定方式：在 Cloudflare 面板 → Pages → 你的项目 → 设置 → 函数 → D1 数据库绑定
+#  绑定变量名填：DB，选择你创建的 D1 数据库即可
 # ============================================
 name = "wnzyq-shop"
 compatibility_date = "2026-08-20"
 
 # Pages 构建输出目录：静态文件就在仓库根目录
 pages_build_output_dir = "."
-
-[[d1_databases]]
-binding = "DB"
-database_name = "wnzyq-shop-db"
-database_id = "把这里替换成你创建的 D1 数据库 ID"
 
 # ============================================
 #  定期清理说明（Pages 项目不支持 wrangler.toml 里的 triggers）
