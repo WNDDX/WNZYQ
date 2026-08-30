@@ -1,0 +1,6 @@
+{
+  "name": "wnzyq-shop",
+  "private": true,
+  "type": "module",
+  "description": "万能资源圈 · 商品小店（前台 + 管理后台 + Cloudflare Pages Functions 后端）"
+}
