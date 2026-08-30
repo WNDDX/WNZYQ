@@ -1,4 +1,4 @@
-﻿/**
+/**
  * POST /api/install
  * 一键初始化系统（幂等）：
  *   1. 建表（表不存在才建）
@@ -115,49 +115,67 @@ const DEFAULT_SETTINGS = [
 export async function onRequestPost(context) {
   const { env } = context;
 
-  // 1. 建表
-  await env.DB.exec(CREATE_SQL);
-
-  // 1.5 迁移：为已部署的数据库添加新字段（schedule_on / schedule_off）
   try {
-    const cols = await env.DB.prepare("PRAGMA table_info(products)").all();
-    const colNames = cols.results.map(c => c.name);
-    if (!colNames.includes('schedule_on')) {
-      await env.DB.exec("ALTER TABLE products ADD COLUMN schedule_on TEXT");
+    // 检查数据库绑定是否生效
+    if (!env.DB) {
+      return json({ ok: false, msg: '数据库绑定未生效，请检查 wrangler.toml 配置或 Cloudflare 面板绑定' }, 500);
     }
-    if (!colNames.includes('schedule_off')) {
-      await env.DB.exec("ALTER TABLE products ADD COLUMN schedule_off TEXT");
-    }
-  } catch (e) { /* 忽略迁移错误 */ }
 
-  // 2. 默认分类（仅"全部"）
-  const cat = await env.DB.prepare('SELECT COUNT(*) AS n FROM categories').first();
-  if (!cat || cat.n === 0) {
-    for (const c of DEFAULT_CATEGORIES) {
-      await env.DB.prepare('INSERT INTO categories (id, name, sort) VALUES (?, ?, ?)')
-        .bind(c.id, c.name, c.sort).run();
+    // 1. 建表（拆分成单条执行，避免 exec 多语句问题）
+    const sqlStatements = CREATE_SQL.split(';').filter(s => s.trim());
+    for (const sql of sqlStatements) {
+      try {
+        await env.DB.prepare(sql).run();
+      } catch (e) {
+        // 忽略表已存在等错误
+        console.error('SQL执行错误:', sql.substring(0, 50), e.message);
+      }
     }
+
+    // 1.5 迁移：为已部署的数据库添加新字段（schedule_on / schedule_off）
+    try {
+      const cols = await env.DB.prepare("PRAGMA table_info(products)").all();
+      const colNames = cols.results.map(c => c.name);
+      if (!colNames.includes('schedule_on')) {
+        await env.DB.exec("ALTER TABLE products ADD COLUMN schedule_on TEXT");
+      }
+      if (!colNames.includes('schedule_off')) {
+        await env.DB.exec("ALTER TABLE products ADD COLUMN schedule_off TEXT");
+      }
+    } catch (e) { /* 忽略迁移错误 */ }
+
+    // 2. 默认分类（仅"全部"）
+    const cat = await env.DB.prepare('SELECT COUNT(*) AS n FROM categories').first();
+    if (!cat || cat.n === 0) {
+      for (const c of DEFAULT_CATEGORIES) {
+        await env.DB.prepare('INSERT INTO categories (id, name, sort) VALUES (?, ?, ?)')
+          .bind(c.id, c.name, c.sort).run();
+      }
+    }
+
+    // 3. 不写入示例资源（留空，管理员自行添加）
+
+    // 4. 默认管理员（带随机盐）
+    const adm = await env.DB.prepare('SELECT COUNT(*) AS n FROM admins').first();
+    if (!adm || adm.n === 0) {
+      const salt = randomSalt();
+      const hash = await hashPasswordWithSalt(DEFAULT_ADMIN.password, salt);
+      await env.DB.prepare('INSERT INTO admins (username, password_hash, salt) VALUES (?, ?, ?)')
+        .bind(DEFAULT_ADMIN.username, hash, salt).run();
+    }
+
+    // 5. 默认平台设置
+    const st = await env.DB.prepare('SELECT COUNT(*) AS n FROM settings').first();
+    if (!st || st.n === 0) {
+      for (const s of DEFAULT_SETTINGS) {
+        await env.DB.prepare('INSERT INTO settings (key, value) VALUES (?, ?)')
+          .bind(s.key, s.value).run();
+      }
+    }
+
+    return json({ ok: true, msg: '初始化完成', defaultAdmin: { username: DEFAULT_ADMIN.username } });
+  } catch (e) {
+    console.error('初始化失败:', e);
+    return json({ ok: false, msg: '初始化失败: ' + e.message, error: e.message }, 500);
   }
-
-  // 3. 不写入示例资源（留空，管理员自行添加）
-
-  // 4. 默认管理员（带随机盐）
-  const adm = await env.DB.prepare('SELECT COUNT(*) AS n FROM admins').first();
-  if (!adm || adm.n === 0) {
-    const salt = randomSalt();
-    const hash = await hashPasswordWithSalt(DEFAULT_ADMIN.password, salt);
-    await env.DB.prepare('INSERT INTO admins (username, password_hash, salt) VALUES (?, ?, ?)')
-      .bind(DEFAULT_ADMIN.username, hash, salt).run();
-  }
-
-  // 5. 默认平台设置
-  const st = await env.DB.prepare('SELECT COUNT(*) AS n FROM settings').first();
-  if (!st || st.n === 0) {
-    for (const s of DEFAULT_SETTINGS) {
-      await env.DB.prepare('INSERT INTO settings (key, value) VALUES (?, ?)')
-        .bind(s.key, s.value).run();
-    }
-  }
-
-  return json({ ok: true, msg: '初始化完成', defaultAdmin: { username: DEFAULT_ADMIN.username } });
 }
