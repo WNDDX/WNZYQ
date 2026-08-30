@@ -1,4 +1,4 @@
-﻿/**
+/**
  * POST /api/admin/clear-cache
  * 清除资源和分类的 API 缓存（管理员修改资源/分类后调用）
  * 需要管理员登录
@@ -9,8 +9,8 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   // 鉴权
-  const auth = await requireAuth(request, env);
-  if (auth) return auth;
+  const auth = await requireAuth(env, request);
+  if (auth instanceof Response) return auth;
 
   const cache = caches.default;
   const baseUrl = new URL(request.url).origin;

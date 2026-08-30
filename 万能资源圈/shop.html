@@ -974,7 +974,7 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="shop-brand">
-        <a class="shop-logo-link" href="admin" title="进入管理后台">
+        <a class="shop-logo-link" href="admin.html" title="进入管理后台">
           <img class="shop-logo" id="shopLogo" alt="Logo" />
         </a>
         <div class="shop-name" id="shopName">万能资源圈</div>
@@ -1169,11 +1169,25 @@
     }
 
     // HTML 安全过滤：只允许安全标签和属性，移除 script/事件/javascript: 协议
-    // 用于资源描述和类型描述，支持 <a href="...">超链接</a>
+    // 用于资源描述和类型描述，支持 <a href="...">超链接</a>、图片、视频
     function sanitizeHTML(html) {
       if (!html) return '';
-      var allowed = { A:1, BR:1, P:1, STRONG:1, EM:1, B:1, I:1, U:1, SPAN:1, DIV:1,
-        UL:1, OL:1, LI:1, H1:1, H2:1, H3:1, H4:1, H5:1, H6:1, BLOCKQUOTE:1, CODE:1, PRE:1, HR:1 };
+      var allowed = { A:1, BR:1, P:1, STRONG:1, EM:1, B:1, I:1, U:1, S:1, SPAN:1, DIV:1,
+        UL:1, OL:1, LI:1, H1:1, H2:1, H3:1, H4:1, H5:1, H6:1, BLOCKQUOTE:1, CODE:1, PRE:1, HR:1,
+        IMG:1, VIDEO:1, SOURCE:1 };
+      // 允许的属性
+      var allowedAttrs = {
+        A: ['href','target','rel','title'],
+        IMG: ['src','alt','title','style','width','height'],
+        VIDEO: ['src','controls','autoplay','loop','muted','poster','style','width','height'],
+        SOURCE: ['src','type'],
+        SPAN: ['style'],
+        DIV: ['style'],
+        P: ['style'],
+        H1: ['style'], H2: ['style'], H3: ['style'], H4: ['style'], H5: ['style'], H6: ['style'],
+        LI: ['style'], UL: ['style'], OL: ['style'],
+        BLOCKQUOTE: ['style'], CODE: ['style'], PRE: ['style']
+      };
       try {
         var doc = new DOMParser().parseFromString(html, 'text/html');
         var els = doc.body.querySelectorAll('*');
@@ -1184,21 +1198,41 @@
             if (el.parentNode) el.parentNode.replaceChild(text, el);
             return;
           }
-          // 移除危险属性（on* 事件、javascript:/data: 协议）
+          // 只保留允许的属性，移除危险属性
+          var tagAllowed = allowedAttrs[tag] || [];
           Array.from(el.attributes).forEach(function (attr) {
             var name = attr.name.toLowerCase();
+            // 移除 on* 事件属性
             if (name.indexOf('on') === 0) { el.removeAttribute(attr.name); return; }
+            // 检查 href/src 是否为危险协议
             if (name === 'href' || name === 'src') {
               var val = attr.value.toLowerCase().trim();
               if (val.indexOf('javascript:') === 0 || val.indexOf('data:') === 0) {
                 el.removeAttribute(attr.name);
+                return;
               }
+            }
+            // 检查 style 属性是否包含危险内容
+            if (name === 'style') {
+              var styleVal = attr.value.toLowerCase();
+              if (styleVal.indexOf('expression') !== -1 || styleVal.indexOf('url(') !== -1) {
+                el.removeAttribute(attr.name);
+                return;
+              }
+            }
+            // 如果不在允许的属性列表中，移除
+            if (tagAllowed.indexOf(name) === -1 && name !== 'class') {
+              el.removeAttribute(attr.name);
             }
           });
           // a 标签强制新窗口打开 + 安全 rel
           if (tag === 'A') {
             el.setAttribute('target', '_blank');
             el.setAttribute('rel', 'noopener noreferrer');
+          }
+          // 视频标签默认加上 controls
+          if (tag === 'VIDEO' && !el.hasAttribute('controls')) {
+            el.setAttribute('controls', '');
           }
         });
         return doc.body.innerHTML;

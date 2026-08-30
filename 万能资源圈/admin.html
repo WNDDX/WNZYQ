@@ -269,6 +269,58 @@
     .row-btn.danger { color: var(--red); border-color: #ffc8c8; }
     .empty { text-align: center; color: #999; padding: 60px 0; font-size: 14px; }
 
+    /* 卡片视图 */
+    #productList.card-view {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    #productList.card-view .product-row {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 0;
+      overflow: hidden;
+      gap: 0;
+      position: relative;
+    }
+    #productList.card-view .product-row .row-check {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 2;
+      width: 20px;
+      height: 20px;
+    }
+    #productList.card-view .product-row .thumb {
+      width: 100%;
+      height: 140px;
+      border-radius: 0;
+    }
+    #productList.card-view .product-row .info {
+      flex-basis: 100%;
+      padding: 12px 14px 8px;
+    }
+    #productList.card-view .product-row .p-ops {
+      width: 100%;
+      display: flex;
+      gap: 8px;
+      padding: 0 14px 12px;
+      justify-content: flex-start;
+    }
+    #productList.card-view .product-row .p-ops .row-btn {
+      flex: 1;
+      text-align: center;
+    }
+    #productList.card-view .product-row .switch {
+      margin: 0 14px 10px;
+    }
+    /* 视图切换按钮激活状态 */
+    .view-btn.active {
+      background: var(--blue1) !important;
+      color: #fff !important;
+      border-color: var(--blue1) !important;
+    }
+
     /* ---------- 统计 ---------- */
     .stat-cards {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -343,21 +395,68 @@
     .modal-box {
       position: relative; background: #fff; border-radius: 14px;
       width: 100%; max-width: 420px; max-height: 88vh; overflow-y: auto;
-      padding: 22px; text-align: center; animation: modalIn 0.25s ease;
+      padding: 22px; text-align: left; animation: modalIn 0.25s ease;
     }
-    .modal-wide { max-width: 560px; text-align: left; }
+    .modal-wide { max-width: 560px; }
     @keyframes modalIn {
       from { transform: translateY(20px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
     }
-    .modal-title { font-size: 20px; color: #222; margin-bottom: 16px; letter-spacing: 1.2px; }
+    .modal-title { font-size: 20px; color: #222; margin-bottom: 16px; letter-spacing: 1.2px; padding-right: 30px; }
+    /* 弹窗右上角关闭按钮 */
+    .modal-close-x {
+      position: absolute; top: 12px; right: 12px; z-index: 10;
+      width: 32px; height: 32px; border-radius: 50%;
+      border: none; background: #f0f2f5; color: #666;
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s ease; line-height: 1;
+    }
+    .modal-close-x:hover { background: #ff4444; color: #fff; transform: scale(1.1); }
+    .modal-close-x:active { transform: scale(0.92); }
     .form label { display: block; font-size: 13px; color: #666; margin: 12px 0 5px; }
     .form input, .form textarea, .form select, .input {
       width: 100%; border: 1px solid #ddd; border-radius: 10px;
       padding: 10px 12px; outline: none; background: #fff;
     }
     .form input:focus, .form textarea:focus, .form select:focus, .input:focus { border-color: var(--blue1); }
+    /* 日期输入框统一样式 */
+    input[type="date"], input[type="datetime-local"] {
+      width: 100%; border: 1px solid #ddd; border-radius: 10px;
+      padding: 10px 12px; outline: none; background: #fff;
+      font-size: 14px; color: #333; transition: border-color 0.2s;
+    }
+    input[type="date"]:focus, input[type="datetime-local"]:focus { border-color: var(--blue1); }
+    /* 数据统计日期输入框 */
+    .stat-date-input {
+      padding: 8px 10px !important; border: 1px solid #ddd !important;
+      border-radius: 8px !important; font-size: 13px !important; width: auto !important;
+    }
     .form textarea { resize: vertical; line-height: 1.6; }
+    /* 富文本编辑器 */
+    .rte-toolbar {
+      display: flex; flex-wrap: wrap; gap: 4px; padding: 8px;
+      background: #f8f9fa; border: 1px solid #ddd; border-bottom: none;
+      border-radius: 10px 10px 0 0;
+    }
+    .rte-btn {
+      padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px;
+      background: #fff; cursor: pointer; font-size: 13px; color: #333;
+      transition: all 0.15s; min-width: 32px; text-align: center;
+    }
+    .rte-btn:hover { background: #e3f2fd; border-color: #1976d2; color: #1976d2; }
+    .rte-btn:active { transform: scale(0.95); }
+    .rte-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
+    .rte-color { padding: 2px; width: 36px; height: 32px; cursor: pointer; border: 1px solid #ddd; border-radius: 6px; }
+    .rte-editor {
+      min-height: 150px; max-height: 400px; overflow-y: auto;
+      padding: 12px; border: 1px solid #ddd; border-radius: 0 0 10px 10px;
+      background: #fff; line-height: 1.7; font-size: 14px; color: #333;
+      outline: none;
+    }
+    .rte-editor:focus { border-color: var(--blue1); }
+    .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+    .rte-editor a { color: #1976d2; text-decoration: underline; }
     .form .hint { font-size: 11px; color: #bbb; margin-top: 3px; }
     .form .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
     .form .checkbox-row input { width: auto; }
@@ -393,7 +492,7 @@
     }
     .modal-close {
       background-color: var(--red); color: #fff; border: none;
-      padding: 0 24px; border-radius: 8px; font-size: 16px;
+      padding: 0 24px; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 600;
     }
     .modal-inner-btn, .modal-close, .btn-blue, .tab, .mini-btn, .row-btn, .switch, .variant-add {
       transition: all 0.10s ease;
@@ -580,7 +679,7 @@
   <!-- ============ 登录视图 ============ -->
   <div id="loginView" class="login-view">
     <div class="login-card">
-      <a class="login-logo-link" href="shop" title="回到资源首页">
+      <a class="login-logo-link" href="shop.html" title="回到资源首页">
         <div class="login-logo">
           <img src="assets/images/logo.png" alt="万能资源圈" onerror="this.style.display='none';this.parentNode.textContent='圈';" />
         </div>
@@ -599,7 +698,7 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="topbar-brand">
-          <a class="topbar-logo-link" href="shop" title="回到资源首页">
+          <a class="topbar-logo-link" href="shop.html" title="回到资源首页">
             <img class="topbar-logo" src="assets/images/logo.png" alt="" onerror="this.style.display='none'" />
           </a>
           <span>万能资源圈・管理</span>
@@ -638,6 +737,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input type="text" id="adminSearch" placeholder="搜索资源" />
           </div>
+          <!-- 视图切换按钮 -->
+          <div class="view-toggle" style="display:flex;gap:4px;margin-left:8px;">
+            <button class="view-btn active" id="viewListBtn" title="列表视图" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">☰ 列表</button>
+            <button class="view-btn" id="viewCardBtn" title="卡片视图" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">▦ 卡片</button>
+          </div>
         </div>
         <div class="batch-bar" id="batchBar">
           已选 <span class="batch-count" id="batchCount">0</span> 项
@@ -665,9 +769,9 @@
                 <button class="time-btn" data-days="30">近30天</button>
               </div>
               <div style="display:flex;align-items:center;gap:4px;font-size:13px;color:#666;">
-                <input type="date" id="statStartDate" style="padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+                <input type="date" id="statStartDate" class="stat-date-input" />
                 <span>至</span>
-                <input type="date" id="statEndDate" style="padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+                <input type="date" id="statEndDate" class="stat-date-input" />
                 <button class="time-btn" id="statCustomBtn" style="padding:5px 12px;">应用</button>
               </div>
               <button class="export-btn" id="exportBtn">导出资源数据</button>
@@ -720,6 +824,14 @@
           <button class="btn-blue" id="addCatBtn">新增分类</button>
           <span class="toolbar-hint">"全部"为固定分类，不可修改删除；排序值越小越靠前</span>
         </div>
+        <!-- 分类批量操作栏 -->
+        <div class="batch-bar" id="catBatchBar" style="display:none;background:#fff;border-radius:10px;padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.07);align-items:center;gap:12px;">
+          <span style="font-size:13px;color:#666;">已选 <b id="catBatchCount" style="color:var(--blue1);">0</b> 项</span>
+          <button class="row-btn" id="catBatchHide" style="background:#ff9800;color:#fff;">批量隐藏</button>
+          <button class="row-btn" id="catBatchShow" style="background:#4CAF50;color:#fff;">批量显示</button>
+          <button class="row-btn danger" id="catBatchDel">批量删除</button>
+          <button class="row-btn" id="catBatchCancel" style="margin-left:auto;">取消</button>
+        </div>
         <div id="catList"></div>
       </section>
 
@@ -732,26 +844,38 @@
             <input class="input" id="setContactUrl" />
           </div>
           <div class="setting-row">
-            <label>平台公告（显示在资源页顶部，支持HTML）</label>
-            <textarea class="input" id="setAnnouncement" rows="3" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></textarea>
+            <label>平台公告（显示在资源页顶部）</label>
+            <div class="rte-toolbar" id="announcementRteToolbar" style="border-radius:8px 8px 0 0;">
+              <button type="button" class="rte-btn" data-cmd="bold" data-target="setAnnouncement"><b>B</b></button>
+              <button type="button" class="rte-btn" data-cmd="italic" data-target="setAnnouncement"><i>I</i></button>
+              <button type="button" class="rte-btn" data-cmd="underline" data-target="setAnnouncement"><u>U</u></button>
+              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <input type="color" class="rte-color" data-target="setAnnouncement" value="#333333" />
+              <button type="button" class="rte-btn" id="announcementRteLink">🔗 链接</button>
+            </div>
+            <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></div>
           </div>
           <button class="btn-blue" id="saveSettingsBtn" style="width:auto;padding:0 28px;">保存设置</button>
         </div>
         <div class="setting-group">
           <h3>修改密码</h3>
-          <div class="setting-row">
-            <label>原密码</label>
-            <input class="input" id="oldPwd" type="password" placeholder="请输入原密码" />
+          <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 28px;background:#4CAF50;">修改密码</button>
+          <div id="pwdForm" style="display:none;margin-top:16px;">
+            <div class="setting-row">
+              <label>原密码</label>
+              <input class="input" id="oldPwd" type="password" placeholder="请输入原密码" />
+            </div>
+            <div class="setting-row">
+              <label>新密码</label>
+              <input class="input" id="newPwd" type="password" placeholder="请输入新密码" />
+            </div>
+            <div class="setting-row">
+              <label>确认新密码</label>
+              <input class="input" id="confirmPwd" type="password" placeholder="请再次输入新密码" />
+            </div>
+            <button class="btn-blue" id="changePwdBtn" style="width:auto;padding:0 28px;background:#4CAF50;">确认修改</button>
+            <button class="btn-blue" id="cancelPwdBtn" style="width:auto;padding:0 28px;background:#999;margin-left:10px;">取消</button>
           </div>
-          <div class="setting-row">
-            <label>新密码</label>
-            <input class="input" id="newPwd" type="password" placeholder="请输入新密码" />
-          </div>
-          <div class="setting-row">
-            <label>确认新密码</label>
-            <input class="input" id="confirmPwd" type="password" placeholder="请再次输入新密码" />
-          </div>
-          <button class="btn-blue" id="changePwdBtn" style="width:auto;padding:0 28px;background:#4CAF50;">确认修改</button>
         </div>
       </section>
 
@@ -761,32 +885,46 @@
   <!-- ============ 资源编辑弹窗 ============ -->
   <div class="modal-mask" id="editMask">
     <div class="modal-box modal-wide">
+      <button class="modal-close-x" data-close="editMask">×</button>
       <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
         <label>标题</label><input id="fTitle" placeholder="资源标题" />
         <label>分类</label><select id="fCid"></select>
-        <label>简介（列表卡片上显示）</label><input id="fDesc" placeholder="一句话简介" />
-        <label>详细描述（支持文字、图片、视频混排，像文章一样）</label>
-        <textarea id="fDetail" rows="5" placeholder="在这里输入详细描述，可以插入图片和视频链接，内容会像文章一样展示"></textarea>
-        <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button type="button" class="insert-link-btn" id="insertDetailLink">插入超链接</button>
-          <button type="button" class="insert-link-btn" id="insertDetailImg">插入图片</button>
-          <button type="button" class="insert-link-btn" id="insertDetailVideo">插入视频</button>
+        <label>简介</label><input id="fDesc" placeholder="列表卡片上显示的一句话简介" />
+        <label>详细描述</label>
+        <div class="rte-toolbar" id="detailRteToolbar">
+          <button type="button" class="rte-btn" data-cmd="bold" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" title="左对齐">⬅</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" title="居中">⬌</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" title="右对齐">➡</button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="有序列表">1. 列表</button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <input type="color" class="rte-color" id="detailTextColor" title="文字颜色" value="#333333" />
+          <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接">🔗 链接</button>
+          <button type="button" class="rte-btn" id="detailRteImg" title="插入图片">🖼 图片</button>
+          <button type="button" class="rte-btn" id="detailRteVideo" title="插入视频">🎬 视频</button>
         </div>
+        <div class="rte-editor" id="fDetail" contenteditable="true" placeholder="支持文字、图片、视频混排，像文章一样展示"></div>
         <label>资源封面图 URL</label><input id="fImg" placeholder="https://... 或 assets/images/xx.jpg" />
         <div style="font-size:11px;color:#999;margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" />
-        <label>联系客服链接（可不填，没填则用全局默认）</label>
-        <input id="fContactUrl" placeholder="https://work.weixin.qq.com/..." />
-        <label>价格（元，不填或 0 = 免费，免费不显示价格）</label>
-        <input id="fPrice" type="number" step="0.01" min="0" placeholder="如 99 或 99.00，不填则免费" />
-        <label>排序（越小越靠前）</label><input id="fSort" type="number" value="0" />
+        <label>联系客服链接</label>
+        <input id="fContactUrl" placeholder="可不填，没填则用全局默认，如 https://work.weixin.qq.com/..." />
+        <label>价格</label>
+        <input id="fPrice" type="number" step="0.01" min="0" placeholder="元，不填或 0 = 免费，免费不显示价格，如 99 或 99.00" />
+        <label>排序</label><input id="fSort" type="number" value="0" placeholder="越小越靠前" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 上架中</label>
         <label class="checkbox-row"><input type="checkbox" id="fHidden" /> 隐藏（资源页不显示，仅后台可见）</label>
-        <label>定时上架（可不填，到时间自动上架）</label>
-        <input id="fScheduleOn" type="datetime-local" />
-        <label>定时下架（可不填，到时间自动下架）</label>
-        <input id="fScheduleOff" type="datetime-local" />
+        <label>定时上架</label>
+        <input id="fScheduleOn" type="datetime-local" placeholder="可不填，到时间自动上架" />
+        <label>定时下架</label>
+        <input id="fScheduleOff" type="datetime-local" placeholder="可不填，到时间自动下架" />
 
         <!-- 资源类型管理 -->
         <div class="variant-section">
@@ -808,9 +946,10 @@
   <!-- ============ 分类编辑弹窗（名称 + 排序 + 级别 + 隐藏） ============ -->
   <div class="modal-mask" id="catMask">
     <div class="modal-box">
+      <button class="modal-close-x" data-close="catMask">×</button>
       <h2 class="modal-title" id="catModalTitle">新增分类</h2>
       <div class="form">
-        <label>分类名称 *</label><input id="catName" class="input" placeholder="分类名称" />
+        <label>分类名称</label><input id="catName" class="input" placeholder="请输入分类名称" />
         <label>分类级别</label>
         <div style="display:flex;gap:16px;margin-bottom:4px;">
           <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#333;">
@@ -834,9 +973,24 @@
     </div>
   </div>
 
+  <!-- ============ 批量改分类弹窗（下拉选择） ============ -->
+  <div class="modal-mask" id="batchCatMask">
+    <div class="modal-box" style="max-width:400px;">
+      <button class="modal-close-x" data-close="batchCatMask">×</button>
+      <h2 class="modal-title">批量改分类</h2>
+      <div style="font-size:13px;color:#666;margin-bottom:12px;">选择目标分类，将选中的资源移动到该分类下</div>
+      <select class="input" id="batchCatSelect" style="margin-bottom:16px;"></select>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="batchCatOk">确定修改</button>
+        <button class="modal-close" data-close="batchCatMask">取消</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ 通用输入弹窗 ============ -->
   <div class="modal-mask" id="inputMask">
     <div class="modal-box" style="max-width:400px;">
+      <button class="modal-close-x" data-close="inputMask">×</button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
       <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
       <input class="input" id="inputValue" placeholder="请输入..." style="margin-bottom:16px;" />
@@ -850,9 +1004,10 @@
   <!-- ============ 资源类型编辑弹窗 ============ -->
   <div class="modal-mask" id="variantMask">
     <div class="modal-box modal-wide">
+      <button class="modal-close-x" data-close="variantMask">×</button>
       <h2 class="modal-title" id="variantModalTitle">添加类型</h2>
       <div class="form">
-        <label>类型名称 *</label><input id="vName" placeholder="如：基础版 / 高级版 / 单月卡" />
+        <label>类型名称</label><input id="vName" placeholder="如：基础版 / 高级版 / 单月卡" />
         <label>类型描述</label><textarea id="vDesc" rows="2" placeholder="该类型的说明，每行一条"></textarea>
         <label>类型图片 URL（可不填）</label><input id="vImg" placeholder="https://... 或 assets/images/xx.jpg" />
         <label>类型视频 URL（可不填）</label><input id="vVideo" placeholder="https://.../xx.mp4" />
@@ -875,6 +1030,7 @@
   <!-- ============ 通用确认弹窗 ============ -->
   <div class="modal-mask" id="confirmMask">
     <div class="modal-box" style="max-width:360px;">
+      <button class="modal-close-x" data-close="confirmMask">×</button>
       <h2 class="modal-title" id="confirmTitle">确认操作</h2>
       <div id="confirmMsg" style="font-size:14px;color:#666;line-height:1.7;margin-bottom:20px;text-align:left;"></div>
       <div class="modal-footer">
@@ -1007,6 +1163,7 @@
       editingVariantId: null,
       catEditingId: null,
       statsDays: 7,          // 统计时间筛选天数（默认7天，最大可查30天）
+      catExpanded: {},       // 分类展开/收起状态
     };
 
     // ---------- toast 轻提示 ----------
@@ -1027,22 +1184,44 @@
 
     // ---------- 通用确认弹窗 ----------
     var confirmCallback = null;
-    function showConfirm(title, msg, callback) {
+    var confirmCancelCallback = null;
+    function showConfirm(title, msg, callback, cancelCallback) {
       document.getElementById('confirmTitle').textContent = title || '确认操作';
       document.getElementById('confirmMsg').textContent = msg || '';
       confirmCallback = callback;
+      confirmCancelCallback = cancelCallback || null;
       document.getElementById('confirmMask').classList.add('open');
     }
     document.getElementById('confirmOk').addEventListener('click', function () {
       document.getElementById('confirmMask').classList.remove('open');
-      if (confirmCallback) { var cb = confirmCallback; confirmCallback = null; cb(); }
+      if (confirmCallback) { var cb = confirmCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
     });
     document.getElementById('confirmCancel').addEventListener('click', function () {
       document.getElementById('confirmMask').classList.remove('open');
-      confirmCallback = null;
+      if (confirmCancelCallback) { var cb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
+      else { confirmCallback = null; confirmCancelCallback = null; }
     });
     document.getElementById('confirmMask').addEventListener('click', function (e) {
-      if (e.target === this) { this.classList.remove('open'); confirmCallback = null; }
+      if (e.target === this) {
+        this.classList.remove('open');
+        if (confirmCancelCallback) { var cb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
+        else { confirmCallback = null; confirmCancelCallback = null; }
+      }
+    });
+
+    // 弹窗右上角×按钮统一关闭（事件委托）
+    document.addEventListener('click', function (e) {
+      var closeBtn = e.target.closest('.modal-close-x');
+      if (closeBtn && closeBtn.dataset.close) {
+        var mask = document.getElementById(closeBtn.dataset.close);
+        if (mask) {
+          mask.classList.remove('open');
+          // 清除输入弹窗回调
+          if (closeBtn.dataset.close === 'inputMask') inputCallback = null;
+          // 清除确认弹窗回调
+          if (closeBtn.dataset.close === 'confirmMask') confirmCallback = null;
+        }
+      }
     });
 
     // ---------- 通用请求（自动带 token，401 自动跳登录） ----------
@@ -1151,14 +1330,14 @@
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var s = res.settings || {};
         document.getElementById('setContactUrl').value = s.contact_url || '';
-        document.getElementById('setAnnouncement').value = s.announcement || '';
+        document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
       });
     }
 
     document.getElementById('saveSettingsBtn').addEventListener('click', function () {
       var data = {
         contact_url: document.getElementById('setContactUrl').value.trim(),
-        announcement: document.getElementById('setAnnouncement').value
+        announcement: document.getElementById('setAnnouncement').innerHTML
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
         if (res.ok) toast('设置已保存', 'success');
@@ -1175,6 +1354,29 @@
     document.querySelectorAll('.batch-btn').forEach(function (btn) {
       btn.addEventListener('click', function () { batchAction(this.dataset.action); });
     });
+
+    // ---------- 视图切换（列表/卡片） ----------
+    var currentView = localStorage.getItem('admin_product_view') || 'list';
+    function setView(view) {
+      currentView = view;
+      localStorage.setItem('admin_product_view', view);
+      var listBtn = document.getElementById('viewListBtn');
+      var cardBtn = document.getElementById('viewCardBtn');
+      var productList = document.getElementById('productList');
+      if (view === 'card') {
+        listBtn.classList.remove('active');
+        cardBtn.classList.add('active');
+        productList.classList.add('card-view');
+      } else {
+        listBtn.classList.add('active');
+        cardBtn.classList.remove('active');
+        productList.classList.remove('card-view');
+      }
+    }
+    document.getElementById('viewListBtn').addEventListener('click', function () { setView('list'); });
+    document.getElementById('viewCardBtn').addEventListener('click', function () { setView('card'); });
+    // 初始化视图
+    setView(currentView);
 
     // ---------- 登录 ----------
     loginBtn.addEventListener('click', doLogin);
@@ -1518,20 +1720,30 @@
         delete: '确定删除选中的 ' + ids.length + ' 个资源？其类型和统计数据也会一并删除，不可恢复。'
       };
 
-      // 改分类：弹出分类选择
+      // 改分类：弹出分类下拉选择
       if (action === 'changeCat') {
-        var catOptions = state.categories.map(function (c) { return c.id + ' - ' + c.name; }).join('<br>');
-        showInput('批量改分类', '可用分类：<br>' + catOptions, '请输入目标分类ID', function (catInput) {
-          if (!catInput) return;
-          var newCid = Number(catInput);
-          if (isNaN(newCid)) { toast('请输入有效的分类ID', 'error'); return; }
-          showConfirm('批量改分类', '确定将选中的 ' + ids.length + ' 个资源分类改为 ID=' + newCid + '？', function () {
+        var select = document.getElementById('batchCatSelect');
+        select.innerHTML = '';
+        state.categories.forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name + (c.id === 0 ? '（全部）' : '');
+          select.appendChild(opt);
+        });
+        document.getElementById('batchCatMask').classList.add('open');
+        // 确认按钮事件（只绑定一次）
+        var okBtn = document.getElementById('batchCatOk');
+        okBtn.onclick = function () {
+          var newCid = Number(select.value);
+          if (isNaN(newCid)) { toast('请选择分类', 'error'); return; }
+          document.getElementById('batchCatMask').classList.remove('open');
+          showConfirm('批量改分类', '确定将选中的 ' + ids.length + ' 个资源分类改为「' + (select.options[select.selectedIndex].text) + '」？', function () {
             api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
               if (res.ok) { toast('批量改分类成功（' + res.count + '项）', 'success'); loadProducts(); }
               else toast(res.msg || '操作失败', 'error');
             });
           });
-        });
+        };
         return;
       }
 
@@ -1622,17 +1834,39 @@
       state.editingProduct = p;
       editTitle.textContent = p ? '编辑资源' : '新增资源';
       fillCidSelect(p ? p.cid : 0);
-      fTitle.value = p ? (p.title || '') : '';
-      fDesc.value = p ? (p.desc || '') : '';
-      fDetail.value = p ? (p.detail || '') : '';
-      fImg.value = p ? (p.img || '') : '';
-      fContactUrl.value = p ? (p.contactUrl || '') : '';
-      fPrice.value = p ? (p.price || '') : '';
-      fSort.value = p ? (p.sort || 0) : 0;
-      fOnline.checked = p ? !!p.is_online : true;
-      fHidden.checked = p ? !!p.is_hidden : false;
-      fScheduleOn.value = p ? (p.schedule_on || '') : '';
-      fScheduleOff.value = p ? (p.schedule_off || '') : '';
+
+      // 检查是否有未保存的草稿
+      var draftKey = 'product_draft_' + (p ? p.id : 'new');
+      var draft = localStorage.getItem(draftKey);
+      if (draft) {
+        try {
+          var draftData = JSON.parse(draft);
+          var draftTime = new Date(draftData.savedAt).toLocaleString();
+          showConfirm('发现未保存的草稿', '检测到 ' + draftTime + ' 保存的草稿，是否恢复？', function () {
+            // 恢复草稿
+            fTitle.value = draftData.title || '';
+            fDesc.value = draftData.desc || '';
+            fDetail.innerHTML = draftData.detail || '';
+            fImg.value = draftData.img || '';
+            fContactUrl.value = draftData.contactUrl || '';
+            fPrice.value = draftData.price || '';
+            fSort.value = draftData.sort || 0;
+            fOnline.checked = !!draftData.online;
+            fHidden.checked = !!draftData.hidden;
+            fillCidSelect(draftData.cid || 0);
+            updateImgPreview();
+            toast('草稿已恢复', 'success');
+          }, function () {
+            // 不恢复，使用原始数据
+            fillProductForm(p);
+          });
+        } catch (e) {
+          fillProductForm(p);
+        }
+      } else {
+        fillProductForm(p);
+      }
+
       editMask.classList.add('open');
       // 图片预览
       updateImgPreview();
@@ -1644,6 +1878,56 @@
       undoStack = [];
       redoStack = [];
       pushUndoState();
+      // 启动自动保存草稿
+      startAutoSaveDraft();
+    }
+
+    // 填充资源表单
+    function fillProductForm(p) {
+      fTitle.value = p ? (p.title || '') : '';
+      fDesc.value = p ? (p.desc || '') : '';
+      fDetail.innerHTML = p ? (p.detail || '') : '';
+      fImg.value = p ? (p.img || '') : '';
+      fContactUrl.value = p ? (p.contactUrl || '') : '';
+      fPrice.value = p ? (p.price || '') : '';
+      fSort.value = p ? (p.sort || 0) : 0;
+      fOnline.checked = p ? !!p.is_online : true;
+      fHidden.checked = p ? !!p.is_hidden : false;
+      fScheduleOn.value = p ? (p.schedule_on || '') : '';
+      fScheduleOff.value = p ? (p.schedule_off || '') : '';
+    }
+
+    // 自动保存草稿
+    var draftTimer = null;
+    function startAutoSaveDraft() {
+      stopAutoSaveDraft();
+      draftTimer = setInterval(saveDraft, 10000); // 每10秒自动保存
+    }
+    function stopAutoSaveDraft() {
+      if (draftTimer) { clearInterval(draftTimer); draftTimer = null; }
+    }
+    function saveDraft() {
+      if (!editMask.classList.contains('open')) return;
+      var draftKey = 'product_draft_' + (state.editingId || 'new');
+      var draftData = {
+        title: fTitle.value,
+        desc: fDesc.value,
+        detail: fDetail.innerHTML,
+        img: fImg.value,
+        contactUrl: fContactUrl.value,
+        price: fPrice.value,
+        sort: fSort.value,
+        online: fOnline.checked,
+        hidden: fHidden.checked,
+        cid: fCid.value,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draftData));
+    }
+    function clearDraft() {
+      var draftKey = 'product_draft_' + (state.editingId || 'new');
+      localStorage.removeItem(draftKey);
+      stopAutoSaveDraft();
     }
 
     // ---------- 撤销/重做 ----------
@@ -1652,14 +1936,14 @@
     var UNDO_MAX = 50;
     function getFormState() {
       return {
-        title: fTitle.value, desc: fDesc.value, detail: fDetail.value,
+        title: fTitle.value, desc: fDesc.value, detail: fDetail.innerHTML,
         img: fImg.value, detailImages: [], detailVideos: [],
         contactUrl: fContactUrl.value, price: fPrice.value, sort: fSort.value,
         cid: fCid.value, online: fOnline.checked, hidden: fHidden.checked
       };
     }
     function applyFormState(s) {
-      fTitle.value = s.title; fDesc.value = s.desc; fDetail.value = s.detail;
+      fTitle.value = s.title; fDesc.value = s.desc; fDetail.innerHTML = s.detail;
       fImg.value = s.img;
       fContactUrl.value = s.contactUrl; fPrice.value = s.price; fSort.value = s.sort;
       fCid.value = s.cid; fOnline.checked = s.online; fHidden.checked = s.hidden;
@@ -1737,8 +2021,8 @@
     }
 
     saveProductBtn.addEventListener('click', saveProduct);
-    editCancel.addEventListener('click', function () { editMask.classList.remove('open'); });
-    editMask.addEventListener('click', function (e) { if (e.target === editMask) editMask.classList.remove('open'); });
+    editCancel.addEventListener('click', function () { editMask.classList.remove('open'); clearDraft(); });
+    editMask.addEventListener('click', function (e) { if (e.target === editMask) { editMask.classList.remove('open'); clearDraft(); } });
 
     // ---------- 表单必填校验 ----------
     function validateField(input, msg) {
@@ -1773,7 +2057,7 @@
         cid: Number(fCid.value) || 0,
         title: fTitle.value.trim(),
         desc: fDesc.value.trim(),
-        detail: fDetail.value,
+        detail: fDetail.innerHTML,
         img: fImg.value.trim(),
         detailImages: [],
         detailVideos: [],
@@ -1806,6 +2090,7 @@
             state.editingId = res.id;
           }
           editMask.classList.remove('open');
+          clearDraft(); // 保存成功后清除草稿
           toast('保存成功', 'success');
           clearCache();
           loadProducts();
@@ -1915,19 +2200,134 @@
       });
     }
 
-    // 详细描述：插入超链接按钮
-    document.getElementById('insertDetailLink').addEventListener('click', function () {
+    // ========== 富文本编辑器功能 ==========
+    var rteEditor = document.getElementById('fDetail');
+
+    // 工具栏按钮点击执行命令
+    document.querySelectorAll('#detailRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
+      btn.addEventListener('mousedown', function (e) { e.preventDefault(); }); // 防止失去焦点
+      btn.addEventListener('click', function () {
+        var cmd = this.dataset.cmd;
+        document.execCommand(cmd, false, null);
+        rteEditor.focus();
+        updateRteActive();
+      });
+    });
+
+    // 更新工具栏按钮激活状态
+    function updateRteActive() {
+      document.querySelectorAll('#detailRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
+        var cmd = btn.dataset.cmd;
+        try {
+          if (document.queryCommandState(cmd)) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        } catch (e) {}
+      });
+    }
+    rteEditor.addEventListener('keyup', updateRteActive);
+    rteEditor.addEventListener('mouseup', updateRteActive);
+
+    // 文字颜色
+    document.getElementById('detailTextColor').addEventListener('input', function () {
+      document.execCommand('foreColor', false, this.value);
+      rteEditor.focus();
+    });
+
+    // 插入超链接
+    document.getElementById('detailRteLink').addEventListener('click', function () {
       showInput('插入超链接', '请输入链接地址', 'https://...', function (url) {
         if (!url) return;
         url = url.trim();
         showInput('插入超链接', '请输入链接显示文字', '点击查看', function (text) {
           text = (text && text.trim()) ? text.trim() : url;
           var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
-          insertAtCursor(fDetail, html);
+          document.execCommand('insertHTML', false, html);
           toast('超链接已插入', 'success');
         }, '点击查看');
       });
     });
+
+    // 插入图片
+    document.getElementById('detailRteImg').addEventListener('click', function () {
+      showInput('插入图片', '请输入图片 URL', 'https://...', function (url) {
+        if (!url) return;
+        url = url.trim();
+        var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="" style="max-width:100%;border-radius:8px;" />';
+        document.execCommand('insertHTML', false, html);
+        toast('图片已插入', 'success');
+      });
+    });
+
+    // 插入视频
+    document.getElementById('detailRteVideo').addEventListener('click', function () {
+      showInput('插入视频', '请输入视频 URL（mp4）', 'https://.../xx.mp4', function (url) {
+        if (!url) return;
+        url = url.trim();
+        var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
+        document.execCommand('insertHTML', false, html);
+        toast('视频已插入', 'success');
+      });
+    });
+
+    // 占位符显示/隐藏
+    function updateRtePlaceholder() {
+      if (!rteEditor.innerHTML || rteEditor.innerHTML === '<br>' || rteEditor.innerHTML === '<p><br></p>') {
+        rteEditor.style.color = '#999';
+      } else {
+        rteEditor.style.color = '#333';
+      }
+    }
+    rteEditor.addEventListener('input', updateRtePlaceholder);
+    rteEditor.addEventListener('focus', updateRtePlaceholder);
+    rteEditor.addEventListener('blur', updateRtePlaceholder);
+
+    // ========== 平台公告富文本编辑器 ==========
+    var annEditor = document.getElementById('setAnnouncement');
+
+    // 工具栏按钮点击执行命令
+    document.querySelectorAll('#announcementRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
+      btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+      btn.addEventListener('click', function () {
+        var cmd = this.dataset.cmd;
+        document.execCommand(cmd, false, null);
+        annEditor.focus();
+      });
+    });
+
+    // 文字颜色
+    document.querySelector('#announcementRteToolbar .rte-color').addEventListener('input', function () {
+      document.execCommand('foreColor', false, this.value);
+      annEditor.focus();
+    });
+
+    // 插入超链接
+    document.getElementById('announcementRteLink').addEventListener('click', function () {
+      showInput('插入超链接', '请输入链接地址', 'https://...', function (url) {
+        if (!url) return;
+        url = url.trim();
+        showInput('插入超链接', '请输入链接显示文字', '点击查看', function (text) {
+          text = (text && text.trim()) ? text.trim() : url;
+          var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
+          document.execCommand('insertHTML', false, html);
+          toast('超链接已插入', 'success');
+        }, '点击查看');
+      });
+    });
+
+    // 占位符显示/隐藏
+    function updateAnnPlaceholder() {
+      if (!annEditor.innerHTML || annEditor.innerHTML === '<br>' || annEditor.innerHTML === '<p><br></p>') {
+        annEditor.style.color = '#999';
+      } else {
+        annEditor.style.color = '#333';
+      }
+    }
+    annEditor.addEventListener('input', updateAnnPlaceholder);
+    annEditor.addEventListener('focus', updateAnnPlaceholder);
+    annEditor.addEventListener('blur', updateAnnPlaceholder);
 
     addVariantBtn.addEventListener('click', function () {
       if (!state.editingId) {
@@ -2242,7 +2642,47 @@
       ordered.forEach(function (c) {
         var row = document.createElement('div');
         row.className = 'cat-row';
+        row.draggable = true;
+        row.dataset.id = c.id;
         var isTop = c.parent_id === 0;
+
+        // 拖拽事件（同级别内排序）
+        row.addEventListener('dragstart', function (e) {
+          e.dataTransfer.setData('text/plain', c.id);
+          this.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', function () {
+          this.classList.remove('dragging');
+          document.querySelectorAll('.cat-row').forEach(function (r) { r.classList.remove('drag-over'); });
+        });
+        row.addEventListener('dragover', function (e) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          this.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', function () {
+          this.classList.remove('drag-over');
+        });
+        row.addEventListener('drop', function (e) {
+          e.preventDefault();
+          this.classList.remove('drag-over');
+          var draggedId = Number(e.dataTransfer.getData('text/plain'));
+          var targetId = c.id;
+          if (draggedId === targetId) return;
+          reorderCategories(draggedId, targetId);
+        });
+
+        // 复选框（"全部"分类不可选）
+        if (c.id !== 0) {
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.className = 'cat-check';
+          cb.dataset.id = c.id;
+          cb.style.cssText = 'width:16px;height:16px;cursor:pointer;flex-shrink:0;';
+          cb.addEventListener('change', updateCatBatchBar);
+          row.appendChild(cb);
+        }
 
         var name = document.createElement('span');
         name.className = 'c-name';
@@ -2252,6 +2692,36 @@
         name.style.color = isTop ? '#1a1a1a' : '#555';
         var prefix = isTop ? '' : '└ ';
         name.textContent = prefix + c.name + (c.id === 0 ? '（全部）' : '') + (isTop ? '' : '');
+
+        // 一级分类展开/收起箭头
+        if (isTop && c.id !== 0) {
+          var toggleBtn = document.createElement('span');
+          toggleBtn.style.cssText = 'display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;cursor:pointer;margin-right:4px;color:#666;transition:transform 0.2s;user-select:none;';
+          var hasChildren = list.some(function (sub) { return sub.parent_id === c.id; });
+          if (hasChildren) {
+            toggleBtn.textContent = state.catExpanded[c.id] === false ? '▶' : '▼';
+            toggleBtn.title = state.catExpanded[c.id] === false ? '展开子分类' : '收起子分类';
+          } else {
+            toggleBtn.textContent = '•';
+            toggleBtn.style.cursor = 'default';
+            toggleBtn.style.color = '#ccc';
+          }
+          toggleBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (!hasChildren) return;
+            state.catExpanded[c.id] = state.catExpanded[c.id] === false ? true : false;
+            renderCategories(state.categories);
+          });
+          row.appendChild(toggleBtn);
+        }
+
+        // 二级分类：如果父级分类收起，则隐藏
+        if (!isTop) {
+          var parentExpanded = state.catExpanded[c.parent_id] !== false;
+          if (!parentExpanded) {
+            row.style.display = 'none';
+          }
+        }
 
         // 级别标签
         var levelBadge = document.createElement('span');
@@ -2275,6 +2745,22 @@
         var cnt = document.createElement('span');
         cnt.className = 'c-count';
         cnt.textContent = (c.cnt || 0) + ' 件资源';
+        cnt.style.cursor = 'pointer';
+        cnt.style.color = '#1976d2';
+        cnt.style.textDecoration = 'underline';
+        cnt.title = '点击查看该分类下的资源';
+        cnt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          // 切换到资源管理标签
+          document.querySelector('.tab[data-tab="products"]').click();
+          // 设置分类筛选
+          var filterCat = document.getElementById('filterCat');
+          if (filterCat) {
+            filterCat.value = c.id;
+            renderProducts();
+          }
+          toast('已筛选分类：' + c.name, 'success');
+        });
 
         row.appendChild(name);
         row.appendChild(levelBadge);
@@ -2306,6 +2792,67 @@
     }
 
     document.getElementById('addCatBtn').addEventListener('click', function () { openCatEdit(null); });
+
+    // ---------- 分类批量操作 ----------
+    function updateCatBatchBar() {
+      var checks = document.querySelectorAll('.cat-check:checked');
+      var count = checks.length;
+      var bar = document.getElementById('catBatchBar');
+      document.getElementById('catBatchCount').textContent = count;
+      bar.style.display = count > 0 ? 'flex' : 'none';
+    }
+    // 批量隐藏
+    document.getElementById('catBatchHide').addEventListener('click', function () {
+      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
+      if (ids.length === 0) return;
+      showConfirm('批量隐藏', '确定隐藏选中的 ' + ids.length + ' 个分类？隐藏后资源页不显示。', function () {
+        batchCatAction(ids, 'hide');
+      });
+    });
+    // 批量显示
+    document.getElementById('catBatchShow').addEventListener('click', function () {
+      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
+      if (ids.length === 0) return;
+      showConfirm('批量显示', '确定显示选中的 ' + ids.length + ' 个分类？', function () {
+        batchCatAction(ids, 'show');
+      });
+    });
+    // 批量删除
+    document.getElementById('catBatchDel').addEventListener('click', function () {
+      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
+      if (ids.length === 0) return;
+      showConfirm('批量删除', '确定删除选中的 ' + ids.length + ' 个分类？其下资源将归入"全部"，子分类也会一并删除，不可恢复。', function () {
+        batchCatAction(ids, 'delete');
+      });
+    });
+    // 取消选择
+    document.getElementById('catBatchCancel').addEventListener('click', function () {
+      document.querySelectorAll('.cat-check:checked').forEach(function (cb) { cb.checked = false; });
+      updateCatBatchBar();
+    });
+    // 执行批量操作
+    function batchCatAction(ids, action) {
+      var done = 0, fail = 0;
+      ids.forEach(function (id) {
+        var req;
+        if (action === 'hide') {
+          req = api('admin/categories/' + id, { method: 'PUT', body: JSON.stringify({ is_hidden: true }) });
+        } else if (action === 'show') {
+          req = api('admin/categories/' + id, { method: 'PUT', body: JSON.stringify({ is_hidden: false }) });
+        } else {
+          req = api('admin/categories/' + id, { method: 'DELETE' });
+        }
+        req.then(function (res) {
+          if (res.ok) done++; else fail++;
+          if (done + fail === ids.length) {
+            var actionName = action === 'hide' ? '隐藏' : (action === 'show' ? '显示' : '删除');
+            toast('批量' + actionName + '完成：成功 ' + done + ' 项，失败 ' + fail + ' 项', fail > 0 ? 'error' : 'success');
+            clearCache();
+            loadCategories();
+          }
+        });
+      });
+    }
 
     function openCatEdit(c) {
       state.catEditingId = c ? c.id : null;
@@ -2343,6 +2890,31 @@
         catParentWrap.style.display = this.value === '1' ? 'block' : 'none';
       });
     });
+
+    // 分类拖拽排序（同级别内排序）
+    function reorderCategories(draggedId, targetId) {
+      var dragged = state.categories.find(function (c) { return c.id === draggedId; });
+      var target = state.categories.find(function (c) { return c.id === targetId; });
+      if (!dragged || !target) return;
+      // 只允许同级别内排序
+      if (dragged.parent_id !== target.parent_id) {
+        toast('只能在同级别分类内排序', 'error');
+        return;
+      }
+      var targetSort = Number(target.sort) || 0;
+      api('admin/categories/' + draggedId, {
+        method: 'PUT',
+        body: JSON.stringify({ sort: targetSort })
+      }).then(function (res) {
+        if (res.ok) {
+          toast('排序已更新', 'success');
+          clearCache();
+          loadCategories();
+        } else {
+          toast(res.msg || '排序失败', 'error');
+        }
+      });
+    }
 
     var catSaving = false;
     catOk.addEventListener('click', function () {
@@ -2387,6 +2959,20 @@
     catMask.addEventListener('click', function (e) { if (e.target === catMask) catMask.classList.remove('open'); });
 
     // ---------- 平台设置：修改密码 ----------
+    // 点击"修改密码"按钮显示输入框
+    document.getElementById('showPwdFormBtn').addEventListener('click', function () {
+      document.getElementById('pwdForm').style.display = 'block';
+      this.style.display = 'none';
+    });
+    // 点击"取消"按钮隐藏输入框
+    document.getElementById('cancelPwdBtn').addEventListener('click', function () {
+      document.getElementById('pwdForm').style.display = 'none';
+      document.getElementById('showPwdFormBtn').style.display = 'inline-block';
+      document.getElementById('oldPwd').value = '';
+      document.getElementById('newPwd').value = '';
+      document.getElementById('confirmPwd').value = '';
+    });
+    // 确认修改密码
     document.getElementById('changePwdBtn').addEventListener('click', function () {
       var oldPwd = document.getElementById('oldPwd').value;
       var newPwd = document.getElementById('newPwd').value;
@@ -2400,6 +2986,8 @@
             document.getElementById('oldPwd').value = '';
             document.getElementById('newPwd').value = '';
             document.getElementById('confirmPwd').value = '';
+            document.getElementById('pwdForm').style.display = 'none';
+            document.getElementById('showPwdFormBtn').style.display = 'inline-block';
           } else {
             toast(res.msg || '修改失败', 'error');
           }
@@ -2468,7 +3056,7 @@
     document.getElementById('previewProductBtn').addEventListener('click', function () {
       document.getElementById('previewTitle').textContent = fTitle.value || '(未填写标题)';
       document.getElementById('previewDesc').textContent = fDesc.value || '';
-      document.getElementById('previewDetail').textContent = fDetail.value || '';
+      document.getElementById('previewDetail').innerHTML = fDetail.innerHTML || '';
       var price = Number(fPrice.value) || 0;
       document.getElementById('previewPrice').textContent = price > 0 ? '¥' + (price === Math.floor(price) ? price : price.toFixed(2)) : '';
       var cover = document.getElementById('previewCover');
