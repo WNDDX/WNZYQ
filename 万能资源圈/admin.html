@@ -448,6 +448,17 @@
     .rte-btn:active { transform: scale(0.95); }
     .rte-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
     .rte-color { padding: 2px; width: 36px; height: 32px; cursor: pointer; border: 1px solid #ddd; border-radius: 6px; }
+    .rte-select {
+      height: 32px; padding: 0 6px; border: 1px solid #ddd; border-radius: 6px;
+      background: #fff; font-size: 12px; color: #333; cursor: pointer; outline: none;
+    }
+    .rte-select:hover { border-color: #1976d2; }
+    .rte-color-label {
+      display: inline-flex; align-items: center; gap: 2px; cursor: pointer;
+      padding: 2px 4px; border: 1px solid #ddd; border-radius: 6px; background: #fff;
+    }
+    .rte-color-label:hover { border-color: #1976d2; }
+    .rte-color-label .rte-color { width: 24px; height: 20px; border: none; padding: 0; }
     .rte-editor {
       min-height: 150px; max-height: 400px; overflow-y: auto;
       padding: 12px; border: 1px solid #ddd; border-radius: 0 0 10px 10px;
@@ -458,8 +469,9 @@
     .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
     .form .hint { font-size: 11px; color: #bbb; margin-top: 3px; }
-    .form .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
-    .form .checkbox-row input { width: auto; }
+    .form .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; cursor: pointer; }
+    .form .checkbox-row input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--blue1); }
+    .form .checkbox-row { font-size: 14px; color: #333; }
     .modal-footer { display: flex; gap: 10px; margin-top: 18px; align-items: center; }
     /* 预览按钮 */
     .preview-btn {
@@ -679,7 +691,7 @@
   <!-- ============ 登录视图 ============ -->
   <div id="loginView" class="login-view">
     <div class="login-card">
-      <a class="login-logo-link" href="shop.html" title="回到资源首页">
+      <a class="login-logo-link" href="shop" title="回到资源首页">
         <div class="login-logo">
           <img src="assets/images/logo.png" alt="万能资源圈" onerror="this.style.display='none';this.parentNode.textContent='圈';" />
         </div>
@@ -698,7 +710,7 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="topbar-brand">
-          <a class="topbar-logo-link" href="shop.html" title="回到资源首页">
+          <a class="topbar-logo-link" href="shop" title="回到资源首页">
             <img class="topbar-logo" src="assets/images/logo.png" alt="" onerror="this.style.display='none'" />
           </a>
           <span>万能资源圈・管理</span>
@@ -846,12 +858,38 @@
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
             <div class="rte-toolbar" id="announcementRteToolbar" style="border-radius:8px 8px 0 0;">
+              <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement">
+                <option value="">字体</option>
+                <option value="Microsoft YaHei">微软雅黑</option>
+                <option value="SimSun">宋体</option>
+                <option value="SimHei">黑体</option>
+                <option value="KaiTi">楷体</option>
+              </select>
+              <select class="rte-select" data-cmd="fontSize" data-target="setAnnouncement">
+                <option value="">字号</option>
+                <option value="2">小</option>
+                <option value="3">正常</option>
+                <option value="4">大</option>
+                <option value="5">特大</option>
+              </select>
+              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
               <button type="button" class="rte-btn" data-cmd="bold" data-target="setAnnouncement"><b>B</b></button>
               <button type="button" class="rte-btn" data-cmd="italic" data-target="setAnnouncement"><i>I</i></button>
               <button type="button" class="rte-btn" data-cmd="underline" data-target="setAnnouncement"><u>U</u></button>
               <span style="width:1px;background:#ddd;margin:0 4px;"></span>
-              <input type="color" class="rte-color" data-target="setAnnouncement" value="#333333" />
+              <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement">⬅</button>
+              <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement">⬌</button>
+              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <label class="rte-color-label">
+                <span style="font-size:12px;color:#666;">A</span>
+                <input type="color" class="rte-color" data-cmd="foreColor" data-target="setAnnouncement" value="#333333" />
+              </label>
               <button type="button" class="rte-btn" id="announcementRteLink">🔗 链接</button>
+              <button type="button" class="rte-btn" id="announcementRteImg">🖼 图片</button>
+              <button type="button" class="rte-btn" id="announcementRteVideo">🎬 视频</button>
+              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <button type="button" class="rte-btn" id="announcementFormatBrush">🖌 格式刷</button>
+              <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button>
             </div>
             <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></div>
           </div>
@@ -885,7 +923,6 @@
   <!-- ============ 资源编辑弹窗 ============ -->
   <div class="modal-mask" id="editMask">
     <div class="modal-box modal-wide">
-      <button class="modal-close-x" data-close="editMask">×</button>
       <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
         <label>标题</label><input id="fTitle" placeholder="资源标题" />
@@ -893,6 +930,25 @@
         <label>简介</label><input id="fDesc" placeholder="列表卡片上显示的一句话简介" />
         <label>详细描述</label>
         <div class="rte-toolbar" id="detailRteToolbar">
+          <select class="rte-select" data-cmd="fontName" title="字体">
+            <option value="">字体</option>
+            <option value="Microsoft YaHei">微软雅黑</option>
+            <option value="SimSun">宋体</option>
+            <option value="SimHei">黑体</option>
+            <option value="KaiTi">楷体</option>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+          </select>
+          <select class="rte-select" data-cmd="fontSize" title="字号">
+            <option value="">字号</option>
+            <option value="1">小</option>
+            <option value="3">正常</option>
+            <option value="4">大</option>
+            <option value="5">特大</option>
+            <option value="6">超大</option>
+            <option value="7">巨大</option>
+          </select>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
           <button type="button" class="rte-btn" data-cmd="bold" title="加粗"><b>B</b></button>
           <button type="button" class="rte-btn" data-cmd="italic" title="斜体"><i>I</i></button>
           <button type="button" class="rte-btn" data-cmd="underline" title="下划线"><u>U</u></button>
@@ -905,10 +961,21 @@
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="有序列表">1. 列表</button>
           <span style="width:1px;background:#ddd;margin:0 4px;"></span>
-          <input type="color" class="rte-color" id="detailTextColor" title="文字颜色" value="#333333" />
+          <label class="rte-color-label" title="文字颜色">
+            <span style="font-size:12px;color:#666;">A</span>
+            <input type="color" class="rte-color" data-cmd="foreColor" value="#333333" />
+          </label>
+          <label class="rte-color-label" title="背景颜色">
+            <span style="font-size:12px;color:#666;background:#ffff00;padding:0 2px;">A</span>
+            <input type="color" class="rte-color" data-cmd="hiliteColor" value="#ffff00" />
+          </label>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
           <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接">🔗 链接</button>
           <button type="button" class="rte-btn" id="detailRteImg" title="插入图片">🖼 图片</button>
           <button type="button" class="rte-btn" id="detailRteVideo" title="插入视频">🎬 视频</button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷">🖌 格式刷</button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" title="清除格式">✕ 格式</button>
         </div>
         <div class="rte-editor" id="fDetail" contenteditable="true" placeholder="支持文字、图片、视频混排，像文章一样展示"></div>
         <label>资源封面图 URL</label><input id="fImg" placeholder="https://... 或 assets/images/xx.jpg" />
@@ -1008,7 +1075,56 @@
       <h2 class="modal-title" id="variantModalTitle">添加类型</h2>
       <div class="form">
         <label>类型名称</label><input id="vName" placeholder="如：基础版 / 高级版 / 单月卡" />
-        <label>类型描述</label><textarea id="vDesc" rows="2" placeholder="该类型的说明，每行一条"></textarea>
+        <label>类型描述</label>
+        <div class="rte-toolbar" id="vDescRteToolbar" style="border-radius:8px 8px 0 0;">
+          <select class="rte-select" data-cmd="fontName" data-target="vDescEditor">
+            <option value="">字体</option>
+            <option value="Microsoft YaHei">微软雅黑</option>
+            <option value="SimSun">宋体</option>
+            <option value="SimHei">黑体</option>
+            <option value="KaiTi">楷体</option>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+          </select>
+          <select class="rte-select" data-cmd="fontSize" data-target="vDescEditor">
+            <option value="">字号</option>
+            <option value="1">小</option>
+            <option value="3">正常</option>
+            <option value="4">大</option>
+            <option value="5">特大</option>
+            <option value="6">超大</option>
+            <option value="7">巨大</option>
+          </select>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="vDescEditor"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="vDescEditor"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="vDescEditor"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vDescEditor"><s>S</s></button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor">⬅</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor">⬌</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor">➡</button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vDescEditor">• 列表</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vDescEditor">1. 列表</button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <label class="rte-color-label">
+            <span style="font-size:12px;color:#666;">A</span>
+            <input type="color" class="rte-color" data-cmd="foreColor" data-target="vDescEditor" value="#333333" />
+          </label>
+          <label class="rte-color-label">
+            <span style="font-size:12px;color:#666;background:#ffff00;padding:0 2px;">A</span>
+            <input type="color" class="rte-color" data-cmd="hiliteColor" data-target="vDescEditor" value="#ffff00" />
+          </label>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" id="vDescRteLink">🔗 链接</button>
+          <button type="button" class="rte-btn" id="vDescRteImg">🖼 图片</button>
+          <button type="button" class="rte-btn" id="vDescRteVideo">🎬 视频</button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" id="vDescFormatBrush">🖌 格式刷</button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor">✕ 格式</button>
+        </div>
+        <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;" placeholder="该类型的说明，支持文字、图片、视频、超链接"></div>
         <label>类型图片 URL（可不填）</label><input id="vImg" placeholder="https://... 或 assets/images/xx.jpg" />
         <label>类型视频 URL（可不填）</label><input id="vVideo" placeholder="https://.../xx.mp4" />
         <label>该类型专属客服链接（可不填）</label><input id="vContactUrl" placeholder="https://..." />
@@ -1017,8 +1133,41 @@
         <label>排序（越小越靠前）</label><input id="vSort" type="number" value="0" />
         <label>资源码（可不填，不填则该类型无资源码功能）</label>
         <input id="vResourceCode" placeholder="如 JC2026，买家联系客服交易后获取" />
-        <label>资源码专属内容（HTML，支持文字/链接/图片/视频）</label>
-        <textarea id="vResourceContent" rows="4" placeholder="输入正确资源码后显示的内容，支持HTML，如 &lt;p&gt;下载链接：&lt;a href='https://...'&gt;点击下载&lt;/a&gt;&lt;/p&gt;"></textarea>
+        <label>资源码专属内容（支持文字/链接/图片/视频）</label>
+        <div class="rte-toolbar" id="vContentRteToolbar" style="border-radius:8px 8px 0 0;">
+          <select class="rte-select" data-cmd="fontName" data-target="vContentEditor">
+            <option value="">字体</option>
+            <option value="Microsoft YaHei">微软雅黑</option>
+            <option value="SimSun">宋体</option>
+            <option value="SimHei">黑体</option>
+          </select>
+          <select class="rte-select" data-cmd="fontSize" data-target="vContentEditor">
+            <option value="">字号</option>
+            <option value="2">小</option>
+            <option value="3">正常</option>
+            <option value="4">大</option>
+            <option value="5">特大</option>
+          </select>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="vContentEditor"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="vContentEditor"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="vContentEditor"><u>U</u></button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor">⬅</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor">⬌</button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <label class="rte-color-label">
+            <span style="font-size:12px;color:#666;">A</span>
+            <input type="color" class="rte-color" data-cmd="foreColor" data-target="vContentEditor" value="#333333" />
+          </label>
+          <button type="button" class="rte-btn" id="vContentRteLink">🔗 链接</button>
+          <button type="button" class="rte-btn" id="vContentRteImg">🖼 图片</button>
+          <button type="button" class="rte-btn" id="vContentRteVideo">🎬 视频</button>
+          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <button type="button" class="rte-btn" id="vContentFormatBrush">🖌 格式刷</button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor">✕ 格式</button>
+        </div>
+        <div class="rte-editor" id="vContentEditor" contenteditable="true" style="min-height:80px;max-height:200px;border-radius:0 0 8px 8px;" placeholder="输入正确资源码后显示的内容，支持文字、图片、视频、超链接"></div>
       </div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="variantOk">确定</button>
@@ -1042,8 +1191,8 @@
 
   <!-- ============ 资源预览弹窗（前台效果） ============ -->
   <div class="modal-mask" id="previewMask">
-    <div class="modal-box preview-box" style="max-width:520px;padding:0;overflow:hidden;">
-      <button class="modal-close-x preview-close-x" id="previewCloseX">✕</button>
+    <div class="modal-box preview-box" style="max-width:520px;padding:0;overflow:visible;">
+      <button class="modal-close-x preview-close-x" id="previewCloseX" style="top:12px;right:12px;background:rgba(0,0,0,0.5);">✕</button>
       <img class="preview-cover" id="previewCover" alt="" />
       <div style="padding:16px 20px 20px;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
@@ -1051,7 +1200,7 @@
           <div class="preview-price" id="previewPrice" style="color:#ff6b35;font-size:22px;font-weight:700;white-space:nowrap;"></div>
         </div>
         <div class="preview-desc" id="previewDesc" style="font-size:14px;color:#1E88E5;margin-bottom:12px;font-weight:600;line-height:1.6;"></div>
-        <div class="preview-detail" id="previewDetail" style="background:#f7faff;border-radius:10px;padding:12px 14px;font-size:13px;color:#555;line-height:1.9;margin-bottom:14px;border-left:3px solid #42A5F5;white-space:pre-wrap;"></div>
+        <div class="preview-detail" id="previewDetail" style="background:#f7faff;border-radius:10px;padding:12px 14px;font-size:13px;color:#555;line-height:1.9;margin-bottom:14px;border-left:3px solid #42A5F5;"></div>
         <div style="display:flex;gap:10px;">
           <button style="flex:1;height:44px;border:none;border-radius:10px;background:linear-gradient(135deg,#1E88E5,#42A5F5);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">联系客服</button>
           <button class="preview-close-btn" style="padding:0 24px;border:none;border-radius:10px;background:#ff4444;color:#fff;font-size:15px;cursor:pointer;">关闭</button>
@@ -2214,6 +2363,28 @@
       });
     });
 
+    // 下拉选择（字体、字号）
+    document.querySelectorAll('#detailRteToolbar .rte-select[data-cmd]').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var cmd = this.dataset.cmd;
+        var val = this.value;
+        if (val) {
+          document.execCommand(cmd, false, val);
+          rteEditor.focus();
+        }
+        this.selectedIndex = 0; // 重置选择
+      });
+    });
+
+    // 颜色选择（文字颜色、背景颜色）
+    document.querySelectorAll('#detailRteToolbar .rte-color[data-cmd]').forEach(function (colorInput) {
+      colorInput.addEventListener('input', function () {
+        var cmd = this.dataset.cmd;
+        document.execCommand(cmd, false, this.value);
+        rteEditor.focus();
+      });
+    });
+
     // 更新工具栏按钮激活状态
     function updateRteActive() {
       document.querySelectorAll('#detailRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
@@ -2230,24 +2401,53 @@
     rteEditor.addEventListener('keyup', updateRteActive);
     rteEditor.addEventListener('mouseup', updateRteActive);
 
-    // 文字颜色
-    document.getElementById('detailTextColor').addEventListener('input', function () {
-      document.execCommand('foreColor', false, this.value);
-      rteEditor.focus();
+    // 插入超链接（一个弹窗两个输入框）
+    document.getElementById('detailRteLink').addEventListener('click', function () {
+      showLinkDialog('', '', function (url, text) {
+        var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
+        document.execCommand('insertHTML', false, html);
+        toast('超链接已插入', 'success');
+      });
     });
 
-    // 插入超链接
-    document.getElementById('detailRteLink').addEventListener('click', function () {
-      showInput('插入超链接', '请输入链接地址', 'https://...', function (url) {
-        if (!url) return;
-        url = url.trim();
-        showInput('插入超链接', '请输入链接显示文字', '点击查看', function (text) {
-          text = (text && text.trim()) ? text.trim() : url;
-          var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
-          document.execCommand('insertHTML', false, html);
-          toast('超链接已插入', 'success');
-        }, '点击查看');
-      });
+    // 格式刷
+    var detailBrushStyle = null;
+    document.getElementById('detailFormatBrush').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    document.getElementById('detailFormatBrush').addEventListener('click', function () {
+      var brushBtn = this;
+      if (!detailBrushStyle) {
+        var sel = window.getSelection();
+        if (sel.rangeCount > 0 && !sel.isCollapsed) {
+          detailBrushStyle = {
+            fontName: document.queryCommandValue('fontName'),
+            fontSize: document.queryCommandValue('fontSize'),
+            foreColor: document.queryCommandValue('foreColor'),
+            bold: document.queryCommandState('bold'),
+            italic: document.queryCommandState('italic'),
+            underline: document.queryCommandState('underline')
+          };
+          brushBtn.classList.add('active');
+          toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
+        } else {
+          toast('请先选中要复制格式的内容', 'error');
+        }
+      } else {
+        var sel2 = window.getSelection();
+        if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
+          if (detailBrushStyle.fontName) document.execCommand('fontName', false, detailBrushStyle.fontName);
+          if (detailBrushStyle.fontSize) document.execCommand('fontSize', false, detailBrushStyle.fontSize);
+          if (detailBrushStyle.foreColor) document.execCommand('foreColor', false, detailBrushStyle.foreColor);
+          if (detailBrushStyle.bold) document.execCommand('bold', false, null);
+          if (detailBrushStyle.italic) document.execCommand('italic', false, null);
+          if (detailBrushStyle.underline) document.execCommand('underline', false, null);
+          rteEditor.focus();
+          toast('格式已应用', 'success');
+        } else {
+          toast('请先选中要应用格式的内容', 'error');
+        }
+        detailBrushStyle = null;
+        brushBtn.classList.remove('active');
+      }
     });
 
     // 插入图片
@@ -2297,24 +2497,97 @@
       });
     });
 
-    // 文字颜色
-    document.querySelector('#announcementRteToolbar .rte-color').addEventListener('input', function () {
-      document.execCommand('foreColor', false, this.value);
-      annEditor.focus();
+    // 下拉选择（字体、字号）
+    document.querySelectorAll('#announcementRteToolbar .rte-select[data-cmd]').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var cmd = this.dataset.cmd;
+        var val = this.value;
+        if (val) {
+          document.execCommand(cmd, false, val);
+          annEditor.focus();
+        }
+        this.selectedIndex = 0;
+      });
     });
 
-    // 插入超链接
+    // 颜色选择（文字颜色、背景颜色）
+    document.querySelectorAll('#announcementRteToolbar .rte-color[data-cmd]').forEach(function (colorInput) {
+      colorInput.addEventListener('input', function () {
+        var cmd = this.dataset.cmd;
+        document.execCommand(cmd, false, this.value);
+        annEditor.focus();
+      });
+    });
+
+    // 插入超链接（一个弹窗两个输入框）
     document.getElementById('announcementRteLink').addEventListener('click', function () {
-      showInput('插入超链接', '请输入链接地址', 'https://...', function (url) {
+      showLinkDialog('', '', function (url, text) {
+        var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
+        document.execCommand('insertHTML', false, html);
+        toast('超链接已插入', 'success');
+      });
+    });
+
+    // 插入图片
+    document.getElementById('announcementRteImg').addEventListener('click', function () {
+      showInput('插入图片', '请输入图片 URL', 'https://...', function (url) {
         if (!url) return;
         url = url.trim();
-        showInput('插入超链接', '请输入链接显示文字', '点击查看', function (text) {
-          text = (text && text.trim()) ? text.trim() : url;
-          var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
-          document.execCommand('insertHTML', false, html);
-          toast('超链接已插入', 'success');
-        }, '点击查看');
+        var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="图片" style="max-width:100%;border-radius:8px;" />';
+        document.execCommand('insertHTML', false, html);
+        toast('图片已插入', 'success');
       });
+    });
+
+    // 插入视频
+    document.getElementById('announcementRteVideo').addEventListener('click', function () {
+      showInput('插入视频', '请输入视频 URL', 'https://.../xx.mp4', function (url) {
+        if (!url) return;
+        url = url.trim();
+        var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
+        document.execCommand('insertHTML', false, html);
+        toast('视频已插入', 'success');
+      });
+    });
+
+    // 格式刷
+    var annBrushStyle = null;
+    document.getElementById('announcementFormatBrush').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    document.getElementById('announcementFormatBrush').addEventListener('click', function () {
+      var brushBtn = this;
+      if (!annBrushStyle) {
+        var sel = window.getSelection();
+        if (sel.rangeCount > 0 && !sel.isCollapsed) {
+          annBrushStyle = {
+            fontName: document.queryCommandValue('fontName'),
+            fontSize: document.queryCommandValue('fontSize'),
+            foreColor: document.queryCommandValue('foreColor'),
+            bold: document.queryCommandState('bold'),
+            italic: document.queryCommandState('italic'),
+            underline: document.queryCommandState('underline')
+          };
+          brushBtn.classList.add('active');
+          toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
+        } else {
+          toast('请先选中要复制格式的内容', 'error');
+        }
+      } else {
+        var sel2 = window.getSelection();
+        if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
+          if (annBrushStyle.fontName) document.execCommand('fontName', false, annBrushStyle.fontName);
+          if (annBrushStyle.fontSize) document.execCommand('fontSize', false, annBrushStyle.fontSize);
+          if (annBrushStyle.foreColor) document.execCommand('foreColor', false, annBrushStyle.foreColor);
+          if (annBrushStyle.bold) document.execCommand('bold', false, null);
+          if (annBrushStyle.italic) document.execCommand('italic', false, null);
+          if (annBrushStyle.underline) document.execCommand('underline', false, null);
+          annEditor.focus();
+          toast('格式已应用', 'success');
+        } else {
+          toast('请先选中要应用格式的内容', 'error');
+        }
+        annBrushStyle = null;
+        brushBtn.classList.remove('active');
+      }
     });
 
     // 占位符显示/隐藏
@@ -2341,16 +2614,173 @@
       state.editingVariantId = v ? v.id : null;
       variantModalTitle.textContent = v ? '编辑类型' : '添加类型';
       vName.value = v ? (v.name || '') : '';
-      vDesc.value = v ? (v.desc || '') : '';
+      document.getElementById('vDescEditor').innerHTML = v ? (v.desc || '') : '';
       vImg.value = v ? (v.img || '') : '';
       vVideo.value = v ? (v.video || '') : '';
       vContactUrl.value = v ? (v.contactUrl || '') : '';
       vPrice.value = v ? (v.price || '') : '';
       vSort.value = v ? (v.sort || 0) : 0;
       vResourceCode.value = v ? (v.resourceCode || '') : '';
-      vResourceContent.value = v ? (v.resourceContent || '') : '';
+      document.getElementById('vContentEditor').innerHTML = v ? (v.resourceContent || '') : '';
       variantMask.classList.add('open');
     }
+
+    // 通用超链接弹窗（一个弹窗两个输入框）
+    var linkDialogMask = null;
+    function showLinkDialog(defaultUrl, defaultText, callback) {
+      // 创建弹窗
+      if (!linkDialogMask) {
+        linkDialogMask = document.createElement('div');
+        linkDialogMask.className = 'modal-mask';
+        linkDialogMask.innerHTML = '<div class="modal-box" style="max-width:420px;">' +
+          '<button class="modal-close-x" data-link-close>×</button>' +
+          '<h2 class="modal-title">插入超链接</h2>' +
+          '<div class="form">' +
+          '<label>链接地址</label><input id="linkDialogUrl" placeholder="https://..." />' +
+          '<label>显示文字</label><input id="linkDialogText" placeholder="不填则显示链接地址" />' +
+          '</div>' +
+          '<div class="modal-footer">' +
+          '<button class="modal-inner-btn" id="linkDialogOk">确定</button>' +
+          '<button class="modal-close" id="linkDialogCancel">取消</button>' +
+          '</div></div>';
+        document.body.appendChild(linkDialogMask);
+        // 关闭事件
+        linkDialogMask.querySelector('[data-link-close]').addEventListener('click', function () {
+          linkDialogMask.classList.remove('open');
+        });
+        linkDialogMask.querySelector('#linkDialogCancel').addEventListener('click', function () {
+          linkDialogMask.classList.remove('open');
+        });
+        linkDialogMask.addEventListener('click', function (e) {
+          if (e.target === linkDialogMask) linkDialogMask.classList.remove('open');
+        });
+      }
+      // 填充默认值
+      document.getElementById('linkDialogUrl').value = defaultUrl || '';
+      document.getElementById('linkDialogText').value = defaultText || '';
+      linkDialogMask.classList.add('open');
+      // 确定按钮
+      var okBtn = document.getElementById('linkDialogOk');
+      okBtn.onclick = function () {
+        var url = document.getElementById('linkDialogUrl').value.trim();
+        var text = document.getElementById('linkDialogText').value.trim();
+        if (!url) { toast('请输入链接地址', 'error'); return; }
+        if (!text) text = url;
+        linkDialogMask.classList.remove('open');
+        if (callback) callback(url, text);
+      };
+    }
+
+    // 类型描述富文本编辑器
+    function initVariantRte(toolbarId, editorId, linkBtnId, imgBtnId, videoBtnId, formatBrushBtnId) {
+      var editor = document.getElementById(editorId);
+      var formatBrushStyle = null; // 格式刷保存的样式
+
+      // 工具栏按钮
+      document.querySelectorAll('#' + toolbarId + ' .rte-btn[data-cmd]').forEach(function (btn) {
+        btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        btn.addEventListener('click', function () {
+          document.execCommand(this.dataset.cmd, false, null);
+          editor.focus();
+        });
+      });
+      // 下拉选择
+      document.querySelectorAll('#' + toolbarId + ' .rte-select[data-cmd]').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          if (this.value) {
+            document.execCommand(this.dataset.cmd, false, this.value);
+            editor.focus();
+          }
+          this.selectedIndex = 0;
+        });
+      });
+      // 颜色选择
+      document.querySelectorAll('#' + toolbarId + ' .rte-color[data-cmd]').forEach(function (colorInput) {
+        colorInput.addEventListener('input', function () {
+          document.execCommand(this.dataset.cmd, false, this.value);
+          editor.focus();
+        });
+      });
+      // 格式刷
+      if (formatBrushBtnId) {
+        var brushBtn = document.getElementById(formatBrushBtnId);
+        brushBtn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        brushBtn.addEventListener('click', function () {
+          if (!formatBrushStyle) {
+            // 第一次点击：复制样式
+            var sel = window.getSelection();
+            if (sel.rangeCount > 0 && !sel.isCollapsed) {
+              formatBrushStyle = {
+                fontName: document.queryCommandValue('fontName'),
+                fontSize: document.queryCommandValue('fontSize'),
+                foreColor: document.queryCommandValue('foreColor'),
+                bold: document.queryCommandState('bold'),
+                italic: document.queryCommandState('italic'),
+                underline: document.queryCommandState('underline')
+              };
+              brushBtn.classList.add('active');
+              toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
+            } else {
+              toast('请先选中要复制格式的内容', 'error');
+            }
+          } else {
+            // 第二次点击：应用样式
+            var sel2 = window.getSelection();
+            if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
+              if (formatBrushStyle.fontName) document.execCommand('fontName', false, formatBrushStyle.fontName);
+              if (formatBrushStyle.fontSize) document.execCommand('fontSize', false, formatBrushStyle.fontSize);
+              if (formatBrushStyle.foreColor) document.execCommand('foreColor', false, formatBrushStyle.foreColor);
+              if (formatBrushStyle.bold) document.execCommand('bold', false, null);
+              if (formatBrushStyle.italic) document.execCommand('italic', false, null);
+              if (formatBrushStyle.underline) document.execCommand('underline', false, null);
+              editor.focus();
+              toast('格式已应用', 'success');
+            } else {
+              toast('请先选中要应用格式的内容', 'error');
+            }
+            formatBrushStyle = null;
+            brushBtn.classList.remove('active');
+          }
+        });
+      }
+      // 插入链接（一个弹窗两个输入框）
+      if (linkBtnId) {
+        document.getElementById(linkBtnId).addEventListener('click', function () {
+          showLinkDialog('', '', function (url, text) {
+            var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
+            document.execCommand('insertHTML', false, html);
+            toast('超链接已插入', 'success');
+          });
+        });
+      }
+      // 插入图片
+      if (imgBtnId) {
+        document.getElementById(imgBtnId).addEventListener('click', function () {
+          showInput('插入图片', '请输入图片 URL', 'https://...', function (url) {
+            if (!url) return;
+            url = url.trim();
+            var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="图片" style="max-width:100%;border-radius:8px;" />';
+            document.execCommand('insertHTML', false, html);
+            toast('图片已插入', 'success');
+          });
+        });
+      }
+      // 插入视频
+      if (videoBtnId) {
+        document.getElementById(videoBtnId).addEventListener('click', function () {
+          showInput('插入视频', '请输入视频 URL', 'https://.../xx.mp4', function (url) {
+            if (!url) return;
+            url = url.trim();
+            var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
+            document.execCommand('insertHTML', false, html);
+            toast('视频已插入', 'success');
+          });
+        });
+      }
+    }
+    // 初始化类型描述和资源码专属内容的富文本编辑器
+    initVariantRte('vDescRteToolbar', 'vDescEditor', 'vDescRteLink', 'vDescRteImg', 'vDescRteVideo', 'vDescFormatBrush');
+    initVariantRte('vContentRteToolbar', 'vContentEditor', 'vContentRteLink', 'vContentRteImg', 'vContentRteVideo', 'vContentFormatBrush');
 
     variantOk.addEventListener('click', function () {
       if (!validateField(vName, '请填写类型名称')) return;
@@ -2359,14 +2789,14 @@
       var data = {
         productId: state.editingId,
         name: name,
-        desc: vDesc.value,
+        desc: document.getElementById('vDescEditor').innerHTML,
         img: vImg.value.trim(),
         video: vVideo.value.trim(),
         contactUrl: vContactUrl.value.trim(),
         price: Number(vPrice.value) || 0,
         sort: Number(vSort.value) || 0,
         resourceCode: vResourceCode.value.trim(),
-        resourceContent: vResourceContent.value
+        resourceContent: document.getElementById('vContentEditor').innerHTML
       };
       var req = state.editingVariantId
         ? api('admin/variants/' + state.editingVariantId, { method: 'PUT', body: JSON.stringify(data) })
@@ -2617,7 +3047,7 @@
     function loadCategories() {
       api('admin/categories').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
-        state.categories = (res.list || []).map(function (c) { return { id: c.id, name: c.name }; });
+        state.categories = res.list || [];
         renderCategories(res.list || []);
       });
     }
@@ -2747,7 +3177,6 @@
         cnt.textContent = (c.cnt || 0) + ' 件资源';
         cnt.style.cursor = 'pointer';
         cnt.style.color = '#1976d2';
-        cnt.style.textDecoration = 'underline';
         cnt.title = '点击查看该分类下的资源';
         cnt.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -2919,21 +3348,33 @@
     var catSaving = false;
     catOk.addEventListener('click', function () {
       if (catSaving) return; // 防重复提交
+      catSaving = true; // 立即锁定，防止快速双击
+      catOk.disabled = true;
+      catOk.style.opacity = '0.6';
+
       var name = catName.value.trim();
       var sort = Number(catSort.value) || 0;
       var isChild = document.querySelector('input[name="catLevel"]:checked').value === '1';
       var parentId = isChild ? Number(catParent.value) || 0 : 0;
       var isHidden = catHidden.checked;
-      if (!name) { toast('请填写分类名称', 'error'); return; }
-      if (isChild && !parentId) { toast('请选择所属一级分类', 'error'); return; }
+      if (!name) {
+        toast('请填写分类名称', 'error');
+        catSaving = false;
+        catOk.disabled = false;
+        catOk.style.opacity = '';
+        return;
+      }
+      if (isChild && !parentId) {
+        toast('请选择所属一级分类', 'error');
+        catSaving = false;
+        catOk.disabled = false;
+        catOk.style.opacity = '';
+        return;
+      }
       var data = { name: name, sort: sort, parent_id: parentId, is_hidden: isHidden };
       var req = state.catEditingId
         ? api('admin/categories/' + state.catEditingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/categories', { method: 'POST', body: JSON.stringify(data) });
-
-      catSaving = true;
-      catOk.disabled = true;
-      catOk.style.opacity = '0.6';
 
       req.then(function (res) {
         catSaving = false;

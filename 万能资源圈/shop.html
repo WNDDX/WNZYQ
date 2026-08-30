@@ -292,6 +292,39 @@
     @media (max-width: 900px)  { .product-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 600px)  { .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; } }
 
+    /* 列表视图 */
+    .product-grid.list-view {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .product-grid.list-view .product-card {
+      display: flex;
+      align-items: stretch;
+    }
+    .product-grid.list-view .card-img {
+      width: 160px;
+      min-width: 160px;
+      aspect-ratio: auto;
+      height: auto;
+    }
+    .product-grid.list-view .card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    @media (max-width: 600px) {
+      .product-grid.list-view .card-img { width: 120px; min-width: 120px; }
+    }
+
+    /* 视图切换按钮激活状态 */
+    .view-btn.active {
+      background: #fff !important;
+      color: #1E88E5 !important;
+      border-color: #fff !important;
+    }
+
     .product-card {
       background: #fff;
       border-radius: 12px;
@@ -974,7 +1007,7 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="shop-brand">
-        <a class="shop-logo-link" href="admin.html" title="进入管理后台">
+        <a class="shop-logo-link" href="admin" title="进入管理后台">
           <img class="shop-logo" id="shopLogo" alt="Logo" />
         </a>
         <div class="shop-name" id="shopName">万能资源圈</div>
@@ -1004,6 +1037,11 @@
         </svg>
         <input class="search-input" id="searchInput" placeholder="搜索资源" />
         <button class="search-clear" id="searchClear" title="清空">✕</button>
+      </div>
+      <!-- 视图切换按钮 -->
+      <div class="view-toggle" style="display:flex;gap:4px;margin-left:8px;">
+        <button class="view-btn active" id="viewGridBtn" title="网格视图" style="padding:6px 10px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:13px;">▦ 网格</button>
+        <button class="view-btn" id="viewListBtn" title="列表视图" style="padding:6px 10px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:13px;">☰ 列表</button>
       </div>
     </div>
   </header>
@@ -2295,6 +2333,29 @@
     renderShopInfo();
     updateTopbarHeight();
     initData();
+
+    // 视图切换（网格/列表）
+    var currentView = localStorage.getItem('shop_view') || 'grid';
+    function setShopView(view) {
+      currentView = view;
+      localStorage.setItem('shop_view', view);
+      var grid = document.getElementById('productGrid');
+      var gridBtn = document.getElementById('viewGridBtn');
+      var listBtn = document.getElementById('viewListBtn');
+      if (view === 'list') {
+        grid.classList.add('list-view');
+        gridBtn.classList.remove('active');
+        listBtn.classList.add('active');
+      } else {
+        grid.classList.remove('list-view');
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+      }
+    }
+    document.getElementById('viewGridBtn').addEventListener('click', function () { setShopView('grid'); });
+    document.getElementById('viewListBtn').addEventListener('click', function () { setShopView('list'); });
+    setShopView(currentView);
+
     // 强制确保页面可见（防止动画异常导致body opacity为0）
     setTimeout(function () { document.body.style.opacity = '1'; }, 500);
   </script>
