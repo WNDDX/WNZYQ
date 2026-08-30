@@ -103,6 +103,17 @@
       letter-spacing: 1.5px;
       white-space: nowrap;
     }
+    .shop-name-link {
+      text-decoration: none;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .shop-name-link:hover .shop-name {
+      opacity: 0.85;
+    }
+    .shop-name-link:active .shop-name {
+      transform: scale(0.95);
+    }
     .shop-brand {
       display: flex;
       align-items: center;
@@ -1026,10 +1037,12 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="shop-brand">
-        <a class="shop-logo-link" href="admin.html" title="进入管理后台">
+        <a class="shop-logo-link" href="admin" title="进入管理后台">
           <img class="shop-logo" id="shopLogo" alt="Logo" />
         </a>
-        <div class="shop-name" id="shopName">万能资源圈</div>
+        <a class="shop-name-link" href="admin" title="进入管理后台">
+          <div class="shop-name" id="shopName">万能资源圈</div>
+        </a>
       </div>
       <div class="topbar-actions">
         <button class="top-btn" id="topContact" title="联系客服">
@@ -2056,9 +2069,13 @@
           try {
             localStorage.setItem('wnzyq_shop_data', JSON.stringify({ products: DATA.products, categories: DATA.categories }));
           } catch (e) {}
-          renderAll();
         }
-      }).catch(function () { /* 保持本地数据 */ });
+        // 无论成功失败，都渲染一次（隐藏骨架屏，显示商品或空状态）
+        renderAll();
+      }).catch(function () {
+        // 请求异常时也渲染一次（隐藏骨架屏，显示本地数据或空状态）
+        renderAll();
+      });
     }
 
     // ---------- 顶栏高度自适应 ----------

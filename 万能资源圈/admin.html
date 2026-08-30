@@ -562,7 +562,7 @@
   <!-- ============ 登录视图 ============ -->
   <div id="loginView" class="login-view">
     <div class="login-card">
-      <a class="login-logo-link" href="shop.html" title="回到商品首页">
+      <a class="login-logo-link" href="shop" title="回到商品首页">
         <div class="login-logo">
           <img src="assets/images/logo.png" alt="万能资源圈" onerror="this.style.display='none';this.parentNode.textContent='圈';" />
         </div>
@@ -572,7 +572,6 @@
       <input id="loginUser" class="input" placeholder="账号" autocomplete="off" />
       <input id="loginPass" class="input" type="password" placeholder="密码" />
       <button class="btn-blue" id="loginBtn">登 录</button>
-      <button class="btn-init" id="initBtn" style="display:none">初始化系统（首次使用）</button>
       <p class="login-foot">万能资源圈 · 管理系统</p>
     </div>
   </div>
@@ -582,7 +581,7 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="topbar-brand">
-          <a class="topbar-logo-link" href="shop.html" title="回到商品首页">
+          <a class="topbar-logo-link" href="shop" title="回到商品首页">
             <img class="topbar-logo" src="assets/images/logo.png" alt="" onerror="this.style.display='none'" />
           </a>
           <span>万能资源圈 · 管理后台</span>
@@ -896,7 +895,6 @@
     var loginUser = document.getElementById('loginUser');
     var loginPass = document.getElementById('loginPass');
     var loginBtn  = document.getElementById('loginBtn');
-    var initBtn   = document.getElementById('initBtn');
     var loginTip  = document.getElementById('loginTip');
     var adminNameEl = document.getElementById('adminName');
     var logoutBtn = document.getElementById('logoutBtn');
@@ -1058,8 +1056,17 @@
       if (!isLocal) {
         api('health').then(function (h) {
           if (h && h.ok && !h.ready) {
-            initBtn.style.display = 'block';
-            loginTip.textContent = '系统尚未初始化，请先点下方按钮初始化';
+            // 数据库未初始化，自动初始化
+            loginTip.textContent = '系统初始化中，请稍候...';
+            api('install', { method: 'POST' }).then(function (res) {
+              if (res.ok) {
+                loginTip.textContent = '初始化完成，请登录';
+              } else {
+                loginTip.textContent = res.msg || '初始化失败，请刷新重试';
+              }
+            }).catch(function () {
+              loginTip.textContent = '初始化失败，请刷新重试';
+            });
           }
         });
       }
@@ -1189,20 +1196,6 @@
           loginBtn.textContent = '登 录';
         });
     }
-
-    // ---------- 初始化系统 ----------
-    initBtn.addEventListener('click', function () {
-      if (!confirm('将初始化数据库并创建管理员账号(1747358421)。\n商品和分类留空，由你自行添加。\n如果之前已初始化过，请不要重复操作。\n确定继续？')) return;
-      api('install', { method: 'POST' }).then(function (res) {
-        if (res.ok) {
-          alert('初始化完成！\n管理员账号：1747358421\n请使用设置的密码登录。');
-          initBtn.style.display = 'none';
-          loginTip.textContent = '请登录后管理商品';
-        } else {
-          alert(res.msg || '初始化失败');
-        }
-      });
-    });
 
     // ---------- 商品管理 ----------
     function loadProducts() {
