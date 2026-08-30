@@ -385,7 +385,7 @@ if ('serviceWorker' in navigator) {
 }
 
 //页面按钮事件
-function openResource() {window.location.href = CONFIG.resourceUrl;}
+function openResource() {window.open(CONFIG.resourceUrl, "_blank");}
 function openService() {showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服");}
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
