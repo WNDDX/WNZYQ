@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>万能资源圈 · 资源</title>
+  <title>万能资源圈・资源</title>
   <meta name="description" content="万能资源圈・导航，优质虚拟资源导航平台，汇聚学习资源、软件工具、设计素材，展示即下单。">
   <meta name="keywords" content="万能资源圈,资源导航,虚拟资源,学习资源,软件工具">
   <meta property="og:title" content="万能资源圈">
@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <style>
     /* ============================================
-       万能资源圈 · 资源展示前台
+       万能资源圈・资源展示前台
        风格与引导页统一：蓝色渐变 + 白圆角 + 红关闭
        ============================================ */
     * {
@@ -1225,7 +1225,7 @@
       var cfg = (typeof SHOP_CONFIG !== 'undefined') ? SHOP_CONFIG : null;
       // 先显示 config.js 兜底
       shopNameEl.textContent = (cfg && cfg.shopName) || '万能资源圈';
-      document.title = shopNameEl.textContent + ' · 资源';
+      document.title = shopNameEl.textContent + '・资源';
       var logo = (cfg && cfg.shopLogo) || '';
       if (logo) loadImg(shopLogo, logo);
       else shopLogo.style.display = 'none';
@@ -1235,7 +1235,7 @@
         fetch('api/settings').then(function (r) { return r.json(); }).then(function (res) {
           if (res && res.ok && res.settings) {
             var s = res.settings;
-            if (s.shop_name) { shopNameEl.textContent = s.shop_name; document.title = s.shop_name + ' · 资源'; }
+            if (s.shop_name) { shopNameEl.textContent = s.shop_name; document.title = s.shop_name + '・资源'; }
             if (s.shop_logo) loadImg(shopLogo, s.shop_logo);
             // 全局客服链接存在 window 上，供联系客服按钮使用
             window._globalContact = s.contact_url || getDefaultContact();

@@ -1,4 +1,4 @@
-﻿# 万能资源圈 · 资源小店（GitHub + Cloudflare 免费版）
+﻿# 万能资源圈・资源小店（GitHub + Cloudflare 免费版）
 
 一个纯前端 + Cloudflare 免费云服务的虚拟资源展示小店，包含**前台资源页**和**管理后台**。
 
