@@ -15,11 +15,10 @@ database_name = "wnzyq-shop-db"
 database_id = "把这里替换成你创建的 D1 数据库 ID"
 
 # ============================================
-#  定期清理 Cron Trigger（每天 UTC 0:00 执行，即北京时间 8:00）
-#  触发 /api/cleanup 清理 30 天前的统计数据，防止数据库无限增长
-#  部署后需要在 Cloudflare 面板 → Pages → 你的项目 → 设置 → 函数 → Cron 触发器 里启用
+#  定期清理说明（Pages 项目不支持 wrangler.toml 里的 triggers）
+#  部署后需要在 Cloudflare 面板 → Pages → 你的项目 → 设置 → 函数 → Cron 触发器 里手动添加：
+#    Cron: 0 0 * * *（每天 UTC 0:00，即北京时间 8:00）
+#    触发路径: /api/cleanup
 #  或者用免费的 cron-job.org / UptimeRobot 每天调用 https://你的域名/api/cleanup
 #  建议设置环境变量 CLEANUP_TOKEN 作为清理接口的鉴权 token
 # ============================================
-[triggers]
-crons = ["0 0 * * *"]
