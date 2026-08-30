@@ -3,7 +3,7 @@
  * PUT    /api/admin/variants/:id   → 更新类型
  * DELETE /api/admin/variants/:id   → 删除类型
  */
-import { json, requireAuth, readJSON } from '../../_utils.js';
+import { json, requireAuth, readJSON } from '../../../_utils.js';
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;

@@ -3,7 +3,7 @@
  * DELETE /api/admin/products/:id   → 删除商品（同时删其类型和统计）
  * 均需登录
  */
-import { json, requireAuth, readJSON } from '../../_utils.js';
+import { json, requireAuth, readJSON } from '../../../_utils.js';
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;

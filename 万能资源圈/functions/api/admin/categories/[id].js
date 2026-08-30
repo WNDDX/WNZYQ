@@ -3,7 +3,7 @@
  * PUT    /api/admin/categories/:id    → 修改分类  body: { name, sort, parent_id, is_hidden }
  * DELETE /api/admin/categories/:id    → 删除分类（id=0"全部"不可删，同时删其子分类）
  */
-import { json, requireAuth, readJSON } from '../../_utils.js';
+import { json, requireAuth, readJSON } from '../../../_utils.js';
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
