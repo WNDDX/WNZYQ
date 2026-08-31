@@ -22,3 +22,15 @@
 # HTML 不缓存（确保更新即时生效）
 /*.html
   Cache-Control: no-cache, must-revalidate
+
+# 无后缀 clean URL 页面同样不缓存（/shop /admin /index 等）
+/
+  Cache-Control: no-cache, must-revalidate
+/shop
+  Cache-Control: no-cache, must-revalidate
+/admin
+  Cache-Control: no-cache, must-revalidate
+/index
+  Cache-Control: no-cache, must-revalidate
+/error
+  Cache-Control: no-cache, must-revalidate
