@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>万能资源圈・资源</title>
-  <meta name="description" content="万能资源圈・导航，优质虚拟资源导航平台，汇聚学习资源、软件工具、设计素材，展示即下单。">
+  <meta name="description" content="万能资源圈・资源，优质虚拟资源分享平台，汇聚学习资源、软件工具、设计素材，展示与联系客服获取。">
   <meta name="keywords" content="万能资源圈,资源导航,虚拟资源,学习资源,软件工具">
   <meta property="og:title" content="万能资源圈">
   <meta property="og:description" content="优质虚拟资源导航平台，一键获取学习资源、软件工具、设计素材">
@@ -328,6 +328,9 @@
     .view-btn { transition: all 0.10s ease; -webkit-tap-highlight-color: transparent; }
     .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
     .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    /* 视图切换时不让图片/内边距做形变动画，只保留卡片悬浮效果（与管理页一致、不夸张） */
+    .product-card { transition: transform 0.18s ease, box-shadow 0.18s ease !important; }
+    .card-img, .card-body { transition: none !important; }
     .view-btn.active {
       background: #fff !important;
       color: #1E88E5 !important;
@@ -1152,7 +1155,7 @@
 
   <!-- ============ 回到顶部按钮 ============ -->
   <button class="back-top" id="backTop" title="回到顶部">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="18 15 12 9 6 15"></polyline>
     </svg>
   </button>
@@ -1234,7 +1237,7 @@
     // 用于资源描述和类型描述，支持 <a href="...">超链接</a>、图片、视频
     function sanitizeHTML(html) {
       if (!html) return '';
-      var allowed = { A:1, BR:1, P:1, STRONG:1, EM:1, B:1, I:1, U:1, S:1, SPAN:1, DIV:1,
+      var allowed = { A:1, BR:1, P:1, STRONG:1, EM:1, B:1, I:1, U:1, S:1, SPAN:1, DIV:1, FONT:1,
         UL:1, OL:1, LI:1, H1:1, H2:1, H3:1, H4:1, H5:1, H6:1, BLOCKQUOTE:1, CODE:1, PRE:1, HR:1,
         IMG:1, VIDEO:1, SOURCE:1 };
       // 允许的属性
@@ -1243,7 +1246,8 @@
         IMG: ['src','alt','title','style','width','height'],
         VIDEO: ['src','controls','autoplay','loop','muted','poster','style','width','height'],
         SOURCE: ['src','type'],
-        SPAN: ['style'],
+        SPAN: ['style','color'],
+        FONT: ['color','size','face'],
         DIV: ['style'],
         P: ['style'],
         H1: ['style'], H2: ['style'], H3: ['style'], H4: ['style'], H5: ['style'], H6: ['style'],
@@ -2081,8 +2085,8 @@
         ]);
       }
       Promise.all([
-        withTimeout(fetch('api/products').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
-        withTimeout(fetch('api/categories').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000)
+        withTimeout(fetch('api/products', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
+        withTimeout(fetch('api/categories', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000)
       ]).then(function (res) {
         if (res[0] && res[0].ok && res[1] && res[1].ok) {
           DATA.products = res[0].list || [];
@@ -2107,6 +2111,14 @@
       document.documentElement.style.setProperty('--topbar-h', h + 'px');
     }
     window.addEventListener('resize', updateTopbarHeight);
+    // 页面重新可见 / 从后台切回时，静默拉取最新数据（后台改动更快同步，不闪骨架屏）
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && typeof usingRemote !== 'undefined' && usingRemote) fetchRemote();
+    });
+    window.addEventListener('pageshow', function () {
+      var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocal) fetchRemote();
+    });
 
     // ---------- 下拉刷新（手机端页面顶部下拉刷新数据） ----------
     var pullRefreshEl = document.getElementById('pullRefresh');
@@ -2123,7 +2135,7 @@
         isPulling = true;
         pullDistance = 0;
         // 下拉开始时隐藏顶部栏，避免蓝色背景重叠遮挡
-        if (topbarEl) topbarEl.classList.add('hidden');
+        if (topbarEl) { topbarEl.style.transition = 'none'; topbarEl.classList.add('hidden'); }
       }
     }, { passive: true });
     document.addEventListener('touchmove', function (e) {
@@ -2157,14 +2169,14 @@
           pullRefreshEl.classList.remove('show');
           pullRefreshEl.style.height = '0';
           // 刷新结束后显示顶部栏
-          if (topbarEl) topbarEl.classList.remove('hidden');
+          if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
         }, 800);
       } else {
         // 未达到阈值，收回
         pullRefreshEl.classList.remove('show');
         pullRefreshEl.style.height = '0';
         // 收回后显示顶部栏
-        if (topbarEl) topbarEl.classList.remove('hidden');
+        if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
       }
       pullDistance = 0;
     }, { passive: true });
@@ -2189,6 +2201,7 @@
         topbarEl.classList.add('hidden');
       } else if (delta < -2) {
         // 向上滑动
+        if (topbarEl.style.transition === 'none') topbarEl.style.transition = '';
         topbarEl.classList.remove('hidden');
       }
       // delta 在 -2 到 2 之间（停止滑动或微小抖动），保持当前状态，不做处理
@@ -2254,14 +2267,16 @@
     var categoryBar = document.getElementById('categoryBar');
     catToggle.addEventListener('click', function () {
       // 不管分类是否超出一行，都切换展开/收回状态
-      catExpanded = !catExpanded;
+      var _overflow = categoryBar.scrollWidth > categoryBar.clientWidth + 2;
+      catExpanded = _overflow ? !catExpanded : false;
       categoryBar.classList.toggle('expanded', catExpanded);
       this.classList.toggle('open', catExpanded);
+      if (!_overflow) { var _ar = this.querySelector('.toggle-arrow'); if (_ar) { _ar.style.transform = 'rotate(0deg)'; setTimeout(function () { if (!catExpanded && _ar) _ar.style.transform = 'rotate(-90deg)'; }, 280); } }
       // 用JS直接控制箭头方向，避免CSS transition卡住的bug
       // 展开时箭头向下（rotate 0deg），收回时箭头向左（rotate -90deg）
       var arrow = this.querySelector('.toggle-arrow');
       if (arrow) {
-        arrow.style.transform = catExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+        arrow.style.transform = (!_overflow && !catExpanded) ? 'rotate(0deg)' : (catExpanded ? 'rotate(0deg)' : 'rotate(-90deg)');
       }
     });
 
@@ -2271,12 +2286,14 @@
     if (subCatToggle && subCategoryBar) {
       subCatToggle.addEventListener('click', function () {
         // 不管分类是否超出一行，都切换展开/收回状态
-        subCatExpanded = !subCatExpanded;
+        var _subOverflow = subCategoryBar.scrollWidth > subCategoryBar.clientWidth + 2;
+        subCatExpanded = _subOverflow ? !subCatExpanded : false;
         subCategoryBar.classList.toggle('expanded', subCatExpanded);
         this.classList.toggle('open', subCatExpanded);
         var arrow = this.querySelector('.toggle-arrow');
         if (arrow) {
-          arrow.style.transform = subCatExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+          if (!_subOverflow && !subCatExpanded) { arrow.style.transform = 'rotate(0deg)'; var _sar = arrow; setTimeout(function () { if (!subCatExpanded && _sar) _sar.style.transform = 'rotate(-90deg)'; }, 280); }
+          else arrow.style.transform = subCatExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
         }
       });
     }
@@ -2348,7 +2365,11 @@
         lightboxMask.onclick = closeLightbox;
         document.body.appendChild(lightboxMask);
       }
-      lightboxMask.innerHTML = '<img src="' + src + '" style="max-width:92%;max-height:92%;object-fit:contain;border-radius:8px;">';
+      lightboxMask.textContent = '';
+      var _lbImg = document.createElement('img');
+      _lbImg.src = src;
+      _lbImg.style.cssText = 'max-width:92%;max-height:92%;object-fit:contain;border-radius:8px;';
+      lightboxMask.appendChild(_lbImg);
       lightboxMask.style.display = 'flex';
       lightboxMask.classList.add('open');
     }

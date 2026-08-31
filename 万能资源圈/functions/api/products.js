@@ -3,9 +3,9 @@
  * 返回所有【上架中】的资源（公开接口，前台用）
  * 每个资源同时带上其类型列表（variants），前台详情弹窗直接用
  * 分类/搜索过滤由前台完成
- * 带 5 分钟缓存（Cache API），管理员修改后自动失效
+ * 带 20 秒边缘缓存（Cache API），管理员修改后自动失效
  */
-import { json, cleanProduct, cleanVariant } from '../_utils.js';
+import { json, cleanProduct, cleanVariant, ensureVariantColumns } from '../_utils.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -32,6 +32,8 @@ export async function onRequestGet(context) {
     ).run();
   } catch (e) { /* 忽略定时上下架错误 */ }
 
+  await ensureVariantColumns(env);
+
   // 3. 查数据库
   const { results } = await env.DB.prepare(
     'SELECT * FROM products WHERE is_online = 1 AND is_hidden = 0 ORDER BY sort ASC, id DESC'
@@ -47,6 +49,7 @@ export async function onRequestGet(context) {
     ).bind(...ids).all();
     for (const v of vrows) {
       if (!variantsByProduct[v.product_id]) variantsByProduct[v.product_id] = [];
+      if (v.is_hidden) continue; // 隐藏的类型不在资源页显示
       variantsByProduct[v.product_id].push(cleanVariant(v));
     }
   }
@@ -58,11 +61,11 @@ export async function onRequestGet(context) {
     return item;
   });
 
-  // 5. 写入缓存（5分钟，减少数据库查询）
+  // 5. 写入缓存（20 秒，兼顾性能与后台改动快速生效）
   const response = new Response(JSON.stringify({ ok: true, list }), {
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=300',
+      'Cache-Control': 'public, max-age=20',
     },
   });
   context.waitUntil(cache.put(cacheKey, response.clone()));

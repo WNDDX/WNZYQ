@@ -2,9 +2,9 @@
  * 资源类型管理（需登录）
  * GET  /api/admin/variants?product_id=xxx  → 某资源的类型列表
  * POST /api/admin/variants                   → 新增类型
- * body: { productId, name, desc, img, video, contactUrl, sort }
+ * body: { productId, name, desc, img, video, contactUrl, sort, resourceCode, resourceContent, isHidden }
  */
-import { json, requireAuth, readJSON, cleanVariant } from '../../_utils.js';
+import { json, requireAuth, readJSON, cleanVariant, ensureVariantColumns } from '../../_utils.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -14,6 +14,7 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const productId = Number(url.searchParams.get('product_id') || 0);
   if (!productId) return json({ ok: false, msg: '缺少 product_id' }, 400);
+  await ensureVariantColumns(env);
 
   const { results } = await env.DB.prepare(
     'SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort ASC, id ASC'
@@ -32,10 +33,11 @@ export async function onRequestPost(context) {
   const name = String(b.name || '').trim();
   if (!productId) return json({ ok: false, msg: '缺少资源 id' }, 400);
   if (!name) return json({ ok: false, msg: '请填写类型名称' }, 400);
+  await ensureVariantColumns(env);
 
   const r = await env.DB.prepare(
-    `INSERT INTO product_variants (product_id, name, "desc", img, video, contact_url, price, sort)
-     VALUES (?,?,?,?,?,?,?,?)`
+    `INSERT INTO product_variants (product_id, name, "desc", img, video, contact_url, price, sort, resource_code, resource_content, is_hidden)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)`
   )
     .bind(
       productId,
@@ -45,7 +47,10 @@ export async function onRequestPost(context) {
       String(b.video || ''),
       String(b.contactUrl || ''),
       Number(b.price) || 0,
-      Number(b.sort) || 0
+      Number(b.sort) || 0,
+      String(b.resourceCode || ''),
+      String(b.resourceContent || ''),
+      b.isHidden ? 1 : 0
     )
     .run();
 

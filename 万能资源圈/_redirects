@@ -1,6 +1,2 @@
-# 错误页面重定向
-# 404 页面不存在 → error.html?code=404
-/* /error.html?code=404 404
-
-# 500 服务器错误 → error.html?code=500
-/* /error.html?code=500 500
+# 统一错误页：所有未匹配到静态资源/函数的路径都跳到错误页（Cloudflare Pages 默认支持 /xxx 访问 xxx.html 的干净链接）
+/* /error?code=404 404

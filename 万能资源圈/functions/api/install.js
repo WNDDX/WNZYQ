@@ -4,8 +4,8 @@
  *   1. 建表（表不存在才建）
  *   2. 写入固定分类"全部"（空时才写）
  *   3. 不写入任何示例资源（管理员自行添加）
- *   4. 创建默认管理员（账号 1747358258，带随机盐，无法注册）
- *   5. 写入默认平台设置
+ *   4. 创建默认管理员（账号 1747358421，带随机盐，无法注册）
+ *   5. 写入默认平台设置（含类型表资源码/隐藏字段）
  * 部署后打开管理后台，点"初始化系统"即可调用。
  */
 import { json, hashPasswordWithSalt, randomSalt } from '../_utils.js';
@@ -48,6 +48,9 @@ CREATE TABLE IF NOT EXISTS product_variants (
   contact_url TEXT    NOT NULL DEFAULT '',
   price       REAL    NOT NULL DEFAULT 0,
   sort        INTEGER NOT NULL DEFAULT 0,
+  resource_code    TEXT NOT NULL DEFAULT '',
+  resource_content TEXT NOT NULL DEFAULT '',
+  is_hidden        INTEGER NOT NULL DEFAULT 0,
   created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -143,6 +146,15 @@ export async function onRequestPost(context) {
         await env.DB.exec("ALTER TABLE products ADD COLUMN schedule_off TEXT");
       }
     } catch (e) { /* 忽略迁移错误 */ }
+
+    // 1.6 迁移：为已部署的类型表补充 资源码/专属内容/隐藏 字段（幂等）
+    try {
+      const vcols = await env.DB.prepare("PRAGMA table_info(product_variants)").all();
+      const vcolNames = vcols.results.map(c => c.name);
+      if (!vcolNames.includes('resource_code')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN resource_code TEXT NOT NULL DEFAULT ''");
+      if (!vcolNames.includes('resource_content')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN resource_content TEXT NOT NULL DEFAULT ''");
+      if (!vcolNames.includes('is_hidden')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0");
+    } catch (e) { /* 忽略类型表迁移错误 */ }
 
     // 2. 默认分类（仅"全部"）
     const cat = await env.DB.prepare('SELECT COUNT(*) AS n FROM categories').first();

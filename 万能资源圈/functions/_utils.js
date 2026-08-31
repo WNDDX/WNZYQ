@@ -126,6 +126,20 @@ export function cleanProduct(p) {
   };
 }
 
+// 幂等确保 product_variants 拥有 资源码/专属内容/隐藏 字段（已部署库自动迁移，无需手动初始化）
+let _variantColsEnsured = false;
+export async function ensureVariantColumns(env) {
+  if (_variantColsEnsured) return;
+  try {
+    const cols = await env.DB.prepare("PRAGMA table_info(product_variants)").all();
+    const names = cols.results.map((c) => c.name);
+    if (!names.includes('resource_code')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN resource_code TEXT NOT NULL DEFAULT ''");
+    if (!names.includes('resource_content')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN resource_content TEXT NOT NULL DEFAULT ''");
+    if (!names.includes('is_hidden')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0");
+    _variantColsEnsured = true;
+  } catch (e) { /* 表尚未创建时忽略，install 会按新结构建表 */ }
+}
+
 // 把数据库行转成资源类型字段
 export function cleanVariant(v) {
   return {
@@ -138,5 +152,8 @@ export function cleanVariant(v) {
     contactUrl: v.contact_url,
     price: v.price || 0,            // 类型价格（0=不显示，用资源价格）
     sort: v.sort,
+    resourceCode: v.resource_code || '',
+    resourceContent: v.resource_content || '',
+    isHidden: v.is_hidden || 0,
   };
 }

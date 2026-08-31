@@ -3,7 +3,7 @@
  * PUT    /api/admin/variants/:id   → 更新类型
  * DELETE /api/admin/variants/:id   → 删除类型
  */
-import { json, requireAuth, readJSON } from '../../../_utils.js';
+import { json, requireAuth, readJSON, ensureVariantColumns } from '../../../_utils.js';
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
@@ -16,9 +16,10 @@ export async function onRequestPut(context) {
   const b = await readJSON(request);
   const name = String(b.name || '').trim();
   if (!name) return json({ ok: false, msg: '请填写类型名称' }, 400);
+  await ensureVariantColumns(env);
 
   await env.DB.prepare(
-    `UPDATE product_variants SET name=?, "desc"=?, img=?, video=?, contact_url=?, price=?, sort=?
+    `UPDATE product_variants SET name=?, "desc"=?, img=?, video=?, contact_url=?, price=?, sort=?, resource_code=?, resource_content=?, is_hidden=?
      WHERE id=?`
   )
     .bind(
@@ -29,6 +30,9 @@ export async function onRequestPut(context) {
       String(b.contactUrl || ''),
       Number(b.price) || 0,
       Number(b.sort) || 0,
+      String(b.resourceCode || ''),
+      String(b.resourceContent || ''),
+      b.isHidden ? 1 : 0,
       id
     )
     .run();
