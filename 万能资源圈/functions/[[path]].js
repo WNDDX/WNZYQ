@@ -1,16 +1,22 @@
 /**
- * 兜底路由（catch-all）——全站错误兜底
+ * 兜底路由（catch-all）——全站 clean URL 路由 + 错误兜底
  *
- * 处理所有未匹配到静态资源、也未匹配到具体 Function 的路径：
- *  - 站点根 "/" → 302 重定向到导航页 index（用重定向而非 rewrite，避免 URL 停留根级导致相对图片路径错乱）
- *  - 其它一切不存在的路径（/errorr、/abc、/随便乱输 等）→ 统一返回错误页 error.html（404）
+ * 职责（按顺序）：
+ *  1. 站点根 "/"            → 302 重定向到导航页（index）
+ *  2. 已知页面名             → 路由到对应页面（index / shop / admin，兼容根部署与子目录部署）
+ *  3. 其它一切不存在的路径     → 统一返回错误页 error.html（404）
  *
  * 说明：
- *  - Cloudflare Pages 静态资源优先于 Functions，真实文件（index/shop/admin/error 及 /万能资源圈/ 下资源）不会被拦截
- *  - /api/* 由 functions/api/ 目录下更具体的 Function 处理，不会被本 catch-all 接管
- *  - 本站页面部署在「万能资源圈」子目录下，抓取资源时优先子目录路径，找不到再回退根目录，兼容两种部署结构
+ *  - Cloudflare Pages 静态资源优先于 Functions：页面若在站点根，/index 等会直接命中静态文件，
+ *    不会走到本 catch-all；本文件只兜住"没有静态资源命中的路径"。
+ *  - 页面若部署在 /万能资源圈/ 子目录，/index 等无静态资源命中，则本文件负责抓到子目录里的
+ *    真实页面返回，保证 clean URL（不带 .html、不带子目录前缀）始终可用。
+ *  - /api/* 由 functions/api/ 目录下更具体的 Function 处理，不会被本 catch-all 接管。
  */
 const HTML_HEADERS = { 'content-type': 'text/html; charset=utf-8' };
+
+// 已知页面：clean URL 名 → 实际文件名
+const PAGES = { index: 'index.html', shop: 'shop.html', admin: 'admin.html' };
 
 /** 统一返回错误页（HTTP 404） */
 async function serveError(context) {
@@ -47,10 +53,30 @@ async function serveHome(context) {
   return serveError(context);
 }
 
+/** 路由到已知页面（兼容根部署与子目录部署） */
+async function servePage(context, file) {
+  try {
+    const candidates = ['/' + file, '/万能资源圈/' + file];
+    for (const u of candidates) {
+      const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
+      if (res && res.ok) {
+        return new Response(res.body, { status: 200, headers: HTML_HEADERS });
+      }
+    }
+  } catch (e) {
+    /* 忽略，走错误页兜底 */
+  }
+  return serveError(context);
+}
+
 export async function onRequestGet(context) {
-  const path = new URL(context.request.url).pathname;
-  if (path === '/' || path === '') {
+  const path = new URL(context.request.url).pathname.replace(/\/+$/, '') || '/';
+  if (path === '/') {
     return serveHome(context);
+  }
+  const name = path.split('/').pop(); // 取最后一段作为页面名
+  if (PAGES[name]) {
+    return servePage(context, PAGES[name]);
   }
   return serveError(context);
 }
