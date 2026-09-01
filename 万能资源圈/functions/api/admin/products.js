@@ -3,7 +3,24 @@
  * POST /api/admin/products        → 新增资源（需登录）
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  */
-import { json, requireAuth, readJSON, cleanProduct } from '../../_utils.js';
+import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns } from '../../_utils.js';
+
+// 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
+async function attachVariants(env, list) {
+  if (!list || !list.length) return list;
+  const ids = list.map((p) => p.id);
+  const placeholders = ids.map(() => '?').join(',');
+  const { results: vrows } = await env.DB.prepare(
+    `SELECT * FROM product_variants WHERE product_id IN (${placeholders}) ORDER BY sort ASC, id ASC`
+  ).bind(...ids).all();
+  const map = {};
+  (vrows || []).forEach((v) => {
+    if (!map[v.product_id]) map[v.product_id] = [];
+    map[v.product_id].push(cleanVariant(v));
+  });
+  list.forEach((p) => { p.variants = map[p.id] || []; });
+  return list;
+}
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -19,11 +36,14 @@ export async function onRequestGet(context) {
     const { results } = await env.DB.prepare(
       'SELECT * FROM products ORDER BY sort ASC, id DESC'
     ).all();
-    return json({ ok: true, list: results.map(cleanProduct), total: results.length });
+    await ensureVariantColumns(env);
+    const list = await attachVariants(env, results.map(cleanProduct));
+    return json({ ok: true, list: list, total: list.length });
   }
 
   // 分页查询
   const offset = (page - 1) * pageSize;
+  await ensureVariantColumns(env);
   const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products').first();
   const total = countRes ? countRes.n : 0;
   const { results } = await env.DB.prepare(
@@ -32,7 +52,7 @@ export async function onRequestGet(context) {
 
   return json({
     ok: true,
-    list: results.map(cleanProduct),
+    list: await attachVariants(env, results.map(cleanProduct)),
     total: total,
     page: page,
     page_size: pageSize,

@@ -63,7 +63,7 @@
     html {
       background: #f2f7fd;
       /* 阻止移动端整页橡皮筋下拉，避免露出蓝色底，自定义下拉刷新不受影响 */
-      overscroll-behavior-y: contain;
+      overscroll-behavior: none;
     }
     body {
       background: #f2f7fd;
@@ -71,7 +71,7 @@
       min-height: 100vh;
       padding-top: var(--topbar-h);
       opacity: 1;
-      overscroll-behavior-y: contain;
+      overscroll-behavior: none;
     }
 
     /* ---------- 顶部栏（固定） ---------- */
@@ -296,7 +296,14 @@
     }
     @media (max-width: 1200px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
     @media (max-width: 900px)  { .product-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 600px)  { .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; } }
+    @media (max-width: 600px)  {
+      .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; }
+      .card-img { aspect-ratio: 16 / 10; }
+      .card-body { padding: 8px 10px 10px; }
+      .card-title { font-size: 13px; min-height: 36px; margin-bottom: 4px; line-height: 1.35; }
+      .card-desc { font-size: 11px; line-height: 1.45; -webkit-line-clamp: 1; }
+      .product-grid.list-view .card-img { width: 108px; min-width: 108px; }
+    }
 
     /* 列表视图 */
     .product-grid.list-view {
@@ -321,11 +328,11 @@
       justify-content: center;
     }
     @media (max-width: 600px) {
-      .product-grid.list-view .card-img { width: 120px; min-width: 120px; }
+      .product-grid.list-view .card-img { width: 108px; min-width: 108px; }
     }
 
     /* 视图切换按钮激活状态 */
-    .view-btn { transition: all 0.10s ease; -webkit-tap-highlight-color: transparent; }
+    .view-btn { padding:6px 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; transition: all 0.10s ease; -webkit-tap-highlight-color: transparent; }
     .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
     .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     /* 视图切换时不让图片/内边距做形变动画，只保留卡片悬浮效果（与管理页一致、不夸张） */
@@ -1067,8 +1074,10 @@
       </div>
       <!-- 视图切换按钮 -->
       <div class="view-toggle" style="display:flex;gap:4px;margin-left:8px;">
-        <button class="view-btn active" id="viewGridBtn" title="网格视图" style="padding:6px 10px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:13px;">▦ 网格</button>
-        <button class="view-btn" id="viewListBtn" title="列表视图" style="padding:6px 10px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:13px;">☰ 列表</button>
+        <button type="button" class="view-btn" id="viewListBtn" title="列表视图">☰ 列表</button>
+        <button type="button" class="view-btn active" id="viewGridBtn" title="网格视图">▦ 网格</button>
+
+
       </div>
     </div>
   </header>
@@ -2135,7 +2144,7 @@
         isPulling = true;
         pullDistance = 0;
         // 下拉开始时隐藏顶部栏，避免蓝色背景重叠遮挡
-        if (topbarEl) { topbarEl.style.transition = 'none'; topbarEl.classList.add('hidden'); }
+        // 顶栏改在 touchmove 确认是下拉动作后才隐藏，避免轻点即隐藏导致点不中 logo/搜索
       }
     }, { passive: true });
     document.addEventListener('touchmove', function (e) {
@@ -2145,6 +2154,7 @@
       // 只响应垂直下拉（垂直位移大于水平位移）
       if (deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
         pullDistance = Math.min(deltaY * 0.5, 80); // 阻尼效果，最大80px
+        if (deltaY > 8 && topbarEl) { topbarEl.style.transition = 'none'; topbarEl.classList.add('hidden'); } // 确认下拉再隐藏顶栏
         pullRefreshEl.style.height = pullDistance + 'px';
         pullRefreshEl.classList.add('show');
         document.getElementById('pullRefreshText').textContent = pullDistance > PULL_THRESHOLD ? '释放立即刷新' : '下拉刷新';

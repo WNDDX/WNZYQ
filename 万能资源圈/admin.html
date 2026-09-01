@@ -123,6 +123,27 @@
     /* ---------- 主视图 ---------- */
     .topbar {
       position: sticky; top: 0; z-index: 100;
+      transition: transform .28s ease, box-shadow .28s ease; will-change: transform;
+    }
+    .topbar.nav-hidden { transform: translateY(-100%); box-shadow: none; }
+    .back-top {
+      position: fixed; right: 22px; bottom: 28px; z-index: 200;
+      width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+      background: rgba(22,136,255,0.72); color: #fff; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(22,136,255,0.35);
+      opacity: 0; pointer-events: none; transform: translateY(12px) scale(0.9);
+      transition: opacity .2s ease, transform .2s ease, background .15s;
+    }
+    .back-top.show { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+    .back-top:hover { background: rgba(22,136,255,0.92); transform: translateY(-2px) scale(1.05); }
+    .back-top:active { transform: scale(0.92); }
+    html, body { overscroll-behavior: none; }
+    .pull-refresh { position: fixed; top: 0; left: 0; right: 0; height: 0; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; z-index: 300; transition: height .2s ease; pointer-events: none; background: transparent; }
+    .pull-refresh.show { height: 46px; }
+    .pull-refresh-text { font-size: 12px; color: var(--blue1); background: rgba(255,255,255,.94); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    .pull-refresh-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2); border-top-color: var(--blue1); border-radius: 50%; animation: prspin .8s linear infinite; }
+    @keyframes prspin { to { transform: rotate(360deg); } }
+    .topbar {
       background: linear-gradient(135deg, var(--blue1), var(--blue));
       box-shadow: 0 2px 10px rgba(30, 136, 229, 0.35);
     }
@@ -178,7 +199,13 @@
       font-size: 13px; white-space: nowrap;
     }
     .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
-    .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
+    .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .tb-row2 select { padding: 7px 10px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 13px; background: #fff; color: #333; }
+    .view-toggle { display: flex; gap: 0; border: 1px solid #d6e0ea; border-radius: 8px; overflow: hidden; }
+    .view-btn { padding: 7px 14px; border: none; background: #fff; cursor: pointer; font-size: 13px; color: #555; transition: background .15s, color .15s; }
+    .view-btn + .view-btn { border-left: 1px solid #d6e0ea; }
+    .view-btn.active { background: linear-gradient(135deg, var(--blue1), var(--blue2)); color: #fff; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; }
     .toolbar-hint { font-size: 13px; color: #999; }
     .admin-search {
@@ -531,6 +558,15 @@
       outline: none;
     }
     .rte-editor:focus { border-color: var(--blue1); }
+    /* 放大编辑：脱离弹窗固定为大屏 */
+    .rte-editor.rte-large {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 92vw; max-width: 860px; height: 70vh; max-height: 70vh; min-height: 300px;
+      z-index: 4000; background: #fff; border: 1px solid var(--blue1);
+      border-radius: 12px; box-shadow: 0 0 0 100vw rgba(0,0,0,0.45), 0 16px 48px rgba(0,0,0,0.3);
+      overflow-y: auto;
+    }
+    .rte-zoom { font-weight: 600; }
     .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
     .rte-editor ul, .rte-editor ol { padding-left: 24px; margin: 6px 0; }
@@ -613,7 +649,7 @@
 
     /* 批量操作工具栏 */
     .batch-bar {
-      display: none; align-items: center; gap: 8px;
+      display: none; align-items: center; gap: 8px; flex-wrap: wrap;
       background: #eef4fb; border-radius: 8px; padding: 8px 12px;
       margin-bottom: 12px; font-size: 13px; color: #555;
     }
@@ -682,7 +718,7 @@
     .export-btn:active { transform: scale(0.95); }
 
     /* 折线图 */
-    .line-chart { position: relative; background: #fafbfc; border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+    .line-chart { position: relative; background: #fafbfc; border-radius: 10px; padding: 12px; margin-bottom: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .line-chart svg { display: block; }
     .line-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: #666; justify-content: center; }
     .line-legend span { display: flex; align-items: center; gap: 6px; }
@@ -756,6 +792,12 @@
       .preview-btn { flex-basis: 100%; order: -1; }
       .time-filter { flex: 1; }
       .time-btn { flex: 1; padding: 6px 8px; font-size: 12px; }
+      .stat-date-input { flex: 1 1 130px; min-width: 0 !important; font-size: 12px !important; padding: 7px 8px !important; }
+      .trend-chart { padding: 12px; overflow-x: auto; }
+      .rte-toolbar { gap: 3px; padding: 6px; }
+      .rte-toolbar .rte-btn, .rte-toolbar .rte-select { font-size: 12px; padding: 4px 6px; }
+      .tb-row2 { gap: 8px; }
+      .back-top { right: 14px; bottom: 18px; width: 40px; height: 40px; }
     }
 
     /* ========== 统一按钮动画（跟资源页一致） ========== */
@@ -830,7 +872,15 @@
       <!-- 资源管理 -->
       <section id="panel-products">
         <div class="toolbar">
-          <button class="btn-blue" id="addProductBtn">新增资源</button>
+          <div class="tb-row tb-row1">
+            <button class="btn-blue" id="addProductBtn">新增资源</button>
+            <span style="flex:1"></span>
+            <div class="view-toggle" id="viewToggle">
+              <button class="view-btn active" id="viewListBtn" title="列表视图">☰ 列表</button>
+              <button class="view-btn" id="viewCardBtn" title="网格视图">▦ 网格</button>
+            </div>
+          </div>
+          <div class="tb-row tb-row2">
           <select id="filterCat" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;">
             <option value="">全部分类</option>
           </select>
@@ -847,10 +897,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input type="text" id="adminSearch" placeholder="搜索资源" />
           </div>
-          <!-- 视图切换按钮 -->
-          <div class="view-toggle" style="display:flex;gap:4px;margin-left:8px;">
-            <button class="view-btn active" id="viewListBtn" title="列表视图" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">☰ 列表</button>
-            <button class="view-btn" id="viewCardBtn" title="卡片视图" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">▦ 卡片</button>
+
+
+
+
           </div>
         </div>
         <div class="batch-bar" id="batchBar">
@@ -879,18 +929,18 @@
                 <button class="time-btn" data-days="30">近30天</button>
               </div>
               <div style="display:flex;align-items:center;gap:4px;font-size:13px;color:#666;">
-                <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="date" placeholder="开始日期" />
+                <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="开始时间" />
                 <span>至</span>
-                <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="date" placeholder="结束日期" />
+                <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="结束时间" />
                 <button class="time-btn" id="statCustomBtn" style="padding:5px 12px;">应用</button>
               </div>
               <button class="export-btn" id="exportBtn">导出资源数据</button>
-              <button class="export-btn" id="exportResourceBtn" style="margin-left:8px;">导出解锁记录</button>
+
             </div>
           </div>
           <!-- 折线图 -->
           <div class="line-chart" id="lineChart">
-            <svg id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="none"></svg>
+            <svg id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" style="display:block;min-width:560px;"></svg>
             <div class="line-legend">
               <span class="lg-view"><i></i>浏览</span>
               <span class="lg-contact"><i></i>联系客服</span>
@@ -955,7 +1005,7 @@
           </div>
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
-            <div class="rte-toolbar" id="announcementRteToolbar" style="border-radius:8px 8px 0 0;">
+            <div class="rte-toolbar" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;">
               <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement">
                 <option value="">字体</option>
                 <option value="Microsoft YaHei">微软雅黑</option>
@@ -1022,6 +1072,7 @@
               <span style="width:1px;background:#ddd;margin:0 4px;"></span>
               <button type="button" class="rte-btn" id="announcementFormatBrush">🖌 格式刷</button>
               <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button>
+              <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button>
             </div>
             <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></div>
           </div>
@@ -1068,7 +1119,7 @@
         <img class="img-preview" id="fImgPreview" alt="预览" />
         <label>简介</label><input id="fDesc" placeholder="列表卡片上显示的一句话简介" />
         <label>详细描述</label>
-        <div class="rte-toolbar" id="detailRteToolbar">
+        <div class="rte-toolbar" id="detailRteToolbar" data-editor="fDetail">
           <select class="rte-select" data-cmd="fontName" title="字体">
             <option value="">字体</option>
             <option value="Microsoft YaHei">微软雅黑</option>
@@ -1135,6 +1186,7 @@
           <span style="width:1px;background:#ddd;margin:0 4px;"></span>
           <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" title="清除格式">✕ 格式</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶ 放大</button>
         </div>
         <div class="rte-editor" id="fDetail" contenteditable="true" placeholder="支持文字、图片、视频混排，像文章一样展示"></div>
 
@@ -1233,7 +1285,7 @@
       <div class="form">
         <label>类型名称</label><input id="vName" placeholder="如：基础版 / 高级版 / 单月卡" />
         <label>类型描述</label>
-        <div class="rte-toolbar" id="vDescRteToolbar" style="border-radius:8px 8px 0 0;">
+        <div class="rte-toolbar" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;">
           <select class="rte-select" data-cmd="fontName" data-target="vDescEditor">
             <option value="">字体</option>
             <option value="Microsoft YaHei">微软雅黑</option>
@@ -1300,6 +1352,7 @@
           <span style="width:1px;background:#ddd;margin:0 4px;"></span>
           <button type="button" class="rte-btn" id="vDescFormatBrush">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor">✕ 格式</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button>
         </div>
         <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;" placeholder="该类型的说明，支持文字、图片、视频、超链接"></div>
         <label class="checkbox-row"><input type="checkbox" id="vHidden" /> 隐藏该类型（资源页不显示，仅后台可见）</label>
@@ -1311,7 +1364,7 @@
         <label>资源码</label>
         <input id="vResourceCode" placeholder="可不填，买家联系客服交易后获取的专属码" />
         <label>资源码专属内容（支持文字/链接/图片/视频）</label>
-        <div class="rte-toolbar" id="vContentRteToolbar" style="border-radius:8px 8px 0 0;">
+        <div class="rte-toolbar" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;">
           <select class="rte-select" data-cmd="fontName" data-target="vContentEditor">
             <option value="">字体</option>
             <option value="Microsoft YaHei">微软雅黑</option>
@@ -1378,6 +1431,7 @@
           <span style="width:1px;background:#ddd;margin:0 4px;"></span>
           <button type="button" class="rte-btn" id="vContentFormatBrush">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor">✕ 格式</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶ 放大</button>
         </div>
         <div class="rte-editor" id="vContentEditor" contenteditable="true" style="min-height:80px;max-height:200px;border-radius:0 0 8px 8px;" placeholder="输入正确资源码后显示的内容，支持文字、图片、视频、超链接"></div>
       </div>
@@ -1651,7 +1705,7 @@
           '<input type="time" id="dtTime" value="00:00" />' +
         '</div>' +
         '<div class="dt-btns">' +
-          '<button type="button" class="dt-now" id="dtNow">今天</button>' +
+          '<button type="button" class="dt-now" id="dtNow">当前</button>' +
           '<button type="button" id="dtClear">清除</button>' +
           '<button type="button" class="dt-ok" id="dtOk">确定</button>' +
         '</div>';
@@ -1710,7 +1764,70 @@
       });
       pop.querySelector('#dtOk').addEventListener('click', commit);
       window.addEventListener('resize', closePicker);
-      window.addEventListener('scroll', closePicker, true);
+    })();
+
+    // ---------- 顶栏滚动显隐 + 回到顶部（与资源页统一，rAF 节流，零卡顿） ----------
+    (function () {
+      var nav = document.querySelector('#mainView .topbar');
+      var lastY = window.scrollY || 0, ticking = false;
+      function onScroll() {
+        var y = window.scrollY || 0;
+        if (nav) {
+          if (y < 80) nav.classList.remove('nav-hidden');
+          else if (y > lastY + 4) nav.classList.add('nav-hidden');      // 向下滑：隐藏
+          else if (y < lastY - 4) nav.classList.remove('nav-hidden');  // 向上滑：显示
+        }
+        if (backBtn) backBtn.classList.toggle('show', y > 320);
+        lastY = y; ticking = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!ticking) { ticking = true; requestAnimationFrame(onScroll); }
+      }, { passive: true });
+      // 回到顶部按钮（统一风格，半透明、箭头居中）
+      var backBtn = document.createElement('button');
+      backBtn.type = 'button';
+      backBtn.className = 'back-top';
+      backBtn.setAttribute('aria-label', '回到顶部');
+      backBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg>';
+      backBtn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+      document.body.appendChild(backBtn);
+    })();
+
+    // ---------- 全页面下拉刷新（与资源页统一，仅手机触摸，顶部下拉，无蓝块） ----------
+    (function () {
+      var tip = document.createElement('div');
+      tip.className = 'pull-refresh';
+      tip.innerHTML = '<span class="pull-refresh-text"><span class="pull-refresh-icon"></span><span class="prt">下拉刷新</span></span>';
+      document.body.appendChild(tip);
+      var sy = 0, sx = 0, pulling = false, dist = 0, TH = 60;
+      function activeTab() { var t = document.querySelector('.tab.active'); return t ? t.dataset.tab : 'products'; }
+      document.addEventListener('touchstart', function (e) {
+        if ((window.scrollY || 0) <= 0 && document.getElementById('mainView') && document.getElementById('mainView').style.display !== 'none') {
+          sy = e.touches[0].clientY; sx = e.touches[0].clientX; pulling = true; dist = 0;
+        }
+      }, { passive: true });
+      document.addEventListener('touchmove', function (e) {
+        if (!pulling) return;
+        var dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
+        if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
+          dist = Math.min(dy * 0.5, 80); tip.style.height = dist + 'px'; tip.classList.add('show');
+          tip.querySelector('.prt').textContent = dist > TH ? '释放立即刷新' : '下拉刷新';
+        }
+      }, { passive: true });
+      document.addEventListener('touchend', function () {
+        if (!pulling) return; pulling = false;
+        if (dist > TH) {
+          tip.style.height = '46px'; tip.querySelector('.prt').textContent = '正在刷新...';
+          try { if (typeof clearCache === 'function') clearCache(); } catch (e) {}
+          var t = activeTab();
+          if (t === 'products' && typeof loadProducts === 'function') loadProducts();
+          else if (t === 'stats' && typeof loadStats === 'function') loadStats();
+          else if (t === 'categories' && typeof loadCategories === 'function') loadCategories();
+          else if (t === 'settings' && typeof loadSettings === 'function') loadSettings();
+          setTimeout(function () { tip.classList.remove('show'); tip.style.height = '0'; }, 700);
+        } else { tip.classList.remove('show'); tip.style.height = '0'; }
+        dist = 0;
+      }, { passive: true });
     })();
 
     // ---------- 启动 ----------
@@ -1858,11 +1975,16 @@
         var filterCat = document.getElementById('filterCat');
         if (filterCat) {
           filterCat.innerHTML = '<option value="">全部分类</option>';
+          // state.categories 已在加载时按“一级→其二级”层级排好序，这里直接输出；二级缩进体现层级
+
+
+
+
           state.categories.forEach(function (c) {
             var opt = document.createElement('option');
             opt.value = c.id;
-            opt.textContent = c.name;
-            if (c.id !== 0) filterCat.appendChild(opt); // 系统"全部"不进分类筛选（已有"全部分类"）
+            opt.textContent = (c.parent_id ? '　　' : '') + c.name;
+            if (c.id !== 0) filterCat.appendChild(opt); // 系统“全部”不进筛选（已有“全部分类”）
           });
         }
         return api('admin/products');
@@ -1888,7 +2010,7 @@
     });
 
     var adminPage = 1;
-    var ADMIN_PAGE_SIZE = 20;
+    var ADMIN_PAGE_SIZE = 9999; // 后台一次性展示全部资源，避免“看不全”
 
     function renderProducts() {
       var box = document.getElementById('productList');
@@ -2799,6 +2921,55 @@
     // ========== 富文本编辑器功能 ==========
     var rteEditor = document.getElementById('fDetail');
 
+    // ===== 富文本统一：记忆最后编辑的编辑器与选区，弹窗(链接/图片/视频)关闭后仍能插回原位置 =====
+    var __rte = { editor: null, range: null };
+    document.addEventListener('selectionchange', function () {
+      var sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      var el = sel.anchorNode;
+      while (el && !(el.classList && el.classList.contains('rte-editor'))) el = el.parentNode;
+      if (el) { __rte.editor = el; try { __rte.range = sel.getRangeAt(0).cloneRange(); } catch (e) {} }
+    });
+    document.addEventListener('mousedown', function (e) {
+      var bar = e.target.closest ? e.target.closest('.rte-toolbar') : null;
+      if (!bar) return;
+      // 按下按钮/色板时阻止默认失焦，保住编辑器选区（下拉框不阻止，保证能展开）
+      if (e.target.closest('.rte-btn, .rte-palette') && !e.target.closest('select')) e.preventDefault();
+      var edId = bar.getAttribute('data-editor'), sel = window.getSelection();
+      if (edId && sel && sel.rangeCount) {
+        var ed = document.getElementById(edId), p = sel.anchorNode;
+        while (p && p !== ed) p = p.parentNode;
+        if (p === ed) { __rte.editor = ed; try { __rte.range = sel.getRangeAt(0).cloneRange(); } catch (e) {} }
+      }
+    });
+    function rteFocusEnd(editor) {
+      var r = document.createRange(); r.selectNodeContents(editor); r.collapse(false);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    }
+    function rteInsert(editor, html) {
+      if (!editor) return;
+      editor.focus();
+      var sel = window.getSelection(), ok = false;
+      if (__rte.editor === editor && __rte.range) {
+        try { sel.removeAllRanges(); sel.addRange(__rte.range); ok = true; } catch (e) { ok = false; }
+      }
+      if (!ok) rteFocusEnd(editor);
+      var _rteCmd = 'insertHTML';
+      document.execCommand(_rteCmd, false, html);
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+      __rte.editor = editor;
+      try { __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (e) {}
+    }
+    document.addEventListener('click', function (e) {
+      var z = e.target.closest ? e.target.closest('.rte-zoom') : null;
+      if (!z) return;
+      var ed = document.getElementById(z.getAttribute('data-editor'));
+      if (!ed) return;
+      var big = ed.classList.toggle('rte-large');
+      z.textContent = big ? '🗗 还原' : '⛶ 放大';
+      if (big) ed.focus();
+    });
+
     // 工具栏按钮点击执行命令
     document.querySelectorAll('#detailRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
       btn.addEventListener('mousedown', function (e) { e.preventDefault(); }); // 防止失去焦点
@@ -2831,7 +3002,10 @@
       if (!pal) return;
       var editor = document.getElementById(pal.getAttribute('data-editor'));
       if (!editor) return;
+      editor.focus();
+      if (__rte.editor === editor && __rte.range) { try { var _ps = window.getSelection(); _ps.removeAllRanges(); _ps.addRange(__rte.range); } catch (e) {} }
       document.execCommand(pal.getAttribute('data-cmd'), false, sw.getAttribute('data-color'));
+      try { __rte.editor = editor; __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (e) {}
       editor.focus();
     });
 
@@ -2855,7 +3029,7 @@
     document.getElementById('detailRteLink').addEventListener('click', function () {
       showLinkDialog('', '', function (url, text) {
         var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
-        document.execCommand('insertHTML', false, html);
+        rteInsert(__rte.editor, html);
         toast('超链接已插入', 'success');
       });
     });
@@ -2906,7 +3080,7 @@
         if (!url) return;
         url = url.trim();
         var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="" style="max-width:100%;border-radius:8px;" />';
-        document.execCommand('insertHTML', false, html);
+        rteInsert(__rte.editor, html);
         toast('图片已插入', 'success');
       });
     });
@@ -2917,7 +3091,7 @@
         if (!url) return;
         url = url.trim();
         var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
-        document.execCommand('insertHTML', false, html);
+        rteInsert(__rte.editor, html);
         toast('视频已插入', 'success');
       });
     });
@@ -2964,7 +3138,7 @@
     document.getElementById('announcementRteLink').addEventListener('click', function () {
       showLinkDialog('', '', function (url, text) {
         var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
-        document.execCommand('insertHTML', false, html);
+        rteInsert(__rte.editor, html);
         toast('超链接已插入', 'success');
       });
     });
@@ -2975,7 +3149,7 @@
         if (!url) return;
         url = url.trim();
         var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="图片" style="max-width:100%;border-radius:8px;" />';
-        document.execCommand('insertHTML', false, html);
+        rteInsert(__rte.editor, html);
         toast('图片已插入', 'success');
       });
     });
@@ -2986,7 +3160,7 @@
         if (!url) return;
         url = url.trim();
         var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
-        document.execCommand('insertHTML', false, html);
+        rteInsert(__rte.editor, html);
         toast('视频已插入', 'success');
       });
     });
@@ -3182,7 +3356,7 @@
         document.getElementById(linkBtnId).addEventListener('click', function () {
           showLinkDialog('', '', function (url, text) {
             var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
-            document.execCommand('insertHTML', false, html);
+            rteInsert(__rte.editor, html);
             toast('超链接已插入', 'success');
           });
         });
@@ -3194,7 +3368,7 @@
             if (!url) return;
             url = url.trim();
             var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="图片" style="max-width:100%;border-radius:8px;" />';
-            document.execCommand('insertHTML', false, html);
+            rteInsert(__rte.editor, html);
             toast('图片已插入', 'success');
           });
         });
@@ -3206,7 +3380,7 @@
             if (!url) return;
             url = url.trim();
             var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
-            document.execCommand('insertHTML', false, html);
+            rteInsert(__rte.editor, html);
             toast('视频已插入', 'success');
           });
         });
@@ -3316,7 +3490,8 @@
     }
 
     // ---------- 导出 CSV ----------
-    function exportCSV() {
+    function exportCSV() { return exportAllData(); }
+    function _legacyExportCSV() {
       var rows = [['资源名称', '分类', '状态', '浏览量', '联系客服', '简短描述']];
       var catName = {};
       state.categories.forEach(function (c) { catName[c.id] = c.name; });
@@ -3372,8 +3547,57 @@
       URL.revokeObjectURL(url);
     }
 
+    // 统一导出：一个 Excel，多工作表（资源清单 / 资源类型 / 分类清单 / 每日趋势 / 按资源统计），数据只含近30天
+    function exportAllData() {
+      try {
+        var catById = {};
+        state.categories.forEach(function (c) { catById[c.id] = c; });
+        function catPath(id) {
+          var c = catById[id];
+          if (!c) return id === 0 ? '全部' : '未分类';
+          if (c.parent_id && catById[c.parent_id]) return catById[c.parent_id].name + ' / ' + c.name;
+          return c.name;
+        }
+        function plain(html) { var d = document.createElement('div'); d.innerHTML = html || ''; return (d.textContent || '').replace(/\s+/g, ' ').trim(); }
+        var sheets = [];
+        // 1 资源清单
+        var pRows = [['ID', '资源标题', '分类', '状态', '价格(元)', '浏览量', '联系客服', '简介', '客服链接', '排序']];
+        state.products.forEach(function (p) {
+          pRows.push([p.id, p.title || '', catPath(p.cid), p.is_hidden ? '已隐藏' : (p.is_online ? '上架中' : '已下架'), Number(p.price) || 0, p.views || 0, p.contacts || 0, plain(p.desc), p.contactUrl || '', p.sort || 0]);
+        });
+        sheets.push({ name: '资源清单', rows: pRows });
+        // 2 资源类型
+        var vRows = [['所属资源', '类型名称', '类型描述', '价格(元)', '资源码', '是否需要资源码', '是否隐藏', '排序']];
+        var hasV = false;
+        state.products.forEach(function (p) {
+          (p.variants || []).forEach(function (v) {
+            hasV = true;
+            vRows.push([p.title || '', v.name || '', plain(v.desc), Number(v.price) || 0, v.resourceCode || '', v.resourceCode ? '是' : (v.resourceContent ? '否(直接获取)' : '否'), v.isHidden ? '是' : '否', v.sort || 0]);
+          });
+        });
+        if (hasV) sheets.push({ name: '资源类型', rows: vRows });
+        // 3 分类清单
+        var cRows = [['ID', '分类名称', '层级', '所属一级', '排序', '是否隐藏', '资源数']];
+        state.categories.forEach(function (c) {
+          cRows.push([c.id, c.name || '', c.id === 0 ? '默认' : (c.parent_id ? '二级' : '一级'), c.parent_id ? (catById[c.parent_id] ? catById[c.parent_id].name : '') : '—', c.sort || 0, c.is_hidden ? '是' : '否', c.cnt || 0]);
+        });
+        sheets.push({ name: '分类清单', rows: cRows });
+        // 4/5 统计（近30天内）
+        var trend = state.statsTrend || [], byProduct = state.statsByProduct || [];
+        var tRows = [['日期', '浏览量', '联系客服', '资源码解锁']];
+        trend.forEach(function (d) { tRows.push([d.day || '', d.views || 0, d.contacts || 0, d.resource_unlocks || 0]); });
+        sheets.push({ name: '每日趋势', rows: tRows });
+        var bRows = [['资源名称', '浏览量', '联系客服', '资源码解锁']];
+        byProduct.forEach(function (p) { bRows.push([String(p.title || ''), p.views || 0, p.contacts || 0, p.resource_unlocks || 0]); });
+        sheets.push({ name: '按资源统计', rows: bRows });
+        var d = new Date(); function pd(n) { return String(n).padStart(2, '0'); }
+        var stamp = d.getFullYear() + pd(d.getMonth() + 1) + pd(d.getDate());
+        downloadMultiSheetXLS('万能资源圈_资源数据_' + stamp + '.xls', sheets);
+        toast('导出成功：资源清单、资源类型、分类清单、每日趋势、按资源统计分工作表', 'success');
+      } catch (e) { toast('导出失败：' + e.message, 'error'); }
+    }
     // 导出资源码解锁记录（30天内，每日趋势 / 按资源统计 分两个工作表）
-    function exportResourceUnlockCSV() {
+    function _legacyExportUnlock() {
       var trend = state.statsTrend || [];
       var byProduct = state.statsByProduct || [];
       var daily = [['日期', '浏览量', '联系客服', '资源码解锁']];
@@ -3525,11 +3749,29 @@
     function loadCategories() {
       api('admin/categories').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
-        state.categories = res.list || [];
-        renderCategories(res.list || []);
+        state.categories = orderCats(res.list || []);
+        renderCategories(state.categories);
       });
     }
 
+    // 统一的层级排序：默认“全部”(id=0)在最前，随后每个一级分类紧跟其二级分类（同级按 sort）
+    function orderCats(list) {
+      var tops = list.filter(function (c) { return c.parent_id === 0; })
+        .sort(function (a, b) { return (a.id === 0 ? -1 : b.id === 0 ? 1 : 0) || (a.sort || 0) - (b.sort || 0); });
+      var out = [];
+      tops.forEach(function (top) {
+        out.push(top);
+        if (top.id === 0) return;
+        list.filter(function (c) { return c.parent_id === top.id; })
+          .sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); })
+          .forEach(function (s) { out.push(s); });
+      });
+      // 异常：找不到父级的二级分类也补上
+      list.forEach(function (c) {
+        if (c.parent_id !== 0 && !out.find(function (x) { return x.id === c.id; })) out.push(c);
+      });
+      return out;
+    }
     function renderCategories(list) {
       var box = document.getElementById('catList');
       box.innerHTML = '';
@@ -3599,10 +3841,10 @@
         name.className = 'c-name';
         name.style.fontWeight = isTop ? '700' : '400';
         name.style.fontSize = isTop ? '16px' : '14px';
-        name.style.paddingLeft = isTop ? '0' : '24px';
+        name.style.paddingLeft = isTop ? '0' : '30px';
         name.style.color = isTop ? '#1a1a1a' : '#555';
-        var prefix = isTop ? '' : '└ ';
-        name.textContent = prefix + c.name;
+        if (!isTop) { name.style.borderLeft = '2px solid #cfe3fb'; name.style.marginLeft = '6px'; }
+        name.textContent = c.name;
 
         // 一级分类展开/收起箭头
         if (isTop && c.id !== 0) {
@@ -3637,9 +3879,9 @@
         // 级别标签
         var levelBadge = document.createElement('span');
         levelBadge.className = 'badge ' + (isTop ? 'on' : '');
-        levelBadge.style.background = isTop ? '#e3f2fd' : '#f5f5f5';
-        levelBadge.style.color = isTop ? '#1976d2' : '#999';
-        levelBadge.textContent = isTop ? '一级' : '二级';
+        levelBadge.style.background = c.id === 0 ? '#fff3e0' : (isTop ? '#e3f2fd' : '#f5f5f5');
+        levelBadge.style.color = c.id === 0 ? '#ef6c00' : (isTop ? '#1976d2' : '#999');
+        levelBadge.textContent = c.id === 0 ? '默认' : (isTop ? '一级' : '二级');
 
         // 隐藏状态
         if (c.is_hidden) {
@@ -3658,7 +3900,8 @@
         cnt.className = 'c-count';
         cnt.textContent = (c.cnt || 0) + ' 件资源';
         cnt.style.cursor = 'pointer';
-        cnt.style.color = '#1976d2';
+        cnt.style.color = '#888';
+        cnt.style.textDecoration = 'none';
         cnt.title = '点击查看该分类下的资源';
         cnt.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -3743,7 +3986,16 @@
     });
     // 执行批量操作
     function batchCatAction(ids, action) {
+      var targetIds = ids.slice();
+      if (action === 'hide' || action === 'show') {
+        ids.forEach(function (pid) {
+          state.categories.forEach(function (c) {
+            if (c.parent_id === pid && targetIds.indexOf(c.id) === -1) targetIds.push(c.id);
+          });
+        });
+      }
       var done = 0, fail = 0;
+      ids = targetIds; // 后续遍历/完成判定统一使用级联后的集合
       ids.forEach(function (id) {
         var req;
         if (action === 'hide') {
@@ -3952,16 +4204,16 @@
     document.getElementById('statCustomBtn').addEventListener('click', function () {
       var s = document.getElementById('statStartDate').value;
       var e = document.getElementById('statEndDate').value;
-      if (!s || !e) { toast('请选择开始和结束日期', 'error'); return; }
-      if (s > e) { toast('开始日期不能晚于结束日期', 'error'); return; }
+      if (!s || !e) { toast('请选择开始和结束时间', 'error'); return; }
+      if (s.slice(0, 10) > e.slice(0, 10)) { toast('开始时间不能晚于结束时间', 'error'); return; }
       // 计算30天前的日期
       var maxStart = new Date();
       maxStart.setDate(maxStart.getDate() - 29);
       var maxStartStr = maxStart.toISOString().slice(0, 10);
-      if (s < maxStartStr) {
-        toast('最多只能查询最近30天的数据，已自动调整开始日期', 'warn');
-        document.getElementById('statStartDate').value = maxStartStr;
-        s = maxStartStr;
+      if (s.slice(0, 10) < maxStartStr) {
+        toast('最多只能查询最近30天的数据，已自动调整开始时间', 'warn');
+        document.getElementById('statStartDate').value = maxStartStr + ' 00:00';
+        s = maxStartStr + ' 00:00';
       }
       document.querySelectorAll('.time-btn').forEach(function (b) { b.classList.remove('active'); });
       this.classList.add('active');
@@ -3972,7 +4224,7 @@
     document.getElementById('exportBtn').addEventListener('click', exportCSV);
     // 导出资源码解锁记录
     var exportResourceBtn = document.getElementById('exportResourceBtn');
-    if (exportResourceBtn) exportResourceBtn.addEventListener('click', exportResourceUnlockCSV);
+    // 解锁记录已并入统一导出，无需单独按钮
 
     // ---------- 资源预览（贴近资源页：含类型切换、类型价格） ----------
     var previewCurVariant = 0;

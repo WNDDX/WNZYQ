@@ -235,6 +235,12 @@ body{
     transform: scale(0.97);
     opacity: 0.9;
 }
+html,body{overscroll-behavior:none;}
+.pull-refresh{position:fixed;top:0;left:0;right:0;height:0;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;z-index:998;transition:height .2s ease;pointer-events:none;background:transparent;}
+.pull-refresh.show{height:46px;}
+.prt-text{font-size:12px;color:#fff;background:rgba(30,136,229,.92);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.prt-icon{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.6);border-top-color:#fff;border-radius:50%;animation:prtspin .8s linear infinite;}
+@keyframes prtspin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -389,6 +395,31 @@ function openResource() {window.location.href = CONFIG.resourceUrl;}
 function openService() {showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服");}
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
+
+// 下拉刷新（与资源页/管理页统一，顶部下拉即重载同步最新内容）
+(function(){
+    var tip=document.createElement('div');tip.className='pull-refresh';
+    tip.innerHTML='<span class="prt-text"><span class="prt-icon"></span><span class="prt-label">下拉刷新</span></span>';
+    document.body.appendChild(tip);
+    var sy=0,sx=0,pulling=false,dist=0,TH=60;
+    document.addEventListener('touchstart',function(e){
+        if((window.scrollY||0)<=0){sy=e.touches[0].clientY;sx=e.touches[0].clientX;pulling=true;dist=0;}
+    },{passive:true});
+    document.addEventListener('touchmove',function(e){
+        if(!pulling)return;
+        var dy=e.touches[0].clientY-sy,dx=e.touches[0].clientX-sx;
+        if(dy>0&&Math.abs(dy)>Math.abs(dx)){
+            dist=Math.min(dy*0.5,80);tip.style.height=dist+'px';tip.classList.add('show');
+            tip.querySelector('.prt-label').textContent=dist>TH?'释放立即刷新':'下拉刷新';
+        }
+    },{passive:true});
+    document.addEventListener('touchend',function(){
+        if(!pulling)return;pulling=false;
+        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新...';tip.style.height='46px';setTimeout(function(){location.reload();},500);}
+        else{tip.classList.remove('show');tip.style.height='0';}
+        dist=0;
+    },{passive:true});
+})();
 </script>
 </body>
 </html>

@@ -26,8 +26,8 @@ export async function onRequestGet(context) {
   // stats表单表用的日期过滤（明确指定 stats.created_at）
   let statsDateFilter;
   if (startDate && endDate) {
-    effectiveStart = startDate > maxStartStr ? startDate : maxStartStr;
-    effectiveEnd = endDate;
+    effectiveStart = String(startDate).slice(0, 10) > maxStartStr ? String(startDate).slice(0, 10) : maxStartStr;
+    effectiveEnd = String(endDate).slice(0, 10);
     statsDateFilter = ` AND date(stats.created_at) >= '${effectiveStart}' AND date(stats.created_at) <= '${effectiveEnd}'`;
   } else {
     statsDateFilter = ` AND stats.created_at >= datetime('now', '-30 days')`;
