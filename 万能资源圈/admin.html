@@ -1560,7 +1560,7 @@
       if (t.tagName === 'IMG' && !t.dataset.fh) {
         t.dataset.fh = '1';
         t.src = EXC_PLACEHOLDER;
-        t.style.objectFit = 'cover';
+        t.style.objectFit = 'contain';
         t.style.display = 'block';
       } else if (t.tagName === 'VIDEO' && !t.dataset.fh) {
         t.dataset.fh = '1';

@@ -1250,7 +1250,7 @@
         im.addEventListener('error', function () {
           im.onerror = null;
           im.src = IMG_PLACEHOLDER;
-          im.style.objectFit = 'cover';
+          im.style.objectFit = 'contain';
           im.style.display = 'block';
         });
       })(imgs[i]);
@@ -1271,7 +1271,7 @@
         this.onerror = null; // 防止占位图也加载失败导致死循环
         this.src = IMG_PLACEHOLDER;
         this.style.display = 'block';
-        this.style.objectFit = 'cover';
+        this.style.objectFit = 'contain';
       };
       img.onload = function () { this.style.display = 'block'; };
       img.src = src || IMG_PLACEHOLDER;

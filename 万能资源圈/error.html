@@ -60,7 +60,7 @@ if (code && errorMap[code]) {
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       this.onerror = null;
       this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23eef4fb"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="150" r="44"/%3E%3Cpath d="M200 114v52" stroke="%23eef4fb" stroke-width="12" stroke-linecap="round"/%3E%3Ccircle cx="200" cy="192" r="8"/%3E%3C/g%3E%3C/svg%3E';
-      this.style.objectFit = 'cover';
+      this.style.objectFit = 'contain';
       this.style.display = 'block';
     };
   }
