@@ -47,7 +47,12 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    html, body { background: #f2f7fd; color: #333; }
+    html, body { background: #f2f7fd; color: #333; max-width: 100%; overflow-x: hidden; }
+    *, *::before, *::after { min-width: 0; }
+    img, video, svg { max-width: 100%; }
+    .container, .panel, .modal-box, .form { min-width: 0; }
+    table { max-width: 100%; }
+    pre, .rte-editor { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
     /* 注意：不要在 body/html 上使用 transform/opacity 动画，否则会使其成为 fixed 弹窗的包含块，
        导致弹窗遮罩无法相对视口定位而错位。淡入动画只加在内部视图上（弹窗是 body 直接子元素，不受影响）。 */
     #loginView, #mainView { animation: pageFadeIn 0.4s ease; }
@@ -127,16 +132,17 @@
     }
     .topbar.nav-hidden { transform: translateY(-100%); box-shadow: none; }
     .back-top {
-      position: fixed; right: 22px; bottom: 28px; z-index: 200;
+      position: fixed; right: 24px; bottom: 30px; z-index: 200;
       width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-      background: rgba(22,136,255,0.72); color: #fff; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 14px rgba(22,136,255,0.35);
-      opacity: 0; pointer-events: none; transform: translateY(12px) scale(0.9);
-      transition: opacity .2s ease, transform .2s ease, background .15s;
+      background: linear-gradient(135deg, var(--blue1), var(--blue2)); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(30,136,229,0.4);
+      opacity: 0; visibility: hidden; transform: translateY(10px);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.2s;
     }
-    .back-top.show { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
-    .back-top:hover { background: rgba(22,136,255,0.92); transform: translateY(-2px) scale(1.05); }
-    .back-top:active { transform: scale(0.92); }
+    .back-top.show { opacity: 0.72; visibility: visible; transform: translateY(0); }
+    .back-top:hover { opacity: 1; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(30,136,229,0.5); }
+    .back-top:active { transform: scale(0.9); }
     html, body { overscroll-behavior: none; }
     .pull-refresh { position: fixed; top: 0; left: 0; right: 0; height: 0; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; z-index: 300; transition: height .2s ease; pointer-events: none; background: transparent; }
     .pull-refresh.show { height: 46px; }
@@ -376,10 +382,10 @@
     /* ---------- 分类 ---------- */
     .cat-row {
       background: #fff; border-radius: 14px; padding: 12px 16px;
-      margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; max-width:100%;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
-    .cat-row .c-name { flex: 1; font-size: 15px; }
+    .cat-row .c-name { flex: 1 1 140px; font-size: 15px; min-width: 0; word-break: break-word; }
     .cat-row .c-count { color: #999; font-size: 13px; text-decoration: none !important; border-bottom: none !important; }
     .cat-row .c-sort { color: #bbb; font-size: 12px; min-width: 50px; }
 
@@ -561,11 +567,13 @@
     /* 放大编辑：脱离弹窗固定为大屏 */
     .rte-editor.rte-large {
       position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      width: 92vw; max-width: 860px; height: 70vh; max-height: 70vh; min-height: 300px;
-      z-index: 4000; background: #fff; border: 1px solid var(--blue1);
-      border-radius: 12px; box-shadow: 0 0 0 100vw rgba(0,0,0,0.45), 0 16px 48px rgba(0,0,0,0.3);
+      width: 96vw; max-width: 1200px; height: 88vh; max-height: 88vh; min-height: 320px;
+      z-index: 6000; background: #fff; border: 2px solid var(--blue1);
+      border-radius: 12px; box-shadow: 0 0 0 100vw rgba(0,0,0,0.55), 0 16px 48px rgba(0,0,0,0.35);
       overflow-y: auto;
     }
+    .rte-editor.rte-large ~ * { }
+    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); }
     .rte-zoom { font-weight: 600; }
     .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
@@ -1772,11 +1780,7 @@
       var lastY = window.scrollY || 0, ticking = false;
       function onScroll() {
         var y = window.scrollY || 0;
-        if (nav) {
-          if (y < 80) nav.classList.remove('nav-hidden');
-          else if (y > lastY + 4) nav.classList.add('nav-hidden');      // 向下滑：隐藏
-          else if (y < lastY - 4) nav.classList.remove('nav-hidden');  // 向上滑：显示
-        }
+          if (nav) nav.classList.remove('nav-hidden'); // 顶栏常驻：取消下滑隐藏
         if (backBtn) backBtn.classList.toggle('show', y > 320);
         lastY = y; ticking = false;
       }
@@ -1824,7 +1828,7 @@
           else if (t === 'stats' && typeof loadStats === 'function') loadStats();
           else if (t === 'categories' && typeof loadCategories === 'function') loadCategories();
           else if (t === 'settings' && typeof loadSettings === 'function') loadSettings();
-          setTimeout(function () { tip.classList.remove('show'); tip.style.height = '0'; }, 700);
+          setTimeout(function () { tip.classList.remove('show'); tip.style.height = '0'; }, 400);
         } else { tip.classList.remove('show'); tip.style.height = '0'; }
         dist = 0;
       }, { passive: true });
@@ -2799,6 +2803,13 @@
           // 如果是新增，拿到新 id 后刷新类型列表（类型可能已在编辑时添加）
           if (!state.editingId && res.id) {
             state.editingId = res.id;
+            // 提交新增前暂存的类型（顺序提交，保证排序）
+            var pend = (state.variants || []).slice();
+            (function next(i) {
+              if (i >= pend.length) return;
+              var vd = Object.assign({}, pend[i], { productId: res.id });
+              api('admin/variants', { method: 'POST', body: JSON.stringify(vd) }).then(function () { next(i + 1); }).catch(function () { next(i + 1); });
+            })(0);
           }
           editMask.classList.remove('open');
           if (isNewSave) localStorage.removeItem('product_draft_new'); // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
@@ -2877,7 +2888,7 @@
         var delBtn = document.createElement('button');
         delBtn.className = 'row-btn danger';
         delBtn.textContent = '删除';
-        delBtn.addEventListener('click', function () { delVariant(v.id); });
+        delBtn.addEventListener('click', function () { state._delVariantRef = v; delVariant(v.id); });
 
         // 拖拽事件
         item.addEventListener('dragstart', function (e) {
@@ -2936,11 +2947,14 @@
       // 按下按钮/色板时阻止默认失焦，保住编辑器选区（下拉框不阻止，保证能展开）
       if (e.target.closest('.rte-btn, .rte-palette') && !e.target.closest('select')) e.preventDefault();
       var edId = bar.getAttribute('data-editor'), sel = window.getSelection();
-      if (edId && sel && sel.rangeCount) {
-        var ed = document.getElementById(edId), p = sel.anchorNode;
-        while (p && p !== ed) p = p.parentNode;
-        if (p === ed) { __rte.editor = ed; try { __rte.range = sel.getRangeAt(0).cloneRange(); } catch (e) {} }
+      var ed0 = edId ? document.getElementById(edId) : null, inside0 = false;
+      if (ed0 && sel && sel.rangeCount) {
+        var p0 = sel.anchorNode;
+        while (p0 && p0 !== ed0) p0 = p0.parentNode;
+        if (p0 === ed0) { inside0 = true; try { __rte.range = sel.getRangeAt(0).cloneRange(); } catch (e) {} }
       }
+      // 关键：点哪个编辑器的工具栏，就锁定哪个编辑器；若光标不在其中，选区置空→插入时落到末尾，避免插到别的编辑器
+      if (ed0) { __rte.editor = ed0; if (!inside0) __rte.range = null; }
     });
     function rteFocusEnd(editor) {
       var r = document.createRange(); r.selectNodeContents(editor); r.collapse(false);
@@ -2949,13 +2963,24 @@
     function rteInsert(editor, html) {
       if (!editor) return;
       editor.focus();
-      var sel = window.getSelection(), ok = false;
+      var sel = window.getSelection(), okRange = false;
       if (__rte.editor === editor && __rte.range) {
-        try { sel.removeAllRanges(); sel.addRange(__rte.range); ok = true; } catch (e) { ok = false; }
+        try { sel.removeAllRanges(); sel.addRange(__rte.range); okRange = true; } catch (e) { okRange = false; }
       }
-      if (!ok) rteFocusEnd(editor);
-      var _rteCmd = 'insertHTML';
-      document.execCommand(_rteCmd, false, html);
+      var inserted = false;
+      try {
+        inserted = document.execCommand('insertHTML', false, html);
+      } catch (e) { inserted = false; }
+      // execCommand 失效兜底：解析节点后用 Range 插到光标处或末尾
+      if (!inserted) {
+        try {
+          var tmp = document.createElement('div'); tmp.innerHTML = html;
+          var rng = okRange ? __rte.range : null;
+          if (!rng) rteFocusEnd(editor), rng = window.getSelection().getRangeAt(0);
+          while (tmp.firstChild) rng.insertNode(tmp.firstChild);
+          rng.collapse(false);
+        } catch (e2) { editor.innerHTML += html; }
+      }
       editor.dispatchEvent(new Event('input', { bubbles: true }));
       __rte.editor = editor;
       try { __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (e) {}
@@ -2966,8 +2991,35 @@
       var ed = document.getElementById(z.getAttribute('data-editor'));
       if (!ed) return;
       var big = ed.classList.toggle('rte-large');
+      z.classList.toggle('rte-zoom-on', big);
       z.textContent = big ? '🗗 还原' : '⛶ 放大';
-      if (big) ed.focus();
+      if (big) {
+        ed.focus();
+        var exit = document.getElementById('rteExitZoom');
+        if (!exit) {
+          exit = document.createElement('button');
+          exit.id = 'rteExitZoom';
+          exit.type = 'button';
+          exit.textContent = '🗗 还原';
+          exit.style.cssText = 'position:fixed;top:14px;right:18px;z-index:6001;border:none;border-radius:18px;padding:8px 18px;background:linear-gradient(135deg,#1E88E5,#1688FF);color:#fff;font-size:14px;font-weight:600;box-shadow:0 4px 14px rgba(30,136,229,.4);cursor:pointer;';
+          exit.addEventListener('click', function () { z.click(); });
+          document.body.appendChild(exit);
+        }
+        exit.style.display = 'block';
+      } else {
+        var ex = document.getElementById('rteExitZoom'); if (ex) ex.style.display = 'none';
+      }
+    });
+    // Esc 退出放大编辑（不影响其它弹窗的 Esc 关闭）
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        var bigEd = document.querySelector('.rte-editor.rte-large');
+        if (bigEd) {
+          bigEd.classList.remove('rte-large');
+          document.querySelectorAll('.rte-zoom.rte-zoom-on').forEach(function (b) { b.classList.remove('rte-zoom-on'); b.textContent = '⛶ 放大'; });
+          var _ex = document.getElementById('rteExitZoom'); if (_ex) _ex.style.display = 'none';
+        }
+      }
     });
 
     // 工具栏按钮点击执行命令
@@ -3227,6 +3279,7 @@
 
     function openVariantEdit(v) {
       state.editingVariantId = v ? v.id : null;
+      state._editVariantIdx = v ? state.variants.indexOf(v) : -1;
       variantModalTitle.textContent = v ? '编辑类型' : '添加类型';
       vName.value = v ? (v.name || '') : '';
       document.getElementById('vDescEditor').innerHTML = v ? (v.desc || '') : '';
@@ -3393,7 +3446,7 @@
     variantOk.addEventListener('click', function () {
       if (!validateField(vName, '请填写类型名称')) return;
       var name = vName.value.trim();
-      if (!state.editingId) { toast('请先保存资源', 'error'); return; }
+      var isLocalVariant = !state.editingId;
       var data = {
         productId: state.editingId,
         name: name,
@@ -3408,6 +3461,15 @@
         resourceCode: vResourceCode.value.trim(),
         resourceContent: document.getElementById('vContentEditor').innerHTML
       };
+      if (isLocalVariant) {
+        var _li = (typeof state._editVariantIdx === 'number') ? state._editVariantIdx : -1;
+        if (_li >= 0 && state.variants[_li]) { Object.assign(state.variants[_li], data); } else { state.variants.push(data); }
+        state.variants.forEach(function (vv, i) { vv.sort = i + 1; });
+        variantMask.classList.remove('open');
+        toast('类型已添加（保存资源后生效）', 'success');
+        renderVariants();
+        return;
+      }
       var req = state.editingVariantId
         ? api('admin/variants/' + state.editingVariantId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/variants', { method: 'POST', body: JSON.stringify(data) });
@@ -3424,6 +3486,7 @@
 
     function delVariant(id) {
       showConfirm('删除类型', '确定删除该类型？', function () {
+        if (!state.editingId) { var di = state.variants.indexOf(state._delVariantRef); if (di >= 0) state.variants.splice(di, 1); renderVariants(); toast('已删除', 'success'); return; }
         api('admin/variants/' + id, { method: 'DELETE' }).then(function (res) {
           if (res.ok) { toast('已删除', 'success'); loadVariants(state.editingId); }
           else toast(res.msg || '删除失败', 'error');
