@@ -1,0 +1,2 @@
+# 统一错误页：所有未匹配到静态资源/函数的路径都跳到错误页（Cloudflare Pages 默认支持 /xxx 访问 xxx.html 的干净链接）
+/* /error?code=404 404
