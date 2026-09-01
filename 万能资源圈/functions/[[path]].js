@@ -15,7 +15,7 @@ const HTML_HEADERS = { 'content-type': 'text/html; charset=utf-8' };
 /** 统一返回错误页（HTTP 404） */
 async function serveError(context) {
   try {
-    const candidates = ['/万能资源圈/error.html', '/error.html'];
+    const candidates = ['/error.html', '/万能资源圈/error.html'];
     for (const u of candidates) {
       const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
       if (res && res.ok) {
@@ -34,7 +34,7 @@ async function serveError(context) {
 /** 站点根：302 重定向到导航页（必须用重定向而非 rewrite，否则 URL 停留在根级，页面内相对图片路径会全部加载失败） */
 async function serveHome(context) {
   try {
-    const candidates = ['/万能资源圈/index', '/index'];
+    const candidates = ['/index', '/万能资源圈/index'];
     for (const u of candidates) {
       const res = await context.env.ASSETS.fetch(new URL(u + '.html', context.request.url));
       if (res && res.ok) {

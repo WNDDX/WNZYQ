@@ -329,6 +329,8 @@ const dom = {
     modalJumpBtn: document.getElementById('modalJumpBtn')
 };
 
+// 全站统一：图片加载失败显示感叹号占位（与资源页/管理页/错误页一致）
+var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23eef4fb"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="150" r="44"/%3E%3Cpath d="M200 114v52" stroke="%23eef4fb" stroke-width="12" stroke-linecap="round"/%3E%3Ccircle cx="200" cy="192" r="8"/%3E%3C/g%3E%3C/svg%3E';
 /**图片重试加载 */
 function loadImg(imgDom, src, retryCount = 0) {
     imgDom.onload = imgDom.onerror = null;
@@ -342,7 +344,10 @@ function loadImg(imgDom, src, retryCount = 0) {
             setTimeout(()=>loadImg(imgDom,src,nextCount),CONFIG.retryDelay);
         }else{
             imgDom.style.display = 'none';
-            imgDom === dom.logoImage ? dom.logoFail.style.display = 'flex' : dom.qrFail.style.display = 'flex';
+            imgDom.onerror = null;
+            imgDom.src = EXC_PH;
+            imgDom.style.objectFit = 'contain';
+            imgDom.style.display = 'block';
         }
     };
     imgDom.src = src;

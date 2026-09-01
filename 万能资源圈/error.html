@@ -54,12 +54,9 @@ if (code && errorMap[code]) {
 // 智能识别部署根：本站页面部署在「万能资源圈」子目录下，错误页可能从任意路径（含根级 /xxx）进入，
 // 因此返回导航按钮与 logo 需根据当前路径自动计算正确地址，保证任何情况都能跳回导航页。
 (function () {
-  var SEG = '/万能资源圈/';
-  var here = window.location.pathname || '';
-  var root = here.indexOf(SEG) !== -1 ? '' : SEG; // 已在子目录内用相对路径，否则指向子目录绝对路径
   var logo = document.getElementById('errLogo');
   if (logo) {
-    logo.src = root + 'assets/images/logo.png';
+    logo.src = 'assets/images/logo.png'; // 相对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       this.onerror = null;
       this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23eef4fb"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="150" r="44"/%3E%3Cpath d="M200 114v52" stroke="%23eef4fb" stroke-width="12" stroke-linecap="round"/%3E%3Ccircle cx="200" cy="192" r="8"/%3E%3C/g%3E%3C/svg%3E';
@@ -68,7 +65,24 @@ if (code && errorMap[code]) {
     };
   }
   var back = document.getElementById('errBack');
-  if (back) { back.href = root + 'index'; }
+  // 返回导航：探测候选导航页，取第一个能访问的（兼容根部署与子目录部署两种结构）
+  if (back) {
+    var here2 = window.location.pathname || '';
+    var candidates = [];
+    if (here2.indexOf('/万能资源圈/') !== -1) {
+      var dir = here2.substring(0, here2.lastIndexOf('/'));
+      candidates.push(dir + '/index', '/万能资源圈/index');
+    } else {
+      candidates.push('/index', '/万能资源圈/index');
+    }
+    (function tryNext(i) {
+      if (i >= candidates.length) { back.href = candidates[0]; return; }
+      fetch(candidates[i], { method: 'GET' }).then(function (r) {
+        if (r && r.ok) { back.href = candidates[i]; }
+        else { tryNext(i + 1); }
+      }).catch(function () { tryNext(i + 1); });
+    })(0);
+  }
 })();
 // 下拉刷新（与其它三页统一，静默刷新，不阻塞操作）
 (function(){
