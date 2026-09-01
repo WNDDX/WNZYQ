@@ -316,9 +316,9 @@
       align-items: stretch;
     }
     .product-grid.list-view .card-img {
-      width: 160px;
-      min-width: 160px;
-      aspect-ratio: auto;
+      width: 96px;
+      min-width: 96px;
+      aspect-ratio: 1 / 1;
       height: auto;
     }
     .product-grid.list-view .card-body {
@@ -335,6 +335,9 @@
     .view-btn { padding:6px 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; }
     .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
     .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    /* 视图切换动画（管理页/资源页一致） */
+    @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
+    .view-switch-anim { animation: viewSwitch 0.18s ease; }
     /* 视图切换时不让图片/内边距做形变动画，只保留卡片悬浮效果（与管理页一致、不夸张） */
     .product-card { transition: transform 0.10s ease, box-shadow 0.10s ease !important; }
     .card-img, .card-body { transition: none !important; }
@@ -1210,7 +1213,7 @@
     var modalCloseX = document.getElementById('modalCloseX');
 
     // ---------- 状态 ----------
-    var DATA = { categories: [], products: [], announcement: '' };
+    var DATA = { categories: [], products: [], announcement: '', announcementMode: 'always' };
     var currentCat = 0;
     var currentSubCat = 0;  // 当前选中的二级分类 id，0=该一级分类下全部
     var currentProduct = null;
@@ -1368,7 +1371,20 @@
       var bar = document.getElementById('noticeBar');
       if (!bar) return;
       var html = (DATA.announcement || '').trim();
-      if (!html) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+      var mode = DATA.announcementMode || 'always';
+      if (!html || mode === 'off') { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+      if (mode === 'daily') {
+        try {
+          var today = new Date().toDateString();
+          if (localStorage.getItem('wnzyq_ann_date') === today) { bar.style.display = 'none'; return; }
+          localStorage.setItem('wnzyq_ann_date', today);
+        } catch (e) {}
+      } else if (mode === 'session') {
+        try {
+          if (sessionStorage.getItem('wnzyq_ann_session')) { bar.style.display = 'none'; return; }
+          sessionStorage.setItem('wnzyq_ann_session', '1');
+        } catch (e) {}
+      }
       bar.innerHTML = '<div class="notice-inner">' + sanitizeHTML(html) + '</div>';
       bar.style.display = 'block';
     }
@@ -2089,6 +2105,8 @@
           if (c.products && c.categories) {
             DATA.products = c.products;
             DATA.categories = c.categories;
+            if (c.announcement !== undefined) DATA.announcement = c.announcement;
+            if (c.announcement_mode !== undefined) DATA.announcementMode = c.announcement_mode;
             usingRemote = true;
             hasCache = true;
           }
@@ -2125,7 +2143,16 @@
             localStorage.setItem('wnzyq_shop_data', JSON.stringify({ products: DATA.products, categories: DATA.categories }));
           } catch (e) {}
         }
-        if (res[2] && res[2].ok) { DATA.announcement = (res[2].settings || {}).announcement || ''; }
+        if (res[2] && res[2].ok) {
+          DATA.announcement = (res[2].settings || {}).announcement || '';
+          DATA.announcementMode = (res[2].settings || {}).announcement_mode || 'always';
+          try {
+            var cacheData = JSON.parse(localStorage.getItem('wnzyq_shop_data') || '{}');
+            cacheData.announcement = DATA.announcement;
+            cacheData.announcement_mode = DATA.announcementMode;
+            localStorage.setItem('wnzyq_shop_data', JSON.stringify(cacheData));
+          } catch (e) {}
+        }
         // 无论成功失败，都渲染一次（隐藏骨架屏，显示资源或空状态）
         renderAll();
       }).catch(function () {
@@ -2417,6 +2444,7 @@
 
     // 视图切换（网格/列表）
     var currentView = localStorage.getItem('shop_view') || 'grid';
+    function triggerViewAnim(el) { if (!el) return; el.classList.remove('view-switch-anim'); void el.offsetWidth; el.classList.add('view-switch-anim'); }
     function setShopView(view) {
       currentView = view;
       localStorage.setItem('shop_view', view);
@@ -2425,10 +2453,12 @@
       var listBtn = document.getElementById('viewListBtn');
       if (view === 'list') {
         grid.classList.add('list-view');
+        triggerViewAnim(grid);
         gridBtn.classList.remove('active');
         listBtn.classList.add('active');
       } else {
         grid.classList.remove('list-view');
+        triggerViewAnim(grid);
         gridBtn.classList.add('active');
         listBtn.classList.remove('active');
       }

@@ -6,7 +6,7 @@
 import { json, requireAuth, readJSON } from '../../_utils.js';
 
 // 允许设置的 key 白名单
-const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url'];
+const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode'];
 
 export async function onRequestGet(context) {
   const { env, request } = context;

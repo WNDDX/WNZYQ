@@ -3,7 +3,7 @@
  * POST /api/admin/products        → 新增资源（需登录）
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  */
-import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns } from '../../_utils.js';
+import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns } from '../../_utils.js';
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
 async function attachVariants(env, list) {
@@ -36,6 +36,7 @@ export async function onRequestGet(context) {
     const { results } = await env.DB.prepare(
       'SELECT * FROM products ORDER BY sort ASC, id DESC'
     ).all();
+    await ensureProductColumns(env);
     await ensureVariantColumns(env);
     const list = await attachVariants(env, results.map(cleanProduct));
     return json({ ok: true, list: list, total: list.length });
@@ -65,6 +66,7 @@ export async function onRequestPost(context) {
   const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
 
+  await ensureProductColumns(env);
   const b = await readJSON(request);
   if (!String(b.title || '').trim()) return json({ ok: false, msg: '请填写资源标题' }, 400);
 

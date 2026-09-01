@@ -140,6 +140,28 @@ export async function ensureVariantColumns(env) {
   } catch (e) { /* 表尚未创建时忽略，install 会按新结构建表 */ }
 }
 
+// 幂等确保 products 拥有后加字段（已部署旧库自动补列，避免新增/编辑报 500）
+let _productColsEnsured = false;
+export async function ensureProductColumns(env) {
+  if (_productColsEnsured) return;
+  try {
+    const cols = await env.DB.prepare("PRAGMA table_info(products)").all();
+    const names = cols.results.map((c) => c.name);
+    const add = async (col, ddl) => {
+      if (!names.includes(col)) await env.DB.exec("ALTER TABLE products ADD COLUMN " + ddl);
+    };
+    await add('detail_images', "detail_images TEXT NOT NULL DEFAULT '[]'");
+    await add('detail_videos', "detail_videos TEXT NOT NULL DEFAULT '[]'");
+    await add('price', "price REAL NOT NULL DEFAULT 0");
+    await add('is_hidden', "is_hidden INTEGER NOT NULL DEFAULT 0");
+    await add('schedule_on', "schedule_on TEXT");
+    await add('schedule_off', "schedule_off TEXT");
+    await add('sort', "sort INTEGER NOT NULL DEFAULT 0");
+    await add('updated_at', "updated_at TEXT NOT NULL DEFAULT (datetime('now'))");
+    _productColsEnsured = true;
+  } catch (e) { /* 表尚未创建时忽略，install 会按新结构建表 */ }
+}
+
 // 把数据库行转成资源类型字段
 export function cleanVariant(v) {
   return {
