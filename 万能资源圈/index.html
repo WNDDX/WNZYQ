@@ -415,7 +415,7 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
     },{passive:true});
     document.addEventListener('touchend',function(){
         if(!pulling)return;pulling=false;
-        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新...';tip.style.height='46px';setTimeout(function(){location.reload();},500);}
+        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新...';tip.style.height='46px';setTimeout(function(){try{loadImg(dom.logoImage,CONFIG.logoImg);}catch(e){}tip.classList.remove('show');tip.style.height='0';tip.querySelector('.prt-label').textContent='下拉刷新';},600);}
         else{tip.classList.remove('show');tip.style.height='0';}
         dist=0;
     },{passive:true});

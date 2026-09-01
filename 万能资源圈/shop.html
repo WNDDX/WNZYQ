@@ -332,7 +332,7 @@
     }
 
     /* 视图切换按钮激活状态 */
-    .view-btn { padding:6px 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; transition: all 0.10s ease; -webkit-tap-highlight-color: transparent; }
+    .view-btn { padding:6px 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; }
     .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
     .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     /* 视图切换时不让图片/内边距做形变动画，只保留卡片悬浮效果（与管理页一致、不夸张） */
@@ -2360,9 +2360,9 @@
 
     // ---------- 移动端下拉刷新 ----------
     var touchStartY = 0;
-    var pullRefreshEl = null;
+    var touchRefreshBar = null;
     document.addEventListener('touchstart', function (e) {
-      if (window.scrollY <= 0) {
+      if (false) {
         touchStartY = e.touches[0].clientY;
       }
     }, { passive: true });
@@ -2377,7 +2377,7 @@
       }
     }, { passive: true });
     document.addEventListener('touchend', function () {
-      if (pullRefreshEl) {
+      if (false && pullRefreshEl) {
         pullRefreshEl.parentNode.removeChild(pullRefreshEl);
         pullRefreshEl = null;
         initData();

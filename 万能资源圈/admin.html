@@ -211,7 +211,7 @@
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tb-row2 select { padding: 7px 10px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 13px; background: #fff; color: #333; }
     .view-toggle { display: flex; gap: 0; border: 1px solid #d6e0ea; border-radius: 8px; overflow: hidden; }
-    .view-btn { padding: 7px 14px; border: none; background: #fff; cursor: pointer; font-size: 13px; color: #555; transition: background .15s, color .15s; }
+    .view-btn { padding: 7px 14px; border: none; background: #fff; cursor: pointer; font-size: 13px; color: #555; transition: background .15s ease, color .15s ease, transform .1s ease; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     .view-btn + .view-btn { border-left: 1px solid #d6e0ea; }
     .view-btn.active { background: linear-gradient(135deg, var(--blue1), var(--blue2)); color: #fff; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; }
@@ -572,14 +572,14 @@
     .rte-editor:focus { border-color: var(--blue1); }
     /* 放大编辑：脱离弹窗固定为大屏 */
     .rte-editor.rte-large {
-      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      width: 96vw; max-width: 1200px; height: 88vh; max-height: 88vh; min-height: 320px;
-      z-index: 6000; background: #fff; border: 2px solid var(--blue1);
-      border-radius: 12px; box-shadow: 0 0 0 100vw rgba(0,0,0,0.55), 0 16px 48px rgba(0,0,0,0.35);
+      position: fixed; left: 50%; top: 64px; transform: translateX(-50%);
+      width: 96vw; max-width: 1200px; height: calc(100vh - 78px); max-height: none; min-height: 320px;
+      z-index: 6000; background: #fff; border: 2px solid var(--blue1); border-top: none;
+      border-radius: 0 0 12px 12px; box-shadow: 0 0 0 100vw rgba(0,0,0,0.55), 0 16px 48px rgba(0,0,0,0.35);
       overflow-y: auto;
     }
     .rte-editor.rte-large ~ * { }
-    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); }
+    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 4px; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
     .rte-zoom { font-weight: 600; }
     .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
@@ -946,7 +946,7 @@
                 <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="开始时间" />
                 <span>至</span>
                 <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="结束时间" />
-                <button class="time-btn" id="statCustomBtn" style="padding:5px 12px;">应用</button>
+                <button class="time-btn" id="statCustomBtn" style="padding:6px 16px;background:linear-gradient(135deg,#1E88E5,#1688FF);color:#fff;font-weight:600;border-radius:8px;box-shadow:0 2px 8px rgba(30,136,229,0.35);">应用</button>
               </div>
               <button class="export-btn" id="exportBtn">导出资源数据</button>
 
@@ -1471,7 +1471,7 @@
 
   <!-- ============ 资源预览弹窗（资源页效果） ============ -->
   <div class="modal-mask" id="previewMask">
-    <div class="modal-box preview-box" style="max-width:520px;padding:0;overflow:visible;">
+    <div class="modal-box preview-box" style="max-width:520px;padding:0;">
       <button class="modal-close-x preview-close-x" id="previewCloseX" style="top:12px;right:12px;background:rgba(0,0,0,0.5);">✕</button>
       <img class="preview-cover" id="previewCover" alt="" />
       <div style="padding:16px 20px 20px;">
@@ -1993,7 +1993,7 @@
           state.categories.forEach(function (c) {
             var opt = document.createElement('option');
             opt.value = c.id;
-            opt.textContent = (c.parent_id ? '　　' : '') + c.name;
+            opt.textContent = (c.parent_id ? '　　└ ' : '') + c.name;
             if (c.id !== 0) filterCat.appendChild(opt); // 系统“全部”不进筛选（已有“全部分类”）
           });
         }
@@ -2996,7 +2996,7 @@
       if (!z) return;
       var ed = document.getElementById(z.getAttribute('data-editor'));
       if (!ed) return;
-      var big = ed.classList.toggle('rte-large');
+      var big = ed.classList.toggle('rte-large'); var tb = ed.previousElementSibling; if (tb && tb.classList && tb.classList.contains('rte-toolbar')) { if (big) tb.classList.add('rte-toolbar-large'); else tb.classList.remove('rte-toolbar-large'); }
       z.classList.toggle('rte-zoom-on', big);
       z.textContent = big ? '🗗 还原' : '⛶ 放大';
       if (big) {
@@ -3021,7 +3021,7 @@
       if (e.key === 'Escape') {
         var bigEd = document.querySelector('.rte-editor.rte-large');
         if (bigEd) {
-          bigEd.classList.remove('rte-large');
+          bigEd.classList.remove('rte-large'); var _tb = bigEd.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar-large')) _tb.classList.remove('rte-toolbar-large');
           document.querySelectorAll('.rte-zoom.rte-zoom-on').forEach(function (b) { b.classList.remove('rte-zoom-on'); b.textContent = '⛶ 放大'; });
           var _ex = document.getElementById('rteExitZoom'); if (_ex) _ex.style.display = 'none';
         }
