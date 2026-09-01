@@ -57,6 +57,8 @@
        导致弹窗遮罩无法相对视口定位而错位。淡入动画只加在内部视图上（弹窗是 body 直接子元素，不受影响）。 */
     #loginView, #mainView { animation: pageFadeIn 0.4s ease; }
     input, textarea, select { font-size: 15px; }
+    input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--blue1); cursor: pointer; flex-shrink: 0; }
+    label:has(input[type="checkbox"]) { user-select: none; }
     button { cursor: pointer; user-select: none; }
 
     /* ---------- 登录页 ---------- */
@@ -304,9 +306,11 @@
     /* 卡片视图 */
     #productList.card-view {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      grid-template-columns: repeat(5, 1fr);
       gap: 12px;
     }
+    @media (max-width: 1200px) { #productList.card-view { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 900px)  { #productList.card-view { grid-template-columns: repeat(3, 1fr); } }
     #productList.card-view .product-row {
       flex-direction: column;
       align-items: stretch;
@@ -325,7 +329,9 @@
     }
     #productList.card-view .product-row .thumb {
       width: 100%;
-      height: 120px;
+      height: auto;
+      aspect-ratio: 3 / 2;
+      border-radius: 0;
       border-radius: 0;
     }
     #productList.card-view .product-row .info {
@@ -3904,9 +3910,9 @@
         name.className = 'c-name';
         name.style.fontWeight = isTop ? '700' : '400';
         name.style.fontSize = isTop ? '16px' : '14px';
-        name.style.paddingLeft = isTop ? '0' : '30px';
+        name.style.paddingLeft = isTop ? '0' : '34px';
         name.style.color = isTop ? '#1a1a1a' : '#555';
-        if (!isTop) { name.style.borderLeft = '2px solid #cfe3fb'; name.style.marginLeft = '6px'; }
+        if (!isTop) { name.style.paddingLeft = '34px'; name.style.opacity = '0.85'; }
         name.textContent = c.name;
 
         // 一级分类展开/收起箭头

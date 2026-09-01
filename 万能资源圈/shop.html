@@ -844,6 +844,11 @@
     .toast.success { background: rgba(40,167,69,0.92); }
 
 
+    /* 平台公告 */
+    .notice-bar { max-width: 1200px; margin: 0 auto; padding: 10px 16px 0; }
+    .notice-bar .notice-inner { background: linear-gradient(135deg, #fff8e6, #fff3d6); border: 1px solid #ffd98a; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #7a5b00; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }
+    .notice-bar .notice-inner img, .notice-bar .notice-inner video { max-width: 100%; border-radius: 6px; }
+    .notice-bar .notice-inner a { color: #1e88e5; }
     /* 分类栏 */
     .category-bar-wrap {
       position: relative;
@@ -1098,6 +1103,9 @@
     </button>
   </div>
 
+  <!-- ============ 平台公告（后台可编辑，富文本） ============ -->
+  <div class="notice-bar" id="noticeBar" style="display:none"></div>
+
   <!-- ============ 资源网格 ============ -->
   <main class="product-grid" id="productGrid"></main>
   <div class="empty-tip" id="emptyTip">
@@ -1202,7 +1210,7 @@
     var modalCloseX = document.getElementById('modalCloseX');
 
     // ---------- 状态 ----------
-    var DATA = { categories: [], products: [] };
+    var DATA = { categories: [], products: [], announcement: '' };
     var currentCat = 0;
     var currentSubCat = 0;  // 当前选中的二级分类 id，0=该一级分类下全部
     var currentProduct = null;
@@ -1355,6 +1363,15 @@
 
     // ---------- 渲染分类 ----------
     // ---------- 渲染分类（一级） ----------
+    // 平台公告渲染（后台设置，富文本；为空则不显示）
+    function renderAnnouncement() {
+      var bar = document.getElementById('noticeBar');
+      if (!bar) return;
+      var html = (DATA.announcement || '').trim();
+      if (!html) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+      bar.innerHTML = '<div class="notice-inner">' + sanitizeHTML(html) + '</div>';
+      bar.style.display = 'block';
+    }
     function renderCategories() {
       var cats = DATA.categories.slice();
       // 确保"全部"在最前面
@@ -2057,6 +2074,7 @@
 
     function renderAll() {
       renderShopInfo();
+      renderAnnouncement();
       renderCategories();
       renderProducts();
     }
@@ -2095,7 +2113,8 @@
       }
       Promise.all([
         withTimeout(fetch('api/products', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
-        withTimeout(fetch('api/categories', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000)
+        withTimeout(fetch('api/categories', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
+        withTimeout(fetch('api/settings', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000)
       ]).then(function (res) {
         if (res[0] && res[0].ok && res[1] && res[1].ok) {
           DATA.products = res[0].list || [];
@@ -2106,6 +2125,7 @@
             localStorage.setItem('wnzyq_shop_data', JSON.stringify({ products: DATA.products, categories: DATA.categories }));
           } catch (e) {}
         }
+        if (res[2] && res[2].ok) { DATA.announcement = (res[2].settings || {}).announcement || ''; }
         // 无论成功失败，都渲染一次（隐藏骨架屏，显示资源或空状态）
         renderAll();
       }).catch(function () {
