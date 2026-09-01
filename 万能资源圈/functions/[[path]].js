@@ -9,10 +9,13 @@ const HTML_HEADERS = { 'content-type': 'text/html; charset=utf-8' };
 
 async function serveError(context) {
   try {
-    const url = new URL('/error.html', context.request.url);
-    const res = await context.env.ASSETS.fetch(url);
-    if (res && res.ok) {
-      return new Response(res.body, { status: 404, headers: HTML_HEADERS });
+    // 优先取「万能资源圈」子目录下的错误页；若部署在仓库根目录则回退到 /error.html
+    const candidates = ['/万能资源圈/error.html', '/error.html'];
+    for (const u of candidates) {
+      const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
+      if (res && res.ok) {
+        return new Response(res.body, { status: 404, headers: HTML_HEADERS });
+      }
     }
   } catch (e) {
     /* 忽略，走内置兜底 */

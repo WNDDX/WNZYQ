@@ -26,11 +26,11 @@ html,body{overscroll-behavior:none;}
 </head>
 <body>
 <div class="box">
-  <div class="logo"><img src="assets/images/logo.png" alt="万能资源圈" onerror="this.style.display='none'"></div>
+  <div class="logo"><img id="errLogo" alt="万能资源圈"></div>
   <div class="code" id="errorCode">错误</div>
   <div class="title" id="errorTitle">页面访问异常</div>
   <div class="desc" id="errorDesc">抱歉，你访问的页面出现了问题<br>可能是地址有误、页面已删除或服务器暂时不可用<br>请稍后重试，或返回导航页继续浏览</div>
-  <a href="index" class="btn">返回导航</a>
+  <a href="index" class="btn" id="errBack">返回导航</a>
 </div>
 <script>
 // 根据URL参数显示不同的错误信息
@@ -51,6 +51,17 @@ if (code && errorMap[code]) {
   document.getElementById('errorTitle').textContent = info.title;
   document.getElementById('errorDesc').innerHTML = info.desc;
 }
+// 智能识别部署根：本站页面部署在「万能资源圈」子目录下，错误页可能从任意路径（含根级 /xxx）进入，
+// 因此返回导航按钮与 logo 需根据当前路径自动计算正确地址，保证任何情况都能跳回导航页。
+(function () {
+  var SEG = '/万能资源圈/';
+  var here = window.location.pathname || '';
+  var root = here.indexOf(SEG) !== -1 ? '' : SEG; // 已在子目录内用相对路径，否则指向子目录绝对路径
+  var logo = document.getElementById('errLogo');
+  if (logo) { logo.src = root + 'assets/images/logo.png'; logo.onerror = function () { this.style.display = 'none'; }; }
+  var back = document.getElementById('errBack');
+  if (back) { back.href = root + 'index'; }
+})();
 // 下拉刷新（与其它三页统一，静默刷新，不阻塞操作）
 (function(){
   var tip=document.createElement('div');tip.className='prt';
