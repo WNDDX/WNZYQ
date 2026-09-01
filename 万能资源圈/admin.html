@@ -857,7 +857,7 @@
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页">
         <div class="login-logo">
-          <img src="assets/images/logo.png" alt="万能资源圈" onerror="this.style.display='none';this.parentNode.textContent='圈';" />
+          <img src="assets/images/logo.png" alt="万能资源圈" />
         </div>
       </a>
       <h1>万能资源圈</h1>
@@ -875,7 +875,7 @@
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页">
-            <img class="topbar-logo" src="assets/images/logo.png" alt="" onerror="this.style.display='none'" />
+            <img class="topbar-logo" src="assets/images/logo.png" alt="" />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -905,8 +905,8 @@
             </div>
           </div>
           <div class="tb-row tb-row2">
-          <div class="cat-picker" id="filterCatPicker" style="min-width:160px;position:relative;">
-            <div class="cat-picker-display" style="min-height:31px;padding:5px 10px;border-radius:6px;font-size:13px;width:auto;"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow">▼</span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
+          <div class="cat-picker" id="filterCatPicker" style="position:relative;width:auto;">
+            <div class="cat-picker-display" style="min-height:33px;padding:6px 10px;border-radius:6px;font-size:13px;width:auto;"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow">▼</span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
           </select>
           <select id="filterStatus" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;">
             <option value="">全部状态</option>
@@ -1553,7 +1553,7 @@
        ============================================ */
 
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23eef4fb"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="150" r="44"/%3E%3Cpath d="M200 114v52" stroke="%23eef4fb" stroke-width="12" stroke-linecap="round"/%3E%3Ccircle cx="200" cy="192" r="8"/%3E%3C/g%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;

@@ -29,7 +29,7 @@ html,body{overscroll-behavior:none;}
   <div class="logo"><img id="errLogo" alt="万能资源圈"></div>
   <div class="code" id="errorCode">错误</div>
   <div class="title" id="errorTitle">页面访问异常</div>
-  <div class="desc" id="errorDesc">抱歉，你访问的页面出现了问题<br>可能是地址有误、页面已删除或服务器暂时不可用<br>请稍后重试，或返回导航页继续浏览</div>
+  <div class="desc" id="errorDesc">抱歉！您访问的页面出现了问题<br>可能是：①地址有误②页面已删除③服务暂不可用<br>请点击【返回导航】继续浏览</div>
   <a href="index" class="btn" id="errBack">返回导航</a>
 </div>
 <script>
@@ -59,7 +59,7 @@ if (code && errorMap[code]) {
     logo.src = 'assets/images/logo.png'; // 相对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       this.onerror = null;
-      this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23eef4fb"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="150" r="44"/%3E%3Cpath d="M200 114v52" stroke="%23eef4fb" stroke-width="12" stroke-linecap="round"/%3E%3Ccircle cx="200" cy="192" r="8"/%3E%3C/g%3E%3C/svg%3E';
+      this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/%3E%3C/svg%3E';
       this.style.objectFit = 'contain';
       this.style.display = 'block';
     };
