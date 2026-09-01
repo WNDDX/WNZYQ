@@ -1552,6 +1552,25 @@
        管理页逻辑
        ============================================ */
 
+    // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23eef4fb"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="150" r="44"/%3E%3Cpath d="M200 114v52" stroke="%23eef4fb" stroke-width="12" stroke-linecap="round"/%3E%3Ccircle cx="200" cy="192" r="8"/%3E%3C/g%3E%3C/svg%3E';
+    document.addEventListener('error', function (e) {
+      var t = e.target;
+      if (!t || !t.tagName) return;
+      if (t.tagName === 'IMG' && !t.dataset.fh) {
+        t.dataset.fh = '1';
+        t.src = EXC_PLACEHOLDER;
+        t.style.objectFit = 'cover';
+        t.style.display = 'block';
+      } else if (t.tagName === 'VIDEO' && !t.dataset.fh) {
+        t.dataset.fh = '1';
+        var ph = document.createElement('img');
+        ph.src = EXC_PLACEHOLDER;
+        ph.style.cssText = 'width:100%;height:auto;display:block;';
+        if (t.parentNode) t.parentNode.replaceChild(ph, t);
+      }
+    }, true);
+
     // ---------- DOM ----------
     var loginView = document.getElementById('loginView');
     var mainView  = document.getElementById('mainView');

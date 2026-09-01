@@ -1239,7 +1239,32 @@
 
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect fill="%23eef4fb" width="400" height="300"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="140" r="32"/%3E%3Cpath d="M200 120c-11 0-20 9-20 20s9 20 20 20 20-9 20-20-9-20-20-20zm0 32c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z"/%3E%3Cpath d="M140 180h120v-8c0-8.8-7.2-16-16-16h-88c-8.8 0-16 7.2-16 16v8zm160 0h-16v-8c0-17.7-14.3-32-32-32h-96c-17.7 0-32 14.3-32 32v8H100c-11 0-20 9-20 20v60c0 11 9 20 20 20h200c11 0 20-9 20-20v-60c0-11-9-20-20-20z" opacity="0.6"/%3E%3C/g%3E%3C/svg%3E';
+    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23eef4fb"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="150" r="44"/%3E%3Cpath d="M200 114v52" stroke="%23eef4fb" stroke-width="12" stroke-linecap="round"/%3E%3Ccircle cx="200" cy="192" r="8"/%3E%3C/g%3E%3C/svg%3E';
+
+    // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
+    function bindMediaFail(root) {
+      if (!root) return;
+      var imgs = root.querySelectorAll('img');
+      for (var i = 0; i < imgs.length; i++) (function (im) {
+        if (im.dataset.fh) return; im.dataset.fh = '1';
+        im.addEventListener('error', function () {
+          im.onerror = null;
+          im.src = IMG_PLACEHOLDER;
+          im.style.objectFit = 'cover';
+          im.style.display = 'block';
+        });
+      })(imgs[i]);
+      var vids = root.querySelectorAll('video');
+      for (var j = 0; j < vids.length; j++) (function (vd) {
+        if (vd.dataset.fh) return; vd.dataset.fh = '1';
+        vd.addEventListener('error', function () {
+          var ph = document.createElement('img');
+          ph.src = IMG_PLACEHOLDER;
+          ph.style.cssText = 'width:100%;height:auto;display:block;';
+          if (vd.parentNode) vd.parentNode.replaceChild(ph, vd);
+        });
+      })(vids[j]);
+    }
 
     function loadImg(img, src) {
       img.onerror = function () {
@@ -1394,6 +1419,7 @@
         } catch (e) {}
       }
       var body = document.getElementById('annBody'); if (body) body.innerHTML = sanitizeHTML(html);
+      if (body) bindMediaFail(body);
       mask.classList.add('open');
       document.body.style.overflow = 'hidden';
     }
@@ -1651,6 +1677,7 @@
       // 详细描述（支持 HTML 超链接，如 <a href="https://...">点击查看</a>）
       if (p.detail && p.detail.trim()) {
         modalDetail.innerHTML = sanitizeHTML(p.detail);
+        bindMediaFail(modalDetail);
         modalDetail.style.display = 'block';
       } else {
         modalDetail.style.display = 'none';
@@ -1677,6 +1704,8 @@
         v.playsInline = true;
         modalMedia.appendChild(v);
       });
+
+      bindMediaFail(modalMedia);
 
       // 资源类型（按 sort 字段从小到大排序）
       var variants = (p.variants || []).slice().sort(function (a, b) {
@@ -1778,6 +1807,7 @@
       var resourceContent = document.getElementById('resourceContent');
       var content = getCurrentResourceContent();
       resourceContent.innerHTML = sanitizeHTML(content || '<p>专属内容</p>');
+      bindMediaFail(resourceContent);
       resourceContent.style.display = 'block';
       // 触发动画重播
       resourceContent.style.animation = 'none';
@@ -1815,6 +1845,7 @@
         var d = document.createElement('div');
         d.className = 'v-desc';
         d.innerHTML = sanitizeHTML(currentVariant.desc);
+        bindMediaFail(d);
         variantDetail.appendChild(d);
         hasContent = true;
       }
@@ -1835,6 +1866,7 @@
         variantDetail.appendChild(v);
         hasContent = true;
       }
+      bindMediaFail(variantDetail);
       variantDetail.style.display = hasContent ? 'block' : 'none';
       if (hasContent) {
         variantDetail.style.animation = 'none';
