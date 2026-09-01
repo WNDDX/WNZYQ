@@ -29,7 +29,8 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-  const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('page_size')) || 0));
+  // page_size=0 或未传 → 返回全部（管理后台一次展示所有资源）
+  const pageSize = Math.min(100, Math.max(0, Number(url.searchParams.get('page_size')) || 0));
 
   // 不分页（page_size=0 或未传）：返回全部
   if (pageSize === 0) {

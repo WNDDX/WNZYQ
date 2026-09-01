@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>万能资源圈・管理</title>
-  <meta name="description" content="万能资源圈管理后台，资源管理、分类管理、数据统计。">
+  <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}</script>
@@ -13,7 +13,7 @@
 
   <style>
     /* ============================================
-       管理后台（风格与资源页/引导页统一：蓝色系）
+       管理页（风格与资源页/导航页统一：蓝色系）
        ============================================ */
     * {
       -webkit-tap-highlight-color: transparent;
@@ -473,11 +473,14 @@
     .cat-picker-display .cpd-arrow { color: #999; transition: transform 0.15s; flex-shrink: 0; }
     .cat-picker.open .cpd-arrow { transform: rotate(180deg); }
     .cat-picker-panel {
-      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 60;
+      display: none; position: fixed; z-index: 9999;
       max-height: 264px; overflow-y: auto; background: #fff; border: 1px solid #e3e8ee;
       border-radius: 10px; box-shadow: 0 10px 28px rgba(20,60,110,0.16); padding: 6px;
     }
     .cat-picker.open .cat-picker-panel { display: block; }
+    .select-picker.open .cat-picker-panel { display: block; }
+    .select-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
+    .select-picker.open .cpd-arrow { transform: rotate(180deg); }
     .cp-item {
       display: flex; align-items: center; gap: 6px; padding: 9px 10px; border-radius: 8px;
       cursor: pointer; font-size: 14px; color: #333; transition: background 0.10s;
@@ -496,6 +499,10 @@
     .cp-children { display: none; }
     .cp-children.show { display: block; }
     .cp-empty { padding: 12px; color: #aaa; font-size: 13px; text-align: center; }
+    /* ===== 通用自制下拉选择器（替代原生 select，与分类选择器同风格） ===== */
+    .select-picker { position: relative; width: 100%; user-select: none; }
+    .rte-toolbar .select-picker { width: 80px; flex-shrink: 0; }
+    .rte-toolbar .select-picker .cat-picker-display { min-height: 28px; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
     /* 日期输入框统一样式 */
     input[type="date"], input[type="datetime-local"] {
       width: 100%; border: 1px solid #ddd; border-radius: 10px;
@@ -573,7 +580,7 @@
     /* 放大编辑：脱离弹窗固定为大屏 */
     .rte-editor.rte-large {
       position: fixed; left: 50%; top: 100px; transform: translateX(-50%);
-      width: 96vw; max-width: 1200px; height: calc(100vh - 116px); max-height: none; min-height: 320px;
+      width: 96vw; max-width: 1200px; height: calc(100vh - 116px); max-height: none !important; min-height: 320px !important;
       z-index: 6000; background: #fff; border: 2px solid var(--blue1); border-top: none;
       border-radius: 0 0 12px 12px; box-shadow: 0 0 0 100vw rgba(0,0,0,0.55), 0 16px 48px rgba(0,0,0,0.35);
       overflow-y: auto;
@@ -899,7 +906,7 @@
           </div>
           <div class="tb-row tb-row2">
           <div class="cat-picker" id="filterCatPicker" style="min-width:160px;position:relative;">
-            <div class="cat-picker-display" style="min-height:38px;padding:7px 12px;width:auto;"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow">▼</span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
+            <div class="cat-picker-display" style="min-height:31px;padding:5px 10px;border-radius:6px;font-size:13px;width:auto;"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow">▼</span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
           </select>
           <select id="filterStatus" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;">
             <option value="">全部状态</option>
@@ -1097,7 +1104,7 @@
             </div>
             <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></div>
           </div>
-          <button class="btn-blue" id="saveSettingsBtn" style="width:auto;padding:0 28px;">保存设置</button>
+          <!-- 保存设置按钮已移除：客服链接、平台公告均在各自弹窗内保存 -->
         </div>
         <div class="setting-group">
           <h3>修改密码</h3>
@@ -1136,10 +1143,10 @@
       <div class="form">
         <label>公告显示频率</label>
         <select class="input" id="annMode">
-          <option value="always">每次进入都显示</option>
-          <option value="daily">每天显示一次</option>
-          <option value="session">每次会话显示一次</option>
-          <option value="off">关闭公告</option>
+          <option value="always">每次进入资源页都弹出</option>
+          <option value="daily">每天只弹出一次（当天不重复）</option>
+          <option value="session">每次打开资源页只弹一次（刷新不重复）</option>
+          <option value="off">不弹出公告</option>
         </select>
         <label>公告内容（支持文字、图片、视频、超链接）</label>
         <div id="annEditorSlot"></div>
@@ -1265,7 +1272,7 @@
         <input id="fContactUrl" placeholder="可不填，没填则用全局默认，如 https://work.weixin.qq.com/..." />
         <label>排序</label><input id="fSort" type="number" value="0" placeholder="数值越小越靠前" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 上架中</label>
-        <label class="checkbox-row"><input type="checkbox" id="fHidden" /> 隐藏（资源页不显示，仅后台可见）</label>
+        <label class="checkbox-row"><input type="checkbox" id="fHidden" /> 隐藏（资源页不显示，仅管理页可见）</label>
         <label>定时上架</label>
         <input id="fScheduleOn" type="text" readonly class="dt-field" placeholder="点击选择，可不填=不定时自动上架" data-dt="datetime" />
         <label>定时下架</label>
@@ -1300,7 +1307,7 @@
           <select id="catParent" class="input"></select>
         </div>
         <label>排序</label><input id="catSort" class="input" type="number" value="0" placeholder="数值越小越靠前" />
-        <label class="checkbox-row"><input type="checkbox" id="catHidden" /> 隐藏（资源页不显示，仅后台可见）</label>
+        <label class="checkbox-row"><input type="checkbox" id="catHidden" /> 隐藏（资源页不显示，仅管理页可见）</label>
       </div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="catOk">确定</button>
@@ -1415,7 +1422,7 @@
           <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button>
         </div>
         <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;" placeholder="该类型的说明，支持文字、图片、视频、超链接"></div>
-        <label class="checkbox-row"><input type="checkbox" id="vHidden" /> 隐藏该类型（资源页不显示，仅后台可见）</label>
+        <label class="checkbox-row"><input type="checkbox" id="vHidden" /> 隐藏该类型（资源页不显示，仅管理页可见）</label>
 
         <label>专属客服链接</label><input id="vContactUrl" placeholder="可不填，没填则用资源/全局客服链接" />
         <label>类型价格</label>
@@ -1542,7 +1549,7 @@
 
   <script>
     /* ============================================
-       管理后台逻辑
+       管理页逻辑
        ============================================ */
 
     // ---------- DOM ----------
@@ -1950,7 +1957,7 @@
       });
     }
 
-    document.getElementById('saveSettingsBtn').addEventListener('click', function () {
+    var _ssbEl = document.getElementById('saveSettingsBtn'); if (_ssbEl) _ssbEl.addEventListener('click', function () {
       var data = {
         contact_url: document.getElementById('setContactUrl').value.trim(),
         announcement: document.getElementById('setAnnouncement').innerHTML,
@@ -2073,7 +2080,7 @@
     });
 
     var adminPage = 1;
-    var ADMIN_PAGE_SIZE = 9999; // 后台一次性展示全部资源，避免“看不全”
+    var ADMIN_PAGE_SIZE = 9999; // 管理页一次性展示全部资源，避免“看不全”
 
     function renderProducts() {
       var box = document.getElementById('productList');
@@ -2087,7 +2094,7 @@
       var list = state.products.filter(function (p) {
         if (kw && String(p.title || '').toLowerCase().indexOf(kw) === -1
             && String(p.desc || '').toLowerCase().indexOf(kw) === -1) return false;
-        if (filterCat && String(p.cid) !== filterCat) return false;
+        if (filterCat && filterCat !== '0' && String(p.cid) !== filterCat) return false;
         if (filterStatus === 'online' && (!p.is_online || p.is_hidden)) return false;
         if (filterStatus === 'offline' && (p.is_online || p.is_hidden)) return false;
         if (filterStatus === 'hidden' && !p.is_hidden) return false;
@@ -2363,14 +2370,14 @@
         buildCatPicker(document.getElementById('batchCatPicker'), select,
           document.getElementById('batchCatDisplay'), document.getElementById('batchCatPanel'),
           Number(select.value) || 0, { allowUncategorized: true, placeholder: '请选择目标分类' });
-        select.innerHTML = '';
+        if (false) { /* 历史冗余：hidden input 无需填充 option，已由 buildCatPicker 构建，以下不执行 */
         state.categories.forEach(function (c) {
           var opt = document.createElement('option');
           opt.value = c.id;
           opt.textContent = c.name + (c.id === 0 ? '（全部）' : '');
           select.appendChild(opt);
         });
-        document.getElementById('batchCatMask').classList.add('open');
+        } document.getElementById('batchCatMask').classList.add('open');
         // 确认按钮事件（只绑定一次）
         var okBtn = document.getElementById('batchCatOk');
         okBtn.onclick = function () {
@@ -2468,7 +2475,7 @@
     }
 
     // 三状态直接切换：online=上架中 / offline=已下架 / hidden=已隐藏（带完整数据，后端为全量更新）
-    // 三状态直接切换：online=上架中 / offline=已下架 / hidden=已隐藏（乐观更新：点击立即生效，后台异步保存）
+    // 三状态直接切换：online=上架中 / offline=已下架 / hidden=已隐藏（乐观更新：点击立即生效，管理页异步保存）
     function setProductStatus(id, status) {
       var target = state.products.filter(function (p) { return p.id === id; })[0];
       if (!target) return;
@@ -2736,23 +2743,92 @@
       var txtEl = displayEl.querySelector('.cpd-text');
       txtEl.textContent = name;
       txtEl.classList.remove('placeholder');
-      document.querySelectorAll('.cat-picker.open').forEach(function (p) { p.classList.remove('open'); });
+      document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
       pickerEl.querySelectorAll('.cp-item.selected').forEach(function (el) { el.classList.remove('selected'); });
       if (typeof onProductCidChange === 'function') onProductCidChange(id);
     }
     document.addEventListener('click', function (e) {
       var disp = e.target.closest ? e.target.closest('.cat-picker-display') : null;
       if (disp) {
-        var picker = disp.closest('.cat-picker');
+        var picker = disp.closest('.cat-picker, .select-picker');
         var wasOpen = picker.classList.contains('open');
-        document.querySelectorAll('.cat-picker.open').forEach(function (p) { p.classList.remove('open'); });
-        if (!wasOpen) picker.classList.add('open');
+        document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
+        if (!wasOpen) { picker.classList.add('open'); positionCatPanel(picker); }
         return;
       }
-      if (!(e.target.closest && e.target.closest('.cat-picker'))) {
-        document.querySelectorAll('.cat-picker.open').forEach(function (p) { p.classList.remove('open'); });
+      if (!(e.target.closest && (e.target.closest('.cat-picker') || e.target.closest('.select-picker')))) {
+        document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
       }
     });
+    // 面板定位：fixed 跟随触发按钮，避免被弹窗/容器裁剪（分类与通用选择器共用）
+    function positionCatPanel(picker) {
+      var panel = picker.querySelector('.cat-picker-panel');
+      var disp = picker.querySelector('.cat-picker-display');
+      if (!panel || !disp) return;
+      var r = disp.getBoundingClientRect();
+      var ph = Math.min(panel.scrollHeight || 240, 264);
+      var left = Math.max(8, r.left);
+      var top = r.bottom + 4;
+      if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 4);
+      panel.style.left = left + 'px';
+      panel.style.top = top + 'px';
+      panel.style.width = Math.max(r.width, 180) + 'px';
+    }
+    // 通用自制下拉选择器：把原生 select 替换为与分类选择器一致的美观选择框
+    // 原 select 保留（隐藏）作为值载体，选择后派发 change 事件，原逻辑无需改动
+    function makeSelectPicker(sel) {
+      if (!sel || sel.dataset.sp) return sel && sel.dataset.spRef;
+      sel.dataset.sp = '1';
+      var holder = document.createElement('div');
+      holder.className = 'select-picker';
+      var disp = document.createElement('div');
+      disp.className = 'cat-picker-display';
+      var txt = document.createElement('span');
+      txt.className = 'cpd-text' + (sel.value ? '' : ' placeholder');
+      txt.textContent = sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '请选择';
+      var arrow = document.createElement('span');
+      arrow.className = 'cpd-arrow'; arrow.textContent = '▾';
+      disp.appendChild(txt); disp.appendChild(arrow);
+      var panel = document.createElement('div');
+      panel.className = 'cat-picker-panel';
+      function render() {
+        panel.innerHTML = '';
+        txt.textContent = sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '请选择';
+        txt.classList.toggle('placeholder', !sel.value);
+        Array.from(sel.options).forEach(function (o) {
+          var it = document.createElement('div');
+          it.className = 'cp-item' + (String(o.value) === String(sel.value) ? ' selected' : '');
+          it.textContent = o.textContent;
+          it.addEventListener('click', function () {
+            sel.value = o.value;
+            txt.textContent = o.textContent;
+            txt.classList.remove('placeholder');
+            holder.classList.remove('open');
+            panel.querySelectorAll('.cp-item.selected').forEach(function (e) { e.classList.remove('selected'); });
+            it.classList.add('selected');
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+          panel.appendChild(it);
+        });
+      }
+      holder.appendChild(disp); holder.appendChild(panel);
+      sel.parentNode.insertBefore(holder, sel);
+      sel.style.display = 'none';
+      render();
+      var ref = { el: holder, refresh: render, sel: sel };
+      sel.dataset.spRef = ref;
+      return ref;
+    }
+    // 统一升级页面里所有原生 select 为自制选择框（编辑器字体/字号、状态筛选、公告频率、分类父级等）
+    function upgradeAllSelects() {
+      document.querySelectorAll('select').forEach(function (sel) {
+        var ref = makeSelectPicker(sel);
+        // 资源管理工具栏的状态筛选与分类筛选并排，固定适配宽度
+        if (sel.id === 'filterStatus' && ref) ref.el.style.width = '130px';
+      });
+    }
+    upgradeAllSelects();
+
     function initFilterCatPicker() {
       var fp = document.getElementById('filterCatPicker');
       if (!fp) return;
@@ -3279,7 +3355,7 @@
       document.getElementById('setContactUrl').value = v;
       var st = document.getElementById('contactStatus'); if (st) st.textContent = v ? '已设置' : '未设置';
       document.getElementById('contactMask').classList.remove('open');
-      toast('客服链接已设置，记得点击「保存设置」生效', 'success');
+      api('admin/settings', { method: 'PUT', body: JSON.stringify({ contact_url: v }) }).then(function (res) { if (res.ok) toast('客服链接已保存', 'success'); else toast(res.msg || '保存失败', 'error'); });
     });
     document.getElementById('cancelContactBtn').addEventListener('click', function () { document.getElementById('contactMask').classList.remove('open'); });
 
@@ -3391,7 +3467,7 @@
 
     addVariantBtn.addEventListener('click', function () {
       if (!state.editingId) {
-        toast('请先保存资源，再添加类型', 'error');
+      openVariantEdit(null); // 类型可随时添加，无需先保存资源；未保存时暂存本地列表，保存资源时一并提交
         return;
       }
       openVariantEdit(null);
@@ -4224,10 +4300,12 @@
       document.querySelector('input[name="catLevel"][value="0"]').checked = !isChild;
       document.querySelector('input[name="catLevel"][value="1"]').checked = isChild;
       catParentWrap.style.display = isChild ? 'block' : 'none';
+      if (catParent.dataset.spRef) catParent.dataset.spRef.refresh();
       if (isChild && catParent.options.length > 0) {
         catParent.value = c.parent_id;
       }
 
+      if (catParent.dataset.spRef) catParent.dataset.spRef.refresh();
       catMask.classList.add('open');
     }
 
@@ -4354,7 +4432,7 @@
 
     // ---------- 退出 ----------
     logoutBtn.addEventListener('click', function () {
-      showConfirm('退出登录', '确定要退出管理后台吗？', function () {
+      showConfirm('退出登录', '确定要退出管理页吗？', function () {
         api('admin/logout', { method: 'POST' });
         localStorage.removeItem(TOKEN_KEY);
         showLogin();

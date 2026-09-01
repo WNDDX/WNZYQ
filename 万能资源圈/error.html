@@ -51,7 +51,7 @@ if (code && errorMap[code]) {
   document.getElementById('errorTitle').textContent = info.title;
   document.getElementById('errorDesc').innerHTML = info.desc;
 }
-// 下拉刷新（与其它三页统一，后台静默刷新，不阻塞操作）
+// 下拉刷新（与其它三页统一，静默刷新，不阻塞操作）
 (function(){
   var tip=document.createElement('div');tip.className='prt';
   tip.innerHTML='<span><i></i><b class="prt-l">下拉刷新</b></span>';document.body.appendChild(tip);

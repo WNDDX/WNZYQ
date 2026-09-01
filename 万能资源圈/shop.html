@@ -848,10 +848,12 @@
 
 
     /* 平台公告 */
-    .notice-bar { max-width: 1200px; margin: 0 auto; padding: 10px 16px 0; }
-    .notice-bar .notice-inner { background: linear-gradient(135deg, #fff8e6, #fff3d6); border: 1px solid #ffd98a; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #7a5b00; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }
-    .notice-bar .notice-inner img, .notice-bar .notice-inner video { max-width: 100%; border-radius: 6px; }
-    .notice-bar .notice-inner a { color: #1e88e5; }
+    .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; padding: 24px 22px; animation: modalIn 0.25s ease; text-align: left; }
+    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding-right: 30px; letter-spacing: 1px; }
+    .ann-modal .ann-body { font-size: 14px; color: #333; line-height: 1.75; word-break: break-word; overflow-wrap: anywhere; }
+    .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; border-radius: 8px; margin: 6px 0; }
+    .ann-modal .ann-body a { color: #1e88e5; }
+    .ann-modal .ann-body p { margin: 6px 0; }
     /* 分类栏 */
     .category-bar-wrap {
       position: relative;
@@ -1014,7 +1016,7 @@
       .btn-close-modal { padding: 0 20px; }
       .modal-close-x { top: -10px; right: -10px; width: 32px; height: 32px; font-size: 16px; }
       .product-grid { padding: 12px; gap: 10px; }
-      /* 手机端商品卡片更紧凑：图片改方形、标题单行，避免占屏过大 */
+      /* 手机端资源卡片更紧凑：图片改方形、标题单行，避免占屏过大 */
       .card-img { aspect-ratio: 1 / 1; }
       .card-body { padding: 10px 10px 10px; }
       .card-title { font-size: 14px; min-height: 20px; -webkit-line-clamp: 1; margin-bottom: 3px; }
@@ -1049,7 +1051,7 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="shop-brand">
-        <a class="shop-logo-link" href="admin" title="进入管理后台">
+        <a class="shop-logo-link" href="admin" title="进入管理页">
           <img class="shop-logo" id="shopLogo" alt="Logo" />
         </a>
         <div class="shop-name" id="shopName">万能资源圈</div>
@@ -1106,8 +1108,14 @@
     </button>
   </div>
 
-  <!-- ============ 平台公告（后台可编辑，富文本） ============ -->
-  <div class="notice-bar" id="noticeBar" style="display:none"></div>
+  <!-- ============ 平台公告弹窗（管理页可编辑，富文本） ============ -->
+  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');document.body.style.overflow=''}">
+    <div class="ann-box" onclick="event.stopPropagation()">
+      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');document.body.style.overflow=''">✕</button>
+      <div class="ann-title">平台公告</div>
+      <div class="ann-body" id="annBody"></div>
+    </div>
+  </div>
 
   <!-- ============ 资源网格 ============ -->
   <main class="product-grid" id="productGrid"></main>
@@ -1350,7 +1358,7 @@
       if (logo) loadImg(shopLogo, logo);
       else shopLogo.style.display = 'none';
 
-      // 部署后从 API 获取平台设置（后台可修改）
+      // 部署后从 API 获取平台设置（管理页可修改）
       if (usingRemote) {
         fetch('api/settings').then(function (r) { return r.json(); }).then(function (res) {
           if (res && res.ok && res.settings) {
@@ -1366,27 +1374,28 @@
 
     // ---------- 渲染分类 ----------
     // ---------- 渲染分类（一级） ----------
-    // 平台公告渲染（后台设置，富文本；为空则不显示）
+    // 平台公告渲染（管理页设置，富文本；为空则不显示）——以弹窗形式在资源页展示
     function renderAnnouncement() {
-      var bar = document.getElementById('noticeBar');
-      if (!bar) return;
+      var mask = document.getElementById('annModal');
+      if (!mask) return;
       var html = (DATA.announcement || '').trim();
       var mode = DATA.announcementMode || 'always';
-      if (!html || mode === 'off') { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+      if (!html || mode === 'off') { mask.classList.remove('open'); return; }
       if (mode === 'daily') {
         try {
           var today = new Date().toDateString();
-          if (localStorage.getItem('wnzyq_ann_date') === today) { bar.style.display = 'none'; return; }
+          if (localStorage.getItem('wnzyq_ann_date') === today) return;
           localStorage.setItem('wnzyq_ann_date', today);
         } catch (e) {}
       } else if (mode === 'session') {
         try {
-          if (sessionStorage.getItem('wnzyq_ann_session')) { bar.style.display = 'none'; return; }
+          if (sessionStorage.getItem('wnzyq_ann_session')) return;
           sessionStorage.setItem('wnzyq_ann_session', '1');
         } catch (e) {}
       }
-      bar.innerHTML = '<div class="notice-inner">' + sanitizeHTML(html) + '</div>';
-      bar.style.display = 'block';
+      var body = document.getElementById('annBody'); if (body) body.innerHTML = sanitizeHTML(html);
+      mask.classList.add('open');
+      document.body.style.overflow = 'hidden';
     }
     function renderCategories() {
       var cats = DATA.categories.slice();
@@ -2167,7 +2176,7 @@
       document.documentElement.style.setProperty('--topbar-h', h + 'px');
     }
     window.addEventListener('resize', updateTopbarHeight);
-    // 页面重新可见 / 从后台切回时，静默拉取最新数据（后台改动更快同步，不闪骨架屏）
+    // 页面重新可见 / 从其他页面切回时，静默拉取最新数据（管理页改动更快同步，不闪骨架屏）
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden && typeof usingRemote !== 'undefined' && usingRemote) fetchRemote();
     });
@@ -2443,7 +2452,7 @@
     initData();
 
     // 视图切换（网格/列表）
-    var currentView = localStorage.getItem('shop_view') || 'grid';
+    var currentView = localStorage.getItem('shop_view') || 'list';
     function triggerViewAnim(el) { if (!el) return; el.classList.remove('view-switch-anim'); void el.offsetWidth; el.classList.add('view-switch-anim'); }
     function setShopView(view) {
       currentView = view;
