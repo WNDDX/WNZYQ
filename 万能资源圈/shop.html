@@ -99,7 +99,7 @@
       width: 40px; height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.25); opacity: 0;
+      background: rgba(255,255,255,0.25); opacity: 0; transition: opacity 0.12s ease;
       flex-shrink: 0;
     }
     .shop-name {
@@ -254,7 +254,7 @@
       padding: 10px 16px;
       border-bottom-left-radius: 14px;
       border-bottom-right-radius: 14px;
-      -webkit-overflow-scrolling: touch;
+      -webkit-overflow-scrolling: touch; min-height: 56px;
     }
     .category-bar::-webkit-scrollbar { display: none; }
     .category-tag {
@@ -809,6 +809,13 @@
       line-height: 1.8;
       animation: fadeInUp 0.3s ease;
     }
+    .resource-content img, .resource-content video {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto;
+      border-radius: 8px;
+    }
     .resource-content h4 {
       color: var(--blue1);
       margin-bottom: 8px;
@@ -923,7 +930,7 @@
       padding: 0;
       transition: color 0.2s ease;
     }
-    .cat-toggle:hover { color: #ff6b35; }
+    .cat-toggle:hover { color: var(--blue1); }
     .cat-toggle .toggle-arrow {
       width: 20px;
       height: 20px;
@@ -969,7 +976,7 @@
       height: 22px;
       border: none;
       background: transparent;
-      color: #8ab8e0;
+      color: var(--blue1);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -1146,12 +1153,12 @@
   </div>
 
   <!-- ============ 平台公告弹窗（管理页可编辑，富文本） ============ -->
-  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');document.body.style.overflow=''}">
+  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false)}">
     <div class="ann-box" onclick="event.stopPropagation()">
-      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');document.body.style.overflow=''">✕</button>
+      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false)">✕</button>
       <div class="ann-title" style="text-align:center;">公告</div>
       <div class="ann-body" id="annBody"></div>
-      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');document.body.style.overflow=''">确定</button>
+      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false)">确定</button>
     </div>
   </div>
 
@@ -1270,6 +1277,13 @@
     var catExpanded = false;      // 一级分类是否展开（保存状态，重新渲染后恢复）
     var subCatExpanded = false;   // 二级分类是否展开（保存状态，重新渲染后恢复）
 
+    // 弹窗滚动锁（计数器管理，多弹窗叠加时全部关闭才恢复，避免滚轮/滚动失效）
+    var __bodyLockCount = 0;
+    function setBodyLock(lock) {
+      if (lock) { __bodyLockCount++; } else { __bodyLockCount = Math.max(0, __bodyLockCount - 1); }
+      document.body.style.overflow = __bodyLockCount > 0 ? 'hidden' : '';
+    }
+
     // 全局默认客服链接（config.js 里配置，没填则按钮隐藏）
     function getDefaultContact() {
       return (typeof SHOP_CONFIG !== 'undefined' && SHOP_CONFIG.defaultContactUrl) || '';
@@ -1277,7 +1291,28 @@
 
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f5f5f5"/%3E%3Cpath d="M200 66 C 256 106 284 150 284 192 C 284 234 254 264 226 278 C 211 285 200 297 200 309 C 200 297 189 285 174 278 C 146 264 116 234 116 192 C 116 150 144 106 200 66 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="200" cy="323" r="15" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath fill="%23c3ccd6" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/%3E%3C/svg%3E';
+
+    // 全局媒体加载失败兜底：任何 IMG/VIDEO 加载失败统一替换为感叹号占位（页面加载即注册，与导航页一致）
+    if (!window.__mediaErrOnce) {
+      window.__mediaErrOnce = 1;
+      document.addEventListener('error', function (e) {
+        var t = e.target;
+        if (!t || !t.tagName || t.dataset.fh) return;
+        if (t.tagName === 'IMG') {
+          t.dataset.fh = '1';
+          t.src = IMG_PLACEHOLDER;
+          t.style.objectFit = 'contain';
+          t.style.display = 'block'; t.style.opacity = '1';
+        } else if (t.tagName === 'VIDEO') {
+          t.dataset.fh = '1';
+          var ph = document.createElement('img');
+          ph.src = IMG_PLACEHOLDER;
+          ph.style.cssText = 'width:100%;height:auto;display:block;';
+          if (t.parentNode) t.parentNode.replaceChild(ph, t);
+        }
+      }, true);
+    }
 
     // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
     function bindMediaFail(root) {
@@ -1316,7 +1351,7 @@
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
       if (!src) { img.src = IMG_PLACEHOLDER; img.style.display = 'block'; img.style.opacity = '1'; }
 
-    if (!window.__mediaErrOnce) { window.__mediaErrOnce = 1; // 全局兜底：任何动态图片/视频加载失败显示感叹号（仅注册一次）
+    /* 全局媒体兜底已上移至脚本顶部统一注册（见 loadImg 上方），此处旧实现不再执行
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName || t.dataset.fh) return;
@@ -1332,7 +1367,7 @@
         ph.style.cssText = 'width:100%;height:auto;display:block;';
         if (t.parentNode) t.parentNode.replaceChild(ph, t);
       }
-    }, true); }
+    }, true); } */
     }
 
     // 价格格式化：0 或空返回 ''（免费不显示），整数显示 ¥99，小数显示 ¥99.00
@@ -1446,7 +1481,7 @@
           if (res && res.ok && res.settings) {
             var s = res.settings;
             if (s.shop_name) { shopNameEl.textContent = s.shop_name; document.title = s.shop_name + '・资源'; }
-            if (s.shop_logo) loadImg(shopLogo, s.shop_logo);
+            if (s.shop_logo && s.shop_logo !== (shopLogo.getAttribute('src') || '')) loadImg(shopLogo, s.shop_logo);
             // 全局客服链接存在 window 上，供联系客服按钮使用
             window._globalContact = s.contact_url || getDefaultContact();
           }
@@ -1460,7 +1495,7 @@
     function renderAnnouncement() {
       var mask = document.getElementById('annModal');
       if (!mask) return;
-      if (mask.classList.contains('open')) return; var html = (DATA.announcement || '').trim();
+      if (window.__annShown || mask.classList.contains('open')) return; var html = (DATA.announcement || '').trim();
       var mode = DATA.announcementMode || 'always';
       if (!html || mode === 'off') { mask.classList.remove('open'); return; }
       if (mode === 'daily') {
@@ -1475,10 +1510,10 @@
           sessionStorage.setItem('wnzyq_ann_session', '1');
         } catch (e) {}
       }
-      var body = document.getElementById('annBody'); if (body) body.innerHTML = sanitizeHTML(html);
-      if (body) bindMediaFail(body);
+      window.__annShown = true; var body = document.getElementById('annBody'); if (body) body.innerHTML = sanitizeHTML(html);
+      if (body) bindMediaFail(body); bindLightbox(body);
       mask.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      setBodyLock(true);
     }
     function renderCategories() {
       var cats = DATA.categories.slice();
@@ -1734,7 +1769,7 @@
       // 详细描述（支持 HTML 超链接，如 <a href="https://...">点击查看</a>）
       if (p.detail && p.detail.trim()) {
         modalDetail.innerHTML = sanitizeHTML(p.detail);
-        bindMediaFail(modalDetail);
+        bindMediaFail(modalDetail); bindLightbox(modalDetail);
         modalDetail.style.display = 'block';
       } else {
         modalDetail.style.display = 'none';
@@ -1803,7 +1838,7 @@
       initResourceCodeSection();
 
       modalMask.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      setBodyLock(true);
     }
 
     // 获取当前应使用的资源码（优先类型级，其次资源级）
@@ -1864,7 +1899,7 @@
       var resourceContent = document.getElementById('resourceContent');
       var content = getCurrentResourceContent();
       resourceContent.innerHTML = sanitizeHTML(content || '<p>专属内容</p>');
-      bindMediaFail(resourceContent);
+      bindMediaFail(resourceContent); bindLightbox(resourceContent);
       resourceContent.style.display = 'block';
       // 触发动画重播
       resourceContent.style.animation = 'none';
@@ -1902,7 +1937,7 @@
         var d = document.createElement('div');
         d.className = 'v-desc';
         d.innerHTML = sanitizeHTML(currentVariant.desc);
-        bindMediaFail(d);
+        bindMediaFail(d); bindLightbox(d);
         variantDetail.appendChild(d);
         hasContent = true;
       }
@@ -1923,7 +1958,7 @@
         variantDetail.appendChild(v);
         hasContent = true;
       }
-      bindMediaFail(variantDetail);
+      bindMediaFail(variantDetail); bindLightbox(variantDetail);
       variantDetail.style.display = hasContent ? 'block' : 'none';
       if (hasContent) {
         variantDetail.style.animation = 'none';
@@ -1968,13 +2003,13 @@
           window.open(url, '_blank');
         };
       } else {
-        btnContact.style.display = 'none';
+        btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未配置客服'); };
       }
     }
 
     function closeModal() {
       modalMask.classList.remove('open');
-      document.body.style.overflow = '';
+      setBodyLock(false);
       currentProduct = null;
       currentVariant = null;
       // 重置专属内容区域状态
@@ -2521,10 +2556,10 @@
         document.body.appendChild(lightboxMask);
       }
       lightboxMask.textContent = '';
-      var _lbImg = document.createElement('img');
-      _lbImg.src = src;
-      _lbImg.style.cssText = 'max-width:92%;max-height:92%;object-fit:contain;border-radius:8px;';
-      lightboxMask.appendChild(_lbImg);
+      var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src); var _lbImg = document.createElement(isVideo ? 'video' : 'img');
+      _lbImg.src = src; if (isVideo) { _lbImg.controls = true; _lbImg.autoplay = true; _lbImg.playsInline = true; }
+      _lbImg.style.cssText = 'max-width:92%;max-height:92%;object-fit:contain;border-radius:8px;transition:transform .05s linear;';
+      lightboxMask.appendChild(_lbImg); setBodyLock(true);
       lightboxMask.style.display = 'flex';
       lightboxMask.classList.add('open');
     }
@@ -2532,7 +2567,50 @@
       if (lightboxMask) {
         lightboxMask.style.display = 'none';
         lightboxMask.classList.remove('open');
+        setBodyLock(false);
       }
+    }
+
+    // 灯箱双指缩放（事件委托：lightbox 打开时双指放大看细节，双击复位）
+    (function () {
+      var scale = 1, startDist = 0;
+      document.addEventListener('touchstart', function (e) {
+        if (!lightboxMask || !lightboxMask.classList.contains('open')) return;
+        if (e.touches.length === 2) startDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      }, { passive: true });
+      document.addEventListener('touchmove', function (e) {
+        if (!lightboxMask || !lightboxMask.classList.contains('open')) return;
+        if (e.touches.length === 2 && startDist > 0) {
+          var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          scale = Math.min(4, Math.max(1, scale * (d / startDist)));
+          var el = lightboxMask.querySelector('img, video');
+          if (el) el.style.transform = 'scale(' + scale + ')';
+          startDist = d;
+          e.preventDefault();
+        }
+      }, { passive: false });
+      document.addEventListener('touchend', function () { startDist = 0; });
+      document.addEventListener('dblclick', function (e) {
+        if (!lightboxMask || !lightboxMask.classList.contains('open')) return;
+        if (lightboxMask.contains(e.target)) { scale = 1; var el = lightboxMask.querySelector('img, video'); if (el) el.style.transform = 'scale(1)'; }
+      });
+    })();
+    // 统一绑定：区域内所有图片/视频点击放大（富文本描述/类型描述/专属内容等复用）
+    function bindLightbox(root) {
+      if (!root) return;
+      // 动态内容每次重新绑定（img 用 dataset.lb 去重）
+      root.querySelectorAll('img').forEach(function (im) {
+        if (im.dataset.lb) return;
+        im.dataset.lb = '1';
+        im.style.cursor = 'zoom-in';
+        im.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(im.currentSrc || im.src); });
+      });
+      root.querySelectorAll('video').forEach(function (v) {
+        if (v.dataset.lb) return;
+        v.dataset.lb = '1';
+        v.style.cursor = 'zoom-in';
+        v.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(v.currentSrc || v.src); });
+      });
     }
 
     // ---------- 初始化 ----------

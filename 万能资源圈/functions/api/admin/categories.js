@@ -42,5 +42,13 @@ export async function onRequestPost(context) {
   await env.DB.prepare('INSERT INTO categories (id, name, sort, parent_id, is_hidden) VALUES (?, ?, ?, ?, ?)')
     .bind(newId, name, Number(b.sort) || 0, parentId, b.is_hidden ? 1 : 0).run();
 
+  // 新增一级分类时，自动在其下创建一个二级"全部"分类（保底子分类：一级分类必有"全部"）
+  if (parentId === 0) {
+    const max2 = await env.DB.prepare('SELECT MAX(id) AS m FROM categories').first();
+    const childId = (max2 && max2.m) ? max2.m + 1 : 1;
+    await env.DB.prepare('INSERT INTO categories (id, name, sort, parent_id, is_hidden) VALUES (?, ?, ?, ?, ?)')
+      .bind(childId, '全部', 0, newId, b.is_hidden ? 1 : 0).run();
+  }
+
   return json({ ok: true, id: newId });
 }
