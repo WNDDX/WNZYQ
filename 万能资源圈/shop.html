@@ -162,7 +162,7 @@
       box-shadow: 0 3px 10px rgba(0,0,0,0.15);
     }
     .top-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
-    .top-btn svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
+    .top-btn svg { width: 15px; height: 15px; flex-shrink: 0; display: block; vertical-align: middle; }    .top-btn span { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
@@ -1096,7 +1096,7 @@
     <div class="topbar-inner">
       <div class="shop-brand">
         <a class="shop-logo-link" href="admin" title="进入管理页">
-          <img class="shop-logo" id="shopLogo" src="assets/images/logo.png" alt="Logo" onload="this.style.opacity='1'" />
+          <img class="shop-logo" id="shopLogo" src="assets/images/logo.png" alt="Logo" onload="this.style.opacity='1'" onerror="window.__logoFail&&window.__logoFail(this)" />
         </a>
         <div class="shop-name" id="shopName">万能资源圈</div>
       </div>
@@ -1291,8 +1291,11 @@
 
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 6v8.5" stroke="%23c3ccd6" stroke-width="3.8" stroke-linecap="round" fill="none"/%3E%3Ccircle cx="12" cy="17.6" r="1.9" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
 
+    // logo 加载失败兜底：替换为感叹号占位（与全站一致）
+    window.__logoFail = function (im) { try { im.onerror = null; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; im.style.opacity = '1'; } catch (e) {} };
+    (function () { var _sl = document.getElementById('shopLogo'); if (_sl && _sl.complete && _sl.naturalWidth === 0 && String(_sl.getAttribute('src')).indexOf('data:') !== 0) window.__logoFail(_sl); })();
     // 全局媒体加载失败兜底：任何 IMG/VIDEO 加载失败统一替换为感叹号占位（页面加载即注册，与导航页一致）
     if (!window.__mediaErrOnce) {
       window.__mediaErrOnce = 1;

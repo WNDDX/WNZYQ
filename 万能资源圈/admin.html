@@ -298,7 +298,7 @@
     .status-select:hover { transform: scale(1.04); }
     .status-select:active { transform: scale(0.96); }    .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
 
-    .row-btn {
+    .product-row .p-ops { display: flex; align-items: center; gap: 12px; }    .row-btn {
       border: 1px solid #ddd; background: #fff; color: #555;
       padding: 6px 12px; border-radius: 6px; font-size: 13px; flex-shrink: 0;
     }
@@ -357,7 +357,7 @@
       text-align: center;
     }
     #productList.card-view .product-row .status-select {
-      margin: 0 14px 10px; align-self: flex-start;
+      margin: 0 12px 14px; align-self: stretch;
     }
     /* 视图切换按钮激活状态 */
     .view-btn.active {
@@ -564,7 +564,7 @@
     .form textarea { resize: vertical; line-height: 1.6; }
     /* 富文本编辑器 */
     .rte-toolbar {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px;
       background: #f8f9fa; border: 1px solid #ddd; border-bottom: none;
       border-radius: 10px 10px 0 0;
     }
@@ -574,7 +574,7 @@
       transition: all 0.10s; min-width: 32px; text-align: center;
     }
     .rte-btn:hover { background: #e3f2fd; border-color: #1976d2; color: #1976d2; }
-    .rte-btn:active { transform: scale(0.95); }    .rte-sep { flex: 0 0 1px; width: 1px; height: 22px; background: #e0e4e8; align-self: center; margin: 0 6px; }
+    .rte-btn:active { transform: scale(0.95); }    .rte-group { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }    .rte-group:last-child { margin-right: 0; }
     .rte-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
     /* 预设色板（文字颜色 / 背景颜色）：点色块即应用，无需输入代码 */
     .rte-palette {
@@ -609,7 +609,7 @@
       overflow-y: auto;
     }
     .rte-editor.rte-large ~ * { }
-    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
+    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
     .rte-zoom { font-weight: 600; }    .rte-toolbar .select-picker .cat-picker-display { min-height: 0; height: 32px; padding: 0 10px; align-self: center; border-radius: 6px; font-size: 13px; }    .rte-toolbar.rte-toolbar-large .select-picker .cat-picker-display { height: 36px; font-size: 15px; }
     .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
@@ -736,12 +736,12 @@
     .trend-chart h3 { font-size: 15px; margin-bottom: 12px; }
     .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding: 10px 2.5% 0 5%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; }
     .trend-bars::-webkit-scrollbar { display: none; }
-    .trend-col { flex: 1 0 22px; min-width: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .trend-bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; height: 100px; gap: 2px; }
+    .trend-col { flex: 1 0 22px; min-width: 22px; position: relative; height: 100%; }
+    .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: 24px; display: flex; flex-direction: column; justify-content: flex-end; height: 100px; gap: 2px; }
     .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
     .trend-bar.view { background: var(--blue1); }
     .trend-bar.contact { background: #ff9900; }
-    .trend-label { font-size: 10px; color: #999; white-space: nowrap; line-height: 1.3; padding-top: 8px; }
+    .trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #999; white-space: nowrap; line-height: 1.3; }
     .trend-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: #666; justify-content: center; }
     .trend-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
@@ -1041,11 +1041,11 @@
       <!-- 分类管理 -->
       <section id="panel-categories" style="display:none">
         <div class="toolbar">
-          <div class="tb-row"><button class="btn-blue" id="addCatBtn">新增分类</button></div>
+          <div class="tb-row"><button class="btn-blue" id="addCatBtn">新增分类</button><label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#333;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="catSelectAll" /> 全选</label></div>
           <span class="toolbar-hint">"全部"为固定分类，不可修改删除；排序值越小越靠前</span>
         </div>
         <!-- 分类批量操作栏 -->
-        <div class="batch-bar" id="catBatchBar"><label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#333;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="catSelectAll" /> 全选</label>
+        <div class="batch-bar" id="catBatchBar">
           <span style="font-size:13px;color:#666;">已选 <b id="catBatchCount" style="color:var(--blue1);">0</b> 项</span>
           <button class="batch-btn" id="catBatchHide">批量隐藏</button>
           <button class="batch-btn" id="catBatchShow">批量显示</button>
@@ -1067,7 +1067,7 @@
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
             <button type="button" class="btn-blue" id="openAnnBtn" style="width:auto;padding:0 24px;">设置公告</button>
-            <div class="rte-toolbar" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;">
+            <div class="rte-toolbar" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;"><span class="rte-group">
               <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement">
                 <option value="">字体</option>
                 <option value="Microsoft YaHei">微软雅黑</option>
@@ -1086,19 +1086,19 @@
                 <option value="6">超大</option>
                 <option value="7">巨大</option>
               </select>
-              <span class="rte-sep"></span>
+              </span><span class="rte-group">
               <button type="button" class="rte-btn" data-cmd="bold" data-target="setAnnouncement"><b>B</b></button>
               <button type="button" class="rte-btn" data-cmd="italic" data-target="setAnnouncement"><i>I</i></button>
               <button type="button" class="rte-btn" data-cmd="underline" data-target="setAnnouncement"><u>U</u></button>
               <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="setAnnouncement"><s>S</s></button>
-              <span class="rte-sep"></span>
+              </span><span class="rte-group">
               <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement">⬅</button>
               <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement">⬌</button>
               <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement">➡</button>
-              <span class="rte-sep"></span>
+              </span><span class="rte-group">
               <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="setAnnouncement">• 列表</button>
               <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="setAnnouncement">1. 列表</button>
-              <span class="rte-sep"></span>
+              </span><span class="rte-group">
               <div class="rte-palette" data-cmd="foreColor" data-editor="setAnnouncement" title="文字颜色">
                 <span class="palette-a">A</span>
                 <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
@@ -1127,14 +1127,14 @@
                 <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
                 <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
               </div>
-              <span class="rte-sep"></span>
+              </span><span class="rte-group">
               <button type="button" class="rte-btn" id="announcementRteLink">🔗 链接</button>
               <button type="button" class="rte-btn" id="announcementRteImg">🖼 图片</button>
               <button type="button" class="rte-btn" id="announcementRteVideo">🎬 视频</button>
-              <span class="rte-sep"></span>
+              </span><span class="rte-group">
               <button type="button" class="rte-btn" id="announcementFormatBrush">🖌 格式刷</button>
               <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button>
-              <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button>
+              <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button></span>
             </div>
             <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></div>
           </div>
@@ -1220,7 +1220,7 @@
         <img class="img-preview" id="fImgPreview" alt="预览" />
         <label>简介</label><input id="fDesc" placeholder="列表卡片上显示的一句话简介" />
         <label>详细描述</label>
-        <div class="rte-toolbar" id="detailRteToolbar" data-editor="fDetail">
+        <div class="rte-toolbar" id="detailRteToolbar" data-editor="fDetail"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" title="字体">
             <option value="">字体</option>
             <option value="Microsoft YaHei">微软雅黑</option>
@@ -1239,19 +1239,19 @@
             <option value="6">超大</option>
             <option value="7">巨大</option>
           </select>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="bold" title="加粗"><b>B</b></button>
           <button type="button" class="rte-btn" data-cmd="italic" title="斜体"><i>I</i></button>
           <button type="button" class="rte-btn" data-cmd="underline" title="下划线"><u>U</u></button>
           <button type="button" class="rte-btn" data-cmd="strikeThrough" title="删除线"><s>S</s></button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="justifyLeft" title="左对齐">⬅</button>
           <button type="button" class="rte-btn" data-cmd="justifyCenter" title="居中">⬌</button>
           <button type="button" class="rte-btn" data-cmd="justifyRight" title="右对齐">➡</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="有序列表">1. 列表</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <div class="rte-palette" data-cmd="foreColor" data-editor="fDetail" title="文字颜色">
             <span class="palette-a">A</span>
             <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
@@ -1280,14 +1280,14 @@
             <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接">🔗 链接</button>
           <button type="button" class="rte-btn" id="detailRteImg" title="插入图片">🖼 图片</button>
           <button type="button" class="rte-btn" id="detailRteVideo" title="插入视频">🎬 视频</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" title="清除格式">✕ 格式</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶ 放大</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶ 放大</button></span>
         </div>
         <div class="rte-editor" id="fDetail" contenteditable="true" placeholder="支持文字、图片、视频混排，像文章一样展示"></div>
 
@@ -1386,7 +1386,7 @@
       <div class="form">
         <label>类型名称</label><input id="vName" placeholder="如：基础版 / 高级版 / 单月卡" />
         <label>类型描述</label>
-        <div class="rte-toolbar" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;">
+        <div class="rte-toolbar" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vDescEditor">
             <option value="">字体</option>
             <option value="Microsoft YaHei">微软雅黑</option>
@@ -1405,19 +1405,19 @@
             <option value="6">超大</option>
             <option value="7">巨大</option>
           </select>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="bold" data-target="vDescEditor"><b>B</b></button>
           <button type="button" class="rte-btn" data-cmd="italic" data-target="vDescEditor"><i>I</i></button>
           <button type="button" class="rte-btn" data-cmd="underline" data-target="vDescEditor"><u>U</u></button>
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vDescEditor"><s>S</s></button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor">⬅</button>
           <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor">⬌</button>
           <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor">➡</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vDescEditor">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vDescEditor">1. 列表</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <div class="rte-palette" data-cmd="foreColor" data-editor="vDescEditor" title="文字颜色">
             <span class="palette-a">A</span>
             <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
@@ -1446,14 +1446,14 @@
             <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" id="vDescRteLink">🔗 链接</button>
           <button type="button" class="rte-btn" id="vDescRteImg">🖼 图片</button>
           <button type="button" class="rte-btn" id="vDescRteVideo">🎬 视频</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" id="vDescFormatBrush">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor">✕ 格式</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button></span>
         </div>
         <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;" placeholder="该类型的说明，支持文字、图片、视频、超链接"></div>
         <label class="checkbox-row"><input type="checkbox" id="vHidden" /> 隐藏该类型（资源页不显示，仅管理页可见）</label>
@@ -1465,7 +1465,7 @@
         <label>资源码</label>
         <input id="vResourceCode" placeholder="可不填，买家联系客服交易后获取的专属码" />
         <label>资源码专属内容（支持文字/链接/图片/视频）</label>
-        <div class="rte-toolbar" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;">
+        <div class="rte-toolbar" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vContentEditor">
             <option value="">字体</option>
             <option value="Microsoft YaHei">微软雅黑</option>
@@ -1484,19 +1484,19 @@
             <option value="6">超大</option>
             <option value="7">巨大</option>
           </select>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="bold" data-target="vContentEditor"><b>B</b></button>
           <button type="button" class="rte-btn" data-cmd="italic" data-target="vContentEditor"><i>I</i></button>
           <button type="button" class="rte-btn" data-cmd="underline" data-target="vContentEditor"><u>U</u></button>
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vContentEditor"><s>S</s></button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor">⬅</button>
           <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor">⬌</button>
           <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor">➡</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vContentEditor">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vContentEditor">1. 列表</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <div class="rte-palette" data-cmd="foreColor" data-editor="vContentEditor" title="文字颜色">
             <span class="palette-a">A</span>
             <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
@@ -1525,14 +1525,14 @@
             <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" id="vContentRteLink">🔗 链接</button>
           <button type="button" class="rte-btn" id="vContentRteImg">🖼 图片</button>
           <button type="button" class="rte-btn" id="vContentRteVideo">🎬 视频</button>
-          <span class="rte-sep"></span>
+          </span><span class="rte-group">
           <button type="button" class="rte-btn" id="vContentFormatBrush">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor">✕ 格式</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶ 放大</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶ 放大</button></span>
         </div>
         <div class="rte-editor" id="vContentEditor" contenteditable="true" style="min-height:80px;max-height:200px;border-radius:0 0 8px 8px;" placeholder="输入正确资源码后显示的内容，支持文字、图片、视频、超链接"></div>
       </div>
@@ -1587,7 +1587,7 @@
        ============================================ */
 
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 6v8.5" stroke="%23c3ccd6" stroke-width="3.8" stroke-linecap="round" fill="none"/%3E%3Ccircle cx="12" cy="17.6" r="1.9" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
@@ -1643,15 +1643,15 @@
     var catCancel = document.getElementById('catCancel');    var catDraftPending = false, catDraftFor = null;
     // ===== 关键按钮事件委托兜底：确保「新增分类 / 设置客服」任何情况下都能打开对应弹窗 =====
     function openContactSetting() {
-      if (!contactDraftPending) document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || '';
-      contactDraftPending = false;
-      document.getElementById('contactMask').classList.add('open');
+      try { if (!contactDraftPending) document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; } catch (e) {}
+      try { contactDraftPending = false; } catch (e) {}
+      try { document.getElementById('contactMask').classList.add('open'); } catch (e) {}
     }
     document.addEventListener('click', function (e) {
       var btn = e.target.closest ? e.target.closest('#openContactBtn, #addCatBtn') : null;
       if (!btn) return;
-      if (btn.id === 'openContactBtn') { if (!document.getElementById('contactMask').classList.contains('open')) openContactSetting(); }
-      else if (btn.id === 'addCatBtn') { if (!document.getElementById('catMask').classList.contains('open')) openCatEdit(null); }
+      if (btn.id === 'openContactBtn') { try { if (!document.getElementById('contactMask').classList.contains('open')) openContactSetting(); } catch (e) { try { document.getElementById('contactMask').classList.add('open'); } catch (e2) {} } }
+      else if (btn.id === 'addCatBtn') { try { if (!document.getElementById('catMask').classList.contains('open')) openCatEdit(null); } catch (e) { try { document.getElementById('catMask').classList.add('open'); } catch (e2) {} } }
     });
 
     // 通用输入弹窗
@@ -2012,7 +2012,7 @@
       if (name === 'products' && !window.__plP) { window.__plP = 1; loadProducts(); }
       if (name === 'stats' && !window.__plS) { window.__plS = 1; loadStats(); }
       if (name === 'categories' && !window.__plC) { window.__plC = 1; loadCategories(); }
-      if (name === 'settings') { (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = 'padding-top:12px;'; _fg.appendChild(_pg); } })(); if (!window.__plSet) { window.__plSet = 1; loadSettings(); } }
+      if (name === 'settings') { (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = ''; _fg.appendChild(_pg); } })(); if (!window.__plSet) { window.__plSet = 1; loadSettings(); } }
     }
 
     // ---------- 平台设置 ----------
@@ -2023,7 +2023,7 @@
         document.getElementById('setContactUrl').value = s.contact_url || '';
         // 客服状态文字已按需求移除
         document.getElementById('setAnnouncement').innerHTML = s.announcement || ''; annStoredV = s.announcement || '';
-        (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = 'padding-top:12px;'; _fg.appendChild(_pg); } })();
+        (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = ''; _fg.appendChild(_pg); } })();
         document.getElementById('annMode').value = s.announcement_mode || 'always';
         // 公告状态文字已按需求移除
       });
@@ -4422,12 +4422,12 @@
       document.querySelector('input[name="catLevel"][value="0"]').checked = !isChild;
       document.querySelector('input[name="catLevel"][value="1"]').checked = isChild;
       catParentWrap.style.display = isChild ? 'block' : 'none';
-      if (catParent.dataset.spRef) catParent.dataset.spRef.refresh();
+      try { if (catParent.dataset.spRef) catParent.dataset.spRef.refresh(); } catch (e) {}
       if (isChild && catParent.options.length > 0) {
         catParent.value = c.parent_id;
       }
 
-      if (catParent.dataset.spRef) catParent.dataset.spRef.refresh();
+      try { if (catParent.dataset.spRef) catParent.dataset.spRef.refresh(); } catch (e) {}
       catMask.classList.add('open');
     }
 
