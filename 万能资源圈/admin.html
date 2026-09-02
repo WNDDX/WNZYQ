@@ -437,7 +437,7 @@
       background: rgba(0, 0, 0, 0.76);
       display: none; align-items: center; justify-content: center; padding: 16px;
     }
-    .modal-mask.open { display: flex; }
+    .modal-mask.open { display: flex; animation: maskIn 0.22s ease; }
     .modal-box {
       position: relative; background: #fff; border-radius: 14px;
       width: 100%; max-width: 420px; max-height: 88vh; overflow-y: auto;
@@ -1604,6 +1604,7 @@
         if (t.parentNode) t.parentNode.replaceChild(ph, t);
       }
     }, true);
+    document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; } });
 
     // ---------- DOM ----------
     var loginView = document.getElementById('loginView');

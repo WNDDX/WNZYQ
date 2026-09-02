@@ -161,7 +161,7 @@
       opacity: 0.9;
       box-shadow: 0 3px 10px rgba(0,0,0,0.15);
     }
-    .top-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    .top-btn:active { opacity: 0.85; }
     .top-btn svg { width: 15px; height: 15px; flex-shrink: 0; display: block; vertical-align: middle; }    .top-btn span { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 
     @keyframes toastIn {
@@ -405,7 +405,7 @@
       font-size: 14px;
       display: none;
     }
-    .empty-tip.show { display: block; }
+    .empty-tip.show { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block; z-index: 50; }
     .empty-tip .empty-icon {
       font-size: 48px;
       margin-bottom: 12px;
@@ -1315,6 +1315,7 @@
           if (t.parentNode) t.parentNode.replaceChild(ph, t);
         }
       }, true);
+      document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; } });
     }
 
     // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
@@ -1329,6 +1330,9 @@
           im.style.objectFit = 'contain';
           im.style.display = 'block';
         });
+        if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) {
+          im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block';
+        }
       })(imgs[i]);
       var vids = root.querySelectorAll('video');
       for (var j = 0; j < vids.length; j++) (function (vd) {
