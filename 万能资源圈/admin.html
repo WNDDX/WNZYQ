@@ -2073,6 +2073,18 @@
     document.getElementById('viewCardBtn').addEventListener('click', function () { setView('card'); });
     // 初始化视图
     setView(currentView);
+    // 调整统计表格顺序：资源明细 → 分类统计 → 浏览记录
+    (function () {
+      var cRows = document.getElementById('statCatRows');
+      var dRows = document.getElementById('statRows');
+      if (cRows && dRows) {
+        var cw = cRows.closest('.stat-table-wrap');
+        var dw = dRows.closest('.stat-table-wrap');
+        if (cw && dw && cw.parentNode && dw.parentNode === cw.parentNode && dw.nextElementSibling === cw) {
+          cw.parentNode.insertBefore(dw, cw);
+        }
+      }
+    })();
 
     // ---------- 登录 ----------
     loginBtn.addEventListener('click', doLogin);
@@ -3224,7 +3236,7 @@
       if (!ed) return;
       var big = ed.classList.toggle('rte-large'); var tb = ed.previousElementSibling; if (tb && tb.classList && tb.classList.contains('rte-toolbar')) { if (big) tb.classList.add('rte-toolbar-large'); else tb.classList.remove('rte-toolbar-large'); }
       z.classList.toggle('rte-zoom-on', big);
-      z.textContent = big ? '🗗 还原' : '⛶ 放大';
+      z.textContent = '⛶ 放大';
       if (big) {
         ed.focus();
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
@@ -4591,7 +4603,7 @@
     });
 
     // ---------- 导出 CSV ----------
-    document.getElementById('exportBtn').addEventListener('click', exportCSV);
+    document.getElementById('exportBtn').addEventListener('click', exportAllData);
     // 导出资源码解锁记录
     var exportResourceBtn = document.getElementById('exportResourceBtn');
     // 解锁记录已并入统一导出，无需单独按钮

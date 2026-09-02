@@ -1128,8 +1128,8 @@
       </div>
       <!-- 视图切换按钮 -->
       <div class="view-toggle" style="display:flex;gap:4px;margin-left:8px;">
-        <button type="button" class="view-btn" id="viewListBtn" title="列表视图">☰ 列表</button>
-        <button type="button" class="view-btn active" id="viewGridBtn" title="网格视图">▦ 网格</button>
+        <button type="button" class="view-btn active" id="viewListBtn" title="列表视图">☰ 列表</button>
+        <button type="button" class="view-btn" id="viewGridBtn" title="网格视图">▦ 网格</button>
 
 
       </div>
@@ -2150,7 +2150,7 @@
 
     // ---------- 顶栏：联系客服 ----------
     topContactBtn.addEventListener('click', function () {
-      var url = getDefaultContact();
+      var url = window._globalContact || getDefaultContact();
       if (url) window.open(url, '_blank');
       else showToast('暂未设置客服链接');
     });
