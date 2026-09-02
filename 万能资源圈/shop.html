@@ -96,7 +96,7 @@
       gap: 12px;
     }
     .shop-logo {
-      width: 44px; height: 44px;
+      width: 40px; height: 40px;
       border-radius: 50%;
       object-fit: cover;
       background: rgba(255,255,255,0.25);
@@ -104,9 +104,9 @@
     }
     .shop-name {
       color: #fff;
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 700;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
       white-space: nowrap;
     }
     .shop-brand {
@@ -1277,7 +1277,7 @@
 
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23f5f5f5"/%3E%3Cpath d="M200 70c-48 37-76 72-76 108a76 76 0 0 0 152 0c0-36-28-71-76-108z" fill="%23c3ccd6"/%3E%3Crect x="192" y="122" width="16" height="60" rx="8" fill="%23f5f5f5"/%3E%3Ccircle cx="200" cy="208" r="9" fill="%23f5f5f5"/%3E%3C/svg%3E';
+    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f5f5f5"/%3E%3Cpath d="M200 82 C 236 110 260 140 260 172 C 260 200 242 224 218 240 C 206 249 202 256 200 264 C 198 256 194 249 182 240 C 158 224 140 200 140 172 C 140 140 164 110 200 82 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="200" cy="310" r="16" fill="%23c3ccd6"/%3E%3C/svg%3E';
 
     // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
     function bindMediaFail(root) {
@@ -1315,6 +1315,24 @@
       img.onload = function () { this.style.display = 'block'; };
       img.src = src || IMG_PLACEHOLDER;
       if (!src) { img.src = IMG_PLACEHOLDER; img.style.display = 'block'; }
+
+    if (!window.__mediaErrOnce) { window.__mediaErrOnce = 1; // 全局兜底：任何动态图片/视频加载失败显示感叹号（仅注册一次）
+    document.addEventListener('error', function (e) {
+      var t = e.target;
+      if (!t || !t.tagName || t.dataset.fh) return;
+      if (t.tagName === 'IMG') {
+        t.dataset.fh = '1';
+        t.src = IMG_PLACEHOLDER;
+        t.style.objectFit = 'contain';
+        t.style.display = 'block';
+      } else if (t.tagName === 'VIDEO') {
+        t.dataset.fh = '1';
+        var ph = document.createElement('img');
+        ph.src = IMG_PLACEHOLDER;
+        ph.style.cssText = 'width:100%;height:auto;display:block;';
+        if (t.parentNode) t.parentNode.replaceChild(ph, t);
+      }
+    }, true); }
     }
 
     // 价格格式化：0 或空返回 ''（免费不显示），整数显示 ¥99，小数显示 ¥99.00

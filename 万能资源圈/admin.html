@@ -91,7 +91,7 @@
       margin: 0 auto;
       border-radius: 50%;
       overflow: hidden;
-      background: linear-gradient(135deg, var(--blue1), var(--blue));
+      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       color: #fff; font-size: 34px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 12px rgba(30, 136, 229, 0.4);
@@ -121,9 +121,9 @@
     .btn-blue {
       width: 100%; height: 44px;
       border: none; border-radius: 8px;
-      background: linear-gradient(135deg, var(--blue1), var(--blue));
+      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       color: #fff; font-size: 16px; font-weight: 600;
-      letter-spacing: 1px; margin-bottom: 10px;
+      letter-spacing: 1.2px; margin-bottom: 10px;
     }
     .login-foot { font-size: 12px; color: #bbb; line-height: 1.6; }
 
@@ -152,22 +152,22 @@
     .pull-refresh-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2); border-top-color: var(--blue1); border-radius: 50%; animation: prspin .8s linear infinite; }
     @keyframes prspin { to { transform: rotate(360deg); } }
     .topbar {
-      background: linear-gradient(135deg, var(--blue1), var(--blue));
+      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       box-shadow: 0 2px 10px rgba(30, 136, 229, 0.35);
     }
     .topbar-inner {
       max-width: 1200px; margin: 0 auto;
       padding: 10px 16px;
-      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     }
     .topbar-brand {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
       color: #fff;
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 1px;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
       white-space: nowrap;
     }
     .topbar-logo-link {
@@ -186,11 +186,11 @@
       box-shadow: 0 0 0 3px rgba(255,255,255,0.45);
     }
     .topbar-logo {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.25);
     }
     .tabs { display: flex; gap: 6px; flex: 1; }
     .tab {
@@ -341,7 +341,7 @@
     #productList.card-view .product-row .p-ops {
       width: 100%;
       display: flex;
-      gap: 8px;
+      gap: 12px;
       padding: 0 12px 10px;
       justify-content: flex-start;
     }
@@ -365,7 +365,7 @@
       gap: 14px; margin-bottom: 18px;
     }
     .stat-card {
-      background: linear-gradient(135deg, var(--blue1), var(--blue));
+      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       color: #fff; border-radius: 12px; padding: 18px;
       text-align: center; box-shadow: 0 4px 12px rgba(30, 136, 229, 0.25);
     }
@@ -446,7 +446,7 @@
       position: absolute; top: 12px; right: 12px; z-index: 10;
       width: 32px; height: 32px; border-radius: 50%;
       border: none; background: #f0f2f5; color: #666;
-      font-size: 18px; cursor: pointer;
+      font-size: 19px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.12s ease; line-height: 1;
     }
@@ -470,8 +470,10 @@
     .cat-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
     .cat-picker-display .cpd-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cat-picker-display .cpd-text.placeholder { color: #aaa; }
-    .cat-picker-display .cpd-arrow { color: #999; transition: transform 0.15s; flex-shrink: 0; }
-    .cat-picker.open .cpd-arrow { transform: rotate(180deg); }
+    .cat-picker-display .cpd-arrow { width: 16px; height: 16px; color: var(--blue1); transition: transform 0.3s ease, color 0.2s ease; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); }
+    .cat-picker-display:hover .cpd-arrow { color: #ff6b35; }
+    .cat-picker-display .cpd-arrow svg { width: 100%; height: 100%; display: block; }
+    .cat-picker.open .cpd-arrow { transform: rotate(0deg); }
     .cat-picker-panel {
       display: none; position: fixed; z-index: 9999;
       max-height: 264px; overflow-y: auto; background: #fff; border: 1px solid #e3e8ee;
@@ -480,7 +482,7 @@
     .cat-picker.open .cat-picker-panel { display: block; }
     .select-picker.open .cat-picker-panel { display: block; }
     .select-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
-    .select-picker.open .cpd-arrow { transform: rotate(180deg); }
+    .select-picker.open .cpd-arrow { transform: rotate(0deg); }
     .cp-item {
       display: flex; align-items: center; gap: 6px; padding: 9px 10px; border-radius: 8px;
       cursor: pointer; font-size: 14px; color: #333; transition: background 0.10s;
@@ -491,11 +493,12 @@
     .cp-item.cp-sub { padding-left: 30px; font-weight: 400; color: #555; font-size: 13px; }
     .cp-item .cp-name { flex: 1; }
     .cp-item .cp-chevron {
-      width: 22px; height: 22px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-      color: #888; font-size: 11px; border-radius: 6px; transition: transform 0.15s, background 0.10s;
+      width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      color: var(--blue1); transition: transform 0.3s ease, color 0.2s ease; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
     }
-    .cp-item .cp-chevron:hover { background: #dcebfb; }
-    .cp-item.cp-expanded .cp-chevron { transform: rotate(90deg); }
+    .cp-item .cp-chevron svg { width: 100%; height: 100%; display: block; }
+    .cp-item .cp-chevron:hover { color: #ff6b35; }
+    .cp-item.cp-expanded .cp-chevron { transform: rotate(0deg); }
     .cp-children { display: none; }
     .cp-children.show { display: block; }
     .cp-empty { padding: 12px; color: #aaa; font-size: 13px; text-align: center; }
@@ -542,7 +545,7 @@
     /* 数据统计日期输入框 */
     .stat-date-input {
       padding: 8px 10px !important; border: 1px solid #ddd !important;
-      border-radius: 8px !important; font-size: 13px !important; width: auto !important;
+      border-radius: 8px !important; font-size: 13px !important; width: 165px !important;
     }
     .form textarea { resize: vertical; line-height: 1.6; }
     /* 富文本编辑器 */
@@ -647,7 +650,7 @@
     .modal-inner-btn {
       flex: 1; height: 44px; border: none; border-radius: 8px;
       color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 1px;
-      background: linear-gradient(135deg, var(--blue1), var(--blue));
+      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
     }
     .modal-close {
       flex: 1; background-color: var(--red); color: #fff; border: none;
@@ -717,8 +720,8 @@
       margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
     }
     .trend-chart h3 { font-size: 15px; margin-bottom: 12px; }
-    .trend-bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-top: 10px; }
-    .trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .trend-bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-top: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+    .trend-col { flex: 1 0 46px; min-width: 46px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .trend-bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; height: 100px; gap: 2px; }
     .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
     .trend-bar.view { background: var(--blue1); }
@@ -759,8 +762,9 @@
 
     /* 手机端适配 */
     @media (max-width: 600px) {
-      .topbar-inner { gap: 6px; padding: 8px 12px; flex-wrap: wrap; }
-      .topbar-brand { flex: 1; min-width: 0; font-size: 15px; }
+      .topbar-inner { gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
+      .topbar-logo { width: 34px; height: 34px; }
+      .topbar-brand { flex: 1; min-width: 0; font-size: 16px; }
       .topbar-title { font-size: 15px; }
       .topbar-brand span { display: none; }
       .topbar-right { flex-shrink: 0; }
@@ -804,7 +808,7 @@
       .product-row .p-ops {
         width: 100%;
         display: flex;
-        gap: 8px;
+        gap: 12px;
         padding: 0 12px 10px;
         justify-content: flex-start;
       }
@@ -814,7 +818,8 @@
       #productList.card-view { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       #productList.card-view .product-row .thumb { height: 90px; }
       #productList.card-view .product-row .info { padding: 8px 10px 4px; }
-      #productList.card-view .product-row .p-ops { padding: 0 10px 8px; }
+      #productList.card-view .product-row .p-ops { padding: 0 10px 8px; flex-wrap: wrap; gap: 6px; }
+      #productList.card-view .product-row .p-ops .row-btn { flex: 1 1 42%; padding: 7px 4px; font-size: 12px; white-space: nowrap; }
       .stat-cards { grid-template-columns: repeat(2, 1fr); }
       .modal-box { padding: 18px 16px; }
       .modal-footer { flex-wrap: wrap; }
@@ -911,8 +916,8 @@
             </div>
           </div>
           <div class="tb-row tb-row2">
-          <div class="cat-picker" id="filterCatPicker" style="position:relative;width:auto;">
-            <div class="cat-picker-display"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow">▼</span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
+          <div class="cat-picker" id="filterCatPicker" style="position:relative;">
+            <div class="cat-picker-display"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
           </select>
           <select id="filterStatus">
             <option value="">全部状态</option>
@@ -970,7 +975,7 @@
           </div>
           <!-- 折线图 -->
           <div class="line-chart" id="lineChart">
-            <svg id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" style="display:block;min-width:560px;"></svg>
+            <svg id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;"></svg>
             <div class="line-legend">
               <span class="lg-view"><i></i>浏览</span>
               <span class="lg-contact"><i></i>联系客服</span>
@@ -986,7 +991,7 @@
           </div>
         </div>
         <div class="stat-table-wrap" style="margin-bottom:14px;">
-          <h3>按分类统计</h3>
+          <h3>分类统计</h3>
           <table class="stat-table">
             <thead><tr><th>分类</th><th>资源数</th><th>总浏览</th></tr></thead>
             <tbody id="statCatRows"></tbody>
@@ -1000,7 +1005,7 @@
           </table>
         </div>
         <div class="stat-table-wrap">
-          <h3>最近浏览记录（20条）</h3>
+          <h3>浏览记录</h3>
           <table class="stat-table">
             <thead><tr><th>时间</th><th>类型</th><th>资源</th></tr></thead>
             <tbody id="statRecentRows"></tbody>
@@ -1112,7 +1117,7 @@
         </div>
         <div class="setting-group">
           <h3>修改密码</h3>
-          <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 28px;background:#4CAF50;">修改密码</button>
+          <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 24px;background:#4CAF50;">修改密码</button>
         </div>
       </section>
 
@@ -1184,7 +1189,7 @@
       <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
         <label>标题</label><input id="fTitle" placeholder="资源标题" />
-        <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow">▾</span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
+        <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
         <label>资源封面图</label><input id="fImg" placeholder="网络图片地址 https://...（仅 logo 用本地图）" />
         <div style="font-size:11px;color:#999;margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" />
@@ -1326,7 +1331,7 @@
       <button class="modal-close-x" data-close="batchCatMask">×</button>
       <h2 class="modal-title">批量改分类</h2>
       <div style="font-size:13px;color:#666;margin-bottom:12px;">选择目标分类，将选中的资源移动到该分类下</div>
-      <div class="cat-picker" id="batchCatPicker" style="margin-bottom:16px;"><input type="hidden" id="batchCatSelect" value="0" /><div class="cat-picker-display" id="batchCatDisplay"><span class="cpd-text">请选择目标分类</span><span class="cpd-arrow">▾</span></div><div class="cat-picker-panel" id="batchCatPanel"></div></div>
+      <div class="cat-picker" id="batchCatPicker" style="margin-bottom:16px;"><input type="hidden" id="batchCatSelect" value="0" /><div class="cat-picker-display" id="batchCatDisplay"><span class="cpd-text">请选择目标分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="batchCatPanel"></div></div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="batchCatOk">确定修改</button>
         <button class="modal-close" data-close="batchCatMask">取消</button>
@@ -1557,7 +1562,7 @@
        ============================================ */
 
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23f5f5f5"/%3E%3Cpath d="M200 70c-48 37-76 72-76 108a76 76 0 0 0 152 0c0-36-28-71-76-108z" fill="%23c3ccd6"/%3E%3Crect x="192" y="122" width="16" height="60" rx="8" fill="%23f5f5f5"/%3E%3Ccircle cx="200" cy="208" r="9" fill="%23f5f5f5"/%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f5f5f5"/%3E%3Cpath d="M200 82 C 236 110 260 140 260 172 C 260 200 242 224 218 240 C 206 249 202 256 200 264 C 198 256 194 249 182 240 C 158 224 140 200 140 172 C 140 140 164 110 200 82 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="200" cy="310" r="16" fill="%23c3ccd6"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
@@ -1663,7 +1668,7 @@
     // 改密码弹窗
     var TOKEN_KEY = 'wnzyq_token';
     // 占位图统一使用 EXC_PLACEHOLDER（见上方定义），IMG_PLACEHOLDER 保留兼容旧引用
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect fill="%23eef4fb" width="400" height="300"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="140" r="32"/%3E%3Cpath d="M200 120c-11 0-20 9-20 20s9 20 20 20 20-9 20-20-9-20-20-20zm0 32c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z"/%3E%3Cpath d="M140 180h120v-8c0-8.8-7.2-16-16-16h-88c-8.8 0-16 7.2-16 16v8zm160 0h-16v-8c0-17.7-14.3-32-32-32h-96c-17.7 0-32 14.3-32 32v8H100c-11 0-20 9-20 20v60c0 11 9 20 20 20h200c11 0 20-9 20-20v-60c0-11-9-20-20-20z" opacity="0.6"/%3E%3C/g%3E%3C/svg%3E';
+    var IMG_PLACEHOLDER = EXC_PLACEHOLDER; // 兼容旧引用，统一感叹号占位
     var state = {
       categories: [],
       products: [],
@@ -1724,6 +1729,10 @@
       var closeBtn = e.target.closest('.modal-close-x, .modal-close[data-close]');
       if (closeBtn && closeBtn.dataset.close) {
         var mask = document.getElementById(closeBtn.dataset.close);
+        if (closeBtn.dataset.close === 'editMask') clearDraft(); // ×=取消：丢弃商品编辑草稿
+        if (closeBtn.dataset.close === 'catMask') catDraftPending = false; // ×=取消：丢弃分类草稿
+        if (closeBtn.dataset.close === 'variantMask') variantDraftPending = false; // ×=取消：丢弃类型草稿
+        if (closeBtn.dataset.close === 'pwdMask') { var _o=document.getElementById('oldPwd'),_n=document.getElementById('newPwd'),_c=document.getElementById('confirmPwd'); if(_o)_o.value=''; if(_n)_n.value=''; if(_c)_c.value=''; } // ×=取消：清空密码框
         if (mask) {
           mask.classList.remove('open');
           // 清除输入弹窗回调
@@ -2582,7 +2591,7 @@
       redoStack = [];
       /* 撤销/重做已交由浏览器原生处理，不再维护自定义历史栈 */
       // 启动自动保存草稿
-      startAutoSaveDraft();
+      /* 草稿自动保存已移除：未保存不保留 */
     }
 
     // 填充资源表单
@@ -2604,7 +2613,7 @@
     var draftTimer = null;
     function startAutoSaveDraft() {
       stopAutoSaveDraft();
-      draftTimer = setInterval(saveDraft, 10000); // 每10秒自动保存
+      // draftTimer = setInterval(saveDraft, 10000); // 草稿自动保存已移除（未保存不保留）
     }
     function stopAutoSaveDraft() {
       if (draftTimer) { clearInterval(draftTimer); draftTimer = null; }
@@ -2703,11 +2712,11 @@
       var tops = cats.filter(function (c) { return c.id !== 0 && (!c.parent_id || c.parent_id === 0); })
         .sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
       panelEl.innerHTML = '';
-      if (opts.allowUncategorized) {
+      if (opts.showAll || opts.allowUncategorized) {
         var all = document.createElement('div');
         all.className = 'cp-item cp-top' + (Number(selected) === 0 ? ' selected' : '');
-        all.innerHTML = '<span class="cp-name">全部（未分类）</span>';
-        all.addEventListener('click', function () { pickCatValue(pickerEl, hiddenInput, displayEl, 0, '全部（未分类）'); });
+        all.innerHTML = '<span class="cp-name">' + (opts.allLabel || '全部（未分类）') + '</span>';
+        all.addEventListener('click', function () { pickCatValue(pickerEl, hiddenInput, displayEl, 0, opts.allLabel || '全部（未分类）'); });
         panelEl.appendChild(all);
       }
       if (!tops.length) {
@@ -2728,7 +2737,7 @@
         if (subs.length) {
           var chev = document.createElement('span');
           chev.className = 'cp-chevron';
-          chev.textContent = '▶';
+          chev.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>';
           chev.addEventListener('click', function (ev) {
             ev.stopPropagation();
             var childBox = row.nextElementSibling;
@@ -2756,7 +2765,7 @@
       var sel = Number(selected);
       var found = (state.categories || []).find(function (c) { return Number(c.id) === sel && !(opts.excludeZero && Number(c.id) === 0); });
       var txtEl = displayEl.querySelector('.cpd-text');
-      if (sel === 0 && opts.allowUncategorized) { txtEl.textContent = '全部（未分类）'; txtEl.classList.remove('placeholder'); }
+      if (sel === 0 && (opts.showAll || opts.allowUncategorized)) { txtEl.textContent = opts.allLabel || '全部（未分类）'; txtEl.classList.remove('placeholder'); }
       else if (found) { txtEl.textContent = found.name; txtEl.classList.remove('placeholder'); }
       else { txtEl.textContent = opts.placeholder || '请选择分类'; txtEl.classList.add('placeholder'); }
       hiddenInput.value = sel || 0;
@@ -2810,7 +2819,7 @@
       txt.className = 'cpd-text' + (sel.value ? '' : ' placeholder');
       txt.textContent = sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '请选择';
       var arrow = document.createElement('span');
-      arrow.className = 'cpd-arrow'; arrow.textContent = '▾';
+      arrow.className = 'cpd-arrow'; arrow.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>';
       disp.appendChild(txt); disp.appendChild(arrow);
       var panel = document.createElement('div');
       panel.className = 'cat-picker-panel';
@@ -2861,7 +2870,7 @@
         fp.querySelector('.cat-picker-display'),
         document.getElementById('filterCatPanel'),
         0,
-        { excludeZero: true, placeholder: '全部分类' }
+        { excludeZero: false, showAll: true, allLabel: '全部分类', placeholder: '全部分类' }
       );
     }
     function onProductCidChange(id) {
@@ -2910,7 +2919,7 @@
 
     saveProductBtn.addEventListener('click', saveProduct);
     editCancel.addEventListener('click', function () { editMask.classList.remove('open'); clearDraft(); });
-    editMask.addEventListener('click', function (e) { if (e.target === editMask) { editMask.classList.remove('open'); clearDraft(); } });
+    editMask.addEventListener('click', function (e) { if (e.target === editMask) { saveDraft(); editMask.classList.remove('open'); } });
 
     // ---------- 表单必填校验 ----------
     function validateField(input, msg) {
@@ -2939,7 +2948,7 @@
     }
 
     var saving = false;
-    var catSaving = false; // 分类保存防重复提交锁
+    // （catSaving 在分类管理区域声明）
     function saveProduct() {
       if (saving) return; // 防重复提交
       var data = {
@@ -3367,6 +3376,7 @@
     });
     // 取消公告
     document.getElementById('cancelAnnBtn').addEventListener('click', function () { document.getElementById('annMask').classList.remove('open'); });
+    document.getElementById('annMask').addEventListener('click', function (e) { if (e.target === document.getElementById('annMask')) document.getElementById('annMask').classList.remove('open'); }); // 遮罩关闭：保留输入可继续编辑
 
     // ---------- 全局客服链接（弹窗设置，与公告一致） ----------
     document.getElementById('openContactBtn').addEventListener('click', function () {
@@ -3381,6 +3391,7 @@
       api('admin/settings', { method: 'PUT', body: JSON.stringify({ contact_url: v }) }).then(function (res) { if (res.ok) toast('客服链接已保存', 'success'); else toast(res.msg || '保存失败', 'error'); });
     });
     document.getElementById('cancelContactBtn').addEventListener('click', function () { document.getElementById('contactMask').classList.remove('open'); });
+    document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) document.getElementById('contactMask').classList.remove('open'); }); // 遮罩关闭：保留输入可继续编辑
 
     // 工具栏按钮点击执行命令
     document.querySelectorAll('#announcementRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
@@ -3488,6 +3499,8 @@
     annEditor.addEventListener('focus', updateAnnPlaceholder);
     annEditor.addEventListener('blur', updateAnnPlaceholder);
 
+    var variantDraftPending = false; // 类型弹窗：遮罩关闭暂存输入
+    var variantDraftFor = null; // 暂存对应的类型 id（防止打开其他类型时误保留）
     addVariantBtn.addEventListener('click', function () {
       if (!state.editingId) {
       openVariantEdit(null); // 类型可随时添加，无需先保存资源；未保存时暂存本地列表，保存资源时一并提交
@@ -3497,6 +3510,7 @@
     });
 
     function openVariantEdit(v) {
+      if (variantDraftPending && variantDraftFor === (v ? v.id : null)) { variantDraftPending = false; variantModalTitle.textContent = v ? '编辑类型' : '添加类型'; return; } // 遮罩关闭暂存：仅同一类型保留输入继续编辑
       state.editingVariantId = v ? v.id : null;
       state._editVariantIdx = v ? state.variants.indexOf(v) : -1;
       variantModalTitle.textContent = v ? '编辑类型' : '添加类型';
@@ -3684,7 +3698,7 @@
         var _li = (typeof state._editVariantIdx === 'number') ? state._editVariantIdx : -1;
         if (_li >= 0 && state.variants[_li]) { Object.assign(state.variants[_li], data); } else { state.variants.push(data); }
         state.variants.forEach(function (vv, i) { vv.sort = i + 1; });
-        variantMask.classList.remove('open');
+        variantDraftPending = false; variantMask.classList.remove('open');
         toast('类型已添加（保存资源后生效）', 'success');
         renderVariants();
         return;
@@ -3694,7 +3708,7 @@
         : api('admin/variants', { method: 'POST', body: JSON.stringify(data) });
       req.then(function (res) {
         if (res.ok) {
-          variantMask.classList.remove('open');
+          variantDraftPending = false; variantMask.classList.remove('open');
           toast('保存成功', 'success');
           loadVariants(state.editingId);
         } else {
@@ -3713,8 +3727,8 @@
       });
     }
 
-    variantCancel.addEventListener('click', function () { variantMask.classList.remove('open'); });
-    variantMask.addEventListener('click', function (e) { if (e.target === variantMask) variantMask.classList.remove('open'); });
+    variantCancel.addEventListener('click', function () { variantDraftPending = false; variantMask.classList.remove('open'); });
+    variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = true; variantDraftFor = state.editingVariantId; variantMask.classList.remove('open'); } });
 
     // ---------- 折线图渲染 ----------
     function renderLineChart(trend) {
@@ -3932,6 +3946,14 @@
       if (endDate) params.push('end_date=' + encodeURIComponent(endDate));
       if (params.length) url += '?' + params.join('&');
       api(url).then(function (res) {
+        // 数据统计表格顺序：资源明细 → 分类统计 → 浏览记录（幂等，仅首次生效）
+        var _sec = document.getElementById('panel-stats');
+        if (_sec) {
+          var _ws = _sec.querySelectorAll('.stat-table-wrap');
+          if (_ws.length >= 3 && _ws[0].querySelector('h3') && _ws[0].querySelector('h3').textContent.indexOf('分类') !== -1) {
+            _sec.insertBefore(_ws[1], _ws[0]);
+          }
+        }
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var ov = res.overview || {};
         var cards = [
@@ -3989,7 +4011,7 @@
           wrap.appendChild(barC);
           var label = document.createElement('div');
           label.className = 'trend-label';
-          label.textContent = (trendData.length <= 14 || i % 3 === 0 || i === trendData.length - 1) ? (d.day ? d.day.slice(5) : '') : '';
+          label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? d.day.slice(5) : '') : '';
           col.appendChild(wrap);
           col.appendChild(label);
           trendBox.appendChild(col);
@@ -4131,10 +4153,11 @@
         // 一级分类展开/收起箭头
         if (isTop && c.id !== 0) {
           var toggleBtn = document.createElement('span');
-          toggleBtn.style.cssText = 'display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;cursor:pointer;margin-right:4px;color:#666;transition:transform 0.2s;user-select:none;';
+          toggleBtn.style.cssText = 'display:inline-block;width:20px;height:20px;cursor:pointer;margin-right:4px;color:var(--blue1);transition:transform 0.3s ease;user-select:none;filter:drop-shadow(0 1px 2px rgba(30,136,229,0.3));';
           var hasChildren = list.some(function (sub) { return sub.parent_id === c.id; });
           if (hasChildren) {
-            toggleBtn.textContent = state.catExpanded[c.id] === false ? '▶' : '▼';
+            toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;display:block"><path d="M7 10l5 5 5-5z"/></svg>';
+            toggleBtn.style.transform = state.catExpanded[c.id] === false ? 'rotate(-90deg)' : 'rotate(0deg)';
             toggleBtn.title = state.catExpanded[c.id] === false ? '展开子分类' : '收起子分类';
           } else {
             toggleBtn.textContent = '•';
@@ -4301,6 +4324,7 @@
     }
 
     function openCatEdit(c) {
+      if (catDraftPending && catDraftFor === (c ? c.id : null)) { catDraftPending = false; catModalTitle.textContent = c ? '编辑分类' : '新增分类'; return; } // 遮罩关闭暂存：仅同一分类保留输入继续编辑
       state.catEditingId = c ? c.id : null;
       catModalTitle.textContent = c ? '编辑分类' : '新增分类';
       catName.value = c ? (c.name || '') : '';
@@ -4365,6 +4389,8 @@
     }
 
     var catSaving = false;
+    var catDraftPending = false; // 分类弹窗：遮罩关闭暂存输入，取消/保存后丢弃
+    var catDraftFor = null; // 暂存对应的分类 id（防止打开其他分类时误保留）
     catOk.addEventListener('click', function () {
       if (catSaving) return; // 防重复提交
       catSaving = true; // 立即锁定，防止快速双击
@@ -4400,7 +4426,7 @@
         catOk.disabled = false;
         catOk.style.opacity = '';
         if (res.ok) {
-          catMask.classList.remove('open');
+          catDraftPending = false; catMask.classList.remove('open');
           toast('保存成功', 'success');
           clearCache();
           loadCategories();
@@ -4415,8 +4441,8 @@
       });
     });
 
-    catCancel.addEventListener('click', function () { catMask.classList.remove('open'); });
-    catMask.addEventListener('click', function (e) { if (e.target === catMask) catMask.classList.remove('open'); });
+    catCancel.addEventListener('click', function () { catDraftPending = false; catMask.classList.remove('open'); });
+    catMask.addEventListener('click', function (e) { if (e.target === catMask) { catDraftPending = true; catDraftFor = state.catEditingId; catMask.classList.remove('open'); } });
 
     // ---------- 平台设置：修改密码（弹窗形式） ----------
     var pwdMask = document.getElementById('pwdMask');
@@ -4429,6 +4455,7 @@
     });
     // 点击"取消"按钮关闭弹窗
     document.getElementById('cancelPwdBtn').addEventListener('click', function () {
+      document.getElementById('oldPwd').value = ''; document.getElementById('newPwd').value = ''; document.getElementById('confirmPwd').value = ''; // 取消=丢弃输入
       pwdMask.classList.remove('open');
     });
     // 点击遮罩关闭弹窗

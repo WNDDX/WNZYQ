@@ -330,7 +330,7 @@ const dom = {
 };
 
 // 全站统一：图片加载失败显示感叹号占位（与资源页/管理页/错误页一致）
-var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23f5f5f5"/%3E%3Cpath d="M200 70c-48 37-76 72-76 108a76 76 0 0 0 152 0c0-36-28-71-76-108z" fill="%23c3ccd6"/%3E%3Crect x="192" y="122" width="16" height="60" rx="8" fill="%23f5f5f5"/%3E%3Ccircle cx="200" cy="208" r="9" fill="%23f5f5f5"/%3E%3C/svg%3E';
+var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f5f5f5"/%3E%3Cpath d="M200 82 C 236 110 260 140 260 172 C 260 200 242 224 218 240 C 206 249 202 256 200 264 C 198 256 194 249 182 240 C 158 224 140 200 140 172 C 140 140 164 110 200 82 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="200" cy="310" r="16" fill="%23c3ccd6"/%3E%3C/svg%3E';
 /**图片重试加载 */
 function loadImg(imgDom, src, retryCount = 0) {
     imgDom.onload = imgDom.onerror = null;
