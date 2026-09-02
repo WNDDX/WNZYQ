@@ -94,7 +94,7 @@
       background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       color: #fff; font-size: 34px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.4);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.35), 0 4px 12px rgba(30, 136, 229, 0.4); border: 2px solid #fff; box-sizing: border-box;
       transition: transform 0.12s ease;
     }
     .login-logo-link:active .login-logo {
@@ -191,7 +191,7 @@
       height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.25); opacity: 0; transition: opacity 0.12s ease;
+      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease;
     }
     .tabs { display: flex; gap: 6px; flex: 1; }
     .tab {
@@ -296,7 +296,7 @@
     .status-select.status-offline { background: #f2f2f2; color: #777; border-color: #e0e0e0; }
     .status-select.status-hidden { background: #fff4e5; color: #e8890c; border-color: #ffe0b3; }
     .status-select:hover { transform: scale(1.04); }
-    .status-select:active { transform: scale(0.96); }    .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }    .product-row .select-picker.status-online .cat-picker-display { background: #e6f7e6; color: var(--green); border-color: #bfe6bf; }    .product-row .select-picker.status-offline .cat-picker-display { background: #f2f2f2; color: #777; border-color: #e0e0e0; }    .product-row .select-picker.status-hidden .cat-picker-display { background: #fff4e5; color: #e8890c; border-color: #ffe0b3; }
+    .status-select:active { transform: scale(0.96); }    .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
 
     .row-btn {
       border: 1px solid #ddd; background: #fff; color: #555;
@@ -499,7 +499,7 @@
     }
     .cp-item:hover { background: #eef5fd; }
     .cp-item.selected { background: #e3f0fd; color: #1976d2; font-weight: 700; }
-    .cp-item.cp-top { font-weight: 700; color: #333; font-size: 14px; }
+    .cp-item.cp-top { font-weight: 400; color: #333; font-size: 14px; }
     .cp-item.cp-sub { padding-left: 30px; font-weight: 400; color: #333; font-size: 14px; }
     .cp-item.cp-all { font-weight: 400; color: #333; font-size: 14px; }
     .cp-item .cp-name { flex: 1; }
@@ -564,7 +564,7 @@
     .form textarea { resize: vertical; line-height: 1.6; }
     /* 富文本编辑器 */
     .rte-toolbar {
-      display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; padding: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px;
       background: #f8f9fa; border: 1px solid #ddd; border-bottom: none;
       border-radius: 10px 10px 0 0;
     }
@@ -574,7 +574,7 @@
       transition: all 0.10s; min-width: 32px; text-align: center;
     }
     .rte-btn:hover { background: #e3f2fd; border-color: #1976d2; color: #1976d2; }
-    .rte-btn:active { transform: scale(0.95); }
+    .rte-btn:active { transform: scale(0.95); }    .rte-sep { flex: 0 0 1px; width: 1px; height: 22px; background: #e0e4e8; align-self: center; margin: 0 6px; }
     .rte-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
     /* 预设色板（文字颜色 / 背景颜色）：点色块即应用，无需输入代码 */
     .rte-palette {
@@ -609,7 +609,7 @@
       overflow-y: auto;
     }
     .rte-editor.rte-large ~ * { }
-    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
+    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
     .rte-zoom { font-weight: 600; }    .rte-toolbar .select-picker .cat-picker-display { min-height: 0; height: 32px; padding: 0 10px; align-self: center; border-radius: 6px; font-size: 13px; }    .rte-toolbar.rte-toolbar-large .select-picker .cat-picker-display { height: 36px; font-size: 15px; }
     .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
@@ -734,14 +734,14 @@
       margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
     }
     .trend-chart h3 { font-size: 15px; margin-bottom: 12px; }
-    .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding-top: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; }
+    .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding: 10px 2.5% 0 5%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; }
     .trend-bars::-webkit-scrollbar { display: none; }
-    .trend-col { flex: 1 0 22px; min-width: 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .trend-col { flex: 1 0 22px; min-width: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .trend-bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; height: 100px; gap: 2px; }
     .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
     .trend-bar.view { background: var(--blue1); }
     .trend-bar.contact { background: #ff9900; }
-    .trend-label { font-size: 10px; color: #999; white-space: nowrap; line-height: 1.3; padding-top: 6px; }
+    .trend-label { font-size: 10px; color: #999; white-space: nowrap; line-height: 1.3; padding-top: 8px; }
     .trend-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: #666; justify-content: center; }
     .trend-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
@@ -1045,7 +1045,7 @@
           <span class="toolbar-hint">"全部"为固定分类，不可修改删除；排序值越小越靠前</span>
         </div>
         <!-- 分类批量操作栏 -->
-        <div class="batch-bar" id="catBatchBar">
+        <div class="batch-bar" id="catBatchBar"><label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#333;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="catSelectAll" /> 全选</label>
           <span style="font-size:13px;color:#666;">已选 <b id="catBatchCount" style="color:var(--blue1);">0</b> 项</span>
           <button class="batch-btn" id="catBatchHide">批量隐藏</button>
           <button class="batch-btn" id="catBatchShow">批量显示</button>
@@ -1086,19 +1086,19 @@
                 <option value="6">超大</option>
                 <option value="7">巨大</option>
               </select>
-              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <span class="rte-sep"></span>
               <button type="button" class="rte-btn" data-cmd="bold" data-target="setAnnouncement"><b>B</b></button>
               <button type="button" class="rte-btn" data-cmd="italic" data-target="setAnnouncement"><i>I</i></button>
               <button type="button" class="rte-btn" data-cmd="underline" data-target="setAnnouncement"><u>U</u></button>
               <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="setAnnouncement"><s>S</s></button>
-              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <span class="rte-sep"></span>
               <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement">⬅</button>
               <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement">⬌</button>
               <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement">➡</button>
-              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <span class="rte-sep"></span>
               <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="setAnnouncement">• 列表</button>
               <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="setAnnouncement">1. 列表</button>
-              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <span class="rte-sep"></span>
               <div class="rte-palette" data-cmd="foreColor" data-editor="setAnnouncement" title="文字颜色">
                 <span class="palette-a">A</span>
                 <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
@@ -1127,11 +1127,11 @@
                 <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
                 <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
               </div>
-              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <span class="rte-sep"></span>
               <button type="button" class="rte-btn" id="announcementRteLink">🔗 链接</button>
               <button type="button" class="rte-btn" id="announcementRteImg">🖼 图片</button>
               <button type="button" class="rte-btn" id="announcementRteVideo">🎬 视频</button>
-              <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+              <span class="rte-sep"></span>
               <button type="button" class="rte-btn" id="announcementFormatBrush">🖌 格式刷</button>
               <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button>
               <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button>
@@ -1239,19 +1239,19 @@
             <option value="6">超大</option>
             <option value="7">巨大</option>
           </select>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="bold" title="加粗"><b>B</b></button>
           <button type="button" class="rte-btn" data-cmd="italic" title="斜体"><i>I</i></button>
           <button type="button" class="rte-btn" data-cmd="underline" title="下划线"><u>U</u></button>
           <button type="button" class="rte-btn" data-cmd="strikeThrough" title="删除线"><s>S</s></button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="justifyLeft" title="左对齐">⬅</button>
           <button type="button" class="rte-btn" data-cmd="justifyCenter" title="居中">⬌</button>
           <button type="button" class="rte-btn" data-cmd="justifyRight" title="右对齐">➡</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="有序列表">1. 列表</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <div class="rte-palette" data-cmd="foreColor" data-editor="fDetail" title="文字颜色">
             <span class="palette-a">A</span>
             <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
@@ -1280,11 +1280,11 @@
             <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接">🔗 链接</button>
           <button type="button" class="rte-btn" id="detailRteImg" title="插入图片">🖼 图片</button>
           <button type="button" class="rte-btn" id="detailRteVideo" title="插入视频">🎬 视频</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" title="清除格式">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶ 放大</button>
@@ -1405,19 +1405,19 @@
             <option value="6">超大</option>
             <option value="7">巨大</option>
           </select>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="bold" data-target="vDescEditor"><b>B</b></button>
           <button type="button" class="rte-btn" data-cmd="italic" data-target="vDescEditor"><i>I</i></button>
           <button type="button" class="rte-btn" data-cmd="underline" data-target="vDescEditor"><u>U</u></button>
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vDescEditor"><s>S</s></button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor">⬅</button>
           <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor">⬌</button>
           <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor">➡</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vDescEditor">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vDescEditor">1. 列表</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <div class="rte-palette" data-cmd="foreColor" data-editor="vDescEditor" title="文字颜色">
             <span class="palette-a">A</span>
             <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
@@ -1446,11 +1446,11 @@
             <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" id="vDescRteLink">🔗 链接</button>
           <button type="button" class="rte-btn" id="vDescRteImg">🖼 图片</button>
           <button type="button" class="rte-btn" id="vDescRteVideo">🎬 视频</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" id="vDescFormatBrush">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button>
@@ -1484,19 +1484,19 @@
             <option value="6">超大</option>
             <option value="7">巨大</option>
           </select>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="bold" data-target="vContentEditor"><b>B</b></button>
           <button type="button" class="rte-btn" data-cmd="italic" data-target="vContentEditor"><i>I</i></button>
           <button type="button" class="rte-btn" data-cmd="underline" data-target="vContentEditor"><u>U</u></button>
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vContentEditor"><s>S</s></button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor">⬅</button>
           <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor">⬌</button>
           <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor">➡</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vContentEditor">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vContentEditor">1. 列表</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <div class="rte-palette" data-cmd="foreColor" data-editor="vContentEditor" title="文字颜色">
             <span class="palette-a">A</span>
             <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
@@ -1525,11 +1525,11 @@
             <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" id="vContentRteLink">🔗 链接</button>
           <button type="button" class="rte-btn" id="vContentRteImg">🖼 图片</button>
           <button type="button" class="rte-btn" id="vContentRteVideo">🎬 视频</button>
-          <span style="width:1px;background:#ddd;margin:0 4px;"></span>
+          <span class="rte-sep"></span>
           <button type="button" class="rte-btn" id="vContentFormatBrush">🖌 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶ 放大</button>
@@ -1587,7 +1587,7 @@
        ============================================ */
 
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5v11" stroke="%23c3ccd6" stroke-width="3.4" stroke-linecap="round" fill="none"/%3E%3Ccircle cx="12" cy="18.4" r="1.8" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 6v8.5" stroke="%23c3ccd6" stroke-width="3.8" stroke-linecap="round" fill="none"/%3E%3Ccircle cx="12" cy="17.6" r="1.9" fill="%23c3ccd6"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
@@ -1640,7 +1640,7 @@
     var catParentWrap = document.getElementById('catParentWrap');
     var catHidden = document.getElementById('catHidden');
     var catOk = document.getElementById('catOk');
-    var catCancel = document.getElementById('catCancel');
+    var catCancel = document.getElementById('catCancel');    var catDraftPending = false, catDraftFor = null;
     // ===== 关键按钮事件委托兜底：确保「新增分类 / 设置客服」任何情况下都能打开对应弹窗 =====
     function openContactSetting() {
       if (!contactDraftPending) document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || '';
@@ -2009,10 +2009,10 @@
       document.getElementById('panel-stats').style.display = name === 'stats' ? '' : 'none';
       document.getElementById('panel-categories').style.display = name === 'categories' ? '' : 'none';
       document.getElementById('panel-settings').style.display = name === 'settings' ? '' : 'none';
-      if (name === 'products') loadProducts();
-      if (name === 'stats') loadStats();
-      if (name === 'categories') loadCategories();
-      if (name === 'settings') { (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = 'border-top:1px solid #eee;padding-top:14px;margin-top:6px;'; _fg.appendChild(_pg); } })(); loadSettings(); }
+      if (name === 'products' && !window.__plP) { window.__plP = 1; loadProducts(); }
+      if (name === 'stats' && !window.__plS) { window.__plS = 1; loadStats(); }
+      if (name === 'categories' && !window.__plC) { window.__plC = 1; loadCategories(); }
+      if (name === 'settings') { (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = 'padding-top:12px;'; _fg.appendChild(_pg); } })(); if (!window.__plSet) { window.__plSet = 1; loadSettings(); } }
     }
 
     // ---------- 平台设置 ----------
@@ -2023,7 +2023,7 @@
         document.getElementById('setContactUrl').value = s.contact_url || '';
         // 客服状态文字已按需求移除
         document.getElementById('setAnnouncement').innerHTML = s.announcement || ''; annStoredV = s.announcement || '';
-        (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = 'border-top:1px solid #eee;padding-top:14px;margin-top:6px;'; _fg.appendChild(_pg); } })();
+        (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = 'padding-top:12px;'; _fg.appendChild(_pg); } })();
         document.getElementById('annMode').value = s.announcement_mode || 'always';
         // 公告状态文字已按需求移除
       });
@@ -3795,7 +3795,7 @@
     variantCancel.addEventListener('click', function () { variantDraftPending = false; variantMask.classList.remove('open'); });
     variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = true; variantDraftFor = state.editingVariantId; variantMask.classList.remove('open'); } });
 
-    // ---------- 折线图渲染 ----------
+    function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? (Number(p[1]) + '/' + Number(p[2])) : s; }    // ---------- 折线图渲染 ----------
     function renderLineChart(trend) {
       var svg = document.getElementById('lineSvg');
       if (!svg || !trend || !trend.length) { svg.innerHTML = ''; return; }
@@ -3821,7 +3821,7 @@
       // X轴标签
       trend.forEach(function (d, i) {
         var px = pt(i, 0).x;
-        var label = d.day ? d.day.slice(5) : '';
+        var label = d.day ? fmtDay(d.day) : '';
         if (trend.length <= 10 || i % Math.ceil(trend.length / 8) === 0) {
           html += '<text x="' + px + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#999">' + label + '</text>';
         }
@@ -4076,7 +4076,7 @@
           wrap.appendChild(barC);
           var label = document.createElement('div');
           label.className = 'trend-label';
-          label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? d.day.slice(5) : '') : '';
+          label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? fmtDay(d.day) : '') : '';
           col.appendChild(wrap);
           col.appendChild(label);
           trendBox.appendChild(col);
@@ -4196,7 +4196,7 @@
         });
 
         // 复选框（"全部"分类也可选，属于保底根分类；批量隐藏/删除对其受限）
-        if (c.id === 0) {
+        if (false) { // "全部"(id=0) 为固定保底分类，不提供选中框
           var cb0 = document.createElement('input');
           cb0.type = 'checkbox';
           cb0.className = 'cat-check';
@@ -4325,14 +4325,14 @@
       });
     }
 
-    document.getElementById('addCatBtn').addEventListener('click', function () { openCatEdit(null); });
+    document.getElementById('addCatBtn').addEventListener('click', function () { openCatEdit(null); });    document.getElementById('catSelectAll').addEventListener('change', function () { var on = this.checked; document.querySelectorAll('.cat-check').forEach(function (cb) { cb.checked = on; }); updateCatBatchBar(); });
 
     // ---------- 分类批量操作 ----------
     function updateCatBatchBar() {
       var checks = document.querySelectorAll('.cat-check:checked');
       var count = checks.length;
       var bar = document.getElementById('catBatchBar');
-      document.getElementById('catBatchCount').textContent = count;
+      document.getElementById('catBatchCount').textContent = count;      var allBox = document.getElementById('catSelectAll'); if (allBox) allBox.checked = count > 0 && count === document.querySelectorAll('.cat-check').length;
       bar.classList.toggle('show', count > 0);
     }
     // 批量隐藏

@@ -99,7 +99,7 @@
       width: 40px; height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.25); opacity: 0; transition: opacity 0.12s ease;
+      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease;
       flex-shrink: 0;
     }
     .shop-name {
@@ -1291,7 +1291,7 @@
 
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5v11" stroke="%23c3ccd6" stroke-width="3.4" stroke-linecap="round" fill="none"/%3E%3Ccircle cx="12" cy="18.4" r="1.8" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 6v8.5" stroke="%23c3ccd6" stroke-width="3.8" stroke-linecap="round" fill="none"/%3E%3Ccircle cx="12" cy="17.6" r="1.9" fill="%23c3ccd6"/%3E%3C/svg%3E';
 
     // 全局媒体加载失败兜底：任何 IMG/VIDEO 加载失败统一替换为感叹号占位（页面加载即注册，与导航页一致）
     if (!window.__mediaErrOnce) {
@@ -1472,8 +1472,8 @@
       shopNameEl.textContent = (cfg && cfg.shopName) || '万能资源圈';
       document.title = shopNameEl.textContent + '・资源';
       /* logo 已写死本地 assets/images/logo.png（与管理页同款，解析即加载），不再由 JS 覆盖，避免刷新闪动 */
-      if (false) loadImg(shopLogo, '');
-      else { shopLogo.style.display = 'none'; if (false) loadImg(shopLogo, ''); }
+      /* logo 由 HTML 直接加载显示，失败时全局感叹号占位兜底，JS 不再干预 */
+      /* 无需 JS 干预 */
 
       // 部署后从 API 获取平台设置（管理页可修改）
       if (usingRemote) {
