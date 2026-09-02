@@ -503,6 +503,12 @@
     .select-picker { position: relative; width: 100%; user-select: none; }
     .rte-toolbar .select-picker { width: 80px; flex-shrink: 0; }
     .rte-toolbar .select-picker .cat-picker-display { min-height: 28px; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+    /* 资源管理筛选工具栏：分类筛选与状态筛选统一尺寸（同一 CSS 类，代码复用保证同步） */
+    .tb-row2 .cat-picker, .tb-row2 .select-picker { width: 130px; flex-shrink: 0; }
+    .tb-row2 .admin-search { flex: 1 1 200px; max-width: none; }
+    .tb-row2 .cat-picker-display {
+      min-height: 33px; padding: 6px 10px; border-radius: 6px; font-size: 13px; width: auto;
+    }
     /* 日期输入框统一样式 */
     input[type="date"], input[type="datetime-local"] {
       width: 100%; border: 1px solid #ddd; border-radius: 10px;
@@ -906,9 +912,9 @@
           </div>
           <div class="tb-row tb-row2">
           <div class="cat-picker" id="filterCatPicker" style="position:relative;width:auto;">
-            <div class="cat-picker-display" style="min-height:33px;padding:6px 10px;border-radius:6px;font-size:13px;width:auto;"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow">▼</span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
+            <div class="cat-picker-display"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow">▼</span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
           </select>
-          <select id="filterStatus" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;">
+          <select id="filterStatus">
             <option value="">全部状态</option>
             <option value="online">上架中</option>
             <option value="offline">已下架</option>
@@ -1027,12 +1033,10 @@
             <label>全局客服链接（资源没填专属链接时用这个）</label>
             <input class="input" id="setContactUrl" style="display:none" />
             <button type="button" class="btn-blue" id="openContactBtn" style="width:auto;padding:0 24px;">设置客服</button>
-            <span id="contactStatus" style="color:#999;font-size:12px;margin-left:6px;"></span>
           </div>
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
             <button type="button" class="btn-blue" id="openAnnBtn" style="width:auto;padding:0 24px;">设置公告</button>
-            <span id="annStatus" style="color:#999;font-size:12px;margin-left:6px;"></span>
             <div class="rte-toolbar" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;">
               <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement">
                 <option value="">字体</option>
@@ -1553,7 +1557,7 @@
        ============================================ */
 
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23f5f5f5"/%3E%3Cpath d="M200 70c-48 37-76 72-76 108a76 76 0 0 0 152 0c0-36-28-71-76-108z" fill="%23c3ccd6"/%3E%3Crect x="192" y="122" width="16" height="60" rx="8" fill="%23f5f5f5"/%3E%3Ccircle cx="200" cy="208" r="9" fill="%23f5f5f5"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
@@ -1658,7 +1662,7 @@
 
     // 改密码弹窗
     var TOKEN_KEY = 'wnzyq_token';
-    // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
+    // 占位图统一使用 EXC_PLACEHOLDER（见上方定义），IMG_PLACEHOLDER 保留兼容旧引用
     var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect fill="%23eef4fb" width="400" height="300"/%3E%3Cg fill="%23b8c8de"%3E%3Ccircle cx="200" cy="140" r="32"/%3E%3Cpath d="M200 120c-11 0-20 9-20 20s9 20 20 20 20-9 20-20-9-20-20-20zm0 32c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z"/%3E%3Cpath d="M140 180h120v-8c0-8.8-7.2-16-16-16h-88c-8.8 0-16 7.2-16 16v8zm160 0h-16v-8c0-17.7-14.3-32-32-32h-96c-17.7 0-32 14.3-32 32v8H100c-11 0-20 9-20 20v60c0 11 9 20 20 20h200c11 0 20-9 20-20v-60c0-11-9-20-20-20z" opacity="0.6"/%3E%3C/g%3E%3C/svg%3E';
     var state = {
       categories: [],
@@ -1969,10 +1973,10 @@
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var s = res.settings || {};
         document.getElementById('setContactUrl').value = s.contact_url || '';
-        var cs = document.getElementById('contactStatus'); if (cs) cs.textContent = (s.contact_url || '').trim() ? '已设置' : '未设置';
+        // 客服状态文字已按需求移除
         document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
         document.getElementById('annMode').value = s.announcement_mode || 'always';
-        var annSt = document.getElementById('annStatus'); if (annSt) annSt.textContent = (s.announcement || '').trim() ? '已设置' : '未设置';
+        // 公告状态文字已按需求移除
       });
     }
 
@@ -2186,8 +2190,8 @@
         img.className = 'thumb';
         img.alt = '';
         img.loading = 'lazy';
-        img.src = p.img || IMG_PLACEHOLDER;
-        img.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; };
+        img.src = p.img || EXC_PLACEHOLDER;
+        img.onerror = function () { this.onerror = null; this.src = EXC_PLACEHOLDER; };
 
         var info = document.createElement('div');
         info.className = 'info';
@@ -3967,8 +3971,8 @@
         var trendBox = document.getElementById('trendBars');
         trendBox.innerHTML = '';
         var maxVal = 1;
-        trendData.forEach(function (d) { maxVal = Math.max(maxVal, d.views, d.contacts); });
-        trendData.forEach(function (d) {
+        trendData.forEach(function (d, i) { maxVal = Math.max(maxVal, d.views, d.contacts); });
+        trendData.forEach(function (d, i) {
           var col = document.createElement('div');
           col.className = 'trend-col';
           var wrap = document.createElement('div');
@@ -3985,7 +3989,7 @@
           wrap.appendChild(barC);
           var label = document.createElement('div');
           label.className = 'trend-label';
-          label.textContent = d.day ? d.day.slice(5) : '';
+          label.textContent = (trendData.length <= 14 || i % 3 === 0 || i === trendData.length - 1) ? (d.day ? d.day.slice(5) : '') : '';
           col.appendChild(wrap);
           col.appendChild(label);
           trendBox.appendChild(col);
@@ -4186,7 +4190,7 @@
           // 切换到资源管理标签
           document.querySelector('.tab[data-tab="products"]').click();
           // 设置分类筛选
-          initFilterCatPicker(); var filterCat = null;
+          initFilterCatPicker(); var filterCat = document.getElementById('filterCat');
           if (filterCat) {
             filterCat.value = c.id;
             renderProducts();

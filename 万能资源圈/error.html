@@ -59,7 +59,7 @@ if (code && errorMap[code]) {
     logo.src = 'assets/images/logo.png'; // 相对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       this.onerror = null;
-      this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/%3E%3C/svg%3E';
+      this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23f5f5f5"/%3E%3Cpath d="M200 70c-48 37-76 72-76 108a76 76 0 0 0 152 0c0-36-28-71-76-108z" fill="%23c3ccd6"/%3E%3Crect x="192" y="122" width="16" height="60" rx="8" fill="%23f5f5f5"/%3E%3Ccircle cx="200" cy="208" r="9" fill="%23f5f5f5"/%3E%3C/svg%3E';
       this.style.objectFit = 'contain';
       this.style.display = 'block';
     };

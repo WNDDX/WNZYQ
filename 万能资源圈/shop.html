@@ -629,6 +629,38 @@
       background: #000;
     }
 
+    /* 弹窗内富文本图片/视频自适应（不超模、居中） */
+    .modal-detail img, .modal-detail video {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto;
+      border-radius: 8px;
+    }
+
+    /* 图片/视频放大查看器（点击放大、双指缩放） */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 100000; display: none;
+      align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.92); touch-action: none;
+    }
+    .lightbox.open { display: flex; }
+    .lb-media {
+      max-width: 94vw; max-height: 94vh;
+      object-fit: contain; border-radius: 6px;
+      will-change: transform; cursor: zoom-out;
+    }
+    .lb-close {
+      position: absolute; top: 14px; right: 14px; z-index: 10;
+      width: 40px; height: 40px; border-radius: 50%;
+      border: none; background: rgba(255,255,255,0.2); color: #fff;
+      font-size: 22px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s ease;
+    }
+    .lb-close:hover { transform: scale(1.1); background: rgba(255,255,255,0.35); }
+    .lb-tip { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.65); font-size: 13px; white-space: nowrap; }
+
     /* 类型切换 */
     .variant-tabs {
       display: flex;
@@ -854,6 +886,11 @@
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; border-radius: 8px; margin: 6px 0; }
     .ann-modal .ann-body a { color: #1e88e5; }
     .ann-modal .ann-body p { margin: 6px 0; }
+    .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: linear-gradient(135deg, #1e88e5, #42a5f5); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.12s ease, opacity 0.12s ease; }
+    .ann-modal .ann-ok:hover { transform: scale(0.97); opacity: 0.9; }
+    .ann-modal .ann-ok:active { transform: scale(0.94); opacity: 0.8; }
+    .ann-modal .modal-close-x { top: 14px; right: 14px; width: 34px; height: 34px; }
     /* 分类栏 */
     .category-bar-wrap {
       position: relative;
@@ -1112,8 +1149,9 @@
   <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');document.body.style.overflow=''}">
     <div class="ann-box" onclick="event.stopPropagation()">
       <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');document.body.style.overflow=''">✕</button>
-      <div class="ann-title">平台公告</div>
+      <div class="ann-title" style="text-align:center;">公告</div>
       <div class="ann-body" id="annBody"></div>
+      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');document.body.style.overflow=''">确定</button>
     </div>
   </div>
 
@@ -1239,7 +1277,7 @@
 
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/%3E%3C/svg%3E';
+    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23f5f5f5"/%3E%3Cpath d="M200 70c-48 37-76 72-76 108a76 76 0 0 0 152 0c0-36-28-71-76-108z" fill="%23c3ccd6"/%3E%3Crect x="192" y="122" width="16" height="60" rx="8" fill="%23f5f5f5"/%3E%3Ccircle cx="200" cy="208" r="9" fill="%23f5f5f5"/%3E%3C/svg%3E';
 
     // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
     function bindMediaFail(root) {
@@ -1267,6 +1305,7 @@
     }
 
     function loadImg(img, src) {
+      if (img.getAttribute('src') === src && img.src && img.complete) { img.style.display = 'block'; return; }
       img.onerror = function () {
         this.onerror = null; // 防止占位图也加载失败导致死循环
         this.src = IMG_PLACEHOLDER;
@@ -1902,7 +1941,7 @@
       var url = '';
       if (currentVariant && currentVariant.contactUrl) url = currentVariant.contactUrl;
       else if (currentProduct && currentProduct.contactUrl) url = currentProduct.contactUrl;
-      else url = getDefaultContact();
+      else url = window._globalContact || getDefaultContact();
 
       if (url) {
         btnContact.style.display = '';
@@ -2510,6 +2549,78 @@
 
     // 强制确保页面可见（防止动画异常导致body opacity为0）
     setTimeout(function () { document.body.style.opacity = '1'; }, 500);
+
+    // ---- 图片/视频放大查看器（点击放大、双指缩放） ----
+    var lb = document.getElementById('lightbox');
+    var lbImg = document.getElementById('lbImg');
+    var lbVideo = document.getElementById('lbVideo');
+    var lbCloseBtn = document.getElementById('lbClose');
+    var lbScale = 1, lbBase = 1, lbStartDist = 0, lbMoved = false;
+    function lbReset() {
+      lbScale = 1; lbStartDist = 0; lbMoved = false;
+      lbImg.style.transform = ''; lbVideo.style.transform = '';
+    }
+    function lbOpen(src, isVideo) {
+      if (!src) return;
+      lbReset();
+      if (isVideo) {
+        lbImg.style.display = 'none'; lbVideo.style.display = 'block';
+        lbVideo.src = src; var p = lbVideo.play(); if (p && p.catch) p.catch(function(){});
+      } else {
+        lbVideo.pause(); lbVideo.style.display = 'none'; lbVideo.src = '';
+        lbImg.style.display = 'block'; lbImg.src = src;
+      }
+      lb.classList.add('open');
+    }
+    function lbClose() {
+      lb.classList.remove('open');
+      lbVideo.pause(); lbVideo.src = ''; lbImg.src = '';
+    }
+    lbCloseBtn.addEventListener('click', lbClose);
+    lb.addEventListener('click', function (e) {
+      if (e.target === lb || e.target === lbImg || e.target === lbVideo) { if (!lbMoved) lbClose(); }
+    });
+    lb.addEventListener('touchstart', function (e) {
+      lbMoved = false;
+      if (e.touches.length === 2) {
+        lbStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        lbBase = lbScale;
+      }
+    }, { passive: true });
+    lb.addEventListener('touchmove', function (e) {
+      if (e.touches.length === 2) {
+        var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        if (lbStartDist > 0) {
+          lbScale = Math.min(5, Math.max(1, lbBase * d / lbStartDist));
+          lbImg.style.transform = 'scale(' + lbScale + ')';
+          lbVideo.style.transform = 'scale(' + lbScale + ')';
+          lbMoved = true;
+        }
+        e.preventDefault();
+      }
+    }, { passive: false });
+    lb.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      lbScale = Math.min(5, Math.max(1, lbScale + (e.deltaY < 0 ? 0.15 : -0.15)));
+      lbImg.style.transform = 'scale(' + lbScale + ')';
+      lbVideo.style.transform = 'scale(' + lbScale + ')';
+    }, { passive: false });
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.tagName) return;
+      if ((t.tagName === 'IMG' || t.tagName === 'VIDEO') && t.closest && t.closest('.modal-box, .ann-box')) {
+        e.preventDefault();
+        if (t.tagName === 'IMG') { lbOpen(t.src || '', false); }
+        else { lbOpen(t.currentSrc || t.src, true); }
+      }
+    });
   </script>
+  <!-- 图片/视频放大查看器 -->
+  <div class="lightbox" id="lightbox">
+    <button class="lb-close" id="lbClose" title="关闭">×</button>
+    <img class="lb-media" id="lbImg" alt="" />
+    <video class="lb-media" id="lbVideo" controls playsinline></video>
+    <div class="lb-tip">点击关闭・双指缩放</div>
+  </div>
 </body>
 </html>
