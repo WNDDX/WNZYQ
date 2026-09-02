@@ -32,7 +32,7 @@ async function serveError(context) {
     /* 忽略，走内置兜底 */
   }
   return new Response(
-    '<meta charset="utf-8"><title>错误</title><body style="text-align:center;padding-top:80px;font-family:sans-serif;color:#333;"><h2>页面不存在</h2><p><a href="/">返回导航</a></p></body>',
+    '<meta charset="utf-8"><title>万能资源圈・错误</title><body style="text-align:center;padding-top:80px;font-family:sans-serif;color:#333;"><h2>页面访问异常</h2><p>抱歉！您访问的页面出现了问题</p><p>①地址有误　②页面已删除　③服务暂不可用</p><p><a href="/">返回导航</a></p></body>',
     { status: 404, headers: HTML_HEADERS }
   );
 }

@@ -215,7 +215,7 @@
     .view-btn { padding: 7px 14px; border: none; background: #fff; cursor: pointer; font-size: 13px; color: #555; transition: background .15s ease, color .15s ease, transform .1s ease; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     .view-btn + .view-btn { border-left: 1px solid #d6e0ea; }
     .view-btn.active { background: var(--blue1); color: #fff; }
-    .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; }
+    .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; display: inline-flex; align-items: center; justify-content: center; }
     .toolbar-hint { font-size: 13px; color: #999; }
     .admin-search {
       position: relative;
@@ -296,7 +296,7 @@
     .status-select.status-offline { background: #f2f2f2; color: #777; border-color: #e0e0e0; }
     .status-select.status-hidden { background: #fff4e5; color: #e8890c; border-color: #ffe0b3; }
     .status-select:hover { transform: scale(1.04); }
-    .status-select:active { transform: scale(0.96); }
+    .status-select:active { transform: scale(0.96); }    .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }    .product-row .select-picker.status-online .cat-picker-display { background: #e6f7e6; color: var(--green); border-color: #bfe6bf; }    .product-row .select-picker.status-offline .cat-picker-display { background: #f2f2f2; color: #777; border-color: #e0e0e0; }    .product-row .select-picker.status-hidden .cat-picker-display { background: #fff4e5; color: #e8890c; border-color: #ffe0b3; }
 
     .row-btn {
       border: 1px solid #ddd; background: #fff; color: #555;
@@ -564,7 +564,7 @@
     .form textarea { resize: vertical; line-height: 1.6; }
     /* 富文本编辑器 */
     .rte-toolbar {
-      display: flex; flex-wrap: wrap; gap: 4px; padding: 8px;
+      display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; padding: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
       background: #f8f9fa; border: 1px solid #ddd; border-bottom: none;
       border-radius: 10px 10px 0 0;
     }
@@ -609,8 +609,8 @@
       overflow-y: auto;
     }
     .rte-editor.rte-large ~ * { }
-    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
-    .rte-zoom { font-weight: 600; }
+    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
+    .rte-zoom { font-weight: 600; }    .rte-toolbar .select-picker .cat-picker-display { min-height: 0; height: 32px; padding: 0 10px; align-self: center; border-radius: 6px; font-size: 13px; }    .rte-toolbar.rte-toolbar-large .select-picker .cat-picker-display { height: 36px; font-size: 15px; }
     .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
     .rte-editor ul, .rte-editor ol { padding-left: 24px; margin: 6px 0; }
@@ -736,12 +736,12 @@
     .trend-chart h3 { font-size: 15px; margin-bottom: 12px; }
     .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding-top: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; }
     .trend-bars::-webkit-scrollbar { display: none; }
-    .trend-col { flex: 1 0 22px; min-width: 22px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .trend-col { flex: 1 0 22px; min-width: 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .trend-bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; height: 100px; gap: 2px; }
     .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
     .trend-bar.view { background: var(--blue1); }
     .trend-bar.contact { background: #ff9900; }
-    .trend-label { font-size: 11px; color: #999; white-space: nowrap; }
+    .trend-label { font-size: 10px; color: #999; white-space: nowrap; line-height: 1.3; padding-top: 6px; }
     .trend-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: #666; justify-content: center; }
     .trend-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
@@ -758,7 +758,7 @@
 
     /* 导出按钮 */
     .export-btn {
-      padding: 6px 14px; border: 1px solid var(--blue1); border-radius: 8px;
+      height: 36px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--blue1); border-radius: 8px;
       background: #fff; color: var(--blue1); font-size: 13px; font-weight: 600;
       cursor: pointer; transition: all 0.10s ease;
     }
@@ -766,7 +766,7 @@
     .export-btn:active { transform: scale(0.95); }
 
     /* 折线图 */
-    .line-chart { position: relative; background: #fafbfc; border-radius: 10px; padding: 12px; margin-bottom: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .line-chart { position: relative; background: #fafbfc; border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .line-chart svg { display: block; }
     .line-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: #666; justify-content: center; }
     .line-legend span { display: flex; align-items: center; gap: 6px; }
@@ -941,7 +941,7 @@
             </div>
           </div>
           <div class="tb-row tb-row2">
-          <div class="cat-picker" id="filterCatPicker" style="position:relative;">
+          <div class="cat-picker" id="filterCatPicker" style="position:relative;width:130px;flex-shrink:0;">
             <div class="cat-picker-display"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
           </select>
           <select id="filterStatus">
@@ -992,7 +992,7 @@
                 <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="开始时间" />
                 <span>至</span>
                 <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="结束时间" />
-                <button class="btn-blue" id="statCustomBtn" style="width:auto;padding:0 22px;height:36px;">应用</button>
+                <button class="btn-blue" id="statCustomBtn" style="width:auto;padding:0 18px;height:36px;margin:0;">应用</button>
               </div>
               <button class="export-btn" id="exportBtn">导出资源数据</button>
 
@@ -1000,7 +1000,7 @@
           </div>
           <!-- 折线图 -->
           <div class="line-chart" id="lineChart">
-            <svg id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;"></svg>
+            <svg id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;aspect-ratio:4/1;height:auto;"></svg>
             <div class="line-legend">
               <span class="lg-view"><i></i>浏览</span>
               <span class="lg-contact"><i></i>联系客服</span>
@@ -1041,7 +1041,7 @@
       <!-- 分类管理 -->
       <section id="panel-categories" style="display:none">
         <div class="toolbar">
-          <button class="btn-blue" id="addCatBtn">新增分类</button>
+          <div class="tb-row"><button class="btn-blue" id="addCatBtn">新增分类</button></div>
           <span class="toolbar-hint">"全部"为固定分类，不可修改删除；排序值越小越靠前</span>
         </div>
         <!-- 分类批量操作栏 -->
@@ -1587,7 +1587,7 @@
        ============================================ */
 
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath fill="%23c3ccd6" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5v11" stroke="%23c3ccd6" stroke-width="3.4" stroke-linecap="round" fill="none"/%3E%3Ccircle cx="12" cy="18.4" r="1.8" fill="%23c3ccd6"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
@@ -1761,6 +1761,8 @@
       }
     });
 
+    // 弹窗/编辑器放大态打开时锁定页面滚动（滚轮只在弹窗内滚动），全部关闭后自动恢复，避免“滚轮失灵”的体感
+    (function () { window.__syncBodyLock = function () { var anyOpen = document.querySelector('.modal-mask.open') || document.querySelector('.rte-editor.rte-large'); document.body.style.overflow = anyOpen ? 'hidden' : ''; }; window.__syncBodyLock(); new MutationObserver(window.__syncBodyLock).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] }); })();
     // 弹窗右上角×按钮统一关闭（事件委托）
     document.addEventListener('click', function (e) {
       var closeBtn = e.target.closest('.modal-close-x, .modal-close[data-close]');
@@ -2010,7 +2012,7 @@
       if (name === 'products') loadProducts();
       if (name === 'stats') loadStats();
       if (name === 'categories') loadCategories();
-      if (name === 'settings') loadSettings();
+      if (name === 'settings') { (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = 'border-top:1px solid #eee;padding-top:14px;margin-top:6px;'; _fg.appendChild(_pg); } })(); loadSettings(); }
     }
 
     // ---------- 平台设置 ----------
@@ -2021,6 +2023,7 @@
         document.getElementById('setContactUrl').value = s.contact_url || '';
         // 客服状态文字已按需求移除
         document.getElementById('setAnnouncement').innerHTML = s.announcement || ''; annStoredV = s.announcement || '';
+        (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = 'border-top:1px solid #eee;padding-top:14px;margin-top:6px;'; _fg.appendChild(_pg); } })();
         document.getElementById('annMode').value = s.announcement_mode || 'always';
         // 公告状态文字已按需求移除
       });
@@ -2164,6 +2167,7 @@
     var ADMIN_PAGE_SIZE = 9999; // 管理页一次性展示全部资源，避免“看不全”
 
     function renderProducts() {
+      if (window.__skipRenderOnce) { window.__skipRenderOnce = false; return; }
       var box = document.getElementById('productList');
       var empty = document.getElementById('productEmpty');
       box.innerHTML = '';
@@ -2287,7 +2291,7 @@
         statusSel.addEventListener('change', function () {
           setProductStatus(p.id, this.value);
         });
-        statusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (statusSel.parentNode && typeof makeSelectPicker === 'function') { var _sp = makeSelectPicker(statusSel); if (_sp) { _sp.el.style.width = '110px'; _sp.el.style.flexShrink = '0'; } } }, 0);
+        statusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (statusSel.parentNode && typeof makeSelectPicker === 'function') { var _sp = makeSelectPicker(statusSel); if (_sp) { _sp.el.style.width = 'auto'; _sp.el.style.flexShrink = '0'; var _d = _sp.el.querySelector('.cat-picker-display'); if (_d) _d.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:0;width:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;transition:border-color 0.10s;'; var _a = _sp.el.querySelector('.cpd-arrow'); if (_a) _a.style.cssText = 'width:14px;height:14px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-90deg);transition:transform .3s ease;color:#1688FF;'; } } }, 0);
 
         // 资源码/专属内容状态标记（三种状态规范用词）
         var variants = p.variants || [];
@@ -2577,6 +2581,7 @@
       // 立即在本地生效并重渲染，保证“点击即响应”
       target.is_online = (status === 'online');
       target.is_hidden = (status === 'hidden');
+      window.__skipRenderOnce = true; var _sr = document.querySelector('#productList [data-id="' + id + '"]'); if (_sr) { var _spk = _sr.querySelector('.select-picker'); if (_spk) { var _stx = _spk.querySelector('.cpd-text'); if (_stx) _stx.textContent = status === 'online' ? '上架中' : (status === 'offline' ? '已下架' : '已隐藏'); _spk.classList.remove('status-online', 'status-offline', 'status-hidden'); _spk.classList.add('status-' + status); } }
       renderProducts();
       var data = {
         cid: target.cid, title: target.title, desc: target.desc, detail: target.detail,
@@ -2590,7 +2595,7 @@
         if (res.ok) { clearCache(); }
         else {
           // 失败回滚
-          target.is_online = prevOnline; target.is_hidden = prevHidden;
+          target.is_online = prevOnline; target.is_hidden = prevHidden; window.__skipRenderOnce = false;
           renderProducts();
           toast(res.msg || '操作失败，状态已回滚', 'error');
         }
@@ -2825,7 +2830,7 @@
       var sel = Number(selected);
       var found = (state.categories || []).find(function (c) { return Number(c.id) === sel && !(opts.excludeZero && Number(c.id) === 0); });
       var txtEl = displayEl.querySelector('.cpd-text');
-      if (sel === 0 && (opts.showAll || opts.allowUncategorized)) { txtEl.textContent = opts.allLabel || '全部（未分类）'; }
+      if (sel === 0 && (opts.showAll || opts.allowUncategorized)) { txtEl.textContent = opts.allLabel || '全部（未分类）'; txtEl.classList.add('placeholder'); }
       else if (found) { txtEl.textContent = found.name; txtEl.classList.remove('placeholder'); }
       else { txtEl.textContent = opts.placeholder || '请选择分类'; txtEl.classList.add('placeholder'); }
       hiddenInput.value = sel || 0;
@@ -3236,7 +3241,7 @@
       if (!ed) return;
       var big = ed.classList.toggle('rte-large'); var tb = ed.previousElementSibling; if (tb && tb.classList && tb.classList.contains('rte-toolbar')) { if (big) tb.classList.add('rte-toolbar-large'); else tb.classList.remove('rte-toolbar-large'); }
       z.classList.toggle('rte-zoom-on', big);
-      z.textContent = '⛶ 放大';
+      z.textContent = big ? '🗗 还原' : '⛶ 放大'; window.__syncBodyLock && window.__syncBodyLock();
       if (big) {
         ed.focus();
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
@@ -3262,7 +3267,7 @@
         var bigEd = document.querySelector('.rte-editor.rte-large');
         if (bigEd) {
           bigEd.classList.remove('rte-large'); var _tb = bigEd.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar-large')) _tb.classList.remove('rte-toolbar-large');
-          document.querySelectorAll('.rte-zoom.rte-zoom-on').forEach(function (b) { b.classList.remove('rte-zoom-on'); b.textContent = '⛶ 放大'; });
+          document.querySelectorAll('.rte-zoom.rte-zoom-on').forEach(function (b) { b.classList.remove('rte-zoom-on'); b.textContent = '⛶ 放大'; }); window.__syncBodyLock && window.__syncBodyLock();
           var _ex = document.getElementById('rteExitZoom'); if (_ex) _ex.style.display = 'none';
         }
       }
