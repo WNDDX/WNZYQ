@@ -125,6 +125,7 @@
       color: #fff; font-size: 16px; font-weight: 600;
       letter-spacing: 1.2px; margin-bottom: 10px;
     }
+    .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
     .login-foot { font-size: 12px; color: #bbb; line-height: 1.6; }
 
     /* ---------- 主视图 ---------- */
@@ -136,7 +137,7 @@
     .back-top {
       position: fixed; right: 24px; bottom: 30px; z-index: 200;
       width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-      background: linear-gradient(135deg, var(--blue1), var(--blue2)); color: #fff;
+      background: var(--blue1); color: #fff;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 14px rgba(30,136,229,0.4);
       opacity: 0; visibility: hidden; transform: translateY(10px);
@@ -190,7 +191,7 @@
       height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.25); opacity: 0;
     }
     .tabs { display: flex; gap: 6px; flex: 1; }
     .tab {
@@ -213,7 +214,7 @@
     .view-toggle { display: flex; gap: 0; border: 1px solid #d6e0ea; border-radius: 8px; overflow: hidden; }
     .view-btn { padding: 7px 14px; border: none; background: #fff; cursor: pointer; font-size: 13px; color: #555; transition: background .15s ease, color .15s ease, transform .1s ease; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     .view-btn + .view-btn { border-left: 1px solid #d6e0ea; }
-    .view-btn.active { background: linear-gradient(135deg, var(--blue1), var(--blue2)); color: #fff; }
+    .view-btn.active { background: var(--blue1); color: #fff; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; }
     .toolbar-hint { font-size: 13px; color: #999; }
     .admin-search {
@@ -541,7 +542,7 @@
     .dt-pop .dt-btns button:hover { transform: scale(0.96); }
     .dt-pop .dt-btns button:active { transform: scale(0.92); }
     .dt-pop .dt-now { border-color: var(--blue1) !important; color: var(--blue1) !important; font-weight: 600; }
-    .dt-pop .dt-ok { background: linear-gradient(135deg,#1E88E5,#42A5F5) !important; color: #fff !important; border: none !important; font-weight: 600; }
+    .dt-pop .dt-ok { background: #1E88E5 !important; color: #fff !important; border: none !important; font-weight: 600; }
     /* 数据统计日期输入框 */
     .stat-date-input {
       padding: 8px 10px !important; border: 1px solid #ddd !important;
@@ -595,7 +596,7 @@
       overflow-y: auto;
     }
     .rte-editor.rte-large ~ * { }
-    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 4px; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
+    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
     .rte-zoom { font-weight: 600; }
     .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
@@ -632,7 +633,7 @@
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
     /* 预览弹窗 */
-    .preview-box { position: relative; animation: modalIn 0.25s ease; }
+    .preview-box { position: relative; animation: modalIn 0.25s ease; } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; }
     .preview-close-x {
       position: absolute; top: -14px; right: -14px; z-index: 10;
       width: 36px; height: 36px; border-radius: 50%;
@@ -720,8 +721,8 @@
       margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
     }
     .trend-chart h3 { font-size: 15px; margin-bottom: 12px; }
-    .trend-bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-top: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
-    .trend-col { flex: 1 0 46px; min-width: 46px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding-top: 10px; }
+    .trend-col { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .trend-bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; height: 100px; gap: 2px; }
     .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
     .trend-bar.view { background: var(--blue1); }
@@ -828,7 +829,7 @@
       .time-filter { flex: 1; }
       .time-btn { flex: 1; padding: 6px 8px; font-size: 12px; }
       .stat-date-input { flex: 1 1 130px; min-width: 0 !important; font-size: 12px !important; padding: 7px 8px !important; }
-      .trend-chart { padding: 12px; overflow-x: auto; }
+      .trend-chart { padding: 12px; }
       .rte-toolbar { gap: 3px; padding: 6px; }
       .rte-toolbar .rte-btn, .rte-toolbar .rte-select { font-size: 12px; padding: 4px 6px; }
       .tb-row2 { gap: 8px; }
@@ -886,7 +887,7 @@
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页">
-            <img class="topbar-logo" src="assets/images/logo.png" alt="" />
+            <img class="topbar-logo" src="assets/images/logo.png" alt="" onload="this.style.opacity='1'" onerror="this.style.opacity='1'" />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -946,7 +947,7 @@
           <button class="batch-btn" data-action="show">取消隐藏</button>
           <button class="batch-btn" data-action="changeCat">改分类</button>
           <button class="batch-btn" data-action="changePrice">改价格</button>
-          <button class="batch-btn danger" data-action="delete">批量删除</button>
+          <button class="batch-btn danger" data-action="delete">批量删除</button>          <button class="batch-btn" data-action="clearSel">取消选中</button>
         </div>
         <div id="productList"></div>
         <div class="empty" id="productEmpty" style="display:none">暂无资源，点上方"新增资源"添加</div>
@@ -967,7 +968,7 @@
                 <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="开始时间" />
                 <span>至</span>
                 <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="结束时间" />
-                <button class="time-btn" id="statCustomBtn" style="padding:6px 16px;background:linear-gradient(135deg,#1E88E5,#1688FF);color:#fff;font-weight:600;border-radius:8px;box-shadow:0 2px 8px rgba(30,136,229,0.35);">应用</button>
+                <button class="time-btn" id="statCustomBtn" style="padding:6px 16px;background:#1688FF;color:#fff;font-weight:600;border-radius:8px;box-shadow:0 2px 8px rgba(30,136,229,0.35);">应用</button>
               </div>
               <button class="export-btn" id="exportBtn">导出资源数据</button>
 
@@ -1116,7 +1117,7 @@
           <!-- 保存设置按钮已移除：客服链接、平台公告均在各自弹窗内保存 -->
         </div>
         <div class="setting-group">
-          <h3>修改密码</h3>
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">修改密码</label>
           <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 24px;background:#4CAF50;">修改密码</button>
         </div>
       </section>
@@ -1549,7 +1550,7 @@
           <div id="previewVariantDetail" style="background:#f7faff;border-radius:10px;padding:12px 14px;font-size:13px;color:#555;line-height:1.9;border-left:3px solid #42A5F5;"></div>
         </div>
         <div style="display:flex;gap:10px;">
-          <button type="button" id="previewContactBtn" style="flex:1;height:44px;border:none;border-radius:10px;background:linear-gradient(135deg,#1E88E5,#42A5F5);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">联系客服</button>
+          <button type="button" id="previewContactBtn" style="flex:1;height:44px;border:none;border-radius:10px;background:#1688FF;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">联系客服</button>
           <button class="preview-close-btn" style="padding:0 24px;border:none;border-radius:10px;background:#ff4444;color:#fff;font-size:15px;cursor:pointer;">关闭</button>
         </div>
       </div>
@@ -1562,7 +1563,7 @@
        ============================================ */
 
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f5f5f5"/%3E%3Cpath d="M200 82 C 236 110 260 140 260 172 C 260 200 242 224 218 240 C 206 249 202 256 200 264 C 198 256 194 249 182 240 C 158 224 140 200 140 172 C 140 140 164 110 200 82 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="200" cy="310" r="16" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f5f5f5"/%3E%3Cpath d="M200 66 C 256 106 284 150 284 192 C 284 234 254 264 226 278 C 211 285 200 297 200 309 C 200 297 189 285 174 278 C 146 264 116 234 116 192 C 116 150 144 106 200 66 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="200" cy="323" r="15" fill="%23c3ccd6"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
@@ -1678,7 +1679,7 @@
       editingVariantId: null,
       catEditingId: null,
       statsDays: 7,          // 统计时间筛选天数（默认7天，最大可查30天）
-      catExpanded: {},       // 分类展开/收起状态
+      catExpanded: {}, prodSelected: {}, catSelected: {},       // 分类展开/收起状态 + 资源/分类勾选（切换标签后保留）
     };
 
     // ---------- toast 轻提示 ----------
@@ -1983,7 +1984,7 @@
         var s = res.settings || {};
         document.getElementById('setContactUrl').value = s.contact_url || '';
         // 客服状态文字已按需求移除
-        document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
+        document.getElementById('setAnnouncement').innerHTML = s.announcement || ''; annStoredV = s.announcement || '';
         document.getElementById('annMode').value = s.announcement_mode || 'always';
         // 公告状态文字已按需求移除
       });
@@ -2004,7 +2005,7 @@
     // ---------- 批量操作 / 全选 ----------
     document.getElementById('selectAll').addEventListener('change', function () {
       var checked = this.checked;
-      document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = checked; });
+      document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = checked; state.prodSelected[Number(cb.dataset.id)] = checked; });
       updateBatchBar();
     });
     document.querySelectorAll('.batch-btn').forEach(function (btn) {
@@ -2193,7 +2194,7 @@
         cb.style.height = '20px';
         cb.style.cursor = 'pointer';
         cb.style.accentColor = 'var(--blue1)';
-        cb.addEventListener('change', updateBatchBar);
+        cb.checked = !!state.prodSelected[p.id]; cb.addEventListener('change', function () { state.prodSelected[p.id] = this.checked; updateBatchBar(); });
 
         var img = document.createElement('img');
         img.className = 'thumb';
@@ -2227,7 +2228,7 @@
         statusSel.addEventListener('change', function () {
           setProductStatus(p.id, this.value);
         });
-        statusSel.addEventListener('click', function (e) { e.stopPropagation(); });
+        statusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (statusSel.parentNode && typeof makeSelectPicker === 'function') { var _sp = makeSelectPicker(statusSel); if (_sp) { _sp.el.style.width = '110px'; _sp.el.style.flexShrink = '0'; } } }, 0);
 
         // 资源码/专属内容状态标记（三种状态规范用词）
         var variants = p.variants || [];
@@ -2385,7 +2386,7 @@
 
     // 批量操作
     function batchAction(action) {
-      var ids = Array.from(document.querySelectorAll('.row-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
+      if (action === 'clearSel') { state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); var _sa = document.getElementById('selectAll'); if (_sa) _sa.checked = false; updateBatchBar(); return; } var ids = Array.from(document.querySelectorAll('.row-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
       if (ids.length === 0) return;
       var actionNames = { online: '批量上架', offline: '批量下架', hide: '批量隐藏', show: '取消隐藏', delete: '批量删除', changeCat: '批量改分类', changePrice: '批量改价格' };
       var msgs = {
@@ -2765,7 +2766,7 @@
       var sel = Number(selected);
       var found = (state.categories || []).find(function (c) { return Number(c.id) === sel && !(opts.excludeZero && Number(c.id) === 0); });
       var txtEl = displayEl.querySelector('.cpd-text');
-      if (sel === 0 && (opts.showAll || opts.allowUncategorized)) { txtEl.textContent = opts.allLabel || '全部（未分类）'; txtEl.classList.remove('placeholder'); }
+      if (sel === 0 && (opts.showAll || opts.allowUncategorized)) { txtEl.textContent = opts.allLabel || '全部（未分类）'; }
       else if (found) { txtEl.textContent = found.name; txtEl.classList.remove('placeholder'); }
       else { txtEl.textContent = opts.placeholder || '请选择分类'; txtEl.classList.add('placeholder'); }
       hiddenInput.value = sel || 0;
@@ -3180,7 +3181,7 @@
       if (big) {
         ed.focus();
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
-        (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _b = _tb.getBoundingClientRect().bottom + 8; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; } })();
+        (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 8; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; }; _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) {} } })();
         var exit = null; // 右上角还原按钮已移除：用工具栏"还原"或 Esc 退出
         if (false && exit) {
           exit = document.createElement('button');
@@ -3347,7 +3348,7 @@
     rteEditor.addEventListener('blur', updateRtePlaceholder);
 
     // ========== 平台公告富文本编辑器 ==========
-    var annEditor = document.getElementById('setAnnouncement');
+    var annEditor = document.getElementById('setAnnouncement'); var annStoredV = ''; var annDraftPending = false;
     // 初始隐藏设置页中的公告编辑器（由"设置公告"弹窗承载）
     (function () { var _tb = document.getElementById('announcementRteToolbar'); if (_tb) _tb.style.display = 'none'; if (annEditor) annEditor.style.display = 'none'; })();
     // 打开公告设置弹窗：把公告编辑器移入弹窗
@@ -3358,12 +3359,12 @@
         if (_tb) { _tb.style.display = ''; slot.appendChild(_tb); }
         if (annEditor) { annEditor.style.display = ''; slot.appendChild(annEditor); }
       }
-      document.getElementById('annMask').classList.add('open');
+      if (!annDraftPending) { if (annEditor) annEditor.innerHTML = annStoredV || ''; } document.getElementById('annMask').classList.add('open');
     });
     // 保存公告
     document.getElementById('saveAnnBtn').addEventListener('click', function () {
       var data = {
-        announcement: (annEditor ? annEditor.innerHTML : ''),
+        announcement: (annEditor ? (annStoredV = annEditor.innerHTML) : ''),
         announcement_mode: document.getElementById('annMode').value
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
@@ -3375,12 +3376,12 @@
       });
     });
     // 取消公告
-    document.getElementById('cancelAnnBtn').addEventListener('click', function () { document.getElementById('annMask').classList.remove('open'); });
-    document.getElementById('annMask').addEventListener('click', function (e) { if (e.target === document.getElementById('annMask')) document.getElementById('annMask').classList.remove('open'); }); // 遮罩关闭：保留输入可继续编辑
+    document.getElementById('cancelAnnBtn').addEventListener('click', function () { annDraftPending = false; if (annEditor) annEditor.innerHTML = annStoredV || ''; document.getElementById('annMask').classList.remove('open'); });
+    document.getElementById('annMask').addEventListener('click', function (e) { if (e.target === document.getElementById('annMask')) { annDraftPending = true; document.getElementById('annMask').classList.remove('open'); } }); // 遮罩关闭：保留输入可继续编辑
 
-    // ---------- 全局客服链接（弹窗设置，与公告一致） ----------
+    // ---------- 全局客服链接（弹窗设置，与公告一致） ---------- var contactDraftPending = false;
     document.getElementById('openContactBtn').addEventListener('click', function () {
-      document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || '';
+      if (!contactDraftPending) document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; contactDraftPending = false;
       document.getElementById('contactMask').classList.add('open');
     });
     document.getElementById('saveContactBtn').addEventListener('click', function () {
@@ -3390,8 +3391,8 @@
       document.getElementById('contactMask').classList.remove('open');
       api('admin/settings', { method: 'PUT', body: JSON.stringify({ contact_url: v }) }).then(function (res) { if (res.ok) toast('客服链接已保存', 'success'); else toast(res.msg || '保存失败', 'error'); });
     });
-    document.getElementById('cancelContactBtn').addEventListener('click', function () { document.getElementById('contactMask').classList.remove('open'); });
-    document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) document.getElementById('contactMask').classList.remove('open'); }); // 遮罩关闭：保留输入可继续编辑
+    document.getElementById('cancelContactBtn').addEventListener('click', function () { contactDraftPending = false; document.getElementById('contactUrlInput').value = ''; document.getElementById('contactMask').classList.remove('open'); });
+    document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) { contactDraftPending = true; document.getElementById('contactMask').classList.remove('open'); } }); // 遮罩关闭：保留输入可继续编辑
 
     // 工具栏按钮点击执行命令
     document.querySelectorAll('#announcementRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
@@ -4137,7 +4138,7 @@
           cb.className = 'cat-check';
           cb.dataset.id = c.id;
           cb.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--blue1);';
-          cb.addEventListener('change', updateCatBatchBar);
+          cb.checked = !!state.catSelected[c.id]; cb.addEventListener('change', function () { state.catSelected[c.id] = this.checked; updateCatBatchBar(); });
           row.appendChild(cb);
         }
 
@@ -4324,7 +4325,7 @@
     }
 
     function openCatEdit(c) {
-      if (catDraftPending && catDraftFor === (c ? c.id : null)) { catDraftPending = false; catModalTitle.textContent = c ? '编辑分类' : '新增分类'; return; } // 遮罩关闭暂存：仅同一分类保留输入继续编辑
+      if (catDraftPending && catDraftFor === (c ? c.id : null)) { catDraftPending = false; catModalTitle.textContent = c ? '编辑分类' : '新增分类'; catMask.classList.add('open'); return; } // 遮罩关闭暂存：仅同一分类保留输入继续编辑
       state.catEditingId = c ? c.id : null;
       catModalTitle.textContent = c ? '编辑分类' : '新增分类';
       catName.value = c ? (c.name || '') : '';
@@ -4580,11 +4581,11 @@
           t.type = 'button';
           t.textContent = v.name || ('类型' + (i + 1));
           t.style.cssText = 'padding:7px 16px;border-radius:18px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;color:#555;transition:all .15s;';
-          if (i === 0) { t.style.background = 'linear-gradient(135deg,#1E88E5,#42A5F5)'; t.style.color = '#fff'; t.style.borderColor = '#1E88E5'; }
+          if (i === 0) { t.style.background = '#1E88E5'; t.style.color = '#fff'; t.style.borderColor = '#1E88E5'; }
           t.addEventListener('click', function () {
             previewCurVariant = i;
             Array.prototype.forEach.call(tabs.children, function (c, j) {
-              if (j === i) { c.style.background = 'linear-gradient(135deg,#1E88E5,#42A5F5)'; c.style.color = '#fff'; c.style.borderColor = '#1E88E5'; }
+              if (j === i) { c.style.background = '#1E88E5'; c.style.color = '#fff'; c.style.borderColor = '#1E88E5'; }
               else { c.style.background = '#fff'; c.style.color = '#555'; c.style.borderColor = '#ddd'; }
             });
             renderPreviewVariant();
