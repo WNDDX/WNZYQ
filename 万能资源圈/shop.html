@@ -1094,6 +1094,10 @@
     .modal-mask #modalBox { height: min(680px, 84vh); }
     .ann-modal .ann-box { height: min(600px, 80vh); display: flex; flex-direction: column; overflow: hidden; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; min-height: 0; }
+    /* 滚动条始终占位，弹窗/切换时不因滚动条消失导致画面跳动 */
+    html { scrollbar-gutter: stable; }
+    /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
+    .shop-brand { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
   </style>
 </head>
 
@@ -2219,15 +2223,15 @@
           try { fallbackCopy(url); } catch(e){}
           showToast('链接已复制');
         }
-        if (shareMask) shareMask.classList.add('open');
+        if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       } catch (e) {
         console.error('分享失败:', e);
-        if (shareMask) shareMask.classList.add('open');
+        if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       }
     }
 
     function closeShare() {
-      shareMask.classList.remove('open');
+      shareMask.classList.remove('open'); setBodyLock(false);
     }
 
     shareClose.addEventListener('click', closeShare);
@@ -2728,10 +2732,10 @@
         lbVideo.pause(); lbVideo.style.display = 'none'; lbVideo.src = '';
         lbImg.style.display = 'block'; lbImg.src = src;
       }
-      lb.classList.add('open');
+      lb.classList.add('open'); setBodyLock(true);
     }
     function lbClose() {
-      lb.classList.remove('open');
+      lb.classList.remove('open'); setBodyLock(false);
       lbVideo.pause(); lbVideo.src = ''; lbImg.src = '';
     }
     lbCloseBtn.addEventListener('click', lbClose);

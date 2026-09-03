@@ -401,12 +401,15 @@
     /* ---------- 分类 ---------- */
     .cat-row {
       background: #fff; border-radius: 14px; padding: 12px 16px;
-      margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; max-width:100%;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; max-width:100%;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
     .cat-row .c-name { flex: 1 1 140px; font-size: 15px; min-width: 0; word-break: break-word; }
     .cat-row .c-count { color: #999; font-size: 13px; text-decoration: none !important; border-bottom: none !important; }
     .cat-row .c-sort { color: #bbb; font-size: 12px; min-width: 50px; }
+    /* 分类行状态框移到右侧（复用资源管理）：显示/隐藏 → 编辑 → 删除 */
+    .cat-row .select-picker { order: 50; }
+    .cat-row .row-btn { order: 60; }
 
     /* ---------- 资源类型列表（编辑弹窗内） ---------- */
     .variant-section {
@@ -790,6 +793,10 @@
     .export-btn:hover { background: var(--blue1); color: #fff; }
     .export-btn:active { transform: scale(0.95); }
     #exportBtn { margin-left: auto; flex-shrink: 0; }
+    /* 数据统计：时间筛选+导出单独一行（访问趋势标题上方），标题独占一行 */
+    #panel-stats .trend-chart > div:first-child { flex-wrap: wrap; }
+    #panel-stats .trend-chart > div:first-child h3 { flex: 1 1 100% !important; order: 2; margin: 0 0 12px; }
+    #panel-stats .trend-chart > div:first-child > div { flex: 1 1 100% !important; order: 1; }
 
     /* 折线图 */
     .line-chart { position: relative; background: #fafbfc; border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -934,6 +941,22 @@
     .topbar-brand { flex: 0 0 auto !important; min-width: 0; gap: 12px !important; }
     .topbar-brand span { display: inline !important; }
     @media (max-width: 600px) { .topbar-brand span { letter-spacing: 1px !important; } }
+    /* 滚动条始终占位，弹窗/切换时不因滚动条消失导致画面跳动 */
+    html { scrollbar-gutter: stable; }
+    /* 资源管理筛选行残留的旧“全选”已移至“新增资源”右侧，隐藏残留 */
+    #panel-products .tb-row2 label { display: none !important; }
+    /* 手机端网格卡片：操作按钮（状态/编辑/复制/删除）完整可见，不被裁剪或换行竖排 */
+    @media (max-width: 600px) {
+      #productList.card-view .product-row .select-picker { margin: 2px 8px 6px; width: auto; max-width: calc(100% - 16px); flex-shrink: 0; }
+      #productList.card-view .product-row .select-picker .cat-picker-display { white-space: nowrap; }
+      #productList.card-view .product-row .p-ops { padding: 0 8px 10px; gap: 6px; }
+      #productList.card-view .product-row .p-ops .row-btn { white-space: nowrap; }
+      #productList.card-view .product-row .info { padding: 8px 8px 4px; }
+      #productList.card-view .product-row .thumb { aspect-ratio: 4/3; }
+    }
+    /* 公告项名字直接在项内编辑 */
+    .ann-title-input { border: 1px solid transparent; background: transparent; font-size: 14px; color: #333; min-width: 60px; width: auto; flex: 1; padding: 2px 4px; border-radius: 4px; outline: none; }
+    .ann-title-input:hover, .ann-title-input:focus { border-color: #ddd; background: #fff; }
   </style>
 </head>
 
@@ -985,6 +1008,9 @@
         <div class="toolbar">
           <div class="tb-row tb-row1">
             <button class="btn-blue" id="addProductBtn">新增资源</button>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#333;cursor:pointer;white-space:nowrap;">
+              <input type="checkbox" id="selectAll" /> 全选
+            </label>
             <span style="flex:1"></span>
             <div class="view-toggle" id="viewToggle">
               <button class="view-btn active" id="viewListBtn" title="列表视图">☰ 列表</button>
@@ -1044,7 +1070,7 @@
                 <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="开始时间" />
                 <span>至</span>
                 <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="结束时间" />
-                <button class="btn-blue" id="statCustomBtn" style="width:auto;padding:0 18px;height:36px;margin:0;">应用</button>
+                <button class="btn-blue" id="statCustomBtn" style="width:auto;padding:0 18px;height:36px;margin:0;flex-shrink:0;white-space:nowrap;">应用</button>
               </div>
               <button class="export-btn" id="exportBtn">导出资源数据</button>
 
@@ -1235,9 +1261,9 @@
           <option value="off">不弹出公告</option>
         </select>
         <label>公告项（拖拽 ⋮⋮ 调整顺序；点击某项即可编辑；隐藏的项不在资源页显示）</label>
-        <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">添加公告</button>
+        <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">新增公告项</button>
         <div id="annList" class="ann-list"></div>
-        <input class="input" id="annTitleInput" placeholder="公告标题（资源页小项按键显示的文字）" />
+        <input class="input" id="annTitleInput" placeholder="公告标题（资源页小项按键显示的文字）" style="display:none;" />
         <label>公告内容（支持文字、图片、视频、超链接）</label>
         <div id="annEditorSlot"></div>
       </div>
@@ -3496,7 +3522,7 @@
     function flushAnnEdit() {
       if (stateAnn.curId) {
         var cur = stateAnn.list.find(function (x) { return x.id === stateAnn.curId; });
-        if (cur) { cur.title = annTitleInput.value.trim(); if (annEditor) cur.content = annEditor.innerHTML; }
+        if (cur) { if (annEditor) cur.content = annEditor.innerHTML; }
       }
     }
     // 渲染公告项列表（拖拽排序）
@@ -3509,8 +3535,11 @@
         var handle = document.createElement('span');
         handle.style.cssText = 'cursor:grab;color:#ccc;font-size:15px;margin-right:2px;user-select:none;';
         handle.textContent = '⋮⋮';
-        var txt = document.createElement('span'); txt.className = 'ann-title-txt';
-        txt.textContent = a.title || '(未命名公告)';
+        var txt = document.createElement('input'); txt.type = 'text'; txt.className = 'ann-title-input';
+        txt.value = a.title || ''; txt.title = '点击修改公告项名字';
+        txt.addEventListener('click', function (e) { e.stopPropagation(); });
+        txt.addEventListener('input', function () { a.title = this.value; });
+        txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '(未命名公告)'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
         // 公告隐藏状态由下方状态下拉框控制（不再使用徽章标识）
         var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;'; sortEl.textContent = '排序:' + (idx + 1);
         var annStatusSel = document.createElement('select'); annStatusSel.className = 'status-select ' + (a.hidden ? 'status-hidden' : 'status-online'); annStatusSel.title = '直接切换公告显示/隐藏'; [['show', '显示'], ['hidden', '隐藏']].forEach(function (op) { var o = document.createElement('option'); o.value = op[0]; o.textContent = op[1]; if ((a.hidden ? 'hidden' : 'show') === op[0]) o.selected = true; annStatusSel.appendChild(o); });
@@ -3527,7 +3556,7 @@
             else renderAnnList();
           });
         });
-        item.addEventListener('click', function () { selectAnnItem(a.id); });
+        item.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('.select-picker, .cat-picker, .cat-picker-panel, .cp-item, .cat-picker-display')) return; selectAnnItem(a.id); });
         item.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', idx); item.style.opacity = '0.5'; });
         item.addEventListener('dragend', function () { item.style.opacity = '1'; document.querySelectorAll('.ann-item').forEach(function (el) { el.style.borderTop = ''; }); });
         item.addEventListener('dragover', function (e) { e.preventDefault(); item.style.borderTop = '2px solid var(--blue1)'; });
@@ -3552,7 +3581,6 @@
       var a = stateAnn.list.find(function (x) { return x.id === id; });
       if (!a) return;
       stateAnn.curId = id;
-      annTitleInput.value = a.title || '';
       if (annEditor) annEditor.innerHTML = a.content || '';
       if (annEditLabel) annEditLabel.textContent = '编辑公告：' + (a.title || '(未命名)');
       renderAnnList();
@@ -3561,7 +3589,6 @@
     function clearAnnEdit() {
       flushAnnEdit();
       stateAnn.curId = null;
-      annTitleInput.value = '';
       if (annEditor) annEditor.innerHTML = '';
       if (annEditLabel) annEditLabel.textContent = '编辑公告';
       renderAnnList();
@@ -3574,6 +3601,8 @@
         if (_tb) { _tb.style.display = ''; slot.appendChild(_tb); }
         if (annEditor) { annEditor.style.display = ''; slot.appendChild(annEditor); }
       }
+      // 先立即打开弹窗，再后台拉取最新数据（避免网络延迟导致弹窗迟迟不出现）
+      document.getElementById('annMask').classList.add('open');
       if (!annDraftPending || !stateAnn.loaded) {
         api('admin/settings').then(function (res) {
           if (res && res.ok) {
@@ -3582,10 +3611,7 @@
             document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
             if (stateAnn.list.length) selectAnnItem(stateAnn.list[0].id); else clearAnnEdit();
           }
-          document.getElementById('annMask').classList.add('open');
-        }).catch(function () { document.getElementById('annMask').classList.add('open'); });
-      } else {
-        document.getElementById('annMask').classList.add('open');
+        }).catch(function () {});
       }
     });
     // 添加公告（由事件委托统一调用，保证按钮始终可用）
@@ -4511,7 +4537,7 @@
     }
 
     setTimeout(function () { var _cb = document.getElementById('catList'); if (_cb) { _cb.classList.remove('prod-fade'); void _cb.offsetWidth; _cb.classList.add('prod-fade'); } }, 10);
-    document.getElementById('addCatBtn').addEventListener('click', function () { openCatEdit(null); });    document.getElementById('catSelectAll').addEventListener('change', function () { var on = this.checked; document.querySelectorAll('.cat-check').forEach(function (cb) { cb.checked = on; }); updateCatBatchBar(); });
+    document.getElementById('addCatBtn').addEventListener('click', function () { openCatEdit(null); });    document.getElementById('catSelectAll').addEventListener('change', function () { var on = this.checked; document.querySelectorAll('.cat-check').forEach(function (cb) { cb.checked = on; state.catSelected[Number(cb.dataset.id)] = on; }); updateCatBatchBar(); });
 
     // ---------- 分类批量操作 ----------
     function updateCatBatchBar() {
@@ -4547,7 +4573,7 @@
     });
     // 取消选择
     document.getElementById('catBatchCancel').addEventListener('click', function () {
-      document.querySelectorAll('.cat-check:checked').forEach(function (cb) { cb.checked = false; });
+      document.querySelectorAll('.cat-check:checked').forEach(function (cb) { cb.checked = false; state.catSelected[Number(cb.dataset.id)] = false; });
       updateCatBatchBar();
     });
     // 执行批量操作
