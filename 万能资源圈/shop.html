@@ -165,7 +165,7 @@
     .top-btn:active { opacity: 0.85; }
     .top-btn svg { width: 15px; height: 15px; flex-shrink: 0; display: block; vertical-align: middle; }    .top-btn span { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
     /* 联系客服/分享按钮复用管理页资源管理按钮（row-btn）样式，保留图标标识 */
-    .top-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; color: #555; font-weight: 400; box-shadow: none; flex-shrink: 0; }
+    .top-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; color: #555; font-weight: 400; box-shadow: none; flex-shrink: 0; letter-spacing: 0; line-height: 1.2; }
     .top-btn:hover { transform: scale(0.97); opacity: 0.9; box-shadow: none; }
     .top-btn:active { transform: scale(0.94); opacity: 0.8; }
 
@@ -1105,6 +1105,9 @@
     html { scrollbar-gutter: stable; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
+    /* logo 与一级分类白色栏左边缘对齐：一级分类栏加与二级分类栏一致的左右内边距 */
+    .category-bar-wrap { padding: 0 16px; }
+    @media (max-width: 600px) { .category-bar-wrap, .sub-category-bar-wrap { padding: 0 12px; } }
   </style>
 </head>
 

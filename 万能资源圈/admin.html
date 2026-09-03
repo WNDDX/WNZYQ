@@ -203,9 +203,9 @@
     .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
     .topbar-right { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; }
     .mini-btn {
-      border: 1px solid #ffc8c8;
+      border: 1px solid #ddd;
       background: #fff;
-      color: var(--red); padding: 6px 12px; border-radius: 6px;
+      color: #555; padding: 6px 12px; border-radius: 6px;
       font-size: 13px; white-space: nowrap;
     }
     .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
@@ -213,10 +213,10 @@
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tb-row2 select { padding: 7px 10px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 13px; background: #fff; color: #333; }
     .view-toggle { display: flex; gap: 4px; }
-    .view-btn { padding:6px 10px; border:1px solid #d6e0ea; border-radius:6px; background:#eef3f9; color:#7a8ba0; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    .view-btn { padding:6px 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
-    .view-btn.active { background: #fff; color: var(--blue1); border-color: var(--blue1); }
+    .view-btn.active { background:#fff !important; color:#1E88E5 !important; border-color:#fff !important; }
     .btn-blue, .row-btn, .mini-btn, .view-btn, .tab, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; display: inline-flex; align-items: center; justify-content: center; }
     .toolbar-hint { font-size: 13px; color: #999; }
@@ -579,7 +579,7 @@
     .dt-pop .dt-ok { background: #1E88E5 !important; color: #fff !important; border: none !important; font-weight: 600; }
     /* 数据统计日期输入框 */
     .stat-date-input {
-      padding: 8px 10px !important; border: 1px solid #ddd !important;
+      height: 36px !important; padding: 0 10px !important; border: 1px solid #ddd !important; box-sizing: border-box !important;
       border-radius: 8px !important; font-size: 13px !important; width: 165px !important;
     }
     .form textarea { resize: vertical; line-height: 1.6; }
@@ -778,7 +778,7 @@
     /* 时间筛选 */
     .time-filter { display: flex; gap: 0; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
     .time-btn {
-      padding: 6px 14px; border: none; background: #fff; color: #666;
+      height: 36px; padding: 0 14px; border: none; background: #fff; color: #666; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
       font-size: 13px; cursor: pointer; transition: all 0.10s ease;
     }
     .time-btn.active { background: var(--blue1); color: #fff; font-weight: 600; }
@@ -927,6 +927,9 @@
     /* 弹窗底部按钮宽度统一：2 个等宽、3 个等分 */
     .modal-footer button { flex: 1 1 0; min-width: 0; }
     .modal-footer .preview-btn { flex-basis: auto; }
+    .view-toggle { display: flex; align-items: center; gap: 4px; background: var(--blue1); border-radius: 8px; padding: 3px; }
+    /* 商品条目切换动画复用商品页：限制形变过渡，仅保留缩放/阴影，切换时不做布局形变 */
+    .product-row { transition: transform 0.10s ease, box-shadow 0.10s ease !important; }
     .cat-row .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
     .cat-row .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .ann-item .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
@@ -1994,6 +1997,7 @@
       });
       pop.querySelector('#dtOk').addEventListener('click', commit);
       window.addEventListener('resize', closePicker);
+      document.addEventListener('focusin', function (e) { var f = e.target && e.target.closest ? e.target.closest('.dt-field') : null; if (f) openPicker(f); });
     })();
 
     // ---------- 顶栏滚动显隐 + 回到顶部（与资源页统一，rAF 节流，零卡顿） ----------
@@ -2875,8 +2879,8 @@
       if (opts.showAll || opts.allowUncategorized) {
         var all = document.createElement('div');
         all.className = 'cp-item cp-all' + (Number(selected) === 0 ? ' selected' : '');
-        all.innerHTML = '<span class="cp-name">' + (opts.allLabel || '全部（未分类）') + '</span>';
-        all.addEventListener('click', function () { pickCatValue(pickerEl, hiddenInput, displayEl, 0, opts.allLabel || '全部（未分类）'); });
+        all.innerHTML = '<span class="cp-name">' + (opts.allLabel || '全部') + '</span>';
+        all.addEventListener('click', function () { pickCatValue(pickerEl, hiddenInput, displayEl, 0, opts.allLabel || '全部'); });
         panelEl.appendChild(all);
       }
       if (!tops.length) {
@@ -3533,7 +3537,7 @@
     }
     // 渲染公告项列表（拖拽排序）
     function renderAnnList() {
-      annListEl.innerHTML = '';
+      var _ah = annListEl.offsetHeight; if (_ah > 0) annListEl.style.minHeight = _ah + 'px'; annListEl.innerHTML = ''; setTimeout(function () { if (annListEl) { annListEl.style.minHeight = ''; annListEl.classList.remove('prod-fade'); void annListEl.offsetWidth; annListEl.classList.add('prod-fade'); } }, 30);
       stateAnn.list.forEach(function (a, idx) {
         var item = document.createElement('div');
         item.className = 'ann-item' + (a.id === stateAnn.curId ? ' ann-cur' : '');
@@ -4382,7 +4386,7 @@
         var row = document.createElement('div');
         row.className = 'cat-row';
         row.draggable = true;
-        row.dataset.id = c.id;
+        row.dataset.id = c.id; row.dataset.parentId = c.parent_id;
         var isTop = c.parent_id === 0;
 
         // 拖拽事件（同级别内排序）
@@ -4459,7 +4463,7 @@
             e.stopPropagation();
             if (!hasChildren) return;
             state.catExpanded[c.id] = state.catExpanded[c.id] === false ? true : false;
-            renderCategories(state.categories);
+            var subRows = box.querySelectorAll('.cat-row[data-parent-id="' + c.id + '"]'); subRows.forEach(function (sr) { sr.style.display = state.catExpanded[c.id] ? '' : 'none'; }); toggleBtn.style.transform = state.catExpanded[c.id] === false ? 'rotate(-90deg)' : 'rotate(0deg)'; toggleBtn.title = state.catExpanded[c.id] === false ? '展开子分类' : '收起子分类';
           });
           row.appendChild(toggleBtn);
         }
