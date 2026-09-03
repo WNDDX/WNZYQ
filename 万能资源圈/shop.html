@@ -1087,7 +1087,13 @@
       .top-btn svg { width: 17px; height: 17px; }
     }
     /* logo 统一为名称大小（覆盖上方定义） */
-    .shop-logo { width: 19px !important; height: 19px !important; }
+    .shop-logo { width: 38px !important; height: 38px !important; align-self: center; }
+    @keyframes cardIn { from { opacity: 0.9; } to { opacity: 1; } }
+    .product-card { animation: cardIn 0.15s ease; }
+    .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
+    .modal-mask #modalBox { height: min(680px, 84vh); }
+    .ann-modal .ann-box { height: min(600px, 80vh); display: flex; flex-direction: column; overflow: hidden; }
+    .ann-modal .ann-body { flex: 1; overflow-y: auto; min-height: 0; }
   </style>
 </head>
 

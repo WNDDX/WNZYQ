@@ -252,7 +252,7 @@
     }
 
     /* ---------- 资源列表 ---------- */
-    @keyframes rowIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+    @keyframes rowIn { from { opacity: 0.9; } to { opacity: 1; } }
     .product-row {
       background: #fff; border-radius: 12px;
       padding: 12px 14px; margin-bottom: 10px;
@@ -912,7 +912,18 @@
     /* 按钮统一纯色（取消渐变，与资源页一致） */
     .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
     /* logo 统一为名称大小（覆盖上方定义） */
-    .topbar-logo { width: 19px !important; height: 19px !important; }
+    .topbar-logo { width: 38px !important; height: 38px !important; align-self: center; }
+    .cat-row .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
+    .cat-row .select-picker .cpd-arrow { width: 14px; height: 14px; }
+    .ann-item .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
+    .ann-item .select-picker .cpd-arrow { width: 14px; height: 14px; }
+    .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { height: min(680px, 84vh); display: flex; flex-direction: column; }
+    .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; padding-right: 4px; }
+    .modal-mask#catMask > .modal-box { height: min(520px, 78vh); display: flex; flex-direction: column; }
+    .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; }
+    .cat-row { animation: rowIn 0.15s ease; }
+    #productList, #catList { transition: opacity 0.1s ease; }
+    .stat-card { animation: rowIn 0.15s ease; }
   </style>
 </head>
 
@@ -1014,7 +1025,7 @@
         <div class="trend-chart">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
             <h3 style="margin:0;">访问趋势</h3>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;justify-content:flex-end;flex:1;gap:8px;flex-wrap:wrap;">
               <div class="time-filter">
                 <button class="time-btn active" data-days="7">近7天</button>
                 <button class="time-btn" data-days="30">近30天</button>
@@ -1783,7 +1794,7 @@
     }
     document.getElementById('confirmOk').addEventListener('click', function () {
       document.getElementById('confirmMask').classList.remove('open');
-      if (confirmCallback) { var cb = confirmCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
+      toast('操作成功', 'success'); if (confirmCallback) { var cb = confirmCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
     });
     document.getElementById('confirmCancel').addEventListener('click', function () {
       document.getElementById('confirmMask').classList.remove('open');
@@ -1800,6 +1811,7 @@
 
     // 弹窗/编辑器放大态打开时锁定页面滚动（滚轮只在弹窗内滚动），全部关闭后自动恢复，避免“滚轮失灵”的体感
     (function () { window.__syncBodyLock = function () { var anyOpen = document.querySelector('.modal-mask.open') || document.querySelector('.rte-editor.rte-large'); document.body.style.overflow = anyOpen ? 'hidden' : ''; }; window.__syncBodyLock(); new MutationObserver(window.__syncBodyLock).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] }); })();
+    (function () { function _r(){ document.querySelectorAll('.rte-editor.rte-large').forEach(function(e){ e.classList.remove('rte-large'); e.style.top=''; e.style.height=''; }); document.querySelectorAll('.rte-toolbar-large').forEach(function(e){ e.classList.remove('rte-toolbar-large'); }); document.querySelectorAll('.rte-zoom-on').forEach(function(e){ e.classList.remove('rte-zoom-on'); e.textContent='⛶ 放大'; }); if(window.__rteRO&&window.__rteRO.disconnect){ try{ window.__rteRO.disconnect(); }catch(e){} } } window.__resetRteAll=_r; document.querySelectorAll('.modal-mask').forEach(function(m){ new MutationObserver(function(){ if(m.classList.contains('open')) _r(); }).observe(m,{attributes:true,attributeFilter:['class']}); }); })();
     // 弹窗右上角×按钮统一关闭（事件委托）
     document.addEventListener('click', function (e) {
       var closeBtn = e.target.closest('.modal-close-x, .modal-close[data-close]');
@@ -2514,7 +2526,7 @@
           opt.textContent = c.name + (c.id === 0 ? '（全部）' : '');
           select.appendChild(opt);
         });
-        } document.getElementById('batchCatMask').classList.add('open');
+        } document.getElementById('batchCatMask').classList.add('open'); if (!document.getElementById('batchCatMask')._bm) { document.getElementById('batchCatMask')._bm = 1; document.getElementById('batchCatMask').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('open'); }); }
         // 确认按钮事件（只绑定一次）
         var okBtn = document.getElementById('batchCatOk');
         okBtn.onclick = function () {
@@ -2605,7 +2617,7 @@
     function delProduct(id) {
       showConfirm('删除资源', '确定删除该资源？其类型和统计数据也会一并删除。', function () {
         api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
-          if (res.ok) { toast('已删除', 'success'); clearCache(); loadProducts(); }
+          if (res.ok) { toast('已删除', 'success'); clearCache(); state.products = state.products.filter(function(p){ return p.id !== id; }); var _r2 = document.querySelector('#productList [data-id="' + id + '"]'); if (_r2) { _r2.style.transition='opacity .12s ease'; _r2.style.opacity='0'; setTimeout(function(){ if (_r2.parentNode) _r2.parentNode.removeChild(_r2); if (!document.querySelector('#productList .product-row')) renderProducts(); }, 120); } else renderProducts(); }
           else toast(res.msg || '删除失败', 'error');
         });
       });
@@ -2883,7 +2895,7 @@
       txtEl.classList.remove('placeholder');
       document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
       pickerEl.querySelectorAll('.cp-item.selected').forEach(function (el) { el.classList.remove('selected'); });
-      if (typeof onProductCidChange === 'function') onProductCidChange(id);
+      if (!document.getElementById('batchCatMask').classList.contains('open') && typeof onProductCidChange === 'function') onProductCidChange(id);
     }
     document.addEventListener('click', function (e) {
       var disp = e.target.closest ? e.target.closest('.cat-picker-display') : null;
@@ -3081,7 +3093,7 @@
       saveProductBtn.disabled = true;
       saveProductBtn.style.opacity = '0.6';
 
-      var req = state.editingId
+      toast('保存成功', 'success'); editMask.classList.remove('open'); var req = state.editingId
         ? api('admin/products/' + state.editingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/products', { method: 'POST', body: JSON.stringify(data) });
 
@@ -3489,10 +3501,10 @@
         handle.textContent = '⋮⋮';
         var txt = document.createElement('span'); txt.className = 'ann-title-txt';
         txt.textContent = a.title || '(未命名公告)';
-        if (a.hidden) { var bd = document.createElement('span'); bd.className = 'ann-badge'; bd.textContent = '已隐藏'; txt.appendChild(bd); }
+        // 公告隐藏状态由下方状态下拉框控制（不再使用徽章标识）
         var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;'; sortEl.textContent = '排序:' + (idx + 1);
-        var hideBtn = document.createElement('button'); hideBtn.className = 'ann-hide-btn'; hideBtn.textContent = a.hidden ? '显示' : '隐藏';
-        hideBtn.addEventListener('click', function (e) { e.stopPropagation(); a.hidden = a.hidden ? 0 : 1; renderAnnList(); });
+        var annStatusSel = document.createElement('select'); annStatusSel.className = 'status-select ' + (a.hidden ? 'status-hidden' : 'status-online'); annStatusSel.title = '直接切换公告显示/隐藏'; [['show', '显示'], ['hidden', '已隐藏']].forEach(function (op) { var o = document.createElement('option'); o.value = op[0]; o.textContent = op[1]; if ((a.hidden ? 'hidden' : 'show') === op[0]) o.selected = true; annStatusSel.appendChild(o); });
+        annStatusSel.addEventListener('change', function () { a.hidden = this.value === 'hidden' ? 1 : 0; renderAnnList(); }); annStatusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (annStatusSel.parentNode && typeof makeSelectPicker === 'function') { makeSelectPicker(annStatusSel); } }, 0);
         // 点击公告项整行即可选中编辑（无需单独编辑按钮）
         var delBtn = document.createElement('button'); delBtn.className = 'row-btn danger'; delBtn.textContent = '删除';
         delBtn.addEventListener('click', function (e) {
@@ -3520,7 +3532,7 @@
           stateAnn.list.forEach(function (v2, i) { v2.sort = i + 1; });
           renderAnnList();
         });
-        item.appendChild(handle); item.appendChild(txt); item.appendChild(sortEl); item.appendChild(hideBtn); item.appendChild(delBtn);
+        item.appendChild(handle); item.appendChild(txt); item.appendChild(sortEl); item.appendChild(annStatusSel); item.appendChild(delBtn);
         annListEl.appendChild(item);
       });
     }
@@ -3574,7 +3586,7 @@
       selectAnnItem(a.id);
     }
     // 保存公告
-    document.getElementById('saveAnnBtn').addEventListener('click', function () {
+    document.getElementById('saveAnnBtn').addEventListener('click', function () { toast('公告已保存', 'success'); annDraftPending = false; document.getElementById('annMask').classList.remove('open');
       flushAnnEdit();
       var data = {
         announcement: '',
@@ -3612,7 +3624,7 @@
       document.getElementById('setContactUrl').value = v;
       var st = document.getElementById('contactStatus'); if (st) st.textContent = '';
       document.getElementById('contactMask').classList.remove('open');
-      api('admin/settings', { method: 'PUT', body: JSON.stringify({ contact_url: v }) }).then(function (res) { if (res.ok) toast('客服链接已保存', 'success'); else toast(res.msg || '保存失败', 'error'); });
+      toast('客服链接已保存', 'success'); api('admin/settings', { method: 'PUT', body: JSON.stringify({ contact_url: v }) }).then(function (res) { if (res.ok) toast('客服链接已保存', 'success'); else toast(res.msg || '保存失败', 'error'); });
     });
     document.getElementById('cancelContactBtn').addEventListener('click', function () { contactDraftPending = false; document.getElementById('contactUrlInput').value = ''; document.getElementById('contactMask').classList.remove('open'); });
     document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) { contactDraftPending = true; document.getElementById('contactMask').classList.remove('open'); } }); // 遮罩关闭：保留输入可继续编辑
@@ -3929,7 +3941,7 @@
         renderVariants();
         return;
       }
-      var req = state.editingVariantId
+      toast('保存成功', 'success'); variantDraftPending = false; variantMask.classList.remove('open'); var req = state.editingVariantId
         ? api('admin/variants/' + state.editingVariantId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/variants', { method: 'POST', body: JSON.stringify(data) });
       req.then(function (res) {
@@ -4425,13 +4437,13 @@
         levelBadge.style.color = c.id === 0 ? '#ef6c00' : (isTop ? '#1976d2' : '#999');
         levelBadge.textContent = c.id === 0 ? '默认' : (isTop ? '一级' : '二级');
 
-        // 隐藏状态
-        if (c.is_hidden) {
-          var hiddenBadge = document.createElement('span');
-          hiddenBadge.className = 'badge hidden';
-          hiddenBadge.textContent = '已隐藏';
-          row.style.opacity = '0.55';
-          row.appendChild(hiddenBadge);
+        // 显示/隐藏状态下拉框（复用资源管理的商品状态框，点击展开选择显示或隐藏）
+        if (Number(c.id) !== 0) {
+          var catStatusSel = document.createElement('select');
+          catStatusSel.className = 'status-select ' + (c.is_hidden ? 'status-hidden' : 'status-online');
+          catStatusSel.title = '直接切换分类显示/隐藏';
+          [['show', '显示'], ['hidden', '已隐藏']].forEach(function (op) { var o = document.createElement('option'); o.value = op[0]; o.textContent = op[1]; if ((c.is_hidden ? 'hidden' : 'show') === op[0]) o.selected = true; catStatusSel.appendChild(o); });
+          catStatusSel.addEventListener('change', function () { var nowHidden = this.value === 'hidden'; var prev = !!c.is_hidden; if (prev === nowHidden) return; c.is_hidden = nowHidden; renderCategories(state.categories); api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ is_hidden: nowHidden }) }).then(function (res) { if (!res.ok) { c.is_hidden = prev; toast(res.msg || '更新失败', 'error'); renderCategories(state.categories); } else { clearCache(); } }); }); catStatusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (catStatusSel.parentNode && typeof makeSelectPicker === 'function') { makeSelectPicker(catStatusSel); } }, 0); row.appendChild(catStatusSel);
         }
 
         var sort = document.createElement('span');
@@ -4656,7 +4668,7 @@
         return;
       }
       var data = { name: name, sort: sort, parent_id: parentId, is_hidden: isHidden };
-      var req = state.catEditingId
+      toast('保存成功', 'success'); catDraftPending = false; catMask.classList.remove('open'); var req = state.catEditingId
         ? api('admin/categories/' + state.catEditingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/categories', { method: 'POST', body: JSON.stringify(data) });
 
@@ -4708,7 +4720,7 @@
       var confirmPwd = document.getElementById('confirmPwd').value;
       if (!oldPwd || !newPwd || !confirmPwd) { toast('请填写完整密码信息', 'error'); return; }
       if (newPwd !== confirmPwd) { toast('两次输入的新密码不一致', 'error'); return; }
-      api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
+      toast('密码修改成功', 'success'); pwdMask.classList.remove('open'); api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
         .then(function (res) {
           if (res.ok) {
             toast('密码修改成功', 'success');
