@@ -203,9 +203,9 @@
     .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
     .topbar-right { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; }
     .mini-btn {
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff; padding: 5px 12px; border-radius: 14px;
+      border: 1px solid #ffc8c8;
+      background: #fff;
+      color: var(--red); padding: 6px 12px; border-radius: 6px;
       font-size: 13px; white-space: nowrap;
     }
     .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
@@ -213,10 +213,10 @@
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tb-row2 select { padding: 7px 10px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 13px; background: #fff; color: #333; }
     .view-toggle { display: flex; gap: 4px; }
-    .view-btn { padding:6px 10px; border:1px solid #d6e0ea; border-radius:6px; background:#fff; color:#555; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    .view-btn { padding:6px 10px; border:1px solid #d6e0ea; border-radius:6px; background:#eef3f9; color:#7a8ba0; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
-    .view-btn.active { background: var(--blue1); color: #fff; border-color: var(--blue1); }
+    .view-btn.active { background: #fff; color: var(--blue1); border-color: var(--blue1); }
     .btn-blue, .row-btn, .mini-btn, .view-btn, .tab, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; display: inline-flex; align-items: center; justify-content: center; }
     .toolbar-hint { font-size: 13px; color: #999; }
@@ -920,7 +920,13 @@
     /* 按钮统一纯色（取消渐变，与资源页一致） */
     .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
     /* logo 统一为名称大小（覆盖上方定义） */
-    .topbar-logo { width: 38px !important; height: 38px !important; align-self: center; }
+    .topbar-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; }
+    .topbar-brand span { line-height: 1; display: flex; align-items: center; }
+    /* 原生状态 select 在转换为自制选择框前不可见，避免闪现绿色默认样式（分类/公告/资源） */
+    .status-select { opacity: 0; }
+    /* 弹窗底部按钮宽度统一：2 个等宽、3 个等分 */
+    .modal-footer button { flex: 1 1 0; min-width: 0; }
+    .modal-footer .preview-btn { flex-basis: auto; }
     .cat-row .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
     .cat-row .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .ann-item .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
@@ -2077,7 +2083,7 @@
 
     function showMain(username) {
       loginView.style.display = 'none';
-      mainView.style.display = 'block'; window.__plS = 1; loadStats();
+      mainView.style.display = 'block'; window.__plS = 1; loadStats(); loadSettings();
       loadCategories();
       switchTab('products');
     }
@@ -2106,7 +2112,7 @@
       api('admin/settings').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var s = res.settings || {};
-        window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || '';
+        window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || ''; if (document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = s.contact_url || '';
         // 客服状态文字已按需求移除
         document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
         if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; }
@@ -2190,7 +2196,7 @@
         .then(function (res) {
           if (res.ok) {
             localStorage.setItem(TOKEN_KEY, res.token);
-            showMain(res.username);
+            loadSettings(); showMain(res.username);
           } else {
             toast(res.msg || '登录失败', 'error');
             if (res._status === 429) loginTip.textContent = res.msg || '';
@@ -4149,7 +4155,7 @@
         // 3 分类清单
         var cRows = [['ID', '分类名称', '层级', '所属一级', '排序', '是否隐藏', '资源数']];
         state.categories.forEach(function (c) {
-          cRows.push([c.id, c.name || '', c.id === 0 ? '默认' : (c.parent_id ? '二级' : '一级'), c.parent_id ? (catById[c.parent_id] ? catById[c.parent_id].name : '') : '—', c.sort || 0, c.is_hidden ? '是' : '否', c.cnt || 0]);
+          cRows.push([c.id, c.name || '', c.id === 0 ? '—' : (c.parent_id ? '二级' : '一级'), c.parent_id ? (catById[c.parent_id] ? catById[c.parent_id].name : '') : '—', c.sort || 0, c.is_hidden ? '是' : '否', c.cnt || 0]);
         });
         sheets.push({ name: '分类清单', rows: cRows });
         // 4/5 统计（近30天内）
@@ -4471,7 +4477,7 @@
         levelBadge.className = 'badge ' + (isTop ? 'on' : '');
         levelBadge.style.background = c.id === 0 ? '#fff3e0' : (isTop ? '#e3f2fd' : '#f5f5f5');
         levelBadge.style.color = c.id === 0 ? '#ef6c00' : (isTop ? '#1976d2' : '#999');
-        levelBadge.textContent = c.id === 0 ? '默认' : (isTop ? '一级' : '二级');
+        levelBadge.textContent = c.id === 0 ? '' : (isTop ? '一级' : '二级'); levelBadge.style.display = c.id === 0 ? 'none' : '';
 
         // 显示/隐藏状态下拉框（复用资源管理的商品状态框，点击展开选择显示或隐藏）
         if (Number(c.id) !== 0) {

@@ -164,6 +164,10 @@
     }
     .top-btn:active { opacity: 0.85; }
     .top-btn svg { width: 15px; height: 15px; flex-shrink: 0; display: block; vertical-align: middle; }    .top-btn span { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+    /* 联系客服/分享按钮复用管理页资源管理按钮（row-btn）样式，保留图标标识 */
+    .top-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; color: #555; font-weight: 400; box-shadow: none; flex-shrink: 0; }
+    .top-btn:hover { transform: scale(0.97); opacity: 0.9; box-shadow: none; }
+    .top-btn:active { transform: scale(0.94); opacity: 0.8; }
 
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
@@ -1087,7 +1091,10 @@
       .top-btn svg { width: 17px; height: 17px; }
     }
     /* logo 统一为名称大小（覆盖上方定义） */
-    .shop-logo { width: 38px !important; height: 38px !important; align-self: center; }
+    .shop-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; }
+    .shop-name { line-height: 1; display: flex; align-items: center; }
+    /* 弹窗底部按钮宽度统一：2 个等宽 */
+    .modal-footer button { flex: 1; min-width: 0; }
     @keyframes cardIn { from { opacity: 0.9; } to { opacity: 1; } }
     .product-card { animation: cardIn 0.15s ease; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
@@ -1351,7 +1358,8 @@
           im.style.objectFit = 'contain';
           im.style.display = 'block';
         });
-        if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) {
+        var _s = im.getAttribute('src') || '';
+        if (!_s || _s.indexOf('data:') === 0 || (im.complete && im.naturalWidth === 0)) {
           im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block';
         }
       })(imgs[i]);
@@ -1364,6 +1372,14 @@
           ph.style.cssText = 'width:100%;height:auto;display:block;';
           if (vd.parentNode) vd.parentNode.replaceChild(ph, vd);
         });
+        var _vs = vd.getAttribute('src') || '';
+        if (!_vs && !vd.querySelector('source')) {
+          vd.dataset.fh = '1';
+          var ph2 = document.createElement('img');
+          ph2.src = IMG_PLACEHOLDER;
+          ph2.style.cssText = 'width:100%;height:auto;display:block;';
+          if (vd.parentNode) vd.parentNode.replaceChild(ph2, vd);
+        }
       })(vids[j]);
     }
 
