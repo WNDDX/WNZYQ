@@ -912,7 +912,7 @@
     /* 按钮统一纯色（取消渐变，与资源页一致） */
     .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
     /* logo 统一为名称大小（覆盖上方定义） */
-    .topbar-logo { width: 19px; height: 19px; }
+    .topbar-logo { width: 19px !important; height: 19px !important; }
   </style>
 </head>
 
@@ -1400,7 +1400,7 @@
   </div>
 
   <!-- ============ 通用输入弹窗 ============ -->
-  <div class="modal-mask" id="inputMask">
+  <div class="modal-mask" id="inputMask" style="z-index:260;">
     <div class="modal-box" style="max-width:400px;">
       <button class="modal-close-x" data-close="inputMask">×</button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
@@ -3286,8 +3286,8 @@
       if (big) {
         ed.focus();
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
-        (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 8; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; }; _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) {} } })();
-        var exit = null; // 右上角还原按钮已移除：用工具栏"还原"或 Esc 退出; setTimeout(function(){ var _le=document.querySelector('.rte-editor.rte-large'); if(_le){ var _tb2=_le.previousElementSibling; if(_tb2&&_tb2.classList&&_tb2.classList.contains('rte-toolbar')){ var _b2=_tb2.getBoundingClientRect().bottom+8; _le.style.top=_b2+'px'; _le.style.height='calc(100vh - '+(_b2+12)+'px)'; } } }, 80);
+        (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 0; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; }; _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) {} } })();
+        var exit = null; // 右上角还原按钮已移除：用工具栏"还原"或 Esc 退出; setTimeout(function(){ var _le=document.querySelector('.rte-editor.rte-large'); if(_le){ var _tb2=_le.previousElementSibling; if(_tb2&&_tb2.classList&&_tb2.classList.contains('rte-toolbar')){ var _b2=_tb2.getBoundingClientRect().bottom+0; _le.style.top=_b2+'px'; _le.style.height='calc(100vh - '+(_b2+12)+'px)'; } } }, 80);
         if (false && exit) {
           exit = document.createElement('button');
           exit.id = 'rteExitZoom';
@@ -3899,6 +3899,8 @@
     // 初始化类型描述和资源码专属内容的富文本编辑器
     initVariantRte('vDescRteToolbar', 'vDescEditor', 'vDescRteLink', 'vDescRteImg', 'vDescRteVideo', 'vDescFormatBrush');
     initVariantRte('vContentRteToolbar', 'vContentEditor', 'vContentRteLink', 'vContentRteImg', 'vContentRteVideo', 'vContentFormatBrush');
+    // 类型编辑器 focus 时锁定当前编辑器（保证链接/图片/视频/颜色插入目标正确）
+    ['fDetail', 'vDescEditor', 'vContentEditor'].forEach(function (id) { var _e = document.getElementById(id); if (_e) _e.addEventListener('focus', function () { __rte.editor = _e; }); });
 
     variantOk.addEventListener('click', function () {
       if (!validateField(vName, '请填写类型名称')) return;
@@ -4169,7 +4171,7 @@
       if (startDate) params.push('start_date=' + encodeURIComponent(startDate));
       if (endDate) params.push('end_date=' + encodeURIComponent(endDate));
       if (params.length) url += '?' + params.join('&');
-      var _sl0 = document.getElementById('statsLoading'); if (_sl0) _sl0.style.display = 'flex'; var _ps0 = document.getElementById('panel-stats'); if (_ps0) _ps0.classList.remove('stats-fade-in');
+      var _sl0 = document.getElementById('statsLoading'); if (_sl0 && !(document.getElementById('statCards') || { children: [] }).children.length) _sl0.style.display = 'flex';
       api(url).then(function (res) {
         // 数据统计表格顺序：资源明细 → 分类统计 → 浏览记录（幂等，仅首次生效）
         var _sec = document.getElementById('panel-stats');
