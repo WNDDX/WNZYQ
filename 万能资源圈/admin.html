@@ -188,8 +188,8 @@
       box-shadow: 0 0 0 3px rgba(255,255,255,0.45);
     }
     .topbar-logo {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       object-fit: cover;
       background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease;
@@ -439,6 +439,7 @@
     .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid #e3eefc; border-radius: 8px; padding: 6px; margin-bottom: 6px; background: #fbfdff; }
     .ann-item { background: #fff; border: 1px solid #e3eefc; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
     .ann-item:last-child { margin-bottom: 0; }
+    .ann-item.ann-cur { border-color: var(--blue1); box-shadow: 0 0 0 1px var(--blue1) inset; }
     .ann-item .ann-title-txt { flex: 1; font-size: 14px; font-weight: 500; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ann-item .ann-badge { font-size: 11px; color: #b26a00; background: #fff3e0; padding: 1px 7px; border-radius: 4px; font-weight: 600; }
     .ann-item .ann-hide-btn, .ann-item .ann-edit-btn, .ann-item .ann-del-btn { border: none; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: transform .12s ease; }
@@ -882,7 +883,7 @@
       /* 批量栏按钮紧凑换行，不超出画面 */
       .batch-bar { gap: 6px; padding: 8px 10px; }
       .batch-btn { padding: 5px 9px; font-size: 12px; }
-      .back-top { right: 14px; bottom: 18px; width: 40px; height: 40px; }
+      .back-top { right: 14px; bottom: 18px; width: 36px; height: 36px; }
     }
 
     /* ========== 统一按钮动画（跟资源页一致） ========== */
@@ -1212,7 +1213,7 @@
         </select>
         <label>公告项（拖拽 ⋮⋮ 调整顺序；隐藏的项不在资源页显示）</label>
         <div id="annList" class="ann-list"></div>
-        <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">+ 添加公告</button>
+        <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">添加公告</button>
         <label id="annEditLabel">编辑公告</label>
         <input class="input" id="annTitleInput" placeholder="公告标题（资源页小项按键显示的文字）" />
         <label>公告内容（支持文字、图片、视频、超链接）</label>
@@ -1682,10 +1683,11 @@
       try { document.getElementById('contactMask').classList.add('open'); } catch (e) {}
     }
     document.addEventListener('click', function (e) {
-      var btn = e.target.closest ? e.target.closest('#openContactBtn, #addCatBtn') : null;
+      var btn = e.target.closest ? e.target.closest('#openContactBtn, #addCatBtn, #addAnnBtn') : null;
       if (!btn) return;
       if (btn.id === 'openContactBtn') { try { if (!document.getElementById('contactMask').classList.contains('open')) openContactSetting(); } catch (e) { try { document.getElementById('contactMask').classList.add('open'); } catch (e2) {} } }
       else if (btn.id === 'addCatBtn') { try { if (!document.getElementById('catMask').classList.contains('open')) openCatEdit(null); } catch (e) { try { document.getElementById('catMask').classList.add('open'); } catch (e2) {} } }
+      else if (btn.id === 'addAnnBtn') { try { addNewAnnouncement(); } catch (e) {} }
     });
 
     // 通用输入弹窗
@@ -2057,7 +2059,8 @@
         var s = res.settings || {};
         document.getElementById('setContactUrl').value = s.contact_url || '';
         // 客服状态文字已按需求移除
-        document.getElementById('setAnnouncement').innerHTML = s.announcement || ''; annStoredV = s.announcement || '';
+        document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
+        if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; }
         (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = ''; _fg.appendChild(_pg); } })();
         document.getElementById('annMode').value = s.announcement_mode || 'always';
         // 公告状态文字已按需求移除
@@ -3457,7 +3460,91 @@
     var stateAnn = { list: [], curId: null, loaded: false };
     // 初始隐藏设置页中的公告编辑器（由"设置公告"弹窗承载）
     (function () { var _tb = document.getElementById('announcementRteToolbar'); if (_tb) _tb.style.display = 'none'; if (annEditor) annEditor.style.display = 'none'; })();
-    // 打开公告设置弹窗：把公告编辑器移入弹窗
+    // 解析公告列表（兼容旧单条 announcement）
+    function parseAnnouncements(settings) {
+      var arr = [];
+      try { arr = JSON.parse(settings.announcements || '[]'); } catch (e) { arr = []; }
+      if (!Array.isArray(arr)) arr = [];
+      if (!arr.length && settings.announcement) arr = [{ id: 0, title: '公告', content: String(settings.announcement || ''), hidden: 0, sort: 1 }];
+      arr.sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
+      return arr;
+    }
+    // 把当前编辑中的标题/内容写回列表
+    function flushAnnEdit() {
+      if (stateAnn.curId) {
+        var cur = stateAnn.list.find(function (x) { return x.id === stateAnn.curId; });
+        if (cur) { cur.title = annTitleInput.value.trim(); if (annEditor) cur.content = annEditor.innerHTML; }
+      }
+    }
+    // 渲染公告项列表（拖拽排序）
+    function renderAnnList() {
+      annListEl.innerHTML = '';
+      stateAnn.list.forEach(function (a, idx) {
+        var item = document.createElement('div');
+        item.className = 'ann-item' + (a.id === stateAnn.curId ? ' ann-cur' : '');
+        item.draggable = true; item.dataset.idx = idx; item.style.cursor = 'move';
+        var handle = document.createElement('span');
+        handle.style.cssText = 'cursor:grab;color:#ccc;font-size:15px;margin-right:2px;user-select:none;';
+        handle.textContent = '⋮⋮';
+        var txt = document.createElement('span'); txt.className = 'ann-title-txt';
+        txt.textContent = a.title || '(未命名公告)';
+        if (a.hidden) { var bd = document.createElement('span'); bd.className = 'ann-badge'; bd.textContent = '已隐藏'; txt.appendChild(bd); }
+        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;'; sortEl.textContent = '排序:' + (idx + 1);
+        var hideBtn = document.createElement('button'); hideBtn.className = 'ann-hide-btn'; hideBtn.textContent = a.hidden ? '显示' : '隐藏';
+        hideBtn.addEventListener('click', function (e) { e.stopPropagation(); a.hidden = a.hidden ? 0 : 1; renderAnnList(); });
+        var editBtn = document.createElement('button'); editBtn.className = 'row-btn'; editBtn.textContent = '编辑';
+        editBtn.addEventListener('click', function (e) { e.stopPropagation(); selectAnnItem(a.id); });
+        var delBtn = document.createElement('button'); delBtn.className = 'row-btn danger'; delBtn.textContent = '删除';
+        delBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？', function () {
+            stateAnn.list = stateAnn.list.filter(function (x) { return x.id !== a.id; });
+            if (stateAnn.curId === a.id) stateAnn.curId = null;
+            if (!stateAnn.curId && stateAnn.list.length) selectAnnItem(stateAnn.list[0].id);
+            else if (!stateAnn.list.length) clearAnnEdit();
+            else renderAnnList();
+          });
+        });
+        item.addEventListener('click', function () { selectAnnItem(a.id); });
+        item.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', idx); item.style.opacity = '0.5'; });
+        item.addEventListener('dragend', function () { item.style.opacity = '1'; document.querySelectorAll('.ann-item').forEach(function (el) { el.style.borderTop = ''; }); });
+        item.addEventListener('dragover', function (e) { e.preventDefault(); item.style.borderTop = '2px solid var(--blue1)'; });
+        item.addEventListener('dragleave', function () { item.style.borderTop = ''; });
+        item.addEventListener('drop', function (e) {
+          e.preventDefault(); item.style.borderTop = '';
+          var fromIdx = Number(e.dataTransfer.getData('text/plain'));
+          var toIdx = idx;
+          if (fromIdx === toIdx || isNaN(fromIdx)) return;
+          var moved = stateAnn.list.splice(fromIdx, 1)[0];
+          stateAnn.list.splice(toIdx, 0, moved);
+          stateAnn.list.forEach(function (v2, i) { v2.sort = i + 1; });
+          renderAnnList();
+        });
+        item.appendChild(handle); item.appendChild(txt); item.appendChild(sortEl); item.appendChild(hideBtn); item.appendChild(editBtn); item.appendChild(delBtn);
+        annListEl.appendChild(item);
+      });
+    }
+    // 选中并加载某条公告到编辑区
+    function selectAnnItem(id) {
+      flushAnnEdit();
+      var a = stateAnn.list.find(function (x) { return x.id === id; });
+      if (!a) return;
+      stateAnn.curId = id;
+      annTitleInput.value = a.title || '';
+      if (annEditor) annEditor.innerHTML = a.content || '';
+      annEditLabel.textContent = '编辑公告：' + (a.title || '(未命名)');
+      renderAnnList();
+    }
+    // 清空编辑区
+    function clearAnnEdit() {
+      flushAnnEdit();
+      stateAnn.curId = null;
+      annTitleInput.value = '';
+      if (annEditor) annEditor.innerHTML = '';
+      annEditLabel.textContent = '编辑公告';
+      renderAnnList();
+    }
+    // 打开公告设置弹窗：把公告编辑器移入弹窗，并从服务器拉取最新公告
     document.getElementById('openAnnBtn').addEventListener('click', function () {
       var slot = document.getElementById('annEditorSlot');
       if (slot && slot.querySelector('#setAnnouncement') === null) {
@@ -3465,25 +3552,55 @@
         if (_tb) { _tb.style.display = ''; slot.appendChild(_tb); }
         if (annEditor) { annEditor.style.display = ''; slot.appendChild(annEditor); }
       }
-      if (!annDraftPending) { if (annEditor) annEditor.innerHTML = annStoredV || ''; } document.getElementById('annMask').classList.add('open');
+      if (!annDraftPending || !stateAnn.loaded) {
+        api('admin/settings').then(function (res) {
+          if (res && res.ok) {
+            stateAnn.list = parseAnnouncements(res.settings || {});
+            stateAnn.loaded = true;
+            document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
+            if (stateAnn.list.length) selectAnnItem(stateAnn.list[0].id); else clearAnnEdit();
+          }
+          document.getElementById('annMask').classList.add('open');
+        }).catch(function () { document.getElementById('annMask').classList.add('open'); });
+      } else {
+        document.getElementById('annMask').classList.add('open');
+      }
     });
+    // 添加公告（由事件委托统一调用，保证按钮始终可用）
+    function addNewAnnouncement() {
+      flushAnnEdit();
+      var a = { id: Date.now(), title: '新公告', content: '', hidden: 0, sort: stateAnn.list.length + 1 };
+      stateAnn.list.push(a);
+      selectAnnItem(a.id);
+    }
     // 保存公告
     document.getElementById('saveAnnBtn').addEventListener('click', function () {
+      flushAnnEdit();
       var data = {
-        announcement: (annEditor ? (annStoredV = annEditor.innerHTML) : ''),
-        announcement_mode: document.getElementById('annMode').value
+        announcement: '',
+        announcement_mode: document.getElementById('annMode').value,
+        announcements: JSON.stringify(stateAnn.list)
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
         if (res.ok) {
           toast('公告已保存', 'success');
-          var st = document.getElementById('annStatus'); if (st) st.textContent = '';
+          stateAnn.loaded = true; annDraftPending = false;
           document.getElementById('annMask').classList.remove('open');
         } else toast(res.msg || '保存失败', 'error');
       });
     });
-    // 取消公告
-    document.getElementById('cancelAnnBtn').addEventListener('click', function () { annDraftPending = false; if (annEditor) annEditor.innerHTML = annStoredV || ''; document.getElementById('annMask').classList.remove('open'); });
-    document.getElementById('annMask').addEventListener('click', function (e) { if (e.target === document.getElementById('annMask')) { annDraftPending = true; document.getElementById('annMask').classList.remove('open'); } }); // 遮罩关闭：保留输入可继续编辑
+    // 取消公告（不保存，下次打开重新加载已保存状态）
+    document.getElementById('cancelAnnBtn').addEventListener('click', function () {
+      annDraftPending = false; stateAnn.loaded = false;
+      document.getElementById('annMask').classList.remove('open');
+    });
+    // 遮罩关闭：暂存当前编辑状态，下次打开可继续编辑
+    document.getElementById('annMask').addEventListener('click', function (e) {
+      if (e.target === document.getElementById('annMask')) {
+        annDraftPending = true;
+        document.getElementById('annMask').classList.remove('open');
+      }
+    });
 
     // ---------- 全局客服链接（弹窗设置，与公告一致） ---------- var contactDraftPending = false;
     document.getElementById('openContactBtn').addEventListener('click', function () {

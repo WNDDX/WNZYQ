@@ -97,7 +97,7 @@
       gap: 12px;
     }
     .shop-logo {
-      width: 40px; height: 40px;
+      width: 36px; height: 36px;
       border-radius: 50%;
       object-fit: cover;
       background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease;
@@ -655,7 +655,7 @@
     }
     .lb-close {
       position: absolute; top: 14px; right: 14px; z-index: 10;
-      width: 40px; height: 40px; border-radius: 50%;
+      width: 36px; height: 36px; border-radius: 50%;
       border: none; background: rgba(255,255,255,0.2); color: #fff;
       font-size: 22px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -695,6 +695,11 @@
       font-weight: 600;
       box-shadow: 0 2px 8px rgba(30,136,229,0.3);
     }
+    /* 公告小项 tabs（与类型切换 tabs 完全同款，保证关联性） */
+    .ann-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 0 2px; }
+    .ann-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: #fff; color: #666; font-size: 13px; cursor: pointer; transition: all 0.15s ease; user-select: none; }
+    .ann-tab:hover { border-color: var(--blue1); color: var(--blue1); background: #f0f7ff; transform: translateY(-1px); }
+    .ann-tab.active { background: var(--blue1); color: #fff; border-color: transparent; font-weight: 600; box-shadow: 0 2px 8px rgba(30,136,229,0.3); }
     .variant-detail {
       background: #f7faff;
       border-radius: 8px;
@@ -1071,7 +1076,7 @@
       .product-grid.list-view .card-img { width: 96px; min-width: 96px; aspect-ratio: 1 / 1; }
       .product-grid.list-view .card-body { padding: 10px; }
       .product-grid.list-view .card-title { -webkit-line-clamp: 2; min-height: 38px; }
-      .back-top { right: 16px; bottom: 20px; width: 40px; height: 40px; }
+      .back-top { right: 16px; bottom: 20px; width: 36px; height: 36px; }
       .variant-tab { padding: 5px 14px; font-size: 12px; }
     }
 
@@ -1155,11 +1160,12 @@
     </button>
   </div>
 
-  <!-- ============ 平台公告弹窗（管理页可编辑，富文本） ============ -->
+  <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
   <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false)}">
     <div class="ann-box" onclick="event.stopPropagation()">
       <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false)">✕</button>
       <div class="ann-title" style="text-align:center;">公告</div>
+      <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
       <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false)">确定</button>
     </div>
@@ -1269,7 +1275,7 @@
     var modalCloseX = document.getElementById('modalCloseX');
 
     // ---------- 状态 ----------
-    var DATA = { categories: [], products: [], announcement: '', announcementMode: 'always' };
+    var DATA = { categories: [], products: [], announcement: '', announcementMode: 'always', announcements: [] };
     var currentCat = 0;
     var currentSubCat = 0;  // 当前选中的二级分类 id，0=该一级分类下全部
     var currentProduct = null;
@@ -1501,13 +1507,14 @@
 
     // ---------- 渲染分类 ----------
     // ---------- 渲染分类（一级） ----------
-    // 平台公告渲染（管理页设置，富文本；为空则不显示）——以弹窗形式在资源页展示
+    // 平台公告渲染（多公告项，管理页设置；为空则不显示）——弹窗形式，顶部小项切换
     function renderAnnouncement() {
       var mask = document.getElementById('annModal');
       if (!mask) return;
-      if (window.__annShown || mask.classList.contains('open')) return; var html = (DATA.announcement || '').trim();
+      if (window.__annShown || mask.classList.contains('open')) return;
+      var list = DATA.announcements || [];
       var mode = DATA.announcementMode || 'always';
-      if (!html || mode === 'off') { mask.classList.remove('open'); return; }
+      if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
       if (mode === 'daily') {
         try {
           var today = new Date().toDateString();
@@ -1520,8 +1527,31 @@
           sessionStorage.setItem('wnzyq_ann_session', '1');
         } catch (e) {}
       }
-      window.__annShown = true; var body = document.getElementById('annBody'); if (body) body.innerHTML = sanitizeHTML(html);
-      if (body) bindMediaFail(body); bindLightbox(body);
+      window.__annShown = true;
+      // 渲染小项 tabs（仅多条时显示）
+      var tabs = document.getElementById('annTabs');
+      if (tabs) {
+        tabs.innerHTML = '';
+        if (list.length > 1) {
+          list.forEach(function (a, i) {
+            var t = document.createElement('button');
+            t.type = 'button';
+            t.className = 'ann-tab' + (i === 0 ? ' active' : '');
+            t.textContent = a.title || '公告';
+            t.addEventListener('click', function () {
+              var ts = document.querySelectorAll('#annTabs .ann-tab');
+              ts.forEach(function (x) { x.classList.remove('active'); });
+              t.classList.add('active');
+              var bd = document.getElementById('annBody');
+              if (bd) { bd.innerHTML = sanitizeHTML(a.content || ''); bindMediaFail(bd); bindLightbox(bd); }
+            });
+            tabs.appendChild(t);
+          });
+        }
+      }
+      // 默认显示第一条
+      var body = document.getElementById('annBody');
+      if (body) { body.innerHTML = sanitizeHTML(list[0].content || ''); bindMediaFail(body); bindLightbox(body); }
       mask.classList.add('open');
       setBodyLock(true);
     }
@@ -2238,6 +2268,17 @@
       renderProducts();
     }
 
+    // 解析公告列表（兼容旧单条 announcement；过滤隐藏、按 sort 排序）
+    function parseAnnouncements(settings) {
+      var arr = [];
+      try { arr = JSON.parse(settings.announcements || '[]'); } catch (e) { arr = []; }
+      if (!Array.isArray(arr)) arr = [];
+      if (!arr.length && settings.announcement) arr = [{ id: 0, title: '公告', content: String(settings.announcement || ''), hidden: 0, sort: 1 }];
+      arr = arr.filter(function (a) { return !a.hidden; });
+      arr.sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
+      return arr;
+    }
+
     function initData() {
       var hasCache = false;
       // 先读 localStorage 缓存，秒开
@@ -2250,6 +2291,7 @@
             DATA.categories = c.categories;
             if (c.announcement !== undefined) DATA.announcement = c.announcement;
             if (c.announcement_mode !== undefined) DATA.announcementMode = c.announcement_mode;
+            if (Array.isArray(c.announcements)) DATA.announcements = c.announcements;
             usingRemote = true;
             hasCache = true;
           }
@@ -2289,10 +2331,12 @@
         if (res[2] && res[2].ok) {
           DATA.announcement = (res[2].settings || {}).announcement || '';
           DATA.announcementMode = (res[2].settings || {}).announcement_mode || 'always';
+          DATA.announcements = parseAnnouncements(res[2].settings || {});
           try {
             var cacheData = JSON.parse(localStorage.getItem('wnzyq_shop_data') || '{}');
             cacheData.announcement = DATA.announcement;
             cacheData.announcement_mode = DATA.announcementMode;
+            cacheData.announcements = DATA.announcements;
             localStorage.setItem('wnzyq_shop_data', JSON.stringify(cacheData));
           } catch (e) {}
         }
