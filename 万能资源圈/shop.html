@@ -1298,7 +1298,7 @@
     var __bodyLockCount = 0;
     function setBodyLock(lock) {
       if (lock) { __bodyLockCount++; } else { __bodyLockCount = Math.max(0, __bodyLockCount - 1); }
-      document.body.style.overflow = __bodyLockCount > 0 ? 'hidden' : '';
+      var _locked = __bodyLockCount > 0; var _sbw = _locked ? (window.innerWidth - document.documentElement.clientWidth) : 0; document.body.style.overflow = _locked ? 'hidden' : ''; document.body.style.paddingRight = _locked ? _sbw + 'px' : '';
     }
 
     // 全局默认客服链接（config.js 里配置，没填则按钮隐藏）
