@@ -911,6 +911,8 @@
     }
     /* 按钮统一纯色（取消渐变，与资源页一致） */
     .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
+    /* logo 统一为名称大小（覆盖上方定义） */
+    .topbar-logo { width: 20px; height: 20px; }
   </style>
 </head>
 
@@ -2027,7 +2029,7 @@
 
     function showMain(username) {
       loginView.style.display = 'none';
-      mainView.style.display = 'block';
+      mainView.style.display = 'block'; window.__plS = 1; loadStats();
       loadCategories();
       switchTab('products');
     }
