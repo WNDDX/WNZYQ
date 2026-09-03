@@ -439,7 +439,7 @@
     .variant-item .v-name { flex: 1; font-size: 14px; font-weight: 500; }
     .variant-item .v-sort { color: #999; font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
-    .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid #e3eefc; border-radius: 8px; padding: 6px; margin-bottom: 6px; background: #fbfdff; }
+    .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid #e3eefc; border-radius: 8px; padding: 6px; margin-bottom: 6px; background: #fbfdff; scrollbar-gutter: stable; }
     .ann-item { background: #fff; border: 1px solid #e3eefc; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
     .ann-item:last-child { margin-bottom: 0; }
     .ann-item.ann-cur { border-color: var(--blue1); box-shadow: 0 0 0 1px var(--blue1) inset; }
@@ -3542,7 +3542,7 @@
     }
     // 渲染公告项列表（拖拽排序）
     function renderAnnList() {
-      var _ah = annListEl.offsetHeight; if (_ah > 0) annListEl.style.minHeight = _ah + 'px'; annListEl.innerHTML = ''; setTimeout(function () { if (annListEl) annListEl.style.minHeight = ''; }, 30);
+      var _ah = annListEl.offsetHeight; if (_ah > 0) annListEl.style.minHeight = _ah + 'px'; annListEl.innerHTML = ''; setTimeout(function () { if (annListEl) annListEl.style.minHeight = ''; }, 300);
       stateAnn.list.forEach(function (a, idx) {
         var item = document.createElement('div');
         item.className = 'ann-item' + (a.id === stateAnn.curId ? ' ann-cur' : '');
