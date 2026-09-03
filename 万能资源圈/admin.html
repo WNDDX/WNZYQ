@@ -188,8 +188,8 @@
       box-shadow: 0 0 0 3px rgba(255,255,255,0.45);
     }
     .topbar-logo {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       object-fit: cover;
       background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease;
@@ -667,7 +667,7 @@
     .preview-box { position: relative; animation: modalIn 0.25s ease; } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; }
     .preview-close-x {
       position: absolute; top: 12px; right: 12px; z-index: 10;
-      width: 36px; height: 36px; border-radius: 50%;
+      width: 40px; height: 40px; border-radius: 50%;
       border: 2px solid #fff; background: rgba(0,0,0,0.55);
       color: #fff; font-size: 18px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -803,7 +803,7 @@
     /* 手机端适配 */
     @media (max-width: 600px) {
       .topbar-inner { gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
-      .topbar-logo { width: 34px; height: 34px; }
+      .topbar-logo { width: 30px; height: 30px; }
       .topbar-brand { flex: 1; min-width: 0; font-size: 16px; }
       .topbar-title { font-size: 15px; }
       .topbar-brand span { display: none; }
@@ -883,7 +883,7 @@
       /* 批量栏按钮紧凑换行，不超出画面 */
       .batch-bar { gap: 6px; padding: 8px 10px; }
       .batch-btn { padding: 5px 9px; font-size: 12px; }
-      .back-top { right: 14px; bottom: 18px; width: 36px; height: 36px; }
+      .back-top { right: 14px; bottom: 18px; width: 40px; height: 40px; }
     }
 
     /* ========== 统一按钮动画（跟资源页一致） ========== */
@@ -1211,10 +1211,9 @@
           <option value="session">每次打开资源页只弹一次（刷新不重复）</option>
           <option value="off">不弹出公告</option>
         </select>
-        <label>公告项（拖拽 ⋮⋮ 调整顺序；隐藏的项不在资源页显示）</label>
-        <div id="annList" class="ann-list"></div>
+        <label>公告项（拖拽 ⋮⋮ 调整顺序；点击某项即可编辑；隐藏的项不在资源页显示）</label>
         <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">添加公告</button>
-        <label id="annEditLabel">编辑公告</label>
+        <div id="annList" class="ann-list"></div>
         <input class="input" id="annTitleInput" placeholder="公告标题（资源页小项按键显示的文字）" />
         <label>公告内容（支持文字、图片、视频、超链接）</label>
         <div id="annEditorSlot"></div>
@@ -3492,8 +3491,7 @@
         var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;'; sortEl.textContent = '排序:' + (idx + 1);
         var hideBtn = document.createElement('button'); hideBtn.className = 'ann-hide-btn'; hideBtn.textContent = a.hidden ? '显示' : '隐藏';
         hideBtn.addEventListener('click', function (e) { e.stopPropagation(); a.hidden = a.hidden ? 0 : 1; renderAnnList(); });
-        var editBtn = document.createElement('button'); editBtn.className = 'row-btn'; editBtn.textContent = '编辑';
-        editBtn.addEventListener('click', function (e) { e.stopPropagation(); selectAnnItem(a.id); });
+        // 点击公告项整行即可选中编辑（无需单独编辑按钮）
         var delBtn = document.createElement('button'); delBtn.className = 'row-btn danger'; delBtn.textContent = '删除';
         delBtn.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -3520,7 +3518,7 @@
           stateAnn.list.forEach(function (v2, i) { v2.sort = i + 1; });
           renderAnnList();
         });
-        item.appendChild(handle); item.appendChild(txt); item.appendChild(sortEl); item.appendChild(hideBtn); item.appendChild(editBtn); item.appendChild(delBtn);
+        item.appendChild(handle); item.appendChild(txt); item.appendChild(sortEl); item.appendChild(hideBtn); item.appendChild(delBtn);
         annListEl.appendChild(item);
       });
     }
@@ -3532,7 +3530,7 @@
       stateAnn.curId = id;
       annTitleInput.value = a.title || '';
       if (annEditor) annEditor.innerHTML = a.content || '';
-      annEditLabel.textContent = '编辑公告：' + (a.title || '(未命名)');
+      if (annEditLabel) annEditLabel.textContent = '编辑公告：' + (a.title || '(未命名)');
       renderAnnList();
     }
     // 清空编辑区
@@ -3541,7 +3539,7 @@
       stateAnn.curId = null;
       annTitleInput.value = '';
       if (annEditor) annEditor.innerHTML = '';
-      annEditLabel.textContent = '编辑公告';
+      if (annEditLabel) annEditLabel.textContent = '编辑公告';
       renderAnnList();
     }
     // 打开公告设置弹窗：把公告编辑器移入弹窗，并从服务器拉取最新公告
@@ -3720,7 +3718,7 @@
       }
     }
     annEditor.addEventListener('input', updateAnnPlaceholder);
-    annEditor.addEventListener('focus', updateAnnPlaceholder);
+    annEditor.addEventListener('focus', function () { __rte.editor = annEditor; updateAnnPlaceholder(); });
     annEditor.addEventListener('blur', updateAnnPlaceholder);
 
     var variantDraftPending = false; // 类型弹窗：遮罩关闭暂存输入
