@@ -620,7 +620,7 @@
     .rte-editor:focus { border-color: var(--blue1); }
     /* 放大编辑：脱离弹窗固定为大屏 */
     .rte-editor.rte-large {
-      position: fixed; left: 50%; top: 100px; transform: translateX(-50%);
+      position: fixed; left: 50%; top: 60px; transform: translateX(-50%);
       width: 96vw; max-width: 1200px; height: calc(100vh - 116px); max-height: none !important; min-height: 320px !important;
       z-index: 6000; background: #fff; border: 2px solid var(--blue1); border-top: none;
       border-radius: 0 0 12px 12px; box-shadow: 0 0 0 100vw rgba(0,0,0,0.55), 0 16px 48px rgba(0,0,0,0.35);
@@ -675,7 +675,7 @@
     }
     .preview-close-x:hover { transform: scale(1.1); background: rgba(0,0,0,0.7); }
     /* 感叹号占位自适应：容器内完整显示、居中、淡白填充、不溢出 */
-    img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain;object-position:center;background:#f5f5f5!important;}
+    img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
     .preview-cover {
       width: calc(100% - 32px); margin: 16px 16px 0;
       max-height: 280px; object-fit: cover; display: block;
@@ -912,7 +912,7 @@
     /* 按钮统一纯色（取消渐变，与资源页一致） */
     .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
     /* logo 统一为名称大小（覆盖上方定义） */
-    .topbar-logo { width: 20px; height: 20px; }
+    .topbar-logo { width: 19px; height: 19px; }
   </style>
 </head>
 
@@ -4388,7 +4388,7 @@
         // 一级分类展开/收起箭头
         if (isTop && c.id !== 0) {
           var toggleBtn = document.createElement('span');
-          toggleBtn.style.cssText = 'display:inline-block;width:20px;height:20px;cursor:pointer;margin-right:4px;color:var(--blue1);transition:transform 0.3s ease;user-select:none;filter:drop-shadow(0 1px 2px rgba(30,136,229,0.3));';
+          toggleBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;cursor:pointer;margin-right:4px;color:var(--blue1);transition:transform 0.3s ease;user-select:none;filter:drop-shadow(0 1px 2px rgba(30,136,229,0.3));';
           var hasChildren = list.some(function (sub) { return sub.parent_id === c.id; });
           if (hasChildren) {
             toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;display:block"><path d="M7 10l5 5 5-5z"/></svg>';
