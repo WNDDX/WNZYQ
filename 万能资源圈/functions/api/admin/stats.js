@@ -85,7 +85,7 @@ export async function onRequestGet(context) {
      FROM categories c
      LEFT JOIN products p ON p.cid = c.id
      LEFT JOIN (
-       SELECT product_id, COUNT(*) AS views FROM stats WHERE stats.type='view' GROUP BY product_id
+       SELECT product_id, COUNT(*) AS views FROM stats WHERE stats.type='view'${statsDateFilter} GROUP BY product_id
      ) s2 ON s2.product_id = p.id
      GROUP BY c.id
      ORDER BY c.sort ASC, c.id ASC`
@@ -96,6 +96,7 @@ export async function onRequestGet(context) {
     `SELECT s.id, s.type, s.created_at, p.title, p.img
      FROM stats s
      LEFT JOIN products p ON p.id = s.product_id
+     WHERE s.created_at >= datetime('now', '-30 days')
      ORDER BY s.id DESC
      LIMIT 20`
   ).all();

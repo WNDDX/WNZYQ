@@ -47,7 +47,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    html, body { background: #f2f7fd; color: #333; max-width: 100%; overflow-x: hidden; }
+    html, body { background: #f2f7fd; color: #333; max-width: 100%; overflow-x: hidden; overflow-y: scroll; }
     *, *::before, *::after { min-width: 0; }
     img, video, svg { max-width: 100%; }
     .container, .panel, .modal-box, .form { min-width: 0; }
@@ -147,6 +147,7 @@
     .back-top:hover { opacity: 1; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(30,136,229,0.5); }
     .back-top:active { transform: scale(0.9); }
     html, body { overscroll-behavior: none; }
+    @media (hover: hover) and (pointer: fine) { html, body { overscroll-behavior: auto; } }
     .pull-refresh { position: fixed; top: 0; left: 0; right: 0; height: 0; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; z-index: 300; transition: height .2s ease; pointer-events: none; background: transparent; }
     .pull-refresh.show { height: 46px; }
     .pull-refresh-text { font-size: 12px; color: var(--blue1); background: rgba(255,255,255,.94); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
@@ -211,10 +212,12 @@
     .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tb-row2 select { padding: 7px 10px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 13px; background: #fff; color: #333; }
-    .view-toggle { display: flex; gap: 0; border: 1px solid #d6e0ea; border-radius: 8px; overflow: hidden; }
-    .view-btn { padding: 7px 14px; border: none; background: #fff; cursor: pointer; font-size: 13px; color: #555; transition: background .15s ease, color .15s ease, transform .1s ease; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
-    .view-btn + .view-btn { border-left: 1px solid #d6e0ea; }
-    .view-btn.active { background: var(--blue1); color: #fff; }
+    .view-toggle { display: flex; gap: 4px; }
+    .view-btn { padding:6px 10px; border:1px solid #d6e0ea; border-radius:6px; background:#fff; color:#555; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
+    .view-switch-anim { animation: viewSwitch 0.18s ease; }
+    .view-btn.active { background: var(--blue1); color: #fff; border-color: var(--blue1); }
+    .btn-blue, .row-btn, .mini-btn, .view-btn, .tab, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; display: inline-flex; align-items: center; justify-content: center; }
     .toolbar-hint { font-size: 13px; color: #999; }
     .admin-search {
@@ -305,6 +308,8 @@
     .row-btn.danger { color: var(--red); border-color: #ffc8c8; }
     .empty { text-align: center; color: #999; padding: 60px 0; font-size: 14px; }
 
+    .prod-fade { animation: prodFade 0.22s ease; }
+    @keyframes prodFade { from { opacity: 0.4; } to { opacity: 1; } }
     /* 卡片视图 */
     #productList.card-view {
       display: grid;
@@ -356,8 +361,8 @@
       flex: 1;
       text-align: center;
     }
-    #productList.card-view .product-row .status-select {
-      margin: 0 12px 14px; align-self: stretch;
+    #productList.card-view .product-row .select-picker {
+      margin: 2px 12px 10px; align-self: flex-start; width: auto;
     }
     /* 视图切换按钮激活状态 */
     .view-btn.active {
@@ -430,6 +435,17 @@
     }
     .variant-item .v-name { flex: 1; font-size: 14px; font-weight: 500; }
     .variant-item .v-sort { color: #999; font-size: 12px; }
+    /* ---------- 公告项列表 ---------- */
+    .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid #e3eefc; border-radius: 8px; padding: 6px; margin-bottom: 6px; background: #fbfdff; }
+    .ann-item { background: #fff; border: 1px solid #e3eefc; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .ann-item:last-child { margin-bottom: 0; }
+    .ann-item .ann-title-txt { flex: 1; font-size: 14px; font-weight: 500; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ann-item .ann-badge { font-size: 11px; color: #b26a00; background: #fff3e0; padding: 1px 7px; border-radius: 4px; font-weight: 600; }
+    .ann-item .ann-hide-btn, .ann-item .ann-edit-btn, .ann-item .ann-del-btn { border: none; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: transform .12s ease; }
+    .ann-item .ann-hide-btn:hover, .ann-item .ann-edit-btn:hover, .ann-item .ann-del-btn:hover { transform: scale(0.96); }
+    .ann-item .ann-hide-btn { background: #f5f7fa; color: #555; }
+    .ann-item .ann-edit-btn { background: #e8f1fd; color: #1565c0; }
+    .ann-item .ann-del-btn { background: #fdecea; color: #c62828; }
 
     /* ---------- 弹窗 ---------- */
     .modal-mask {
@@ -446,6 +462,7 @@
     .modal-wide { max-width: 560px; }
     /* 分类弹窗与资源编辑弹窗复用同一尺寸模板（新增/编辑统一大宽度） */
     .modal-mask#catMask > .modal-box, .modal-mask#variantMask > .modal-box { max-width: 560px; }
+    @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes modalIn {
       from { transform: translateY(20px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
@@ -571,7 +588,7 @@
     .rte-btn {
       padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px;
       background: #fff; cursor: pointer; font-size: 13px; color: #333;
-      transition: all 0.10s; min-width: 32px; text-align: center;
+      transition: all 0.10s; min-width: 32px; text-align: center; display: inline-flex; align-items: center; justify-content: center;
     }
     .rte-btn:hover { background: #e3f2fd; border-color: #1976d2; color: #1976d2; }
     .rte-btn:active { transform: scale(0.95); }    .rte-group { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }    .rte-group:last-child { margin-right: 0; }
@@ -656,6 +673,8 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.12s ease;
     }
     .preview-close-x:hover { transform: scale(1.1); background: rgba(0,0,0,0.7); }
+    /* 感叹号占位自适应：容器内完整显示、居中、淡白填充、不溢出 */
+    img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain;object-position:center;background:#f5f5f5!important;}
     .preview-cover {
       width: calc(100% - 32px); margin: 16px 16px 0;
       max-height: 280px; object-fit: cover; display: block;
@@ -696,11 +715,11 @@
 
     /* 批量操作工具栏 */
     .batch-bar {
-      display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; visibility: hidden; transition: max-height .18s ease, padding .18s ease, visibility .18s;
       background: #eef4fb; border-radius: 8px; padding: 8px 12px;
       margin-bottom: 12px; font-size: 13px; color: #555;
     }
-    .batch-bar.show { display: flex; }
+    .batch-bar.show { max-height: 120px; padding-top: 8px; padding-bottom: 8px; visibility: visible; }
     .batch-bar .batch-count { font-weight: 600; color: var(--blue1); }
     .batch-btn {
       border: 1px solid #ddd; background: #fff; color: #555;
@@ -734,9 +753,14 @@
       margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
     }
     .trend-chart h3 { font-size: 15px; margin-bottom: 12px; }
-    .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding: 10px 2.5% 0 5%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; }
+    .stats-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 0; color:#999; font-size:14px; gap:12px; }
+    .stats-loading .sl-spin { width:30px; height:30px; border:3px solid #e3e8ef; border-top-color:var(--blue1); border-radius:50%; animation:slspin .8s linear infinite; }
+    @keyframes slspin { to { transform: rotate(360deg); } }
+    .stats-fade-in { animation: statFade .3s ease; }
+    @keyframes statFade { from { opacity:.2; } to { opacity:1; } }
+    .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding: 10px 2.5% 0 5%; }
     .trend-bars::-webkit-scrollbar { display: none; }
-    .trend-col { flex: 1 0 22px; min-width: 22px; position: relative; height: 100%; }
+    .trend-col { flex: 1 1 0; min-width: 0; position: relative; height: 100%; }
     .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: 24px; display: flex; flex-direction: column; justify-content: flex-end; height: 100px; gap: 2px; }
     .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
     .trend-bar.view { background: var(--blue1); }
@@ -828,7 +852,7 @@
         justify-content: flex-start;
       }
       .product-row .p-ops .row-btn { flex: 1; text-align: center; }
-      .product-row .status-select { margin: 0 12px 8px; align-self: flex-start; }
+      .product-row .select-picker { margin: 2px 12px 8px; align-self: flex-start; width: auto; }
       /* 卡片视图手机端更窄列、更小图 */
       #productList.card-view { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       #productList.card-view .product-row .thumb { height: 90px; }
@@ -842,6 +866,7 @@
       .preview-btn { flex-basis: 100%; order: -1; }
       .time-filter { flex: 1; }
       .time-btn { flex: 1; padding: 6px 8px; font-size: 12px; }
+      .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
       .stat-date-input { flex: 1 1 130px; min-width: 0 !important; font-size: 12px !important; padding: 7px 8px !important; }
       .trend-chart { padding: 12px; }
       .rte-toolbar { gap: 3px; padding: 6px; }
@@ -852,6 +877,8 @@
       .trend-chart .time-filter { flex-basis: 100%; max-width: 100%; }
       .trend-chart .time-filter + div { flex-basis: 100%; max-width: 100%; }
       .trend-chart .stat-date-input { flex: 1; min-width: 0 !important; }
+      .trend-bars { gap: 2px; }
+      .trend-label { font-size: 9px; }
       /* 批量栏按钮紧凑换行，不超出画面 */
       .batch-bar { gap: 6px; padding: 8px 10px; }
       .batch-btn { padding: 5px 9px; font-size: 12px; }
@@ -941,7 +968,7 @@
             </div>
           </div>
           <div class="tb-row tb-row2">
-          <div class="cat-picker" id="filterCatPicker" style="position:relative;width:130px;flex-shrink:0;">
+          <div class="cat-picker" id="filterCatPicker" style="position:relative;width:138px;flex-shrink:0;">
             <div class="cat-picker-display"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
           </select>
           <select id="filterStatus">
@@ -979,6 +1006,7 @@
 
       <!-- 数据统计 -->
       <section id="panel-stats" style="display:none">
+        <div class="stats-loading" id="statsLoading"><div class="sl-spin"></div><div>加载中…</div></div>
         <div class="stat-cards" id="statCards"></div>
         <div class="trend-chart">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
@@ -1171,17 +1199,22 @@
 
   <!-- ============ 公告设置弹窗 ============ -->
   <div class="modal-mask" id="annMask">
-    <div class="modal-box modal-wide" style="max-width:640px;">
+    <div class="modal-box modal-wide" style="max-width:700px;">
       <button class="modal-close-x" data-close="annMask">×</button>
       <h2 class="modal-title">设置公告</h2>
       <div class="form">
-        <label>公告显示频率</label>
+        <label>公告显示频率（作用于整个公告弹窗）</label>
         <select class="input" id="annMode">
           <option value="always">每次进入资源页都弹出</option>
           <option value="daily">每天只弹出一次（当天不重复）</option>
           <option value="session">每次打开资源页只弹一次（刷新不重复）</option>
           <option value="off">不弹出公告</option>
         </select>
+        <label>公告项（拖拽 ⋮⋮ 调整顺序；隐藏的项不在资源页显示）</label>
+        <div id="annList" class="ann-list"></div>
+        <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">+ 添加公告</button>
+        <label id="annEditLabel">编辑公告</label>
+        <input class="input" id="annTitleInput" placeholder="公告标题（资源页小项按键显示的文字）" />
         <label>公告内容（支持文字、图片、视频、超链接）</label>
         <div id="annEditorSlot"></div>
       </div>
@@ -1812,6 +1845,7 @@
     // 清除资源和分类的 API 缓存（管理员修改后调用，不阻塞主流程）
     function clearCache() {
       api('admin/clear-cache', { method: 'POST' }).catch(function () {});
+    (function () { var _g = document.querySelector('#panel-stats .time-filter'); var _wrap = _g && _g.parentNode; var _card = document.getElementById('statCards'); if (_wrap && _card && _wrap.parentNode) { var _bar = document.createElement('div'); _bar.id = 'statsFilterBar'; _bar.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px;background:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.07);'; while (_wrap.firstChild) _bar.appendChild(_wrap.firstChild); _wrap.parentNode.removeChild(_wrap); _card.parentNode.insertBefore(_bar, _card.nextSibling); } })();
     }
 
     // 把 textarea 每行转成数组（过滤空行）
@@ -2169,7 +2203,7 @@
 
     function renderProducts() {
       if (window.__skipRenderOnce) { window.__skipRenderOnce = false; return; }
-      var box = document.getElementById('productList');
+      var box = document.getElementById('productList'); var _minH = box.offsetHeight; if (_minH > 0) box.style.minHeight = _minH + 'px';
       var empty = document.getElementById('productEmpty');
       box.innerHTML = '';
 
@@ -2336,9 +2370,11 @@
         row.appendChild(info);
         row.appendChild(statusSel);
         row.appendChild(ops);
-        box.appendChild(row);
+        box.appendChild(row); box.style.minHeight = '';
       });
 
+      // 渲染完成淡入，避免批量操作/筛选时内容闪动
+      setTimeout(function () { var _b = document.getElementById('productList'); if (_b) { _b.classList.remove('prod-fade'); void _b.offsetWidth; _b.classList.add('prod-fade'); } }, 10);
       // 分页控件
       if (totalPages > 1) {
         var pager = document.createElement('div');
@@ -3247,7 +3283,7 @@
         ed.focus();
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
         (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 8; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; }; _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) {} } })();
-        var exit = null; // 右上角还原按钮已移除：用工具栏"还原"或 Esc 退出
+        var exit = null; // 右上角还原按钮已移除：用工具栏"还原"或 Esc 退出; setTimeout(function(){ var _le=document.querySelector('.rte-editor.rte-large'); if(_le){ var _tb2=_le.previousElementSibling; if(_tb2&&_tb2.classList&&_tb2.classList.contains('rte-toolbar')){ var _b2=_tb2.getBoundingClientRect().bottom+8; _le.style.top=_b2+'px'; _le.style.height='calc(100vh - '+(_b2+12)+'px)'; } } }, 80);
         if (false && exit) {
           exit = document.createElement('button');
           exit.id = 'rteExitZoom';
@@ -3413,7 +3449,12 @@
     rteEditor.addEventListener('blur', updateRtePlaceholder);
 
     // ========== 平台公告富文本编辑器 ==========
-    var annEditor = document.getElementById('setAnnouncement'); var annStoredV = ''; var annDraftPending = false;
+    var annEditor = document.getElementById('setAnnouncement');
+    var annTitleInput = document.getElementById('annTitleInput');
+    var annListEl = document.getElementById('annList');
+    var annEditLabel = document.getElementById('annEditLabel');
+    var annDraftPending = false;
+    var stateAnn = { list: [], curId: null, loaded: false };
     // 初始隐藏设置页中的公告编辑器（由"设置公告"弹窗承载）
     (function () { var _tb = document.getElementById('announcementRteToolbar'); if (_tb) _tb.style.display = 'none'; if (annEditor) annEditor.style.display = 'none'; })();
     // 打开公告设置弹窗：把公告编辑器移入弹窗
@@ -4011,6 +4052,7 @@
       if (startDate) params.push('start_date=' + encodeURIComponent(startDate));
       if (endDate) params.push('end_date=' + encodeURIComponent(endDate));
       if (params.length) url += '?' + params.join('&');
+      var _sl0 = document.getElementById('statsLoading'); if (_sl0) _sl0.style.display = 'flex'; var _ps0 = document.getElementById('panel-stats'); if (_ps0) _ps0.classList.remove('stats-fade-in');
       api(url).then(function (res) {
         // 数据统计表格顺序：资源明细 → 分类统计 → 浏览记录（幂等，仅首次生效）
         var _sec = document.getElementById('panel-stats');
@@ -4111,6 +4153,7 @@
           var typeColor = '';
           tr.innerHTML = '<td>' + (r.created_at || '') + '</td><td style="' + typeColor + '">' + typeText + '</td><td>' + (r.title || '') + '</td>';
           recentTbody.appendChild(tr);
+        var _sl2 = document.getElementById('statsLoading'); if (_sl2) _sl2.style.display = 'none'; var _ps2 = document.getElementById('panel-stats'); if (_ps2) { _ps2.classList.remove('stats-fade-in'); void _ps2.offsetWidth; _ps2.classList.add('stats-fade-in'); }
         });
       });
     }
@@ -4143,7 +4186,7 @@
       return out;
     }
     function renderCategories(list) {
-      var box = document.getElementById('catList');
+      var box = document.getElementById('catList'); var _minH = box.offsetHeight; if (_minH > 0) box.style.minHeight = _minH + 'px';
       box.innerHTML = '';
 
       // 按层级分组：一级分类在前，每个一级分类下跟其二级分类
@@ -4322,10 +4365,11 @@
           row.appendChild(delBtn);
         }
 
-        box.appendChild(row);
+        box.appendChild(row); box.style.minHeight = '';
       });
     }
 
+    setTimeout(function () { var _cb = document.getElementById('catList'); if (_cb) { _cb.classList.remove('prod-fade'); void _cb.offsetWidth; _cb.classList.add('prod-fade'); } }, 10);
     document.getElementById('addCatBtn').addEventListener('click', function () { openCatEdit(null); });    document.getElementById('catSelectAll').addEventListener('change', function () { var on = this.checked; document.querySelectorAll('.cat-check').forEach(function (cb) { cb.checked = on; }); updateCatBatchBar(); });
 
     // ---------- 分类批量操作 ----------
