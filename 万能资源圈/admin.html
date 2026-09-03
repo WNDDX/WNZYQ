@@ -197,7 +197,7 @@
     .tabs { display: flex; gap: 6px; flex: 1; }
     .tab {
       border: none; background: rgba(255, 255, 255, 0.18);
-      color: #fff; padding: 8px 16px; border-radius: 18px;
+      color: #fff; padding: 0 16px; height: 38px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 18px;
       font-size: 14px; white-space: nowrap; transition: all 0.2s;
     }
     .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
@@ -205,7 +205,7 @@
     .mini-btn {
       border: 1px solid #ddd;
       background: #fff;
-      color: #555; padding: 6px 12px; border-radius: 6px;
+      color: #555; padding: 0 12px; height: 38px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;
       font-size: 13px; white-space: nowrap;
     }
     .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
@@ -213,7 +213,7 @@
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tb-row2 select { padding: 7px 10px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 13px; background: #fff; color: #333; }
     .view-toggle { display: flex; gap: 4px; }
-    .view-btn { padding:6px 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    .view-btn { padding:0 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; height:38px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
     .view-btn.active { background:#fff !important; color:#1E88E5 !important; border-color:#fff !important; }
@@ -930,7 +930,12 @@
     .view-toggle { display: flex; align-items: center; gap: 4px; background: var(--blue1); border-radius: 8px; padding: 3px; }
     /* 商品条目切换动画复用商品页：限制形变过渡，仅保留缩放/阴影，切换时不做布局形变 */
     .product-row { transition: transform 0.10s ease, box-shadow 0.10s ease !important; }
+    /* 公告列表防横向滚动条：溢出隐藏（新增公告项不再瞬间出现横向滑轮） */
+    .ann-list { overflow-x: hidden; }
+    .ann-item { overflow: hidden; }
     .cat-row .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
+    /* 退出按钮完整复用 row-btn 代码，颜色采用删除键红色线条 */
+    .mini-btn { border: 1px solid #ffc8c8 !important; background: #fff !important; color: var(--red) !important; padding: 6px 12px !important; height: auto !important; border-radius: 6px !important; font-size: 13px !important; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .cat-row .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .ann-item .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
     .ann-item .select-picker .cpd-arrow { width: 14px; height: 14px; }
@@ -3537,7 +3542,7 @@
     }
     // 渲染公告项列表（拖拽排序）
     function renderAnnList() {
-      var _ah = annListEl.offsetHeight; if (_ah > 0) annListEl.style.minHeight = _ah + 'px'; annListEl.innerHTML = ''; setTimeout(function () { if (annListEl) { annListEl.style.minHeight = ''; annListEl.classList.remove('prod-fade'); void annListEl.offsetWidth; annListEl.classList.add('prod-fade'); } }, 30);
+      var _ah = annListEl.offsetHeight; if (_ah > 0) annListEl.style.minHeight = _ah + 'px'; annListEl.innerHTML = ''; setTimeout(function () { if (annListEl) annListEl.style.minHeight = ''; }, 30);
       stateAnn.list.forEach(function (a, idx) {
         var item = document.createElement('div');
         item.className = 'ann-item' + (a.id === stateAnn.curId ? ' ann-cur' : '');

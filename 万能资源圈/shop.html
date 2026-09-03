@@ -164,8 +164,8 @@
     }
     .top-btn:active { opacity: 0.85; }
     .top-btn svg { width: 15px; height: 15px; flex-shrink: 0; display: block; vertical-align: middle; }    .top-btn span { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
-    /* 联系客服/分享按钮复用管理页资源管理按钮（row-btn）样式，保留图标标识 */
-    .top-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; color: #555; font-weight: 400; box-shadow: none; flex-shrink: 0; letter-spacing: 0; line-height: 1.2; }
+    /* 联系客服/分享按钮完整复用管理页资源管理 row-btn 代码，仅保留图标标识 */
+    .top-btn { border: 1px solid #ddd; background: #fff; color: #555; padding: 6px 12px; border-radius: 6px; font-size: 13px; flex-shrink: 0; box-shadow: none; letter-spacing: 0; line-height: 1.2; display: inline-flex; align-items: center; justify-content: center; }
     .top-btn:hover { transform: scale(0.97); opacity: 0.9; box-shadow: none; }
     .top-btn:active { transform: scale(0.94); opacity: 0.8; }
 
@@ -337,7 +337,7 @@
     }
 
     /* 视图切换按钮激活状态 */
-    .view-btn { padding:6px 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; }
+    .view-btn { padding:0 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; height:38px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; }
     .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
     .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
     /* 视图切换动画（管理页/资源页一致） */
@@ -926,7 +926,7 @@
     /* 一级分类展开按钮 - 三角形 */
     .cat-toggle {
       position: absolute;
-      right: 6px;
+      right: 22px;
       top: 50%;
       transform: translateY(-50%);
       width: 28px;
@@ -1058,7 +1058,7 @@
       .view-toggle { order: 1; flex-shrink: 0; margin-left: 0; gap: 4px; }
       .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
       .search-box { order: 2; flex: 1 1 100%; margin-top: 0; }
-      .cat-toggle { right: 6px; width: 24px; height: 24px; }
+      .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
       .modal-box { max-width: 100%; max-height: 92vh; border-radius: 12px; }
       .modal-cover { width: calc(100% - 24px); margin: 12px 12px 0; max-height: 220px; }
@@ -1108,6 +1108,9 @@
     /* logo 与一级分类白色栏左边缘对齐：一级分类栏加与二级分类栏一致的左右内边距 */
     .category-bar-wrap { padding: 0 16px; }
     @media (max-width: 600px) { .category-bar-wrap, .sub-category-bar-wrap { padding: 0 12px; } }
+    /* 三角键随白色栏内缩对齐：一级 22px（16+6）/ 二级 26px（16+10），不超模 */
+    .sub-cat-toggle { right: 26px; }
+    @media (max-width: 600px) { .sub-cat-toggle { right: 18px; } }
   </style>
 </head>
 
