@@ -1132,7 +1132,10 @@
     *::-webkit-scrollbar-thumb { background: rgba(144,158,180,0.5); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
     *::-webkit-scrollbar-thumb:hover { background: rgba(120,135,160,0.7); background-clip: padding-box; }
     * { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
-  </style>
+      /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
+    .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
+    .modal-mask > *, .share-mask > *, .lightbox > * { margin: 0 auto !important; float: none !important; }
+</style>
 </head>
 
 <body>
@@ -1594,12 +1597,12 @@
             t.type = 'button';
             t.className = 'ann-tab';
             t.textContent = a.title || '公告';
-            t.addEventListener('click', function () {
+            t.addEventListener('click', function () { try {
               var ts = document.querySelectorAll('#annTabs .ann-tab');
               ts.forEach(function (x) { x.classList.remove('active'); }); var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.remove('active');
               t.classList.add('active');
               var bd = document.getElementById('annBody');
-              if (bd) { var _c2 = sanitizeHTML(a.content || ''); bd.innerHTML = _c2 || '<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容</div>'; bindMediaFail(bd); bindLightbox(bd); }
+              if (bd) { var _c2 = sanitizeHTML(a.content || ''); bd.innerHTML = _c2 || '<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容</div>'; bindMediaFail(bd); bindLightbox(bd); } } catch (e) { console.error('公告切换错误:', e); }
             });
             tabs.appendChild(t);
           });
