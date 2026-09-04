@@ -464,7 +464,7 @@
     .modal-mask {
       position: fixed; inset: 0; z-index: 200;
       background: rgba(0, 0, 0, 0.76);
-      display: none; align-items: center; justify-content: center; padding: 16px;
+      display: none; align-items: flex-start; justify-content: center; padding: 80px 16px 16px;
     }
     .modal-mask.open { display: flex; animation: maskIn 0.22s ease; }
     .modal-box {
@@ -954,7 +954,7 @@
     .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { max-height: 84vh; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
     .modal-mask#annMask > .modal-box .modal-title, .modal-mask#editMask > .modal-box .modal-title, .modal-mask#variantMask > .modal-box .modal-title, .modal-mask#annMask > .modal-box .modal-footer, .modal-mask#editMask > .modal-box .modal-footer, .modal-mask#variantMask > .modal-box .modal-footer { flex-shrink: 0; width: 100% !important; }
     .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; margin-right: -22px; padding-right: 22px; }
-    .modal-mask#catMask > .modal-box { max-height: 78vh; display: flex; flex-direction: column; }
+    .modal-mask#catMask > .modal-box { max-height: 84vh; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
     .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; margin-right: -22px; padding-right: 22px; }
     .cat-row { animation: rowIn 0.15s ease; }
     #productList, #catList { transition: opacity 0.1s ease; }
@@ -3721,8 +3721,10 @@
 
     // ---------- 全局客服链接（弹窗设置，与公告一致） ---------- var contactDraftPending = false;
     document.getElementById('openContactBtn').addEventListener('click', function () {
-      if (!contactDraftPending) { document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; if (!window.__plSet || !document.getElementById('setContactUrl').value) { try { if (typeof loadSettings === 'function') loadSettings(); } catch (e) {} } } contactDraftPending = false;
       document.getElementById('contactMask').classList.add('open');
+      if (contactDraftPending) { contactDraftPending = false; return; }
+      var _ci = document.getElementById('contactUrlInput'); var _cs = document.getElementById('setContactUrl'); _ci.value = _cs.value || '';
+      try { api('admin/settings').then(function (res) { if (res && res.ok) { var s = res.settings || {}; _cs.value = s.contact_url || ''; _ci.value = s.contact_url || ''; window.__plSet = 1; } }); } catch (e) {}
     });
     document.getElementById('saveContactBtn').addEventListener('click', function () {
       var v = document.getElementById('contactUrlInput').value.trim();
