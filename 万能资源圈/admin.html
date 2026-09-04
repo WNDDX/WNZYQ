@@ -444,7 +444,7 @@
     .variant-item .v-name { flex: 1; font-size: 14px; font-weight: 500; }
     .variant-item .v-sort { color: #999; font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
-    .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid #e3eefc; border-radius: 8px; padding: 6px; margin-bottom: 6px; background: #fbfdff; scrollbar-gutter: stable; }
+    .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid #e3eefc; border-radius: 8px; padding: 6px; margin-bottom: 6px; background: #fbfdff; }
     .ann-item { background: #fff; border: 1px solid #e3eefc; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
     .ann-item:last-child { margin-bottom: 0; }
     .ann-item.ann-cur { border-color: var(--blue1); box-shadow: 0 0 0 1px var(--blue1) inset; }
@@ -951,9 +951,9 @@
     .cat-row .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .ann-item .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
     .ann-item .select-picker .cpd-arrow { width: 14px; height: 14px; }
-    .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { height: min(680px, 84vh); display: flex; flex-direction: column; }
+    .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { max-height: 84vh; display: flex; flex-direction: column; }
     .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; padding-right: 4px; }
-    .modal-mask#catMask > .modal-box { height: min(520px, 78vh); display: flex; flex-direction: column; }
+    .modal-mask#catMask > .modal-box { max-height: 78vh; display: flex; flex-direction: column; }
     .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; }
     .cat-row { animation: rowIn 0.15s ease; }
     #productList, #catList { transition: opacity 0.1s ease; }
@@ -962,7 +962,7 @@
     .modal-mask#confirmMask > .modal-box, .modal-mask#pwdMask > .modal-box, .modal-mask#inputMask > .modal-box { max-width: 480px !important; }
     .modal-mask#batchCatMask > .modal-box { max-width: 560px !important; }
     .modal-mask#annMask > .modal-box { max-width: 660px !important; }
-    .modal-mask#catMask > .modal-box { height: min(680px, 84vh); }
+    .modal-mask#catMask > .modal-box { max-height: 84vh; }
     /* 管理页 logo 栏与资源页完全一致（复用 shop 样式：名称始终显示、自然宽度） */
     .topbar-brand { flex: 0 0 auto !important; min-width: 0; gap: 12px !important; }
     .topbar-brand span { display: inline !important; }
@@ -3579,7 +3579,7 @@
           showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？', function () {
             stateAnn.list = stateAnn.list.filter(function (x) { return x.id !== a.id; });
             if (stateAnn.curId === a.id) stateAnn.curId = null;
-            if (!stateAnn.curId && stateAnn.list.length) selectAnnItem(stateAnn.list[0].id);
+            if (!stateAnn.curId && stateAnn.list.length) { renderAnnList(); selectAnnItem(stateAnn.list[0].id); }
             else if (!stateAnn.list.length) clearAnnEdit();
             else renderAnnList();
           });
@@ -3638,7 +3638,7 @@
             stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 });
             stateAnn.loaded = true;
             document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
-            if (stateAnn.list.length) { var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; selectAnnItem(_defAnn.id); } else clearAnnEdit();
+            if (stateAnn.list.length) { var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; renderAnnList(); selectAnnItem(_defAnn.id); } else { renderAnnList(); clearAnnEdit(); }
           }
         }).catch(function () {});
       }
@@ -3648,6 +3648,7 @@
       flushAnnEdit();
       var a = { id: Date.now(), title: '新公告', content: '', hidden: 0, sort: stateAnn.list.length + 1, level: 2 };
       stateAnn.list.push(a);
+      renderAnnList();
       selectAnnItem(a.id);
     }
     // 保存公告
@@ -4501,7 +4502,7 @@
         levelBadge.className = 'badge ' + (isTop ? 'on' : '');
         levelBadge.style.background = c.id === 0 ? '#fff3e0' : (isTop ? '#e3f2fd' : '#f5f5f5');
         levelBadge.style.color = c.id === 0 ? '#ef6c00' : (isTop ? '#1976d2' : '#999');
-        levelBadge.textContent = c.id === 0 ? '' : (isTop ? '一级' : '二级'); levelBadge.style.display = c.id === 0 ? 'none' : '';
+        levelBadge.textContent = ''; levelBadge.style.display = 'none';
 
         // 显示/隐藏状态下拉框（复用资源管理的商品状态框，点击展开选择显示或隐藏）
         if (Number(c.id) !== 0) {
@@ -4514,7 +4515,7 @@
 
         var sort = document.createElement('span');
         sort.className = 'c-sort';
-        sort.textContent = '排序:' + (ordered.filter(function (x) { return x.parent_id === c.parent_id; }).indexOf(c) + 1);
+        sort.textContent = Number(c.id) === 0 ? '排序:-' : '排序:' + (ordered.filter(function (x) { return x.parent_id === c.parent_id && Number(x.id) !== 0; }).indexOf(c) + 1);
 
         var cnt = document.createElement('span');
         cnt.className = 'c-count';
@@ -4538,7 +4539,7 @@
 
         row.appendChild(name);
         // 级别标签放到最前（复选框之后、展开箭头之前），一眼看出层级
-        row.insertBefore(levelBadge, (typeof toggleBtn !== 'undefined' && toggleBtn) || (row.firstChild && row.firstChild.nextSibling) || null);
+        row.insertBefore(levelBadge, (typeof toggleBtn !== 'undefined' && toggleBtn) || (row.firstChild && row.firstChild.nextSibling && row.firstChild.nextSibling.nextSibling) || null);
         row.appendChild(sort);
         row.appendChild(cnt);
 
