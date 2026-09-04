@@ -900,7 +900,7 @@
 
     /* 平台公告 */
     .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto; padding: 24px 22px; animation: modalIn 0.25s ease; text-align: left; }
-    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; width: 100%; display: block; text-align: center; line-height: 1.5; transition: color 0.15s ease; }
+    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color 0.15s ease; }
     .ann-modal .ann-title:hover { color: var(--blue1); }
     .ann-modal .ann-title.active { color: var(--blue1); }
     .ann-modal .ann-body { font-size: 14px; color: #333; line-height: 1.75; word-break: break-word; overflow-wrap: anywhere; }
@@ -928,7 +928,7 @@
     /* 一级分类展开按钮 - 三角形 */
     .cat-toggle {
       position: absolute;
-      right: 16px;
+      right: 26px;
       top: 50%;
       transform: translateY(-50%);
       width: 28px;
@@ -1103,10 +1103,10 @@
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
     .modal-mask #modalBox { max-height: 84vh; }
     .modal-mask#annModal > .ann-box { max-height: 80vh; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; max-width: 520px !important; width: 100% !important; margin: 0 auto !important; }
-    .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; width: 100% !important; }
+    .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; min-height: 0; }
     /* 滚动条始终占位，弹窗/切换时不因滚动条消失导致画面跳动 */
-    html { scrollbar-gutter: stable; }
+    html, body { scrollbar-gutter: stable; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
     /* logo 与一级分类白色栏左边缘对齐：一级分类栏加与二级分类栏一致的左右内边距 */
@@ -1114,7 +1114,7 @@
     @media (max-width: 600px) { .category-bar-wrap, .sub-category-bar-wrap { padding: 0 12px; } }
     /* 三角键随白色栏内缩对齐：一级 22px（16+6）/ 二级 26px（16+10），不超模 */
     .sub-cat-toggle { right: 26px; }
-    @media (max-width: 600px) { .sub-cat-toggle { right: 18px; } }
+    @media (max-width: 600px) { .sub-cat-toggle, .cat-toggle { right: 18px; } }
     .topbar-inner { flex-wrap: wrap; }
     /* === 全系统弹窗横向溢出防护：禁止底部滑轮，内容超宽一律裁剪/换行 === */
     .modal-box, .modal-wrap, .ann-box, .modal-detail, .ann-body, .media-list, .variant-detail, .form, .rte-editor, .rte-large, .ann-list, .cat-picker-panel { overflow-x: hidden; }
@@ -1335,7 +1335,7 @@
     var __bodyLockCount = 0;
     function setBodyLock(lock) {
       if (lock) { __bodyLockCount++; } else { __bodyLockCount = Math.max(0, __bodyLockCount - 1); }
-      var _locked = __bodyLockCount > 0; var _sbw = _locked ? (window.innerWidth - document.documentElement.clientWidth) : 0; document.body.style.overflow = _locked ? 'hidden' : ''; document.body.style.paddingRight = _locked ? _sbw + 'px' : '';
+      var _locked = __bodyLockCount > 0; document.body.style.overflow = _locked ? 'hidden' : '';
     }
 
     // 全局默认客服链接（config.js 里配置，没填则按钮隐藏）

@@ -969,7 +969,7 @@
     .topbar-brand span { display: inline !important; }
     @media (max-width: 600px) { .topbar-brand span { letter-spacing: 1px !important; } }
     /* 滚动条始终占位，弹窗/切换时不因滚动条消失导致画面跳动 */
-    html { scrollbar-gutter: stable; }
+    html, body { scrollbar-gutter: stable; }
     /* 资源管理筛选行残留的旧“全选”已移至“新增资源”右侧，隐藏残留 */
     #panel-products .tb-row2 label { display: none !important; }
     /* 手机端网格卡片：操作按钮（状态/编辑/复制/删除）完整可见，不被裁剪或换行竖排 */
@@ -1883,7 +1883,7 @@
     });
 
     // 弹窗/编辑器放大态打开时锁定页面滚动（滚轮只在弹窗内滚动），全部关闭后自动恢复，避免“滚轮失灵”的体感
-    (function () { window.__syncBodyLock = function () { var anyOpen = document.querySelector('.modal-mask.open') || document.querySelector('.rte-editor.rte-large'); var _sbw = anyOpen ? (window.innerWidth - document.documentElement.clientWidth) : 0; document.body.style.overflow = anyOpen ? 'hidden' : ''; document.body.style.paddingRight = anyOpen ? _sbw + 'px' : ''; }; window.__syncBodyLock(); new MutationObserver(window.__syncBodyLock).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] }); })();
+    (function () { window.__syncBodyLock = function () { var anyOpen = document.querySelector('.modal-mask.open') || document.querySelector('.rte-editor.rte-large'); document.body.style.overflow = anyOpen ? 'hidden' : ''; }; window.__syncBodyLock(); new MutationObserver(window.__syncBodyLock).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] }); })();
     (function () { function _r(){ document.querySelectorAll('.rte-editor.rte-large').forEach(function(e){ e.classList.remove('rte-large'); e.style.top=''; e.style.height=''; }); document.querySelectorAll('.rte-toolbar-large').forEach(function(e){ e.classList.remove('rte-toolbar-large'); }); document.querySelectorAll('.rte-zoom-on').forEach(function(e){ e.classList.remove('rte-zoom-on'); e.textContent='⛶ 放大'; }); if(window.__rteRO&&window.__rteRO.disconnect){ try{ window.__rteRO.disconnect(); }catch(e){} } } window.__resetRteAll=_r; document.querySelectorAll('.modal-mask').forEach(function(m){ new MutationObserver(function(){ if(m.classList.contains('open')) _r(); }).observe(m,{attributes:true,attributeFilter:['class']}); }); })();
     // 弹窗右上角×按钮统一关闭（事件委托）
     document.addEventListener('click', function (e) {
@@ -1893,7 +1893,7 @@
         if (closeBtn.dataset.close === 'editMask') { try { clearDraft(); } catch (e) {} } // ×=取消：丢弃草稿
         if (closeBtn.dataset.close === 'catMask') { catDraftPending = false; catDraftFor = null; } // ×=取消：丢弃分类草稿
         if (closeBtn.dataset.close === 'variantMask') { variantDraftPending = false; variantDraftFor = null; } // ×=取消：丢弃类型草稿
-        if (closeBtn.dataset.close === 'annMask') { annDraftPending = false; stateAnn.loaded = false; } // ×=取消：不保存，重新加载已保存
+        if (closeBtn.dataset.close === 'annMask') { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } annDraftPending = false; stateAnn.loaded = false; } // ×=取消：恢复备份，重新加载已保存
         if (closeBtn.dataset.close === 'contactMask') { contactDraftPending = false; var _cu=document.getElementById('contactUrlInput'); if(_cu)_cu.value=''; } // ×=取消：清空输入
         if (closeBtn.dataset.close === 'pwdMask') { var _o=document.getElementById('oldPwd'),_n=document.getElementById('newPwd'),_c=document.getElementById('confirmPwd'); if(_o)_o.value=''; if(_n)_n.value=''; if(_c)_c.value=''; } // ×=取消：清空密码框
         if (mask) {
@@ -3672,7 +3672,7 @@
       if (stateAnn.loaded && stateAnn.list.length) { try { renderAnnList(); var _dl0 = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; selectAnnItem(_dl0.id); } catch (e) {} } if (!annDraftPending || !stateAnn.loaded) {
         api('admin/settings').then(function (res) {
           if (res && res.ok) {
-            stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 });
+            stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 }); stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
             stateAnn.loaded = true;
             document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
             if (stateAnn.list.length) { var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; renderAnnList(); selectAnnItem(_defAnn.id); } else { renderAnnList(); clearAnnEdit(); }
@@ -3699,13 +3699,14 @@
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
         if (res.ok) {
           toast('公告已保存', 'success');
-          stateAnn.loaded = true; annDraftPending = false;
+          stateAnn.loaded = true; annDraftPending = false; stateAnn._backup = null;
           document.getElementById('annMask').classList.remove('open');
         } else toast(res.msg || '保存失败', 'error');
       });
     });
     // 取消公告（不保存，下次打开重新加载已保存状态）
     document.getElementById('cancelAnnBtn').addEventListener('click', function () {
+      if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; }
       annDraftPending = false; stateAnn.loaded = false;
       document.getElementById('annMask').classList.remove('open');
     });
@@ -4440,7 +4441,7 @@
         .forEach(function (c) { ordered.push(c); });
 
       ordered.forEach(function (c) {
-        if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; var _vcb = document.createElement('input'); _vcb.type = 'checkbox'; _vcb.className = 'cat-check'; _vcb.dataset.id = c.id; _vcb.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--blue1);'; _vcb.checked = !!state.catSelected[c.id]; _vcb.addEventListener('change', function () { state.catSelected[this.dataset.id] = this.checked; updateCatBatchBar(); }); _vrow.appendChild(_vcb); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'padding-left:34px;font-size:14px;color:#555;opacity:0.85;flex:1;text-align:left;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
+        if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; var _vcb = document.createElement('input'); _vcb.type = 'checkbox'; _vcb.className = 'cat-check'; _vcb.dataset.id = c.id; _vcb.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--blue1);'; _vcb.checked = !!state.catSelected[c.id]; _vcb.addEventListener('change', function () { state.catSelected[this.dataset.id] = this.checked; updateCatBatchBar(); }); var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh);_vrow.appendChild(_vcb); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'padding-left:34px;font-size:14px;color:#555;opacity:0.85;flex:1;text-align:left;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
         var row = document.createElement('div');
         row.className = 'cat-row';
         row.draggable = false;
