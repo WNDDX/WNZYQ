@@ -116,7 +116,7 @@
       gap: 12px;
       flex-shrink: 0;
     }
-    .shop-logo-link {
+    .shop-logo-link { text-decoration: none;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -167,7 +167,7 @@
     /* 联系客服/分享按钮完整复用管理页资源管理 row-btn 代码，仅保留图标标识 */
     .top-btn { border: 1px solid #ddd; background: #fff; color: #555; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 400; flex-shrink: 0; box-shadow: none; letter-spacing: 0; line-height: 1.2; display: inline-flex; align-items: center; justify-content: center; }
     .top-btn:hover { transform: scale(0.97); opacity: 0.9; box-shadow: none; }
-    .top-btn:active { transform: scale(0.94); opacity: 0.8; }
+    .top-btn:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
@@ -900,7 +900,9 @@
 
     /* 平台公告 */
     .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; padding: 24px 22px; animation: modalIn 0.25s ease; text-align: left; }
-    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding-right: 30px; letter-spacing: 1px; }
+    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding-right: 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; width: 100%; display: block; transition: color 0.15s ease; }
+    .ann-modal .ann-title:hover { color: var(--blue1); }
+    .ann-modal .ann-title.active { color: var(--blue1); }
     .ann-modal .ann-body { font-size: 14px; color: #333; line-height: 1.75; word-break: break-word; overflow-wrap: anywhere; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; border-radius: 8px; margin: 6px 0; }
     .ann-modal .ann-body a { color: #1e88e5; }
@@ -1111,6 +1113,7 @@
     /* 三角键随白色栏内缩对齐：一级 22px（16+6）/ 二级 26px（16+10），不超模 */
     .sub-cat-toggle { right: 26px; }
     @media (max-width: 600px) { .sub-cat-toggle { right: 18px; } }
+    .topbar-inner { flex-wrap: wrap; }
   </style>
 </head>
 
@@ -1128,7 +1131,7 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="shop-brand">
-        <a class="shop-logo-link" href="admin" title="进入管理页">
+        <a class="shop-logo-link" href="admin" title="进入管理页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
           <img class="shop-logo" id="shopLogo" src="assets/images/logo.png" alt="Logo" onload="this.style.opacity='1'" onerror="window.__logoFail&&window.__logoFail(this)" />
         </a>
         <div class="shop-name" id="shopName">万能资源圈</div>
@@ -1186,13 +1189,13 @@
   </div>
 
   <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
-  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false)}">
+  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false);window.__annShown=false}">
     <div class="ann-box" onclick="event.stopPropagation()">
-      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false)">✕</button>
-      <div class="ann-title" style="text-align:center;">公告</div>
+      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false">✕</button>
+      <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="(function(){var l=(window.DATA&amp;&amp;DATA.announcements)||[];var d=l.find(function(x){return x.level===1;})||l[0];if(!d)return;var bd=document.getElementById('annBody');if(bd){bd.innerHTML=sanitizeHTML(d.content||'');bindMediaFail(bd);bindLightbox(bd);}var tt=document.getElementById('annTitleTab');if(tt)tt.classList.add('active');document.querySelectorAll('#annTabs .ann-tab').forEach(function(x){x.classList.remove('active');});})()">公告</button>
       <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
-      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false)">确定</button>
+      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false">确定</button>
     </div>
   </div>
 
@@ -1546,7 +1549,7 @@
       var mask = document.getElementById('annModal');
       if (!mask) return;
       if (window.__annShown || mask.classList.contains('open')) return;
-      var list = DATA.announcements || [];
+      var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
       var mode = DATA.announcementMode || 'always';
       if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
       if (mode === 'daily') {
@@ -1566,15 +1569,15 @@
       var tabs = document.getElementById('annTabs');
       if (tabs) {
         tabs.innerHTML = '';
-        if (list.length > 1) {
-          list.forEach(function (a, i) {
+        var subs = list.filter(function (x) { return x.level !== 1; }); if (subs.length) {
+          subs.forEach(function (a, i) {
             var t = document.createElement('button');
             t.type = 'button';
-            t.className = 'ann-tab' + (i === 0 ? ' active' : '');
+            t.className = 'ann-tab';
             t.textContent = a.title || '公告';
             t.addEventListener('click', function () {
               var ts = document.querySelectorAll('#annTabs .ann-tab');
-              ts.forEach(function (x) { x.classList.remove('active'); });
+              ts.forEach(function (x) { x.classList.remove('active'); }); var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.remove('active');
               t.classList.add('active');
               var bd = document.getElementById('annBody');
               if (bd) { bd.innerHTML = sanitizeHTML(a.content || ''); bindMediaFail(bd); bindLightbox(bd); }
@@ -1585,7 +1588,7 @@
       }
       // 默认显示第一条
       var body = document.getElementById('annBody');
-      if (body) { body.innerHTML = sanitizeHTML(list[0].content || ''); bindMediaFail(body); bindLightbox(body); }
+      var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { body.innerHTML = sanitizeHTML((defAnn && defAnn.content) || ''); bindMediaFail(body); bindLightbox(body); }
       mask.classList.add('open');
       setBodyLock(true);
     }
@@ -2307,7 +2310,7 @@
       var arr = [];
       try { arr = JSON.parse(settings.announcements || '[]'); } catch (e) { arr = []; }
       if (!Array.isArray(arr)) arr = [];
-      if (!arr.length && settings.announcement) arr = [{ id: 0, title: '公告', content: String(settings.announcement || ''), hidden: 0, sort: 1 }];
+      if (!arr.length && settings.announcement) arr = [{ id: 0, title: '公告', content: String(settings.announcement || ''), hidden: 0, sort: 0, level: 1 }];
       arr = arr.filter(function (a) { return !a.hidden; });
       arr.sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
       return arr;
