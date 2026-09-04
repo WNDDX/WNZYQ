@@ -192,7 +192,7 @@
       height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease;
+      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease; flex-shrink: 0;
     }
     .tabs { display: flex; gap: 6px; flex: 1; }
     .tab {
@@ -262,6 +262,11 @@
       cursor: grab; animation: rowIn 0.15s ease;
     }
     .product-row:active { cursor: grabbing; }
+    .cat-row.dragging, .ann-item.dragging { opacity: 0.4; transform: scale(0.98); }
+    .cat-row.drag-over, .ann-item.drag-over { border-top: 3px solid var(--blue1); margin-top: -3px; }
+    .drag-handle { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; background: rgba(30,136,229,0.12); color: #1E88E5; font-size: 13px; cursor: grab; user-select: none; flex-shrink: 0; touch-action: none; }
+    .drag-handle:hover { background: rgba(30,136,229,0.2); }
+    .drag-handle:active { cursor: grabbing; }
     .product-row.dragging {
       opacity: 0.4;
       transform: scale(0.98);
@@ -2322,9 +2327,10 @@
       pageList.forEach(function (p, idx) {
         var row = document.createElement('div');
         row.className = 'product-row';
-        row.draggable = true;
+        row.draggable = false;
         row.dataset.id = p.id;
         row.dataset.idx = idx;
+        var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '⋮⋮'; row.appendChild(handle);
 
         // 拖拽事件
         row.addEventListener('dragstart', function (e) {
@@ -3204,13 +3210,13 @@
       state.variants.forEach(function (v, idx) {
         var item = document.createElement('div');
         item.className = 'variant-item';
-        item.draggable = true;
+        item.draggable = false;
         item.dataset.idx = idx;
-        item.style.cursor = 'move';
+        item.style.cursor = 'default';
 
         // 拖拽手柄
         var handle = document.createElement('span');
-        handle.style.cssText = 'cursor:grab;color:#ccc;font-size:16px;margin-right:6px;user-select:none;';
+        handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序';
         handle.textContent = '⋮⋮';
 
         var name = document.createElement('span');
@@ -3550,9 +3556,9 @@
       stateAnn.list.forEach(function (a, idx) {
         var item = document.createElement('div');
         item.className = 'ann-item' + (a.level === 1 ? ' primary' : '') + (a.id === stateAnn.curId ? ' ann-cur' : '');
-        item.draggable = a.level === 1 ? false : true; item.dataset.idx = idx; item.style.cursor = a.level === 1 ? 'default' : 'move';
+        item.draggable = false; item.dataset.idx = idx; item.style.cursor = 'default';
         var handle = document.createElement('span');
-        handle.style.cssText = 'cursor:grab;color:#ccc;font-size:15px;margin-right:2px;user-select:none;';
+        handle.className = 'drag-handle'; handle.draggable = a.level === 1 ? false : true; handle.style.opacity = a.level === 1 ? '0.35' : '1'; handle.title = a.level === 1 ? '默认公告不可拖动' : '拖动排序';
         handle.textContent = '⋮⋮';
         var txt = document.createElement('input'); txt.type = 'text'; txt.className = 'ann-title-input';
         txt.value = a.title || ''; txt.title = '点击修改公告项名字';
@@ -3576,12 +3582,12 @@
           });
         });
         item.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('.select-picker, .cat-picker, .cat-picker-panel, .cp-item, .cat-picker-display')) return; selectAnnItem(a.id); });
-        item.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', idx); item.style.opacity = '0.5'; });
-        item.addEventListener('dragend', function () { item.style.opacity = '1'; document.querySelectorAll('.ann-item').forEach(function (el) { el.style.borderTop = ''; }); });
-        item.addEventListener('dragover', function (e) { e.preventDefault(); item.style.borderTop = '2px solid var(--blue1)'; });
-        item.addEventListener('dragleave', function () { item.style.borderTop = ''; });
+        item.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', idx); this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+        item.addEventListener('dragend', function () { this.classList.remove('dragging'); document.querySelectorAll('.ann-item').forEach(function (el) { el.classList.remove('drag-over'); }); });
+        item.addEventListener('dragover', function (e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; this.classList.add('drag-over'); });
+        item.addEventListener('dragleave', function () { this.classList.remove('drag-over'); });
         item.addEventListener('drop', function (e) {
-          e.preventDefault(); item.style.borderTop = '';
+          e.preventDefault(); this.classList.remove('drag-over');
           var fromIdx = Number(e.dataTransfer.getData('text/plain'));
           var toIdx = idx;
           if (fromIdx === toIdx || isNaN(fromIdx)) return;
@@ -4394,8 +4400,9 @@
       ordered.forEach(function (c) {
         var row = document.createElement('div');
         row.className = 'cat-row';
-        row.draggable = true;
+        row.draggable = false;
         row.dataset.id = c.id; row.dataset.parentId = c.parent_id;
+        if (Number(c.id) !== 0) { var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '⋮⋮'; row.appendChild(handle); }
         var isTop = c.parent_id === 0;
 
         // 拖拽事件（同级别内排序）

@@ -900,7 +900,7 @@
 
     /* 平台公告 */
     .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; padding: 24px 22px; animation: modalIn 0.25s ease; text-align: left; }
-    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding-right: 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; width: 100%; display: block; transition: color 0.15s ease; }
+    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; width: 100%; display: block; transition: color 0.15s ease; }
     .ann-modal .ann-title:hover { color: var(--blue1); }
     .ann-modal .ann-title.active { color: var(--blue1); }
     .ann-modal .ann-body { font-size: 14px; color: #333; line-height: 1.75; word-break: break-word; overflow-wrap: anywhere; }
@@ -1108,7 +1108,7 @@
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
     /* logo 与一级分类白色栏左边缘对齐：一级分类栏加与二级分类栏一致的左右内边距 */
-    .category-bar-wrap { padding: 0 16px; }
+    .category-bar-wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
     @media (max-width: 600px) { .category-bar-wrap, .sub-category-bar-wrap { padding: 0 12px; } }
     /* 三角键随白色栏内缩对齐：一级 22px（16+6）/ 二级 26px（16+10），不超模 */
     .sub-cat-toggle { right: 26px; }
