@@ -184,7 +184,7 @@
     .share-mask.open { display: flex; }
     .share-box {
       background: #fff; border-radius: 14px;
-      padding: 24px 20px; width: 100%; max-width: 400px;
+      position: relative; padding: 24px 20px; width: 100%; max-width: 400px;
       text-align: center; animation: modalIn 0.25s ease;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
@@ -1052,7 +1052,8 @@
         padding: 8px 12px;
       }
       .shop-logo { width: 30px; height: 30px; }
-      .shop-name { font-size: 16px; letter-spacing: 1px; }
+      .shop-brand { flex: 0 1 auto; min-width: 0; }
+      .shop-name { font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .topbar-actions { order: 1; margin-left: auto; gap: 6px; }
       .top-btn { padding: 7px; width: 34px; height: 34px; border-radius: 50%; }
       .top-btn span { display: none; }  /* 手机端只显示图标 */
@@ -1101,7 +1102,7 @@
     .product-card { animation: cardIn 0.15s ease; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
     .modal-mask #modalBox { max-height: 84vh; }
-    .ann-modal .ann-box { max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+    .ann-modal .ann-box { max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; max-width: 520px !important; width: 100% !important; margin: 0 auto !important; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; min-height: 0; }
     /* 滚动条始终占位，弹窗/切换时不因滚动条消失导致画面跳动 */
     html { scrollbar-gutter: stable; }
@@ -1114,6 +1115,11 @@
     .sub-cat-toggle { right: 26px; }
     @media (max-width: 600px) { .sub-cat-toggle { right: 18px; } }
     .topbar-inner { flex-wrap: wrap; }
+    /* === 全系统弹窗横向溢出防护：禁止底部滑轮，内容超宽一律裁剪/换行 === */
+    .modal-box, .modal-wrap, .ann-box, .modal-detail, .ann-body, .media-list, .variant-detail, .form, .rte-editor, .rte-large, .ann-list, .cat-picker-panel { overflow-x: hidden; }
+    .modal-detail, .ann-body, .variant-detail, .rte-editor { word-break: break-word; overflow-wrap: anywhere; }
+    .modal-detail video, .ann-body video, .variant-detail video, .rte-editor video, .media-list video { width: 100% !important; max-width: 100% !important; height: auto !important; display: block; border-radius: 8px; }
+    .modal-detail img, .modal-detail video, .modal-detail table, .modal-detail iframe, .modal-detail svg, .ann-body img, .ann-body video, .ann-body table, .ann-body iframe, .ann-body svg, .variant-detail img, .variant-detail video, .variant-detail table, .variant-detail iframe, .rte-editor img, .rte-editor video, .rte-editor table, .rte-editor iframe, .media-list img, .media-list video, .media-list table, .media-list iframe { max-width: 100% !important; height: auto; }
   </style>
 </head>
 
@@ -1189,13 +1195,13 @@
   </div>
 
   <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
-  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false);window.__annShown=false;try{sessionStorage.removeItem('wnzyq_ann_open')}catch(e){}}">
+  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false);window.__annShown=false;try{document.querySelectorAll('#annModal video').forEach(function(v){v.pause()})}catch(e){}}">
     <div class="ann-box" onclick="event.stopPropagation()">
-      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false;try{sessionStorage.removeItem('wnzyq_ann_open')}catch(e){}">✕</button>
+      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false;try{document.querySelectorAll('#annModal video').forEach(function(v){v.pause()})}catch(e){}">✕</button>
       <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="(function(){var l=(window.DATA&amp;&amp;DATA.announcements)||[];var d=l.find(function(x){return x.level===1;})||l[0];if(!d)return;var bd=document.getElementById('annBody');if(bd){var _c3=sanitizeHTML(d.content||'');bd.innerHTML=_c3||'<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容，请在管理页设置</div>';bindMediaFail(bd);bindLightbox(bd);}var tt=document.getElementById('annTitleTab');if(tt)tt.classList.add('active');document.querySelectorAll('#annTabs .ann-tab').forEach(function(x){x.classList.remove('active');});})()">公告</button>
       <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
-      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false;try{sessionStorage.removeItem('wnzyq_ann_open')}catch(e){}">确定</button>
+      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false;try{document.querySelectorAll('#annModal video').forEach(function(v){v.pause()})}catch(e){}">确定</button>
     </div>
   </div>
 
@@ -1256,7 +1262,7 @@
   <!-- ============ 分享提示弹窗 ============ -->
   <div class="share-mask" id="shareMask">
     <div class="share-box">
-      <div class="share-title">分享本站</div>
+      <button class="modal-close-x" id="shareCloseX" type="button" onclick="closeShare()">✕</button>      <div class="share-title">分享本站</div>
       <div class="share-tip">网站链接已复制到剪贴板</div>
       <div class="share-link" id="shareLinkText"></div>
       <button class="share-close" id="shareClose">关闭</button>
@@ -1546,9 +1552,10 @@
     // ---------- 渲染分类（一级） ----------
     // 平台公告渲染（多公告项，管理页设置；为空则不显示）——弹窗形式，顶部小项切换
     function renderAnnouncement() {
+      var _abx = document.querySelector('.ann-modal .ann-box'); if (_abx) { _abx.style.display='flex'; _abx.style.flexDirection='column'; _abx.style.maxWidth='520px'; _abx.style.width='100%'; _abx.style.margin='0 auto'; _abx.style.boxSizing='border-box'; } var _at2 = document.getElementById('annTitleTab'); if (_at2) { _at2.style.display='block'; _at2.style.width='100%'; _at2.style.textAlign='center'; } var _aok2 = document.querySelector('.ann-modal .ann-ok'); if (_aok2) { _aok2.style.display='block'; _aok2.style.width='100%'; }
       var mask = document.getElementById('annModal');
       if (!mask) return;
-      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annShown || mask.classList.contains('open')) return; try { if (sessionStorage.getItem('wnzyq_ann_open') === '1') return; } catch (e) {}
+      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annShown || mask.classList.contains('open')) return;
       var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
       var mode = DATA.announcementMode || 'always';
       if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
@@ -1564,7 +1571,7 @@
           sessionStorage.setItem('wnzyq_ann_session', '1');
         } catch (e) {}
       }
-      window.__annShown = true; try { sessionStorage.setItem('wnzyq_ann_open', '1'); } catch (e) {}
+      window.__annShown = true;
       // 渲染小项 tabs（仅多条时显示）
       var tabs = document.getElementById('annTabs');
       if (tabs) {
@@ -2084,7 +2091,7 @@
       }
     }
 
-    function closeModal() {
+    function closeModal() { try { document.querySelectorAll('#modalBox video, #modalMedia video').forEach(function (v) { v.pause(); }); } catch (e) {}
       modalMask.classList.remove('open');
       setBodyLock(false);
       currentProduct = null;
@@ -2393,11 +2400,11 @@
     window.addEventListener('resize', updateTopbarHeight);
     // 页面重新可见 / 从其他页面切回时，静默拉取最新数据（管理页改动更快同步，不闪骨架屏）
     document.addEventListener('visibilitychange', function () {
-      if (!document.hidden && typeof usingRemote !== 'undefined' && usingRemote) { window.__annSilent = true; fetchRemote(); }
+      if (!document.hidden && typeof usingRemote !== 'undefined' && usingRemote) { fetchRemote(); }
     });
     window.addEventListener('pageshow', function () {
       var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      if (!isLocal) { window.__annSilent = true; fetchRemote(); }
+      if (!isLocal) { fetchRemote(); }
     });
 
     // ---------- 下拉刷新（手机端页面顶部下拉刷新数据） ----------
@@ -2646,7 +2653,7 @@
         lightboxMask.onclick = closeLightbox;
         document.body.appendChild(lightboxMask);
       }
-      lightboxMask.textContent = '';
+      lightboxMask.textContent = ''; var _lbx = document.createElement('button'); _lbx.type = 'button'; _lbx.className = 'modal-close-x'; _lbx.style.cssText = 'position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.9);color:#666;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;'; _lbx.textContent = '✕'; _lbx.onclick = closeLightbox; lightboxMask.appendChild(_lbx);
       var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src); var _lbImg = document.createElement(isVideo ? 'video' : 'img');
       _lbImg.src = src; if (isVideo) { _lbImg.controls = true; _lbImg.autoplay = true; _lbImg.playsInline = true; }
       _lbImg.style.cssText = 'max-width:92%;max-height:92%;object-fit:contain;border-radius:8px;transition:transform .05s linear;';
@@ -2654,7 +2661,7 @@
       lightboxMask.style.display = 'flex';
       lightboxMask.classList.add('open');
     }
-    function closeLightbox() {
+    function closeLightbox() { try { if (lightboxMask) lightboxMask.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {}
       if (lightboxMask) {
         lightboxMask.style.display = 'none';
         lightboxMask.classList.remove('open');

@@ -170,7 +170,7 @@ body{
     background: #ffffff;
     border-radius: 14px;
     padding: 26px 22px;
-    max-width: 480px;
+    position: relative; max-width: 480px; max-height: 84vh; overflow-y: auto;
     width: 100%;
     text-align: center;
 }
@@ -244,6 +244,14 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 .prt-text{font-size:12px;color:#fff;background:rgba(30,136,229,.92);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
 .prt-icon{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.6);border-top-color:#fff;border-radius:50%;animation:prtspin .8s linear infinite;}
 @keyframes prtspin{to{transform:rotate(360deg);}}
+/* 弹窗右上角关闭按钮（与资源页/管理页一致） */
+.modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.12s ease;line-height:1;}
+.modal-close-x:hover{background:#ff4444;color:#fff;transform:scale(1.1);}
+.modal-close-x:active{transform:scale(0.92);}
+html { scrollbar-gutter: stable; }
+/* === 弹窗横向溢出防护：禁止底部滑轮 === */
+.modal-box, .modal-wrap { overflow-x: hidden; }
+.modal-tip, .modal-title { word-break: break-word; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -291,7 +299,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 
 <div class="modal-mask" id="mask" onclick="closeModal()">
     <div class="modal-box" onclick="event.stopPropagation()">
-        <div class="modal-title" id="modalTitle"></div>
+        <button class="modal-close-x" type="button" onclick="closeModal()">×</button>        <div class="modal-title" id="modalTitle"></div>
         <div class="qrcode-wrap">
             <img class="modal-qrcode" id="modalImg" alt="">
             <div class="qrcode-fail-icon" id="qrFail">

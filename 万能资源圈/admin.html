@@ -644,7 +644,7 @@
     .rte-editor.rte-large ~ * { }
     .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: #fff; border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 7px 12px; }
     .rte-zoom { font-weight: 600; }    .rte-toolbar .select-picker .cat-picker-display { min-height: 0; height: 32px; padding: 0 10px; align-self: center; border-radius: 6px; font-size: 13px; }    .rte-toolbar.rte-toolbar-large .select-picker .cat-picker-display { height: 36px; font-size: 15px; }
-    .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+    .rte-editor img, .rte-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; } .rte-editor video { width: 100%; height: auto; display: block; }
     .rte-editor a { color: #1976d2; text-decoration: underline; }
     .rte-editor ul, .rte-editor ol { padding-left: 24px; margin: 6px 0; }
     .rte-editor li { margin: 3px 0; }
@@ -679,7 +679,7 @@
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
     /* 预览弹窗 */
-    .preview-box { position: relative; animation: modalIn 0.25s ease; } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; }
+    .preview-box { position: relative; animation: modalIn 0.25s ease; } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; } .preview-box video { width: 100%; display: block; }
     .preview-close-x {
       position: absolute; top: 12px; right: 12px; z-index: 10;
       width: 40px; height: 40px; border-radius: 50%;
@@ -983,6 +983,10 @@
     /* 公告项名字直接在项内编辑 */
     .ann-title-input { border: 1px solid transparent; background: transparent; font-size: 14px; color: #333; min-width: 60px; width: auto; flex: 1; padding: 2px 4px; border-radius: 4px; outline: none; }
     .ann-title-input:hover, .ann-title-input:focus { border-color: #ddd; background: #fff; }
+    /* === 全系统弹窗横向溢出防护：禁止底部滑轮，内容超宽一律裁剪/换行 === */
+    .modal-box, .modal-wrap, .ann-box, .modal-detail, .ann-body, .media-list, .variant-detail, .form, .rte-editor, .rte-large, .ann-list, .cat-picker-panel { overflow-x: hidden; }
+    .modal-detail, .ann-body, .variant-detail, .rte-editor { word-break: break-word; overflow-wrap: anywhere; }
+    .modal-detail img, .modal-detail video, .modal-detail table, .modal-detail iframe, .modal-detail svg, .ann-body img, .ann-body video, .ann-body table, .ann-body iframe, .ann-body svg, .variant-detail img, .variant-detail video, .variant-detail table, .variant-detail iframe, .rte-editor img, .rte-editor video, .rte-editor table, .rte-editor iframe, .media-list img, .media-list video, .media-list table, .media-list iframe { max-width: 100% !important; height: auto; }
   </style>
 </head>
 
@@ -1319,7 +1323,7 @@
   <!-- ============ 资源编辑弹窗 ============ -->
   <div class="modal-mask" id="editMask">
     <div class="modal-box modal-wide">
-      <h2 class="modal-title" id="editTitle">编辑资源</h2>
+      <button class="modal-close-x" data-close="editMask">×</button>      <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
         <label>标题</label><input id="fTitle" placeholder="资源标题" />
         <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
@@ -1879,9 +1883,11 @@
       var closeBtn = e.target.closest('.modal-close-x, .modal-close[data-close]');
       if (closeBtn && closeBtn.dataset.close) {
         var mask = document.getElementById(closeBtn.dataset.close);
-        if (closeBtn.dataset.close === 'editMask') clearDraft(); // ×=取消：丢弃商品编辑草稿
-        if (closeBtn.dataset.close === 'catMask') catDraftPending = false; // ×=取消：丢弃分类草稿
-        if (closeBtn.dataset.close === 'variantMask') variantDraftPending = false; // ×=取消：丢弃类型草稿
+        if (closeBtn.dataset.close === 'editMask') { try { clearDraft(); } catch (e) {} } // ×=取消：丢弃草稿
+        if (closeBtn.dataset.close === 'catMask') { catDraftPending = false; catDraftFor = null; } // ×=取消：丢弃分类草稿
+        if (closeBtn.dataset.close === 'variantMask') { variantDraftPending = false; variantDraftFor = null; } // ×=取消：丢弃类型草稿
+        if (closeBtn.dataset.close === 'annMask') { annDraftPending = false; stateAnn.loaded = false; } // ×=取消：不保存，重新加载已保存
+        if (closeBtn.dataset.close === 'contactMask') { contactDraftPending = false; var _cu=document.getElementById('contactUrlInput'); if(_cu)_cu.value=''; } // ×=取消：清空输入
         if (closeBtn.dataset.close === 'pwdMask') { var _o=document.getElementById('oldPwd'),_n=document.getElementById('newPwd'),_c=document.getElementById('confirmPwd'); if(_o)_o.value=''; if(_n)_n.value=''; if(_c)_c.value=''; } // ×=取消：清空密码框
         if (mask) {
           mask.classList.remove('open');
@@ -2136,7 +2142,7 @@
         window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || ''; if (document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = s.contact_url || '';
         // 客服状态文字已按需求移除
         document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
-        if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; }
+        if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; if (document.getElementById('annMask').classList.contains('open')) { try { if (typeof renderAnnList === 'function') renderAnnList(); var _dlx = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dlx && typeof selectAnnItem === 'function') selectAnnItem(_dlx.id); else if (typeof clearAnnEdit === 'function') clearAnnEdit(); } catch (e) {} } }
         (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = ''; _fg.appendChild(_pg); } })();
         document.getElementById('annMode').value = s.announcement_mode || 'always';
         // 公告状态文字已按需求移除
@@ -2590,7 +2596,7 @@
           opt.textContent = c.name + (c.id === 0 ? '（全部）' : '');
           select.appendChild(opt);
         });
-        } document.getElementById('batchCatMask').classList.add('open'); if (!document.getElementById('batchCatMask')._bm) { document.getElementById('batchCatMask')._bm = 1; document.getElementById('batchCatMask').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('open'); }); }
+        } document.getElementById('batchCatMask').classList.add('open'); if (!document.getElementById('batchCatMask')._bm) { document.getElementById('batchCatMask')._bm = 1; document.getElementById('batchCatMask').addEventListener('click', function (e) { if (e.target === this) { this.classList.remove('open'); try { this.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} } }); }
         // 确认按钮事件（只绑定一次）
         var okBtn = document.getElementById('batchCatOk');
         okBtn.onclick = function () {
@@ -2723,6 +2729,27 @@
     document.getElementById('addProductBtn').addEventListener('click', function () { openEdit(null); });
 
     function openEdit(p) {
+      state.editingId = p ? p.id : null;
+      state.editingProduct = p;
+      editTitle.textContent = p ? '编辑资源' : '新增资源';
+      fillCidSelect(p ? p.cid : 0);
+      fillProductForm(p);
+      // 有草稿直接恢复，不弹确认框（取消=丢弃；×/窗外=暂存草稿，下次打开自动恢复）
+      try {
+        var draftKey = 'product_draft_' + (p ? p.id : 'new');
+        var draft = localStorage.getItem(draftKey);
+        if (draft) {
+          var dd = JSON.parse(draft);
+          fTitle.value = dd.title || ''; fDesc.value = dd.desc || ''; fDetail.innerHTML = dd.detail || ''; fImg.value = dd.img || ''; fContactUrl.value = dd.contactUrl || ''; fPrice.value = dd.price || ''; fSort.value = dd.sort || 0; fOnline.checked = !!dd.online; fHidden.checked = !!dd.hidden; fillCidSelect(dd.cid || 0);
+        }
+      } catch (e) {}
+      updateImgPreview();
+      editMask.classList.add('open');
+      state.variants = [];
+      renderVariants();
+      if (p && p.id) loadVariants(p.id);
+    }
+    function openEdit_OLD(p) {
       state.editingId = p ? p.id : null;
       state.editingProduct = p;
       editTitle.textContent = p ? '编辑资源' : '新增资源';
@@ -2932,6 +2959,8 @@
         panelEl.appendChild(row);
         var childBox = document.createElement('div');
         childBox.className = 'cp-children';
+        // 一级分类下的"全部"（等价选中该一级全部子分类）；已有同名"全部"二级则不重复插入
+        if (!subs.some(function (s) { return String(s.name || '').trim() === '全部'; })) { var _allr = document.createElement('div'); _allr.className = 'cp-item cp-sub' + (Number(selected) === top.id ? ' selected' : ''); var _alln = document.createElement('span'); _alln.className = 'cp-name'; _alln.textContent = '全部'; _allr.appendChild(_alln); _allr.addEventListener('click', (function (ti, tn) { return function () { pickCatValue(pickerEl, hiddenInput, displayEl, ti, tn); }; })(top.id, top.name)); childBox.appendChild(_allr); }
         subs.forEach(function (sub) {
           var srow = document.createElement('div');
           srow.className = 'cp-item cp-sub' + (Number(selected) === sub.id ? ' selected' : '');
@@ -3066,7 +3095,7 @@
       buildCatPicker(
         document.getElementById('fCidPicker'), fCid,
         document.getElementById('fCidDisplay'), document.getElementById('fCidPanel'),
-        selected, { allowUncategorized: false, placeholder: '请选择一级或二级分类' }
+        selected, { allowUncategorized: true, placeholder: '请选择分类' }
       );
     }
     function _oldFillCidSelectUnused(selected) {
@@ -3632,7 +3661,7 @@
       }
       // 先立即打开弹窗，再后台拉取最新数据（避免网络延迟导致弹窗迟迟不出现）
       document.getElementById('annMask').classList.add('open');
-      if (!annDraftPending || !stateAnn.loaded) {
+      if (stateAnn.loaded && stateAnn.list.length) { try { renderAnnList(); var _dl0 = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; selectAnnItem(_dl0.id); } catch (e) {} } if (!annDraftPending || !stateAnn.loaded) {
         api('admin/settings').then(function (res) {
           if (res && res.ok) {
             stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 });
@@ -3682,7 +3711,7 @@
 
     // ---------- 全局客服链接（弹窗设置，与公告一致） ---------- var contactDraftPending = false;
     document.getElementById('openContactBtn').addEventListener('click', function () {
-      if (!contactDraftPending) { document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; api('admin/settings').then(function (res) { if (res && res.ok && !contactDraftPending && document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = (res.settings || {}).contact_url || ''; }); } contactDraftPending = false;
+      if (!contactDraftPending) { document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; if (!document.getElementById('setContactUrl').value) { try { if (typeof loadSettings === 'function') loadSettings(); } catch (e) {} } } contactDraftPending = false;
       document.getElementById('contactMask').classList.add('open');
     });
     document.getElementById('saveContactBtn').addEventListener('click', function () {
@@ -4359,7 +4388,7 @@
     function loadCategories() {
       api('admin/categories').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
-        state.categories = orderCats(res.list || []);
+        state.categories = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden }; }));
         renderCategories(state.categories);
       });
     }
@@ -4395,7 +4424,7 @@
         // 跳过它，避免把所有一级分类重复当成其子分类（修复分类重复显示两个的 bug）
         if (top.id === 0) return;
         list.filter(function (c) { return c.parent_id === top.id; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).forEach(function (sub) {
-          ordered.push(sub);
+          ordered.push(sub); if (!list.some(function (c) { return Number(c.parent_id) === Number(top.id) && String(c.name || '').trim() === '全部'; })) { var _vt = list.find(function (x) { return Number(x.id) === Number(top.id); }); ordered.push({ id: 'v' + top.id, parent_id: top.id, name: '全部', sort: -1, virtual: true, cnt: (_vt ? _vt.cnt : 0) }); }
         });
       });
       // 没有父级的（异常数据）也加上
@@ -4403,6 +4432,7 @@
         .forEach(function (c) { ordered.push(c); });
 
       ordered.forEach(function (c) {
+        if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; _vrow.style.cssText = 'padding-left:34px;opacity:0.75;'; var _vnm = document.createElement('span'); _vnm.style.cssText = 'color:#999;font-style:italic;flex:1;text-align:left;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#bbb;margin-right:12px;'; _vrow.appendChild(_vcnt); box.appendChild(_vrow); return; }
         var row = document.createElement('div');
         row.className = 'cat-row';
         row.draggable = false;
@@ -4470,7 +4500,7 @@
         if (isTop && c.id !== 0) {
           var toggleBtn = document.createElement('span');
           toggleBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;cursor:pointer;margin-right:4px;color:var(--blue1);transition:transform 0.3s ease;user-select:none;filter:drop-shadow(0 1px 2px rgba(30,136,229,0.3));';
-          var hasChildren = list.some(function (sub) { return sub.parent_id === c.id; });
+          var hasChildren = list.some(function (sub) { return sub.parent_id === c.id; }) || ordered.some(function (x) { return x.virtual && Number(x.parent_id) === Number(c.id); });
           if (hasChildren) {
             toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;display:block"><path d="M7 10l5 5 5-5z"/></svg>';
             toggleBtn.style.transform = state.catExpanded[c.id] === false ? 'rotate(-90deg)' : 'rotate(0deg)';
@@ -4884,7 +4914,7 @@
         _lbMask.onclick = closeLightbox;
         document.body.appendChild(_lbMask);
       }
-      _lbMask.textContent = '';
+      _lbMask.textContent = ''; var _lbx = document.createElement('button'); _lbx.type = 'button'; _lbx.className = 'modal-close-x'; _lbx.style.cssText = 'position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.9);color:#666;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;'; _lbx.textContent = '✕'; _lbx.onclick = closeLightbox; _lbMask.appendChild(_lbx);
       var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src);
       var m = document.createElement(isVideo ? 'video' : 'img');
       m.src = src;
@@ -4894,7 +4924,7 @@
       _lbMask.style.display = 'flex';
       _lbMask.classList.add('open');
     }
-    function closeLightbox() { if (_lbMask) { _lbMask.style.display = 'none'; _lbMask.classList.remove('open'); } }
+    function closeLightbox() { if (_lbMask) { try { _lbMask.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} _lbMask.style.display = 'none'; _lbMask.classList.remove('open'); } }
     (function () {
       var scale = 1, startDist = 0;
       document.addEventListener('touchstart', function (e) {
@@ -4998,7 +5028,7 @@
       document.getElementById('previewMask').classList.add('open');
     });
     document.getElementById('previewCloseX').addEventListener('click', function () {
-      document.getElementById('previewMask').classList.remove('open');
+      document.getElementById('previewMask').classList.remove('open');try{document.querySelectorAll('#previewMask video').forEach(function(v){v.pause()})}catch(e){}
     });
     // 预览里的“联系客服”可直接点击，验证跳转是否正确（优先当前类型客服链接，其次资源，再全局）
     document.getElementById('previewContactBtn').addEventListener('click', function () {
@@ -5013,17 +5043,17 @@
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
-      document.getElementById('previewMask').classList.remove('open');
+      document.getElementById('previewMask').classList.remove('open');try{document.querySelectorAll('#previewMask video').forEach(function(v){v.pause()})}catch(e){}
     });
     document.getElementById('previewMask').addEventListener('click', function (e) {
-      if (e.target === this) this.classList.remove('open');
+      if (e.target === this) { this.classList.remove('open'); try { this.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} }
     });
 
     // ---------- ESC 关闭弹窗 ----------
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         var masks = document.querySelectorAll('.modal-mask.open, .preview-mask.open');
-        masks.forEach(function (m) { m.classList.remove('open'); });
+        masks.forEach(function (m) { m.classList.remove('open'); try { m.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} });
       }
       // Ctrl+S 保存资源
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
