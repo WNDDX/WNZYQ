@@ -731,11 +731,11 @@
 
     /* 批量操作工具栏 */
     .batch-bar {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; visibility: hidden; transition: max-height .18s ease, padding .18s ease, visibility .18s;
-      background: #eef4fb; border-radius: 8px; padding: 8px 12px;
-      margin-bottom: 12px; font-size: 13px; color: #555;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; opacity: 0; transition: max-height .2s ease, padding .2s ease, opacity .15s ease;
+      background: #eef4fb; border-radius: 8px; padding: 0 12px;
+      margin-bottom: 0; font-size: 13px; color: #555;
     }
-    .batch-bar.show { max-height: 120px; padding-top: 8px; padding-bottom: 8px; visibility: visible; }
+    .batch-bar.show { max-height: 80px; padding-top: 8px; padding-bottom: 8px; opacity: 1; margin-bottom: 12px; }
     .batch-bar .batch-count { font-weight: 600; color: var(--blue1); }
     .batch-btn {
       border: 1px solid #ddd; background: #fff; color: #555;
@@ -953,9 +953,9 @@
     .ann-item .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { max-height: 84vh; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
     .modal-mask#annMask > .modal-box .modal-title, .modal-mask#editMask > .modal-box .modal-title, .modal-mask#variantMask > .modal-box .modal-title, .modal-mask#annMask > .modal-box .modal-footer, .modal-mask#editMask > .modal-box .modal-footer, .modal-mask#variantMask > .modal-box .modal-footer { flex-shrink: 0; width: 100% !important; }
-    .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; padding-right: 4px; }
+    .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; margin-right: -22px; padding-right: 22px; }
     .modal-mask#catMask > .modal-box { max-height: 78vh; display: flex; flex-direction: column; }
-    .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; }
+    .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; margin-right: -22px; padding-right: 22px; }
     .cat-row { animation: rowIn 0.15s ease; }
     #productList, #catList { transition: opacity 0.1s ease; }
     .stat-card { animation: rowIn 0.15s ease; }
@@ -2945,13 +2945,14 @@
       tops.forEach(function (top) {
         var subs = cats.filter(function (c) { return c.parent_id === top.id; })
           .sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
+        var _hasAllV = !subs.some(function (s) { return String(s.name || '').trim() === '全部'; });
         var row = document.createElement('div');
         row.className = 'cp-item cp-top' + (Number(selected) === top.id ? ' selected' : '');
         var name = document.createElement('span');
         name.className = 'cp-name';
         name.textContent = top.name;
         row.appendChild(name);
-        if (subs.length) {
+        if (subs.length || _hasAllV) {
           var chev = document.createElement('span');
           chev.className = 'cp-chevron';
           chev.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>';
@@ -2968,7 +2969,7 @@
         var childBox = document.createElement('div');
         childBox.className = 'cp-children';
         // 一级分类下的"全部"（等价选中该一级全部子分类）；已有同名"全部"二级则不重复插入
-        if (!subs.some(function (s) { return String(s.name || '').trim() === '全部'; })) { var _allr = document.createElement('div'); _allr.className = 'cp-item cp-sub' + (Number(selected) === top.id ? ' selected' : ''); var _alln = document.createElement('span'); _alln.className = 'cp-name'; _alln.textContent = '全部'; _allr.appendChild(_alln); _allr.addEventListener('click', (function (ti, tn) { return function () { pickCatValue(pickerEl, hiddenInput, displayEl, ti, tn); }; })(top.id, top.name)); childBox.appendChild(_allr); }
+        if (_hasAllV) { var _allr = document.createElement('div'); _allr.className = 'cp-item cp-sub' + (Number(selected) === top.id ? ' selected' : ''); var _alln = document.createElement('span'); _alln.className = 'cp-name'; _alln.textContent = '全部'; _allr.appendChild(_alln); _allr.addEventListener('click', (function (ti, tn) { return function () { pickCatValue(pickerEl, hiddenInput, displayEl, ti, tn); }; })(top.id, top.name)); childBox.appendChild(_allr); }
         subs.forEach(function (sub) {
           var srow = document.createElement('div');
           srow.className = 'cp-item cp-sub' + (Number(selected) === sub.id ? ' selected' : '');
@@ -3720,7 +3721,7 @@
 
     // ---------- 全局客服链接（弹窗设置，与公告一致） ---------- var contactDraftPending = false;
     document.getElementById('openContactBtn').addEventListener('click', function () {
-      if (!contactDraftPending) { document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; if (!document.getElementById('setContactUrl').value) { try { if (typeof loadSettings === 'function') loadSettings(); } catch (e) {} } } contactDraftPending = false;
+      if (!contactDraftPending) { document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; if (!window.__plSet || !document.getElementById('setContactUrl').value) { try { if (typeof loadSettings === 'function') loadSettings(); } catch (e) {} } } contactDraftPending = false;
       document.getElementById('contactMask').classList.add('open');
     });
     document.getElementById('saveContactBtn').addEventListener('click', function () {

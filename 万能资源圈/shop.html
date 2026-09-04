@@ -1102,9 +1102,10 @@
     .product-card { animation: cardIn 0.15s ease; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
     .modal-mask #modalBox { max-height: 84vh; }
-    .modal-mask#annModal > .ann-box { max-height: 80vh; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; max-width: 520px !important; width: 100% !important; margin: 0 auto !important; }
+    .modal-mask#annModal > .ann-box { max-height: 80vh; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: 0 auto !important; box-sizing: border-box; }
+    .modal-mask#annModal > .ann-box > * { box-sizing: border-box; max-width: 100%; }
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
-    .ann-modal .ann-body { flex: 1; overflow-y: auto; min-height: 0; }
+    .ann-modal .ann-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; margin-right: -22px; padding-right: 22px; width: 100%; box-sizing: border-box; }
     /* 滚动条始终占位，弹窗/切换时不因滚动条消失导致画面跳动 */
     html, body { scrollbar-gutter: stable; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
@@ -1113,8 +1114,8 @@
     .category-bar-wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
     @media (max-width: 600px) { .category-bar-wrap, .sub-category-bar-wrap { padding: 0 12px; } }
     /* 三角键随白色栏内缩对齐：一级 22px（16+6）/ 二级 26px（16+10），不超模 */
-    .sub-cat-toggle { right: 26px; }
-    @media (max-width: 600px) { .sub-cat-toggle, .cat-toggle { right: 18px; } }
+    .sub-cat-toggle { right: 32px; }
+    @media (max-width: 600px) { .cat-toggle { right: 18px; } .sub-cat-toggle { right: 24px; } }
     .topbar-inner { flex-wrap: wrap; }
     /* === 全系统弹窗横向溢出防护：禁止底部滑轮，内容超宽一律裁剪/换行 === */
     .modal-box, .modal-wrap, .ann-box, .modal-detail, .ann-body, .media-list, .variant-detail, .form, .rte-editor, .rte-large, .ann-list, .cat-picker-panel { overflow-x: hidden; }
@@ -1563,12 +1564,11 @@
     // ---------- 渲染分类（一级） ----------
     // 平台公告渲染（多公告项，管理页设置；为空则不显示）——弹窗形式，顶部小项切换
     function renderAnnouncement() {
-      var _abx = document.querySelector('.ann-modal .ann-box'); if (_abx) { _abx.style.display='flex'; _abx.style.flexDirection='column'; _abx.style.maxWidth='520px'; _abx.style.width='100%'; _abx.style.margin='0 auto'; _abx.style.boxSizing='border-box'; } var _at2 = document.getElementById('annTitleTab'); if (_at2) { _at2.style.display='block'; _at2.style.width='100%'; _at2.style.textAlign='center'; } var _aok2 = document.querySelector('.ann-modal .ann-ok'); if (_aok2) { _aok2.style.display='block'; _aok2.style.width='100%'; }
       var mask = document.getElementById('annModal');
       if (!mask) return;
-      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) return;
-      var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
       var mode = DATA.announcementMode || 'always';
+      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) {} } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) {} } return; }
+      var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
       if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
       if (mode === 'daily') {
         try {
@@ -2456,6 +2456,7 @@
         // 触发刷新
         pullRefreshEl.style.height = '50px';
         document.getElementById('pullRefreshText').textContent = '正在刷新...';
+        window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
         try { localStorage.removeItem('wnzyq_shop_data'); } catch (e) {}
         setTimeout(function () {
