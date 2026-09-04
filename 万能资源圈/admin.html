@@ -909,7 +909,7 @@
     /* ========== 统一按钮动画（跟资源页一致） ========== */
     .btn-blue, .btn-cyan, .mini-btn, .tab, .export-btn, .batch-btn,
     .variant-add, .insert-link-btn, .time-btn, .cat-toggle, .modal-inner-btn,
-    .modal-close, .preview-btn, .confirm-ok, .confirm-cancel, .view-btn, .status-select {
+    .modal-close, .preview-btn, .confirm-ok, .confirm-cancel, .view-btn, .status-select, .row-btn {
       transition: all 0.10s ease;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -917,14 +917,14 @@
     .btn-blue:hover, .btn-cyan:hover, .mini-btn:hover, .tab:hover,
     .export-btn:hover, .batch-btn:hover, .variant-add:hover, .insert-link-btn:hover,
     .time-btn:hover, .cat-toggle:hover, .modal-inner-btn:hover, .modal-close:hover,
-    .preview-btn:hover, .confirm-ok:hover, .confirm-cancel:hover, .view-btn:hover {
+    .preview-btn:hover, .confirm-ok:hover, .confirm-cancel:hover, .view-btn:hover, .row-btn:hover {
       transform: scale(0.96);
       opacity: 0.9;
     }
     .btn-blue:active, .btn-cyan:active, .mini-btn:active, .tab:active,
     .export-btn:active, .batch-btn:active, .variant-add:active, .insert-link-btn:active,
     .time-btn:active, .cat-toggle:active, .modal-inner-btn:active, .modal-close:active,
-    .preview-btn:active, .confirm-ok:active, .confirm-cancel:active, .view-btn:active {
+    .preview-btn:active, .confirm-ok:active, .confirm-cancel:active, .view-btn:active, .row-btn:active {
       transform: scale(0.92);
       opacity: 0.8;
       filter: brightness(0.9);
@@ -951,7 +951,8 @@
     .cat-row .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .ann-item .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
     .ann-item .select-picker .cpd-arrow { width: 14px; height: 14px; }
-    .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { max-height: 84vh; display: flex; flex-direction: column; }
+    .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { max-height: 84vh; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
+    .modal-mask#annMask > .modal-box .modal-title, .modal-mask#editMask > .modal-box .modal-title, .modal-mask#variantMask > .modal-box .modal-title, .modal-mask#annMask > .modal-box .modal-footer, .modal-mask#editMask > .modal-box .modal-footer, .modal-mask#variantMask > .modal-box .modal-footer { flex-shrink: 0; width: 100% !important; }
     .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; padding-right: 4px; }
     .modal-mask#catMask > .modal-box { max-height: 78vh; display: flex; flex-direction: column; }
     .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; }
@@ -987,6 +988,12 @@
     .modal-box, .modal-wrap, .ann-box, .modal-detail, .ann-body, .media-list, .variant-detail, .form, .rte-editor, .rte-large, .ann-list, .cat-picker-panel { overflow-x: hidden; }
     .modal-detail, .ann-body, .variant-detail, .rte-editor { word-break: break-word; overflow-wrap: anywhere; }
     .modal-detail img, .modal-detail video, .modal-detail table, .modal-detail iframe, .modal-detail svg, .ann-body img, .ann-body video, .ann-body table, .ann-body iframe, .ann-body svg, .variant-detail img, .variant-detail video, .variant-detail table, .variant-detail iframe, .rte-editor img, .rte-editor video, .rte-editor table, .rte-editor iframe, .media-list img, .media-list video, .media-list table, .media-list iframe { max-width: 100% !important; height: auto; }
+    /* 全系统统一滚动条：宽度、颜色、圆角、与边框距离一致 */
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb { background: rgba(144,158,180,0.5); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+    *::-webkit-scrollbar-thumb:hover { background: rgba(120,135,160,0.7); background-clip: padding-box; }
+    * { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
   </style>
 </head>
 
@@ -1026,7 +1033,7 @@
           <button class="tab" data-tab="settings">平台设置</button>
         </div>
         <div class="topbar-right">
-          <button class="mini-btn" id="logoutBtn">退出</button>
+          <button class="row-btn danger" id="logoutBtn">退出</button>
         </div>
       </div>
     </header>
@@ -1450,7 +1457,7 @@
         </div>
         <div id="catParentWrap" style="display:none;">
           <label>所属一级分类</label>
-          <select id="catParent" class="input"></select>
+          <div class="cat-picker" id="catParentPicker" style="margin-bottom:8px;"><input type="hidden" id="catParentValue" value="0" /><div class="cat-picker-display" id="catParentDisplay"><span class="cpd-text">请选择所属一级分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="catParentPanel"></div></div>
         </div>
         <label>排序</label><input id="catSort" class="input" type="number" value="0" placeholder="数值越小越靠前" />
         <label class="checkbox-row"><input type="checkbox" id="catHidden" /> 隐藏（资源页不显示，仅管理页可见）</label>
@@ -2916,6 +2923,7 @@
       opts = opts || {};
       var cats = (state.categories || []).filter(function (c) {
         if (opts.excludeZero && c.id === 0) return false;
+        if (opts.topOnly) return c.id !== 0 && (!c.parent_id || c.parent_id === 0);
         return true;
       });
       var tops = cats.filter(function (c) { return c.id !== 0 && (!c.parent_id || c.parent_id === 0); })
@@ -2988,7 +2996,7 @@
       txtEl.classList.remove('placeholder');
       document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
       pickerEl.querySelectorAll('.cp-item.selected').forEach(function (el) { el.classList.remove('selected'); });
-      if (!document.getElementById('batchCatMask').classList.contains('open') && typeof onProductCidChange === 'function') onProductCidChange(id);
+      if (!document.getElementById('batchCatMask').classList.contains('open') && !document.getElementById('catMask').classList.contains('open') && typeof onProductCidChange === 'function') onProductCidChange(id);
     }
     document.addEventListener('click', function (e) {
       var disp = e.target.closest ? e.target.closest('.cat-picker-display') : null;
@@ -4423,8 +4431,8 @@
         // id=0 的"全部"是虚拟根分类，parent_id===0 表示一级分类而非"全部"的子级，
         // 跳过它，避免把所有一级分类重复当成其子分类（修复分类重复显示两个的 bug）
         if (top.id === 0) return;
-        list.filter(function (c) { return c.parent_id === top.id; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).forEach(function (sub) {
-          ordered.push(sub); if (!list.some(function (c) { return Number(c.parent_id) === Number(top.id) && String(c.name || '').trim() === '全部'; })) { var _vt = list.find(function (x) { return Number(x.id) === Number(top.id); }); ordered.push({ id: 'v' + top.id, parent_id: top.id, name: '全部', sort: -1, virtual: true, cnt: (_vt ? _vt.cnt : 0) }); }
+        if (!ordered.some(function (x) { return x.virtual && Number(x.parent_id) === Number(top.id); }) && !list.some(function (c) { return Number(c.parent_id) === Number(top.id) && String(c.name || '').trim() === '全部'; })) { var _vt = list.find(function (x) { return Number(x.id) === Number(top.id); }); ordered.push({ id: 'v' + top.id, parent_id: top.id, name: '全部', sort: -1, virtual: true, cnt: (_vt ? _vt.cnt : 0) }); } list.filter(function (c) { return c.parent_id === top.id; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).forEach(function (sub) {
+          ordered.push(sub);
         });
       });
       // 没有父级的（异常数据）也加上
@@ -4432,7 +4440,7 @@
         .forEach(function (c) { ordered.push(c); });
 
       ordered.forEach(function (c) {
-        if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; _vrow.style.cssText = 'padding-left:34px;opacity:0.75;'; var _vnm = document.createElement('span'); _vnm.style.cssText = 'color:#999;font-style:italic;flex:1;text-align:left;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#bbb;margin-right:12px;'; _vrow.appendChild(_vcnt); box.appendChild(_vrow); return; }
+        if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; var _vcb = document.createElement('input'); _vcb.type = 'checkbox'; _vcb.className = 'cat-check'; _vcb.dataset.id = c.id; _vcb.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--blue1);'; _vcb.checked = !!state.catSelected[c.id]; _vcb.addEventListener('change', function () { state.catSelected[this.dataset.id] = this.checked; updateCatBatchBar(); }); _vrow.appendChild(_vcb); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'padding-left:34px;font-size:14px;color:#555;opacity:0.85;flex:1;text-align:left;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
         var row = document.createElement('div');
         row.className = 'cat-row';
         row.draggable = false;
@@ -4610,7 +4618,7 @@
     }
     // 批量隐藏
     document.getElementById('catBatchHide').addEventListener('click', function () {
-      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
+      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
       if (ids.length === 0) return;
       showConfirm('批量隐藏', '确定隐藏选中的 ' + ids.length + ' 个分类？隐藏后资源页不显示。', function () {
         batchCatAction(ids, 'hide');
@@ -4618,7 +4626,7 @@
     });
     // 批量显示
     document.getElementById('catBatchShow').addEventListener('click', function () {
-      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
+      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
       if (ids.length === 0) return;
       showConfirm('批量显示', '确定显示选中的 ' + ids.length + ' 个分类？', function () {
         batchCatAction(ids, 'show');
@@ -4626,7 +4634,7 @@
     });
     // 批量删除
     document.getElementById('catBatchDel').addEventListener('click', function () {
-      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
+      var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
       if (ids.length === 0) return;
       showConfirm('批量删除', '确定删除选中的 ' + ids.length + ' 个分类？其下资源将归入"全部"，子分类也会一并删除，不可恢复。', function () {
         batchCatAction(ids, 'delete');
@@ -4679,9 +4687,9 @@
       catSort.value = c ? (c.sort || 0) : 0;
       catHidden.checked = c ? !!c.is_hidden : false;
 
-      // 填充父级下拉框（只显示一级分类，排除自己）
-      catParent.innerHTML = '';
-      state.categories.forEach(function (cat) {
+      // 所属一级分类：自制级联选择器（只显示一级分类，排除自己，面板 fixed 不裁剪）
+      try { var _cpp = document.getElementById('catParentPicker'), _cph = document.getElementById('catParentValue'), _cpd = document.getElementById('catParentDisplay'), _cppan = document.getElementById('catParentPanel'); if (_cpp && _cph && _cpd && _cppan) buildCatPicker(_cpp, _cph, _cpd, _cppan, (c && c.parent_id > 0) ? (Number(c.parent_id) || 0) : 0, { topOnly: true, excludeZero: true, placeholder: '请选择所属一级分类' }); } catch (e) {}
+      if (false) state.categories.forEach(function (cat) {
         if (cat.parent_id === 0 && cat.id !== 0 && (!c || cat.id !== c.id)) {
           var opt = document.createElement('option');
           opt.value = cat.id;
@@ -4696,7 +4704,7 @@
       document.querySelector('input[name="catLevel"][value="1"]').checked = isChild;
       catParentWrap.style.display = isChild ? 'block' : 'none';
       try { if (catParent.dataset.spRef) catParent.dataset.spRef.refresh(); } catch (e) {}
-      if (isChild && catParent.options.length > 0) {
+      if (false && catParent.options.length > 0) {
         catParent.value = c.parent_id;
       }
 
@@ -4708,6 +4716,7 @@
     document.querySelectorAll('input[name="catLevel"]').forEach(function (radio) {
       radio.addEventListener('change', function () {
         catParentWrap.style.display = this.value === '1' ? 'block' : 'none';
+        if (this.value === '1') { try { var _cpp2 = document.getElementById('catParentPicker'), _cph2 = document.getElementById('catParentValue'), _cpd2 = document.getElementById('catParentDisplay'), _cppan2 = document.getElementById('catParentPanel'); if (_cpp2 && _cph2 && _cpd2 && _cppan2) buildCatPicker(_cpp2, _cph2, _cpd2, _cppan2, 0, { topOnly: true, excludeZero: true, placeholder: '请选择所属一级分类' }); } catch (e) {} }
       });
     });
 
@@ -4765,7 +4774,7 @@
       var name = catName.value.trim();
       var sort = Number(catSort.value) || 0;
       var isChild = document.querySelector('input[name="catLevel"]:checked').value === '1';
-      var parentId = isChild ? Number(catParent.value) || 0 : 0;
+      var parentId = isChild ? Number(document.getElementById('catParentValue') ? document.getElementById('catParentValue').value : 0) || 0 : 0;
       var isHidden = catHidden.checked;
       if (!name) {
         toast('请填写分类名称', 'error');
@@ -4914,7 +4923,7 @@
         _lbMask.onclick = closeLightbox;
         document.body.appendChild(_lbMask);
       }
-      _lbMask.textContent = ''; var _lbx = document.createElement('button'); _lbx.type = 'button'; _lbx.className = 'modal-close-x'; _lbx.style.cssText = 'position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.9);color:#666;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;'; _lbx.textContent = '✕'; _lbx.onclick = closeLightbox; _lbMask.appendChild(_lbx);
+      _lbMask.textContent = ''; var _lbx = document.createElement('button'); _lbx.type = 'button'; _lbx.className = 'modal-close-x'; _lbx.style.cssText = 'position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;'; _lbx.textContent = '✕'; _lbx.onclick = closeLightbox; _lbMask.appendChild(_lbx);
       var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src);
       var m = document.createElement(isVideo ? 'video' : 'img');
       m.src = src;

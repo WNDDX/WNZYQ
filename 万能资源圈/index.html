@@ -252,6 +252,12 @@ html { scrollbar-gutter: stable; }
 /* === 弹窗横向溢出防护：禁止底部滑轮 === */
 .modal-box, .modal-wrap { overflow-x: hidden; }
 .modal-tip, .modal-title { word-break: break-word; overflow-wrap: anywhere; }
+/* 全系统统一滚动条：宽度、颜色、圆角、与边框距离一致 */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(144,158,180,0.5); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(120,135,160,0.7); background-clip: padding-box; }
+* { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
 </style>
 </head>
 <body>
