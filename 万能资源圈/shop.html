@@ -975,7 +975,7 @@
       overflow-x: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
-      padding: 6px 16px 8px;
+      padding: 6px 24px 8px;
       gap: 6px;
       transition: min-height 0.3s ease, padding-bottom 0.3s ease;
     }
@@ -1565,7 +1565,7 @@
     // ---------- 渲染分类（一级） ----------
     // 平台公告渲染（多公告项，管理页设置；为空则不显示）——弹窗形式，顶部小项切换
     function renderAnnouncement() {
-      var mask = document.getElementById('annModal');
+      try { var mask = document.getElementById('annModal');
       if (!mask) return;
       var mode = DATA.announcementMode || 'always';
       if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) {} } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) {} } return; }
@@ -1609,7 +1609,7 @@
       var body = document.getElementById('annBody');
       var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容，请在管理页设置</div>'; bindMediaFail(body); bindLightbox(body); }
       mask.classList.add('open');
-      setBodyLock(true);
+      setBodyLock(true); } catch (e) { console.error('公告渲染错误:', e); }
     }
     function renderCategories() {
       var cats = DATA.categories.slice();
