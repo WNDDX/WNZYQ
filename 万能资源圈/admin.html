@@ -469,12 +469,15 @@
     .modal-mask.open { display: flex; animation: maskIn 0.22s ease; }
     .modal-box {
       position: relative; background: #fff; border-radius: 14px;
-      width: 100%; max-width: 420px; max-height: 88vh; overflow-y: auto;
+      width: 100%; max-width: 400px; max-height: 88vh; overflow-y: auto;
       padding: 22px; text-align: left; animation: modalIn 0.25s ease;
     }
-    .modal-wide { max-width: 560px; }
-    /* 分类弹窗与资源编辑弹窗复用同一尺寸模板（新增/编辑统一大宽度） */
-    .modal-mask#catMask > .modal-box, .modal-mask#variantMask > .modal-box { max-width: 560px; }
+    .modal-wide { max-width: 520px; }
+    .modal-lg { max-width: 680px; }
+    /* 按内容量分配档位：大(编辑资源/公告) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
+    .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box { max-width: 680px; }
+    .modal-mask#catMask > .modal-box, .modal-mask#batchCatMask > .modal-box { max-width: 520px; }
+    /* 弹窗宽度由各弹窗 modal-wide/modal-lg 类控制 */
     @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes modalIn {
       from { transform: translateY(20px); opacity: 0; }
@@ -1252,7 +1255,7 @@
 
   <!-- ============ 修改密码弹窗 ============ -->
   <div class="modal-mask" id="pwdMask">
-    <div class="modal-box" style="max-width:400px;">
+    <div class="modal-box">
       <button class="modal-close-x" data-close="pwdMask">×</button>
       <h2 class="modal-title">修改密码</h2>
       <div class="form">
@@ -1272,7 +1275,7 @@
 
   <!-- ============ 公告设置弹窗 ============ -->
   <div class="modal-mask" id="annMask">
-    <div class="modal-box modal-wide" style="max-width:700px;">
+    <div class="modal-box modal-wide">
       <button class="modal-close-x" data-close="annMask">×</button>
       <h2 class="modal-title">设置公告</h2>
       <div class="form">
@@ -1299,7 +1302,7 @@
 
   <!-- ============ 客服链接设置弹窗 ============ -->
   <div class="modal-mask" id="contactMask">
-    <div class="modal-box" style="max-width:480px;">
+    <div class="modal-box">
       <button class="modal-close-x" data-close="contactMask">×</button>
       <h2 class="modal-title">设置客服</h2>
       <div class="form">
@@ -1457,7 +1460,7 @@
 
   <!-- ============ 批量改分类弹窗（下拉选择） ============ -->
   <div class="modal-mask" id="batchCatMask">
-    <div class="modal-box" style="max-width:400px;">
+    <div class="modal-box">
       <button class="modal-close-x" data-close="batchCatMask">×</button>
       <h2 class="modal-title">批量改分类</h2>
       <div style="font-size:13px;color:#666;margin-bottom:12px;">选择目标分类，将选中的资源移动到该分类下</div>
@@ -1471,7 +1474,7 @@
 
   <!-- ============ 通用输入弹窗 ============ -->
   <div class="modal-mask" id="inputMask" style="z-index:260;">
-    <div class="modal-box" style="max-width:400px;">
+    <div class="modal-box">
       <button class="modal-close-x" data-close="inputMask">×</button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
       <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
@@ -1650,7 +1653,7 @@
 
   <!-- ============ 通用确认弹窗 ============ -->
   <div class="modal-mask" id="confirmMask">
-    <div class="modal-box" style="max-width:360px;">
+    <div class="modal-box">
       <button class="modal-close-x" data-close="confirmMask">×</button>
       <h2 class="modal-title" id="confirmTitle">确认操作</h2>
       <div id="confirmMsg" style="font-size:14px;color:#666;line-height:1.7;margin-bottom:20px;text-align:left;"></div>
@@ -1663,7 +1666,7 @@
 
   <!-- ============ 资源预览弹窗（资源页效果） ============ -->
   <div class="modal-mask" id="previewMask">
-    <div class="modal-box preview-box" style="max-width:520px;padding:0;">
+    <div class="modal-box preview-box modal-wide" style="padding:0;">
       <button class="modal-close-x preview-close-x" id="previewCloseX" style="top:12px;right:12px;background:rgba(0,0,0,0.5);">✕</button>
       <img class="preview-cover" id="previewCover" alt="" />
       <div style="padding:16px 20px 20px;">
@@ -2527,7 +2530,7 @@
       var toIdx = state.products.findIndex(function (p) { return p.id === targetId; });
       if (fromIdx === -1 || toIdx === -1) return;
       var item = state.products.splice(fromIdx, 1)[0];
-      state.products.splice(toIdx, 0, item);
+      state.products.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, item);
       // 重新分配 sort 值并批量更新
       var updates = state.products.map(function (p, i) {
         p.sort = i + 1;
@@ -3276,7 +3279,7 @@
           var toIdx = idx;
           if (fromIdx === toIdx || isNaN(fromIdx)) return;
           var moved = state.variants.splice(fromIdx, 1)[0];
-          state.variants.splice(toIdx, 0, moved);
+          state.variants.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, moved);
           // 重新分配 sort
           state.variants.forEach(function (v2, i) { v2.sort = i + 1; });
           renderVariants();
@@ -3540,7 +3543,7 @@
       try { arr = JSON.parse(settings.announcements || '[]'); } catch (e) { arr = []; }
       if (!Array.isArray(arr)) arr = [];
       if (!arr.length && settings.announcement) arr = [{ id: 0, title: '公告', content: String(settings.announcement || ''), hidden: 0, sort: 0, level: 1 }];
-      arr.sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
+      arr.sort(function (a, b) { var la = a.level === 1 ? -1 : 0, lb = b.level === 1 ? -1 : 0; if (la !== lb) return la - lb; return (a.sort || 0) - (b.sort || 0); });
       return arr;
     }
     // 把当前编辑中的标题/内容写回列表
@@ -3560,13 +3563,13 @@
         var handle = document.createElement('span');
         handle.className = 'drag-handle'; handle.draggable = a.level === 1 ? false : true; handle.style.opacity = a.level === 1 ? '0.35' : '1'; handle.title = a.level === 1 ? '默认公告不可拖动' : '拖动排序';
         handle.textContent = '⋮⋮';
-        var txt = document.createElement('input'); txt.type = 'text'; txt.className = 'ann-title-input';
+        var txt = document.createElement('input'); txt.type = 'text'; txt.className = 'ann-title-input'; txt.readOnly = a.level === 1;
         txt.value = a.title || ''; txt.title = '点击修改公告项名字';
         txt.addEventListener('click', function (e) { e.stopPropagation(); });
         txt.addEventListener('input', function () { a.title = this.value; });
         txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '(未命名公告)'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
         // 公告隐藏状态由下方状态下拉框控制（不再使用徽章标识）
-        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;'; sortEl.textContent = a.level === 1 ? '默认公告' : '排序:' + (idx + 1);
+        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;'; sortEl.textContent = '排序:' + (idx + 1);
         var annStatusSel = document.createElement('select'); annStatusSel.className = 'status-select ' + (a.hidden ? 'status-hidden' : 'status-online'); annStatusSel.title = '直接切换公告显示/隐藏'; [['show', '显示'], ['hidden', '隐藏']].forEach(function (op) { var o = document.createElement('option'); o.value = op[0]; o.textContent = op[1]; if ((a.hidden ? 'hidden' : 'show') === op[0]) o.selected = true; annStatusSel.appendChild(o); });
         annStatusSel.addEventListener('change', function () { a.hidden = this.value === 'hidden' ? 1 : 0; }); annStatusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (annStatusSel.parentNode && typeof makeSelectPicker === 'function') { var _spa = makeSelectPicker(annStatusSel); if (_spa) { _spa.el.style.width = 'auto'; _spa.el.style.flexShrink = '0'; var _da = _spa.el.querySelector('.cat-picker-display'); if (_da) _da.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:0;width:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;'; var _aa = _spa.el.querySelector('.cpd-arrow'); if (_aa) _aa.style.cssText = 'width:14px;height:14px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-90deg);transition:transform .3s ease;color:#1688FF;'; } } }, 0);
         // 点击公告项整行即可选中编辑（无需单独编辑按钮）
@@ -3591,8 +3594,8 @@
           var fromIdx = Number(e.dataTransfer.getData('text/plain'));
           var toIdx = idx;
           if (fromIdx === toIdx || isNaN(fromIdx)) return;
-          var moved = stateAnn.list.splice(fromIdx, 1)[0];
-          stateAnn.list.splice(toIdx, 0, moved);
+          if (toIdx === 0) toIdx = 1; var moved = stateAnn.list.splice(fromIdx, 1)[0];
+          stateAnn.list.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, moved);
           stateAnn.list.forEach(function (v2, i) { v2.sort = i + 1; });
           renderAnnList();
         });
@@ -3608,7 +3611,8 @@
       stateAnn.curId = id;
       if (annEditor) annEditor.innerHTML = a.content || '';
       if (annEditLabel) annEditLabel.textContent = '编辑公告：' + (a.title || '(未命名)');
-      renderAnnList();
+      var _idxA = -1; for (var _ii = 0; _ii < stateAnn.list.length; _ii++) { if (stateAnn.list[_ii].id === id) { _idxA = _ii; break; } }
+      document.querySelectorAll('.ann-item').forEach(function (el) { el.classList.toggle('ann-cur', Number(el.dataset.idx) === _idxA); });
     }
     // 清空编辑区
     function clearAnnEdit() {
@@ -3634,7 +3638,7 @@
             stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 });
             stateAnn.loaded = true;
             document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
-            if (stateAnn.list.length) selectAnnItem(stateAnn.list[0].id); else clearAnnEdit();
+            if (stateAnn.list.length) { var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; selectAnnItem(_defAnn.id); } else clearAnnEdit();
           }
         }).catch(function () {});
       }
@@ -3830,7 +3834,7 @@
       if (!linkDialogMask) {
         linkDialogMask = document.createElement('div');
         linkDialogMask.className = 'modal-mask';
-        linkDialogMask.innerHTML = '<div class="modal-box" style="max-width:420px;">' +
+        linkDialogMask.innerHTML = '<div class="modal-box">' +
           '<button class="modal-close-x" data-link-close>×</button>' +
           '<h2 class="modal-title">插入超链接</h2>' +
           '<div class="form">' +
@@ -4510,7 +4514,7 @@
 
         var sort = document.createElement('span');
         sort.className = 'c-sort';
-        sort.textContent = '排序:' + (c.sort || 0);
+        sort.textContent = '排序:' + (ordered.filter(function (x) { return x.parent_id === c.parent_id; }).indexOf(c) + 1);
 
         var cnt = document.createElement('span');
         cnt.className = 'c-count';
@@ -4678,6 +4682,23 @@
 
     // 分类拖拽排序（同级别内排序）
     function reorderCategories(draggedId, targetId) {
+      var list = state.categories.slice();
+      var dragged = list.find(function (c) { return c.id === draggedId; });
+      var target = list.find(function (c) { return c.id === targetId; });
+      if (!dragged || !target) return;
+      if (dragged.parent_id !== target.parent_id) { toast('只能在同级别分类内排序', 'error'); return; }
+      var sameLevel = list.filter(function (c) { return c.parent_id === dragged.parent_id; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
+      var di = sameLevel.indexOf(dragged); var ti = sameLevel.indexOf(target); if (di < 0 || ti < 0) return;
+      sameLevel.splice(di, 1); sameLevel.splice(ti > di ? ti - 1 : ti, 0, dragged);
+      var changed = []; sameLevel.forEach(function (c, i) { if (Number(c.sort) !== i) { c.sort = i; changed.push(c); } });
+      if (!changed.length) return;
+      var seq = changed.map(function (c) { return api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ sort: c.sort }) }); });
+      Promise.all(seq).then(function (reses) {
+        if (reses.every(function (r) { return r && r.ok; })) { toast('排序已更新', 'success'); clearCache(); loadCategories(); }
+        else toast('排序保存失败', 'error');
+      });
+    }
+    function reorderCategories_OLD(draggedId, targetId) {
       var dragged = state.categories.find(function (c) { return c.id === draggedId; });
       var target = state.categories.find(function (c) { return c.id === targetId; });
       if (!dragged || !target) return;

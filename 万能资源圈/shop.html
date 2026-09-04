@@ -184,7 +184,7 @@
     .share-mask.open { display: flex; }
     .share-box {
       background: #fff; border-radius: 14px;
-      padding: 24px 20px; width: 100%; max-width: 340px;
+      padding: 24px 20px; width: 100%; max-width: 400px;
       text-align: center; animation: modalIn 0.25s ease;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
@@ -530,7 +530,7 @@
     .modal-wrap {
       position: relative;
       width: 100%;
-      max-width: 660px;
+      max-width: 680px;
     }
     .modal-box {
       background: #fff;
@@ -899,7 +899,7 @@
 
 
     /* 平台公告 */
-    .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; padding: 24px 22px; animation: modalIn 0.25s ease; text-align: left; }
+    .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto; padding: 24px 22px; animation: modalIn 0.25s ease; text-align: left; }
     .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; width: 100%; display: block; transition: color 0.15s ease; }
     .ann-modal .ann-title:hover { color: var(--blue1); }
     .ann-modal .ann-title.active { color: var(--blue1); }
@@ -1189,13 +1189,13 @@
   </div>
 
   <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
-  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false);window.__annShown=false}">
+  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false);window.__annShown=false;try{sessionStorage.removeItem('wnzyq_ann_open')}catch(e){}}">
     <div class="ann-box" onclick="event.stopPropagation()">
-      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false">✕</button>
-      <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="(function(){var l=(window.DATA&amp;&amp;DATA.announcements)||[];var d=l.find(function(x){return x.level===1;})||l[0];if(!d)return;var bd=document.getElementById('annBody');if(bd){bd.innerHTML=sanitizeHTML(d.content||'');bindMediaFail(bd);bindLightbox(bd);}var tt=document.getElementById('annTitleTab');if(tt)tt.classList.add('active');document.querySelectorAll('#annTabs .ann-tab').forEach(function(x){x.classList.remove('active');});})()">公告</button>
+      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false;try{sessionStorage.removeItem('wnzyq_ann_open')}catch(e){}">✕</button>
+      <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="(function(){var l=(window.DATA&amp;&amp;DATA.announcements)||[];var d=l.find(function(x){return x.level===1;})||l[0];if(!d)return;var bd=document.getElementById('annBody');if(bd){var _c3=sanitizeHTML(d.content||'');bd.innerHTML=_c3||'<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容，请在管理页设置</div>';bindMediaFail(bd);bindLightbox(bd);}var tt=document.getElementById('annTitleTab');if(tt)tt.classList.add('active');document.querySelectorAll('#annTabs .ann-tab').forEach(function(x){x.classList.remove('active');});})()">公告</button>
       <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
-      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false">确定</button>
+      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false;try{sessionStorage.removeItem('wnzyq_ann_open')}catch(e){}">确定</button>
     </div>
   </div>
 
@@ -1548,7 +1548,7 @@
     function renderAnnouncement() {
       var mask = document.getElementById('annModal');
       if (!mask) return;
-      if (window.__annShown || mask.classList.contains('open')) return;
+      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annShown || mask.classList.contains('open')) return; try { if (sessionStorage.getItem('wnzyq_ann_open') === '1') return; } catch (e) {}
       var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
       var mode = DATA.announcementMode || 'always';
       if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
@@ -1564,7 +1564,7 @@
           sessionStorage.setItem('wnzyq_ann_session', '1');
         } catch (e) {}
       }
-      window.__annShown = true;
+      window.__annShown = true; try { sessionStorage.setItem('wnzyq_ann_open', '1'); } catch (e) {}
       // 渲染小项 tabs（仅多条时显示）
       var tabs = document.getElementById('annTabs');
       if (tabs) {
@@ -1580,7 +1580,7 @@
               ts.forEach(function (x) { x.classList.remove('active'); }); var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.remove('active');
               t.classList.add('active');
               var bd = document.getElementById('annBody');
-              if (bd) { bd.innerHTML = sanitizeHTML(a.content || ''); bindMediaFail(bd); bindLightbox(bd); }
+              if (bd) { var _c2 = sanitizeHTML(a.content || ''); bd.innerHTML = _c2 || '<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容</div>'; bindMediaFail(bd); bindLightbox(bd); }
             });
             tabs.appendChild(t);
           });
@@ -1588,7 +1588,7 @@
       }
       // 默认显示第一条
       var body = document.getElementById('annBody');
-      var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { body.innerHTML = sanitizeHTML((defAnn && defAnn.content) || ''); bindMediaFail(body); bindLightbox(body); }
+      var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容，请在管理页设置</div>'; bindMediaFail(body); bindLightbox(body); }
       mask.classList.add('open');
       setBodyLock(true);
     }
@@ -2393,11 +2393,11 @@
     window.addEventListener('resize', updateTopbarHeight);
     // 页面重新可见 / 从其他页面切回时，静默拉取最新数据（管理页改动更快同步，不闪骨架屏）
     document.addEventListener('visibilitychange', function () {
-      if (!document.hidden && typeof usingRemote !== 'undefined' && usingRemote) fetchRemote();
+      if (!document.hidden && typeof usingRemote !== 'undefined' && usingRemote) { window.__annSilent = true; fetchRemote(); }
     });
     window.addEventListener('pageshow', function () {
       var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      if (!isLocal) fetchRemote();
+      if (!isLocal) { window.__annSilent = true; fetchRemote(); }
     });
 
     // ---------- 下拉刷新（手机端页面顶部下拉刷新数据） ----------
