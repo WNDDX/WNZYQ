@@ -1385,6 +1385,7 @@
           im.style.objectFit = 'contain';
           im.style.display = 'block';
         });
+        im.addEventListener('load', function () { if (!im.dataset.fh && im.naturalWidth === 0 && String(im.getAttribute('src') || '').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; } });
         var _s = im.getAttribute('src') || '';
         if (!_s || _s.indexOf('data:') === 0 || (im.complete && im.naturalWidth === 0)) {
           im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block';

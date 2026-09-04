@@ -464,7 +464,7 @@
     .modal-mask {
       position: fixed; inset: 0; z-index: 200;
       background: rgba(0, 0, 0, 0.76);
-      display: none; align-items: flex-start; justify-content: center; padding: 80px 16px 16px;
+      display: none; align-items: center; justify-content: center; padding: 16px;
     }
     .modal-mask.open { display: flex; animation: maskIn 0.22s ease; }
     .modal-box {
@@ -963,7 +963,6 @@
     .modal-mask#confirmMask > .modal-box, .modal-mask#pwdMask > .modal-box, .modal-mask#inputMask > .modal-box { max-width: 480px !important; }
     .modal-mask#batchCatMask > .modal-box { max-width: 560px !important; }
     .modal-mask#annMask > .modal-box { max-width: 660px !important; }
-    .modal-mask#catMask > .modal-box { max-height: 84vh; }
     /* 管理页 logo 栏与资源页完全一致（复用 shop 样式：名称始终显示、自然宽度） */
     .topbar-brand { flex: 0 0 auto !important; min-width: 0; gap: 12px !important; }
     .topbar-brand span { display: inline !important; }
@@ -1723,6 +1722,7 @@
         if (t.parentNode) t.parentNode.replaceChild(ph, t);
       }
     }, true);
+    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; t.style.objectFit = 'contain'; t.style.display = 'block'; t.style.opacity = '1'; } }, true);
     document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; } });
 
     // ---------- DOM ----------
@@ -4557,7 +4557,7 @@
 
         var sort = document.createElement('span');
         sort.className = 'c-sort';
-        sort.textContent = Number(c.id) === 0 ? '排序:-' : '排序:' + (ordered.filter(function (x) { return x.parent_id === c.parent_id && Number(x.id) !== 0; }).indexOf(c) + 1);
+        sort.textContent = '排序:' + (ordered.filter(function (x) { return x.parent_id === c.parent_id; }).indexOf(c) + 1);
 
         var cnt = document.createElement('span');
         cnt.className = 'c-count';
