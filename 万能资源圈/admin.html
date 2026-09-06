@@ -1012,7 +1012,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
         <div class="login-logo">
-          <img src="assets/images/logo.png" alt="万能资源圈" />
+          <img src="assets/images/logo.svg" alt="万能资源圈" />
         </div>
       </a>
       <h1>万能资源圈</h1>
@@ -1030,7 +1030,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
-            <img class="topbar-logo" src="assets/images/logo.png" alt="" onload="this.style.opacity='1'" />
+            <img class="topbar-logo" src="assets/images/logo.svg" alt="" onload="this.style.opacity='1'" />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -1721,6 +1721,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { var ae = document.activeElement; if (ae && (ae.id === 'loginUser' || ae.id === 'loginPass') && !window.__loginDirect && typeof doLogin === 'function') { try { doLogin(); } catch (err) {} } }
     });
+
+    // 去重：移除重复的全选复选框（仅保留首个 id=selectAll，避免重复 id 导致点击无反应）
+    (function () { var _sa = document.querySelectorAll('#selectAll'); if (_sa.length > 1) { for (var i = 1; i < _sa.length; i++) { var _p = _sa[i].parentNode; if (_p && _p.parentNode) { _p.parentNode.removeChild(_p); } } } })();
 
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
     var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
@@ -4411,10 +4414,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           var typeColor = '';
           tr.innerHTML = '<td>' + (r.created_at || '') + '</td><td style="' + typeColor + '">' + typeText + '</td><td>' + (r.title || '') + '</td>';
           recentTbody.appendChild(tr);
-        var _sl2 = document.getElementById('statsLoading'); if (_sl2) _sl2.style.display = 'none'; var _ps2 = document.getElementById('panel-stats'); if (_ps2) { _ps2.classList.remove('stats-fade-in'); void _ps2.offsetWidth; _ps2.classList.add('stats-fade-in'); }
+        /* statsLoading 隐藏与淡入统一在 loadStats 末尾执行一次（原位置错误，已在 forEach 内重复触发） */
         });
       });
     }
+
+    var _sl2 = document.getElementById('statsLoading'); if (_sl2) _sl2.style.display = 'none'; var _ps2 = document.getElementById('panel-stats'); if (_ps2) { _ps2.classList.remove('stats-fade-in'); void _ps2.offsetWidth; _ps2.classList.add('stats-fade-in'); }
 
     // 近7/30天切换：本地重绘图表，不发新请求（趋势数据已在初始化预加载，表格/总览为30天范围保持不变）
     function applyStatsDays() {
