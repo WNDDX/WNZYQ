@@ -120,3 +120,57 @@
   cursor: zoom-out;
 }
 .lightbox.open { display: flex; }
+
+/* ===== 全站弹窗层级规范（强制，后开永远在上层，杜绝倒挂/被媒体内容遮挡） =====
+   普通弹窗遮罩 2000 → 分享/确认 3000/4000 → 编辑器放大 6001 → 客服 10001 → 放大预览 100000 → 轻提示 100001 */
+.modal-mask { z-index: 2000 !important; }
+.share-mask, .confirm-mask { z-index: 3000 !important; }
+#rteExitZoom { z-index: 6001 !important; }
+.kf-mask, #kfFallback { z-index: 10001 !important; }
+.lightbox, .lb { z-index: 100000 !important; }
+.toast { z-index: 100001 !important; }
+
+/* ===== 全站弹窗底部按键区统一：一行 N 键 N 等分、统一间距、等高、文字居中（所有弹窗复用） ===== */
+.modal-footer {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px !important;
+  margin-top: 16px !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+.modal-footer > button,
+.modal-footer > .btn,
+.modal-footer > .modal-inner-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  margin: 0 !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+/* 咨询客服弹窗底部按键：等分容器（jump/close 两键各占一半） */
+.kf-actions {
+  display: flex !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin-top: 16px !important;
+}
+.kf-actions > button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+}
+.kf-jump { width: auto !important; margin: 0 !important; }

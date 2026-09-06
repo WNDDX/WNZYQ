@@ -1236,13 +1236,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   </div>
 
   <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
-  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){this.classList.remove('open');setBodyLock(false);window.__annShown=false;window.__annDismissed=true;try{document.querySelectorAll('#annModal video').forEach(function(v){v.pause()})}catch(e){}}">
+  <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){closeAnnModal()}">
     <div class="ann-box" onclick="event.stopPropagation()">
-      <button class="modal-close-x" id="annCloseX" type="button" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false;window.__annDismissed=true;try{document.querySelectorAll('#annModal video').forEach(function(v){v.pause()})}catch(e){}">✕</button>
-      <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="(function(){var l=(window.DATA&amp;&amp;DATA.announcements)||[];var d=l.find(function(x){return x.level===1;})||l[0];if(!d)return;var bd=document.getElementById('annBody');if(bd){var _c3=sanitizeHTML(d.content||'');bd.innerHTML=_c3||'<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容，请在管理页设置</div>';bindMediaFail(bd);bindLightbox(bd);}var tt=document.getElementById('annTitleTab');if(tt)tt.classList.add('active');document.querySelectorAll('#annTabs .ann-tab').forEach(function(x){x.classList.remove('active');});})()">公告</button>
+      <button class="modal-close-x" id="annCloseX" type="button" onclick="closeAnnModal()">✕</button>
+      <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="showAnnDefault()">公告</button>
       <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
-      <button type="button" class="ann-ok" onclick="document.getElementById('annModal').classList.remove('open');setBodyLock(false);window.__annShown=false;window.__annDismissed=true;try{document.querySelectorAll('#annModal video').forEach(function(v){v.pause()})}catch(e){}">确定</button>
+      <button type="button" class="ann-ok" onclick="closeAnnModal()">确定</button>
     </div>
   </div>
 
@@ -1594,6 +1594,23 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     // ---------- 渲染分类 ----------
     // ---------- 渲染分类（一级） ----------
     // 平台公告渲染（多公告项，管理页设置；为空则不显示）——弹窗形式，顶部小项切换
+    // 公告弹窗统一关闭（× / 遮罩 / 确定复用同一逻辑）
+    function closeAnnModal() {
+      var m = document.getElementById('annModal'); if (m) m.classList.remove('open');
+      if (window.setBodyLock) setBodyLock(false);
+      window.__annShown = false; window.__annDismissed = true;
+      try { document.querySelectorAll('#annModal video').forEach(function (v) { v.pause(); }); } catch (e) {}
+    }
+    // 默认公告（一级公告）展示：选中"公告"标题，内容渲染到正文区
+    function showAnnDefault() {
+      var l = (window.DATA && DATA.announcements) || [];
+      var d = l.find(function (x) { return x.level === 1; }) || l[0];
+      if (!d) return;
+      var bd = document.getElementById('annBody');
+      if (bd) { var _c3 = sanitizeHTML(d.content || ''); bd.innerHTML = _c3 || '<div style="color:#999;text-align:center;padding:24px 0;font-size:13px">该公告暂无内容，请在管理页设置</div>'; bindMediaFail(bd); bindLightbox(bd); }
+      var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active');
+      document.querySelectorAll('#annTabs .ann-tab').forEach(function (x) { x.classList.remove('active'); });
+    }
     function renderAnnouncement() {
       try { var mask = document.getElementById('annModal');
       if (!mask) return;
