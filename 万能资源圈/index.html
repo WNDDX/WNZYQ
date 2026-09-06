@@ -61,7 +61,7 @@ body{
     from{opacity:0;transform:translateY(10px);}
     to{opacity:1;transform:translateY(0);}
 }
-.logo-enter{animation:logoFadeIn 0.8s ease;}
+.logo-enter{animation:logoFadeIn 0.8s ease forwards;}
 @keyframes logoFadeIn{
     from{opacity:0;transform:scale(0.8);}
     to{opacity:1;transform:scale(1);}
@@ -81,12 +81,15 @@ body{
     position: relative;
 }
 .logo-box{
+    display: block;
+    text-decoration: none;
     width: 150px;
     height: 150px;
     border-radius: 50%;
     margin: 0 auto;
     position: relative;
     overflow: hidden;
+    opacity: 0; /* 进场前整体隐藏：边框/背景/图片同步进场 */
     border: 3px solid #fff; box-sizing: border-box; box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22);
     transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
@@ -289,14 +292,14 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 <body>
 <div class="wrap">
     <div class="logo-wrap">
-        <div class="logo-box">
-            <img class="logo-img" id="logoImage" src="assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');">
+        <a class="logo-box" href="shop" title="进入资源页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
+            <img class="logo-img" id="logoImage" src="assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');">
             <div class="logo-fail-icon" id="logoFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
             </div>
-        </div>
+        </a>
     </div>
     <div class="page-title">万能资源圈</div>
 
@@ -380,7 +383,7 @@ function loadImg(imgDom, src, retryCount = 0) {
     imgDom.onload = () => {
         imgDom.style.display = 'block';
         imgDom.style.opacity = '1';
-        if (imgDom === dom.logoImage) { dom.logoFail.style.display = 'none'; var p = imgDom.parentNode; if (p) { p.style.background = '#e2e5e9'; if (!p.classList.contains('logo-enter')) p.classList.add('logo-enter'); } } else { dom.qrFail.style.display = 'none'; }
+        if (imgDom === dom.logoImage) { dom.logoFail.style.display = 'none'; var p = imgDom.parentNode; if (p) { p.style.background = '#e2e5e9'; p.style.opacity = '1'; if (!p.classList.contains('logo-enter')) p.classList.add('logo-enter'); } } else { dom.qrFail.style.display = 'none'; }
     };
     imgDom.onerror = () => {
         const nextCount = retryCount + 1;
@@ -392,6 +395,7 @@ function loadImg(imgDom, src, retryCount = 0) {
             imgDom.src = EXC_PH;
             imgDom.style.objectFit = 'contain';
             imgDom.style.display = 'block';
+            var _pp = imgDom.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
         }
     };
     imgDom.src = src;
@@ -426,6 +430,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
     dom.modalTitle.textContent = title;
     dom.modalTip.textContent = tipText;
     dom.mask.style.display = 'flex';
+    if (window.lockBodyScroll) window.lockBodyScroll(true);
     dom.modalImg.style.display = 'block';
     dom.qrFail.style.display = 'none';
     loadImg(dom.modalImg, imgSrc, 0);
@@ -440,6 +445,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
 }
 function closeModal() {
     dom.mask.style.display = 'none';
+    if (window.lockBodyScroll) window.lockBodyScroll(false);
     dom.modalJumpBtn.onclick = null;
 }
 

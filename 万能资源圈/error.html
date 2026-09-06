@@ -16,7 +16,7 @@ html{scrollbar-gutter:stable;}body{background:linear-gradient(180deg,#1E88E5 0%,
 .desc{font-size:15px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius:25px;text-decoration:none;font-size:16px;font-weight:600;transition:all 0.2s;}
 .btn:hover{transform:scale(1.05);box-shadow:0 4px 15px rgba(0,0,0,0.2);}
-.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 20px;overflow:hidden;background:transparent;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease;}.logo:hover{box-shadow:0 0 0 3px rgba(255,255,255,0.45);}.logo:active{transform:scale(0.9);opacity:0.8;}
+.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 20px;opacity:0;overflow:hidden;background:transparent;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease;}.logo:hover{box-shadow:0 0 0 3px rgba(255,255,255,0.45);}.logo:active{transform:scale(0.9);opacity:0.8;}
 .logo img{width:100%;height:100%;object-fit:cover;}
 img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
@@ -39,13 +39,13 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   .box { max-width: 100%; }
   .btn { padding: 10px 26px; font-size: 15px; }
 }
-    .logo-enter{animation:logoFadeIn 0.8s ease;}
+    .logo-enter{animation:logoFadeIn 0.8s ease forwards;}
     @keyframes logoFadeIn{from{opacity:0;transform:scale(0.8);}to{opacity:1;transform:scale(1);}}
 </style>
 </head>
 <body>
 <div class="box">
-  <a class="logo" href="index" title="返回导航"><img id="errLogo" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></a>
+  <a class="logo" href="index" title="返回导航" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)"><img id="errLogo" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></a>
   <div class="code" id="errorCode">错误</div>
   <div class="title" id="errorTitle">页面访问异常</div>
   <div class="desc" id="errorDesc">抱歉！您访问的页面出现了问题<br>①地址有误　②页面已删除　③服务暂不可用<br>请点击【返回导航】继续浏览</div>
@@ -77,6 +77,7 @@ if (false && code && errorMap[code]) {
   if (logo) {
     logo.src = 'assets/images/logo.png'; // 相对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
+      var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
       this.onerror = null;
       this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
       this.style.objectFit = 'contain';

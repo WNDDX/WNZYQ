@@ -47,7 +47,7 @@
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .logo-enter { animation: logoFadeIn 0.8s ease; }
+    .logo-enter { animation: logoFadeIn 0.8s ease forwards; }
     @keyframes logoFadeIn {
       from { opacity: 0; transform: scale(0.8); }
       to { opacity: 1; transform: scale(1); }
@@ -99,7 +99,7 @@
       margin-bottom: 12px;
     }
     .login-logo {
-      width: 72px; height: 72px;
+      width: 72px; height: 72px; opacity: 0; /* 进场前整体隐藏：边框/背景/图片同步进场 */
       margin: 0 auto;
       border-radius: 50%;
       overflow: hidden;
@@ -188,7 +188,7 @@
       white-space: nowrap;
     }
     .topbar-logo-link {
-      width: fit-content;
+      width: fit-content; opacity: 0; /* 进场前整体隐藏 */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1031,7 +1031,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
         <div class="login-logo">
-          <img src="assets/images/logo.png" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          <img src="assets/images/logo.png" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
         </div>
       </a>
       <h1>万能资源圈</h1>
@@ -1049,7 +1049,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
-            <img class="topbar-logo" src="assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.style.opacity="1";this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+            <img class="topbar-logo" src="assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -1953,9 +1953,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       opts.headers['Content-Type'] = 'application/json';
       var token = localStorage.getItem(TOKEN_KEY);
       if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+      console.log('[api] 请求', 'api/' + path, (opts.method || 'GET'), 'token=' + (token ? '有' : '无'));
       return fetch('api/' + path, opts).then(function (r) {
         return r.json().then(function (d) {
           d._status = r.status;
+          console.log('[api] 响应', path, r.status, JSON.stringify(d).slice(0, 200));
           if (r.status === 401) {
             localStorage.removeItem(TOKEN_KEY);
             if (mainView.style.display !== 'none') {
@@ -2261,24 +2263,35 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     loginPass.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
 
     function doLogin() {
+      if (loginBtn.disabled) return; // 防重复提交：onclick+addEventListener 双绑只执行一次
       var u = loginUser.value.trim();
       var p = loginPass.value;
+      console.log('[登录] 1.获取输入', u, p ? '***' : '(空)');
       if (!u || !p) { toast('请输入账号和密码', 'error'); return; }
       loginBtn.disabled = true;
       loginBtn.textContent = '登录中…';
+      console.log('[登录] 2.发起请求 POST api/admin/login');
       api('admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) })
         .then(function (res) {
           if (res && res.ok) {
+            console.log('[登录] 4.登录成功，写入 token', res.token ? res.token.slice(0, 8) + '...' : '(空)');
             localStorage.setItem(TOKEN_KEY, res.token);
+            console.log('[登录] 5.写入完成，进入主视图');
             loadSettings(); showMain(res.username);
+            console.log('[登录] 6.showMain 已调用');
           } else {
             toast(res.msg || '登录失败', 'error');
-            if (res._status === 429) loginTip.textContent = res.msg || '';
+            console.log('[登录] 4.登录失败：', res.msg, 'HTTP=', res._status);
+            var _local = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (_local) { toast('本地预览没有后端服务，登录无法完成：请部署到线上，或在项目目录运行 npx wrangler dev', 'error'); loginTip.textContent = '本地预览模式：无后端接口，请部署线上或运行 wrangler dev'; }
+            else if (res._status === 429) { toast(res.msg || '尝试次数过多，请稍后再试', 'error'); loginTip.textContent = res.msg || ''; }
+            else { toast(res.msg || '登录失败', 'error'); loginTip.textContent = '登录失败：' + (res.msg || ('HTTP ' + (res._status || '网络错误'))); }
           }
         })
         .finally(function () {
           loginBtn.disabled = false;
           loginBtn.textContent = '登 录';
+          console.log('[登录] 7.按钮恢复');
         });
     }
 
@@ -5038,11 +5051,11 @@ refreshCatCnts();
     function openLightbox(src) {
       if (!_lbMask) {
         _lbMask = document.createElement('div');
-        _lbMask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;display:none;align-items:center;justify-content:center;cursor:zoom-out;';
+        _lbMask.className = 'lightbox';
         _lbMask.onclick = closeLightbox;
         document.body.appendChild(_lbMask);
       }
-      _lbMask.textContent = ''; var _lbx = document.createElement('button'); _lbx.type = 'button'; _lbx.className = 'modal-close-x'; _lbx.style.cssText = 'position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;'; _lbx.textContent = '✕'; _lbx.onclick = closeLightbox; _lbMask.appendChild(_lbx);
+      _lbMask.textContent = ''; var _lbx = document.createElement('button'); _lbx.type = 'button'; _lbx.className = 'modal-close-x'; _lbx.textContent = '×'; _lbx.onclick = closeLightbox; _lbMask.appendChild(_lbx);
       var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src);
       var m = document.createElement(isVideo ? 'video' : 'img');
       m.src = src;
@@ -5158,6 +5171,31 @@ refreshCatCnts();
     document.getElementById('previewCloseX').addEventListener('click', function () {
       document.getElementById('previewMask').classList.remove('open');try{document.querySelectorAll('#previewMask video').forEach(function(v){v.pause()})}catch(e){}
     });
+    // 咨询客服兜底弹窗：ui-common.js 加载失败时使用（样式对齐导航页，杜绝直达链接）
+    function openContactFallback(url) {
+      var m = document.getElementById('kfFallback');
+      if (!m) {
+        m = document.createElement('div');
+        m.id = 'kfFallback';
+        m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;';
+        m.innerHTML = '<div style="background:#fff;border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
+          '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="document.getElementById(\'kfFallback\').style.display=\'none\'">×</button>' +
+          '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;">咨询客服</div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="assets/images/kefu.png" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
+          '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
+          '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="document.getElementById(\'kfFallback\').style.display=\'none\'">关闭</button>' +
+          '</div>';
+        document.body.appendChild(m);
+        m.addEventListener('click', function (e) { if (e.target === m) m.style.display = 'none'; });
+        var im = document.getElementById('kfFallbackImg');
+        if (im) im.onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
+      }
+      var jb = m.querySelector('button[data-u]');
+      if (jb) jb.setAttribute('data-u', url || '');
+      m.style.display = 'flex';
+    }
+
     // 预览里的“咨询客服”可直接点击，验证跳转是否正确（优先当前类型客服链接，其次资源，再全局）
     document.getElementById('previewContactBtn').addEventListener('click', function () {
       var url = '';
@@ -5167,7 +5205,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, 'assets/images/kefu.png'); } else { window.open(url, '_blank'); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, 'assets/images/kefu.png'); } else { openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
@@ -5251,7 +5289,7 @@ refreshCatCnts();
           window.location.reload();
         } else { alert((res && res.msg) || '登录失败'); }
       })
-      .catch(function () { alert('无法连接后端，请确认已部署到 Cloudflare'); })
+      .catch(function () { var _l = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; alert(_l ? '本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev' : '无法连接后端，请确认已部署到 Cloudflare'); })
       .then(function () { btn.disabled = false; btn.textContent = '登 录'; });
   };
   </script>

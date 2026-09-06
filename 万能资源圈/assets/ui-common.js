@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   var HIDE_MS = 1000;
-  var SEL = '.modal-box,.cat-picker-panel,.ann-list,.rte-editor,.dt-pop,.stat-table-wrap';
+  var SEL = '.modal-box,.cat-picker-panel,.ann-list,.ann-body,.kf-box,.rte-editor,.dt-pop,.stat-table-wrap';
   var ACTIVE = 'sb-active';
   var timers = {};
   var uid = 0;
@@ -16,16 +16,32 @@
     if (!el || el.__sbInit) return;
     el.__sbInit = true;
     el.__sbId = 'sb' + (++uid);
-    el.classList.add('sb-fade');
+    // 浮起指示条：注入为容器子元素（absolute 不占布局），scrollTop 补偿定位使其视觉固定在容器右缘
+    var bar = document.createElement('div');
+    bar.className = 'sb-bar';
+    el.appendChild(bar);
+    function upd() {
+      var h = el.clientHeight, sh = el.scrollHeight;
+      if (!sh || sh <= h + 1) { bar.style.display = 'none'; return; }
+      bar.style.display = '';
+      var ratio = h / sh;
+      var th = Math.max(20, h * ratio);
+      bar.style.height = th + 'px';
+      var maxMap = h - th;
+      bar.style.top = ((sh - h) ? (el.scrollTop / (sh - h)) * maxMap : 0) + el.scrollTop + 'px';
+    }
+    upd();
     el.addEventListener('scroll', function () {
-      el.classList.add(ACTIVE);
+      upd();
+      bar.classList.add(ACTIVE);
       var t = timers[el.__sbId];
       if (t) { clearTimeout(t); timers[el.__sbId] = null; }
       timers[el.__sbId] = setTimeout(function () {
-        el.classList.remove(ACTIVE);
+        bar.classList.remove(ACTIVE);
         timers[el.__sbId] = null;
       }, HIDE_MS);
     }, { passive: true });
+    window.addEventListener('resize', upd);
   }
 
   function scan(root) {
@@ -83,7 +99,7 @@
     document.body.appendChild(m);
     function close() {
       m.classList.remove('open');
-      document.body.style.overflow = '';
+      window.lockBodyScroll ? window.lockBodyScroll(false) : (document.body.style.overflow = '');
     }
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
     document.getElementById('kfCloseX').addEventListener('click', close);
@@ -112,7 +128,42 @@
     var mask = document.getElementById('kfMask');
     if (!mask.classList.contains('open')) {
       mask.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     }
   };
+
+  // ===== 全站统一滚动穿透锁定（弹窗打开锁背景、关闭恢复；幂等，手机端 touchmove 拦截） =====
+  var __sbTouchHandler = function (e) {
+    var t = e.target;
+    var sc = t && t.closest ? t.closest('.modal-box,.ann-box,.kf-box,.share-box,.lb-box,.rte-editor,.dt-pop,.stat-table-wrap,.cat-picker-panel,.ann-list,.ann-body,.modal-scroll,.scroll-area,.modal-media,.lb-media') : null;
+    if (sc && sc.scrollHeight > sc.clientHeight + 1) return; // 弹窗内可滚动容器放行
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return; // 输入框/编辑器放行
+    e.preventDefault();
+  };
+  window.lockBodyScroll = function (lock) {
+    if (lock) {
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('touchmove', __sbTouchHandler, { passive: false });
+    } else {
+      document.body.style.overflow = '';
+      document.removeEventListener('touchmove', __sbTouchHandler);
+    }
+  };
+  // 弹窗开关自动锁定背景滚动（MutationObserver 监听 .open，一处代码全站生效：商品/公告/分享/客服/放大预览/管理后台全部弹窗）
+  (function () {
+    var _opened = false;
+    function _sync() {
+      var anyOpen = document.querySelector('.modal-mask.open, .kf-mask.open, .lb.open, .lightbox.open, .share-mask.open, .confirm-mask.open');
+      if (anyOpen && !_opened) { _opened = true; window.lockBodyScroll(true); }
+      else if (!anyOpen && _opened) { _opened = false; window.lockBodyScroll(false); }
+    }
+    try {
+      var _obs = new MutationObserver(_sync);
+      _obs.observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+    } catch (e) {}
+    document.addEventListener('DOMContentLoaded', _sync);
+    window.addEventListener('pageshow', _sync);
+  })();
+  // 浏览器返回 / bfcache 恢复时强制刷新，防止从管理页返回商品页白屏
+  window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
 })();

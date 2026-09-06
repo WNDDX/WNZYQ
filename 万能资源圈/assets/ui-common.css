@@ -1,9 +1,10 @@
 /* ============================================
    万能资源圈 全站公共样式：统一浮起式滚动条
-   - 滚动条不占布局宽度（scrollbar-gutter 对称占位），弹窗内媒体/占位符左右边距天然对称
-   - 平时透明隐藏，滚动时浮现，停止约 1 秒后自动淡化隐藏（由 ui-common.js 控制 .sb-active）
+   - 弹窗/面板滚动容器：原生滚动条完全隐藏、不占布局宽度 → 媒体/占位符左右边距天然对称
+   - 浮起指示条（.sb-bar，由 ui-common.js 注入）：滚动时浮现，停止约 1 秒后自动淡化隐藏
    - 四页面（index/shop/admin/error）统一引用，禁止各页面重复定义
    ============================================ */
+/* 页面级滚动条：细样式（普通页面滚动仍可见，不涉及弹窗布局） */
 * { scrollbar-width: thin; scrollbar-color: rgba(30,136,229,0.25) transparent; }
 *::-webkit-scrollbar { width: 5px; height: 5px; }
 *::-webkit-scrollbar-track { background: transparent; }
@@ -11,20 +12,37 @@
 *::-webkit-scrollbar-thumb:hover { background: rgba(30,136,229,0.5); }
 *::-webkit-scrollbar-corner { background: transparent; }
 
-/* 滚动容器：左右对称占位（both-edges），保证内容区左右边距始终一致、不被滚动条挤压 */
+/* 弹窗/面板等滚动容器：隐藏原生滚动条、完全不占布局宽度（浮起指示条替代） */
 .modal-box,
 .cat-picker-panel,
 .ann-list,
+.ann-body,
+.kf-box,
 .rte-editor,
 .dt-pop,
 .stat-table-wrap {
-  scrollbar-gutter: stable both-edges;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-gutter: auto !important;
+}
+.modal-box::-webkit-scrollbar,
+.cat-picker-panel::-webkit-scrollbar,
+.ann-list::-webkit-scrollbar,
+.ann-body::-webkit-scrollbar,
+.kf-box::-webkit-scrollbar,
+.rte-editor::-webkit-scrollbar,
+.dt-pop::-webkit-scrollbar,
+.stat-table-wrap::-webkit-scrollbar {
+  width: 0; height: 0; display: none;
 }
 
-/* 平时透明隐藏（JS 在滚动时加 .sb-active 浮现，停止约 1 秒后移除） */
-.sb-fade::-webkit-scrollbar-thumb { background: rgba(30,136,229,0); }
-.sb-fade.sb-active::-webkit-scrollbar-thumb { background: rgba(30,136,229,0.25); }
-.sb-fade.sb-active::-webkit-scrollbar-thumb:hover { background: rgba(30,136,229,0.5); }
+/* 浮起指示条：absolute 定位容器右缘，不占布局宽度；滚动时 .sb-active 浮现，停止约 1 秒淡化隐藏 */
+.sb-bar {
+  position: absolute; right: 3px; width: 4px; border-radius: 2px;
+  background: rgba(30,136,229,0.30); opacity: 0;
+  transition: opacity 0.25s ease; pointer-events: none; z-index: 60;
+}
+.sb-bar.sb-active { opacity: 1; }
 
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页：结构/尺寸/样式/动画一处定义全站生效） ===== */
 .kf-mask {
@@ -71,3 +89,34 @@
   .kf-qr { width: 200px; height: 200px; }
   .kf-jump, .kf-close { font-size: 16px; padding: 10px 24px; }
 }
+
+/* ===== 全站统一关闭 ×：32px 圆形淡灰底 #666，hover 变红（弹窗/客服/放大预览通用） ===== */
+.modal-close-x,
+.kf-x,
+.lb-close {
+  position: absolute; top: 12px; right: 12px; z-index: 10;
+  width: 32px !important; height: 32px !important;
+  border-radius: 50% !important; border: none !important;
+  background: #f0f2f5 !important; color: #666 !important;
+  font-size: 19px !important; line-height: 1 !important; cursor: pointer !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  padding: 0 !important; margin: 0 !important;
+  transition: all 0.12s ease !important;
+}
+.modal-close-x:hover,
+.kf-x:hover,
+.lb-close:hover {
+  background: #ff4444 !important; color: #fff !important; transform: scale(1.1);
+}
+.modal-close-x:active,
+.kf-x:active,
+.lb-close:active { transform: scale(0.92); }
+
+/* ===== 全站统一图片/视频放大查看器（lightbox） ===== */
+.lightbox {
+  position: fixed; inset: 0; z-index: 100000; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.92); touch-action: none;
+  cursor: zoom-out;
+}
+.lightbox.open { display: flex; }
