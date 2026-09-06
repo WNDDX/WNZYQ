@@ -46,6 +46,7 @@
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    .logo-enter { animation: logoFadeIn 0.8s ease; }
     @keyframes logoFadeIn {
       from { opacity: 0; transform: scale(0.8); }
       to { opacity: 1; transform: scale(1); }
@@ -103,10 +104,11 @@
       overflow: hidden;
       background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       background: #e2e5e9;
+      background: transparent;
       color: #fff; font-size: 34px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22); border: 3px solid #fff; box-sizing: border-box;
-      animation: logoFadeIn 0.8s ease;
+      /* animation triggered by JS onload */
       transition: transform 0.12s ease, box-shadow 0.12s ease;
     }
     .login-logo-link:active .login-logo {
@@ -185,6 +187,7 @@
       white-space: nowrap;
     }
     .topbar-logo-link {
+      width: fit-content;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -204,7 +207,7 @@
       height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); animation: logoFadeIn 0.8s ease; flex-shrink: 0;
+      background: transparent; box-sizing: border-box; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22); transition: transform 0.12s ease, box-shadow 0.12s ease; flex-shrink: 0;
     }
     .tabs { display: flex; gap: 6px; flex: 1; }
     .tab {
@@ -694,7 +697,7 @@
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
     /* 预览弹窗 */
-    .preview-box { position: relative; animation: modalIn 0.25s ease; } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; } .preview-box video { width: 100%; display: block; }
+    .preview-box { position: relative; animation: modalIn 0.25s ease; } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; } .preview-box img { display: block; margin: 8px auto; } .preview-box video { width: 100%; display: block; }
     .preview-close-x {
       position: absolute; top: 12px; right: 12px; z-index: 10;
       width: 40px; height: 40px; border-radius: 50%;
@@ -706,6 +709,8 @@
     .preview-close-x:hover { transform: scale(1.1); background: rgba(0,0,0,0.7); }
     /* 感叹号占位自适应：容器内完整显示、居中、淡白填充、不溢出 */
     img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
+    /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
+    .modal-box img[src^="data:image/svg+xml"]:not(.preview-cover), .preview-box img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; }
     .preview-cover {
       width: calc(100% - 32px); margin: 16px 16px 0;
       max-height: 280px; object-fit: cover; display: block;
@@ -1025,14 +1030,14 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
         <div class="login-logo">
-          <img src="assets/images/logo.png" alt="万能资源圈" onerror='this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          <img src="assets/images/logo.png" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
         </div>
       </a>
       <h1>万能资源圈</h1>
       <p class="login-tip" id="loginTip"></p>
       <input id="loginUser" class="input" placeholder="账号" autocomplete="off" />
-      <input id="loginPass" class="input" type="password" placeholder="密码" onkeydown="if(event.key==='Enter'&&typeof doLogin==='function')doLogin()" />
-      <button class="btn-blue" id="loginBtn" onclick="if(typeof doLogin==='function')doLogin()">登 录</button>
+      <input id="loginPass" class="input" type="password" placeholder="密码" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" />
+      <button class="btn-blue" id="loginBtn" onclick="if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登 录</button>
       <p class="login-foot">万能资源圈・管理</p>
     </div>
   </div>
@@ -1043,7 +1048,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
-            <img class="topbar-logo" src="assets/images/logo.png" alt="" onload="this.style.opacity='1'" onerror='this.style.opacity="1";this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+            <img class="topbar-logo" src="assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.style.opacity="1";this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
           </a>
           <span>万能资源圈・管理</span>
         </div>
