@@ -1713,6 +1713,15 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
        管理页逻辑
        ============================================ */
 
+    // ---------- 登录按钮事件委托兜底：即使下方任意脚本运行时出错，登录按钮依然可用 ----------
+    document.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('#loginBtn') : null;
+      if (b && !window.__loginDirect && typeof doLogin === 'function') { try { doLogin(); } catch (err) {} }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { var ae = document.activeElement; if (ae && (ae.id === 'loginUser' || ae.id === 'loginPass') && !window.__loginDirect && typeof doLogin === 'function') { try { doLogin(); } catch (err) {} } }
+    });
+
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
     var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
@@ -1765,7 +1774,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     var catModalTitle = document.getElementById('catModalTitle');
     var catName = document.getElementById('catName');
     var catSort = document.getElementById('catSort');
-    var catParent = document.getElementById('catParent');
+    var catParent = null; /* catParent id 不存在，历史遗留引用均有 try/短路保护 */
     var catParentWrap = document.getElementById('catParentWrap');
     var catHidden = document.getElementById('catHidden');
     var catOk = document.getElementById('catOk');
@@ -2226,7 +2235,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     })();
 
     // ---------- 登录 ----------
-    loginBtn.addEventListener('click', doLogin);
+    window.__loginDirect = true; loginBtn.addEventListener('click', doLogin);
     loginPass.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
 
     function doLogin() {
@@ -2237,7 +2246,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       loginBtn.textContent = '登录中…';
       api('admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) })
         .then(function (res) {
-          if (res.ok) {
+          if (res && res.ok) {
             localStorage.setItem(TOKEN_KEY, res.token);
             loadSettings(); showMain(res.username);
           } else {
@@ -2255,8 +2264,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     function loadProducts() {
       var ensureCat = state.categories.length
         ? Promise.resolve()
-        : api('admin/categories').then(function (res) {
-            if (res.ok) {
+        : (window.__catLoading || loadCategories()).then(function (res) {
+            if (res && res.ok) {
               state.categories = (res.list || []).map(function (c) { return { id: c.id, name: c.name, parent_id: c.parent_id || 0, sort: c.sort || 0, is_hidden: c.is_hidden || 0, cnt: c.cnt || 0 }; });
             }
           });
@@ -2526,7 +2535,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         sort: (state.products.length + 1) * 10
       };
       api('admin/products', { method: 'POST', body: JSON.stringify(newProduct) }).then(function (res) {
-        if (res.ok) {
+        if (res && res.ok) {
           var _vs = newProduct.variants || [], _chain = Promise.resolve(), _newId = res.id;
           _vs.forEach(function (v) {
             _chain = _chain.then(function () {
@@ -2623,7 +2632,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           var _catText = document.querySelector('#batchCatDisplay .cpd-text').textContent;
           showConfirm('批量改分类', '确定将选中的 ' + ids.length + ' 个资源分类改为「' + _catText + '」？', function () {
             api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
-              if (res.ok) { toast('批量改分类成功（' + res.count + '项）', 'success'); loadProducts(); }
+              if (res && res.ok) { toast('批量改分类成功（' + res.count + '项）', 'success'); loadProducts(); }
               else toast(res.msg || '操作失败', 'error');
             });
           });
@@ -2639,7 +2648,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           if (isNaN(newPrice) || newPrice < 0) { toast('请输入有效的价格', 'error'); return; }
           showConfirm('批量改价格', '确定将选中的 ' + ids.length + ' 个资源价格改为 ' + newPrice + '？', function () {
             api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changePrice', price: newPrice }) }).then(function (res) {
-              if (res.ok) { toast('批量改价格成功（' + res.count + '项）', 'success'); clearCache(); loadProducts(); }
+              if (res && res.ok) { toast('批量改价格成功（' + res.count + '项）', 'success'); clearCache(); loadProducts(); }
               else toast(res.msg || '操作失败', 'error');
             });
           });
@@ -2649,7 +2658,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
       showConfirm(actionNames[action], msgs[action], function () {
         api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: action }) }).then(function (res) {
-          if (res.ok) {
+          if (res && res.ok) {
             toast(actionNames[action] + '成功（' + res.count + '项）', 'success');
             clearCache();
             loadProducts();
@@ -2696,7 +2705,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         sort: target.sort, is_online: online
       };
       api('admin/products/' + id, { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
-        if (res.ok) { clearCache(); loadProducts(); }
+        if (res && res.ok) { clearCache(); loadProducts(); }
         else toast(res.msg || '操作失败', 'error');
       });
     }
@@ -2704,7 +2713,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     function delProduct(id) {
       showConfirm('删除资源', '确定删除该资源？其类型和统计数据也会一并删除。', function () {
         api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
-          if (res.ok) { toast('已删除', 'success'); clearCache(); state.products = state.products.filter(function(p){ return p.id !== id; }); refreshCatCnts(); var _r2 = document.querySelector('#productList [data-id="' + id + '"]'); if (_r2) { _r2.style.transition='opacity .12s ease'; _r2.style.opacity='0'; setTimeout(function(){ if (_r2.parentNode) _r2.parentNode.removeChild(_r2); if (!document.querySelector('#productList .product-row')) renderProducts(); }, 120); } else renderProducts(); }
+          if (res && res.ok) { toast('已删除', 'success'); clearCache(); state.products = state.products.filter(function(p){ return p.id !== id; }); refreshCatCnts(); var _r2 = document.querySelector('#productList [data-id="' + id + '"]'); if (_r2) { _r2.style.transition='opacity .12s ease'; _r2.style.opacity='0'; setTimeout(function(){ if (_r2.parentNode) _r2.parentNode.removeChild(_r2); if (!document.querySelector('#productList .product-row')) renderProducts(); }, 120); } else renderProducts(); }
           else toast(res.msg || '删除失败', 'error');
         });
       });
@@ -2732,7 +2741,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         is_online: target.is_online, is_hidden: target.is_hidden
       };
       api('admin/products/' + id, { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
-        if (res.ok) { clearCache(); }
+        if (res && res.ok) { clearCache(); }
         else {
           // 失败回滚
           target.is_online = prevOnline; target.is_hidden = prevHidden; window.__skipRenderOnce = false;
@@ -3213,7 +3222,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         saving = false;
         saveProductBtn.disabled = false;
         saveProductBtn.style.opacity = '';
-        if (res.ok) {
+        if (res && res.ok) {
           // 如果是新增，拿到新 id 后刷新类型列表（类型可能已在编辑时添加）
           if (!state.editingId && res.id) {
             state.editingId = res.id;
@@ -3245,7 +3254,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     // ---------- 资源类型管理 ----------
     function loadVariants(productId) {
       api('admin/variants?product_id=' + productId).then(function (res) {
-        if (res.ok) {
+        if (res && res.ok) {
           state.variants = res.list || [];
           renderVariants();
         }
@@ -3708,7 +3717,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         announcements: JSON.stringify(stateAnn.list)
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
-        if (res.ok) {
+        if (res && res.ok) {
           toast('公告已保存', 'success');
           stateAnn.loaded = true; annDraftPending = false; stateAnn._backup = null;
           document.getElementById('annMask').classList.remove('open');
@@ -4062,7 +4071,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         ? api('admin/variants/' + state.editingVariantId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/variants', { method: 'POST', body: JSON.stringify(data) });
       req.then(function (res) {
-        if (res.ok) {
+        if (res && res.ok) {
           variantDraftPending = false; variantMask.classList.remove('open');
           toast('保存成功', 'success');
           loadVariants(state.editingId);
@@ -4076,7 +4085,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       showConfirm('删除类型', '确定删除该类型？', function () {
         if (!state.editingId) { var di = state.variants.indexOf(state._delVariantRef); if (di >= 0) state.variants.splice(di, 1); renderVariants(); toast('已删除', 'success'); return; }
         api('admin/variants/' + id, { method: 'DELETE' }).then(function (res) {
-          if (res.ok) { toast('已删除', 'success'); loadVariants(state.editingId); }
+          if (res && res.ok) { toast('已删除', 'success'); loadVariants(state.editingId); }
           else toast(res.msg || '删除失败', 'error');
         });
       });
@@ -4476,12 +4485,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       }
     }
 
-    function loadCategories() {
-      api('admin/categories').then(function (res) {
+    function loadCategories() { if (window.__catLoading) { window.__catLoading.then(function () { renderCategories(state.categories); }); return window.__catLoading; }
+      window.__catLoading = api('admin/categories').then(function (res) { window.__catLoading = null;
+      // (分类请求已合并到上一行 window.__catLoading 的 then 回调，避免重复请求)
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         state.categories = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }));
 refreshCatCnts();
-        renderCategories(state.categories);
+        renderCategories(state.categories); return res;
       });
     }
 
@@ -4676,7 +4686,7 @@ refreshCatCnts();
           delBtn.addEventListener('click', function () {
             showConfirm('删除分类', '删除该分类？其下资源将归入"全部"，子分类也会一并删除。', function () {
               api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
-                if (res.ok) { toast('已删除', 'success'); clearCache(); loadCategories(); loadProducts(); }
+                if (res && res.ok) { toast('已删除', 'success'); clearCache(); loadCategories(); loadProducts(); }
                 else toast(res.msg || '删除失败', 'error');
               });
             });
@@ -4788,12 +4798,12 @@ refreshCatCnts();
       document.querySelector('input[name="catLevel"][value="0"]').checked = !isChild;
       document.querySelector('input[name="catLevel"][value="1"]').checked = isChild;
       catParentWrap.style.display = isChild ? 'block' : 'none';
-      try { if (catParent.dataset.spRef) catParent.dataset.spRef.refresh(); } catch (e) {}
+      /* 已清理：catParent 元素不存在，空引用刷新已移除 */
       if (false && catParent.options.length > 0) {
         catParent.value = c.parent_id;
       }
 
-      try { if (catParent.dataset.spRef) catParent.dataset.spRef.refresh(); } catch (e) {}
+      /* 已清理：catParent 元素不存在，空引用刷新已移除 */
       catMask.classList.add('open');
     }
 
@@ -4837,7 +4847,7 @@ refreshCatCnts();
         method: 'PUT',
         body: JSON.stringify({ sort: targetSort })
       }).then(function (res) {
-        if (res.ok) {
+        if (res && res.ok) {
           toast('排序已更新', 'success');
           clearCache();
           loadCategories();
@@ -4884,7 +4894,7 @@ refreshCatCnts();
         catSaving = false;
         catOk.disabled = false;
         catOk.style.opacity = '';
-        if (res.ok) {
+        if (res && res.ok) {
           catDraftPending = false; catMask.classList.remove('open');
           toast('保存成功', 'success');
           clearCache();
@@ -4930,7 +4940,7 @@ refreshCatCnts();
       if (newPwd !== confirmPwd) { toast('两次输入的新密码不一致', 'error'); return; }
       toast('密码修改成功', 'success'); pwdMask.classList.remove('open'); api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
         .then(function (res) {
-          if (res.ok) {
+          if (res && res.ok) {
             toast('密码修改成功', 'success');
             pwdMask.classList.remove('open');
           } else {
