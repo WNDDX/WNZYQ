@@ -43,6 +43,9 @@
     box-sizing: border-box;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
 }
+*, *::before, *::after { min-width: 0; }
+img, video, svg { max-width: 100%; }
+table { max-width: 100%; }
 body{
     background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 48%, var(--blue3) 100%);
     min-height: 100vh;
@@ -261,6 +264,22 @@ html { scrollbar-gutter: stable; }
 /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
 .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
 .modal-mask > *, .share-mask > *, .lightbox > * { margin: 0 auto !important; float: none !important; }
+@media (max-width: 600px) {
+  .logo-box { width: 100px; height: 100px; }
+  .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.6px; }
+  .btn-item { padding: 15px 18px; font-size: 19px; gap: 14px; margin-bottom: 12px; border-radius: 10px; }
+  .icon-svg { width: 28px; height: 28px; }
+  .qrcode-wrap { width: 200px; height: 200px; }
+  .modal-box { padding: 20px 16px; }
+  .modal-title { font-size: 19px; }
+  .modal-inner-btn, .modal-close { font-size: 16px; padding: 10px 24px; }
+  .modal-tip { font-size: 14px; }
+}
+@media (min-width: 601px) and (max-width: 900px) {
+  .page-title { font-size: 32px; }
+  .btn-item { font-size: 23px; }
+}
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 </style>
 </head>
 <body>

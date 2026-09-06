@@ -30,6 +30,10 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
     }
 
+    *, *::before, *::after { min-width: 0; }
+    img, video, svg { max-width: 100%; }
+    table { max-width: 100%; }
+
     :root {
       --blue1: #1E88E5;
       --blue2: #64B5F6;
@@ -138,7 +142,7 @@
       gap: 8px;
       flex-shrink: 0;
     }
-    .top-btn {
+    /* 废弃：.top-btn 旧样式已整体移除（联系客服/分享已复用 .tab 公共组件），以下为残留无效声明
       display: flex;
       align-items: center;
       justify-content: center;
@@ -157,17 +161,23 @@
       line-height: 1;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    .top-btn:hover {
+    .top-btn:hover 旧规则已移除（废弃注释内）
       transform: scale(0.96);
       opacity: 0.9;
       box-shadow: 0 3px 10px rgba(0,0,0,0.15);
     }
-    .top-btn:active { opacity: 0.85; }
-    .top-btn svg { width: 15px; height: 15px; flex-shrink: 0; display: block; vertical-align: middle; }    .top-btn span { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
-    /* 联系客服/分享按钮完整复用管理页资源管理 row-btn 代码，仅保留图标标识 */
-    .top-btn { border: 1px solid #ddd; background: #fff; color: #555; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 400; flex-shrink: 0; box-shadow: none; letter-spacing: 0; line-height: 1.2; display: inline-flex; align-items: center; justify-content: center; }
-    .top-btn:hover { transform: scale(0.96); opacity: 0.9; box-shadow: none; }
-    .top-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    .top-btn:active 旧规则已移除（废弃注释内）
+    */
+    /* 顶栏 tab 按钮：完整复用管理页【资源管理/分类管理/数据统计/平台设置】公共组件样式（.tab），零自定义 */
+    .tab { border: none; background: rgba(255, 255, 255, 0.18); color: #fff; padding: 0 16px; height: 38px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 18px; font-size: 14px; white-space: nowrap; transition: all 0.10s ease; }
+    .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
+    .tab:hover { transform: scale(0.97); opacity: 0.9; }
+    .tab:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+    .tab svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
+    .tab svg + span { margin-left: 5px; }
+    /* 废弃：.top-btn 覆盖规则已移除（联系客服/分享已复用 .tab 公共组件） */
+    .top-btn:hover 旧规则已移除（废弃注释内）
+    .top-btn:active 旧规则已移除（废弃注释内）
 
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
@@ -1055,9 +1065,9 @@
       .shop-brand { flex: 0 1 auto; min-width: 0; }
       .shop-name { font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .topbar-actions { order: 1; margin-left: auto; gap: 6px; }
-      .top-btn { padding: 7px; width: 34px; height: 34px; border-radius: 50%; }
-      .top-btn span { display: none; }  /* 手机端只显示图标 */
-      .top-btn svg { width: 17px; height: 17px; }
+      .tab { padding: 7px 12px; font-size: 13px; }  /* 手机端与管理页 tab 按钮表现一致 */
+      /* 手机端不再隐藏文字：与管理页 tab 按钮表现一致 */
+      .tab svg { width: 15px; height: 15px; }
       .view-toggle { order: 1; flex-shrink: 0; margin-left: 0; gap: 4px; }
       .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
       .search-box { order: 2; flex: 1 1 100%; margin-top: 0; }
@@ -1090,8 +1100,8 @@
     /* 平板端 */
     @media (min-width: 601px) and (max-width: 900px) {
       .modal-box { max-width: 90%; }
-      .top-btn span { display: none; }
-      .top-btn svg { width: 17px; height: 17px; }
+      /* 平板端文字不隐藏：与管理页 tab 按钮表现一致 */
+      .tab svg { width: 15px; height: 15px; }
     }
     /* logo 统一为名称大小（覆盖上方定义） */
     .shop-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; }
@@ -1135,6 +1145,7 @@
       /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
     .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
     .modal-mask > *, .share-mask > *, .lightbox > * { margin: 0 auto !important; float: none !important; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 </style>
 </head>
 
@@ -1158,13 +1169,13 @@
         <div class="shop-name" id="shopName">万能资源圈</div>
       </div>
       <div class="topbar-actions">
-        <button class="top-btn" id="topContact" title="联系客服">
+        <button class="tab" id="topContact" title="联系客服">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
           <span>联系客服</span>
         </button>
-        <button class="top-btn" id="topShare" title="分享本页">
+        <button class="tab" id="topShare" title="分享本页">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="18" cy="5" r="3"></circle>
             <circle cx="6" cy="12" r="3"></circle>

@@ -7,6 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;}
+*,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
 html{scrollbar-gutter:stable;}body{background:linear-gradient(180deg,#1E88E5 0%,#64B5F6 48%,#BBDEFB 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 .box{text-align:center;color:#fff;max-width:400px;}
 .code{font-size:80px;font-weight:700;opacity:0.9;margin-bottom:10px;}
@@ -29,6 +30,14 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 *::-webkit-scrollbar-thumb { background: rgba(144,158,180,0.5); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
 *::-webkit-scrollbar-thumb:hover { background: rgba(120,135,160,0.7); background-clip: padding-box; }
 * { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
+@media (max-width: 600px) {
+  .code { font-size: 52px; }
+  .title { font-size: 20px; }
+  .desc { font-size: 14px; }
+  .logo { width: 80px; height: 80px; margin-bottom: 16px; }
+  .box { max-width: 100%; }
+  .btn { padding: 10px 26px; font-size: 15px; }
+}
 </style>
 </head>
 <body>

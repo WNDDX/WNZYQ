@@ -410,8 +410,8 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
     .cat-row .c-name { flex: 1 1 140px; font-size: 15px; min-width: 0; word-break: break-word; }
-    .cat-row .c-count { color: #999; font-size: 13px; text-decoration: none !important; border-bottom: none !important; min-width: 72px; text-align: left; flex-shrink: 0; }
-    .cat-row .c-sort { color: #bbb; font-size: 12px; min-width: 50px; text-align: left; flex-shrink: 0; }
+    .cat-row .c-count { color: #999; font-size: 13px; text-decoration: none !important; border-bottom: none !important; width: 80px; min-width: 80px; text-align: left; flex-shrink: 0; }
+    .cat-row .c-sort { color: #bbb; font-size: 12px; width: 60px; min-width: 60px; text-align: left; flex-shrink: 0; }
     /* 分类行状态框移到右侧（复用资源管理）：显示/隐藏 → 编辑 → 删除 */
     .cat-row .select-picker { order: 50; }
     .cat-row .row-btn { order: 60; }
@@ -1001,6 +1001,7 @@
     /* 强制统一所有 tab section 的置顶高度：section 及第一个子元素无顶部间距 */
     #panel-products, #panel-categories, #panel-stats, #panel-settings { margin: 0 !important; padding: 0 !important; }
     #panel-products > :first-child, #panel-categories > :first-child, #panel-stats > :first-child, #panel-settings > :first-child { margin-top: 0 !important; padding-top: 0 !important; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 </style>
 </head>
 
@@ -1040,7 +1041,7 @@
           <button class="tab" data-tab="settings">平台设置</button>
         </div>
         <div class="topbar-right">
-          <button class="row-btn danger" id="logoutBtn">退出</button>
+          <button class="tab" id="logoutBtn">退出</button>
         </div>
       </div>
     </header>
@@ -2089,7 +2090,7 @@
           try { if (typeof clearCache === 'function') clearCache(); } catch (e) {}
           var t = activeTab();
           if (t === 'products' && typeof loadProducts === 'function') loadProducts();
-          else if (t === 'stats' && typeof loadStats === 'function') loadStats();
+          else if (t === 'stats' && typeof loadStats === 'function') loadStats(undefined, undefined, 1);
           else if (t === 'categories' && typeof loadCategories === 'function') loadCategories();
           else if (t === 'settings' && typeof loadSettings === 'function') loadSettings();
           setTimeout(function () { tip.classList.remove('show'); tip.style.height = '0'; }, 400);
@@ -2125,7 +2126,7 @@
 
     function showMain(username) {
       loginView.style.display = 'none';
-      mainView.style.display = 'block'; window.__plS = 1; loadStats(); loadSettings();
+      mainView.style.display = 'block'; window.__plS = 1; loadStats(); loadSettings(); window.__plC = 1; window.__plP = 1; loadProducts();
       loadCategories();
       switchTab('products');
     }
@@ -2303,6 +2304,7 @@
 
     function renderProducts() {
       if (window.__skipRenderOnce) { window.__skipRenderOnce = false; return; }
+      refreshCatCnts();
       var box = document.getElementById('productList'); var _minH = box.offsetHeight; if (_minH > 0) box.style.minHeight = _minH + 'px';
       var empty = document.getElementById('productEmpty');
       box.innerHTML = '';
@@ -2702,7 +2704,7 @@
     function delProduct(id) {
       showConfirm('删除资源', '确定删除该资源？其类型和统计数据也会一并删除。', function () {
         api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
-          if (res.ok) { toast('已删除', 'success'); clearCache(); state.products = state.products.filter(function(p){ return p.id !== id; }); var _r2 = document.querySelector('#productList [data-id="' + id + '"]'); if (_r2) { _r2.style.transition='opacity .12s ease'; _r2.style.opacity='0'; setTimeout(function(){ if (_r2.parentNode) _r2.parentNode.removeChild(_r2); if (!document.querySelector('#productList .product-row')) renderProducts(); }, 120); } else renderProducts(); }
+          if (res.ok) { toast('已删除', 'success'); clearCache(); state.products = state.products.filter(function(p){ return p.id !== id; }); refreshCatCnts(); var _r2 = document.querySelector('#productList [data-id="' + id + '"]'); if (_r2) { _r2.style.transition='opacity .12s ease'; _r2.style.opacity='0'; setTimeout(function(){ if (_r2.parentNode) _r2.parentNode.removeChild(_r2); if (!document.querySelector('#productList .product-row')) renderProducts(); }, 120); } else renderProducts(); }
           else toast(res.msg || '删除失败', 'error');
         });
       });
@@ -3615,7 +3617,7 @@
         txt.addEventListener('input', function () { a.title = this.value; });
         txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '(未命名公告)'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
         // 公告隐藏状态由下方状态下拉框控制（不再使用徽章标识）
-        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;min-width:48px;text-align:right;flex-shrink:0;'; sortEl.textContent = '排序:' + (idx + 1);
+        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;min-width:56px;text-align:left;flex-shrink:0;'; sortEl.textContent = '排序:' + (idx + 1);
         var annStatusSel = document.createElement('select'); annStatusSel.className = 'status-select ' + (a.hidden ? 'status-hidden' : 'status-online'); annStatusSel.title = '直接切换公告显示/隐藏'; [['show', '显示'], ['hidden', '隐藏']].forEach(function (op) { var o = document.createElement('option'); o.value = op[0]; o.textContent = op[1]; if ((a.hidden ? 'hidden' : 'show') === op[0]) o.selected = true; annStatusSel.appendChild(o); });
         annStatusSel.addEventListener('change', function () { a.hidden = this.value === 'hidden' ? 1 : 0; }); annStatusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (annStatusSel.parentNode && typeof makeSelectPicker === 'function') { var _spa = makeSelectPicker(annStatusSel); if (_spa) { _spa.el.style.width = 'auto'; _spa.el.style.flexShrink = '0'; var _da = _spa.el.querySelector('.cat-picker-display'); if (_da) _da.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:0;width:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;'; var _aa = _spa.el.querySelector('.cpd-arrow'); if (_aa) _aa.style.cssText = 'width:14px;height:14px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-90deg);transition:transform .3s ease;color:#1688FF;'; } } }, 0);
         // 点击公告项整行即可选中编辑（无需单独编辑按钮）
@@ -3678,7 +3680,7 @@
       }
       // 先立即打开弹窗，再后台拉取最新数据（避免网络延迟导致弹窗迟迟不出现）
       document.getElementById('annMask').classList.add('open');
-      if (stateAnn.loaded && stateAnn.list.length) { try { renderAnnList(); var _dl0 = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; selectAnnItem(_dl0.id); } catch (e) {} } if (!annDraftPending || !stateAnn.loaded) {
+      if (stateAnn.loaded && stateAnn.list.length) { try { renderAnnList(); var _dl0 = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; selectAnnItem(_dl0.id); } catch (e) {} } if (!stateAnn.loaded) {
         api('admin/settings').then(function (res) {
           if (res && res.ok) {
             stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 }); stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
@@ -3732,7 +3734,7 @@
       document.getElementById('contactMask').classList.add('open');
       if (contactDraftPending) { contactDraftPending = false; return; }
       var _ci = document.getElementById('contactUrlInput'); var _cs = document.getElementById('setContactUrl'); _ci.value = _cs.value || '';
-      try { api('admin/settings').then(function (res) { if (res && res.ok) { var s = res.settings || {}; _cs.value = s.contact_url || ''; _ci.value = s.contact_url || ''; window.__plSet = 1; } }); } catch (e) {}
+      if (!_cs.value) { try { api('admin/settings').then(function (res) { if (res && res.ok) { var s = res.settings || {}; _cs.value = s.contact_url || ''; _ci.value = s.contact_url || ''; window.__plSet = 1; } }); } catch (e) {} }
     });
     document.getElementById('saveContactBtn').addEventListener('click', function () {
       var v = document.getElementById('contactUrlInput').value.trim();
@@ -4292,7 +4294,8 @@
     }
 
     // ---------- 数据统计 ----------
-    function loadStats(startDate, endDate) {
+    function loadStats(startDate, endDate, force) {
+      if (!force && !startDate && !endDate && state.statsTrendAll && state.statsTrendAll.length) { applyStatsDays(); return; }
       var url = 'admin/stats';
       var params = [];
       if (startDate) params.push('start_date=' + encodeURIComponent(startDate));
@@ -4335,7 +4338,7 @@
         });
 
         // 趋势图（按时间筛选）
-        var allTrend = res.trend || [];
+        var allTrend = res.trend || []; if (!startDate && !endDate) state.statsTrendAll = allTrend;
         var days = state.statsDays || 7;
         var trendData = allTrend.slice(-days);
         // 保存统计数据到 state，供导出使用
@@ -4404,11 +4407,80 @@
       });
     }
 
+    // 近7/30天切换：本地重绘图表，不发新请求（趋势数据已在初始化预加载，表格/总览为30天范围保持不变）
+    function applyStatsDays() {
+      if (!state.statsTrendAll || !state.statsTrendAll.length) { loadStats(); return; }
+      var days = state.statsDays || 7;
+      var trendData = state.statsTrendAll.slice(-days);
+      state.statsTrend = trendData;
+      renderLineChart(trendData);
+      var trendBox = document.getElementById('trendBars');
+      trendBox.innerHTML = '';
+      var maxVal = 1;
+      trendData.forEach(function (d, i) { maxVal = Math.max(maxVal, d.views, d.contacts); });
+      trendData.forEach(function (d, i) {
+        var col = document.createElement('div');
+        col.className = 'trend-col';
+        var wrap = document.createElement('div');
+        wrap.className = 'trend-bar-wrap';
+        var barV = document.createElement('div');
+        barV.className = 'trend-bar view';
+        barV.style.height = (d.views / maxVal * 100) + '%';
+        barV.title = '浏览: ' + d.views;
+        var barC = document.createElement('div');
+        barC.className = 'trend-bar contact';
+        barC.style.height = (d.contacts / maxVal * 100) + '%';
+        barC.title = '联系: ' + d.contacts;
+        wrap.appendChild(barV);
+        wrap.appendChild(barC);
+        var label = document.createElement('div');
+        label.className = 'trend-label';
+        label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? fmtDay(d.day) : '') : '';
+        col.appendChild(wrap);
+        col.appendChild(label);
+        trendBox.appendChild(col);
+      });
+      var _ps2 = document.getElementById('panel-stats'); if (_ps2) { _ps2.classList.remove('stats-fade-in'); void _ps2.offsetWidth; _ps2.classList.add('stats-fade-in'); }
+    }
+
     // ---------- 分类管理 ----------
+    // 实时计算分类资源数（一级分类含全部二级子分类汇总），并同步更新已渲染的分类行文本（不整体重渲染，避免闪烁/丢选中状态）
+    function refreshCatCnts() {
+      var prods = state.products || [];
+      var cats = state.categories || [];
+      var direct = {};
+      prods.forEach(function (p) { var cid = Number(p.cid); if (cid) direct[cid] = (direct[cid] || 0) + 1; });
+      var hasProds = prods.length > 0;
+      var byId = {};
+      cats.forEach(function (c) { byId[Number(c.id)] = c; });
+      cats.forEach(function (c) { var id = Number(c.id); c.cnt = hasProds ? (direct[id] || 0) : (Number(c.cnt) || 0); });
+      cats.forEach(function (c) {
+        if (Number(c.parent_id) === 0 && Number(c.id) !== 0) {
+          var sum = c.cnt;
+          cats.forEach(function (s) { if (Number(s.parent_id) === Number(c.id)) sum += (Number(s.cnt) || 0); });
+          c.totalCnt = sum;
+        } else { c.totalCnt = undefined; }
+      });
+      if (byId[0]) byId[0].cnt = hasProds ? prods.length : (Number(byId[0].cnt) || 0);
+      var box = document.getElementById('catList');
+      if (box) {
+        box.querySelectorAll('.cat-row').forEach(function (row) {
+          var rid = row.dataset.id; if (rid === undefined || rid === null) return;
+          var ref = null;
+          if (String(rid).charAt(0) === 'v') { ref = byId[Number(String(rid).slice(1))] || null; }
+          else { ref = byId[Number(rid)] || null; }
+          if (!ref) return;
+          var cntEl = row.querySelector('.c-count');
+          if (cntEl) cntEl.textContent = (ref.totalCnt !== undefined ? ref.totalCnt : (ref.cnt || 0)) + ' 件资源';
+        });
+      }
+    }
+
     function loadCategories() {
       api('admin/categories').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
-        state.categories = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden }; }));
+        state.categories = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }));
+refreshCatCnts();
         renderCategories(state.categories);
       });
     }
@@ -4443,7 +4515,7 @@
         // id=0 的"全部"是虚拟根分类，parent_id===0 表示一级分类而非"全部"的子级，
         // 跳过它，避免把所有一级分类重复当成其子分类（修复分类重复显示两个的 bug）
         if (top.id === 0) return;
-        if (!ordered.some(function (x) { return x.virtual && Number(x.parent_id) === Number(top.id); }) && !list.some(function (c) { return Number(c.parent_id) === Number(top.id) && String(c.name || '').trim() === '全部'; })) { var _vt = list.find(function (x) { return Number(x.id) === Number(top.id); }); ordered.push({ id: 'v' + top.id, parent_id: top.id, name: '全部', sort: -1, virtual: true, cnt: (_vt ? _vt.cnt : 0) }); } list.filter(function (c) { return c.parent_id === top.id; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).forEach(function (sub) {
+        if (!ordered.some(function (x) { return x.virtual && Number(x.parent_id) === Number(top.id); }) && !list.some(function (c) { return Number(c.parent_id) === Number(top.id) && String(c.name || '').trim() === '全部'; })) { var _vt = list.find(function (x) { return Number(x.id) === Number(top.id); }); ordered.push({ id: 'v' + top.id, parent_id: top.id, name: '全部', sort: -1, virtual: true, cnt: (_vt ? (_vt.totalCnt !== undefined ? _vt.totalCnt : (_vt.cnt || 0)) : 0) }); } list.filter(function (c) { return c.parent_id === top.id; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).forEach(function (sub) {
           ordered.push(sub);
         });
       });
@@ -4452,7 +4524,7 @@
         .forEach(function (c) { ordered.push(c); });
 
       ordered.forEach(function (c) {
-        if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; var _vcb = document.createElement('input'); _vcb.type = 'checkbox'; _vcb.className = 'cat-check'; _vcb.dataset.id = c.id; _vcb.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--blue1);'; _vcb.checked = !!state.catSelected[c.id]; _vcb.addEventListener('change', function () { state.catSelected[this.dataset.id] = this.checked; updateCatBatchBar(); }); var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh);_vrow.appendChild(_vcb); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'padding-left:24px;font-size:14px;color:#555;opacity:0.85;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vph = document.createElement('span'); _vph.style.cssText = 'display:flex;align-items:center;justify-content:center;min-width:0;width:auto;height:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;color:#bbb;background:#fafafa;flex-shrink:0;cursor:default;visibility:hidden;'; _vph.textContent = '固定'; _vrow.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vrow.appendChild(_vedit); _vrow.appendChild(_vdel); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
+        if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; // “全部”项不渲染选中框（直接移除DOM）var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'padding-left:24px;font-size:14px;color:#555;opacity:0.85;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vph = document.createElement('span'); _vph.style.cssText = 'display:flex;align-items:center;justify-content:center;min-width:0;width:72px;order:50;height:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;color:#bbb;background:#fafafa;flex-shrink:0;cursor:default;visibility:hidden;'; _vph.textContent = '固定'; _vrow.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vrow.appendChild(_vedit); _vrow.appendChild(_vdel); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
         var row = document.createElement('div');
         row.className = 'cat-row';
         row.draggable = false;
@@ -4498,13 +4570,13 @@
           row.appendChild(cb0);
         }
         if (Number(c.id) !== 0) {
-          var cb = document.createElement('input');
+          if (String(c.name || '').trim() !== '全部') { var cb = document.createElement('input');
           cb.type = 'checkbox';
           cb.className = 'cat-check';
           cb.dataset.id = c.id;
           cb.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--blue1);';
           cb.checked = !!state.catSelected[c.id]; cb.addEventListener('change', function () { state.catSelected[c.id] = this.checked; updateCatBatchBar(); });
-          row.appendChild(cb);
+          row.appendChild(cb); }
         }
 
         var name = document.createElement('span');
@@ -4569,7 +4641,7 @@
 
         var cnt = document.createElement('span');
         cnt.className = 'c-count';
-        cnt.textContent = (c.cnt || 0) + ' 件资源';
+        cnt.textContent = (c.totalCnt !== undefined ? c.totalCnt : (c.cnt || 0)) + ' 件资源';
         cnt.style.cursor = 'pointer';
         cnt.style.color = '#888';
         cnt.style.textDecoration = 'none';
@@ -4604,7 +4676,7 @@
           delBtn.addEventListener('click', function () {
             showConfirm('删除分类', '删除该分类？其下资源将归入"全部"，子分类也会一并删除。', function () {
               api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
-                if (res.ok) { toast('已删除', 'success'); clearCache(); loadCategories(); }
+                if (res.ok) { toast('已删除', 'success'); clearCache(); loadCategories(); loadProducts(); }
                 else toast(res.msg || '删除失败', 'error');
               });
             });
@@ -4684,6 +4756,7 @@
           if (done + fail === ids.length) {
             var actionName = action === 'hide' ? '隐藏' : (action === 'show' ? '显示' : '删除');
             toast('批量' + actionName + '完成：成功 ' + done + ' 项，失败 ' + fail + ' 项', fail > 0 ? 'error' : 'success');
+            if (action === 'delete') loadProducts();
             clearCache();
             loadCategories();
           }
