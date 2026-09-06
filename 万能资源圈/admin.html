@@ -46,6 +46,10 @@
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes logoFadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
 
     html, body { background: #f2f7fd; color: #333; max-width: 100%; overflow-x: hidden; overflow-y: scroll; }
     *, *::before, *::after { min-width: 0; }
@@ -80,6 +84,9 @@
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
     }
     .login-logo-link {
+      border-radius: 50%;
+      overflow: hidden;
+      clip-path: circle(50%);
       width: fit-content;
       margin-left: auto;
       margin-right: auto;
@@ -98,6 +105,7 @@
       color: #fff; font-size: 34px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 0 2px rgba(255,255,255,0.35), 0 4px 12px rgba(30, 136, 229, 0.4); border: 2px solid #fff; box-sizing: border-box;
+      animation: logoFadeIn 0.8s ease;
       transition: transform 0.12s ease;
     }
     .login-logo-link:active .login-logo {
@@ -195,7 +203,7 @@
       height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease; flex-shrink: 0;
+      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); animation: logoFadeIn 0.8s ease; flex-shrink: 0;
     }
     .tabs { display: flex; gap: 6px; flex: 1; }
     .tab {
@@ -474,9 +482,10 @@
     .modal-mask.open { display: flex; animation: maskIn 0.22s ease; }
     .modal-box {
       position: relative; background: #fff; border-radius: 14px;
-      width: 100%; max-width: 400px; max-height: 88vh; overflow-y: auto;
+      width: 100%; max-width: 400px; max-height: 88vh; overflow-y: auto; scrollbar-gutter: stable; min-height: 160px;
       padding: 22px; text-align: left; animation: modalIn 0.25s ease;
     }
+    .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
     .modal-wide { max-width: 520px; }
     .modal-lg { max-width: 680px; }
     /* 按内容量分配档位：大(编辑资源/公告) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
@@ -485,8 +494,8 @@
     /* 弹窗宽度由各弹窗 modal-wide/modal-lg 类控制 */
     @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes modalIn {
-      from { transform: translateY(20px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
     .modal-title { font-size: 20px; color: #222; margin-bottom: 16px; letter-spacing: 1.2px; padding-right: 30px; }
     /* 弹窗右上角关闭按钮 */
@@ -1015,7 +1024,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
         <div class="login-logo">
-          <img src="assets/images/logo.png" alt="万能资源圈" />
+          <img src="assets/images/logo.png" alt="万能资源圈" onerror='this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
         </div>
       </a>
       <h1>万能资源圈</h1>
@@ -1033,7 +1042,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
-            <img class="topbar-logo" src="assets/images/logo.png" alt="" onload="this.style.opacity='1'" />
+            <img class="topbar-logo" src="assets/images/logo.png" alt="" onload="this.style.opacity='1'" onerror='this.style.opacity="1";this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
           </a>
           <span>万能资源圈・管理</span>
         </div>

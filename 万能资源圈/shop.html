@@ -64,6 +64,10 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes logoFadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
     html {
       background: #f2f7fd;
       max-width: 100%; overflow-x: hidden; overflow-y: scroll; /* 阻止移动端整页橡皮筋下拉，避免露出蓝色底，自定义下拉刷新不受影响 */
@@ -104,7 +108,7 @@
       width: 32px; height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); opacity: 0; transition: opacity 0.12s ease;
+      background: rgba(255,255,255,0.25); box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 2px 8px rgba(30,80,140,0.22); animation: logoFadeIn 0.8s ease;
       flex-shrink: 0;
     }
     .shop-name {
@@ -550,11 +554,13 @@
       max-height: 88vh;
       overflow-y: auto;
       scrollbar-gutter: stable;
-      animation: modalIn 0.25s ease;
+      min-height: 240px;
+      animation: modalIn 0.22s ease;
     }
+    .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
     @keyframes modalIn {
-      from { transform: translateY(20px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
     .modal-close-x {
       position: absolute;
