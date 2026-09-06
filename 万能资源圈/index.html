@@ -263,7 +263,7 @@ html { scrollbar-gutter: stable; }
 * { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
 /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
 .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
-.modal-mask > *, .share-mask > *, .lightbox > * { margin: 0 auto !important; float: none !important; }
+.modal-mask > *, .share-mask > *, .lightbox > * { margin: auto !important; float: none !important; }
 @media (max-width: 600px) {
   .logo-box { width: 100px; height: 100px; }
   .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.6px; }
@@ -286,7 +286,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 <div class="wrap">
     <div class="logo-wrap">
         <div class="logo-box">
-            <img class="logo-img" id="logoImage" src="assets/images/logo.svg" alt="">
+            <img class="logo-img" id="logoImage" src="assets/images/logo.png" alt="">
             <div class="logo-fail-icon" id="logoFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -347,7 +347,7 @@ const CONFIG = {
     resourceUrl: "shop",
     serviceWeixinUrl: "https://work.weixin.qq.com/kfid/kfc39748ad948e8b691",
     groupWeixinUrl: "https://work.weixin.qq.com/gm/8036a2badd7daab25b1764b62c3bff9a",
-    logoImg: "assets/images/logo.svg",
+    logoImg: "assets/images/logo.png",
     serviceQrImg: "assets/images/kefu.png",
     groupQrImg: "assets/images/qun.png",
     gzhImg: "assets/images/gzh.png",
@@ -392,6 +392,29 @@ function loadImg(imgDom, src, retryCount = 0) {
     imgDom.src = src;
 }
 loadImg(dom.logoImage, CONFIG.logoImg);
+
+// 全局补漏：任何 img/video 加载失败统一替换为感叹号占位（与管理页/资源页一致）
+document.addEventListener('error', function (e) {
+  var t = e.target;
+  if (!t || !t.tagName || t.dataset.fh) return;
+  if (t.tagName === 'IMG') {
+    t.dataset.fh = '1';
+    t.src = EXC_PH;
+    t.style.objectFit = 'contain';
+    t.style.display = 'block';
+  } else if (t.tagName === 'VIDEO') {
+    t.dataset.fh = '1';
+    var ph = document.createElement('img');
+    ph.src = EXC_PH;
+    ph.style.cssText = 'width:100%;height:auto;display:block;';
+    if (t.parentNode) t.parentNode.replaceChild(ph, t);
+  }
+}, true);
+document.querySelectorAll('img').forEach(function (im) {
+  if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) {
+    im.dataset.fh = '1'; im.src = EXC_PH; im.style.objectFit = 'contain'; im.style.display = 'block';
+  }
+});
 
 /**弹窗打开 */
 function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {

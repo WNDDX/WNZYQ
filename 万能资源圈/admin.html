@@ -997,7 +997,7 @@
     * { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
       /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
     .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
-    .modal-mask > *, .share-mask > *, .lightbox > * { margin: 0 auto !important; float: none !important; }
+    .modal-mask > *, .share-mask > *, .lightbox > * { margin: auto !important; float: none !important; }
     /* 强制统一所有 tab section 的置顶高度：section 及第一个子元素无顶部间距 */
     #panel-products, #panel-categories, #panel-stats, #panel-settings { margin: 0 !important; padding: 0 !important; }
     #panel-products > :first-child, #panel-categories > :first-child, #panel-stats > :first-child, #panel-settings > :first-child { margin-top: 0 !important; padding-top: 0 !important; }
@@ -1012,7 +1012,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
         <div class="login-logo">
-          <img src="assets/images/logo.svg" alt="万能资源圈" />
+          <img src="assets/images/logo.png" alt="万能资源圈" />
         </div>
       </a>
       <h1>万能资源圈</h1>
@@ -1030,7 +1030,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
-            <img class="topbar-logo" src="assets/images/logo.svg" alt="" onload="this.style.opacity='1'" />
+            <img class="topbar-logo" src="assets/images/logo.png" alt="" onload="this.style.opacity='1'" />
           </a>
           <span>万能资源圈・管理</span>
         </div>
