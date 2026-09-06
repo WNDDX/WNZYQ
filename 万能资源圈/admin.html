@@ -80,6 +80,9 @@
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
     }
     .login-logo-link {
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1018,8 +1021,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       <h1>万能资源圈</h1>
       <p class="login-tip" id="loginTip"></p>
       <input id="loginUser" class="input" placeholder="账号" autocomplete="off" />
-      <input id="loginPass" class="input" type="password" placeholder="密码" />
-      <button class="btn-blue" id="loginBtn">登 录</button>
+      <input id="loginPass" class="input" type="password" placeholder="密码" onkeydown="if(event.key==='Enter'&&typeof doLogin==='function')doLogin()" />
+      <button class="btn-blue" id="loginBtn" onclick="if(typeof doLogin==='function')doLogin()">登 录</button>
       <p class="login-foot">万能资源圈・管理</p>
     </div>
   </div>
