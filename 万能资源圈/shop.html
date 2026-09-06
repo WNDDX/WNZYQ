@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>万能资源圈・资源</title>
-  <meta name="description" content="万能资源圈・资源，优质虚拟资源分享平台，汇聚学习资源、软件工具、设计素材，展示与联系客服获取。">
+  <meta name="description" content="万能资源圈・资源，优质虚拟资源分享平台，汇聚学习资源、软件工具、设计素材，展示与咨询客服获取。">
   <meta name="keywords" content="万能资源圈,资源导航,虚拟资源,学习资源,软件工具">
   <meta property="og:title" content="万能资源圈">
   <meta property="og:description" content="优质虚拟资源导航平台，一键获取学习资源、软件工具、设计素材">
@@ -13,6 +13,7 @@
   <meta property="og:url" content="">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5">
   <link rel="preload" href="assets/images/logo.png" as="image">
@@ -140,14 +141,14 @@
       transform: scale(0.9);
       opacity: 0.8;
     }
-    /* 顶栏操作按钮：联系客服 / 分享 */
+    /* 顶栏操作按钮：咨询客服 / 分享 */
     .topbar-actions {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-shrink: 0;
     }
-    /* 废弃：.top-btn 旧样式已整体移除（联系客服/分享已复用 .tab 公共组件），以下为残留无效声明
+    /* 废弃：.top-btn 旧样式已整体移除（咨询客服/分享已复用 .tab 公共组件），以下为残留无效声明
       display: flex;
       align-items: center;
       justify-content: center;
@@ -180,7 +181,7 @@
     .tab:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
     .tab svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
     .tab svg + span { margin-left: 5px; }
-    /* 废弃：.top-btn 覆盖规则已移除（联系客服/分享已复用 .tab 公共组件） */
+    /* 废弃：.top-btn 覆盖规则已移除（咨询客服/分享已复用 .tab 公共组件） */
     .top-btn:hover 旧规则已移除（废弃注释内）
     .top-btn:active 旧规则已移除（废弃注释内）
 
@@ -875,6 +876,7 @@
       padding: 0 20px 20px;
     }
     .btn-contact {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
       flex: 1;
       height: 46px;
       border: none;
@@ -1180,11 +1182,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         <div class="shop-name" id="shopName">万能资源圈</div>
       </div>
       <div class="topbar-actions">
-        <button class="tab" id="topContact" title="联系客服">
+        <button class="tab" id="topContact" title="咨询客服">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          <span>联系客服</span>
+          <span>咨询客服</span>
         </button>
         <button class="tab" id="topShare" title="分享本页">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1289,7 +1291,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-contact" id="btnContact">联系客服</button>
+          <button class="btn-contact" id="btnContact">咨询客服</button>
           <button class="btn-close-modal" id="btnCloseModal">关闭</button>
         </div>
       </div>
@@ -1549,7 +1551,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       }
     }
 
-    // 数据统计：记录资源浏览/联系客服/资源码解锁事件，发送到后端
+    // 数据统计：记录资源浏览/咨询客服/资源码解锁事件，发送到后端
     // 仅在使用远程 API 时记录，本地环境不记录
     function track(pid, type) {
       if (!usingRemote || !pid) return;
@@ -1579,7 +1581,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             var s = res.settings;
             if (s.shop_name) { shopNameEl.textContent = s.shop_name; document.title = s.shop_name + '・资源'; }
             /* logo 不可改（与管理页一致），跳过 API 更新，避免二次加载闪动 */
-            // 全局客服链接存在 window 上，供联系客服按钮使用
+            // 全局客服链接存在 window 上，供咨询客服按钮使用
             window._globalContact = s.contact_url || getDefaultContact();
           }
         }).catch(function () { /* 忽略，用兜底 */ });
@@ -2110,8 +2112,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       }
     }
 
-    // 联系客服按钮：优先类型链接 → 资源链接 → 全局默认
+    // 咨询客服按钮：优先类型链接 → 资源链接 → 全局默认
     function updateContactBtn() {
+      if (btnContact && !btnContact.querySelector('svg')) { btnContact.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.036 2.87c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.97-.983zm4.844 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.969-.983z"/></svg>'); }
       var url = '';
       if (currentVariant && currentVariant.contactUrl) url = currentVariant.contactUrl;
       else if (currentProduct && currentProduct.contactUrl) url = currentProduct.contactUrl;
@@ -2121,7 +2124,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         btnContact.style.display = '';
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
-          window.open(url, '_blank');
+          if (window.openContactModal) { window.openContactModal(url, 'assets/images/kefu.png'); } else { window.open(url, '_blank'); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未配置客服'); };
@@ -2269,10 +2272,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
     }
 
-    // ---------- 顶栏：联系客服 ----------
+    // ---------- 顶栏：咨询客服 ----------
+    (function () { var svg = topContactBtn && topContactBtn.querySelector('svg'); if (svg) { svg.setAttribute('fill', 'currentColor'); svg.removeAttribute('stroke'); svg.removeAttribute('stroke-width'); svg.removeAttribute('stroke-linecap'); svg.removeAttribute('stroke-linejoin'); var p = svg.querySelector('path'); if (p) p.setAttribute('d', 'M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.036 2.87c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.97-.983zm4.844 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.969-.983z'); svg.style.width = '15px'; svg.style.height = '15px'; } })();
     topContactBtn.addEventListener('click', function () {
       var url = window._globalContact || getDefaultContact();
-      if (url) window.open(url, '_blank');
+      if (url) { if (window.openContactModal) { window.openContactModal(url, 'assets/images/kefu.png'); } else { window.open(url, '_blank'); } }
       else showToast('暂未设置客服链接');
     });
 
@@ -2854,5 +2858,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <video class="lb-media" id="lbVideo" controls playsinline></video>
     <div class="lb-tip">点击关闭・双指缩放</div>
   </div>
+  <script src="assets/ui-common.js"></script>
 </body>
 </html>

@@ -12,6 +12,7 @@
 <meta property="og:image" content="assets/images/logo.png">
 <meta property="og:url" content="">
 <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="assets/ui-common.css">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}</script>
 <meta name="theme-color" content="#1E88E5">
@@ -463,7 +464,7 @@ if ('serviceWorker' in navigator) {
 
 //页面按钮事件
 function openResource() {window.location.href = CONFIG.resourceUrl;}
-function openService() {showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服");}
+function openService() { if (window.openContactModal) { window.openContactModal(CONFIG.serviceWeixinUrl, CONFIG.serviceQrImg, CONFIG.tipService, "跳转-咨询在线客服"); } else { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); } }
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 
@@ -492,5 +493,6 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
     },{passive:true});
 })();
 </script>
+  <script src="assets/ui-common.js"></script>
 </body>
 </html>

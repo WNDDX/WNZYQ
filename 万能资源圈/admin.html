@@ -7,6 +7,7 @@
   <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5">
   <link rel="preload" href="assets/images/logo.png" as="image">
@@ -1144,7 +1145,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             <svg id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;aspect-ratio:4/1;height:auto;"></svg>
             <div class="line-legend">
               <span class="lg-view"><i></i>浏览</span>
-              <span class="lg-contact"><i></i>联系客服</span>
+              <span class="lg-contact"><i></i>咨询客服</span>
               <span class="lg-resource"><i></i>资源码解锁</span>
             </div>
           </div>
@@ -1153,7 +1154,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           <div class="trend-bars" id="trendBars"></div>
           <div class="trend-legend">
             <span class="lg-view">浏览</span>
-            <span class="lg-contact">联系客服</span>
+            <span class="lg-contact">咨询客服</span>
           </div>
         </div>
         <div class="stat-table-wrap" style="margin-bottom:14px;">
@@ -1166,7 +1167,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         <div class="stat-table-wrap" style="margin-bottom:14px;">
           <h3>资源明细（30天内）</h3>
           <table class="stat-table">
-            <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>联系客服</th><th>资源码解锁</th></tr></thead>
+            <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>咨询客服</th><th>资源码解锁</th></tr></thead>
             <tbody id="statRows"></tbody>
           </table>
         </div>
@@ -1447,7 +1448,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
         <label>价格</label>
         <input id="fPrice" type="number" step="0.01" min="0" placeholder="单位元，不填或 0 = 免费，免费不显示价格" />
-        <label>联系客服链接</label>
+        <label>咨询客服链接</label>
         <input id="fContactUrl" placeholder="可不填，没填则用全局默认，如 https://work.weixin.qq.com/..." />
         <label>排序</label><input id="fSort" type="number" value="0" placeholder="数值越小越靠前" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 上架中</label>
@@ -1608,7 +1609,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         <input id="vPrice" type="number" step="0.01" min="0" placeholder="单位元，不填或 0 则用资源价格" />
         <label>排序</label><input id="vSort" type="number" value="0" placeholder="数值越小越靠前" />
         <label>资源码</label>
-        <input id="vResourceCode" placeholder="可不填，买家联系客服交易后获取的专属码" />
+        <input id="vResourceCode" placeholder="可不填，买家咨询客服交易后获取的专属码" />
         <label>资源码专属内容（支持文字/链接/图片/视频）</label>
         <div class="rte-toolbar" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vContentEditor">
@@ -1719,7 +1720,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           <div id="previewVariantDetail" style="background:#f7faff;border-radius:10px;padding:12px 14px;font-size:13px;color:#555;line-height:1.9;border-left:3px solid #42A5F5;"></div>
         </div>
         <div style="display:flex;gap:10px;">
-          <button type="button" id="previewContactBtn" style="flex:1;height:44px;border:none;border-radius:10px;background:#1688FF;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">联系客服</button>
+          <button type="button" id="previewContactBtn" style="flex:1;height:44px;border:none;border-radius:10px;background:#1688FF;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">咨询客服</button>
           <button class="preview-close-btn" style="padding:0 24px;border:none;border-radius:10px;background:#ff4444;color:#fff;font-size:15px;cursor:pointer;">关闭</button>
         </div>
       </div>
@@ -4150,7 +4151,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       var pathV = '';
       trend.forEach(function (d, i) { var p = pt(i, d.views); pathV += (i === 0 ? 'M' : 'L') + p.x + ',' + p.y + ' '; });
       html += '<path d="' + pathV + '" fill="none" stroke="#1E88E5" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
-      // 联系客服折线
+      // 咨询客服折线
       var pathC = '';
       trend.forEach(function (d, i) { var p = pt(i, d.contacts); pathC += (i === 0 ? 'M' : 'L') + p.x + ',' + p.y + ' '; });
       html += '<path d="' + pathC + '" fill="none" stroke="#ff9900" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
@@ -4173,7 +4174,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     // ---------- 导出 CSV ----------
     function exportCSV() { return exportAllData(); }
     function _legacyExportCSV() {
-      var rows = [['资源名称', '分类', '状态', '浏览量', '联系客服', '简短描述']];
+      var rows = [['资源名称', '分类', '状态', '浏览量', '咨询客服', '简短描述']];
       var catName = {};
       state.categories.forEach(function (c) { catName[c.id] = c.name; });
       state.products.forEach(function (p) {
@@ -4242,7 +4243,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         function plain(html) { var d = document.createElement('div'); d.innerHTML = html || ''; return (d.textContent || '').replace(/\s+/g, ' ').trim(); }
         var sheets = [];
         // 1 资源清单
-        var pRows = [['ID', '资源标题', '分类', '状态', '价格(元)', '浏览量', '联系客服', '简介', '客服链接', '排序']];
+        var pRows = [['ID', '资源标题', '分类', '状态', '价格(元)', '浏览量', '咨询客服', '简介', '客服链接', '排序']];
         state.products.forEach(function (p) {
           pRows.push([p.id, p.title || '', catPath(p.cid), p.is_hidden ? '已隐藏' : (p.is_online ? '上架中' : '已下架'), Number(p.price) || 0, p.views || 0, p.contacts || 0, plain(p.desc), p.contactUrl || '', p.sort || 0]);
         });
@@ -4265,10 +4266,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         sheets.push({ name: '分类清单', rows: cRows });
         // 4/5 统计（近30天内）
         var trend = state.statsTrend || [], byProduct = state.statsByProduct || [];
-        var tRows = [['日期', '浏览量', '联系客服', '资源码解锁']];
+        var tRows = [['日期', '浏览量', '咨询客服', '资源码解锁']];
         trend.forEach(function (d) { tRows.push([d.day || '', d.views || 0, d.contacts || 0, d.resource_unlocks || 0]); });
         sheets.push({ name: '每日趋势', rows: tRows });
-        var bRows = [['资源名称', '浏览量', '联系客服', '资源码解锁']];
+        var bRows = [['资源名称', '浏览量', '咨询客服', '资源码解锁']];
         byProduct.forEach(function (p) { bRows.push([String(p.title || ''), p.views || 0, p.contacts || 0, p.resource_unlocks || 0]); });
         sheets.push({ name: '按资源统计', rows: bRows });
         var d = new Date(); function pd(n) { return String(n).padStart(2, '0'); }
@@ -4281,9 +4282,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     function _legacyExportUnlock() {
       var trend = state.statsTrend || [];
       var byProduct = state.statsByProduct || [];
-      var daily = [['日期', '浏览量', '联系客服', '资源码解锁']];
+      var daily = [['日期', '浏览量', '咨询客服', '资源码解锁']];
       trend.forEach(function (d) { daily.push([d.day || '', d.views || 0, d.contacts || 0, d.resource_unlocks || 0]); });
-      var byRes = [['资源名称', '浏览量', '联系客服', '资源码解锁']];
+      var byRes = [['资源名称', '浏览量', '咨询客服', '资源码解锁']];
       byProduct.forEach(function (p) { byRes.push([String(p.title || ''), p.views || 0, p.contacts || 0, p.resource_unlocks || 0]); });
       if (!trend.length && !byProduct.length) { toast('暂无可导出的统计数据', 'warn'); return; }
       downloadMultiSheetXLS('万能资源圈_解锁记录_' + new Date().toISOString().slice(0, 10) + '.xls', [
@@ -4295,13 +4296,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     function _oldExportUnlockUnused() {
       var trend = state.statsTrend || [];
       var byProduct = state.statsByProduct || [];
-      var rows = [['日期', '浏览量', '联系客服', '资源码解锁']];
+      var rows = [['日期', '浏览量', '咨询客服', '资源码解锁']];
       trend.forEach(function (d) {
         rows.push([d.day || '', d.views || 0, d.contacts || 0, d.resource_unlocks || 0]);
       });
       rows.push([]);
       rows.push(['按资源统计（30天内）']);
-      rows.push(['资源名称', '浏览量', '联系客服', '资源码解锁']);
+      rows.push(['资源名称', '浏览量', '咨询客服', '资源码解锁']);
       byProduct.forEach(function (p) {
         rows.push([
           '"' + String(p.title || '').replace(/"/g, '""') + '"',
@@ -4348,7 +4349,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           { label: '在售中', num: ov.online || 0 },
           { label: '已隐藏', num: ov.hidden || 0 },
           { label: '总浏览', num: ov.views || 0 },
-          { label: '联系客服', num: ov.contacts || 0 },
+          { label: '咨询客服', num: ov.contacts || 0 },
           { label: '资源码解锁', num: ov.resource_unlocks || 0 },
         ];
         var cbox = document.getElementById('statCards');
@@ -4428,7 +4429,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         recentTbody.innerHTML = '';
         (res.recent || []).forEach(function (r) {
           var tr = document.createElement('tr');
-          var typeText = r.type === 'view' ? '浏览' : (r.type === 'contact' ? '联系客服' : (r.type === 'resource_unlock' ? '资源码解锁' : r.type));
+          var typeText = r.type === 'view' ? '浏览' : (r.type === 'contact' ? '咨询客服' : (r.type === 'resource_unlock' ? '资源码解锁' : r.type));
           var typeColor = '';
           tr.innerHTML = '<td>' + (r.created_at || '') + '</td><td style="' + typeColor + '">' + typeText + '</td><td>' + (r.title || '') + '</td>';
           recentTbody.appendChild(tr);
@@ -5157,7 +5158,7 @@ refreshCatCnts();
     document.getElementById('previewCloseX').addEventListener('click', function () {
       document.getElementById('previewMask').classList.remove('open');try{document.querySelectorAll('#previewMask video').forEach(function(v){v.pause()})}catch(e){}
     });
-    // 预览里的“联系客服”可直接点击，验证跳转是否正确（优先当前类型客服链接，其次资源，再全局）
+    // 预览里的“咨询客服”可直接点击，验证跳转是否正确（优先当前类型客服链接，其次资源，再全局）
     document.getElementById('previewContactBtn').addEventListener('click', function () {
       var url = '';
       var variants = state.variants || [];
@@ -5166,7 +5167,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) window.open(url, '_blank');
+      if (url) { if (window.openContactModal) { window.openContactModal(url, 'assets/images/kefu.png'); } else { window.open(url, '_blank'); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
@@ -5228,5 +5229,29 @@ refreshCatCnts();
     // ---------- 初始化 ----------
     boot();
   </script>
+  <!-- 独立兜底登录脚本：仅当主脚本解析/加载失败时接管登录（双保险，不覆盖主脚本的正常 doLogin） -->
+  <script>
+  window.doLogin = window.doLogin || function () {
+    var u = document.getElementById('loginUser');
+    var p = document.getElementById('loginPass');
+    var btn = document.getElementById('loginBtn');
+    if (!u || !p || !btn) return;
+    var uv = (u.value || '').trim();
+    var pv = p.value || '';
+    if (!uv || !pv) { alert('请输入账号和密码'); return; }
+    btn.disabled = true; btn.textContent = '登录中…';
+    fetch('api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: uv, password: pv }) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.ok) {
+          try { localStorage.setItem('wnzyq_token', res.token); } catch (e) {}
+          window.location.reload();
+        } else { alert((res && res.msg) || '登录失败'); }
+      })
+      .catch(function () { alert('无法连接后端，请确认已部署到 Cloudflare'); })
+      .then(function () { btn.disabled = false; btn.textContent = '登 录'; });
+  };
+  </script>
+  <script src="assets/ui-common.js"></script>
 </body>
 </html>
