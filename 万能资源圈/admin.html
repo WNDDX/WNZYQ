@@ -5231,6 +5231,9 @@ refreshCatCnts();
   </script>
   <!-- 独立兜底登录脚本：仅当主脚本解析/加载失败时接管登录（双保险，不覆盖主脚本的正常 doLogin） -->
   <script>
+  // 兜底事件绑定：主脚本若整块解析失败（语法错误等），登录按钮/回车仍可用
+  document.addEventListener('click', function (e) { var b = e.target && e.target.closest ? e.target.closest('#loginBtn') : null; if (b && !window.__loginDirect && typeof window.doLogin === 'function') { try { window.doLogin(); } catch (err) {} } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var ae = document.activeElement; if (ae && (ae.id === 'loginUser' || ae.id === 'loginPass') && !window.__loginDirect && typeof window.doLogin === 'function') { try { window.doLogin(); } catch (err) {} } } });
   window.doLogin = window.doLogin || function () {
     var u = document.getElementById('loginUser');
     var p = document.getElementById('loginPass');

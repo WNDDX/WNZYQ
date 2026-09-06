@@ -69,10 +69,28 @@ async function servePage(context, file) {
   return serveError(context);
 }
 
+/** 静态资源兜底：根级 URL → 子目录同名资源（子目录部署时根目录无静态文件，避免图片/脚本/css 404） */
+async function serveAsset(context, path) {
+  try {
+    const u = '/万能资源圈' + path;
+    const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
+    if (res && res.ok) {
+      return new Response(res.body, { headers: res.headers });
+    }
+  } catch (e) {
+    /* 忽略，走错误页兜底 */
+  }
+  return serveError(context);
+}
+
 export async function onRequestGet(context) {
   const path = new URL(context.request.url).pathname.replace(/\/+$/, '') || '/';
   if (path === '/') {
     return serveHome(context);
+  }
+  // 静态资源兜底（子目录部署兼容）：根级 /assets/* /images/* /favicon.ico /manifest.json /sw.js 等
+  if (path.startsWith('/assets/') || path.startsWith('/images/') || path === '/favicon.ico' || path === '/manifest.json' || path === '/sw.js') {
+    return serveAsset(context, path);
   }
   const name = path.split('/').pop(); // 取最后一段作为页面名
   if (PAGES[name]) {

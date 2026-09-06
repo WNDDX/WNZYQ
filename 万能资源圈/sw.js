@@ -6,7 +6,7 @@
  *  - 图片等静态资源 → 缓存优先 + 后台静默更新：二次访问快，且不阻塞更新。
  *  - /api/ 一律不缓存，始终走网络。
  */
-const CACHE_NAME = 'wnzyq-v6';
+const CACHE_NAME = 'wnzyq-v7';
 const STATIC_ASSETS = [
   './',
   './index.html',
