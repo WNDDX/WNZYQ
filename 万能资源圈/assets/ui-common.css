@@ -1,0 +1,184 @@
+/* ============================================
+   万能资源圈 全站公共样式：统一浮起式滚动条
+   - 弹窗/面板滚动容器：原生滚动条完全隐藏、不占布局宽度 → 媒体/占位符左右边距天然对称
+   - 浮起指示条（.sb-bar，由 ui-common.js 注入）：滚动时浮现，停止约 1 秒后自动淡化隐藏
+   - 四页面（index/shop/admin/error）统一引用，禁止各页面重复定义
+   ============================================ */
+/* 页面级滚动条：细样式（普通页面滚动仍可见，不涉及弹窗布局） */
+* { scrollbar-width: thin; scrollbar-color: rgba(30,136,229,0.25) transparent; }
+*::-webkit-scrollbar { width: 5px; height: 5px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(30,136,229,0.22); border-radius: 3px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(30,136,229,0.5); }
+*::-webkit-scrollbar-corner { background: transparent; }
+
+/* 弹窗/面板等滚动容器：隐藏原生滚动条、完全不占布局宽度（浮起指示条替代） */
+.modal-box,
+.cat-picker-panel,
+.ann-list,
+.ann-body,
+.kf-box,
+.rte-editor,
+.dt-pop,
+.stat-table-wrap {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-gutter: auto !important;
+}
+.modal-box::-webkit-scrollbar,
+.cat-picker-panel::-webkit-scrollbar,
+.ann-list::-webkit-scrollbar,
+.ann-body::-webkit-scrollbar,
+.kf-box::-webkit-scrollbar,
+.rte-editor::-webkit-scrollbar,
+.dt-pop::-webkit-scrollbar,
+.stat-table-wrap::-webkit-scrollbar {
+  width: 0; height: 0; display: none;
+}
+
+/* 浮起指示条：absolute 定位容器右缘，不占布局宽度；滚动时 .sb-active 浮现，停止约 1 秒淡化隐藏 */
+.sb-bar {
+  position: absolute; right: 3px; width: 4px; border-radius: 2px;
+  background: rgba(30,136,229,0.30); opacity: 0;
+  transition: opacity 0.25s ease; pointer-events: none; z-index: 60;
+}
+.sb-bar.sb-active { opacity: 1; }
+
+/* ===== 全站统一「咨询客服」弹窗（对齐导航页：结构/尺寸/样式/动画一处定义全站生效） ===== */
+.kf-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.76); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px;
+  scrollbar-gutter: stable;
+}
+.kf-mask.open { display: flex; animation: kfMaskIn 0.22s ease; }
+@keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
+.kf-box {
+  background: #fff; border-radius: 14px; padding: 26px 22px; position: relative;
+  max-width: 480px; width: 100%; max-height: 84vh; overflow-y: auto; text-align: center;
+  animation: kfBoxIn 0.25s ease; scrollbar-gutter: stable both-edges;
+}
+@keyframes kfBoxIn { from { opacity: 0; } to { opacity: 1; } }
+.kf-title { font-size: 22px; color: #222; margin-bottom: 16px; letter-spacing: 1.3px; padding-right: 30px; }
+.kf-qr {
+  width: 250px; height: 250px; max-width: 100%; border: 1px solid #eee;
+  margin: 0 auto 14px; position: relative; display: flex; align-items: center;
+  justify-content: center; border-radius: 6px; background: #f3f4f6;
+}
+.kf-qr img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.kf-qr img[src^="data:image/svg+xml"] { width: 100%; height: 100%; object-fit: contain !important; }
+.kf-tip { font-size: 16px; color: #666; margin-bottom: 16px; letter-spacing: 0.9px; word-break: break-word; }
+.kf-jump {
+  width: 80%; margin: 0 auto 14px; border: none; border-radius: 8px; padding: 11px 32px;
+  background: #01C000; color: #fff; font-size: 18px; font-weight: 500; cursor: pointer;
+  letter-spacing: 0.9px; display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.10s ease;
+}
+.kf-jump:hover { transform: scale(0.97); opacity: 0.9; }
+.kf-jump:active { transform: scale(0.94); opacity: 0.8; }
+.kf-close {
+  background: #ff4444; color: #fff; border: none; padding: 11px 32px; border-radius: 8px;
+  font-size: 18px; cursor: pointer; letter-spacing: 0.9px; transition: all 0.10s ease;
+}
+.kf-close:hover { transform: scale(0.97); opacity: 0.9; }
+.kf-close:active { transform: scale(0.94); opacity: 0.8; }
+.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: #f0f2f5; color: #666; font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s ease; line-height: 1; }
+.kf-x:hover { background: #ff4444; color: #fff; transform: scale(1.1); }
+.kf-x:active { transform: scale(0.92); }
+@media (max-width: 600px) {
+  .kf-box { padding: 20px 16px; }
+  .kf-title { font-size: 19px; }
+  .kf-qr { width: 200px; height: 200px; }
+  .kf-jump, .kf-close { font-size: 16px; padding: 10px 24px; }
+}
+
+/* ===== 全站统一关闭 ×：32px 圆形淡灰底 #666，hover 变红（弹窗/客服/放大预览通用） ===== */
+.modal-close-x,
+.kf-x,
+.lb-close {
+  position: absolute; top: 12px; right: 12px; z-index: 10;
+  width: 32px !important; height: 32px !important;
+  border-radius: 50% !important; border: none !important;
+  background: #f0f2f5 !important; color: #666 !important;
+  font-size: 19px !important; line-height: 1 !important; cursor: pointer !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  padding: 0 !important; margin: 0 !important;
+  transition: all 0.12s ease !important;
+}
+.modal-close-x:hover,
+.kf-x:hover,
+.lb-close:hover {
+  background: #ff4444 !important; color: #fff !important; transform: scale(1.1);
+}
+.modal-close-x:active,
+.kf-x:active,
+.lb-close:active { transform: scale(0.92); }
+
+/* ===== 全站统一图片/视频放大查看器（lightbox） ===== */
+.lightbox {
+  position: fixed; inset: 0; z-index: 100000; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.92); touch-action: none;
+  cursor: zoom-out;
+}
+.lightbox.open { display: flex; }
+
+/* ===== 全站弹窗层级规范（强制，后开永远在上层，杜绝倒挂/被媒体内容遮挡） =====
+   普通弹窗遮罩 2000 → 分享/确认 3000/4000 → 编辑器放大 6001 → 客服 10001 → 放大预览 100000 → 轻提示 100001 */
+.modal-mask { z-index: 2000 !important; }
+.share-mask, .confirm-mask { z-index: 3000 !important; }
+#rteExitZoom { z-index: 6001 !important; }
+.kf-mask, #kfFallback { z-index: 10001 !important; }
+.lightbox, .lb { z-index: 100000 !important; }
+.toast { z-index: 100001 !important; }
+
+/* ===== 全站弹窗底部按键区统一：一行 N 键 N 等分、统一间距、等高、文字居中（所有弹窗复用） ===== */
+.modal-footer {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px !important;
+  margin-top: 16px !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+.modal-footer > button,
+.modal-footer > .btn,
+.modal-footer > a,
+.modal-footer > input,
+.modal-footer > .modal-inner-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 42px !important;
+  margin: 0 !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+/* 窄屏：预览键独占整行排最前，保存/取消在下一行二等分；PC 端三键同一行三等分 */
+@media (max-width: 768px) {
+  .modal-footer > .preview-btn { flex: 1 1 100% !important; width: 100% !important; order: -1; }
+}
+/* 咨询客服弹窗底部按键：等分容器（jump/close 两键各占一半） */
+.kf-actions {
+  display: flex !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin-top: 16px !important;
+}
+.kf-actions > button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 42px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+}
+.kf-jump { width: auto !important; margin: 0 !important; }
