@@ -192,7 +192,7 @@
 
     /* ---------- 分享提示弹窗 ---------- */
     .share-mask {
-      position: fixed; inset: 0; z-index: 3000;
+      position: fixed; inset: 0; z-index: 998;
       background: rgba(0, 0, 0, 0.6);
       display: none; align-items: center; justify-content: center;
       padding: 16px;
@@ -540,7 +540,7 @@
     .modal-mask {
       position: fixed;
       inset: 0;
-      z-index: 2000;
+      z-index: 200;
       background: rgba(0, 0, 0, 0.76);
       display: none;
       align-items: center;
@@ -871,11 +871,11 @@
       margin: 8px 0;
     }
 
-    /* 底部按钮：等分/间距由 ui-common.css 的 .modal-footer 公共类统一提供 */
+    /* 底部按钮 */
     .modal-footer {
       display: flex;
       gap: 10px;
-      /* padding/gap 由公共类提供 */
+      padding: 0 20px 20px;
     }
     .btn-contact {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -915,7 +915,7 @@
     .toast {
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
       background: rgba(0,0,0,0.82); color: #fff; padding: 10px 24px;
-      border-radius: 8px; font-size: 14px; z-index: 100001;
+      border-radius: 8px; font-size: 14px; z-index: 9999;
       opacity: 0; transition: opacity 0.25s; pointer-events: none;
       max-width: 90%; text-align: center;
     }
@@ -1095,7 +1095,7 @@
       .modal-price { font-size: 20px; }
       .modal-desc { font-size: 14px; }
       .modal-detail { font-size: 13px; padding: 10px 12px; }
-      /* 手机端底部按钮区：等分/间距由公共 .modal-footer 提供（此处不再单独覆盖） */
+      .modal-footer { padding: 0 16px 16px; gap: 8px; }
       .btn-contact, .btn-close-modal { height: 42px; font-size: 15px; }
       .btn-close-modal { padding: 0 20px; }
       .modal-close-x { top: 12px; right: 12px; width: 32px; height: 32px; font-size: 19px; }
@@ -1122,7 +1122,7 @@
     .shop-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; }
     .shop-name { line-height: 1; display: flex; align-items: center; }
     /* 弹窗底部按钮宽度统一：2 个等宽 */
-    /* 弹窗底部按钮：等分规则由 ui-common.css 的 .modal-footer 公共类统一提供（此处不再单独定义） */
+    .modal-footer button { flex: 1; min-width: 0; }
     @keyframes cardIn { from { opacity: 0.9; } to { opacity: 1; } }
     .product-card { animation: cardIn 0.15s ease; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
@@ -1242,7 +1242,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="showAnnDefault()">公告</button>
       <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
-      <div class="modal-footer"><button type="button" class="ann-ok" onclick="closeAnnModal()">确定</button></div>
+      <button type="button" class="ann-ok" onclick="closeAnnModal()">确定</button>
     </div>
   </div>
 
@@ -1306,7 +1306,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       <button class="modal-close-x" id="shareCloseX" type="button" onclick="closeShare()">✕</button>      <div class="share-title">分享本站</div>
       <div class="share-tip">网站链接已复制到剪贴板</div>
       <div class="share-link" id="shareLinkText"></div>
-      <div class="modal-footer"><button class="share-close" id="shareClose">关闭</button></div>
+      <button class="share-close" id="shareClose">关闭</button>
     </div>
   </div>
 
@@ -2837,8 +2837,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     document.getElementById('viewListBtn').addEventListener('click', function () { setShopView('list'); });
     setShopView(currentView);
 
-    // 强制确保页面可见（防止动画异常/淡出跳转残留 opacity:0 白屏；pageshow 立即兜底 + 500ms 双保险，与 ui-common.js 一致）
-    window.addEventListener('pageshow', function () { try { document.body.style.opacity = '1'; } catch (e) {} }); setTimeout(function () { document.body.style.opacity = '1'; }, 500);
+    // 强制确保页面可见（防止动画异常导致body opacity为0）
+    setTimeout(function () { document.body.style.opacity = '1'; }, 500);
 
     // ---- 图片/视频放大查看器（点击放大、双指缩放） ----
     var lb = document.getElementById('lightbox');

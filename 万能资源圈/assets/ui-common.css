@@ -122,97 +122,63 @@
 .lightbox.open { display: flex; }
 
 /* ===== 全站弹窗层级规范（强制，后开永远在上层，杜绝倒挂/被媒体内容遮挡） =====
-   层级阶梯（从低到高）：
-   普通弹窗遮罩 .modal-mask（含公告 .ann-modal） 2000
-   分享/确认弹窗 .share-mask/.confirm-mask        3000
-   编辑器放大 #rteExitZoom                        6001
-   客服弹窗 .kf-mask/#kfFallback                  10001
-   图片/视频放大预览 .lightbox/.lb                100000
-   轻提示 .toast                                  100001
-   硬规则：弹窗内部媒体（img/video）及关闭按钮只存在于弹窗容器内（z-index:auto），
-   永远不超过弹窗本体层级，避免“客服弹窗被商品弹窗内的图片视频盖住”。 */
+   普通弹窗遮罩 2000 → 分享/确认 3000/4000 → 编辑器放大 6001 → 客服 10001 → 放大预览 100000 → 轻提示 100001 */
 .modal-mask { z-index: 2000 !important; }
 .share-mask, .confirm-mask { z-index: 3000 !important; }
 #rteExitZoom { z-index: 6001 !important; }
 .kf-mask, #kfFallback { z-index: 10001 !important; }
 .lightbox, .lb { z-index: 100000 !important; }
 .toast { z-index: 100001 !important; }
-/* 弹窗内部元素：仅相对自身容器定位，不参与跨弹窗层级竞争；
-   media 显式 z-index:0 + translateZ(0)（防 iOS Safari video 忽略 z-index 浮到最上层遮挡后续弹窗） */
-.modal-box, .ann-box, .kf-box, .share-box, .lb-box, .modal-wrap { z-index: auto; }
-.modal-box img, .modal-box video, .ann-box img, .ann-box video,
-.kf-box img, .kf-box video, .share-box img, .share-box video { position: relative; z-index: 0; -webkit-transform: translateZ(0); transform: translateZ(0); }
 
-/* ===== 全站弹窗底部按键区统一：一行 N 键 N 等分、统一间距、等高、文字居中（所有弹窗复用，页面禁止覆盖） =====
-   规则：
-   - 一行 1 个按钮 → 按钮占满整行可用宽度
-   - 一行 2 个按钮 → 二等分；N 个按钮 → N 等分
-   - 多行时每一行独立按该行按钮数等分（flex-wrap + flex:1 1 0）
-   - 统一间距：按钮间 gap=10px；距弹窗左右边框/底部 padding=20px；距上方内容 margin-top=16px；按钮等高 44px */
-:root {
-  --fd-gap: 10px;   /* 按钮互相之间间距 */
-  --fd-mt: 16px;    /* 按钮区距上方内容 */
-  --fd-px: 20px;    /* 按钮区距弹窗左右边框 */
-  --fd-pb: 20px;    /* 按钮区距弹窗底部 */
-  --fd-h: 44px;     /* 按钮统一高度 */
-}
+/* ===== 全站弹窗底部按键区统一：一行 N 键 N 等分、统一间距、等高、文字居中（所有弹窗复用） ===== */
 .modal-footer {
   display: flex !important;
   flex-wrap: wrap;
   align-items: stretch;
-  flex-shrink: 0; /* flex 纵向弹窗（公告/编辑/类型）中按钮区不被内容压缩 */
-  gap: var(--fd-gap) !important;
-  margin-top: var(--fd-mt) !important;
-  padding: 0 var(--fd-px) var(--fd-pb) !important;
+  gap: 10px !important;
+  margin-top: 16px !important;
   width: 100% !important;
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 .modal-footer > button,
 .modal-footer > .btn,
 .modal-footer > a,
 .modal-footer > input,
 .modal-footer > .modal-inner-btn {
-  flex: 1 1 0 !important;      /* N 个按钮 N 等分；单按钮占满整行 */
+  flex: 1 1 0 !important;
   min-width: 0 !important;
   width: auto !important;
-  height: var(--fd-h) !important;
+  height: 42px !important;
   margin: 0 !important;
   padding-left: 8px !important;
   padding-right: 8px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  text-align: center;
-  box-sizing: border-box !important;
+  box-sizing: border-box;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 /* 窄屏：预览键独占整行排最前，保存/取消在下一行二等分；PC 端三键同一行三等分 */
 @media (max-width: 768px) {
   .modal-footer > .preview-btn { flex: 1 1 100% !important; width: 100% !important; order: -1; }
 }
-/* 咨询客服弹窗底部按键：与全站 footer 同一套等分/间距规则 */
+/* 咨询客服弹窗底部按键：等分容器（jump/close 两键各占一半） */
 .kf-actions {
   display: flex !important;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: var(--fd-gap) !important;
-  margin-top: var(--fd-mt) !important;
-  padding: 0 !important;   /* kf-box 自身已有左右/底部 padding，无需再加 */
+  gap: 10px !important;
   width: 100% !important;
-  box-sizing: border-box !important;
+  margin-top: 16px !important;
 }
 .kf-actions > button {
   flex: 1 1 0 !important;
   min-width: 0 !important;
   width: auto !important;
-  height: var(--fd-h) !important;
+  height: 42px !important;
   margin: 0 !important;
   padding: 0 8px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 .kf-jump { width: auto !important; margin: 0 !important; }
