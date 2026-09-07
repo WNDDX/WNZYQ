@@ -137,47 +137,87 @@
   };
 
   // ===== 全站统一滚动穿透锁定（弹窗打开锁背景、关闭恢复；幂等，手机端 touchmove 拦截） =====
-  var __SB_SCROLL_SEL = '.modal-box,.ann-box,.kf-box,.share-box,.lb-box,.rte-editor,.dt-pop,.stat-table-wrap,.cat-picker-panel,.ann-list,.ann-body,.modal-scroll,.scroll-area,.modal-media,.lb-media';
-  var __sbBlockHandler = function (e) {
+  var __SB_SCROLL_SEL = '.modal-box,.modal-content,.form,.ann-box,.kf-box,.share-box,.lb-box,.rte-editor,.dt-pop,.stat-table-wrap,.cat-picker-panel,.ann-list,.ann-body,.modal-scroll,.scroll-area,.modal-media,.lb-media,.variant-detail,.modal-detail,.resource-content';
+  // 记录每个可滚动容器的触摸起点（供边界判断）
+  var __sbMarkStart = function (e) {
+    if (!e.touches || !e.touches.length) return;
     var t = e.target;
     var sc = t && t.closest ? t.closest(__SB_SCROLL_SEL) : null;
-    if (sc && sc.scrollHeight > sc.clientHeight + 1) return; // 弹窗内可滚动容器放行
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return; // 输入框/编辑器放行
+    if (sc) { sc.__sbY = e.touches[0].clientY; sc.__sbX = e.touches[0].clientX; }
+  };
+  var __sbBlockHandler = function (e) {
+    var t = e.target;
     if (e.cancelable === false) return;
-    e.preventDefault();
+    // 输入框/编辑器放行（不影响输入）
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    var sc = t && t.closest ? t.closest(__SB_SCROLL_SEL) : null;
+    // 1) 触点不在任何可滚动容器上（弹窗遮罩/空白区/背景）：一律拦截，背景绝不跟随
+    if (!sc) { e.preventDefault(); return; }
+    // 2) 容器本身不可滚动：拦截（避免把滑动“穿过”容器传给背景）
+    if (sc.scrollHeight <= sc.clientHeight + 1) { e.preventDefault(); return; }
+    // 3) 容器可滚动：正常滚动放行；仅当滚到边界后仍继续向外滑时拦截，阻断滚动链传给背景
+    //    （解决“手机端弹窗滑动时背景商品页跟着滚动、弹窗内图片视频抖动”）
+    var dy = 0;
+    if (e.type === 'touchmove' && e.touches && e.touches.length) {
+      var py = sc.__sbY;
+      if (py === undefined) { sc.__sbY = e.touches[0].clientY; sc.__sbX = e.touches[0].clientX; return; }
+      dy = e.touches[0].clientY - py;
+      sc.__sbY = e.touches[0].clientY; sc.__sbX = e.touches[0].clientX;
+    } else if (e.type === 'wheel') {
+      dy = e.deltaY;
+    }
+    var atTop = sc.scrollTop <= 0;
+    var atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
+    if ((atTop && dy < 0) || (atBottom && dy > 0)) { e.preventDefault(); return; }
   };
   window.lockBodyScroll = function (lock) {
     if (lock) {
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden'; // iOS Safari 需锁 html 才彻底阻止背景滚动
+      document.addEventListener('touchstart', __sbMarkStart, { passive: true });
       document.addEventListener('touchmove', __sbBlockHandler, { passive: false });
       document.addEventListener('wheel', __sbBlockHandler, { passive: false });
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.removeEventListener('touchstart', __sbMarkStart);
       document.removeEventListener('touchmove', __sbBlockHandler);
       document.removeEventListener('wheel', __sbBlockHandler);
     }
   };
-  // 弹窗开关自动锁定背景滚动（MutationObserver 监听 .open，一处代码全站生效：商品/公告/分享/客服/放大预览/管理后台全部弹窗）
-  var __SB_MASK_SEL = '.modal-mask.open, .kf-mask.open, .lb.open, .lightbox.open, .share-mask.open, .confirm-mask.open';
+  // 弹窗开关自动锁定背景滚动（MutationObserver 监听 .open + DOM 挂载/移除，一处代码全站生效：商品/公告/分享/客服/放大预览/管理后台全部弹窗）
+  var __SB_MASK_SEL = '.modal-mask.open, .kf-mask.open, .lb.open, .lightbox.open, .share-mask.open, .confirm-mask.open, .rte-editor.rte-large';
   // 统一重算背景锁：还有任意弹窗开着就保持锁定，全部关闭才解锁（多弹窗叠加、任意顺序关闭都正确，幂等）
   window.syncBodyLock = function () {
     var anyOpen = document.querySelector(__SB_MASK_SEL);
     window.lockBodyScroll(!!anyOpen);
   };
   (function () {
-    var _opened = false;
+    var _opened = null;
     function _sync() {
       var anyOpen = document.querySelector(__SB_MASK_SEL);
-      if (anyOpen && !_opened) { _opened = true; window.lockBodyScroll(true); }
-      else if (!anyOpen && _opened) { _opened = false; window.lockBodyScroll(false); }
+      var openNow = !!anyOpen;
+      if (openNow !== _opened) { _opened = openNow; window.lockBodyScroll(openNow); }
     }
     try {
       var _obs = new MutationObserver(_sync);
       _obs.observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
     } catch (e) {}
+    try {
+      var _obs2 = new MutationObserver(_sync); // 弹窗 DOM 整体挂载/移除（display 切换的弹窗）也触发重算
+      _obs2.observe(document.body, { childList: true, subtree: true });
+    } catch (e) {}
     document.addEventListener('DOMContentLoaded', _sync);
     window.addEventListener('pageshow', _sync);
   })();
-  // 浏览器返回 / bfcache 恢复时强制刷新，防止从管理页返回商品页白屏
-  window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
+  // 浏览器返回 / bfcache 恢复：若页面停在“淡出跳转”遗留的 opacity:0 快照则强制刷新（防白屏）；
+  // 普通显示也兜底恢复可见，避免任何淡出残留导致整页透明
+  window.addEventListener('pageshow', function (e) {
+    try { if (getComputedStyle(document.body).opacity === '0') document.body.style.opacity = '1'; } catch (err) {}
+    if (e.persisted) { window.location.reload(); return; }
+  });
+  // 返回键（popstate）兜底：页面内容存在但透明度为 0 时立即恢复可见，杜绝白屏残留
+  window.addEventListener('popstate', function () {
+    try { if (document.body && getComputedStyle(document.body).opacity === '0') document.body.style.opacity = '1'; } catch (err) {}
+  });
 })();

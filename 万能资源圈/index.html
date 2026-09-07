@@ -168,7 +168,7 @@ body{
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.76);
-    z-index: 999;
+    z-index: 2000;
     display: none;
     align-items: center;
     justify-content: center;
@@ -431,7 +431,7 @@ document.querySelectorAll('img').forEach(function (im) {
 function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
     dom.modalTitle.textContent = title;
     dom.modalTip.textContent = tipText;
-    dom.mask.style.display = 'flex';
+    dom.mask.style.display = 'flex'; dom.mask.classList.add('open');
     if (window.lockBodyScroll) window.lockBodyScroll(true);
     dom.modalImg.style.display = 'block';
     dom.qrFail.style.display = 'none';
@@ -446,7 +446,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
     }
 }
 function closeModal() {
-    dom.mask.style.display = 'none';
+    dom.mask.style.display = 'none'; dom.mask.classList.remove('open');
     if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
     dom.modalJumpBtn.onclick = null;
 }
