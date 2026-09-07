@@ -1964,8 +1964,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             }
             var atTop = sc.scrollTop <= 0, atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
             if (sc.scrollHeight <= sc.clientHeight + 1) { if (e.cancelable !== false) e.preventDefault(); return; }
-            if (down > 0 && atBottom) { if (e.cancelable !== false) e.preventDefault(); return; }
-            if (down < 0 && atTop) { if (e.cancelable !== false) e.preventDefault(); return; }
+            if (atTop && down <= 0) { if (e.cancelable !== false) e.preventDefault(); return; }
+            if (atBottom && down >= 0) { if (e.cancelable !== false) e.preventDefault(); return; }
             return;
           }
           if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
@@ -1978,6 +1978,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             document.body.style.overflow = 'hidden';
             document.addEventListener('touchmove', handler, { passive: false });
             document.addEventListener('wheel', handler, { passive: false });
+            if (!window.__sbTouchReset) {
+              window.__sbTouchReset = 1;
+              document.addEventListener('touchstart', function (e) {
+                var _sc = e.target && e.target.closest ? e.target.closest(SEL) : null;
+                if (_sc) _sc.__sbLastY = null;
+              }, { passive: true });
+            }
           } else {
             document.body.style.overflow = '';
             document.removeEventListener('touchmove', handler);
@@ -2316,7 +2323,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       var u = loginUser.value.trim();
       var p = loginPass.value;
       console.log('[登录] 1.获取输入', u, p ? '***' : '(空)');
-      if (!u || !p) { toast('请输入账号和密码', 'error'); return; }
+      if (!u || !p) { if (window.showAlert) window.showAlert('请输入账号和密码'); else toast('请输入账号和密码', 'error'); return; }
       loginBtn.disabled = true;
       loginBtn.textContent = '登录中…';
       console.log('[登录] 2.发起请求 POST api/admin/login');
@@ -2331,11 +2338,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             catch (e) { console.log('[登录] showMain异常，reload兜底', e); setTimeout(function () { location.reload(); }, 300); }
           } else {
             toast(res.msg || '登录失败', 'error');
+            if (window.showAlert) window.showAlert(res.msg || '登录失败');
             console.log('[登录] 4.登录失败：', res.msg, 'HTTP=', res._status);
             var _local = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (_local) { toast('本地预览没有后端服务，登录无法完成：请部署到线上，或在项目目录运行 npx wrangler dev', 'error'); loginTip.textContent = '本地预览模式：无后端接口，请部署线上或运行 wrangler dev'; }
-            else if (res._status === 429) { toast(res.msg || '尝试次数过多，请稍后再试', 'error'); loginTip.textContent = res.msg || ''; }
-            else { toast(res.msg || '登录失败', 'error'); loginTip.textContent = '登录失败：' + (res.msg || ('HTTP ' + (res._status || '网络错误'))); }
+            if (_local) { toast('本地预览没有后端服务，登录无法完成：请部署到线上，或在项目目录运行 npx wrangler dev', 'error'); if (window.showAlert) window.showAlert('本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev'); loginTip.textContent = '本地预览模式：无后端接口，请部署线上或运行 wrangler dev'; }
+            else if (res._status === 429) { toast(res.msg || '尝试次数过多，请稍后再试', 'error'); if (window.showAlert) window.showAlert(res.msg || '尝试次数过多，请稍后再试'); loginTip.textContent = res.msg || ''; }
+            else { toast(res.msg || '登录失败', 'error'); if (window.showAlert) window.showAlert(res.msg || '登录失败'); loginTip.textContent = '登录失败：' + (res.msg || ('HTTP ' + (res._status || '网络错误'))); }
           }
         })
         .finally(function () {
@@ -5026,15 +5034,15 @@ refreshCatCnts();
       var oldPwd = document.getElementById('oldPwd').value;
       var newPwd = document.getElementById('newPwd').value;
       var confirmPwd = document.getElementById('confirmPwd').value;
-      if (!oldPwd || !newPwd || !confirmPwd) { toast('请填写完整密码信息', 'error'); return; }
-      if (newPwd !== confirmPwd) { toast('两次输入的新密码不一致', 'error'); return; }
-      toast('密码修改成功', 'success'); pwdMask.classList.remove('open'); api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
+      if (!oldPwd || !newPwd || !confirmPwd) { if (window.showAlert) window.showAlert('请填写完整密码信息'); else toast('请填写完整密码信息', 'error'); return; }
+      if (newPwd !== confirmPwd) { if (window.showAlert) window.showAlert('两次输入的新密码不一致'); else toast('两次输入的新密码不一致', 'error'); return; }
+      api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
         .then(function (res) {
           if (res && res.ok) {
             toast('密码修改成功', 'success');
             pwdMask.classList.remove('open');
           } else {
-            toast(res.msg || '修改失败', 'error');
+            if (window.showAlert) window.showAlert(res.msg || '修改失败（原密码可能不正确）'); else toast(res.msg || '修改失败', 'error');
           }
         });
     });
@@ -5344,7 +5352,7 @@ refreshCatCnts();
     if (!u || !p || !btn) return;
     var uv = (u.value || '').trim();
     var pv = p.value || '';
-    if (!uv || !pv) { alert('请输入账号和密码'); return; }
+    if (!uv || !pv) { if (window.showAlert) window.showAlert('请输入账号和密码'); else alert('请输入账号和密码'); return; }
     btn.disabled = true; btn.textContent = '登录中…';
     fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: uv, password: pv }) })
       .then(function (r) { return r.json(); })
@@ -5352,9 +5360,9 @@ refreshCatCnts();
         if (res && res.ok) {
           try { localStorage.setItem('wnzyq_token', res.token); } catch (e) {}
           window.location.reload();
-        } else { alert((res && res.msg) || '登录失败'); }
+        } else { if (window.showAlert) window.showAlert((res && res.msg) || '登录失败'); else alert((res && res.msg) || '登录失败'); }
       })
-      .catch(function () { var _l = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; alert(_l ? '本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev' : '无法连接后端，请确认已部署到 Cloudflare'); })
+      .catch(function () { var _l = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; var _m = _l ? '本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev' : '无法连接后端，请确认已部署到 Cloudflare'; if (window.showAlert) window.showAlert(_m); else alert(_m); })
       .then(function () { btn.disabled = false; btn.textContent = '登 录'; });
   };
   </script>

@@ -184,14 +184,37 @@ window.__uiCommonLoaded = true;
     return el;
   };
 
+  // ===== 全站统一提示弹窗（标题 + 内容 + 底部单个"确定"键）：密码错误/操作失败/成功提示等一律走它，复用同一套弹窗样式 =====
+  window.showAlert = function (msg, title) {
+    try {
+      var mask = document.createElement('div');
+      mask.className = 'modal-mask alert-mask open';
+      mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:10060;display:flex;align-items:center;justify-content:center;padding:16px;';
+      mask.innerHTML =
+        '<div class="modal-box" style="background:#fff;border-radius:14px;width:100%;max-width:400px;padding:26px 22px;position:relative;text-align:center;max-height:84vh;overflow-y:auto;">' +
+          '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;">' + (title || '提示') + '</div>' +
+          '<div style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;">' + String(msg == null ? '' : msg) + '</div>' +
+          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;">确定</button></div>' +
+        '</div>';
+      document.body.appendChild(mask);
+      var close = function () {
+        try { document.body.removeChild(mask); } catch (e) {}
+        if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
+      };
+      mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
+      var ok = mask.querySelector('.alert-ok');
+      if (ok) ok.addEventListener('click', close);
+      window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
+    } catch (e) { /* 弹窗失败时回退系统 alert，保证提示不丢失 */ try { window.alert(msg); } catch (e2) {} }
+  };
+
   // ===== 全站统一滚动穿透锁定（弹窗打开锁背景、关闭恢复；幂等，手机端 touchmove 拦截） =====
   var __SB_SCROLL_SEL = '.modal-box,.ann-box,.kf-box,.share-box,.lb-box,.rte-editor,.dt-pop,.stat-table-wrap,.cat-picker-panel,.ann-list,.ann-body,.modal-scroll,.scroll-area,.modal-media,.lb-media';
   var __sbBlockHandler = function (e) {
     var t = e.target;
     var sc = t && t.closest ? t.closest(__SB_SCROLL_SEL) : null;
     if (sc) {
-      // 弹窗内可滚动容器：中间区域放行；已到顶继续上推 / 已到底继续下拉时锁住，杜绝边界处链式穿透到背景
-      // down：内容滚动方向（向下=1，向上=-1）；touch 用 clientY 差值，wheel 用 deltaY，两者方向统一
+      // down：内容滚动方向（向下=1，向上=-1，未知=0）；touch 用 clientY 差值，wheel 用 deltaY，两者方向统一
       var down = 0;
       if (e.touches && e.touches[0]) {
         if (sc.__sbLastY != null) down = e.touches[0].clientY < sc.__sbLastY ? 1 : (e.touches[0].clientY > sc.__sbLastY ? -1 : 0);
@@ -203,8 +226,9 @@ window.__uiCommonLoaded = true;
       var atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
       var canScroll = sc.scrollHeight > sc.clientHeight + 1;
       if (!canScroll) { if (e.cancelable !== false) e.preventDefault(); return; } // 容器本身不可滚 → 一律拦截
-      if (down > 0 && atBottom) { if (e.cancelable !== false) e.preventDefault(); return; } // 到底继续下拉 → 锁
-      if (down < 0 && atTop) { if (e.cancelable !== false) e.preventDefault(); return; } // 到顶继续上推 → 锁
+      // 边界保守拦截：方向未知(down=0，如切换公告项后首次滑动)时只要在边界就锁住，杜绝首次滑动穿透到背景
+      if (atTop && down <= 0) { if (e.cancelable !== false) e.preventDefault(); return; }
+      if (atBottom && down >= 0) { if (e.cancelable !== false) e.preventDefault(); return; }
       return; // 中间区域 → 放行
     }
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return; // 输入框/编辑器放行
@@ -217,6 +241,14 @@ window.__uiCommonLoaded = true;
       document.body.style.overflow = 'hidden';
       document.addEventListener('touchmove', __sbBlockHandler, { passive: false });
       document.addEventListener('wheel', __sbBlockHandler, { passive: false });
+      // 每轮触摸开始时重置滚动位置记录：切换弹窗内容（如公告项）后首次滑动方向不被旧记录误导
+      if (!window.__sbTouchReset) {
+        window.__sbTouchReset = 1;
+        document.addEventListener('touchstart', function (e) {
+          var _sc = e.target && e.target.closest ? e.target.closest(__SB_SCROLL_SEL) : null;
+          if (_sc) _sc.__sbLastY = null;
+        }, { passive: true });
+      }
     } else {
       document.body.style.overflow = '';
       document.removeEventListener('touchmove', __sbBlockHandler);
@@ -224,7 +256,7 @@ window.__uiCommonLoaded = true;
     }
   };
   // 弹窗开关自动锁定背景滚动（MutationObserver 监听 .open，一处代码全站生效：商品/公告/分享/客服/放大预览/管理后台全部弹窗）
-  var __SB_MASK_SEL = '.modal-mask.open, .kf-mask.open, .lb.open, .lightbox.open, .share-mask.open, .confirm-mask.open';
+  var __SB_MASK_SEL = '.modal-mask.open, .kf-mask.open, .lb.open, .lightbox.open, .share-mask.open, .confirm-mask.open, .alert-mask.open';
   // 统一重算背景锁：还有任意弹窗开着就保持锁定，全部关闭才解锁（多弹窗叠加、任意顺序关闭都正确，幂等）
   window.syncBodyLock = function () {
     var anyOpen = document.querySelector(__SB_MASK_SEL);

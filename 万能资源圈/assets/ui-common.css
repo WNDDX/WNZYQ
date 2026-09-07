@@ -206,5 +206,5 @@
   height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain;
 }
 .modal-cover[src^="data:image/svg+xml"], .preview-cover[src^="data:image/svg+xml"] {
-  aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px; object-fit: contain; width: calc(100% - 32px); margin: 16px 16px 0;
+  aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px !important; object-fit: contain !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important;
 }

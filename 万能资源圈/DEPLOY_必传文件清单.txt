@@ -1,0 +1,39 @@
+【万能资源圈 · 本次修复部署清单】
+（2026-09-08 第 11 批：全面复查修复 + 新增 3 处真 bug 修复）
+
+===== 本次新修改的文件（3 个）=====
+1. assets/ui-common.js ← 修复：提示弹窗 showAlert 缺 .open 类导致"提示弹窗与其他弹窗叠加时，关闭提示会错误解锁背景滚动"（已加 open 类 + 滚动锁统计补全 .alert-mask.open）
+2. index.html ← 修复：导航页"交流群聊"弹窗仍残留"跳转-加入交流群聊"多余按键（用户早已要求去掉，本地一直没改彻底）——现在只显示二维码+提示+关闭×，与公众号讯弹窗一致
+3. shop.html ← 加固：商品弹窗封面"加载中"状态尺寸硬性锁定（16:9 + 宽度与成功/失败态完全一致，杜绝任何顺序变化下弹窗跳动）
+
+===== 必须重新上传的文件（全量清单，缺一不可）=====
+上传时选择整个文件夹：D:\万能资源圈（发卡网）\万能资源圈
+  index.html / shop.html / admin.html / error.html
+  config.js / sw.js / manifest.json / favicon.ico / _headers / _redirects
+  assets/ui-common.js、assets/ui-common.css
+  assets/images/logo.png、kefu.png、qun.png、gzh.png
+  functions/ 整个目录（[[path]].js、_utils.js、_middleware.js、api/ 全部）
+上传前建议删除（非网站文件）：.wrangler/ 文件夹、README.md
+
+===== 本轮全面复查结论（已逐项核对代码）=====
+✅ 弹窗标题居中：咨询客服/交流群聊/公众号讯/管理页全部弹窗（padding 左右对称）
+✅ 滚动轮：内容多弹窗内部滚动；切换公告项后立即滑动正常；边界锁住不串背景
+✅ 封面占位符：成功/加载中/失败三态尺寸完全一致，弹窗不跳动
+✅ 错误提示统一弹窗：登录/修改密码错误 → 居中弹窗 + 底部单个"确定"键
+✅ 公告空态："该公告暂无内容"上下左右完全居中
+✅ "联系客服"→"咨询客服"全站替换完成（0 残留）
+✅ 交流群聊弹窗多余跳转键已删除
+✅ 错误页文案定稿（①地址有误 ②页面已删除 ③服务暂不可用）
+✅ 数据只保留近 30 天（统计/会话/登录尝试三表自动清理）
+✅ 导出资源数据按键在最右边
+✅ 公告每次进入只弹一次（session 记忆），弹窗未关闭不再重复弹
+✅ 弹窗底部按键 N 等分 + 统一间距（公共样式）
+✅ 下拉刷新（资源页）+ 浏览器返回不白屏（pageshow 防护）
+✅ 修改密码不再"未请求就提示成功"
+
+===== 线上最新版验证（部署后 30 秒做一次）=====
+1. https://wnzyq.pages.dev/assets/ui-common.js → 搜 showAlert（新版才有）
+2. https://wnzyq.pages.dev/shop → 搜 ann-empty（新版才有）
+3. https://wnzyq.pages.dev/index → 搜 "交流群聊"（新版 openGroup 无跳转键字样）
+4. https://wnzyq.pages.dev/admin → 搜 showAlert（新版才有）
+搜不到 = 没传最新版，硬刷新（Ctrl+Shift+R）后重传
