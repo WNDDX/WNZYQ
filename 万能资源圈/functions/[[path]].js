@@ -69,14 +69,26 @@ async function servePage(context, file) {
   return serveError(context);
 }
 
-/** 静态资源兜底：先查根部署路径，再查子目录同名资源；缺失时返回真正 404（正确 MIME，绝不返回 HTML，防止错误页被当 JS/CSS 解析） */
+/** 静态资源兜底：先查根部署路径，再查子目录同名资源；缺失时返回真正 404（正确 MIME，绝不返回 HTML，防止错误页被当 JS/CSS 解析）
+ *  图片/字体/视频加长缓存（同 URL 全站复用浏览器缓存，跨页秒开；更新文件用新文件名即可强制生效） */
+const LONG_CACHE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'webp', 'woff', 'woff2', 'ttf'];
+const VIDEO_CACHE_EXTS = ['mp4', 'webm', 'ogv'];
 async function serveAsset(context, path) {
   const candidates = [path, '/万能资源圈' + path];
   for (const u of candidates) {
     try {
       const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
       if (res && res.ok) {
-        return new Response(res.body, { status: 200, headers: res.headers });
+        const ext = (path.split('.').pop() || '').toLowerCase();
+        const headers = new Headers(res.headers);
+        if (LONG_CACHE_EXTS.indexOf(ext) !== -1) {
+          // 图片/字体：7 天强缓存（同一 URL 全站/跨页直接用浏览器缓存，不再发请求）
+          headers.set('cache-control', 'public, max-age=604800, immutable');
+        } else if (VIDEO_CACHE_EXTS.indexOf(ext) !== -1) {
+          // 视频：1 天缓存（文件大，减少重复下载）
+          headers.set('cache-control', 'public, max-age=86400');
+        }
+        return new Response(res.body, { status: 200, headers });
       }
     } catch (e) {
       /* 继续尝试下一个候选路径 */
@@ -103,6 +115,17 @@ export async function onRequestGet(context) {
   // 静态资源兜底（子目录部署兼容）：根级 /assets/* /images/* /favicon.ico /manifest.json /sw.js 等
   if (path.startsWith('/assets/') || path.startsWith('/images/') || path === '/favicon.ico' || path === '/manifest.json' || path === '/sw.js') {
     return serveAsset(context, path);
+  }
+  // config.js：存在则正常返回；缺失时返回空配置（页面自动用内置默认，杜绝 console 404 报错）
+  if (path === '/config.js') {
+    const res = await serveAsset(context, path);
+    if (res.status === 404) {
+      return new Response('window.SHOP_CONFIG = window.SHOP_CONFIG || {};', {
+        status: 200,
+        headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' }
+      });
+    }
+    return res;
   }
   const name = path.split('/').pop(); // 取最后一段作为页面名
   if (PAGES[name]) {

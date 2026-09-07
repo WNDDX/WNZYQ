@@ -23,7 +23,7 @@
  * ============================================
  */
 
-const SHOP_CONFIG = {
+window.SHOP_CONFIG = {
   // —— 平台信息 ——
   shopName: "万能资源圈",
   shopLogo: "/assets/images/logo.png",

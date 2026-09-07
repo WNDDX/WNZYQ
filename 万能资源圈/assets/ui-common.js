@@ -82,6 +82,29 @@ window.__uiCommonLoaded = true;
   'use strict';
   var KF_QR_FAIL = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
 
+  // 背景视频显隐管理：原生 <video> 在移动端浏览器层级高于一切 DOM（即使 z-index 更大也盖不住），
+  // 打开客服弹窗必须同时 暂停+隐藏 背景视频，关闭后恢复，否则视频会压在客服弹窗之上
+  var __kfHiddenVideos = [];
+  function __hideBgVideos(hide) {
+    try {
+      document.querySelectorAll('video').forEach(function (v) {
+        if (v.closest('.kf-box')) return;
+        if (hide) {
+          if (!v.dataset.__kfHid) {
+            v.dataset.__kfHid = '1';
+            __kfHiddenVideos.push(v);
+            try { v.pause(); } catch (e) {}
+            v.style.visibility = 'hidden';
+          }
+        } else if (v.dataset.__kfHid) {
+          v.dataset.__kfHid = '';
+          v.style.visibility = '';
+        }
+      });
+      if (!hide) __kfHiddenVideos = [];
+    } catch (e) {}
+  }
+
   function ensureKfModal() {
     if (document.getElementById('kfMask')) return;
     var m = document.createElement('div');
@@ -102,6 +125,7 @@ window.__uiCommonLoaded = true;
     document.body.appendChild(m);
     function close() {
       m.classList.remove('open');
+      __hideBgVideos(false);
       // 不直接解锁：若还有其他弹窗（如商品弹窗）开着，必须保持背景锁定
       if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overflow = '');
     }
@@ -136,7 +160,7 @@ window.__uiCommonLoaded = true;
     var mask = document.getElementById('kfMask');
     if (!mask.classList.contains('open')) {
       mask.classList.add('open');
-      try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('.kf-box')) { try { v.pause(); } catch (e) {} } }); } catch (e) {}
+      __hideBgVideos(true);
       window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     }
   };
@@ -166,17 +190,22 @@ window.__uiCommonLoaded = true;
     var t = e.target;
     var sc = t && t.closest ? t.closest(__SB_SCROLL_SEL) : null;
     if (sc) {
-      // 弹窗内可滚动容器：中间区域放行；已到顶继续下拉 / 已到底继续上推时锁住，杜绝边界处链式穿透到背景
-      var dy = 0;
+      // 弹窗内可滚动容器：中间区域放行；已到顶继续上推 / 已到底继续下拉时锁住，杜绝边界处链式穿透到背景
+      // down：内容滚动方向（向下=1，向上=-1）；touch 用 clientY 差值，wheel 用 deltaY，两者方向统一
+      var down = 0;
       if (e.touches && e.touches[0]) {
-        if (sc.__sbLastY != null) dy = e.touches[0].clientY - sc.__sbLastY;
+        if (sc.__sbLastY != null) down = e.touches[0].clientY < sc.__sbLastY ? 1 : (e.touches[0].clientY > sc.__sbLastY ? -1 : 0);
         sc.__sbLastY = e.touches[0].clientY;
+      } else if (typeof e.deltaY === 'number') {
+        down = e.deltaY > 0 ? 1 : (e.deltaY < 0 ? -1 : 0);
       }
       var atTop = sc.scrollTop <= 0;
       var atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
-      if (dy > 0 && atTop) { if (e.cancelable !== false) e.preventDefault(); return; }
-      if (dy < 0 && atBottom) { if (e.cancelable !== false) e.preventDefault(); return; }
-      if (sc.scrollHeight > sc.clientHeight + 1) return;
+      var canScroll = sc.scrollHeight > sc.clientHeight + 1;
+      if (!canScroll) { if (e.cancelable !== false) e.preventDefault(); return; } // 容器本身不可滚 → 一律拦截
+      if (down > 0 && atBottom) { if (e.cancelable !== false) e.preventDefault(); return; } // 到底继续下拉 → 锁
+      if (down < 0 && atTop) { if (e.cancelable !== false) e.preventDefault(); return; } // 到顶继续上推 → 锁
+      return; // 中间区域 → 放行
     }
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return; // 输入框/编辑器放行
     if (e.cancelable === false) return;

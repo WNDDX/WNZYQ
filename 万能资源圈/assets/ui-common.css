@@ -56,7 +56,7 @@
   animation: kfBoxIn 0.25s ease;
 }
 @keyframes kfBoxIn { from { opacity: 0; } to { opacity: 1; } }
-.kf-title { font-size: 22px; color: #222; margin-bottom: 16px; letter-spacing: 1.3px; padding-right: 30px; }
+.kf-title { font-size: 22px; color: #222; margin-bottom: 16px; letter-spacing: 1.3px; padding: 0 34px; text-align: center; }
 .kf-qr {
   width: 250px; height: 250px; max-width: 100%; border: 1px solid #eee;
   margin: 0 auto 14px; position: relative; display: flex; align-items: center;
@@ -67,6 +67,8 @@
 /* 二维码统一出场动画（每次打开客服弹窗由 ui-common.js 重放，全站时序/动效完全一致） */
 @keyframes kfQrIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 .kf-qr img.kf-qr-in { animation: kfQrIn 0.32s ease; }
+/* 二维码统一出场动画（导航页公众号/群聊二维码与客服二维码同一套动效，全站复用） */
+#modalImg.kf-qr-in, .modal-qr-img.kf-qr-in { animation: kfQrIn 0.32s ease; }
 .kf-tip { font-size: 16px; color: #666; margin-bottom: 16px; letter-spacing: 0.9px; word-break: break-word; }
 .kf-jump {
   width: 80%; margin: 0 auto 14px; border: none; border-radius: 8px; padding: 11px 32px;
@@ -198,3 +200,11 @@
 /* 富文本内媒体（尺寸未知不锁比例）：统一加载底色，避免加载中空白塌陷的突兀跳动 */
 .modal-detail img, .resource-content img, .ann-body img, .rte-editor img, .variant-detail img, .preview-detail img { background: #f5f5f5; }
 .modal-detail video, .resource-content video, .ann-body video, .rte-editor video, .variant-detail video, .preview-detail video { background: #000; }
+
+/* ===== 全站统一加载失败占位图（感叹号）尺寸：固定 16:9 + 最小高度，任何位置都不撑破容器、不引起弹窗高度跳动 ===== */
+.modal-box img[src^="data:image/svg+xml"], .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] {
+  height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain;
+}
+.modal-cover[src^="data:image/svg+xml"], .preview-cover[src^="data:image/svg+xml"] {
+  aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px; object-fit: contain; width: calc(100% - 32px); margin: 16px 16px 0;
+}

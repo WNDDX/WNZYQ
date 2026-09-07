@@ -204,7 +204,7 @@
       text-align: center; animation: modalIn 0.25s ease;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
-    .share-title { font-size: 18px; font-weight: 600; color: #222; margin-bottom: 10px; letter-spacing: 1px; }
+    .share-title { font-size: 18px; font-weight: 600; color: #222; margin-bottom: 10px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
     .share-tip { font-size: 14px; color: #666; margin-bottom: 14px; }
     .share-link {
       background: #f5f7fa; border: 1px solid #e8e8e8; border-radius: 8px;
@@ -367,7 +367,8 @@
     /* 感叹号占位自适应：容器内完整显示、居中、淡白填充、不溢出 */
     img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
     /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
-    .modal-box img[src^="data:image/svg+xml"]:not(.modal-cover), .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; }
+    .modal-box img[src^="data:image/svg+xml"], .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain; }
+    .modal-cover[src^="data:image/svg+xml"] { aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px; object-fit: contain; width: calc(100% - 32px); margin: 16px 16px 0; }
     .view-btn.active {
       background: #fff !important;
       color: #1E88E5 !important;
@@ -1127,7 +1128,7 @@
     .product-card { animation: cardIn 0.15s ease; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
     .modal-mask #modalBox { max-height: 84vh; }
-    .modal-mask#annModal > .ann-box { max-height: 80vh; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
+    .modal-mask#annModal > .ann-box { height: min(72vh, 600px) !important; max-height: none !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
     .modal-mask#annModal > .ann-box > * { box-sizing: border-box; max-width: 100%; }
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; box-sizing: border-box; }
@@ -1317,7 +1318,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     </svg>
   </button>
 
-  <script src="/config.js"></script>
+  <script>var SHOP_CONFIG = window.SHOP_CONFIG || { shopName: '万能资源圈', shopLogo: '/assets/images/logo.png', defaultContactUrl: '', categories: [{ id: 0, name: '全部', parent_id: 0 }], productList: [] };</script>
+  <script>(function () { var s = document.createElement('script'); s.src = '/config.js'; s.onerror = function () {}; document.head.appendChild(s); })();</script>
   <script>
     /* ============================================
        资源页逻辑
@@ -1382,6 +1384,51 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
     var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+
+    // 内联兜底：公共 ui-common.js 未加载时，提供同一套滚动穿透锁（touch+wheel 双拦截），
+    // 保证商品弹窗/视频弹窗/客服弹窗内滑动不穿透到背景页面；公共脚本加载后此定义被跳过（幂等）
+    if (!window.lockBodyScroll) {
+      (function () {
+        var SEL = '.modal-box,.ann-box,.kf-box,.share-box,.lb-box,.rte-editor,.dt-pop,.stat-table-wrap,.cat-picker-panel,.ann-list,.ann-body,.modal-scroll,.scroll-area,.modal-media,.lb-media';
+        var handler = function (e) {
+          var t = e.target;
+          var sc = t && t.closest ? t.closest(SEL) : null;
+          if (sc) {
+            var down = 0;
+            if (e.touches && e.touches[0]) {
+              if (sc.__sbLastY != null) down = e.touches[0].clientY < sc.__sbLastY ? 1 : (e.touches[0].clientY > sc.__sbLastY ? -1 : 0);
+              sc.__sbLastY = e.touches[0].clientY;
+            } else if (typeof e.deltaY === 'number') {
+              down = e.deltaY > 0 ? 1 : (e.deltaY < 0 ? -1 : 0);
+            }
+            var atTop = sc.scrollTop <= 0, atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
+            if (sc.scrollHeight <= sc.clientHeight + 1) { if (e.cancelable !== false) e.preventDefault(); return; }
+            if (down > 0 && atBottom) { if (e.cancelable !== false) e.preventDefault(); return; }
+            if (down < 0 && atTop) { if (e.cancelable !== false) e.preventDefault(); return; }
+            return;
+          }
+          if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+          if (e.cancelable === false) return;
+          e.preventDefault();
+        };
+        window.lockBodyScroll = function (lock) {
+          if (lock) {
+            try { document.querySelectorAll(SEL).forEach(function (el) { el.__sbLastY = null; }); } catch (e) {}
+            document.body.style.overflow = 'hidden';
+            document.addEventListener('touchmove', handler, { passive: false });
+            document.addEventListener('wheel', handler, { passive: false });
+          } else {
+            document.body.style.overflow = '';
+            document.removeEventListener('touchmove', handler);
+            document.removeEventListener('wheel', handler);
+          }
+        };
+        window.syncBodyLock = function () {
+          var anyOpen = document.querySelector('.modal-mask.open') || document.querySelector('.kf-mask.open') || document.querySelector('.lb.open') || document.querySelector('.lightbox.open') || document.querySelector('.share-mask.open') || document.querySelector('.confirm-mask.open');
+          window.lockBodyScroll(!!anyOpen);
+        };
+      })();
+    }
 
     // logo 加载失败兜底：替换为感叹号占位（与全站一致）
     window.__logoFail = function (im) { try { im.onerror = null; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) {} };
@@ -2140,6 +2187,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     }
 
     // 咨询客服兜底弹窗：ui-common.js 加载失败时使用（样式对齐导航页，杜绝直达链接）
+    // 关闭兜底客服：恢复背景视频显示并隐藏弹窗（与公共客服弹窗行为一致）
+    window.__kfFbClose = function () {
+      var m = document.getElementById('kfFallback');
+      if (m) m.style.display = 'none';
+      try { document.querySelectorAll('video').forEach(function (v) { if (v.dataset.__kfFbHid) { v.dataset.__kfFbHid = ''; v.style.visibility = ''; } }); } catch (e) {}
+      if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
+    };
     function openContactFallback(url) {
       var m = document.getElementById('kfFallback');
       if (!m) {
@@ -2147,21 +2201,24 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         m.id = 'kfFallback';
         m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;';
         m.innerHTML = '<div style="background:#fff;border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
-          '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="document.getElementById(\'kfFallback\').style.display=\'none\'">×</button>' +
-          '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;">咨询客服</div>' +
+          '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
+          '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
           '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
-          '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="document.getElementById(\'kfFallback\').style.display=\'none\'">关闭</button>' +
+          '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
           '</div>';
         document.body.appendChild(m);
-        m.addEventListener('click', function (e) { if (e.target === m) m.style.display = 'none'; });
+        m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); });
         var im = document.getElementById('kfFallbackImg');
         if (im) im.onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
       }
       var jb = m.querySelector('button[data-u]');
       if (jb) jb.setAttribute('data-u', url || '');
+      // 打开客服：隐藏并暂停背景视频（原生视频层级高于一切，仅暂停仍会盖住弹窗）
+      try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
       m.style.display = 'flex';
+      if (window.lockBodyScroll) window.lockBodyScroll(true);
     }
 
     // 咨询客服按钮：优先类型链接 → 资源链接 → 全局默认
@@ -2709,6 +2766,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     function __shopBackGuard() {
       setTimeout(function () { try { var grid = document.getElementById('productGrid'); if (grid && !grid.children.length && typeof initData === 'function') initData(); } catch (err) {} }, 60);
     }
+    // 内联兜底：公共脚本未加载时 bfcache 恢复也会强制刷新（返回/前进页面状态混乱导致白屏的唯一根治）
+    window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
     window.addEventListener('pageshow', function (e) { if (e.persisted) return; __shopBackGuard(); });
     window.addEventListener('popstate', __shopBackGuard);
     var savedScroll = parseInt(localStorage.getItem(SCROLL_KEY) || '0', 10);
