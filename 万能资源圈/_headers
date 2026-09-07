@@ -1,0 +1,48 @@
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+# API 接口不缓存
+/api/*
+  Cache-Control: no-store, no-cache, must-revalidate
+  X-Content-Type-Options: nosniff
+
+# Service Worker 与清单必须每次校验，保证新版本立即被发现并激活
+/sw.js
+  Cache-Control: no-cache, must-revalidate
+/manifest.json
+  Cache-Control: no-cache, must-revalidate
+
+# JS/CSS 不缓存（业务代码频繁更新，避免浏览器永久用旧版）
+/assets/*.js
+  Cache-Control: no-cache, must-revalidate
+/assets/*.css
+  Cache-Control: no-cache, must-revalidate
+
+# 其他静态资源（图片等）缓存30天
+/assets/*
+  Cache-Control: public, max-age=2592000
+
+/*.png
+  Cache-Control: public, max-age=2592000
+
+/*.ico
+  Cache-Control: public, max-age=2592000
+
+# HTML 不缓存（确保更新即时生效）
+/*.html
+  Cache-Control: no-cache, must-revalidate
+
+# 无后缀 clean URL 页面同样不缓存（/shop /admin /index 等）
+/
+  Cache-Control: no-cache, must-revalidate
+/shop
+  Cache-Control: no-cache, must-revalidate
+/admin
+  Cache-Control: no-cache, must-revalidate
+/index
+  Cache-Control: no-cache, must-revalidate
+/error
+  Cache-Control: no-cache, must-revalidate

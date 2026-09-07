@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>万能资源圈・错误</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="stylesheet" href="/assets/ui-common.css?v=8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;}
+*,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
+html{scrollbar-gutter:stable;}body{background:linear-gradient(180deg,#1E88E5 0%,#64B5F6 48%,#BBDEFB 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.box{text-align:center;color:#fff;max-width:400px;}
+.code{font-size:80px;font-weight:700;opacity:0.9;margin-bottom:10px;}
+.title{font-size:24px;font-weight:600;margin-bottom:12px;}
+.desc{font-size:15px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius:25px;text-decoration:none;font-size:16px;font-weight:600;transition:all 0.2s;}
+.btn:hover{transform:scale(1.05);box-shadow:0 4px 15px rgba(0,0,0,0.2);}
+.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 20px;opacity:0;overflow:hidden;background:transparent;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease;}.logo:hover{box-shadow:0 0 0 3px rgba(255,255,255,0.45);}.logo:active{transform:scale(0.9);opacity:0.8;}
+.logo img{width:100%;height:100%;object-fit:cover;}
+img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
+html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
+.prt{position:fixed;top:0;left:0;right:0;height:0;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;z-index:99;transition:height .2s ease;pointer-events:none;}
+.prt.show{height:46px;}
+.prt span{font-size:12px;color:#fff;background:rgba(30,136,229,.92);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;}
+.prt i{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.6);border-top-color:#fff;border-radius:50%;animation:prtspin .8s linear infinite;}
+@keyframes prtspin{to{transform:rotate(360deg);}}
+/* 全系统统一滚动条：宽度、颜色、圆角、与边框距离一致 */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(144,158,180,0.5); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(120,135,160,0.7); background-clip: padding-box; }
+* { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
+@media (max-width: 600px) {
+  .code { font-size: 52px; }
+  .title { font-size: 20px; }
+  .desc { font-size: 14px; }
+  .logo { width: 80px; height: 80px; margin-bottom: 16px; }
+  .box { max-width: 100%; }
+  .btn { padding: 10px 26px; font-size: 15px; }
+}
+    .logo-enter{animation:logoFadeIn 0.8s ease forwards;}
+    @keyframes logoFadeIn{from{opacity:0;transform:scale(0.8);}to{opacity:1;transform:scale(1);}}
+</style>
+</head>
+<body>
+<div class="box">
+  <a class="logo" href="index" title="返回导航" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)"><img id="errLogo" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></a>
+  <div class="code" id="errorCode">错误</div>
+  <div class="title" id="errorTitle">页面访问异常</div>
+  <div class="desc" id="errorDesc">抱歉！您访问的页面出现了问题<br>①地址有误　②页面已删除　③服务暂不可用<br>请点击【返回导航】继续浏览</div>
+  <a href="index" class="btn" id="errBack">返回导航</a>
+</div>
+<script>
+// 根据URL参数显示不同的错误信息
+var params = new URLSearchParams(window.location.search);
+var code = params.get('code') || '';
+var errorMap = {
+  '400': { title: '请求错误', desc: '你的请求格式不正确，请检查后重试' },
+  '401': { title: '未授权访问', desc: '你没有权限访问此页面，请先登录' },
+  '403': { title: '禁止访问', desc: '服务器拒绝了你的访问请求' },
+  '404': { title: '页面不存在', desc: '抱歉！您访问的页面出现了问题<br>①地址有误 ②页面已删除 ③服务暂不可用<br>请点击【返回导航】继续浏览' },
+  '500': { title: '服务器错误', desc: '服务器内部出现错误，请稍后重试' },
+  '502': { title: '网关错误', desc: '服务器暂时不可用，请稍后重试' },
+  '503': { title: '服务不可用', desc: '服务器正在维护中，请稍后重试' }
+};
+if (false && code && errorMap[code]) {
+  var info = errorMap[code];
+  document.getElementById('errorCode').textContent = code;
+  document.getElementById('errorTitle').textContent = info.title;
+  document.getElementById('errorDesc').innerHTML = info.desc;
+}
+// 智能识别部署根：本站页面部署在「万能资源圈」子目录下，错误页可能从任意路径（含根级 /xxx）进入，
+// 因此返回导航按钮与 logo 需根据当前路径自动计算正确地址，保证任何情况都能跳回导航页。
+(function () {
+  var logo = document.getElementById('errLogo');
+  if (logo) {
+    logo.src = '/assets/images/logo.png'; // 绝对路径，加载失败自动显示感叹号占位
+    logo.onerror = function () { // 加载失败显示统一感叹号占位
+      var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
+      this.onerror = null;
+      this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+      this.style.objectFit = 'contain';
+      this.style.display = 'block';
+    };
+  }
+  var back = document.getElementById('errBack');
+  // 返回导航：探测候选导航页，取第一个能访问的（兼容根部署与子目录部署两种结构）
+  if (back) {
+    var here2 = window.location.pathname || '';
+    var candidates = [];
+    if (here2.indexOf('/万能资源圈/') !== -1) {
+      var dir = here2.substring(0, here2.lastIndexOf('/'));
+      candidates.push(dir + '/index', '/万能资源圈/index');
+    } else {
+      candidates.push('/index', '/万能资源圈/index');
+    }
+    (function tryNext(i) {
+      if (i >= candidates.length) { back.href = candidates[0]; return; }
+      fetch(candidates[i], { method: 'GET' }).then(function (r) {
+        if (r && r.ok) { back.href = candidates[i]; }
+        else { tryNext(i + 1); }
+      }).catch(function () { tryNext(i + 1); });
+    })(0);
+  }
+})();
+// 下拉刷新（与其它三页统一，静默刷新，不阻塞操作）
+(function(){
+  var tip=document.createElement('div');tip.className='prt';
+  tip.innerHTML='<span><i></i><b class="prt-l">下拉刷新</b></span>';document.body.appendChild(tip);
+  var sy=0,sx=0,pulling=false,dist=0,TH=60;
+  document.addEventListener('touchstart',function(e){if((window.scrollY||0)<=0){sy=e.touches[0].clientY;sx=e.touches[0].clientX;pulling=true;dist=0;}},{passive:true});
+  document.addEventListener('touchmove',function(e){if(!pulling)return;var dy=e.touches[0].clientY-sy,dx=e.touches[0].clientX-sx;if(dy>0&&Math.abs(dy)>Math.abs(dx)){dist=Math.min(dy*.5,80);tip.style.height=dist+'px';tip.classList.add('show');tip.querySelector('.prt-l').textContent=dist>TH?'释放立即刷新':'下拉刷新';}},{passive:true});
+  document.addEventListener('touchend',function(){if(!pulling)return;pulling=false;if(dist>TH){tip.querySelector('.prt-l').textContent='正在刷新...';setTimeout(function(){location.reload();},400);}else{tip.classList.remove('show');tip.style.height='0';}dist=0;},{passive:true});
+})();
+</script>
+<script src="/assets/ui-common.js?v=8"></script>
+<script>
+(function () {
+  function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功：请把整个“万能资源圈”文件夹完整重新上传（含 assets、functions、sw.js、config.js）');
+      var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
+      if (!ok) warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
+    }, 800);
+  });
+})();
+</script>
+</body>
+</html>
