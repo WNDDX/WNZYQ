@@ -47,14 +47,13 @@
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页：结构/尺寸/样式/动画一处定义全站生效） ===== */
 .kf-mask {
   position: fixed; inset: 0; background: rgba(0,0,0,0.76); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px;
-  scrollbar-gutter: stable;
 }
 .kf-mask.open { display: flex; animation: kfMaskIn 0.22s ease; }
 @keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
 .kf-box {
   background: #fff; border-radius: 14px; padding: 26px 22px; position: relative;
   max-width: 480px; width: 100%; max-height: 84vh; overflow-y: auto; text-align: center;
-  animation: kfBoxIn 0.25s ease; scrollbar-gutter: stable both-edges;
+  animation: kfBoxIn 0.25s ease;
 }
 @keyframes kfBoxIn { from { opacity: 0; } to { opacity: 1; } }
 .kf-title { font-size: 22px; color: #222; margin-bottom: 16px; letter-spacing: 1.3px; padding-right: 30px; }
@@ -65,6 +64,9 @@
 }
 .kf-qr img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
 .kf-qr img[src^="data:image/svg+xml"] { width: 100%; height: 100%; object-fit: contain !important; }
+/* 二维码统一出场动画（每次打开客服弹窗由 ui-common.js 重放，全站时序/动效完全一致） */
+@keyframes kfQrIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+.kf-qr img.kf-qr-in { animation: kfQrIn 0.32s ease; }
 .kf-tip { font-size: 16px; color: #666; margin-bottom: 16px; letter-spacing: 0.9px; word-break: break-word; }
 .kf-jump {
   width: 80%; margin: 0 auto 14px; border: none; border-radius: 8px; padding: 11px 32px;
@@ -182,3 +184,17 @@
   box-sizing: border-box;
 }
 .kf-jump { width: auto !important; margin: 0 !important; }
+
+/* ===== 弹窗媒体统一稳定（全站复用，禁止各弹窗单独写） =====
+   1) 加载前用 .m-loading 预留 16:9 占位，图片/视频加载完成不会撑开弹窗导致尺寸跳动
+   2) 媒体宽度锁死内容区、box-sizing 统一，右侧不会超出弹窗被遮挡，左右边距对称
+   3) 弹窗仅允许纵向滚动，横向一律裁切，不出现横向滚动条 */
+.modal-box img, .modal-box video, .kf-box img, .ann-box img, .ann-box video, .preview-box img, .preview-box video {
+  max-width: 100%; box-sizing: border-box;
+}
+.m-loading { aspect-ratio: 16 / 9; background: #f5f5f5; border-radius: 8px; width: 100%; }
+.m-loading.is-video { background: #000; }
+.modal-box, .ann-box, .kf-box, .preview-box { overflow-x: hidden; }
+/* 富文本内媒体（尺寸未知不锁比例）：统一加载底色，避免加载中空白塌陷的突兀跳动 */
+.modal-detail img, .resource-content img, .ann-body img, .rte-editor img, .variant-detail img, .preview-detail img { background: #f5f5f5; }
+.modal-detail video, .resource-content video, .ann-body video, .rte-editor video, .variant-detail video, .preview-detail video { background: #000; }

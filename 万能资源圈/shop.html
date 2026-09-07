@@ -1934,6 +1934,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         im.alt = '';
         im.style.cursor = 'zoom-in';
         im.addEventListener('click', function () { openLightbox(url); });
+        if (window.mediaStable) window.mediaStable(im);
         modalMedia.appendChild(im);
       });
       videos.forEach(function (url) {
@@ -1942,6 +1943,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         v.src = url;
         v.controls = true;
         v.playsInline = true;
+        if (window.mediaStable) window.mediaStable(v, true);
         modalMedia.appendChild(v);
       });
 
@@ -2703,10 +2705,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     window.addEventListener('beforeunload', function () {
       localStorage.setItem(SCROLL_KEY, window.scrollY);
     });
-    window.addEventListener('pageshow', function (e) {
-      if (e.persisted) return;
+    // 浏览器返回/回退兜底：bfcache 由 ui-common.js 强制 reload；popstate 与非 persisted pageshow 时，列表为空则重新初始化，杜绝白屏
+    function __shopBackGuard() {
       setTimeout(function () { try { var grid = document.getElementById('productGrid'); if (grid && !grid.children.length && typeof initData === 'function') initData(); } catch (err) {} }, 60);
-    });
+    }
+    window.addEventListener('pageshow', function (e) { if (e.persisted) return; __shopBackGuard(); });
+    window.addEventListener('popstate', __shopBackGuard);
     var savedScroll = parseInt(localStorage.getItem(SCROLL_KEY) || '0', 10);
     if (savedScroll > 0) {
       setTimeout(function () { window.scrollTo(0, savedScroll); }, 100);

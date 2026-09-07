@@ -118,8 +118,12 @@
     ensureKfModal();
     var img = document.getElementById('kfQrImg');
     if (img) {
+      // 二维码统一出场动画：每次打开都重放（先移除→重排→加载完成后播放），全站任何入口时序一致
+      img.classList.remove('kf-qr-in');
       img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; };
+      img.onload = function () { void img.offsetWidth; img.classList.add('kf-qr-in'); };
       img.src = qrImg || 'assets/images/kefu.png';
+      if (img.complete && img.naturalWidth) { void img.offsetWidth; img.classList.add('kf-qr-in'); }
     }
     var tipEl = document.getElementById('kfTip');
     if (tipEl) tipEl.textContent = tip || '长按图片识别-添加人工客服';
@@ -134,6 +138,25 @@
       try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('.kf-box')) { try { v.pause(); } catch (e) {} } }); } catch (e) {}
       window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     }
+  };
+
+  // 公共媒体占位：加载前预留 16:9 高度防止弹窗先小后大；加载完成同一帧用真实宽高比接管（图片已在缓存，无等待撑开感）；失败交给感叹号兜底
+  window.mediaStable = function (el, isVideo, keepRatio) {
+    if (!el) return el;
+    el.classList.add('m-loading');
+    if (isVideo) el.classList.add('is-video');
+    function applyRatio(w, h) {
+      if (!keepRatio && w && h) { try { el.style.aspectRatio = (w / h); } catch (e) {} }
+      el.classList.remove('m-loading', 'is-video');
+    }
+    if (isVideo) {
+      el.addEventListener('loadedmetadata', function () { applyRatio(el.videoWidth, el.videoHeight); }, { once: true });
+    } else {
+      if (el.complete && el.naturalWidth) applyRatio(el.naturalWidth, el.naturalHeight);
+      else el.addEventListener('load', function () { applyRatio(el.naturalWidth, el.naturalHeight); }, { once: true });
+    }
+    el.addEventListener('error', function () { el.classList.remove('m-loading', 'is-video'); }, { once: true });
+    return el;
   };
 
   // ===== 全站统一滚动穿透锁定（弹窗打开锁背景、关闭恢复；幂等，手机端 touchmove 拦截） =====
