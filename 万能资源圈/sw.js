@@ -9,7 +9,7 @@
  *  - /api/ 一律不缓存，始终走网络。
  *  - 任何非 200、或内容类型为 HTML 的 /assets 响应一律不缓存（防止错误页伪装成脚本/样式）。
  */
-const CACHE_NAME = 'wnzyq-v8';
+const CACHE_NAME = 'wnzyq-v9';
 const STATIC_ASSETS = [
   './',
   './index.html',

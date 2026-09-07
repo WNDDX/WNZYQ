@@ -208,74 +208,10 @@ window.__uiCommonLoaded = true;
     } catch (e) { /* 弹窗失败时回退系统 alert，保证提示不丢失 */ try { window.alert(msg); } catch (e2) {} }
   };
 
-  // ===== 全站统一滚动穿透锁定（弹窗打开锁背景、关闭恢复；幂等，手机端 touchmove 拦截） =====
-  var __SB_SCROLL_SEL = '.modal-box,.ann-box,.kf-box,.share-box,.lb-box,.rte-editor,.dt-pop,.stat-table-wrap,.cat-picker-panel,.ann-list,.ann-body,.modal-scroll,.scroll-area,.modal-media,.lb-media';
-  var __sbBlockHandler = function (e) {
-    var t = e.target;
-    var sc = t && t.closest ? t.closest(__SB_SCROLL_SEL) : null;
-    if (sc) {
-      // down：内容滚动方向（向下=1，向上=-1，未知=0）；touch 用 clientY 差值，wheel 用 deltaY，两者方向统一
-      var down = 0;
-      if (e.touches && e.touches[0]) {
-        if (sc.__sbLastY != null) down = e.touches[0].clientY < sc.__sbLastY ? 1 : (e.touches[0].clientY > sc.__sbLastY ? -1 : 0);
-        sc.__sbLastY = e.touches[0].clientY;
-      } else if (typeof e.deltaY === 'number') {
-        down = e.deltaY > 0 ? 1 : (e.deltaY < 0 ? -1 : 0);
-      }
-      var atTop = sc.scrollTop <= 0;
-      var atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
-      var canScroll = sc.scrollHeight > sc.clientHeight + 1;
-      if (!canScroll) { if (e.cancelable !== false) e.preventDefault(); return; } // 容器本身不可滚 → 一律拦截
-      // 边界保守拦截：方向未知(down=0，如切换公告项后首次滑动)时只要在边界就锁住，杜绝首次滑动穿透到背景
-      if (atTop && down <= 0) { if (e.cancelable !== false) e.preventDefault(); return; }
-      if (atBottom && down >= 0) { if (e.cancelable !== false) e.preventDefault(); return; }
-      return; // 中间区域 → 放行
-    }
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return; // 输入框/编辑器放行
-    if (e.cancelable === false) return;
-    e.preventDefault();
-  };
-  window.lockBodyScroll = function (lock) {
-    if (lock) {
-      try { document.querySelectorAll(__SB_SCROLL_SEL).forEach(function (el) { el.__sbLastY = null; }); } catch (e) {}
-      document.body.style.overflow = 'hidden';
-      document.addEventListener('touchmove', __sbBlockHandler, { passive: false });
-      document.addEventListener('wheel', __sbBlockHandler, { passive: false });
-      // 每轮触摸开始时重置滚动位置记录：切换弹窗内容（如公告项）后首次滑动方向不被旧记录误导
-      if (!window.__sbTouchReset) {
-        window.__sbTouchReset = 1;
-        document.addEventListener('touchstart', function (e) {
-          var _sc = e.target && e.target.closest ? e.target.closest(__SB_SCROLL_SEL) : null;
-          if (_sc) _sc.__sbLastY = null;
-        }, { passive: true });
-      }
-    } else {
-      document.body.style.overflow = '';
-      document.removeEventListener('touchmove', __sbBlockHandler);
-      document.removeEventListener('wheel', __sbBlockHandler);
-    }
-  };
-  // 弹窗开关自动锁定背景滚动（MutationObserver 监听 .open，一处代码全站生效：商品/公告/分享/客服/放大预览/管理后台全部弹窗）
-  var __SB_MASK_SEL = '.modal-mask.open, .kf-mask.open, .lb.open, .lightbox.open, .share-mask.open, .confirm-mask.open, .alert-mask.open';
-  // 统一重算背景锁：还有任意弹窗开着就保持锁定，全部关闭才解锁（多弹窗叠加、任意顺序关闭都正确，幂等）
-  window.syncBodyLock = function () {
-    var anyOpen = document.querySelector(__SB_MASK_SEL);
-    window.lockBodyScroll(!!anyOpen);
-  };
-  (function () {
-    var _opened = false;
-    function _sync() {
-      var anyOpen = document.querySelector(__SB_MASK_SEL);
-      if (anyOpen && !_opened) { _opened = true; window.lockBodyScroll(true); }
-      else if (!anyOpen && _opened) { _opened = false; window.lockBodyScroll(false); }
-    }
-    try {
-      var _obs = new MutationObserver(_sync);
-      _obs.observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
-    } catch (e) {}
-    document.addEventListener('DOMContentLoaded', _sync);
-    window.addEventListener('pageshow', _sync);
-  })();
+  // ===== 滚动锁已取消（用户要求恢复自由滚动：不再锁定 body、不再拦截 touchmove/wheel） =====
+  // lockBodyScroll / syncBodyLock 保留为空操作，所有调用点无需改动即可正常滚动
+  window.lockBodyScroll = function () {};
+  window.syncBodyLock = function () {};
   // 浏览器返回 / bfcache 恢复时强制刷新，防止从管理页返回商品页白屏
   window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
 })();

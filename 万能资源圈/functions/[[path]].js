@@ -81,7 +81,10 @@ async function serveAsset(context, path) {
       if (res && res.ok) {
         const ext = (path.split('.').pop() || '').toLowerCase();
         const headers = new Headers(res.headers);
-        if (LONG_CACHE_EXTS.indexOf(ext) !== -1) {
+        if (path.split('/').pop() === 'sw.js') {
+          // Service Worker 绝不缓存：部署新 sw.js 后所有用户立即生效，杜绝旧 SW 缓存旧页面导致“改了没效果”
+          headers.set('cache-control', 'no-cache, no-store, must-revalidate');
+        } else if (LONG_CACHE_EXTS.indexOf(ext) !== -1) {
           // 图片/字体：7 天强缓存（同一 URL 全站/跨页直接用浏览器缓存，不再发请求）
           headers.set('cache-control', 'public, max-age=604800, immutable');
         } else if (VIDEO_CACHE_EXTS.indexOf(ext) !== -1) {

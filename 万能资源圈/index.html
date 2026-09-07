@@ -12,7 +12,7 @@
 <meta property="og:image" content="/assets/images/logo.png">
 <meta property="og:url" content="">
 <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/assets/ui-common.css?v=8">
+  <link rel="stylesheet" href="/assets/ui-common.css?v=9">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
 <meta name="theme-color" content="#1E88E5">
@@ -325,13 +325,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         </svg>
         <span>交流群聊</span>
     </button>
-
-    <button class="btn-item btn-cyan" onclick="openGzh()">
-        <svg class="icon-svg" viewBox="0 0 24 24" fill="white">
-            <path d="M12 2A10 10 0 1 0 22 12 10 10 0 0 0 12 2zm0 18A8 8 0 1 1 20 12 8 8 0 0 1 12 20zm4.25-11.25a1 1 0 0 1-1.41 0l-1.84-1.84-1.84 1.84a1 1 0 0 1-1.41-1.41l1.84-1.84-1.84-1.84a1 1 0 0 1 1.41-1.41l1.84 1.84 1.84-1.84a1 1 0 0 1 1.41 1.41l-1.84 1.84 1.84 1.84a1 1 0 0 1 0 1.41z"/>
-        </svg>
-        <span>公众号讯</span>
-    </button>
 </div>
 
 <div class="modal-mask" id="mask" onclick="closeModal()">
@@ -515,7 +508,7 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
     },{passive:true});
 })();
 </script>
-  <script src="/assets/ui-common.js?v=8"></script>
+  <script src="/assets/ui-common.js?v=9"></script>
   <script>
   (function () {
     function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }

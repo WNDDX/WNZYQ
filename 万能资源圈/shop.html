@@ -13,7 +13,7 @@
   <meta property="og:url" content="">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="stylesheet" href="/assets/ui-common.css?v=8">
+  <link rel="stylesheet" href="/assets/ui-common.css?v=9">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5">
   <link rel="preload" href="/assets/images/logo.png" as="image">
@@ -1387,56 +1387,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
     var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
 
-    // 内联兜底：公共 ui-common.js 未加载时，提供同一套滚动穿透锁（touch+wheel 双拦截），
-    // 保证商品弹窗/视频弹窗/客服弹窗内滑动不穿透到背景页面；公共脚本加载后此定义被跳过（幂等）
+    // 滚动锁已取消（用户要求恢复自由滚动）：即使 ui-common.js 未加载，也不再拦截 touchmove/wheel
     if (!window.lockBodyScroll) {
-      (function () {
-        var SEL = '.modal-box,.ann-box,.kf-box,.share-box,.lb-box,.rte-editor,.dt-pop,.stat-table-wrap,.cat-picker-panel,.ann-list,.ann-body,.modal-scroll,.scroll-area,.modal-media,.lb-media';
-        var handler = function (e) {
-          var t = e.target;
-          var sc = t && t.closest ? t.closest(SEL) : null;
-          if (sc) {
-            var down = 0;
-            if (e.touches && e.touches[0]) {
-              if (sc.__sbLastY != null) down = e.touches[0].clientY < sc.__sbLastY ? 1 : (e.touches[0].clientY > sc.__sbLastY ? -1 : 0);
-              sc.__sbLastY = e.touches[0].clientY;
-            } else if (typeof e.deltaY === 'number') {
-              down = e.deltaY > 0 ? 1 : (e.deltaY < 0 ? -1 : 0);
-            }
-            var atTop = sc.scrollTop <= 0, atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
-            if (sc.scrollHeight <= sc.clientHeight + 1) { if (e.cancelable !== false) e.preventDefault(); return; }
-            if (atTop && down <= 0) { if (e.cancelable !== false) e.preventDefault(); return; }
-            if (atBottom && down >= 0) { if (e.cancelable !== false) e.preventDefault(); return; }
-            return;
-          }
-          if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-          if (e.cancelable === false) return;
-          e.preventDefault();
-        };
-        window.lockBodyScroll = function (lock) {
-          if (lock) {
-            try { document.querySelectorAll(SEL).forEach(function (el) { el.__sbLastY = null; }); } catch (e) {}
-            document.body.style.overflow = 'hidden';
-            document.addEventListener('touchmove', handler, { passive: false });
-            document.addEventListener('wheel', handler, { passive: false });
-            if (!window.__sbTouchReset) {
-              window.__sbTouchReset = 1;
-              document.addEventListener('touchstart', function (e) {
-                var _sc = e.target && e.target.closest ? e.target.closest(SEL) : null;
-                if (_sc) _sc.__sbLastY = null;
-              }, { passive: true });
-            }
-          } else {
-            document.body.style.overflow = '';
-            document.removeEventListener('touchmove', handler);
-            document.removeEventListener('wheel', handler);
-          }
-        };
-        window.syncBodyLock = function () {
-          var anyOpen = document.querySelector('.modal-mask.open') || document.querySelector('.kf-mask.open') || document.querySelector('.lb.open') || document.querySelector('.lightbox.open') || document.querySelector('.share-mask.open') || document.querySelector('.confirm-mask.open');
-          window.lockBodyScroll(!!anyOpen);
-        };
-      })();
+      window.lockBodyScroll = function () {};
+      window.syncBodyLock = function () {};
     }
 
     // logo 加载失败兜底：替换为感叹号占位（与全站一致）
@@ -2984,7 +2938,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <video class="lb-media" id="lbVideo" controls playsinline></video>
     <div class="lb-tip">点击关闭・双指缩放</div>
   </div>
-  <script src="/assets/ui-common.js?v=8"></script>
+  <script src="/assets/ui-common.js?v=9"></script>
   <script>
   (function () {
     function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
