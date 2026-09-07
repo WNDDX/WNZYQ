@@ -3,10 +3,13 @@
  * 缓存策略：
  *  - 页面导航（index/shop/admin/error）→ 网络优先：每次打开都拿最新版，
  *    后台改动前台立即生效；离线时才回退缓存（无缓存回退到错误页）。
- *  - 图片等静态资源 → 缓存优先 + 后台静默更新：二次访问快，且不阻塞更新。
+ *  - JS / CSS（业务代码频繁改动）→ 网络优先：永远先取最新代码，网络失败才回退缓存，
+ *    彻底避免“改了代码但页面一直用旧缓存 / 把错误页 HTML 当脚本缓存”的问题。
+ *  - 图片等其他静态资源 → 缓存优先 + 后台静默更新：二次访问快，且不阻塞更新。
  *  - /api/ 一律不缓存，始终走网络。
+ *  - 任何非 200、或内容类型为 HTML 的 /assets 响应一律不缓存（防止错误页伪装成脚本/样式）。
  */
-const CACHE_NAME = 'wnzyq-v7';
+const CACHE_NAME = 'wnzyq-v8';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -15,6 +18,8 @@ const STATIC_ASSETS = [
   './error.html',
   './manifest.json',
   './favicon.ico',
+  './assets/ui-common.css',
+  './assets/ui-common.js',
   './assets/images/logo.png',
   './assets/images/kefu.png',
   './assets/images/qun.png',
@@ -33,7 +38,7 @@ self.addEventListener('install', function (event) {
   self.skipWaiting();
 });
 
-// 激活：清理旧缓存，立即接管页面
+// 激活：清理全部旧版本缓存，立即接管页面
 self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
@@ -41,10 +46,25 @@ self.addEventListener('activate', function (event) {
         keys.filter(function (key) { return key !== CACHE_NAME; })
           .map(function (key) { return caches.delete(key); })
       );
-    })
+    }).then(function () { return self.clients.claim(); })
   );
-  self.clients.claim();
 });
+
+// 判断响应是否可缓存：必须 200，且 /assets 下的脚本/样式绝不允许是 HTML（防止缓存错误页）
+function isCacheable(req, res) {
+  if (!res || res.status !== 200 || res.type === 'opaque') return false;
+  var url = (req.url || '').split('?')[0];
+  if (/\/assets\//.test(url) || /\.(js|css)($|\?)/.test(url)) {
+    var ct = res.headers.get('content-type') || '';
+    if (/text\/html/i.test(ct)) return false;
+  }
+  return true;
+}
+
+function putCache(req, res) {
+  var clone = res.clone();
+  return caches.open(CACHE_NAME).then(function (cache) { cache.put(req, clone); });
+}
 
 // 请求拦截
 self.addEventListener('fetch', function (event) {
@@ -52,19 +72,16 @@ self.addEventListener('fetch', function (event) {
   if (req.method !== 'GET') return;            // 只处理 GET
   if (req.url.includes('/api/')) return;       // API 不缓存，走网络
 
+  var url = req.url.split('?')[0];
+  var isCode = /\.(js|css)($|\?)/.test(url);   // JS/CSS：网络优先
+
   // 页面导航：网络优先，保证每次拿到最新代码
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req).then(function (res) {
-        if (res && res.status === 200) {
-          const clone = res.clone();
-          event.waitUntil(
-            caches.open(CACHE_NAME).then(function (cache) { cache.put(req, clone); })
-          );
-        }
+        if (res && res.status === 200) event.waitUntil(putCache(req, res));
         return res;
       }).catch(function () {
-        // 网络失败：回退本地缓存，缓存也没有则回退错误页
         return caches.match(req).then(function (cached) {
           return cached || caches.match('./error.html');
         });
@@ -73,26 +90,34 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // 静态资源：缓存优先 + 后台静默更新
+  // JS / CSS：网络优先（代码更新立即生效），网络失败才回退缓存；错误响应绝不缓存
+  if (isCode) {
+    event.respondWith(
+      fetch(req).then(function (res) {
+        if (isCacheable(req, res)) event.waitUntil(putCache(req, res));
+        return res;
+      }).catch(function () {
+        return caches.match(req).then(function (cached) {
+          return cached || Response.error();
+        });
+      })
+    );
+    return;
+  }
+
+  // 其他静态资源（图片/图标等）：缓存优先 + 后台静默更新
   event.respondWith(
     caches.match(req).then(function (cached) {
       if (cached) {
         event.waitUntil(
           fetch(req).then(function (res) {
-            if (res && res.status === 200) {
-              const clone = res.clone();
-              caches.open(CACHE_NAME).then(function (cache) { cache.put(req, clone); });
-            }
+            if (isCacheable(req, res)) return putCache(req, res);
           }).catch(function () {})
         );
         return cached;
       }
       return fetch(req).then(function (res) {
-        if (!res || res.status !== 200 || res.type === 'opaque') return res;
-        const clone = res.clone();
-        event.waitUntil(
-          caches.open(CACHE_NAME).then(function (cache) { cache.put(req, clone); })
-        );
+        if (isCacheable(req, res)) event.waitUntil(putCache(req, res));
         return res;
       }).catch(function () {
         return Response.error();

@@ -4,6 +4,7 @@
  * - 滚动时滚动条浮现（.sb-active），停止约 1 秒后自动淡化隐藏
  * - 初始扫描 + MutationObserver 自动绑定动态弹窗/列表，无需各页面重复写绑定逻辑
  */
+window.__uiCommonLoaded = true;
 (function () {
   'use strict';
   var HIDE_MS = 1000;
@@ -122,7 +123,7 @@
       img.classList.remove('kf-qr-in');
       img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; };
       img.onload = function () { void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || 'assets/images/kefu.png';
+      img.src = qrImg || '/assets/images/kefu.png';
       if (img.complete && img.naturalWidth) { void img.offsetWidth; img.classList.add('kf-qr-in'); }
     }
     var tipEl = document.getElementById('kfTip');
@@ -164,13 +165,26 @@
   var __sbBlockHandler = function (e) {
     var t = e.target;
     var sc = t && t.closest ? t.closest(__SB_SCROLL_SEL) : null;
-    if (sc && sc.scrollHeight > sc.clientHeight + 1) return; // 弹窗内可滚动容器放行
+    if (sc) {
+      // 弹窗内可滚动容器：中间区域放行；已到顶继续下拉 / 已到底继续上推时锁住，杜绝边界处链式穿透到背景
+      var dy = 0;
+      if (e.touches && e.touches[0]) {
+        if (sc.__sbLastY != null) dy = e.touches[0].clientY - sc.__sbLastY;
+        sc.__sbLastY = e.touches[0].clientY;
+      }
+      var atTop = sc.scrollTop <= 0;
+      var atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
+      if (dy > 0 && atTop) { if (e.cancelable !== false) e.preventDefault(); return; }
+      if (dy < 0 && atBottom) { if (e.cancelable !== false) e.preventDefault(); return; }
+      if (sc.scrollHeight > sc.clientHeight + 1) return;
+    }
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return; // 输入框/编辑器放行
     if (e.cancelable === false) return;
     e.preventDefault();
   };
   window.lockBodyScroll = function (lock) {
     if (lock) {
+      try { document.querySelectorAll(__SB_SCROLL_SEL).forEach(function (el) { el.__sbLastY = null; }); } catch (e) {}
       document.body.style.overflow = 'hidden';
       document.addEventListener('touchmove', __sbBlockHandler, { passive: false });
       document.addEventListener('wheel', __sbBlockHandler, { passive: false });

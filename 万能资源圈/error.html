@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>万能资源圈・错误</title>
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="stylesheet" href="assets/ui-common.css">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="stylesheet" href="/assets/ui-common.css?v=8">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;}
 *,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
@@ -75,7 +75,7 @@ if (false && code && errorMap[code]) {
 (function () {
   var logo = document.getElementById('errLogo');
   if (logo) {
-    logo.src = 'assets/images/logo.png'; // 相对路径，加载失败自动显示感叹号占位
+    logo.src = '/assets/images/logo.png'; // 绝对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
       this.onerror = null;
@@ -114,6 +114,18 @@ if (false && code && errorMap[code]) {
   document.addEventListener('touchend',function(){if(!pulling)return;pulling=false;if(dist>TH){tip.querySelector('.prt-l').textContent='正在刷新...';setTimeout(function(){location.reload();},400);}else{tip.classList.remove('show');tip.style.height='0';}dist=0;},{passive:true});
 })();
 </script>
-<script src="assets/ui-common.js"></script>
+<script src="/assets/ui-common.js?v=8"></script>
+<script>
+(function () {
+  function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功：请把整个“万能资源圈”文件夹完整重新上传（含 assets、functions、sw.js、config.js）');
+      var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
+      if (!ok) warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
+    }, 800);
+  });
+})();
+</script>
 </body>
 </html>

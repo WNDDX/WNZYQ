@@ -69,18 +69,30 @@ async function servePage(context, file) {
   return serveError(context);
 }
 
-/** 静态资源兜底：根级 URL → 子目录同名资源（子目录部署时根目录无静态文件，避免图片/脚本/css 404） */
+/** 静态资源兜底：先查根部署路径，再查子目录同名资源；缺失时返回真正 404（正确 MIME，绝不返回 HTML，防止错误页被当 JS/CSS 解析） */
 async function serveAsset(context, path) {
-  try {
-    const u = '/万能资源圈' + path;
-    const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
-    if (res && res.ok) {
-      return new Response(res.body, { headers: res.headers });
+  const candidates = [path, '/万能资源圈' + path];
+  for (const u of candidates) {
+    try {
+      const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
+      if (res && res.ok) {
+        return new Response(res.body, { status: 200, headers: res.headers });
+      }
+    } catch (e) {
+      /* 继续尝试下一个候选路径 */
     }
-  } catch (e) {
-    /* 忽略，走错误页兜底 */
   }
-  return serveError(context);
+  const ext = (path.split('.').pop() || '').toLowerCase();
+  const types = {
+    js: 'application/javascript; charset=utf-8', css: 'text/css; charset=utf-8',
+    json: 'application/json; charset=utf-8', png: 'image/png', jpg: 'image/jpeg',
+    jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', ico: 'image/x-icon',
+    webp: 'image/webp', woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', mp4: 'video/mp4'
+  };
+  return new Response('Not Found: ' + path, {
+    status: 404,
+    headers: { 'content-type': types[ext] || 'text/plain; charset=utf-8', 'cache-control': 'no-store' }
+  });
 }
 
 export async function onRequestGet(context) {

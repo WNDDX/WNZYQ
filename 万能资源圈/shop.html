@@ -9,14 +9,14 @@
   <meta property="og:title" content="万能资源圈">
   <meta property="og:description" content="优质虚拟资源导航平台，一键获取学习资源、软件工具、设计素材">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="assets/images/logo.png">
+  <meta property="og:image" content="/assets/images/logo.png">
   <meta property="og:url" content="">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="stylesheet" href="assets/ui-common.css">
-  <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}</script>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/assets/ui-common.css?v=8">
+  <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5">
-  <link rel="preload" href="assets/images/logo.png" as="image">
+  <link rel="preload" href="/assets/images/logo.png" as="image">
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <style>
     /* ============================================
@@ -559,7 +559,7 @@
       width: 100%;
       max-height: 88vh;
       overflow-y: auto;
-      scrollbar-gutter: stable;
+      scrollbar-gutter: auto;
       min-height: 240px;
       animation: modalIn 0.22s ease;
     }
@@ -1179,7 +1179,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <div class="topbar-inner">
       <div class="shop-brand">
         <a class="shop-logo-link" href="admin" title="进入管理页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
-          <img class="shop-logo" id="shopLogo" src="assets/images/logo.png" alt="Logo" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="window.__logoFail&&window.__logoFail(this)" />
+          <img class="shop-logo" id="shopLogo" src="/assets/images/logo.png" alt="Logo" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="window.__logoFail&&window.__logoFail(this)" />
         </a>
         <div class="shop-name" id="shopName">万能资源圈</div>
       </div>
@@ -1317,7 +1317,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     </svg>
   </button>
 
-  <script src="config.js"></script>
+  <script src="/config.js"></script>
   <script>
     /* ============================================
        资源页逻辑
@@ -1564,7 +1564,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     function track(pid, type) {
       if (!usingRemote || !pid) return;
       try {
-        fetch('api/track', {
+        fetch('/api/track', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ product_id: pid, type: type })
@@ -1584,7 +1584,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
       // 部署后从 API 获取平台设置（管理页可修改）
       if (usingRemote) {
-        fetch('api/settings').then(function (r) { return r.json(); }).then(function (res) {
+        fetch('/api/settings').then(function (r) { return r.json(); }).then(function (res) {
           if (res && res.ok && res.settings) {
             var s = res.settings;
             if (s.shop_name) { shopNameEl.textContent = s.shop_name; document.title = s.shop_name + '・资源'; }
@@ -2149,7 +2149,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         m.innerHTML = '<div style="background:#fff;border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="document.getElementById(\'kfFallback\').style.display=\'none\'">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="assets/images/kefu.png" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="document.getElementById(\'kfFallback\').style.display=\'none\'">关闭</button>' +
@@ -2176,7 +2176,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         btnContact.style.display = '';
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
-          if (window.openContactModal) { window.openContactModal(url, 'assets/images/kefu.png'); } else { openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png'); } else { openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未配置客服'); };
@@ -2328,7 +2328,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     (function () { var svg = topContactBtn && topContactBtn.querySelector('svg'); if (svg) { svg.setAttribute('fill', 'currentColor'); svg.removeAttribute('stroke'); svg.removeAttribute('stroke-width'); svg.removeAttribute('stroke-linecap'); svg.removeAttribute('stroke-linejoin'); var p = svg.querySelector('path'); if (p) p.setAttribute('d', 'M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.036 2.87c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.97-.983zm4.844 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.969-.983z'); svg.style.width = '15px'; svg.style.height = '15px'; } })();
     topContactBtn.addEventListener('click', function () {
       var url = window._globalContact || getDefaultContact();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, 'assets/images/kefu.png'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png'); } else { openContactFallback(url); } }
       else showToast('暂未设置客服链接');
     });
 
@@ -2452,9 +2452,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         ]);
       }
       Promise.all([
-        withTimeout(fetch('api/products', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
-        withTimeout(fetch('api/categories', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
-        withTimeout(fetch('api/settings', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000)
+        withTimeout(fetch('/api/products', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
+        withTimeout(fetch('/api/categories', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
+        withTimeout(fetch('/api/settings', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000)
       ]).then(function (res) {
         if (res[0] && res[0].ok && res[1] && res[1].ok) {
           DATA.products = res[0].list || [];
@@ -2696,7 +2696,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     // ---------- PWA Service Worker ----------
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('sw.js').catch(function () {});
+        navigator.serviceWorker.register('/sw.js').then(function(reg){ try{reg.update();}catch(e){} var _f=false; navigator.serviceWorker.addEventListener('controllerchange',function(){ if(_f)return; _f=true; window.location.reload(); }); }).catch(function () {});
       });
     }
 
@@ -2916,6 +2916,18 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <video class="lb-media" id="lbVideo" controls playsinline></video>
     <div class="lb-tip">点击关闭・双指缩放</div>
   </div>
-  <script src="assets/ui-common.js"></script>
+  <script src="/assets/ui-common.js?v=8"></script>
+  <script>
+  (function () {
+    function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML');
+        var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
+        if (!ok) warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
+      }, 800);
+    });
+  })();
+  </script>
 </body>
 </html>

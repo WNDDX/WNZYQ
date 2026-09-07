@@ -26,7 +26,7 @@
 const SHOP_CONFIG = {
   // —— 平台信息 ——
   shopName: "万能资源圈",
-  shopLogo: "assets/images/logo.png",
+  shopLogo: "/assets/images/logo.png",
   // 全局默认客服链接（资源或类型没单独设置时，咨询客服按钮跳这里）
   defaultContactUrl: "https://work.weixin.qq.com/kfid/kfc39748ad948e8b691",
 

@@ -9,14 +9,14 @@
 <meta property="og:title" content="万能资源圈・导航">
 <meta property="og:description" content="优质虚拟资源导航站，一键获取学习资源、软件工具、设计素材">
 <meta property="og:type" content="website">
-<meta property="og:image" content="assets/images/logo.png">
+<meta property="og:image" content="/assets/images/logo.png">
 <meta property="og:url" content="">
 <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="assets/ui-common.css">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}</script>
+  <link rel="stylesheet" href="/assets/ui-common.css?v=8">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
 <meta name="theme-color" content="#1E88E5">
-<link rel="preload" href="assets/images/logo.png" as="image">
+<link rel="preload" href="/assets/images/logo.png" as="image">
 <style>
 :root{
     --blue1:#1E88E5;
@@ -293,7 +293,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 <div class="wrap">
     <div class="logo-wrap">
         <a class="logo-box" href="shop" title="进入资源页" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)">
-            <img class="logo-img" id="logoImage" src="assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');">
+            <img class="logo-img" id="logoImage" src="/assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');">
             <div class="logo-fail-icon" id="logoFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -356,10 +356,10 @@ const CONFIG = {
     resourceUrl: "shop",
     serviceWeixinUrl: "https://work.weixin.qq.com/kfid/kfc39748ad948e8b691",
     groupWeixinUrl: "https://work.weixin.qq.com/gm/8036a2badd7daab25b1764b62c3bff9a",
-    logoImg: "assets/images/logo.png",
-    serviceQrImg: "assets/images/kefu.png",
-    groupQrImg: "assets/images/qun.png",
-    gzhImg: "assets/images/gzh.png",
+    logoImg: "/assets/images/logo.png",
+    serviceQrImg: "/assets/images/kefu.png",
+    groupQrImg: "/assets/images/qun.png",
+    gzhImg: "/assets/images/gzh.png",
     tipService: "长按图片识别-添加人工客服",
     tipGroup: "长按图片识别-加入交流群聊",
     tipGzh: "长按图片识别-关注公众号讯",
@@ -466,7 +466,7 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 // PWA Service Worker 注册
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js').catch(function(){});
+        navigator.serviceWorker.register('/sw.js').then(function(reg){ try{reg.update();}catch(e){} var _f=false; navigator.serviceWorker.addEventListener('controllerchange',function(){ if(_f)return; _f=true; window.location.reload(); }); }).catch(function(){});
     });
 }
 
@@ -501,6 +501,18 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
     },{passive:true});
 })();
 </script>
-  <script src="assets/ui-common.js"></script>
+  <script src="/assets/ui-common.js?v=8"></script>
+  <script>
+  (function () {
+    function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML');
+        var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
+        if (!ok) warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
+      }, 800);
+    });
+  })();
+  </script>
 </body>
 </html>

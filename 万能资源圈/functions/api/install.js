@@ -111,7 +111,7 @@ const DEFAULT_ADMIN = { username: '1747358421', password: 'myb775825825148' };
 // 默认平台设置
 const DEFAULT_SETTINGS = [
   { key: 'shop_name', value: '万能资源圈' },
-  { key: 'shop_logo', value: 'assets/images/logo.png' },
+  { key: 'shop_logo', value: '/assets/images/logo.png' },
   { key: 'contact_url', value: 'https://work.weixin.qq.com/kfid/kfc39748ad948e8b691' },
 ];
 
