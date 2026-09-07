@@ -1,75 +1,8 @@
 /**
- * 万能资源圈 公共 UI：统一浮起式滚动条
- * - 所有滚动容器（弹窗内容区/下拉面板/公告列表/富文本/时间弹窗/统计表）统一绑定
- * - 滚动时滚动条浮现（.sb-active），停止约 1 秒后自动淡化隐藏
- * - 初始扫描 + MutationObserver 自动绑定动态弹窗/列表，无需各页面重复写绑定逻辑
+ * 万能资源圈 公共 UI（加载标记 + 统一客服弹窗 + 统一提示弹窗）
+ * 自定义滚动条已取消：恢复浏览器默认滚动条（用户要求）
  */
 window.__uiCommonLoaded = true;
-(function () {
-  'use strict';
-  var HIDE_MS = 1000;
-  var SEL = '.modal-box,.cat-picker-panel,.ann-list,.ann-body,.kf-box,.rte-editor,.dt-pop,.stat-table-wrap';
-  var ACTIVE = 'sb-active';
-  var timers = {};
-  var uid = 0;
-
-  function bind(el) {
-    if (!el || el.__sbInit) return;
-    el.__sbInit = true;
-    el.__sbId = 'sb' + (++uid);
-    // 浮起指示条：注入为容器子元素（absolute 不占布局），scrollTop 补偿定位使其视觉固定在容器右缘
-    var bar = document.createElement('div');
-    bar.className = 'sb-bar';
-    el.appendChild(bar);
-    function upd() {
-      var h = el.clientHeight, sh = el.scrollHeight;
-      if (!sh || sh <= h + 1) { bar.style.display = 'none'; return; }
-      bar.style.display = '';
-      var ratio = h / sh;
-      var th = Math.max(20, h * ratio);
-      bar.style.height = th + 'px';
-      var maxMap = h - th;
-      bar.style.top = ((sh - h) ? (el.scrollTop / (sh - h)) * maxMap : 0) + el.scrollTop + 'px';
-    }
-    upd();
-    el.addEventListener('scroll', function () {
-      upd();
-      bar.classList.add(ACTIVE);
-      var t = timers[el.__sbId];
-      if (t) { clearTimeout(t); timers[el.__sbId] = null; }
-      timers[el.__sbId] = setTimeout(function () {
-        bar.classList.remove(ACTIVE);
-        timers[el.__sbId] = null;
-      }, HIDE_MS);
-    }, { passive: true });
-    window.addEventListener('resize', upd);
-  }
-
-  function scan(root) {
-    var list = (root || document).querySelectorAll(SEL);
-    for (var i = 0; i < list.length; i++) bind(list[i]);
-  }
-
-  scan(document);
-
-  // 动态生成的弹窗/列表：MutationObserver 兜底自动绑定
-  if (window.MutationObserver) {
-    var mo = new MutationObserver(function (muts) {
-      for (var i = 0; i < muts.length; i++) {
-        var added = muts[i].addedNodes;
-        for (var j = 0; j < added.length; j++) {
-          var n = added[j];
-          if (!n || n.nodeType !== 1) continue;
-          if (n.matches && n.matches(SEL)) bind(n);
-          if (n.querySelectorAll) scan(n);
-        }
-      }
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-  }
-
-  window.addEventListener('load', function () { scan(document); });
-})();
 
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页，一处定义全站生效） =====
  * window.openContactModal(url, qrImg, tip, btnText)

@@ -988,8 +988,6 @@
     .topbar-brand { flex: 0 0 auto !important; min-width: 0; gap: 12px !important; }
     .topbar-brand span { display: inline !important; }
     @media (max-width: 600px) { .topbar-brand span { letter-spacing: 1px !important; } }
-    /* 滚动条始终占位，弹窗/切换时不因滚动条消失导致画面跳动 */
-    html, body { scrollbar-gutter: stable; }
     /* 资源管理筛选行残留的旧“全选”已移至“新增资源”右侧，隐藏残留 */
     #panel-products .tb-row2 label { display: none !important; }
     /* 手机端网格卡片：操作按钮（状态/编辑/复制/删除）完整可见，不被裁剪或换行竖排 */
@@ -1008,12 +1006,7 @@
     .modal-box, .modal-wrap, .ann-box, .modal-detail, .ann-body, .media-list, .variant-detail, .form, .rte-editor, .rte-large, .ann-list, .cat-picker-panel { overflow-x: hidden; }
     .modal-detail, .ann-body, .variant-detail, .rte-editor { word-break: break-word; overflow-wrap: anywhere; }
     .modal-detail img, .modal-detail video, .modal-detail table, .modal-detail iframe, .modal-detail svg, .ann-body img, .ann-body video, .ann-body table, .ann-body iframe, .ann-body svg, .variant-detail img, .variant-detail video, .variant-detail table, .variant-detail iframe, .rte-editor img, .rte-editor video, .rte-editor table, .rte-editor iframe, .media-list img, .media-list video, .media-list table, .media-list iframe { max-width: 100% !important; height: auto; }
-    /* 全系统统一滚动条：宽度、颜色、圆角、与边框距离一致 */
-    *::-webkit-scrollbar { width: 8px; height: 8px; }
-    *::-webkit-scrollbar-track { background: transparent; }
-    *::-webkit-scrollbar-thumb { background: rgba(144,158,180,0.5); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
-    *::-webkit-scrollbar-thumb:hover { background: rgba(120,135,160,0.7); background-clip: padding-box; }
-    * { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
+    /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
       /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
     .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
     .modal-mask > *, .share-mask > *, .lightbox > * { margin: auto !important; float: none !important; }

@@ -279,7 +279,7 @@
       border-bottom-right-radius: 14px;
       -webkit-overflow-scrolling: touch; min-height: 56px;
     }
-    .category-bar::-webkit-scrollbar { display: none; }
+    /* 滚动条隐藏由 ui-common.css 全局处理 */
     .category-tag {
       display: inline-block;
       padding: 8px 20px;
@@ -1134,8 +1134,6 @@
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
     .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 13px; padding: 24px 0; box-sizing: border-box; text-align: center; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; box-sizing: border-box; }
-    /* 滚动条始终占位，弹窗/切换时不因滚动条消失导致画面跳动 */
-    html, body { scrollbar-gutter: stable; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
     /* logo 与一级分类白色栏左边缘对齐：一级分类栏加与二级分类栏一致的左右内边距 */
@@ -1154,12 +1152,7 @@
     .modal-close-x { font-size: 19px; line-height: 1; border-radius: 50%; }
     .modal-close-x:hover { transform: scale(1.1); background: #ff4444; color: #fff; }
     .modal-close-x:active { transform: scale(0.92); }
-    /* 全系统统一滚动条：宽度、颜色、圆角、与边框距离一致 */
-    *::-webkit-scrollbar { width: 8px; height: 8px; }
-    *::-webkit-scrollbar-track { background: transparent; }
-    *::-webkit-scrollbar-thumb { background: rgba(144,158,180,0.5); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
-    *::-webkit-scrollbar-thumb:hover { background: rgba(120,135,160,0.7); background-clip: padding-box; }
-    * { scrollbar-width: thin; scrollbar-color: rgba(144,158,180,0.5) transparent; }
+    /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
       /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
     .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
     .modal-mask > *, .share-mask > *, .lightbox > * { margin: auto !important; float: none !important; }

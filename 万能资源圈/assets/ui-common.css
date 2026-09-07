@@ -1,48 +1,10 @@
 /* ============================================
-   万能资源圈 全站公共样式：统一浮起式滚动条
-   - 弹窗/面板滚动容器：原生滚动条完全隐藏、不占布局宽度 → 媒体/占位符左右边距天然对称
-   - 浮起指示条（.sb-bar，由 ui-common.js 注入）：滚动时浮现，停止约 1 秒后自动淡化隐藏
-   - 四页面（index/shop/admin/error）统一引用，禁止各页面重复定义
+   万能资源圈 全站公共样式
+   - 滚动条全部隐藏（用户要求取消滚动轮，滚动功能保留）
    ============================================ */
-/* 页面级滚动条：细样式（普通页面滚动仍可见，不涉及弹窗布局） */
-* { scrollbar-width: thin; scrollbar-color: rgba(30,136,229,0.25) transparent; }
-*::-webkit-scrollbar { width: 5px; height: 5px; }
-*::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: rgba(30,136,229,0.22); border-radius: 3px; }
-*::-webkit-scrollbar-thumb:hover { background: rgba(30,136,229,0.5); }
-*::-webkit-scrollbar-corner { background: transparent; }
-
-/* 弹窗/面板等滚动容器：隐藏原生滚动条、完全不占布局宽度（浮起指示条替代） */
-.modal-box,
-.cat-picker-panel,
-.ann-list,
-.ann-body,
-.kf-box,
-.rte-editor,
-.dt-pop,
-.stat-table-wrap {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  scrollbar-gutter: auto !important;
-}
-.modal-box::-webkit-scrollbar,
-.cat-picker-panel::-webkit-scrollbar,
-.ann-list::-webkit-scrollbar,
-.ann-body::-webkit-scrollbar,
-.kf-box::-webkit-scrollbar,
-.rte-editor::-webkit-scrollbar,
-.dt-pop::-webkit-scrollbar,
-.stat-table-wrap::-webkit-scrollbar {
-  width: 0; height: 0; display: none;
-}
-
-/* 浮起指示条：absolute 定位容器右缘，不占布局宽度；滚动时 .sb-active 浮现，停止约 1 秒淡化隐藏 */
-.sb-bar {
-  position: absolute; right: 3px; width: 4px; border-radius: 2px;
-  background: rgba(30,136,229,0.30); opacity: 0;
-  transition: opacity 0.25s ease; pointer-events: none; z-index: 60;
-}
-.sb-bar.sb-active { opacity: 1; }
+/* 隐藏所有滚动条（页面/弹窗/列表），滚动手势照常可用 */
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
+* { scrollbar-width: none; -ms-overflow-style: none; }
 
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页：结构/尺寸/样式/动画一处定义全站生效） ===== */
 .kf-mask {
