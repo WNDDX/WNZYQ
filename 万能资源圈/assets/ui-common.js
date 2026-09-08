@@ -87,8 +87,7 @@ window.__uiCommonLoaded = true;
     if (tipEl) tipEl.textContent = tip || '长按图片识别-添加人工客服';
     var btn = document.getElementById('kfJumpBtn');
     if (btn) {
-      btn.textContent = btnText || '跳转-咨询在线客服';
-      btn.setAttribute('data-url', url || '');
+      btn.style.display = btnText ? '' : 'none'; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
     }
     var mask = document.getElementById('kfMask');
     if (!mask.classList.contains('open')) {

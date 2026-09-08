@@ -481,8 +481,8 @@ if ('serviceWorker' in navigator) {
 //页面按钮事件
 function openResource() {window.location.href = CONFIG.resourceUrl;}
 function openService() { if (window.openContactModal) { window.openContactModal(CONFIG.serviceWeixinUrl, CONFIG.serviceQrImg, CONFIG.tipService, "跳转-咨询在线客服"); } else { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); } }
-function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
-function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
+function openGroup() { if (window.openContactModal) { window.openContactModal(CONFIG.groupWeixinUrl, CONFIG.groupQrImg, CONFIG.tipGroup, ''); } else { showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup); } }
+function openGzh() { if (window.openContactModal) { window.openContactModal('', CONFIG.gzhImg, CONFIG.tipGzh, ''); } else { showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh); } }
 
 // 下拉刷新（与资源页/管理页统一，顶部下拉即重载同步最新内容）
 (function(){
