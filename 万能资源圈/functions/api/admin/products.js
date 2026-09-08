@@ -1,5 +1,5 @@
 ﻿/**
- * GET  /api/admin/products        → 全部资源列表（含下架），管理后台用
+ * GET  /api/admin/products        → 全部资源列表（含隐藏），管理后台用
  * POST /api/admin/products        → 新增资源（需登录）
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  */

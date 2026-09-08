@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS products (
   price         REAL    NOT NULL DEFAULT 0,
   is_online     INTEGER NOT NULL DEFAULT 1,
   is_hidden     INTEGER NOT NULL DEFAULT 0,
-  schedule_on   TEXT,                          -- 定时上架时间（NULL=不定时）
-  schedule_off  TEXT,                          -- 定时下架时间（NULL=不定时）
+  schedule_on   TEXT,                          -- 定时显示时间（NULL=不定时）
+  schedule_off  TEXT,                          -- 定时隐藏时间（NULL=不定时）
   sort          INTEGER NOT NULL DEFAULT 0,
   created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))

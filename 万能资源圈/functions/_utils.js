@@ -134,8 +134,8 @@ export function cleanProduct(p) {
     price: p.price || 0,           // 价格（0=免费不显示）
     is_online: p.is_online,
     is_hidden: p.is_hidden || 0,   // 1=隐藏（前台不显示）
-    schedule_on: p.schedule_on || '',    // 定时上架时间（空=不定时）
-    schedule_off: p.schedule_off || '',  // 定时下架时间（空=不定时）
+    schedule_on: p.schedule_on || '',    // 定时显示时间（空=不定时）
+    schedule_off: p.schedule_off || '',  // 定时隐藏时间（空=不定时）
     sort: p.sort,
   };
 }

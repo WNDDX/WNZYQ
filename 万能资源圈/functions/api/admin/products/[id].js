@@ -1,5 +1,5 @@
 ﻿/**
- * PUT    /api/admin/products/:id   → 更新资源（含上下架 is_online）
+ * PUT    /api/admin/products/:id   → 更新资源（含显示/隐藏 is_online）
  * DELETE /api/admin/products/:id   → 删除资源（同时删其类型和统计）
  * 均需登录
  */

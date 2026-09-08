@@ -1,6 +1,6 @@
 ﻿/**
  * GET /api/products
- * 返回所有【上架中】的资源（公开接口，前台用）
+ * 返回所有【显示中】的资源（公开接口，前台用）
  * 每个资源同时带上其类型列表（variants），前台详情弹窗直接用
  * 分类/搜索过滤由前台完成
  * 带 20 秒边缘缓存（Cache API），管理员修改后自动失效
@@ -19,18 +19,18 @@ export async function onRequestGet(context) {
     return new Response(cached.body, cached);
   }
 
-  // 2. 定时上下架检查：到了上架时间自动上架，到了下架时间自动下架
+  // 2. 定时显示/隐藏检查：到了显示时间自动显示，到了隐藏时间自动隐藏
   // 注意：用户输入的是本地时间（UTC+8），用 datetime('now','+8 hours') 获取中国时间比较
   try {
     await env.DB.prepare(
-      `UPDATE products SET is_online = 1, updated_at = datetime('now')
+      `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now')
        WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')`
     ).run();
     await env.DB.prepare(
       `UPDATE products SET is_online = 0, updated_at = datetime('now')
        WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')`
     ).run();
-  } catch (e) { /* 忽略定时上下架错误 */ }
+  } catch (e) { /* 忽略定时显示/隐藏错误 */ }
 
   await ensureVariantColumns(env);
 

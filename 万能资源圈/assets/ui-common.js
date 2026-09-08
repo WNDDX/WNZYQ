@@ -17,11 +17,14 @@ window.__uiCommonLoaded = true;
 
   // 背景视频显隐管理：原生 <video> 在移动端浏览器层级高于一切 DOM（即使 z-index 更大也盖不住），
   // 打开客服弹窗必须同时 暂停+隐藏 背景视频，关闭后恢复，否则视频会压在客服弹窗之上
+  // R14：排除范围扩大到所有弹窗容器内的视频（资源详情/预览/公告/分享/灯箱）——
+  // 之前只排除客服弹窗自身，打开客服时把资源弹窗里的视频也 display:none 了，弹窗高度会塌陷
+  var __KF_EXCLUDE_SEL = '.kf-box, .kf-mask, #kfFallback, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal';
   var __kfHiddenVideos = [];
   function __hideBgVideos(hide) {
     try {
       document.querySelectorAll('video').forEach(function (v) {
-        if (v.closest('.kf-box')) return;
+        if (v.closest(__KF_EXCLUDE_SEL)) return;
         if (hide) {
           if (!v.dataset.__kfHid) {
             v.dataset.__kfHid = '1';
@@ -151,6 +154,51 @@ window.__uiCommonLoaded = true;
     } catch (e) { /* 弹窗失败时回退系统 alert，保证提示不丢失 */ try { window.alert(msg); } catch (e2) {} }
   };
 
+  // ===== R14 全站统一「分享链接」弹窗（复刻资源页分享本站弹窗观感：400px 白卡/标题/tip/链接/确定）=====
+  // window.showShareLinkModal(title, url)：标题、链接自动复制到剪贴板并展示
+  window.showShareLinkModal = function (title, url) {
+    try {
+      var mask = document.createElement('div');
+      mask.className = 'share-mask';
+      mask.setAttribute('role', 'dialog');
+      mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+      mask.innerHTML =
+        '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.25s ease;">' +
+          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:all 0.12s ease;">×</button>' +
+          '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
+          '<div style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
+          '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
+          '<button data-share-ok type="button" style="width:100%;border:none;border-radius:8px;padding:11px 0;background:#1688FF;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;">确定</button>' +
+        '</div>';
+      var tEl = mask.querySelector('[data-share-title]');
+      var uEl = mask.querySelector('[data-share-url]');
+      if (tEl) tEl.textContent = title || '分享';
+      if (uEl) uEl.textContent = url || '';
+      document.body.appendChild(mask);
+      function close() {
+        try { document.body.removeChild(mask); } catch (e) {}
+        if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
+      }
+      mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
+      mask.querySelector('[data-share-x]').addEventListener('click', close);
+      mask.querySelector('[data-share-ok]').addEventListener('click', close);
+      // 复制（clipboard 优先 + textarea 兜底，链路与顶栏分享一致）
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url || '').catch(function () { try { __fallbackCopyText(url || ''); } catch (e) {} });
+        } else { __fallbackCopyText(url || ''); }
+      } catch (e) {}
+      window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
+    } catch (e) {}
+  };
+  function __fallbackCopyText(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0;';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
   // ===== 弹窗滚动锁：打开弹窗锁定背景滚动（PC overflow + 移动端拦截穿透），弹窗内部内容仍可正常滚动 =====
   var __touchLocked = false;
   function __blockTouch(e) {
@@ -188,4 +236,66 @@ window.__uiCommonLoaded = true;
   } catch (e) {}
   // 浏览器返回 / bfcache 恢复时强制刷新，防止从管理页返回商品页白屏
   window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
+
+  // ===== R14 全站统一翻页组件（buildUniPager）：复用数据统计翻页的胶囊样式（.uni-pager，样式在 ui-common.css）=====
+  // window.buildUniPager(container, { page, totalPages, total, unit, onPage })：
+  //   page=当前页(1起) totalPages=总页数 total=总条数(可选) unit=单位文案(默认"条") onPage=点上一页/下一页/跳页后的回调
+  // 交互要点（对应本轮反馈）：
+  //   1) 结构：上一页 | 页码信息 N / M（共X条）| 跳页输入+跳转键 | 下一页
+  //   2) 跳页输入框 clamp 到 [1, totalPages]；回车 = 点跳转
+  //   3) 点击即时反馈：按钮无过渡延迟、渲染由调用方同步完成，不做平滑滚动（平滑滚动正是统计翻页"屏幕抖一下"的根因）
+  //   4) 只有一页时组件整体隐藏（无翻页必要不占位）
+  window.buildUniPager = function (container, opts) {
+    if (!container) return;
+    opts = opts || {};
+    var page = opts.page || 1;
+    var totalPages = opts.totalPages || 1;
+    var onPage = typeof opts.onPage === 'function' ? opts.onPage : function () {};
+    var unit = opts.unit || '条';
+    var total = (typeof opts.total === 'number' && !isNaN(opts.total)) ? opts.total : null;
+
+    container.className = 'uni-pager';
+    container.innerHTML = '';
+
+    if (totalPages <= 1) { container.style.display = 'none'; return; }
+    container.style.display = '';
+
+    var prev = document.createElement('button');
+    prev.type = 'button'; prev.className = 'pg-btn'; prev.textContent = '上一页';
+    var info = document.createElement('span');
+    info.className = 'pg-info';
+    var jump = document.createElement('span');
+    jump.className = 'pg-jump';
+    var input = document.createElement('input');
+    input.type = 'number'; input.min = '1'; input.max = String(totalPages);
+    input.setAttribute('inputmode', 'numeric'); input.setAttribute('aria-label', '跳转页码');
+    var goBtn = document.createElement('button');
+    goBtn.type = 'button'; goBtn.textContent = '跳转';
+    var next = document.createElement('button');
+    next.type = 'button'; next.className = 'pg-btn'; next.textContent = '下一页';
+
+    jump.appendChild(input); jump.appendChild(goBtn);
+    container.appendChild(prev); container.appendChild(info); container.appendChild(jump); container.appendChild(next);
+
+    function render() {
+      prev.disabled = page <= 1;
+      next.disabled = page >= totalPages;
+      info.textContent = page + ' / ' + totalPages + (total !== null ? '（共' + total + unit + '）' : '');
+      input.value = page;
+      input.max = String(totalPages);
+    }
+    function go(p) {
+      p = parseInt(p, 10);
+      if (isNaN(p)) return;
+      p = Math.min(Math.max(p, 1), totalPages);
+      if (p === page) { input.value = page; return; }
+      page = p; render(); onPage(page);
+    }
+    prev.addEventListener('click', function () { go(page - 1); });
+    next.addEventListener('click', function () { go(page + 1); });
+    goBtn.addEventListener('click', function () { go(input.value); });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(input.value); } });
+    input.addEventListener('blur', function () { input.value = page; });
+    render();
+  };
 })();

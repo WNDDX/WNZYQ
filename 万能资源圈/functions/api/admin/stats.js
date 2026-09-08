@@ -42,8 +42,9 @@ export async function onRequestGet(context) {
   const byProductDateFilter = statsDateFilter.replace(/stats\.created_at/g, 's.created_at');
   const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, byProductRes, trendRowsRes, byCategoryRes, recentRes] = await Promise.all([
     count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
-    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1'),
-    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_hidden = 1'),
+    // 两态口径：显示 = is_online=1 且未隐藏；隐藏 = 其余全部（历史遗留数据统一归入隐藏）
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0'),
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 0 OR is_hidden = 1'),
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'view'${statsDateFilter}`, statsDateParams),
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'contact'${statsDateFilter}`, statsDateParams),
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'resource_unlock'${statsDateFilter}`, statsDateParams),

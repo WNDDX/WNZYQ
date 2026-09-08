@@ -2,10 +2,9 @@
  * POST /api/admin/batch
  * 批量操作资源（需登录）
  * body: { ids: [1,2,3], action: 'online'|'offline'|'hide'|'show'|'delete'|'changeCat'|'changePrice', cid?: number, price?: number }
- *   online      批量上架
- *   offline     批量下架
- *   hide        批量隐藏（前台不显示）
- *   show        批量取消隐藏
+ *   online      批量显示（资源页可见，同时清掉隐藏标记）
+ *   offline     批量隐藏（资源页不显示）
+ *   hide/show   旧版动作，保留兼容（前端现已统一走 online/offline 两态）
  *   delete      批量删除（同时删类型和统计）
  *   changeCat   批量改分类（需 cid）
  *   changePrice 批量改价格（需 price）
@@ -47,11 +46,21 @@ export async function onRequestPost(context) {
     await env.DB.prepare(
       `UPDATE products SET price = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
     ).bind(price, ...ids).run();
-  } else {
-    const field = action === 'online' || action === 'offline' ? 'is_online' : 'is_hidden';
-    const val = (action === 'online' || action === 'show') ? 1 : 0;
+  } else if (action === 'online') {
+    // 两态：显示 = is_online=1 且清掉 is_hidden（旧隐藏数据也能真正显示）
     await env.DB.prepare(
-      `UPDATE products SET ${field} = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
+      `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${placeholders})`
+    ).bind(...ids).run();
+  } else if (action === 'offline') {
+    // 两态：隐藏 = is_online=0 且清掉 is_hidden
+    await env.DB.prepare(
+      `UPDATE products SET is_online = 0, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${placeholders})`
+    ).bind(...ids).run();
+  } else {
+    // hide/show：旧版动作兼容（前端已不再调用）
+    const val = action === 'show' ? 1 : 0;
+    await env.DB.prepare(
+      `UPDATE products SET is_hidden = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
     ).bind(val, ...ids).run();
   }
 

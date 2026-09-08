@@ -113,8 +113,13 @@
 .lightbox.open { display: flex; }
 
 /* ===== 全站弹窗层级规范（强制，后开永远在上层，杜绝倒挂/被媒体内容遮挡） =====
-   普通弹窗遮罩 2000 → 分享/确认 3000/4000 → 编辑器放大 6001 → 客服 10001 → 放大预览 100000 → 轻提示 100001 */
+   业务弹窗遮罩 2000 → 分享/确认 3000 → 编辑器放大 6000/6001 →
+   弹窗内子弹窗（时间选择/通用输入/插入链接/分类面板）6002 → 客服 10001 →
+   放大预览 100000 → 轻提示 100001
+   注：子弹窗统一取 6002，保证在"编辑器放大模式(6000/6001)"之上——放大态点插入图片/视频/链接
+   的填写弹窗、时间选择等都不会被压住 */
 .modal-mask { z-index: 2000 !important; }
+#inputMask { z-index: 6002 !important; } /* R15：编辑器插入图片/视频等"弹窗里的输入弹窗"，必须高于业务弹窗与放大编辑器 */
 .share-mask, .confirm-mask { z-index: 3000 !important; }
 #rteExitZoom { z-index: 6001 !important; }
 .kf-mask, #kfFallback { z-index: 10001 !important; }
@@ -269,4 +274,39 @@
 }
 .modal-cover[src^="data:image/svg+xml"], .preview-cover[src^="data:image/svg+xml"] {
   aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px !important; object-fit: contain !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important;
+}
+
+
+/* ===== R14 全站统一翻页组件（.uni-pager）：复用数据统计翻页样式（胶囊按钮），两页三处共用 =====
+   结构：上一页 | 页码信息（N / M（共X条））| 跳页输入+跳转键 | 下一页 */
+.uni-pager {
+  display: flex; justify-content: center; align-items: center;
+  gap: 8px; padding: 14px 4px 2px; flex-wrap: wrap;
+}
+.uni-pager button.pg-btn {
+  padding: 8px 16px; border: 1px solid var(--blue2, #90CAF9); background: #fff;
+  color: var(--blue1, #1565c0); border-radius: 20px; cursor: pointer; font-size: 13px;
+  -webkit-tap-highlight-color: transparent;
+}
+.uni-pager button.pg-btn:hover:not(:disabled) { background: #E3F2FD; }
+.uni-pager button.pg-btn:disabled { opacity: 0.4; cursor: default; }
+.uni-pager .pg-info { color: #666; font-size: 13px; }
+.uni-pager .pg-jump { display: inline-flex; align-items: center; gap: 6px; }
+.uni-pager .pg-jump input {
+  width: 52px; padding: 7px 4px; border: 1px solid var(--blue2, #90CAF9); border-radius: 8px;
+  text-align: center; font-size: 13px; box-sizing: border-box; color: #333;
+  -moz-appearance: textfield; appearance: textfield;
+}
+.uni-pager .pg-jump input::-webkit-outer-spin-button,
+.uni-pager .pg-jump input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.uni-pager .pg-jump button {
+  padding: 7px 12px; border: 1px solid var(--blue2, #90CAF9); background: #fff;
+  color: var(--blue1, #1565c0); border-radius: 8px; cursor: pointer; font-size: 13px;
+  -webkit-tap-highlight-color: transparent;
+}
+.uni-pager .pg-jump button:hover { background: #E3F2FD; }
+@media (max-width: 600px) {
+  .uni-pager { gap: 6px; }
+  .uni-pager button.pg-btn { padding: 7px 12px; font-size: 12px; }
+  .uni-pager .pg-info { font-size: 12px; }
 }

@@ -201,9 +201,10 @@
     .share-title { font-size: 18px; font-weight: 600; color: #222; margin-bottom: 10px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
     .share-tip { font-size: 14px; color: #666; margin-bottom: 14px; }
     .share-link {
-      background: #f5f7fa; border: 1px solid #e8e8e8; border-radius: 8px;
-      padding: 10px 12px; font-size: 13px; color: #555;
-      word-break: break-all; margin-bottom: 16px; text-align: left;
+      /* R15：与分享资源弹窗（showShareLinkModal）链接样式统一——蓝字居中 */
+      background: #f5f8fb; border-radius: 8px;
+      padding: 10px 12px; font-size: 14px; color: #1565c0;
+      word-break: break-all; margin-bottom: 16px; text-align: center;
       user-select: all; line-height: 1.5; max-height: 100px; overflow-y: auto;
     }
     .share-close {
@@ -1314,7 +1315,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   <div class="share-mask" id="shareMask">
     <div class="share-box">
       <button class="modal-close-x" id="shareCloseX" type="button" onclick="closeShare()">×</button>      <div class="share-title">分享本站</div>
-      <div class="share-tip">网站链接已复制到剪贴板</div>
+      <div class="share-tip">本站链接已复制到剪贴板</div>
       <div class="share-link" id="shareLinkText"></div>
       <button class="share-close" id="shareClose">确定</button>
     </div>
@@ -1888,12 +1889,20 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       });
       productGrid.appendChild(frag);
 
-      // 分页控件
-      if (totalPages > 1) {
-        var pager = document.createElement('div');
-        pager.id = 'pager';
-        pager.style.cssText = 'display:flex;justify-content:center;align-items:center;gap:8px;padding:20px 16px;flex-wrap:wrap;';
-        // 上一页
+      // 分页控件（R14：改用全站统一 .uni-pager 公共组件——与数据统计翻页同款胶囊样式 + 跳页输入；
+      // 翻页后回顶改瞬时滚动，原先平滑滚动叠加图片加载会显得"卡一下"）
+      var pager = document.createElement('div');
+      pager.id = 'pager';
+      productGrid.parentNode.insertBefore(pager, productGrid.nextSibling);
+      if (window.buildUniPager) {
+        window.buildUniPager(pager, {
+          page: currentPage,
+          totalPages: totalPages,
+          total: list.length,
+          onPage: function (p) { currentPage = p; renderProducts(); try { window.scrollTo(0, 0); } catch (e) {} }
+        });
+      } else if (totalPages > 1) {
+        // 兜底：公共组件缺失时退回原内联胶囊样式（不应发生）
         var prev = document.createElement('button');
         prev.textContent = '上一页';
         prev.style.cssText = 'padding:8px 16px;border:1px solid var(--blue2);background:#fff;color:var(--blue1);border-radius:20px;cursor:pointer;font-size:13px;';
@@ -1901,12 +1910,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         if (prev.disabled) prev.style.opacity = '0.4';
         prev.onclick = function () { if (currentPage > 1) { currentPage--; renderProducts(); window.scrollTo({top:0,behavior:'smooth'}); } };
         pager.appendChild(prev);
-        // 页码
         var info = document.createElement('span');
         info.textContent = currentPage + ' / ' + totalPages;
         info.style.cssText = 'color:var(--text-light);font-size:13px;';
         pager.appendChild(info);
-        // 下一页
         var next = document.createElement('button');
         next.textContent = '下一页';
         next.style.cssText = 'padding:8px 16px;border:1px solid var(--blue2);background:#fff;color:var(--blue1);border-radius:20px;cursor:pointer;font-size:13px;';
@@ -1914,7 +1921,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         if (next.disabled) next.style.opacity = '0.4';
         next.onclick = function () { if (currentPage < totalPages) { currentPage++; renderProducts(); window.scrollTo({top:0,behavior:'smooth'}); } };
         pager.appendChild(next);
-        productGrid.parentNode.insertBefore(pager, productGrid.nextSibling);
       }
     }
 
@@ -2185,7 +2191,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       var jb = m.querySelector('button[data-u]');
       if (jb) jb.setAttribute('data-u', url || '');
       // 打开客服：隐藏并暂停背景视频（原生视频层级高于一切，仅暂停仍会盖住弹窗）
-      try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
+      // R14：排除范围与 ui-common.js 主实现同步扩大——弹窗容器内（资源详情/预览/公告/分享/灯箱）的视频不隐藏，
+      // 否则点客服会把资源弹窗里的视频藏掉、弹窗高度塌陷
+      try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
       m.style.display = 'flex';
       if (window.lockBodyScroll) window.lockBodyScroll(true);
     }
@@ -2202,7 +2210,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         btnContact.style.display = '';
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png'); } else { openContactFallback(url); }
+          // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未配置客服'); };
@@ -2268,19 +2277,14 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     });
 
     // ---------- R10 资源分享（弹窗左上角转发键） ----------
-    // 点击后生成 带当前页面路径+?pid=资源ID 的链接复制到剪贴板（复用顶栏分享的 clipboard+fallbackCopy 复制链路）
+    // R14：点击改为弹窗形式（复用 ui-common 公共分享链接弹窗，观感与顶栏「分享本站」一致：标题+链接+确定），
+    // 弹窗内部自动复制链接到剪贴板
     modalShareX.addEventListener('click', function (e) {
       e.stopPropagation();
       if (!currentProduct || !currentProduct.id) { showToast('该资源暂不能分享'); return; }
       var url = window.location.origin + window.location.pathname + '?pid=' + currentProduct.id;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function () {
-          showToast('资源链接已复制到剪贴板');
-        }).catch(function () { try { fallbackCopy(url); } catch (err) {} showToast('资源链接已复制'); });
-      } else {
-        try { fallbackCopy(url); } catch (err) {}
-        showToast('资源链接已复制');
-      }
+      if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
+      else showToast('资源链接已复制到剪贴板');
     });
 
     // ---------- 资源码验证 ----------
@@ -2359,7 +2363,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     // ---------- Toast 轻提示 ----------
     function showToast(msg) {
       var t = document.createElement('div');
-      t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.78);color:#fff;padding:10px 22px;border-radius:20px;font-size:14px;z-index:9999;pointer-events:none;animation:toastIn 0.2s ease;';
+      t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.78);color:#fff;padding:10px 22px;border-radius:20px;font-size:14px;z-index:100002;pointer-events:none;animation:toastIn 0.2s ease;';
       t.textContent = msg;
       document.body.appendChild(t);
       setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; }, 1800);
@@ -2370,7 +2374,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     (function () { var svg = topContactBtn && topContactBtn.querySelector('svg'); if (svg) { svg.setAttribute('fill', 'currentColor'); svg.removeAttribute('stroke'); svg.removeAttribute('stroke-width'); svg.removeAttribute('stroke-linecap'); svg.removeAttribute('stroke-linejoin'); var p = svg.querySelector('path'); if (p) p.setAttribute('d', 'M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.036 2.87c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.97-.983zm4.844 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.969-.983z'); svg.style.width = '15px'; svg.style.height = '15px'; } })();
     topContactBtn.addEventListener('click', function () {
       var url = window._globalContact || getDefaultContact();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png'); } else { openContactFallback(url); } }
+      // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else showToast('暂未设置客服链接');
     });
 
@@ -2546,7 +2551,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     }
 
     // ---------- R10 分享链接落地：?pid= 自动打开资源弹窗 ----------
-    // fromRemote=true 表示数据来自远端接口（可信），查不到资源时提示"该资源已下架或失效"；
+    // fromRemote=true 表示数据来自远端接口（可信），查不到资源时提示"该资源已隐藏或不存在"；
     // fromRemote=false（网络异常、只有本地缓存）查不到时静默处理，避免缓存过期误报失效。
     // 处理成功后清理 URL 中的 pid 参数，避免刷新/分享造成重复弹窗。
     var __pidHandled = false;
@@ -2559,8 +2564,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       if (p) {
         try { openModal(p); } catch (e) {}
       } else if (fromRemote) {
-        if (window.showAlert) window.showAlert('该资源已下架或失效');
-        else showToast('该资源已下架或失效');
+        if (window.showAlert) window.showAlert('该资源已隐藏或不存在');
+        else showToast('该资源已隐藏或不存在');
       }
       try {
         var u = new URL(window.location.href);
