@@ -4,9 +4,9 @@
  *   1. 建表（表不存在才建）
  *   2. 写入固定分类"全部"（空时才写）
  *   3. 不写入任何示例资源（管理员自行添加）
- *   4. 创建默认管理员（账号 1747358421，带随机盐，无法注册）
+ *   4. 创建管理员（账密由部署者首次初始化时通过请求体指定，代码不保存任何明文凭据）
  *   5. 写入默认平台设置（含类型表资源码/隐藏字段）
- * 部署后打开管理后台，点"初始化系统"即可调用。
+ * 首次部署后手动调用：curl -X POST https://你的域名/api/install -d '{"username":"...","password":"..."}'
  */
 import { json, hashPasswordWithSalt, randomSalt } from '../_utils.js';
 
@@ -105,8 +105,9 @@ const DEFAULT_CATEGORIES = [
   { id: 0, name: '全部', sort: 0 },
 ];
 
-// 默认管理员（无法注册，仅此一个入口）
-const DEFAULT_ADMIN = { username: '1747358421', password: 'myb775825825148' };
+// 安全修复：不再在代码中硬编码任何默认账号/密码（旧版明文密码已删除）。
+// 首次初始化时由部署者通过请求体指定管理员账密：POST /api/install {"username":"...","password":"..."}
+// 仅在 admins 表为空时生效；已初始化的站点重跑本接口不会创建/重置任何管理员。
 
 // 默认平台设置
 const DEFAULT_SETTINGS = [
@@ -167,13 +168,22 @@ export async function onRequestPost(context) {
 
     // 3. 不写入示例资源（留空，管理员自行添加）
 
-    // 4. 默认管理员（带随机盐）
+    // 4. 管理员（仅 admins 表为空时创建；账密来自请求体，代码里不保存任何明文凭据）
     const adm = await env.DB.prepare('SELECT COUNT(*) AS n FROM admins').first();
     if (!adm || adm.n === 0) {
+      let initUser = '', initPass = '';
+      try {
+        const body = await context.request.json();
+        initUser = String((body && body.username) || '').trim();
+        initPass = String((body && body.password) || '');
+      } catch (e) { /* 请求体缺失/非 JSON 时保持为空，走下方校验 */ }
+      if (!/^[A-Za-z0-9_]{3,32}$/.test(initUser) || initPass.length < 8 || initPass.length > 64) {
+        return json({ ok: false, msg: '首次初始化需指定管理员：POST /api/install，body 为 {"username":"3-32位字母数字下划线","password":"8-64位"}' }, 400);
+      }
       const salt = randomSalt();
-      const hash = await hashPasswordWithSalt(DEFAULT_ADMIN.password, salt);
+      const hash = await hashPasswordWithSalt(initPass, salt);
       await env.DB.prepare('INSERT INTO admins (username, password_hash, salt) VALUES (?, ?, ?)')
-        .bind(DEFAULT_ADMIN.username, hash, salt).run();
+        .bind(initUser, hash, salt).run();
     }
 
     // 5. 默认平台设置
@@ -185,7 +195,7 @@ export async function onRequestPost(context) {
       }
     }
 
-    return json({ ok: true, msg: '初始化完成', defaultAdmin: { username: DEFAULT_ADMIN.username } });
+    return json({ ok: true, msg: '初始化完成（管理员账号以本次请求指定的为准，请妥善保管）' });
   } catch (e) {
     console.error('初始化失败:', e);
     return json({ ok: false, msg: '初始化失败: ' + e.message, error: e.message }, 500);

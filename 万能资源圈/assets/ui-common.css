@@ -164,6 +164,63 @@
 }
 .kf-jump { width: auto !important; margin: 0 !important; }
 
+/* ===== 全站统一顶栏 tab 按键（唯一实现）=====
+   资源页顶栏「咨询客服/分享」、管理页「资源管理/分类管理/数据统计/平台设置/退出」
+   完全同一套样式：蓝渐变顶栏上的半透明白胶囊，激活白底蓝字。
+   两页禁止各自再写 .tab 样式（复用，非复制）。 */
+.tab {
+  border: none; background: rgba(255, 255, 255, 0.18);
+  color: #fff; padding: 0 16px; height: 38px;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box; border-radius: 18px;
+  font-size: 14px; white-space: nowrap; line-height: 1.2; gap: 5px;
+  transition: all 0.2s; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
+.tab:hover { transform: scale(0.97); opacity: 0.9; }
+.tab:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+.tab svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
+.tab svg + span { margin-left: 5px; }
+
+/* ===== 全站统一列表/网格切换（唯一实现）=====
+   资源页与管理页共用：蓝底圆角容器 + 半透明白按钮 + 激活白底蓝字。
+   两页禁止各自再写 view-btn/view-toggle 样式。 */
+.view-toggle {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--blue1); border-radius: 8px; padding: 3px;
+}
+.view-btn {
+  padding: 0 10px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12); color: #fff; cursor: pointer;
+  font-size: 13px; height: 38px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center; line-height: 1.2;
+  transition: background .15s ease, color .15s ease, transform .1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.view-btn:hover { transform: scale(0.96); opacity: 0.9; }
+.view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+.view-btn.active { background: #fff !important; color: #1E88E5 !important; border-color: #fff !important; }
+
+/* 窄屏统一适配（tab 与 view-btn 同步缩放，两页一致） */
+@media (max-width: 600px) {
+  .tab { padding: 7px 12px; font-size: 13px; }
+  .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
+}
+
+/* ===== 弹窗底部按键隐藏修复 =====
+   上方 .modal-footer > button / .kf-actions > button 的 display:inline-flex !important
+   会覆盖 JS 设置的内联 style.display='none'，导致本该隐藏的按键被强行渲染
+   （资源页"公众号讯"弹窗左侧多出空的绿色跳转键就是这个 bug）。
+   内联样式写了 display:none 的按键必须真正隐藏：选择器特异性高于上面两条通用规则。 */
+.modal-footer > button[style*="display: none"],
+.modal-footer > button[style*="display:none"],
+.modal-footer > .modal-inner-btn[style*="display: none"],
+.modal-footer > .modal-inner-btn[style*="display:none"],
+.kf-actions > button[style*="display: none"],
+.kf-actions > button[style*="display:none"] {
+  display: none !important;
+}
+
 /* ===== 弹窗媒体统一稳定（全站复用，禁止各弹窗单独写） =====
    1) 加载前用 .m-loading 预留 16:9 占位，图片/视频加载完成不会撑开弹窗导致尺寸跳动
    2) 媒体宽度锁死内容区、box-sizing 统一，右侧不会超出弹窗被遮挡，左右边距对称

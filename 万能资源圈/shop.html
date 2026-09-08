@@ -174,13 +174,7 @@
     }
     .top-btn:active 旧规则已移除（废弃注释内）
     */
-    /* 顶栏 tab 按钮：完整复用管理页【资源管理/分类管理/数据统计/平台设置】公共组件样式（.tab），零自定义 */
-    .tab { border: none; background: rgba(255, 255, 255, 0.18); color: #fff; padding: 0 16px; height: 38px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 18px; font-size: 14px; white-space: nowrap; transition: all 0.10s ease; }
-    .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
-    .tab:hover { transform: scale(0.97); opacity: 0.9; }
-    .tab:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
-    .tab svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
-    .tab svg + span { margin-left: 5px; }
+    /* 顶栏 tab 按钮：直接引用 ui-common.css 全站公共 .tab（与管理页【资源管理/分类管理】同一份样式，零复制） */
     /* 废弃：.top-btn 覆盖规则已移除（咨询客服/分享已复用 .tab 公共组件） */
     .top-btn:hover 旧规则已移除（废弃注释内）
     .top-btn:active 旧规则已移除（废弃注释内）
@@ -354,10 +348,7 @@
       .product-grid.list-view .card-img { width: 108px; min-width: 108px; }
     }
 
-    /* 视图切换按钮激活状态 */
-    .view-btn { padding:0 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; height:38px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; }
-    .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
-    .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    /* 视图切换按钮：直接引用 ui-common.css 全站公共 .view-toggle/.view-btn（与管理页同一份样式，零复制） */
     /* 视图切换动画（管理页/资源页一致） */
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
@@ -370,11 +361,6 @@
     .modal-box img[src^="data:image/svg+xml"], .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain; }
     .modal-cover[src^="data:image/svg+xml"] { aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px !important; object-fit: contain !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important; }
     .modal-cover.m-loading { aspect-ratio: 16 / 9 !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important; max-height: 320px !important; background: #eef4fb; border-radius: 10px; }
-    .view-btn.active {
-      background: #fff !important;
-      color: #1E88E5 !important;
-      border-color: #fff !important;
-    }
 
     .product-card {
       background: #fff;
@@ -1082,11 +1068,8 @@
       .shop-brand { flex: 0 1 auto; min-width: 0; }
       .shop-name { font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .topbar-actions { order: 1; margin-left: auto; gap: 6px; }
-      .tab { padding: 7px 12px; font-size: 13px; }  /* 手机端与管理页 tab 按钮表现一致 */
-      /* 手机端不再隐藏文字：与管理页 tab 按钮表现一致 */
-      .tab svg { width: 15px; height: 15px; }
-      .view-toggle { order: 1; flex-shrink: 0; margin-left: 0; gap: 4px; }
-      .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
+      /* 手机端 .tab/.view-btn 窄屏适配已并入 ui-common.css 公共样式（两页一致） */
+      .view-toggle { order: 1; flex-shrink: 0; margin-left: 0; }
       .search-box { order: 2; flex: 1 1 100%; margin-top: 0; }
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
@@ -1117,8 +1100,7 @@
     /* 平板端 */
     @media (min-width: 601px) and (max-width: 900px) {
       .modal-box { max-width: 90%; }
-      /* 平板端文字不隐藏：与管理页 tab 按钮表现一致 */
-      .tab svg { width: 15px; height: 15px; }
+      /* 平板端文字不隐藏：与管理页 tab 按钮表现一致（.tab 样式统一由 ui-common.css 提供） */
     }
     /* logo 统一为名称大小（覆盖上方定义） */
     .shop-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; }
@@ -1206,7 +1188,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         <button class="search-clear" id="searchClear" title="清空">×</button>
       </div>
       <!-- 视图切换按钮 -->
-      <div class="view-toggle" style="display:flex;gap:4px;margin-left:8px;">
+      <div class="view-toggle" style="margin-left:8px;">
         <button type="button" class="view-btn active" id="viewListBtn" title="列表视图">☰ 列表</button>
         <button type="button" class="view-btn" id="viewGridBtn" title="网格视图">▦ 网格</button>
 

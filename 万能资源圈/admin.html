@@ -211,12 +211,7 @@
       background: transparent; box-sizing: border-box; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22); transition: transform 0.12s ease, box-shadow 0.12s ease; flex-shrink: 0;
     }
     .tabs { display: flex; gap: 6px; flex: 1; }
-    .tab {
-      border: none; background: rgba(255, 255, 255, 0.18);
-      color: #fff; padding: 0 16px; height: 38px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 18px;
-      font-size: 14px; white-space: nowrap; transition: all 0.2s;
-    }
-    .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
+    /* .tab 按钮样式已抽入 ui-common.css 全站公共组件（与资源页顶栏咨询客服/分享同一份，零复制） */
     .topbar-right { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; }
     .mini-btn {
       border: 1px solid #ddd;
@@ -228,12 +223,10 @@
     .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tb-row2 select { padding: 7px 10px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 13px; background: #fff; color: #333; }
-    .view-toggle { display: flex; gap: 4px; }
-    .view-btn { padding:0 10px; border:1px solid rgba(255,255,255,0.35); border-radius:6px; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; font-size:13px; height:38px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; transition: background .15s ease, color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent; } .view-btn:hover { transform: scale(0.96); opacity: 0.9; } .view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
+    /* .view-toggle/.view-btn 已抽入 ui-common.css 全站公共组件（与资源页同一份，零复制；旧的两套重复定义与后置蓝底覆盖全部删除） */
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
-    .view-btn.active { background:#fff !important; color:#1E88E5 !important; border-color:#fff !important; }
-    .btn-blue, .row-btn, .mini-btn, .view-btn, .tab, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
+    .btn-blue, .row-btn, .mini-btn, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; display: inline-flex; align-items: center; justify-content: center; }
     .toolbar-hint { font-size: 13px; color: #999; }
     .admin-search {
@@ -384,12 +377,6 @@
     }
     #productList.card-view .product-row .select-picker {
       margin: 2px 12px 10px; align-self: flex-start; width: auto;
-    }
-    /* 视图切换按钮激活状态 */
-    .view-btn.active {
-      background: var(--blue1) !important;
-      color: #fff !important;
-      border-color: var(--blue1) !important;
     }
 
     /* ---------- 统计 ---------- */
@@ -726,15 +713,15 @@
       flex: 1; background-color: var(--red); color: #fff; border: none;
       padding: 0 24px; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 600;
     }
-    .modal-inner-btn, .modal-close, .btn-blue, .tab, .mini-btn, .row-btn, .switch, .variant-add {
+    .modal-inner-btn, .modal-close, .btn-blue, .mini-btn, .row-btn, .switch, .variant-add {
       transition: all 0.10s ease;
     }
     .modal-inner-btn:hover, .modal-close:hover, .btn-blue:hover,
-    .tab:hover, .mini-btn:hover, .row-btn:hover, .switch:hover, .variant-add:hover {
+    .mini-btn:hover, .row-btn:hover, .switch:hover, .variant-add:hover {
       transform: scale(0.97); opacity: 0.9;
     }
     .modal-inner-btn:active, .modal-close:active, .btn-blue:active,
-    .tab:active, .mini-btn:active, .row-btn:active, .switch:active, .variant-add:active {
+    .mini-btn:active, .row-btn:active, .switch:active, .variant-add:active {
       transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
     }
 
@@ -855,7 +842,7 @@
         -webkit-overflow-scrolling: touch; scrollbar-width: none;
       }
       .tabs::-webkit-scrollbar { display: none; }
-      .tab { padding: 7px 12px; font-size: 13px; flex: 1 0 auto; text-align: center; }
+      .tab { flex: 1 0 auto; text-align: center; }
       .container { padding: 12px; }
       .toolbar { flex-wrap: wrap; gap: 8px; }
       .admin-search { max-width: 100%; flex-basis: 100%; order: 3; }
@@ -908,7 +895,6 @@
       .preview-btn { flex-basis: 100%; order: -1; }
       .time-filter { flex: 1; }
       .time-btn { flex: 1; padding: 6px 8px; font-size: 12px; }
-      .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
       .stat-date-input { flex: 1 1 130px; min-width: 0 !important; font-size: 12px !important; padding: 7px 8px !important; }
       .trend-chart { padding: 12px; }
       .rte-toolbar { gap: 3px; padding: 6px; }
@@ -927,25 +913,25 @@
       .back-top { right: 14px; bottom: 18px; width: 40px; height: 40px; }
     }
 
-    /* ========== 统一按钮动画（跟资源页一致） ========== */
-    .btn-blue, .btn-cyan, .mini-btn, .tab, .export-btn, .batch-btn,
+    /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ========== */
+    .btn-blue, .btn-cyan, .mini-btn, .export-btn, .batch-btn,
     .variant-add, .insert-link-btn, .time-btn, .cat-toggle, .modal-inner-btn,
-    .modal-close, .preview-btn, .confirm-ok, .confirm-cancel, .view-btn, .status-select, .row-btn {
+    .modal-close, .preview-btn, .confirm-ok, .confirm-cancel, .status-select, .row-btn {
       transition: all 0.10s ease;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-blue:hover, .btn-cyan:hover, .mini-btn:hover, .tab:hover,
+    .btn-blue:hover, .btn-cyan:hover, .mini-btn:hover,
     .export-btn:hover, .batch-btn:hover, .variant-add:hover, .insert-link-btn:hover,
     .time-btn:hover, .cat-toggle:hover, .modal-inner-btn:hover, .modal-close:hover,
-    .preview-btn:hover, .confirm-ok:hover, .confirm-cancel:hover, .view-btn:hover, .row-btn:hover {
+    .preview-btn:hover, .confirm-ok:hover, .confirm-cancel:hover, .row-btn:hover {
       transform: scale(0.96);
       opacity: 0.9;
     }
-    .btn-blue:active, .btn-cyan:active, .mini-btn:active, .tab:active,
+    .btn-blue:active, .btn-cyan:active, .mini-btn:active,
     .export-btn:active, .batch-btn:active, .variant-add:active, .insert-link-btn:active,
     .time-btn:active, .cat-toggle:active, .modal-inner-btn:active, .modal-close:active,
-    .preview-btn:active, .confirm-ok:active, .confirm-cancel:active, .view-btn:active, .row-btn:active {
+    .preview-btn:active, .confirm-ok:active, .confirm-cancel:active, .row-btn:active {
       transform: scale(0.92);
       opacity: 0.8;
       filter: brightness(0.9);
@@ -960,7 +946,7 @@
     /* 弹窗底部按钮宽度统一：2 个等宽、3 个等分 */
     .modal-footer button { flex: 1 1 0; min-width: 0; }
     .modal-footer .preview-btn { flex-basis: auto; }
-    .view-toggle { display: flex; align-items: center; gap: 4px; background: var(--blue1); border-radius: 8px; padding: 3px; }
+    /* .view-toggle 蓝底容器已并入 ui-common.css 公共样式（原 admin 后置覆盖删除） */
     /* 商品条目切换动画复用商品页：限制形变过渡，仅保留缩放/阴影，切换时不做布局形变 */
     .product-row { transition: transform 0.10s ease, box-shadow 0.10s ease !important; }
     /* 公告列表防横向滚动条：溢出隐藏（新增公告项不再瞬间出现横向滑轮） */
@@ -4379,12 +4365,16 @@ refreshCatCnts();
 
       ordered.forEach(function (c) {
         if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; // “全部”项不渲染选中框（固定项）
-          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'padding-left:24px;font-size:14px;color:#555;opacity:0.85;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vph = document.createElement('span'); _vph.style.cssText = 'display:flex;align-items:center;justify-content:center;min-width:0;width:72px;order:50;height:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;color:#bbb;background:#fafafa;flex-shrink:0;cursor:default;visibility:hidden;'; _vph.textContent = '固定'; _vrow.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vrow.appendChild(_vedit); _vrow.appendChild(_vdel); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
+          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'padding-left:66px;font-size:14px;color:#555;opacity:0.85;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vph = document.createElement('span'); _vph.style.cssText = 'display:flex;align-items:center;justify-content:center;min-width:0;width:72px;order:50;height:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;color:#bbb;background:#fafafa;flex-shrink:0;cursor:default;visibility:hidden;'; _vph.textContent = '固定'; _vrow.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vrow.appendChild(_vedit); _vrow.appendChild(_vdel); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
         var row = document.createElement('div');
         row.className = 'cat-row';
         row.draggable = false;
         row.dataset.id = c.id; row.dataset.parentId = c.parent_id;
         if (Number(c.id) !== 0) { var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '⋮⋮'; row.appendChild(handle); }
+        else { // 根"全部"(id=0) 固定项：用禁用手柄+固定槽位占位，保证名称列与一级分类严格对齐
+          var _h0 = document.createElement('span'); _h0.className = 'drag-handle'; _h0.draggable = false; _h0.style.opacity = '0.35'; _h0.style.cursor = 'default'; _h0.title = '固定项不可拖动'; _h0.textContent = '⋮⋮'; row.appendChild(_h0);
+          var _sp0 = document.createElement('span'); _sp0.style.cssText = 'width:56px;flex-shrink:0;'; _sp0.setAttribute('aria-hidden', 'true'); row.appendChild(_sp0);
+        }
         var isTop = c.parent_id === 0;
 
         // 拖拽事件（同级别内排序）
@@ -4422,7 +4412,7 @@ refreshCatCnts();
           cb.dataset.id = c.id;
           cb.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--blue1);';
           cb.checked = !!state.catSelected[c.id]; cb.addEventListener('change', function () { state.catSelected[c.id] = this.checked; updateCatBatchBar(); });
-          row.appendChild(cb); }
+          row.appendChild(cb); } else { var _cbp = document.createElement('span'); _cbp.style.cssText = 'width:20px;flex-shrink:0;'; _cbp.setAttribute('aria-hidden', 'true'); row.appendChild(_cbp); }
         }
 
         var name = document.createElement('span');
@@ -4529,6 +4519,12 @@ refreshCatCnts();
           });
           row.appendChild(editBtn);
           row.appendChild(delBtn);
+        }
+        else { // 根"全部"(id=0)：右侧用隐藏占位对齐状态框/按钮列（与虚拟"全部"行同一套占位方式，保证列对齐）
+          var _ph0 = document.createElement('span'); _ph0.style.cssText = 'display:flex;align-items:center;justify-content:center;min-width:0;width:72px;order:50;height:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;color:#bbb;background:#fafafa;flex-shrink:0;cursor:default;visibility:hidden;'; _ph0.textContent = '固定'; _ph0.setAttribute('aria-hidden', 'true'); row.appendChild(_ph0);
+          var _pe0 = document.createElement('button'); _pe0.className = 'row-btn'; _pe0.textContent = '编辑'; _pe0.style.cssText = 'visibility:hidden;pointer-events:none;';
+          var _pd0 = document.createElement('button'); _pd0.className = 'row-btn danger'; _pd0.textContent = '删除'; _pd0.style.cssText = 'visibility:hidden;pointer-events:none;';
+          row.appendChild(_pe0); row.appendChild(_pd0);
         }
 
         box.appendChild(row); box.style.minHeight = '';
