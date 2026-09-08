@@ -28,10 +28,12 @@ window.__uiCommonLoaded = true;
             __kfHiddenVideos.push(v);
             try { v.pause(); } catch (e) {}
             v.style.visibility = 'hidden';
+            v.style.display = 'none';
           }
         } else if (v.dataset.__kfHid) {
           v.dataset.__kfHid = '';
           v.style.visibility = '';
+          v.style.display = '';
         }
       });
       if (!hide) __kfHiddenVideos = [];
@@ -117,6 +119,8 @@ window.__uiCommonLoaded = true;
   };
 
   // ===== 全站统一提示弹窗（标题 + 内容 + 底部单个"确定"键）：密码错误/操作失败/成功提示等一律走它，复用同一套弹窗样式 =====
+  // 安全修复：标题与内容一律用 textContent 写入（不再拼进 innerHTML），
+  // 即使内容来自接口返回或用户数据，也无法执行 HTML/脚本，杜绝 XSS
   window.showAlert = function (msg, title) {
     try {
       var mask = document.createElement('div');
@@ -124,11 +128,15 @@ window.__uiCommonLoaded = true;
       mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:10060;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
         '<div class="modal-box" style="background:#fff;border-radius:14px;width:100%;max-width:400px;padding:26px 22px;position:relative;text-align:center;max-height:84vh;overflow-y:auto;">' +
-          '<button type="button" class="alert-x" aria-label="关闭" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.12s ease;">×</button>' +
-          '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;">' + (title || '提示') + '</div>' +
-          '<div style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;">' + String(msg == null ? '' : msg) + '</div>' +
+          '<button type="button" class="modal-close-x" aria-label="关闭">×</button>' +
+          '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;"></div>' +
+          '<div class="alert-body" style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
           '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;">确定</button></div>' +
         '</div>';
+      var titleEl = mask.querySelector('.modal-title');
+      var bodyEl = mask.querySelector('.alert-body');
+      if (titleEl) titleEl.textContent = (title == null || title === '') ? '提示' : String(title);
+      if (bodyEl) bodyEl.textContent = String(msg == null ? '' : msg);
       document.body.appendChild(mask);
       var close = function () {
         try { document.body.removeChild(mask); } catch (e) {}
@@ -137,7 +145,7 @@ window.__uiCommonLoaded = true;
       mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
       var ok = mask.querySelector('.alert-ok');
       if (ok) ok.addEventListener('click', close);
-      var x = mask.querySelector('.alert-x');
+      var x = mask.querySelector('.modal-close-x');
       if (x) x.addEventListener('click', close);
       window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     } catch (e) { /* 弹窗失败时回退系统 alert，保证提示不丢失 */ try { window.alert(msg); } catch (e2) {} }

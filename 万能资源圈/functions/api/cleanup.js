@@ -7,7 +7,9 @@
  *   3. login_attempts 表：删除 30 天前的记录
  * 全系统统一保留最近 30 天数据
  * 需要 header: x-cleanup-token = 环境变量 CLEANUP_TOKEN
- * 如果未设置 CLEANUP_TOKEN，则不校验（仅限本地测试）
+ * 安全策略：设置了 CLEANUP_TOKEN 就必须带对 token；
+ * 未设置 CLEANUP_TOKEN 时仅允许本地调试（localhost/127.0.0.1）调用，
+ * 公网一律拒绝，防止陌生人直接清空统计数据
  */
 import { json } from '../_utils.js';
 
@@ -20,6 +22,11 @@ export async function onRequestGet(context) {
     const token = request.headers.get('x-cleanup-token') || '';
     if (token !== expectedToken) {
       return json({ ok: false, msg: '未授权' }, 401);
+    }
+  } else {
+    const host = new URL(request.url).hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return json({ ok: false, msg: '未设置 CLEANUP_TOKEN，公网调用已禁用。请在 Cloudflare Pages 环境变量里设置 CLEANUP_TOKEN 后再使用定时清理' }, 401);
     }
   }
 

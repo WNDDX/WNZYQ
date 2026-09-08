@@ -13,7 +13,7 @@
   <meta property="og:url" content="">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="stylesheet" href="/assets/ui-common.css?v=11">
+  <link rel="stylesheet" href="/assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5">
   <link rel="preload" href="/assets/images/logo.png" as="image">
@@ -1203,7 +1203,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
         <input class="search-input" id="searchInput" placeholder="搜索资源" />
-        <button class="search-clear" id="searchClear" title="清空">✕</button>
+        <button class="search-clear" id="searchClear" title="清空">×</button>
       </div>
       <!-- 视图切换按钮 -->
       <div class="view-toggle" style="display:flex;gap:4px;margin-left:8px;">
@@ -1234,7 +1234,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
   <div class="modal-mask ann-modal" id="annModal" onclick="if(event.target===this){closeAnnModal()}">
     <div class="ann-box" onclick="event.stopPropagation()">
-      <button class="modal-close-x" id="annCloseX" type="button" onclick="closeAnnModal()">✕</button>
+      <button class="modal-close-x" id="annCloseX" type="button" onclick="closeAnnModal()">×</button>
       <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="showAnnDefault()">公告</button>
       <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
@@ -1253,7 +1253,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   <!-- ============ 详情弹窗 ============ -->
   <div class="modal-mask" id="modalMask">
     <div class="modal-wrap">
-      <button class="modal-close-x" id="modalCloseX">✕</button>
+      <button class="modal-close-x" id="modalCloseX">×</button>
       <div class="modal-box" id="modalBox">
         <img class="modal-cover" id="modalCover" alt="" />
         <div class="modal-content">
@@ -1299,7 +1299,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   <!-- ============ 分享提示弹窗 ============ -->
   <div class="share-mask" id="shareMask">
     <div class="share-box">
-      <button class="modal-close-x" id="shareCloseX" type="button" onclick="closeShare()">✕</button>      <div class="share-title">分享本站</div>
+      <button class="modal-close-x" id="shareCloseX" type="button" onclick="closeShare()">×</button>      <div class="share-title">分享本站</div>
       <div class="share-tip">网站链接已复制到剪贴板</div>
       <div class="share-link" id="shareLinkText"></div>
       <button class="share-close" id="shareClose">确定</button>
@@ -1576,27 +1576,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     }
 
     // ---------- 渲染平台信息 ----------
+    // 纯渲染：店铺名优先用线上设置（DATA.shopName，由 fetchRemote 统一拉取），
+    // 其次 config.js 兜底。（修复：原先这里单独再请求一次 /api/settings，与 fetchRemote
+    // 里的同一个接口重复——每次进页面 settings 被请求两次，浪费流量且两次结果可能不一致）
     function renderShopInfo() {
       var cfg = (typeof SHOP_CONFIG !== 'undefined') ? SHOP_CONFIG : null;
-      // 先显示 config.js 兜底
-      shopNameEl.textContent = (cfg && cfg.shopName) || '万能资源圈';
-      document.title = shopNameEl.textContent + '・资源';
+      var name = DATA.shopName || (cfg && cfg.shopName) || '万能资源圈';
+      shopNameEl.textContent = name;
+      document.title = name + '・资源';
       /* logo 已写死本地 assets/images/logo.png（与管理页同款，解析即加载），不再由 JS 覆盖，避免刷新闪动 */
       /* logo 由 HTML 直接加载显示，失败时全局感叹号占位兜底，JS 不再干预 */
-      /* 无需 JS 干预 */
-
-      // 部署后从 API 获取平台设置（管理页可修改）
-      if (usingRemote) {
-        fetch('/api/settings').then(function (r) { return r.json(); }).then(function (res) {
-          if (res && res.ok && res.settings) {
-            var s = res.settings;
-            if (s.shop_name) { shopNameEl.textContent = s.shop_name; document.title = s.shop_name + '・资源'; }
-            /* logo 不可改（与管理页一致），跳过 API 更新，避免二次加载闪动 */
-            // 全局客服链接存在 window 上，供咨询客服按钮使用
-            window._globalContact = s.contact_url || getDefaultContact();
-          }
-        }).catch(function () { /* 忽略，用兜底 */ });
-      }
     }
 
     // ---------- 渲染分类 ----------
@@ -2442,6 +2431,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             if (c.announcement !== undefined) DATA.announcement = c.announcement;
             if (c.announcement_mode !== undefined) DATA.announcementMode = c.announcement_mode;
             if (Array.isArray(c.announcements)) DATA.announcements = c.announcements;
+            if (c.shop_name) DATA.shopName = c.shop_name;
             usingRemote = true;
             hasCache = true;
           }
@@ -2482,11 +2472,15 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           DATA.announcement = (res[2].settings || {}).announcement || '';
           DATA.announcementMode = (res[2].settings || {}).announcement_mode || 'always';
           DATA.announcements = parseAnnouncements(res[2].settings || {});
+          // 店铺名与全局客服链接：统一在这一次 settings 请求里更新（不再另发请求）
+          if ((res[2].settings || {}).shop_name) { DATA.shopName = res[2].settings.shop_name; }
+          window._globalContact = (res[2].settings || {}).contact_url || getDefaultContact();
           try {
             var cacheData = JSON.parse(localStorage.getItem('wnzyq_shop_data') || '{}');
             cacheData.announcement = DATA.announcement;
             cacheData.announcement_mode = DATA.announcementMode;
             cacheData.announcements = DATA.announcements;
+            if (DATA.shopName) cacheData.shop_name = DATA.shopName;
             localStorage.setItem('wnzyq_shop_data', JSON.stringify(cacheData));
           } catch (e) {}
         }
@@ -2866,7 +2860,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   </script>
   <!-- 图片/视频放大查看器 -->
   <!-- lightbox removed: use dynamic openLightbox/bindLightbox -->
-  <script src="/assets/ui-common.js?v=11"></script>
+  <script src="/assets/ui-common.js"></script>
   <script>
   (function () {
     function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }

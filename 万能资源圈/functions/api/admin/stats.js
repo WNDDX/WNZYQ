@@ -24,13 +24,16 @@ export async function onRequestGet(context) {
   let effectiveEnd = new Date().toISOString().slice(0, 10);
 
   // stats表单表用的日期过滤（明确指定 stats.created_at）
-  let statsDateFilter;
+  // 安全修复：日期值一律通过 SQL 绑定参数（?）传入，不再拼接进 SQL 字符串
+  let statsDateFilter, statsDateParams;
   if (startDate && endDate) {
     effectiveStart = String(startDate).slice(0, 10) > maxStartStr ? String(startDate).slice(0, 10) : maxStartStr;
     effectiveEnd = String(endDate).slice(0, 10);
-    statsDateFilter = ` AND date(stats.created_at) >= '${effectiveStart}' AND date(stats.created_at) <= '${effectiveEnd}'`;
+    statsDateFilter = ` AND date(stats.created_at) >= ? AND date(stats.created_at) <= ?`;
+    statsDateParams = [effectiveStart, effectiveEnd];
   } else {
     statsDateFilter = ` AND stats.created_at >= datetime('now', '-30 days')`;
+    statsDateParams = [];
   }
 
   // 1. 总览
@@ -38,9 +41,9 @@ export async function onRequestGet(context) {
     products: await count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
     online: await count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1'),
     hidden: await count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_hidden = 1'),
-    views: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'view'${statsDateFilter}`),
-    contacts: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'contact'${statsDateFilter}`),
-    resource_unlocks: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'resource_unlock'${statsDateFilter}`),
+    views: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'view'${statsDateFilter}`, statsDateParams),
+    contacts: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'contact'${statsDateFilter}`, statsDateParams),
+    resource_unlocks: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'resource_unlock'${statsDateFilter}`, statsDateParams),
   };
 
   // 2. 按资源统计（JOIN时明确指定 s.created_at）
@@ -54,14 +57,14 @@ export async function onRequestGet(context) {
      LEFT JOIN stats s ON s.product_id = p.id${byProductDateFilter}
      GROUP BY p.id
      ORDER BY views DESC, p.id DESC`
-  ).all();
+  ).bind(...statsDateParams).all();
 
   // 3. 趋势（单表，明确指定 stats.created_at）
   const trendSql = `SELECT date(stats.created_at) AS day, stats.type, COUNT(*) AS cnt
      FROM stats
      WHERE 1=1${statsDateFilter}
      GROUP BY day, stats.type ORDER BY day ASC`;
-  const { results: trendRows } = await env.DB.prepare(trendSql).all();
+  const { results: trendRows } = await env.DB.prepare(trendSql).bind(...statsDateParams).all();
   // 补全日期范围
   const trend = [];
   const startD = new Date(effectiveStart);
@@ -89,7 +92,7 @@ export async function onRequestGet(context) {
      ) s2 ON s2.product_id = p.id
      GROUP BY c.id
      ORDER BY c.sort ASC, c.id ASC`
-  ).all();
+  ).bind(...statsDateParams).all();
 
   // 5. 最近 20 条浏览记录（明确指定 s.created_at）
   const { results: recent } = await env.DB.prepare(
@@ -119,7 +122,7 @@ export async function onRequestGet(context) {
   });
 }
 
-async function count(db, sql) {
-  const r = await db.prepare(sql).first();
+async function count(db, sql, params) {
+  const r = await db.prepare(sql).bind(...(params || [])).first();
   return r ? r.n : 0;
 }

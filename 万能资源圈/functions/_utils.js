@@ -13,18 +13,32 @@ export function json(data, status = 200) {
   });
 }
 
-// CORS 头（宽松允许跨域，便于本地调试；鉴权靠 token）
-export function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
+// CORS 头：只放行同源（站点页面与 API 部署在同一个 Cloudflare Pages 域名下，全是同源请求）。
+// 修复：原先无条件返回 Access-Control-Allow-Origin: * —— 任何第三方网页都能在用户浏览器里
+// 读取本站接口返回的数据。现在仅当请求方 Origin 与站点自身同源（或本地调试 localhost）时才回显。
+export function corsHeaders(request) {
+  const headers = {
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
+  let origin = '';
+  let selfOrigin = '';
+  try {
+    if (request) {
+      origin = (request.headers && request.headers.get('Origin')) || '';
+      selfOrigin = new URL(request.url).origin;
+    }
+  } catch (e) { /* 解析失败按无 Origin 处理 */ }
+  if (origin && (origin === selfOrigin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))) {
+    headers['Access-Control-Allow-Origin'] = origin;
+    headers['Vary'] = 'Origin';
+  }
+  return headers;
 }
 
 // OPTIONS 预检请求处理
-export function handleOptions() {
-  return new Response(null, { status: 204, headers: corsHeaders() });
+export function handleOptions(request) {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
 }
 
 // 读取请求 JSON 体（失败返回空对象）
