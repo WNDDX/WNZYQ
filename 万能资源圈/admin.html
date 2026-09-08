@@ -7,7 +7,7 @@
   <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="stylesheet" href="/assets/ui-common.css?v=9">
+  <link rel="stylesheet" href="/assets/ui-common.css?v=10">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5">
   <link rel="preload" href="/assets/images/logo.png" as="image">
@@ -4832,8 +4832,8 @@ refreshCatCnts();
 
       // 所属一级分类：自制级联选择器（只显示一级分类，排除自己，面板 fixed 不裁剪）
       try { var _cpp = document.getElementById('catParentPicker'), _cph = document.getElementById('catParentValue'), _cpd = document.getElementById('catParentDisplay'), _cppan = document.getElementById('catParentPanel'); if (_cpp && _cph && _cpd && _cppan) buildCatPicker(_cpp, _cph, _cpd, _cppan, (c && c.parent_id > 0) ? (Number(c.parent_id) || 0) : 0, { topOnly: true, excludeZero: true, placeholder: '请选择所属一级分类' }); } catch (e) {}
-      /* 已清理：历史冗余分类下拉填充 */
-        if (false && (cat.parent_id === 0 && cat.id !== 0 && (!c || cat.id !== c.id))) {
+      if (false) state.categories.forEach(function (cat) {
+        if (cat.parent_id === 0 && cat.id !== 0 && (!c || cat.id !== c.id)) {
           var opt = document.createElement('option');
           opt.value = cat.id;
           opt.textContent = cat.name;
@@ -5318,7 +5318,7 @@ refreshCatCnts();
       .then(function () { btn.disabled = false; btn.textContent = '登 录'; });
   };
   </script>
-  <script src="/assets/ui-common.js?v=9"></script>
+  <script src="/assets/ui-common.js?v=10"></script>
   <script>
   (function () {
     function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
