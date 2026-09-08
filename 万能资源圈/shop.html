@@ -2860,77 +2860,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     setTimeout(function () { document.body.style.opacity = '1'; }, 500);
 
     // ---- 图片/视频放大查看器（点击放大、双指缩放） ----
-    var lb = document.getElementById('lightbox');
-    var lbImg = document.getElementById('lbImg');
-    var lbVideo = document.getElementById('lbVideo');
-    var lbCloseBtn = document.getElementById('lbClose');
-    var lbScale = 1, lbBase = 1, lbStartDist = 0, lbMoved = false;
-    function lbReset() {
-      lbScale = 1; lbStartDist = 0; lbMoved = false;
-      lbImg.style.transform = ''; lbVideo.style.transform = '';
-    }
-    function lbOpen(src, isVideo) {
-      if (!src) return;
-      lbReset();
-      if (isVideo) {
-        lbImg.style.display = 'none'; lbVideo.style.display = 'block';
-        lbVideo.src = src; var p = lbVideo.play(); if (p && p.catch) p.catch(function(){});
-      } else {
-        lbVideo.pause(); lbVideo.style.display = 'none'; lbVideo.src = '';
-        lbImg.style.display = 'block'; lbImg.src = src;
-      }
-      lb.classList.add('open'); setBodyLock(true);
-    }
-    function lbClose() {
-      lb.classList.remove('open'); setBodyLock(false);
-      lbVideo.pause(); lbVideo.src = ''; lbImg.src = '';
-    }
-    lbCloseBtn.addEventListener('click', lbClose);
-    lb.addEventListener('click', function (e) {
-      if (e.target === lb || e.target === lbImg || e.target === lbVideo) { if (!lbMoved) lbClose(); }
-    });
-    lb.addEventListener('touchstart', function (e) {
-      lbMoved = false;
-      if (e.touches.length === 2) {
-        lbStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        lbBase = lbScale;
-      }
-    }, { passive: true });
-    lb.addEventListener('touchmove', function (e) {
-      if (e.touches.length === 2) {
-        var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        if (lbStartDist > 0) {
-          lbScale = Math.min(5, Math.max(1, lbBase * d / lbStartDist));
-          lbImg.style.transform = 'scale(' + lbScale + ')';
-          lbVideo.style.transform = 'scale(' + lbScale + ')';
-          lbMoved = true;
-        }
-        e.preventDefault();
-      }
-    }, { passive: false });
-    lb.addEventListener('wheel', function (e) {
-      e.preventDefault();
-      lbScale = Math.min(5, Math.max(1, lbScale + (e.deltaY < 0 ? 0.15 : -0.15)));
-      lbImg.style.transform = 'scale(' + lbScale + ')';
-      lbVideo.style.transform = 'scale(' + lbScale + ')';
-    }, { passive: false });
-    document.addEventListener('click', function (e) {
-      var t = e.target;
-      if (!t || !t.tagName) return;
-      if ((t.tagName === 'IMG' || t.tagName === 'VIDEO') && t.closest && t.closest('.modal-box, .ann-box')) {
-        e.preventDefault();
-        if (t.tagName === 'IMG') { lbOpen(t.src || '', false); }
-        else { lbOpen(t.currentSrc || t.src, true); }
-      }
-    });
+    // 图片/视频放大查看器已由上方 openLightbox/bindLightbox 统一提供（动态创建），此处无重复实现
+
+    // 弹窗内图片/视频点击放大已由上方 bindLightbox 统一绑定
   </script>
   <!-- 图片/视频放大查看器 -->
-  <div class="lightbox" id="lightbox">
-    <button class="lb-close" id="lbClose" title="关闭">×</button>
-    <img class="lb-media" id="lbImg" alt="" />
-    <video class="lb-media" id="lbVideo" controls playsinline></video>
-    <div class="lb-tip">点击关闭・双指缩放</div>
-  </div>
+  <!-- lightbox removed: use dynamic openLightbox/bindLightbox -->
   <script src="/assets/ui-common.js?v=9"></script>
   <script>
   (function () {

@@ -125,6 +125,7 @@ window.__uiCommonLoaded = true;
       mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:10060;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
         '<div class="modal-box" style="background:#fff;border-radius:14px;width:100%;max-width:400px;padding:26px 22px;position:relative;text-align:center;max-height:84vh;overflow-y:auto;">' +
+          '<button type="button" class="alert-x" aria-label="关闭" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.12s ease;">×</button>' +
           '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;">' + (title || '提示') + '</div>' +
           '<div style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;">' + String(msg == null ? '' : msg) + '</div>' +
           '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;">确定</button></div>' +
