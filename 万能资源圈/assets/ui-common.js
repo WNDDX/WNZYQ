@@ -137,14 +137,32 @@ window.__uiCommonLoaded = true;
       mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
       var ok = mask.querySelector('.alert-ok');
       if (ok) ok.addEventListener('click', close);
+      var x = mask.querySelector('.alert-x');
+      if (x) x.addEventListener('click', close);
       window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     } catch (e) { /* 弹窗失败时回退系统 alert，保证提示不丢失 */ try { window.alert(msg); } catch (e2) {} }
   };
 
-  // ===== 滚动锁已取消（用户要求恢复自由滚动：不再锁定 body、不再拦截 touchmove/wheel） =====
-  // lockBodyScroll / syncBodyLock 保留为空操作，所有调用点无需改动即可正常滚动
-  window.lockBodyScroll = function () {};
-  window.syncBodyLock = function () {};
+  // ===== 弹窗滚动锁：打开弹窗锁定背景滚动（PC overflow + 移动端拦截穿透），弹窗内部内容仍可正常滚动 =====
+  var __touchLocked = false;
+  function __blockTouch(e) {
+    if (!e.target || !e.target.closest) return;
+    var allow = e.target.closest('.modal-box,.kf-box,.share-box,.modal-inner,.lightbox-box,.lb-box,.rte-panel,.ann-box');
+    if (!allow) e.preventDefault();
+  }
+  window.lockBodyScroll = function (lock) {
+    if (lock) {
+      document.body.style.overflow = 'hidden';
+      if (!__touchLocked) { document.addEventListener('touchmove', __blockTouch, { passive: false }); __touchLocked = true; }
+    } else {
+      document.body.style.overflow = '';
+      if (__touchLocked) { document.removeEventListener('touchmove', __blockTouch); __touchLocked = false; }
+    }
+  };
+  window.syncBodyLock = function () {
+    var open = document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open');
+    window.lockBodyScroll(!!open);
+  };
   // 浏览器返回 / bfcache 恢复时强制刷新，防止从管理页返回商品页白屏
   window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
 })();

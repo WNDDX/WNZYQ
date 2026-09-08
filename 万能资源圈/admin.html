@@ -7,7 +7,7 @@
   <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="stylesheet" href="/assets/ui-common.css?v=10">
+  <link rel="stylesheet" href="/assets/ui-common.css?v=11">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5">
   <link rel="preload" href="/assets/images/logo.png" as="image">
@@ -2293,9 +2293,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             if (window.showAlert) window.showAlert(res.msg || '登录失败');
             console.log('[登录] 4.登录失败：', res.msg, 'HTTP=', res._status);
             var _local = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (_local) { toast('本地预览没有后端服务，登录无法完成：请部署到线上，或在项目目录运行 npx wrangler dev', 'error'); if (window.showAlert) window.showAlert('本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev'); loginTip.textContent = '本地预览模式：无后端接口，请部署线上或运行 wrangler dev'; }
-            else if (res._status === 429) { toast(res.msg || '尝试次数过多，请稍后再试', 'error'); if (window.showAlert) window.showAlert(res.msg || '尝试次数过多，请稍后再试'); loginTip.textContent = res.msg || ''; }
-            else { toast(res.msg || '登录失败', 'error'); if (window.showAlert) window.showAlert(res.msg || '登录失败'); loginTip.textContent = '登录失败：' + (res.msg || ('HTTP ' + (res._status || '网络错误'))); }
+            if (_local) { if (window.showAlert) window.showAlert('本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev'); loginTip.textContent = '本地预览模式：无后端接口，请部署线上或运行 wrangler dev'; }
+            else if (res._status === 429) { if (window.showAlert) window.showAlert(res.msg || '尝试次数过多，请稍后再试'); loginTip.textContent = res.msg || ''; }
+            else { if (window.showAlert) window.showAlert(res.msg || '登录失败'); loginTip.textContent = '登录失败：' + (res.msg || ('HTTP ' + (res._status || '网络错误'))); }
           }
         })
         .finally(function () {
@@ -5318,7 +5318,7 @@ refreshCatCnts();
       .then(function () { btn.disabled = false; btn.textContent = '登 录'; });
   };
   </script>
-  <script src="/assets/ui-common.js?v=10"></script>
+  <script src="/assets/ui-common.js?v=11"></script>
   <script>
   (function () {
     function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
