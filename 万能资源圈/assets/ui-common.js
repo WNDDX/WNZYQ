@@ -127,11 +127,11 @@ window.__uiCommonLoaded = true;
       mask.className = 'modal-mask alert-mask open';
       mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:10060;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
-        '<div class="modal-box" style="background:#fff;border-radius:14px;width:100%;max-width:400px;padding:26px 22px;position:relative;text-align:center;max-height:84vh;overflow-y:auto;">' +
+        '<div class="modal-box" style="background:#fff;border-radius:14px;width:100%;max-width:400px;padding:26px 22px;position:relative;text-align:center;max-height:84vh;overflow-y:auto;min-height:auto;">' +
           '<button type="button" class="modal-close-x" aria-label="关闭">×</button>' +
           '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;"></div>' +
           '<div class="alert-body" style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
-          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;">确定</button></div>' +
+          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:opacity 0.12s ease, filter 0.12s ease;box-shadow:0 2px 6px rgba(30,136,229,0.25);-webkit-tap-highlight-color:transparent;">确定</button></div>' +
         '</div>';
       var titleEl = mask.querySelector('.modal-title');
       var bodyEl = mask.querySelector('.alert-body');
@@ -160,17 +160,32 @@ window.__uiCommonLoaded = true;
   }
   window.lockBodyScroll = function (lock) {
     if (lock) {
+      // 同时锁 body 与 html：不同浏览器的主滚动容器归属不一致，双锁确保 PC 鼠标滚轮也让背景纹丝不动
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
       if (!__touchLocked) { document.addEventListener('touchmove', __blockTouch, { passive: false }); __touchLocked = true; }
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
       if (__touchLocked) { document.removeEventListener('touchmove', __blockTouch); __touchLocked = false; }
     }
   };
   window.syncBodyLock = function () {
-    var open = document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open');
+    var open = document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open,.confirm-mask.open,.lightbox.open');
     window.lockBodyScroll(!!open);
   };
+  // ===== 全站弹窗滚动锁自动同步（修复滚动穿透）=====
+  // 此前只有公共组件（客服/提示弹窗）开窗时会锁背景，各页面自建弹窗（admin 的编辑/分类/公告/密码等 mask）
+  // 直接 classList.add('open') 从不调锁——弹窗打开时滑动，背景跟着滚、弹窗内容反而不动（穿透）。
+  // 现统一监听全文档 class 变化，防抖后按"当前是否有任何弹窗 open"自动上锁/解锁，任何页面任何弹窗都生效。
+  try {
+    var __lockT = 0;
+    var __lockObserver = new MutationObserver(function () {
+      clearTimeout(__lockT);
+      __lockT = setTimeout(function () { window.syncBodyLock(); }, 30);
+    });
+    __lockObserver.observe(document.documentElement, { subtree: true, childList: true, attributeFilter: ['class'] });
+  } catch (e) {}
   // 浏览器返回 / bfcache 恢复时强制刷新，防止从管理页返回商品页白屏
   window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
 })();

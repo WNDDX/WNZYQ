@@ -223,7 +223,8 @@
     .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tb-row2 select { padding: 7px 10px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 13px; background: #fff; color: #333; }
-    /* .view-toggle/.view-btn 已抽入 ui-common.css 全站公共组件（与资源页同一份，零复制；旧的两套重复定义与后置蓝底覆盖全部删除） */
+    /* .view-btn 按钮本体已抽入 ui-common.css 全站公共组件（与资源页同一份，零复制），
+       公共样式已按"融入背景"参数化：管理页白底直接透明融入+激活蓝底白字，资源页由 .on-blue 切白系。 */
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
     .btn-blue, .row-btn, .mini-btn, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
@@ -406,6 +407,34 @@
     .stat-table td, .stat-table th { text-align: center; }
     /* 列宽等分（由 table-layout:fixed 自动分配） */
 
+    /* ---------- 统计面板：标题右侧三角展开按键（复用资源页 cat-toggle 视觉） + 翻页（复用资源页翻页样式） ---------- */
+    .stat-wrap-head { position: relative; padding-right: 38px; }
+    .stat-wrap-head h3 { margin-bottom: 10px; }
+    .stat-toggle {
+      position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+      width: 28px; height: 28px; border: none; background: transparent;
+      color: var(--blue1); cursor: pointer; display: flex; align-items: center;
+      justify-content: center; padding: 0; transition: color 0.2s ease; z-index: 5;
+    }
+    .stat-toggle:hover { color: var(--blue2); }
+    .stat-toggle .toggle-arrow {
+      width: 20px; height: 20px; transition: transform 0.3s ease;
+      transform: rotate(-90deg); /* 收起状态：箭头向左（与资源页分类三角一致） */
+      filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
+    }
+    .stat-toggle.open .toggle-arrow { transform: rotate(0deg); /* 展开状态：箭头向下 */ }
+    .stat-wrap-body.collapsed { display: none; }
+    .stat-pager {
+      display: flex; justify-content: center; align-items: center;
+      gap: 8px; padding: 14px 4px 2px; flex-wrap: wrap;
+    }
+    .stat-pager button {
+      padding: 8px 16px; border: 1px solid var(--blue2); background: #fff;
+      color: var(--blue1); border-radius: 20px; cursor: pointer; font-size: 13px;
+    }
+    .stat-pager button:disabled { opacity: 0.4; cursor: default; }
+    .stat-pager .pg-info { color: #666; font-size: 13px; }
+
     /* ---------- 分类 ---------- */
     .cat-row {
       background: #fff; border-radius: 14px; padding: 12px 16px;
@@ -475,7 +504,7 @@
     .modal-box {
       position: relative; background: #fff; border-radius: 14px;
       width: 100%; max-width: 400px; max-height: 88vh; overflow-y: auto; min-height: 160px;
-      padding: 22px; text-align: left; animation: modalIn 0.25s ease;
+      padding: 26px 22px; text-align: left; animation: modalIn 0.25s ease;
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
     .modal-wide { max-width: 520px; }
@@ -501,6 +530,18 @@
     }
     .modal-close-x:hover { background: #ff4444; color: #fff; transform: scale(1.1); }
     .modal-close-x:active { transform: scale(0.92); }
+    /* R10 预览弹窗左上角分享键：与×成对角、规格复用（32px 圆形/12px 距角/同动效），
+       区分点：淡蓝底+蓝图标，悬停蓝底白图标（×是浅灰底、悬停红底白字） */
+    .modal-share-x {
+      position: absolute; top: 12px; left: 12px; z-index: 10;
+      width: 32px; height: 32px; border-radius: 50%;
+      border: none; background: #E3F2FD; color: #1565c0;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s ease; -webkit-tap-highlight-color: transparent;
+    }
+    .modal-share-x svg { width: 15px; height: 15px; display: block; }
+    .modal-share-x:hover { background: #1688FF; color: #fff; transform: scale(1.1); }
+    .modal-share-x:active { transform: scale(0.92); }
     .form label { display: block; font-size: 13px; color: #666; margin: 12px 0 5px; }
     .form input, .form textarea, .form select, .input {
       width: 100%; border: 1px solid #ddd; border-radius: 10px;
@@ -913,25 +954,27 @@
       .back-top { right: 14px; bottom: 18px; width: 40px; height: 40px; }
     }
 
-    /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ========== */
+    /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
+       弹窗按键（.modal-inner-btn/.modal-close/.confirm 系）的按压效果已统一抽入
+       ui-common.css「全站统一弹窗按键按压效果」（变暗+降透明、不缩放、字重恒定），此处不再重复。 */
     .btn-blue, .btn-cyan, .mini-btn, .export-btn, .batch-btn,
-    .variant-add, .insert-link-btn, .time-btn, .cat-toggle, .modal-inner-btn,
-    .modal-close, .preview-btn, .confirm-ok, .confirm-cancel, .status-select, .row-btn {
+    .variant-add, .insert-link-btn, .time-btn, .cat-toggle,
+    .preview-btn, .status-select, .row-btn {
       transition: all 0.10s ease;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .btn-blue:hover, .btn-cyan:hover, .mini-btn:hover,
     .export-btn:hover, .batch-btn:hover, .variant-add:hover, .insert-link-btn:hover,
-    .time-btn:hover, .cat-toggle:hover, .modal-inner-btn:hover, .modal-close:hover,
-    .preview-btn:hover, .confirm-ok:hover, .confirm-cancel:hover, .row-btn:hover {
+    .time-btn:hover, .cat-toggle:hover,
+    .preview-btn:hover, .row-btn:hover {
       transform: scale(0.96);
       opacity: 0.9;
     }
     .btn-blue:active, .btn-cyan:active, .mini-btn:active,
     .export-btn:active, .batch-btn:active, .variant-add:active, .insert-link-btn:active,
-    .time-btn:active, .cat-toggle:active, .modal-inner-btn:active, .modal-close:active,
-    .preview-btn:active, .confirm-ok:active, .confirm-cancel:active, .row-btn:active {
+    .time-btn:active, .cat-toggle:active,
+    .preview-btn:active, .row-btn:active {
       transform: scale(0.92);
       opacity: 0.8;
       filter: brightness(0.9);
@@ -946,7 +989,9 @@
     /* 弹窗底部按钮宽度统一：2 个等宽、3 个等分 */
     .modal-footer button { flex: 1 1 0; min-width: 0; }
     .modal-footer .preview-btn { flex-basis: auto; }
-    /* .view-toggle 蓝底容器已并入 ui-common.css 公共样式（原 admin 后置覆盖删除） */
+    /* 列表/网格按键：完全复用 ui-common.css 公共 .view-btn（与资源页同一份，零复制）。
+       公共样式按"融入背景"参数化设计：未激活透明底+浅描边融入管理页白底，激活蓝底白字
+       ——与 tab 激活观感一致；资源页由 .on-blue 上下文切换白系（见 ui-common.css），管理页无需任何本地规则。 */
     /* 商品条目切换动画复用商品页：限制形变过渡，仅保留缩放/阴影，切换时不做布局形变 */
     .product-row { transition: transform 0.10s ease, box-shadow 0.10s ease !important; }
     /* 公告列表防横向滚动条：溢出隐藏（新增公告项不再瞬间出现横向滑轮） */
@@ -1056,8 +1101,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             </label>
             <span style="flex:1"></span>
             <div class="view-toggle" id="viewToggle">
-              <button class="view-btn active" id="viewListBtn" title="列表视图">☰ 列表</button>
-              <button class="view-btn" id="viewCardBtn" title="网格视图">▦ 网格</button>
+              <button class="view-btn active" id="viewListBtn" title="列表视图">☰ <span>列表</span></button>
+              <button class="view-btn" id="viewCardBtn" title="网格视图">▦ <span>网格</span></button>
             </div>
           </div>
           <div class="tb-row tb-row2">
@@ -1129,26 +1174,50 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             <span class="lg-contact">咨询客服</span>
           </div>
         </div>
-        <div class="stat-table-wrap" style="margin-bottom:14px;">
-          <h3>分类统计</h3>
-          <table class="stat-table">
-            <thead><tr><th>分类</th><th>资源数</th><th>总浏览</th></tr></thead>
-            <tbody id="statCatRows"></tbody>
-          </table>
+        <div class="stat-table-wrap" id="statWrapProduct" style="margin-bottom:14px;">
+          <div class="stat-wrap-head">
+            <h3>资源明细（30天内）</h3>
+            <button class="stat-toggle open" id="statTglProduct" type="button" title="展开/收起">
+              <svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+          </div>
+          <div class="stat-wrap-body" id="statBodyProduct">
+            <table class="stat-table">
+              <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>咨询客服</th><th>资源码解锁</th></tr></thead>
+              <tbody id="statRows"></tbody>
+            </table>
+            <div class="stat-pager" id="statPagerProduct"></div>
+          </div>
         </div>
-        <div class="stat-table-wrap" style="margin-bottom:14px;">
-          <h3>资源明细（30天内）</h3>
-          <table class="stat-table">
-            <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>咨询客服</th><th>资源码解锁</th></tr></thead>
-            <tbody id="statRows"></tbody>
-          </table>
+        <div class="stat-table-wrap" id="statWrapCat" style="margin-bottom:14px;">
+          <div class="stat-wrap-head">
+            <h3>分类统计</h3>
+            <button class="stat-toggle open" id="statTglCat" type="button" title="展开/收起">
+              <svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+          </div>
+          <div class="stat-wrap-body" id="statBodyCat">
+            <table class="stat-table">
+              <thead><tr><th>分类</th><th>资源数</th><th>总浏览</th></tr></thead>
+              <tbody id="statCatRows"></tbody>
+            </table>
+            <div class="stat-pager" id="statPagerCat"></div>
+          </div>
         </div>
-        <div class="stat-table-wrap">
-          <h3>浏览记录</h3>
-          <table class="stat-table">
-            <thead><tr><th>时间</th><th>类型</th><th>资源</th></tr></thead>
-            <tbody id="statRecentRows"></tbody>
-          </table>
+        <div class="stat-table-wrap" id="statWrapRecent">
+          <div class="stat-wrap-head">
+            <h3>浏览记录（30天内）</h3>
+            <button class="stat-toggle open" id="statTglRecent" type="button" title="展开/收起">
+              <svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+          </div>
+          <div class="stat-wrap-body" id="statBodyRecent">
+            <table class="stat-table">
+              <thead><tr><th>时间</th><th>类型</th><th>资源</th></tr></thead>
+              <tbody id="statRecentRows"></tbody>
+            </table>
+            <div class="stat-pager" id="statPagerRecent"></div>
+          </div>
         </div>
       </section>
 
@@ -1678,6 +1747,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   <div class="modal-mask" id="previewMask">
     <div class="modal-box preview-box modal-wide" style="padding:0;">
       <button class="modal-close-x" id="previewCloseX">×</button>
+      <!-- R10 预览弹窗分享键（左上角，与×成对角）：与资源页弹窗同款转发图标，一套逻辑两处生效 -->
+      <button class="modal-share-x" id="previewShareX" type="button" title="分享资源" aria-label="分享资源">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 17 20 12 15 7"></polyline>
+          <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
+        </svg>
+      </button>
       <img class="preview-cover" id="previewCover" alt="" />
       <div style="padding:16px 20px 20px;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
@@ -1772,9 +1848,23 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     var catCancel = document.getElementById('catCancel');    var catDraftPending = false, catDraftFor = null;
     // ===== 关键按钮事件委托兜底：确保「新增分类 / 设置客服」任何情况下都能打开对应弹窗 =====
     function openContactSetting() {
-      try { if (!contactDraftPending) document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; } catch (e) {}
+      // 首开修复（与公告弹窗同模式）：先立即打开弹窗；settings 已加载过则同步填值，
+      // 未加载过（登录后没进过"平台设置"就首次点开）则后台拉取 admin/settings 回填——
+      // 原先取值的 setContactUrl 只有切到设置页才会被 loadSettings 填充，导致首次进弹窗没链接
+      try { if (!contactDraftPending && window.__plSet) document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; } catch (e) {}
       try { contactDraftPending = false; } catch (e) {}
       try { document.getElementById('contactMask').classList.add('open'); } catch (e) {}
+      if (!window.__plSet) {
+        api('admin/settings').then(function (res) {
+          try {
+            if (res && res.ok && document.getElementById('contactMask').classList.contains('open') && !contactDraftPending) {
+              var v = (res.settings || {}).contact_url || '';
+              document.getElementById('contactUrlInput').value = v;
+              document.getElementById('setContactUrl').value = v;
+            }
+          } catch (e) {}
+        }).catch(function () {});
+      }
     }
     document.addEventListener('click', function (e) {
       var btn = e.target.closest ? e.target.closest('#openContactBtn, #addCatBtn, #addAnnBtn') : null;
@@ -2246,8 +2336,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             try { showMain(res.username); }
             catch (e) { setTimeout(function () { location.reload(); }, 300); }
           } else {
-            toast(res.msg || '登录失败', 'error');
-            if (window.showAlert) window.showAlert(res.msg || '登录失败');
+            // 失败路径只弹一个弹窗（此前 toast+showAlert+分支内 showAlert 会叠出两个弹窗，已修复去重）
             var _local = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             if (_local) { if (window.showAlert) window.showAlert('本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev'); loginTip.textContent = '本地预览模式：无后端接口，请部署线上或运行 wrangler dev'; }
             else if (res._status === 429) { if (window.showAlert) window.showAlert(res.msg || '尝试次数过多，请稍后再试'); loginTip.textContent = res.msg || ''; }
@@ -2296,7 +2385,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     });
 
     var adminPage = 1;
-    var ADMIN_PAGE_SIZE = 9999; // 管理页一次性展示全部资源，避免“看不全”
+    var ADMIN_PAGE_SIZE = 20; // 全系统统一：一页 20 条（与资源页/统计面板一致），配合翻页控件使用
 
     function renderProducts() {
       if (window.__skipRenderOnce) { window.__skipRenderOnce = false; return; }
@@ -2612,7 +2701,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           var _catText = document.querySelector('#batchCatDisplay .cpd-text').textContent;
           showConfirm('批量改分类', '确定将选中的 ' + ids.length + ' 个资源分类改为「' + _catText + '」？', function () {
             api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
-              if (res && res.ok) { toast('批量改分类成功（' + res.count + '项）', 'success'); loadProducts(); }
+              if (res && res.ok) {
+                toast('批量改分类成功（' + res.count + '项）', 'success');
+                // 性能：本地即时改 cid 并重渲染（毫秒级反馈），后台静默同步一次保证数据一致
+                applyBatchLocal('changeCat', ids, { cid: newCid }); renderProducts(); silentSyncProducts();
+              }
               else toast(res.msg || '操作失败', 'error');
             });
           });
@@ -2628,7 +2721,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           if (isNaN(newPrice) || newPrice < 0) { toast('请输入有效的价格', 'error'); return; }
           showConfirm('批量改价格', '确定将选中的 ' + ids.length + ' 个资源价格改为 ' + newPrice + '？', function () {
             api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changePrice', price: newPrice }) }).then(function (res) {
-              if (res && res.ok) { toast('批量改价格成功（' + res.count + '项）', 'success'); clearCache(); loadProducts(); }
+              if (res && res.ok) {
+                toast('批量改价格成功（' + res.count + '项）', 'success');
+                applyBatchLocal('changePrice', ids, { price: newPrice }); renderProducts(); silentSyncProducts();
+              }
               else toast(res.msg || '操作失败', 'error');
             });
           });
@@ -2641,7 +2737,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           if (res && res.ok) {
             toast(actionNames[action] + '成功（' + res.count + '项）', 'success');
             clearCache();
-            loadProducts();
+            // 性能修复（批量操作点确定后 1-2 秒才反应）：原先成功后调 loadProducts() 全量重拉接口
+            // + 整表重渲染，网络往返期间界面毫无反馈；现改为本地即时更新 + 立即渲染（毫秒级），
+            // 后台再静默同步一次，保证数据一致的同时操作反馈即时可见
+            applyBatchLocal(action, ids); renderProducts(); silentSyncProducts();
           } else {
             toast(res.msg || '操作失败', 'error');
           }
@@ -2650,6 +2749,38 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     }
 
     // 批量更新资源字段（逐个调用 PUT API）
+    // ---------- 性能：批量操作本地即时更新（乐观 UI）+ 后台静默同步 ----------
+    function applyBatchLocal(action, ids, extra) {
+      var idSet = {};
+      ids.forEach(function (i) { idSet[Number(i)] = true; });
+      if (action === 'delete') {
+        state.products = state.products.filter(function (p) { return !idSet[p.id]; });
+        state.prodSelected = {};
+        document.querySelectorAll('.row-check').forEach(function (cb) { if (idSet[Number(cb.dataset.id)]) cb.checked = false; });
+      } else {
+        state.products.forEach(function (p) {
+          if (!idSet[p.id]) return;
+          if (action === 'online') p.is_online = 1;
+          else if (action === 'offline') p.is_online = 0;
+          else if (action === 'hide') p.is_hidden = 1;
+          else if (action === 'show') p.is_hidden = 0;
+          else if (action === 'changeCat' && extra) p.cid = Number(extra.cid);
+          else if (action === 'changePrice' && extra) p.price = Number(extra.price);
+        });
+      }
+      try { refreshCatCnts(); } catch (e) {}
+    }
+    // 静默同步：不转圈、不打断当前操作，仅在后台拉一次最新数据校正本地状态（防多端编辑漂移）
+    var __silentSyncT = 0;
+    function silentSyncProducts() {
+      clearTimeout(__silentSyncT);
+      __silentSyncT = setTimeout(function () {
+        api('admin/products').then(function (res) {
+          if (res && res.ok) { state.products = res.list || []; renderProducts(); }
+        }).catch(function () {});
+      }, 600);
+    }
+
     function batchUpdateFields(ids, fields, label) {
       var done = 0;
       var fail = 0;
@@ -3598,7 +3729,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       }
     });
 
-    // ---------- 全局客服链接（弹窗设置，与公告一致） ---------- var contactDraftPending = false;
+    // ---------- 全局客服链接（弹窗设置，与公告一致） ----------
+    // 修复（P0）：var 声明原来被误写进上一行 // 注释里（整句被注释掉），contactDraftPending 未定义，
+    // 首次点「设置客服」抛 ReferenceError，输入框赋值不执行 → 第一次进弹窗没链接；兜底代码隐式建了全局变量后才正常
+    var contactDraftPending = false;
     document.getElementById('openContactBtn').addEventListener('click', function () {
       document.getElementById('contactMask').classList.add('open');
       if (contactDraftPending) { contactDraftPending = false; return; }
@@ -4209,40 +4343,107 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           trendBox.appendChild(col);
         });
 
-        // 按分类统计
-        var catTbody = document.getElementById('statCatRows');
-        catTbody.innerHTML = '';
-        (res.byCategory || []).forEach(function (r) {
-          var tr = document.createElement('tr');
-          tr.innerHTML = '<td>' + (r.name || '') + '</td><td>' + (r.product_count || 0) + '</td><td>' + (r.total_views || 0) + '</td>';
-          catTbody.appendChild(tr);
-        });
+        // 三个统计表：全量数据（后端仅按 30 天范围过滤，不再截断条数）+ 前端分页（一页 20 条，全系统统一）
+        state.statByProduct = res.byProduct || [];
+        state.statByCategory = res.byCategory || [];
+        state.statRecent = res.recent || [];
+        renderStatTables();
 
-        // 资源明细
-        var tbody = document.getElementById('statRows');
-        tbody.innerHTML = '';
-        (res.byProduct || []).forEach(function (r) {
-          var tr = document.createElement('tr');
-          var status = r.is_hidden ? '已隐藏' : (r.is_online ? '上架中' : '已下架');
-          tr.innerHTML = '<td>' + (r.title || '(无标题)') + '</td><td>' + status + '</td><td>' + (r.views || 0) + '</td><td>' + (r.contacts || 0) + '</td><td>' + (r.resource_unlocks || 0) + '</td>';
-          tbody.appendChild(tr);
-        });
-
-        // 最近浏览
-        var recentTbody = document.getElementById('statRecentRows');
-        recentTbody.innerHTML = '';
-        (res.recent || []).forEach(function (r) {
-          var tr = document.createElement('tr');
-          var typeText = r.type === 'view' ? '浏览' : (r.type === 'contact' ? '咨询客服' : (r.type === 'resource_unlock' ? '资源码解锁' : r.type));
-          var typeColor = '';
-          tr.innerHTML = '<td>' + (r.created_at || '') + '</td><td style="' + typeColor + '">' + typeText + '</td><td>' + (r.title || '') + '</td>';
-          recentTbody.appendChild(tr);
-        });
+        // 三个统计表（含最近浏览）已在上方统一交给 renderStatTables 渲染：全量数据 + 一页 20 条翻页
         // 修复：加载完成后才隐藏转圈动画并触发淡入——原先这行写在函数外、页面解析时就执行了一次，
         // 导致首次进统计页时"加载中…"转圈永远不消失
         var _slH = document.getElementById('statsLoading'); if (_slH) _slH.style.display = 'none';
         var _psH = document.getElementById('panel-stats'); if (_psH) { _psH.classList.remove('stats-fade-in'); void _psH.offsetWidth; _psH.classList.add('stats-fade-in'); }
       });
+    }
+
+    // ---------- 统计三面板：三角展开按键 + 翻页（一页 20 条，全系统统一，复用资源页翻页样式） ----------
+    var STAT_PAGE_SIZE = 20;
+    var statPages = { product: 1, cat: 1, recent: 1 };
+    // 展开按键：默认展示，点击隐藏内容（视觉复用资源页分类栏三角展开按键）
+    [['statTglProduct', 'statBodyProduct'], ['statTglCat', 'statBodyCat'], ['statTglRecent', 'statBodyRecent']].forEach(function (pair) {
+      var tglBtn = document.getElementById(pair[0]), tglBody = document.getElementById(pair[1]);
+      if (!tglBtn || !tglBody) return;
+      tglBtn.addEventListener('click', function () {
+        var collapsed = tglBody.classList.toggle('collapsed');
+        tglBtn.classList.toggle('open', !collapsed);
+      });
+    });
+    function renderStatTables() {
+      var defs = [
+        {
+          key: 'product', tbodyId: 'statRows', pagerId: 'statPagerProduct', wrapId: 'statWrapProduct',
+          list: state.statByProduct || [],
+          row: function (r) {
+            var tr = document.createElement('tr');
+            var status = r.is_hidden ? '已隐藏' : (r.is_online ? '上架中' : '已下架');
+            tr.innerHTML = '<td>' + (r.title || '(无标题)') + '</td><td>' + status + '</td><td>' + (r.views || 0) + '</td><td>' + (r.contacts || 0) + '</td><td>' + (r.resource_unlocks || 0) + '</td>';
+            return tr;
+          }
+        },
+        {
+          key: 'cat', tbodyId: 'statCatRows', pagerId: 'statPagerCat', wrapId: 'statWrapCat',
+          list: state.statByCategory || [],
+          row: function (r) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + (r.name || '') + '</td><td>' + (r.product_count || 0) + '</td><td>' + (r.total_views || 0) + '</td>';
+            return tr;
+          }
+        },
+        {
+          key: 'recent', tbodyId: 'statRecentRows', pagerId: 'statPagerRecent', wrapId: 'statWrapRecent',
+          list: state.statRecent || [],
+          row: function (r) {
+            var tr = document.createElement('tr');
+            var typeText = r.type === 'view' ? '浏览' : (r.type === 'contact' ? '咨询客服' : (r.type === 'resource_unlock' ? '资源码解锁' : r.type));
+            tr.innerHTML = '<td>' + (r.created_at || '') + '</td><td>' + typeText + '</td><td>' + (r.title || '') + '</td>';
+            return tr;
+          }
+        }
+      ];
+      defs.forEach(function (d) {
+        var tbody = document.getElementById(d.tbodyId);
+        var pager = document.getElementById(d.pagerId);
+        if (!tbody || !pager) return;
+        tbody.innerHTML = '';
+        pager.innerHTML = '';
+        var totalPages = Math.ceil(d.list.length / STAT_PAGE_SIZE) || 1;
+        if (statPages[d.key] > totalPages) statPages[d.key] = totalPages;
+        if (statPages[d.key] < 1) statPages[d.key] = 1;
+        var start = (statPages[d.key] - 1) * STAT_PAGE_SIZE;
+        var frag = document.createDocumentFragment();
+        d.list.slice(start, start + STAT_PAGE_SIZE).forEach(function (r) { frag.appendChild(d.row(r)); });
+        tbody.appendChild(frag);
+        if (totalPages > 1) {
+          // 翻页控件（样式复用资源页翻页：胶囊按钮 + 页码）
+          var prev = document.createElement('button');
+          prev.textContent = '上一页';
+          prev.disabled = statPages[d.key] === 1;
+          prev.onclick = (function (key, wrapId) {
+            return function () {
+              if (statPages[key] > 1) { statPages[key]--; renderStatTables(); scrollStatWrap(wrapId); }
+            };
+          })(d.key, d.wrapId);
+          var info = document.createElement('span');
+          info.className = 'pg-info';
+          info.textContent = statPages[d.key] + ' / ' + totalPages + '（共' + d.list.length + '条）';
+          var next = document.createElement('button');
+          next.textContent = '下一页';
+          next.disabled = statPages[d.key] === totalPages;
+          next.onclick = (function (key, wrapId) {
+            return function () {
+              if (statPages[key] < totalPages) { statPages[key]++; renderStatTables(); scrollStatWrap(wrapId); }
+            };
+          })(d.key, d.wrapId);
+          pager.appendChild(prev);
+          pager.appendChild(info);
+          pager.appendChild(next);
+        }
+      });
+    }
+    function scrollStatWrap(wrapId) {
+      var wrap = document.getElementById(wrapId);
+      if (wrap && wrap.scrollIntoView) { try { wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { wrap.scrollIntoView(); } }
     }
 
     // 近7/30天切换：本地重绘图表，不发新请求（趋势数据已在初始化预加载，表格/总览为30天范围保持不变）
@@ -4323,6 +4524,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 refreshCatCnts();
         renderCategories(state.categories); return res;
       });
+      // 修复（P0）：此前漏了 return，首次调用返回 undefined，loadProducts 的 (window.__catLoading || loadCategories()).then(...)
+      // 直接抛 "Cannot read properties of undefined (reading 'then')"，导致资源列表/全选/分类筛选全部失效
+      return window.__catLoading;
     }
 
     // 统一的层级排序：默认“全部”(id=0)在最前，随后每个一级分类紧跟其二级分类（同级按 sort）
@@ -4934,6 +5138,27 @@ refreshCatCnts();
     });
     document.getElementById('previewCloseX').addEventListener('click', function () {
       document.getElementById('previewMask').classList.remove('open');try{document.querySelectorAll('#previewMask video').forEach(function(v){v.pause()})}catch(e){}
+    });
+    // ---------- R10 预览弹窗分享键：生成资源页分享链接并复制 ----------
+    // 仅编辑已保存资源时可用（新增未保存没有资源 ID）；本地预览模式无部署地址，不生成链接
+    document.getElementById('previewShareX').addEventListener('click', function () {
+      var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocal) { toast('本地预览模式，部署线上后可分享', 'error'); return; }
+      if (!state.editingId) { toast('新增资源请先保存后再分享', 'error'); return; }
+      var url = window.location.origin + '/shop?pid=' + state.editingId;
+      function done() { toast('资源链接已复制：' + url, 'success'); }
+      function fallback() {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = url; ta.style.cssText = 'position:fixed;left:-9999px;top:0;';
+          document.body.appendChild(ta); ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        } catch (e) {}
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(function () { fallback(); done(); });
+      } else { fallback(); done(); }
     });
     // 咨询客服兜底弹窗：ui-common.js 加载失败时使用（样式对齐导航页，杜绝直达链接）
     // 关闭兜底客服：恢复背景视频显示并隐藏弹窗（与公共客服弹窗行为一致）

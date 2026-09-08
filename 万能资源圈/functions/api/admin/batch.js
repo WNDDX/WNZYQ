@@ -29,9 +29,12 @@ export async function onRequestPost(context) {
   const placeholders = ids.map(() => '?').join(',');
 
   if (action === 'delete') {
-    await env.DB.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).bind(...ids).run();
-    await env.DB.prepare(`DELETE FROM product_variants WHERE product_id IN (${placeholders})`).bind(...ids).run();
-    await env.DB.prepare(`DELETE FROM stats WHERE product_id IN (${placeholders})`).bind(...ids).run();
+    // 性能：三条删除并行执行（原先串行三次 D1 往返），批量删除耗时约降为 1/3
+    await Promise.all([
+      env.DB.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).bind(...ids).run(),
+      env.DB.prepare(`DELETE FROM product_variants WHERE product_id IN (${placeholders})`).bind(...ids).run(),
+      env.DB.prepare(`DELETE FROM stats WHERE product_id IN (${placeholders})`).bind(...ids).run(),
+    ]);
   } else if (action === 'changeCat') {
     const cid = Number(b.cid);
     if (isNaN(cid)) return json({ ok: false, msg: '请提供分类ID' }, 400);

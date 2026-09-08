@@ -194,7 +194,7 @@
     .share-mask.open { display: flex; }
     .share-box {
       background: #fff; border-radius: 14px;
-      position: relative; padding: 24px 20px; width: 100%; max-width: 400px;
+      position: relative; padding: 26px 20px; width: 100%; max-width: 400px;
       text-align: center; animation: modalIn 0.25s ease;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
@@ -548,7 +548,7 @@
       max-height: 88vh;
       overflow-y: auto;
       scrollbar-gutter: auto;
-      min-height: 240px;
+      min-height: 160px; /* R12 与管理页统一（详情内容多时自然撑高，此保底值几乎不生效，无观感差） */
       animation: modalIn 0.22s ease;
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
@@ -578,6 +578,32 @@
       background: #e4e7eb;
       color: #333;
     }
+    /* R10 资源弹窗左上角分享键：与右上角×成对角，规格（32px 圆形/12px 距角/过渡动效）完全复用×，
+       但底色淡蓝、图标蓝色、悬停蓝底白图标，与×（灰底/悬停深灰）明确区分 */
+    .modal-share-x {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 10;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: #E3F2FD;
+      color: #1565c0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .modal-share-x svg { width: 15px; height: 15px; display: block; }
+    .modal-share-x:hover {
+      transform: scale(1.1);
+      background: #1688FF;
+      color: #fff;
+    }
+    .modal-share-x:active { transform: scale(0.92); }
     .modal-cover {
       width: calc(100% - 32px);
       margin: 16px 16px 0;
@@ -912,7 +938,7 @@
 
 
     /* 平台公告 */
-    .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto; padding: 24px 22px; animation: modalIn 0.25s ease; text-align: left; }
+    .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto; padding: 26px 22px; animation: modalIn 0.25s ease; text-align: left; }
     .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color 0.15s ease; }
     .ann-modal .ann-title:hover { color: var(--blue1); }
     .ann-modal .ann-title.active { color: var(--blue1); }
@@ -921,9 +947,8 @@
     .ann-modal .ann-body a { color: #1e88e5; }
     .ann-modal .ann-body p { margin: 6px 0; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
-    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.12s ease, opacity 0.12s ease; }
-    .ann-modal .ann-ok:hover { transform: scale(0.97); opacity: 0.9; }
-    .ann-modal .ann-ok:active { transform: scale(0.94); opacity: 0.8; }
+    /* 按压效果复用 ui-common.css 全站统一弹窗按键规则（变暗+降透明、不缩放，字重恒定；公告确定键曾因缩放出现字重突变） */
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.12s ease, filter 0.12s ease; }
     .ann-modal .modal-close-x { top: 12px; right: 12px; width: 32px; height: 32px; }
     /* 分类栏 */
     .category-bar-wrap {
@@ -1067,9 +1092,9 @@
       .shop-logo { width: 30px; height: 30px; }
       .shop-brand { flex: 0 1 auto; min-width: 0; }
       .shop-name { font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .topbar-actions { order: 1; margin-left: auto; gap: 6px; }
+      .topbar-actions { order: 1; margin-left: 0; gap: 6px; } /* R9：咨询客服/分享紧跟 logo 名称（左侧） */
       /* 手机端 .tab/.view-btn 窄屏适配已并入 ui-common.css 公共样式（两页一致） */
-      .view-toggle { order: 1; flex-shrink: 0; margin-left: 0; }
+      .view-toggle { order: 1; flex-shrink: 0; margin-left: auto; } /* R9：列表/网格始终靠右 */
       .search-box { order: 2; flex: 1 1 100%; margin-top: 0; }
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
@@ -1187,10 +1212,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         <input class="search-input" id="searchInput" placeholder="搜索资源" />
         <button class="search-clear" id="searchClear" title="清空">×</button>
       </div>
-      <!-- 视图切换按钮 -->
-      <div class="view-toggle" style="margin-left:8px;">
-        <button type="button" class="view-btn active" id="viewListBtn" title="列表视图">☰ 列表</button>
-        <button type="button" class="view-btn" id="viewGridBtn" title="网格视图">▦ 网格</button>
+      <!-- 视图切换按钮（公共 .view-btn，R8 统一配色：激活淡白底、未激活淡蓝底，与管理页完全同色） -->
+      <div class="view-toggle on-blue">
+        <button type="button" class="view-btn active" id="viewListBtn" title="列表视图">☰ <span>列表</span></button>
+        <button type="button" class="view-btn" id="viewGridBtn" title="网格视图">▦ <span>网格</span></button>
 
 
       </div>
@@ -1236,6 +1261,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   <div class="modal-mask" id="modalMask">
     <div class="modal-wrap">
       <button class="modal-close-x" id="modalCloseX">×</button>
+      <!-- R10 资源分享键（左上角，与×成对角）：转发样式图标，淡蓝底蓝图标，悬停蓝底白图标 -->
+      <button class="modal-share-x" id="modalShareX" type="button" title="分享资源" aria-label="分享资源">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 17 20 12 15 7"></polyline>
+          <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
+        </svg>
+      </button>
       <div class="modal-box" id="modalBox">
         <img class="modal-cover" id="modalCover" alt="" />
         <div class="modal-content">
@@ -1327,6 +1359,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     var btnContact = document.getElementById('btnContact');
     var btnCloseModal = document.getElementById('btnCloseModal');
     var modalCloseX = document.getElementById('modalCloseX');
+    var modalShareX = document.getElementById('modalShareX');
 
     // ---------- 状态 ----------
     var DATA = { categories: [], products: [], announcement: '', announcementMode: 'always', announcements: [] };
@@ -1590,26 +1623,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active');
       document.querySelectorAll('#annTabs .ann-tab').forEach(function (x) { x.classList.remove('active'); });
     }
-    function renderAnnouncement() {
-      try { var mask = document.getElementById('annModal');
-      if (!mask) return;
-      var mode = DATA.announcementMode || 'always';
-      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) {} } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) {} } return; }
-      var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
-      if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
-      if (mode === 'daily') {
-        try {
-          var today = new Date().toDateString();
-          if (localStorage.getItem('wnzyq_ann_date') === today) return;
-          localStorage.setItem('wnzyq_ann_date', today);
-        } catch (e) {}
-      } else if (mode === 'session') {
-        try {
-          if (sessionStorage.getItem('wnzyq_ann_session')) return;
-          sessionStorage.setItem('wnzyq_ann_session', '1');
-        } catch (e) {}
-      }
-      window.__annShown = true;
+    // 公告内容渲染（tabs + 默认选中 + 默认内容）：抽出为独立函数，弹窗已打开而数据后到（首次访问先弹窗后接口返回）时也可刷新
+    function renderAnnContent() {
+      var list = DATA.announcements || [];
+      if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
       // 渲染小项 tabs（仅多条时显示）
       var tabs = document.getElementById('annTabs');
       if (tabs) {
@@ -1631,9 +1648,34 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
           });
         }
       }
-      // 默认显示第一条
+      // 默认显示第一条（一级公告）并选中"公告"标题
       var body = document.getElementById('annBody');
       var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div class="ann-empty">该公告暂无内容，请在管理页设置</div>'; bindMediaFail(body); bindLightbox(body); }
+    }
+    function renderAnnouncement() {
+      try { var mask = document.getElementById('annModal');
+      if (!mask) return;
+      var mode = DATA.announcementMode || 'always';
+      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) {} } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) {} }
+        // 修复（首次开屏）：弹窗已打开但此前数据未到（首访无缓存先弹空窗），接口返回后在此用最新数据刷新 tabs/默认选中/默认内容
+        if (mask.classList.contains('open')) renderAnnContent();
+        return; }
+      var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
+      if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
+      if (mode === 'daily') {
+        try {
+          var today = new Date().toDateString();
+          if (localStorage.getItem('wnzyq_ann_date') === today) return;
+          localStorage.setItem('wnzyq_ann_date', today);
+        } catch (e) {}
+      } else if (mode === 'session') {
+        try {
+          if (sessionStorage.getItem('wnzyq_ann_session')) return;
+          sessionStorage.setItem('wnzyq_ann_session', '1');
+        } catch (e) {}
+      }
+      window.__annShown = true;
+      renderAnnContent();
       mask.classList.add('open');
       setBodyLock(true); } catch (e) { console.error('公告渲染错误:', e); }
     }
@@ -2225,6 +2267,22 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       if (e.target === modalMask) closeModal();
     });
 
+    // ---------- R10 资源分享（弹窗左上角转发键） ----------
+    // 点击后生成 带当前页面路径+?pid=资源ID 的链接复制到剪贴板（复用顶栏分享的 clipboard+fallbackCopy 复制链路）
+    modalShareX.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!currentProduct || !currentProduct.id) { showToast('该资源暂不能分享'); return; }
+      var url = window.location.origin + window.location.pathname + '?pid=' + currentProduct.id;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          showToast('资源链接已复制到剪贴板');
+        }).catch(function () { try { fallbackCopy(url); } catch (err) {} showToast('资源链接已复制'); });
+      } else {
+        try { fallbackCopy(url); } catch (err) {}
+        showToast('资源链接已复制');
+      }
+    });
+
     // ---------- 资源码验证 ----------
     var resourceCodeBtn = document.getElementById('resourceCodeBtn');
     var resourceCodeInput = document.getElementById('resourceCodeInput');
@@ -2401,6 +2459,15 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     }
 
     function initData() {
+      // R10 分享链接：检查 ?pid=参数——带 pid 进入时跳过公告自动弹出（用户意图是直达该资源），
+      // 数据加载完成后自动打开对应资源弹窗；资源不存在/已隐藏时公共弹窗提示
+      var sharePid = null;
+      try {
+        var _pidRaw = new URLSearchParams(window.location.search).get('pid');
+        if (_pidRaw && /^\d+$/.test(_pidRaw)) sharePid = Number(_pidRaw);
+      } catch (e) {}
+      window.__sharePid = sharePid;
+      if (sharePid) { window.__annDismissed = true; window.__annShown = false; }
       var hasCache = false;
       // 先读 localStorage 缓存，秒开
       try {
@@ -2468,10 +2535,39 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         }
         // 无论成功失败，都渲染一次（隐藏骨架屏，显示资源或空状态）
         renderAll();
+        // R10 分享链接：远端数据已到，处理 ?pid= 自动打开资源弹窗（此数据源可信，查不到则提示失效）
+        checkSharePid(true);
       }).catch(function () {
         // 请求异常时也渲染一次（隐藏骨架屏，显示本地数据或空状态）
         renderAll();
+        // R10 分享链接：网络失败时基于缓存尽力打开（缓存查不到不提示失效——可能是缓存过期误报）
+        checkSharePid(false);
       });
+    }
+
+    // ---------- R10 分享链接落地：?pid= 自动打开资源弹窗 ----------
+    // fromRemote=true 表示数据来自远端接口（可信），查不到资源时提示"该资源已下架或失效"；
+    // fromRemote=false（网络异常、只有本地缓存）查不到时静默处理，避免缓存过期误报失效。
+    // 处理成功后清理 URL 中的 pid 参数，避免刷新/分享造成重复弹窗。
+    var __pidHandled = false;
+    function checkSharePid(fromRemote) {
+      if (__pidHandled) return;
+      var pid = window.__sharePid;
+      if (!pid) return;
+      __pidHandled = true;
+      var p = (DATA.products || []).find(function (x) { return Number(x.id) === pid; });
+      if (p) {
+        try { openModal(p); } catch (e) {}
+      } else if (fromRemote) {
+        if (window.showAlert) window.showAlert('该资源已下架或失效');
+        else showToast('该资源已下架或失效');
+      }
+      try {
+        var u = new URL(window.location.href);
+        u.searchParams.delete('pid');
+        window.history.replaceState(null, '', u.pathname + (u.searchParams.toString() ? '?' + u.searchParams.toString() : ''));
+      } catch (e) {}
+      window.__sharePid = null;
     }
 
     // ---------- 顶栏高度自适应 ----------

@@ -51,16 +51,26 @@
   width: 80%; margin: 0 auto 14px; border: none; border-radius: var(--radius); padding: 11px 32px;
   background: var(--green); color: #fff; font-size: 18px; font-weight: 500; cursor: pointer;
   letter-spacing: 0.9px; display: inline-flex; align-items: center; justify-content: center;
-  transition: all 0.10s ease;
+  transition: opacity 0.12s ease, filter 0.12s ease;
 }
-.kf-jump:hover { transform: scale(0.97); opacity: 0.9; }
-.kf-jump:active { transform: scale(0.94); opacity: 0.8; }
 .kf-close {
   background: var(--red); color: #fff; border: none; padding: 11px 32px; border-radius: var(--radius);
-  font-size: 18px; cursor: pointer; letter-spacing: 0.9px; transition: all 0.10s ease;
+  font-size: 18px; cursor: pointer; letter-spacing: 0.9px; transition: opacity 0.12s ease, filter 0.12s ease;
 }
-.kf-close:hover { transform: scale(0.97); opacity: 0.9; }
-.kf-close:active { transform: scale(0.94); opacity: 0.8; }
+/* ===== 全站统一弹窗按键按压效果（唯一实现，所有弹窗确定/取消键复用这一份）=====
+   按压反馈统一为"变暗 + 微降透明度"，刻意不用 transform: scale 缩放——按钮整体缩放会
+   触发文字重新栅格化，观感上像字重突然变细/变粗（公告确定键曾出现此问题）。
+   统一后所有弹窗按键按压期间字形恒定、字重不变，效果全站一致；
+   各页面禁止再为弹窗按键写本地 hover/active 缩放副本。 */
+.alert-ok, .ann-ok, .btn-item, .modal-inner-btn, .modal-close, .kf-jump, .kf-close {
+  -webkit-tap-highlight-color: transparent;
+}
+.alert-ok:hover, .ann-ok:hover, .btn-item:hover, .modal-inner-btn:hover, .modal-close:hover, .kf-jump:hover, .kf-close:hover {
+  opacity: 0.92; filter: brightness(0.97);
+}
+.alert-ok:active, .ann-ok:active, .btn-item:active, .modal-inner-btn:active, .modal-close:active, .kf-jump:active, .kf-close:active {
+  opacity: 0.85; filter: brightness(0.88);
+}
 .kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s ease; line-height: 1; }
 .kf-x:hover { background: var(--red); color: #fff; transform: scale(1.1); }
 .kf-x:active { transform: scale(0.92); }
@@ -178,33 +188,51 @@
 }
 .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
 .tab:hover { transform: scale(0.97); opacity: 0.9; }
-.tab:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+/* 按下瞬间变白底蓝字：与管理页 tab 激活态同一观感（资源页咨询客服/分享按下也变白，两页统一） */
+.tab:active { background: #fff; color: var(--blue1); transform: scale(0.94); }
 .tab svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
 .tab svg + span { margin-left: 5px; }
 
-/* ===== 全站统一列表/网格切换（唯一实现）=====
-   资源页与管理页共用：蓝底圆角容器 + 半透明白按钮 + 激活白底蓝字。
-   两页禁止各自再写 view-btn/view-toggle 样式。 */
+/* ===== 全站统一列表/网格切换（唯一实现，两页同色）=====
+   R8 统一配色（用户定稿）：激活按键 = 淡白色底，未激活按键 = 淡蓝色底，
+   两页（资源页蓝顶栏 / 管理页白背景工具栏）完全同一套色值，不再区分上下文。
+   两页禁止各自再写 view-btn 样式（复用，非复制）。 */
 .view-toggle {
   display: flex; align-items: center; gap: 4px;
-  background: var(--blue1); border-radius: 8px; padding: 3px;
 }
 .view-btn {
-  padding: 0 10px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px;
-  background: rgba(255, 255, 255, 0.12); color: #fff; cursor: pointer;
+  padding: 0 10px; border: 1px solid #90CAF9; border-radius: 6px;
+  background: #E3F2FD; color: #1565c0; cursor: pointer;   /* 未激活：淡蓝底蓝字 */
   font-size: 13px; height: 38px; box-sizing: border-box;
-  display: inline-flex; align-items: center; justify-content: center; line-height: 1.2;
+  display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; gap: 4px;
   transition: background .15s ease, color .15s ease, transform .1s ease;
   -webkit-tap-highlight-color: transparent;
 }
 .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
-.view-btn:active { transform: scale(0.92); opacity: 0.8; filter: brightness(0.9); }
-.view-btn.active { background: #fff !important; color: #1E88E5 !important; border-color: #fff !important; }
+.view-btn:active { transform: scale(0.92); opacity: 0.8; }
+.view-btn.active {
+  background: #FFFFFF; color: #1565c0; border-color: #90CAF9; font-weight: 600; /* 激活：淡白底蓝字 */
+}
+/* R9 边框统一：激活/未激活边框统一为 #90CAF9（此前未激活为 #BBDEFB），两页同值 */
+.view-toggle.on-blue {
+  --vb-border: #90CAF9;
+  --vb-bg: #E3F2FD;
+  --vb-color: #1565c0;
+  --vb-on-bg: #FFFFFF;
+  --vb-on-color: #1565c0;
+  --vb-on-border: #90CAF9;
+}
 
 /* 窄屏统一适配（tab 与 view-btn 同步缩放，两页一致） */
 @media (max-width: 600px) {
   .tab { padding: 7px 12px; font-size: 13px; }
   .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
+  /* R8 小屏适配：带图标的按键（咨询客服/分享/列表/网格）窄屏只留图标、隐藏文字，
+     title 悬停提示保留——手机顶栏空间有限，图标语义已足够，PC 端仍显示完整"图标+文字" */
+  .tab svg + span { display: none; }
+  .tab svg { margin: 0; }
+  .topbar-actions .tab, .view-toggle .view-btn { padding: 6px 10px; }
+  .view-btn span { display: none; }
 }
 
 /* ===== 弹窗底部按键隐藏修复 =====

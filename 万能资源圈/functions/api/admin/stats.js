@@ -36,35 +36,67 @@ export async function onRequestGet(context) {
     statsDateParams = [];
   }
 
-  // 1. 总览
-  const overview = {
-    products: await count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
-    online: await count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1'),
-    hidden: await count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_hidden = 1'),
-    views: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'view'${statsDateFilter}`, statsDateParams),
-    contacts: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'contact'${statsDateFilter}`, statsDateParams),
-    resource_unlocks: await count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'resource_unlock'${statsDateFilter}`, statsDateParams),
-  };
-
-  // 2. 按资源统计（JOIN时明确指定 s.created_at）
+  // 1. 总览 + 2. 按资源统计 + 3. 趋势 + 4. 按分类统计 + 5. 浏览记录
+  // 性能修复：原先 10+ 个 D1 查询逐个 await 串行执行（每次往返 50-200ms，累计 1-2.5 秒），
+  // 现改为 Promise.all 全并行，总耗时 ≈ 最慢单查询，统计接口从 2.35s 级降到亚秒级
   const byProductDateFilter = statsDateFilter.replace(/stats\.created_at/g, 's.created_at');
-  const { results: byProduct } = await env.DB.prepare(
-    `SELECT p.id, p.title, p.is_online, p.is_hidden,
-            COALESCE(SUM(CASE WHEN s.type='view' THEN 1 ELSE 0 END),0) AS views,
-            COALESCE(SUM(CASE WHEN s.type='contact' THEN 1 ELSE 0 END),0) AS contacts,
-            COALESCE(SUM(CASE WHEN s.type='resource_unlock' THEN 1 ELSE 0 END),0) AS resource_unlocks
-     FROM products p
-     LEFT JOIN stats s ON s.product_id = p.id${byProductDateFilter}
-     GROUP BY p.id
-     ORDER BY views DESC, p.id DESC`
-  ).bind(...statsDateParams).all();
+  const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, byProductRes, trendRowsRes, byCategoryRes, recentRes] = await Promise.all([
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1'),
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_hidden = 1'),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'view'${statsDateFilter}`, statsDateParams),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'contact'${statsDateFilter}`, statsDateParams),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'resource_unlock'${statsDateFilter}`, statsDateParams),
+    env.DB.prepare(
+      `SELECT p.id, p.title, p.is_online, p.is_hidden,
+              COALESCE(SUM(CASE WHEN s.type='view' THEN 1 ELSE 0 END),0) AS views,
+              COALESCE(SUM(CASE WHEN s.type='contact' THEN 1 ELSE 0 END),0) AS contacts,
+              COALESCE(SUM(CASE WHEN s.type='resource_unlock' THEN 1 ELSE 0 END),0) AS resource_unlocks
+       FROM products p
+       LEFT JOIN stats s ON s.product_id = p.id${byProductDateFilter}
+       GROUP BY p.id
+       ORDER BY views DESC, p.id DESC`
+    ).bind(...statsDateParams).all(),
+    env.DB.prepare(
+      `SELECT date(stats.created_at) AS day, stats.type, COUNT(*) AS cnt
+       FROM stats
+       WHERE 1=1${statsDateFilter}
+       GROUP BY day, stats.type ORDER BY day ASC`
+    ).bind(...statsDateParams).all(),
+    env.DB.prepare(
+      `SELECT c.id, c.name,
+              COUNT(p.id) AS product_count,
+              COALESCE(SUM(s2.views),0) AS total_views
+       FROM categories c
+       LEFT JOIN products p ON p.cid = c.id
+       LEFT JOIN (
+         SELECT product_id, COUNT(*) AS views FROM stats WHERE stats.type='view'${statsDateFilter} GROUP BY product_id
+       ) s2 ON s2.product_id = p.id
+       GROUP BY c.id
+       ORDER BY c.sort ASC, c.id ASC`
+    ).bind(...statsDateParams).all(),
+    // 浏览记录：不再 LIMIT 20（前端翻页每页 20 条），仅保留 30 天范围限制（按需求只查近 30 天，不删历史数据）
+    env.DB.prepare(
+      `SELECT s.id, s.type, s.created_at, p.title, p.img
+       FROM stats s
+       LEFT JOIN products p ON p.id = s.product_id
+       WHERE s.created_at >= datetime('now', '-30 days')
+       ORDER BY s.id DESC`
+    ).all(),
+  ]);
 
-  // 3. 趋势（单表，明确指定 stats.created_at）
-  const trendSql = `SELECT date(stats.created_at) AS day, stats.type, COUNT(*) AS cnt
-     FROM stats
-     WHERE 1=1${statsDateFilter}
-     GROUP BY day, stats.type ORDER BY day ASC`;
-  const { results: trendRows } = await env.DB.prepare(trendSql).bind(...statsDateParams).all();
+  const overview = {
+    products: oProducts,
+    online: oOnline,
+    hidden: oHidden,
+    views: oViews,
+    contacts: oContacts,
+    resource_unlocks: oUnlocks,
+  };
+  const byProduct = byProductRes.results || [];
+  const trendRows = trendRowsRes.results || [];
+  const byCategory = byCategoryRes.results || [];
+  const recent = recentRes.results || [];
   // 补全日期范围
   const trend = [];
   const startD = new Date(effectiveStart);
@@ -80,29 +112,9 @@ export async function onRequestGet(context) {
     });
   }
 
-  // 4. 按分类统计（子查询单表，无字段歧义）
-  const { results: byCategory } = await env.DB.prepare(
-    `SELECT c.id, c.name,
-            COUNT(p.id) AS product_count,
-            COALESCE(SUM(s2.views),0) AS total_views
-     FROM categories c
-     LEFT JOIN products p ON p.cid = c.id
-     LEFT JOIN (
-       SELECT product_id, COUNT(*) AS views FROM stats WHERE stats.type='view'${statsDateFilter} GROUP BY product_id
-     ) s2 ON s2.product_id = p.id
-     GROUP BY c.id
-     ORDER BY c.sort ASC, c.id ASC`
-  ).bind(...statsDateParams).all();
-
-  // 5. 最近 20 条浏览记录（明确指定 s.created_at）
-  const { results: recent } = await env.DB.prepare(
-    `SELECT s.id, s.type, s.created_at, p.title, p.img
-     FROM stats s
-     LEFT JOIN products p ON p.id = s.product_id
-     WHERE s.created_at >= datetime('now', '-30 days')
-     ORDER BY s.id DESC
-     LIMIT 20`
-  ).all();
+  // 注：第 4 段（按分类统计）与第 5 段（浏览记录）已在上方 Promise.all 中并行执行；
+  // 历史串行版本代码（重复声明 byCategory/recent 且 recent 带 LIMIT 20）已删除——
+  // 重复 const 声明会直接抛 SyntaxError 导致接口 500，串行 await 也会把耗时拖回 2 秒级
 
   return new Response(JSON.stringify({
     ok: true,
