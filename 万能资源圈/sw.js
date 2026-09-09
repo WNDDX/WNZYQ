@@ -9,7 +9,7 @@
  *  - /api/ 一律不缓存，始终走网络。
  *  - 任何非 200、或内容类型为 HTML 的 /assets 响应一律不缓存（防止错误页伪装成脚本/样式）。
  */
-const CACHE_NAME = 'wnzyq-v42'; // R32：图仓改免绑卡方案——KV 命名空间（免费层）替代 R2 绑卡；图片走本站 /img/ 路由直出+边缘缓存，无需配置公开地址
+const CACHE_NAME = 'wnzyq-v48'; // R38：恢复编辑器工具栏 emoji 图标（用户澄清：编辑器内原有图标不删） // R37：手机管理页列表模式改横向紧凑行（方案A：60px缩略图+底部整行按钮，一屏6~7条） // R36：弹窗封面完整显示不超框；编辑器图片/视频统一弹窗(网络+本地上传)；本地视频上传；删除资源联动清图仓(带引用保护)；退出改确认弹窗不清空内容 // R35：翻页组件两组不拆散（连带修复无限滚动误清组盒按钮）；导航页按钮回退组合居中；手机网格卡片操作按钮裁剪修复
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -79,8 +79,10 @@ self.addEventListener('fetch', function (event) {
   var url = req.url.split('?')[0];
   var isCode = /\.(js|css)($|\?)/.test(url);   // JS/CSS：网络优先
 
-  // 页面导航：R20 缓存立即回（秒开，修复手机端跨页跳转白屏/久等）+ 后台拉最新版写缓存供下次使用。
-  // 一致性保障：每次 SW 版本升级时 activate 会清掉旧缓存（见上方 CACHE 管理），因此缓存里的 HTML 始终与当前 js/css 同代，不存在旧 HTML 配新 CSS 的混搭。
+  // 页面导航：R34 网络竞速——有缓存时同时发起网络请求，网络在 400ms 内返回就直接给最新版页面
+  // （修复：部署新版后访客刷新先看到旧版页面/旧图标、要再刷一次才更新的问题）；网络慢或失败时
+  // 缓存秒回（保住手机跨页不白屏），网络完成后在后台写入缓存供下次使用。
+  // 一致性保障：SW 版本升级时 activate 会清掉旧缓存，缓存里的 HTML 始终与当前 js/css 同代，不混搭。
   if (req.mode === 'navigate') {
     event.respondWith(
       caches.match(req).then(function (cached) {
@@ -88,9 +90,22 @@ self.addEventListener('fetch', function (event) {
           if (res && res.status === 200) event.waitUntil(putCache(req, res));
           return res;
         }).catch(function () { return null; });
-        if (cached) { event.waitUntil(network); return cached; } // 有缓存：秒开，后台静默更新
-        return network.then(function (res) {       // 无缓存（首次/刚升级）：走网络，失败回错误页
-          return res || caches.match('./error.html').then(function (e) { return e || Response.error(); });
+        event.waitUntil(network); // 保持 worker 存活至网络请求完成，确保后台缓存更新可靠
+        if (!cached) {            // 无缓存（首次访问/刚升级清空）：走网络，失败回错误页
+          return network.then(function (res) {
+            return res || caches.match('./error.html').then(function (e) { return e || Response.error(); });
+          });
+        }
+        return new Promise(function (resolve) {   // 有缓存：与网络竞速
+          var settled = false;
+          var timer = setTimeout(function () {
+            if (!settled) { settled = true; resolve(cached); }   // 超时：缓存秒回，网络继续后台更新
+          }, 400);
+          network.then(function (res) {
+            if (settled) return;
+            settled = true; clearTimeout(timer);
+            resolve(res || cached);                // 网络够快：直接给最新版页面（不闪旧版）
+          });
         });
       })
     );

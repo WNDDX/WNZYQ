@@ -260,6 +260,9 @@ export function cleanVariant(v) {
 // ============ R31（优化项7）：自有图仓（R2 绑定 IMAGE_BUCKET）============
 // 从任意文本（单个 URL / HTML / JSON 数组字符串）里提取属于图仓的图片 key 并删除。
 // 调用场景：删除资源 / 批量删除时联动清理图仓图片（删图失败不阻塞删资源）。
+// R36：① 同时清理 videos/（本地视频）；② 引用保护——先查剩余资源/类型是否还在用这个 key
+// （复制出来的资源会共用同一张图），被引用的跳过不删，避免别的资源变裂图；
+// ③ 纳入 detail_videos 与 product_variants 的 desc/img/video/resource_content 字段（由调用方传入）。
 export async function deleteBucketImages(env, sources) {
   try {
     if (!env.IMAGE_BUCKET || !Array.isArray(sources) || !sources.length) return;
@@ -267,24 +270,37 @@ export async function deleteBucketImages(env, sources) {
     const base = baseRow ? String(baseRow.value || '').trim().replace(/\/+$/, '') : '';
     const keys = new Set();
     // R32：图片统一走自家路由 /img/images/...（相对路径或任意域名的绝对 URL）；
-    // 兼容旧 R2 公开地址（base 前缀）。
-    const imgPathRe = /(?:https?:\/\/[^\s"'<>)]+)?\/img\/(images\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:png|jpg|webp|gif))/g;
-    const baseRe = base ? new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\/(images\/[^\s"\'<>)]+)', 'g') : null;
+    // R36：新增本地视频 /img/videos/...；兼容旧 R2 公开地址（base 前缀）。
+    const mediaPathRe = /(?:https?:\/\/[^\s"'<>)]+)?\/img\/((?:images|videos)\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:png|jpg|jpeg|webp|gif|mp4|webm|mov))/g;
+    const baseRe = base ? new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\/((?:images|videos)\/[^\s"\'<>)]+)', 'g') : null;
     for (const src of sources) {
       if (!src) continue;
       const text = String(src);
       let m;
-      imgPathRe.lastIndex = 0;
-      while ((m = imgPathRe.exec(text)) !== null) keys.add(m[1].split('?')[0]);
+      mediaPathRe.lastIndex = 0;
+      while ((m = mediaPathRe.exec(text)) !== null) keys.add(m[1].split('?')[0]);
       if (baseRe) {
         baseRe.lastIndex = 0;
         while ((m = baseRe.exec(text)) !== null) keys.add(m[1].split('?')[0].replace(/&amp;.*$/, ''));
       }
     }
     if (!keys.size) return;
-    await Promise.all([...keys].map((k) => env.IMAGE_BUCKET.delete(k)));
-    console.log('R31 图仓联动清理:', keys.size, '张图片');
+    // R36 引用保护：调用方在 DB 记录已删完之后调用本函数，此时库里还引用该 key 的
+    // 一定是别的资源/类型（比如"2（副本）"共用同一张封面），这些不能删。
+    const kept = [];
+    const toDelete = [];
+    for (const key of keys) {
+      const like = '%' + key + '%';
+      const usedBy = await env.DB.prepare(
+        `SELECT (SELECT COUNT(*) FROM products WHERE img LIKE ? OR detail LIKE ? OR detail_images LIKE ? OR detail_videos LIKE ?)
+              + (SELECT COUNT(*) FROM product_variants WHERE "desc" LIKE ? OR img LIKE ? OR video LIKE ? OR resource_content LIKE ?) AS n`
+      ).bind(like, like, like, like, like, like, like, like).first();
+      if (usedBy && usedBy.n > 0) { kept.push(key); continue; }
+      toDelete.push(key);
+    }
+    if (toDelete.length) await Promise.all(toDelete.map((k) => env.IMAGE_BUCKET.delete(k)));
+    console.log('R36 图仓联动清理: 待删 ' + keys.size + ' 个，实际删除 ' + toDelete.length + ' 个，被其它资源引用保留 ' + kept.length + ' 个');
   } catch (e) {
-    console.error('R31 图仓图片清理失败(不影响资源删除):', e);
+    console.error('R36 图仓媒体清理失败(不影响资源删除):', e);
   }
 }

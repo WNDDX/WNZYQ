@@ -198,12 +198,18 @@
     .tabs { display: flex; gap: 6px; flex: 1; }
     /* .tab 按钮样式已抽入 ui-common.css 全站公共组件（与资源页顶栏咨询客服/分享同一份，零复制） */
     .topbar-right { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; }
-    .mini-btn {
-      border: 1px solid #ddd;
-      background: #fff;
-      color: #555; padding: 0 12px; height: 38px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;
-      font-size: 13px; white-space: nowrap;
+    /* R36：退出按钮专用类——之前误用 .tab（无 data-tab），点击触发 switchTab(undefined) 把主内容切成空白。
+       样式与顶栏 tab 同观感（半透明白胶囊），但语义独立：只弹退出确认框，不参与 tab 切换 */
+    .logout-btn {
+      border: none; background: rgba(255, 255, 255, 0.18);
+      color: #fff; padding: 0 16px; height: 38px;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-sizing: border-box; border-radius: 18px;
+      font-size: 14px; white-space: nowrap; line-height: 1.2;
+      transition: all 0.2s; cursor: pointer; -webkit-tap-highlight-color: transparent;
     }
+    .logout-btn:hover { transform: scale(0.97); opacity: 0.9; }
+    .logout-btn:active { background: #fff; color: var(--blue1); transform: scale(0.94); }
     .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
     .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -212,7 +218,7 @@
        公共样式已按"融入背景"参数化：管理页白底直接透明融入+激活蓝底白字，资源页由 .on-blue 切白系。 */
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
-    .btn-blue, .row-btn, .mini-btn, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
+    .btn-blue, .row-btn, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; display: inline-flex; align-items: center; justify-content: center; }
     .toolbar-hint { font-size: 13px; color: #999; }
     .admin-search {
@@ -322,7 +328,8 @@
     @media (max-width: 600px)  {
       #productList.card-view { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       #productList.card-view .product-row .p-ops { flex-wrap: wrap; gap: 8px; }
-      #productList.card-view .product-row .p-ops .row-btn { flex: 1 1 44%; padding: 6px 6px; font-size: 12px; }
+      /* R35：修复手机窄卡片（约178px）按钮被 overflow:hidden 裁掉看不见——三等分平铺，每颗都完整露出 */
+      #productList.card-view .product-row .p-ops .row-btn { flex: 1 1 0; min-width: 0; padding: 6px 2px; font-size: 12px; box-sizing: border-box; text-align: center; }
     }
     #productList.card-view .product-row {
       flex-direction: column;
@@ -444,17 +451,28 @@
       font-size: 14px; color: #555; margin-bottom: 10px;
       display: flex; align-items: center; justify-content: space-between;
     }
+    /* R36：媒体插入统一弹窗的输入行——输入框(flex:1) + 右侧本地上传按钮，比例与"资源封面图"那行一致 */
+    .input-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 16px; }
+    .input-row .input { flex: 1; min-width: 0; margin-bottom: 0; }
+    .input-row .input-upload-btn {
+      display: none; white-space: nowrap; width: auto; flex-shrink: 0;
+      height: auto; padding: 0 16px; font-size: 13px; font-weight: 500;
+      letter-spacing: 0; margin-bottom: 0;
+    }
+    .input-row.has-upload .input-upload-btn { display: inline-flex; }
+    /* 弹窗关闭（open 移除）后按钮隐藏——三种关闭路径（确定/关闭/点蒙层）都不用各改一遍 */
+    #inputMask:not(.open) .input-upload-btn { display: none !important; }
+    /* 手机端：上传按钮换行也不拆散整行结构（按钮文字缩一点保证同行放下） */
+    @media (max-width: 600px) {
+      .input-row { flex-wrap: wrap; }
+      .input-row .input-upload-btn { font-size: 12px; padding: 0 12px; }
+    }
+    /* R36：新增类型按钮——用户要求复用"上传本地图片"那种蓝色按键效果（与表单主按钮统一） */
     .variant-add {
-      border: 1px solid var(--blue1); background: #fff;
-      color: var(--blue1); padding: 4px 12px; border-radius: 6px;
-      font-size: 12px;
+      border: none; background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
+      color: #fff; padding: 6px 16px; border-radius: 6px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
     }
-    .insert-link-btn {
-      border: 1px solid var(--blue1); background: #fff;
-      color: var(--blue1); padding: 4px 12px; border-radius: 6px;
-      font-size: 12px; cursor: pointer;
-    }
-    .insert-link-btn:active { transform: scale(0.96); opacity: 0.85; }
     .variant-item {
       background: #f7faff; border: 1px solid #e3eefc; border-radius: 8px;
       padding: 10px 12px; margin-bottom: 8px;
@@ -473,13 +491,6 @@
     .ann-item.primary .select-picker { pointer-events: none; visibility: hidden; cursor: default; }
     .ann-item.primary .select-picker .cat-picker-display { background: #fafafa; color: #bbb; border-color: #eee; }
     .ann-item.primary .row-btn { visibility: hidden; pointer-events: none; }
-    .ann-item .ann-title-txt { flex: 1; font-size: 14px; font-weight: 500; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ann-item .ann-badge { font-size: 11px; color: #b26a00; background: #fff3e0; padding: 1px 7px; border-radius: 4px; font-weight: 600; }
-    .ann-item .ann-hide-btn, .ann-item .ann-edit-btn, .ann-item .ann-del-btn { border: none; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: transform .12s ease; }
-    .ann-item .ann-hide-btn:hover, .ann-item .ann-edit-btn:hover, .ann-item .ann-del-btn:hover { transform: scale(0.96); }
-    .ann-item .ann-hide-btn { background: #f5f7fa; color: #555; }
-    .ann-item .ann-edit-btn { background: #e8f1fd; color: #1565c0; }
-    .ann-item .ann-del-btn { background: #fdecea; color: #c62828; }
 
     /* ---------- 弹窗 ---------- */
     .modal-mask {
@@ -495,7 +506,6 @@
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
     .modal-wide { max-width: 520px; }
-    .modal-lg { max-width: 680px; }
     /* 按内容量分配档位：大(编辑资源/公告) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
     .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box { max-width: 680px; }
     .modal-mask#catMask > .modal-box, .modal-mask#batchCatMask > .modal-box { max-width: 520px; }
@@ -723,6 +733,8 @@
     #previewMask .preview-title { font-size: 22px; font-weight: 700; color: #1a1a1a; flex: 1; line-height: 1.4; letter-spacing: 0.5px; padding-right: 36px; }
     #previewMask .preview-price { color: #ff6b35; font-size: 24px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     #previewMask .preview-desc { font-size: 15px; color: var(--blue1); margin-bottom: 14px; font-weight: 600; line-height: 1.6; }
+    /* R36：预览弹窗富文本图/视频与资源页一致——宽度 100% 且高度上限，竖长图不撑爆弹窗 */
+    #previewMask .preview-detail img, #previewMask .preview-detail video { max-width: 100%; max-height: 60vh; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
     #previewMask .preview-detail { background: #f7faff; border-radius: 10px; padding: 14px 16px; font-size: 14px; color: #555; line-height: 1.9; white-space: pre-wrap; margin-bottom: 14px; border-left: 3px solid var(--blue2); word-break: break-word; overflow-wrap: break-word; }
     /* 类型切换：与资源页 .variant-tabs / .variant-tab / .variant-detail / .variant-header 同款 */
     #previewMask .variant-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
@@ -757,13 +769,13 @@
     /* 封面：与资源页 .modal-cover 同款（320px 上限、16px 边距） */
     #previewMask .preview-cover {
       width: calc(100% - 32px); margin: 16px 16px 0;
-      max-height: 320px; aspect-ratio: 16 / 9; object-fit: cover; display: block;
+      max-height: 320px; aspect-ratio: 16 / 9; object-fit: contain; display: block;
       background: #eef4fb; border-radius: 10px; border: 1px solid #e0e0e0;
     }
     /* 移动端：与资源页 @media(max-width:600px) 弹窗适配逐项一致 */
     @media (max-width: 600px) {
       #previewMask > .modal-box { max-width: 100%; max-height: 92vh; border-radius: 12px; }
-      #previewMask .preview-cover { width: calc(100% - 24px); margin: 12px 12px 0; max-height: 220px; }
+      #previewMask .preview-cover { width: calc(100% - 24px); margin: 12px 12px 0; max-height: 220px; object-fit: contain; }
       #previewMask .preview-body { padding: 12px 16px 16px; }
       #previewMask .preview-title { font-size: 18px; }
       #previewMask .preview-price { font-size: 20px; }
@@ -792,15 +804,15 @@
       flex: 1; background-color: var(--red); color: #fff; border: none;
       padding: 0 24px; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 600;
     }
-    .modal-inner-btn, .modal-close, .btn-blue, .mini-btn, .row-btn, .switch, .variant-add {
+    .modal-inner-btn, .modal-close, .btn-blue, .row-btn, .switch, .variant-add {
       transition: all 0.10s ease;
     }
     .modal-inner-btn:hover, .modal-close:hover, .btn-blue:hover,
-    .mini-btn:hover, .row-btn:hover, .switch:hover, .variant-add:hover {
+    .row-btn:hover, .switch:hover, .variant-add:hover {
       transform: scale(0.97); opacity: 0.9;
     }
     .modal-inner-btn:active, .modal-close:active, .btn-blue:active,
-    .mini-btn:active, .row-btn:active, .switch:active, .variant-add:active {
+    .row-btn:active, .switch:active, .variant-add:active {
       transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
     }
 
@@ -913,8 +925,7 @@
       .topbar-inner { gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
       .topbar-logo { width: 30px; height: 30px; }
       .topbar-brand { flex: 1; min-width: 0; font-size: 16px; }
-      .topbar-title { font-size: 15px; }
-      .topbar-brand span { display: none; }
+        .topbar-brand span { display: none; }
       .topbar-right { flex-shrink: 0; }
       .tabs {
         order: 3; width: 100%; flex: 0 0 100%;
@@ -926,48 +937,46 @@
       .container { padding: 12px; }
       .toolbar { flex-wrap: wrap; gap: 8px; }
       .admin-search { max-width: 100%; flex-basis: 100%; order: 3; }
-      /* 资源卡片式布局（手机端更紧凑，图片适当缩小） */
-      .product-row {
-        flex-wrap: wrap;
+      /* R37 方案A（用户拍板）：手机列表模式=横向紧凑行——
+         第一行：勾选框 + 60px小缩略图 + 标题/分类/简介 + 拖动排序小把手
+         第二行：显示状态框（左） + 编辑/复制/删除平铺（右）
+         整条约110~125px高，一屏6~7条，真正像"列表"。
+         注意：drag-handle 在列表模式是流内元素（桌面 flex 行首），grid 里必须显式指定
+         落格，否则它会挤掉勾选框的格子、后续元素全体错位 */
+      #productList:not(.card-view) .product-row {
+        display: grid;
+        grid-template-columns: 20px 60px minmax(0, 1fr) 24px;
+        column-gap: 10px; row-gap: 8px;
+        align-items: center;
+        padding: 10px 12px;
+      }
+      #productList:not(.card-view) .product-row .drag-handle { grid-row: 1; grid-column: 4; width: 24px; height: 24px; font-size: 12px; align-self: start; }
+      #productList:not(.card-view) .product-row .row-check { grid-row: 1; grid-column: 1; position: static; width: 20px; height: 20px; margin: 0; }
+      #productList:not(.card-view) .product-row .thumb { grid-row: 1; grid-column: 2; width: 60px; height: 60px; border-radius: 8px; }
+      #productList:not(.card-view) .product-row .info { grid-row: 1; grid-column: 3; min-width: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+      #productList:not(.card-view) .product-row .p-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
+      #productList:not(.card-view) .product-row .p-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+      #productList:not(.card-view) .product-row .badge { align-self: flex-start; font-size: 10px; padding: 1px 6px; }
+      #productList:not(.card-view) .product-row .select-picker { grid-row: 2; grid-column: 1 / 3; margin: 0; align-self: center; justify-self: start; }
+      #productList:not(.card-view) .product-row .p-ops { grid-row: 2; grid-column: 3 / 5; display: flex; gap: 8px; padding: 0; }
+      #productList:not(.card-view) .product-row .p-ops .row-btn { flex: 1; text-align: center; }
+      /* R37：网格视图（card-view）保持竖版卡片——原来竖排基础由列表模式"顺带"提供，
+         列表模式改横向 grid 后，把竖排基础显式落到 card-view 自己头上 */
+      #productList.card-view .product-row {
+        flex-wrap: nowrap;
         flex-direction: column;
         align-items: stretch;
-        padding: 0;
-        overflow: hidden;
-        gap: 0;
+        padding: 0; overflow: hidden; gap: 0;
+        position: relative;
       }
-      .product-row .thumb {
-        width: 100%;
-        height: 100px;
-        border-radius: 0;
-      }
-      .product-row .row-check {
-        position: absolute;
-        top: 8px;
-        left: 8px;
-        z-index: 2;
-        width: 20px;
-        height: 20px;
-      }
-      .product-row { position: relative; }
-      .product-row .info {
-        flex-basis: 100%;
-        padding: 10px 12px 6px;
-      }
-      .product-row .p-ops {
-        width: 100%;
-        display: flex;
-        gap: 12px;
-        padding: 0 12px 10px;
-        justify-content: flex-start;
-      }
-      .product-row .p-ops .row-btn { flex: 1; text-align: center; }
-      .product-row .select-picker { margin: 2px 12px 8px; align-self: flex-start; width: auto; }
-      /* 卡片视图手机端更窄列、更小图 */
+      #productList.card-view .product-row .row-check { position: absolute; top: 8px; left: 8px; z-index: 2; width: 20px; height: 20px; }
+      #productList.card-view .product-row .thumb { width: 100%; height: 90px; border-radius: 0; }
+      #productList.card-view .product-row .info { flex-basis: 100%; padding: 8px 10px 4px; }
+      #productList.card-view .product-row .p-ops { width: 100%; display: flex; gap: 6px; padding: 0 10px 8px; flex-wrap: wrap; justify-content: flex-start; }
+      #productList.card-view .product-row .p-ops .row-btn { flex: 1 1 0; min-width: 0; padding: 7px 2px; font-size: 12px; white-space: nowrap; box-sizing: border-box; text-align: center; }
+      #productList.card-view .product-row .select-picker { margin: 2px 10px 8px; align-self: flex-start; width: auto; max-width: calc(100% - 16px); flex-shrink: 0; }
+      /* 网格视图手机端两列 */
       #productList.card-view { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      #productList.card-view .product-row .thumb { height: 90px; }
-      #productList.card-view .product-row .info { padding: 8px 10px 4px; }
-      #productList.card-view .product-row .p-ops { padding: 0 10px 8px; flex-wrap: wrap; gap: 6px; }
-      #productList.card-view .product-row .p-ops .row-btn { flex: 1 1 42%; padding: 7px 4px; font-size: 12px; white-space: nowrap; }
       .stat-cards { grid-template-columns: repeat(2, 1fr); }
       .modal-box { padding: 18px 16px; }
       .modal-footer { flex-wrap: wrap; }
@@ -1005,22 +1014,22 @@
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
        弹窗按键（.modal-inner-btn/.modal-close/.confirm 系）的按压效果已统一抽入
        ui-common.css「全站统一弹窗按键按压效果」（变暗+降透明、不缩放、字重恒定），此处不再重复。 */
-    .btn-blue, .btn-cyan, .mini-btn, .export-btn, .batch-btn,
-    .variant-add, .insert-link-btn, .time-btn, .cat-toggle,
+    .btn-blue, .btn-cyan, .export-btn, .batch-btn,
+    .variant-add, .time-btn, .cat-toggle,
     .preview-btn, .status-select, .row-btn {
       transition: all 0.10s ease;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-blue:hover, .btn-cyan:hover, .mini-btn:hover,
-    .export-btn:hover, .batch-btn:hover, .variant-add:hover, .insert-link-btn:hover,
+    .btn-blue:hover, .btn-cyan:hover,
+    .export-btn:hover, .batch-btn:hover, .variant-add:hover,
     .time-btn:hover, .cat-toggle:hover,
     .preview-btn:hover, .row-btn:hover {
       transform: scale(0.96);
       opacity: 0.9;
     }
-    .btn-blue:active, .btn-cyan:active, .mini-btn:active,
-    .export-btn:active, .batch-btn:active, .variant-add:active, .insert-link-btn:active,
+    .btn-blue:active, .btn-cyan:active,
+    .export-btn:active, .batch-btn:active, .variant-add:active,
     .time-btn:active, .cat-toggle:active,
     .preview-btn:active, .row-btn:active {
       transform: scale(0.92);
@@ -1046,8 +1055,6 @@
     .ann-list { overflow-x: hidden; }
     .ann-item { overflow: hidden; }
     .cat-row .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
-    /* 退出按钮完整复用 row-btn 代码，颜色采用删除键红色线条 */
-    .mini-btn { border: 1px solid #ffc8c8 !important; background: #fff !important; color: var(--red) !important; padding: 6px 12px !important; height: auto !important; border-radius: 6px !important; font-size: 13px !important; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .cat-row .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .ann-item .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: #555; }
     .ann-item .select-picker .cpd-arrow { width: 14px; height: 14px; }
@@ -1067,14 +1074,14 @@
     .topbar-brand { flex: 0 0 auto !important; min-width: 0; gap: 12px !important; }
     .topbar-brand span { display: inline !important; }
     @media (max-width: 600px) { .topbar-brand span { letter-spacing: 1px !important; } }
-    /* 资源管理筛选行残留的旧“全选”已移至“新增资源”右侧，隐藏残留 */
+    /* 手机端筛选行收纳：筛选标签行隐藏（全选在“新增资源”右侧另有入口） */
     #panel-products .tb-row2 label { display: none !important; }
     /* 手机端网格卡片：操作按钮（状态/编辑/复制/删除）完整可见，不被裁剪或换行竖排 */
     @media (max-width: 600px) {
       #productList.card-view .product-row .select-picker { margin: 2px 8px 6px; width: auto; max-width: calc(100% - 16px); flex-shrink: 0; }
       #productList.card-view .product-row .select-picker .cat-picker-display { white-space: nowrap; }
       #productList.card-view .product-row .p-ops { padding: 0 8px 10px; gap: 6px; }
-      #productList.card-view .product-row .p-ops .row-btn { white-space: nowrap; }
+      #productList.card-view .product-row .p-ops .row-btn { white-space: nowrap; min-width: 0; }
       #productList.card-view .product-row .info { padding: 8px 8px 4px; }
       #productList.card-view .product-row .thumb { aspect-ratio: 4/3; }
     }

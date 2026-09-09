@@ -4,12 +4,15 @@
  * 带一年 immutable 缓存头 + Cloudflare 边缘缓存（caches.default），访客基本不重复回源。
  * KV 免费层读额度 10 万次/天，配合边缘缓存对个人站绰绰有余。
  */
-const KEY_RE = /^images\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|jpeg|webp|gif)$/;
+const KEY_RE = /^(?:images|videos)\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|jpeg|webp|gif|mp4|webm|mov)$/;
 
 function guessType(key) {
   if (key.endsWith('.png')) return 'image/png';
   if (key.endsWith('.webp')) return 'image/webp';
   if (key.endsWith('.gif')) return 'image/gif';
+  if (key.endsWith('.mp4')) return 'video/mp4';
+  if (key.endsWith('.webm')) return 'video/webm';
+  if (key.endsWith('.mov')) return 'video/quicktime';
   return 'image/jpeg';
 }
 

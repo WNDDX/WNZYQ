@@ -63,7 +63,6 @@
     var catModalTitle = document.getElementById('catModalTitle');
     var catName = document.getElementById('catName');
     var catSort = document.getElementById('catSort');
-    /* catParent <select> 已被级联选择器（catParentPicker）取代，原变量为 null 占位，已移除 */
     var catParentWrap = document.getElementById('catParentWrap');
     var catHidden = document.getElementById('catHidden');
     var catOk = document.getElementById('catOk');
@@ -105,15 +104,45 @@
     var inputCancel = document.getElementById('inputCancel');
     var inputCallback = null;
 
-    function showInput(title, tip, placeholder, callback, defaultValue) {
+    function showInput(title, tip, placeholder, callback, defaultValue, uploadKind) {
       inputTitle.textContent = title || '请输入';
       inputTip.innerHTML = tip || '';
       inputValue.placeholder = placeholder || '请输入...';
       inputValue.value = defaultValue || '';
       inputCallback = callback;
+      // R36：媒体插入统一弹窗——uploadKind('image'/'video') 时显示输入框右侧的本地上传按钮，
+      // 网络地址与本地上传共用这一个输入框；弹窗关闭后按钮随 CSS 隐藏（#inputMask:not(.open)）
+      if (uploadKind) {
+        inputRow.classList.add('has-upload');
+        inputUploadBtn.textContent = uploadKind === 'video' ? '上传本地视频' : '上传本地图片';
+        inputUploadBtn.dataset.kind = uploadKind;
+      } else {
+        inputRow.classList.remove('has-upload');
+      }
       inputMask.classList.add('open');
       setTimeout(function () { inputValue.focus(); }, 100);
     }
+
+    // R36：本地上传按钮——选文件 → 上传 → 链接填进输入框 → 自动确定插入
+    inputUploadBtn.addEventListener('click', function () {
+      var kind = inputUploadBtn.dataset.kind;
+      var inp = document.createElement('input');
+      inp.type = 'file';
+      if (kind === 'video') inp.accept = 'video/mp4,video/webm,video/quicktime';
+      else inp.accept = 'image/png,image/jpeg,image/webp,image/gif';
+      inp.addEventListener('change', function () {
+        var f = inp.files && inp.files[0];
+        if (!f) return;
+        var done = function (url, note) {
+          inputValue.value = url;
+          if (note) toast(note, 'info');
+          inputOk.click(); // 上传完成自动确定（等于手填链接后点确定）
+        };
+        if (kind === 'video') uploadVideoToBucket(f, done);
+        else uploadToBucket(f, done);
+      });
+      inp.click();
+    });
 
     inputOk.addEventListener('click', function () {
       var val = inputValue.value;
@@ -156,7 +185,7 @@
       variants: [],          // 当前编辑资源的类型列表
       editingVariantId: null,
       catEditingId: null,
-      statsDays: 7,          // 统计时间筛选天数（默认7天，最大可查30天）
+      statsDays: 1,          // R33：统计默认选 1 天档（用户要求）；最大可查30天
       catExpanded: {}, prodSelected: {}, catSelected: {},       // 分类展开/收起状态 + 资源/分类勾选（切换标签后保留）
     };
 
@@ -451,6 +480,8 @@
 
     // ---------- Tab 切换 ----------
     document.querySelectorAll('.tab').forEach(function (tab) {
+      // R36：跳过没绑 data-tab 的按钮（防止误挂 .tab 类的按钮把 switchTab(undefined) 打成全空内容）
+      if (!tab.dataset || !tab.dataset.tab) return;
       tab.addEventListener('click', function () { switchTab(tab.dataset.tab); });
     });
 
@@ -589,7 +620,6 @@
           });
       ensureCat.then(function () {
         // 分类筛选已改为级联选择器（与新增/编辑资源一致）
-        // 分类筛选已改为级联选择器（filterCatPicker），旧 <select> 填充逻辑为死代码，已移除
         initFilterCatPicker();
         return api('admin/products');
       }).then(function (res) {
@@ -1141,12 +1171,8 @@
       updateImgPreview(); // R15：表单填充后强制同步封面预览（程序赋值不触发 input 事件）
     }
 
-    // 自动保存草稿
+    // 草稿保存：点遮罩关闭编辑弹窗时 saveDraft 落盘；自动保存定时器已随旧功能一并清除
     var draftTimer = null;
-    function startAutoSaveDraft() {
-      stopAutoSaveDraft();
-      // draftTimer = setInterval(saveDraft, 10000); // 草稿自动保存已移除（未保存不保留）
-    }
     function stopAutoSaveDraft() {
       if (draftTimer) { clearInterval(draftTimer); draftTimer = null; }
     }
@@ -1652,7 +1678,7 @@
         ed.focus();
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
         (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 0; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; }; _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) {} } })();
-        // 右上角还原按钮已移除（用工具栏"还原"或 Esc 退出）；放大后正文起点跟随工具栏底部
+        // 放大态正文起点跟随工具栏底部（退出放大用工具栏"还原"或 Esc）
         setTimeout(function(){ var _le=document.querySelector('.rte-editor.rte-large'); if(_le){ var _tb2=_le.previousElementSibling; if(_tb2&&_tb2.classList&&_tb2.classList.contains('rte-toolbar')){ var _b2=_tb2.getBoundingClientRect().bottom+0; _le.style.top=_b2+'px'; _le.style.height='calc(100vh - '+(_b2+12)+'px)'; } } }, 80);
       }
     });
@@ -1813,7 +1839,22 @@
       img.src = objUrl;
     }
 
-    // 封面图「⬆ 上传图片」按钮
+    // R36：本地视频上传（与图片同一套自有存储；KV 单文件 25MB / R2 100MB，上限由后端校验）
+    function uploadVideoToBucket(file, cb) {
+      if (!file) return;
+      var fd = new FormData();
+      fd.append('file', file, file.name || 'video.mp4');
+      toast('正在上传视频，大文件可能要等一会儿...', 'info');
+      fetch('/api/admin/upload-video', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res && res.ok && res.url) cb(res.url, res.note);
+          else toast((res && (res.msg || res.error)) || '上传失败', 'error');
+        })
+        .catch(function () { toast('上传失败，请稍后重试', 'error'); });
+    }
+
+    // 封面图「上传本地图片」按钮
     (function () {
       var btn = document.getElementById('fImgUpload');
       if (!btn) return;
@@ -1832,45 +1873,31 @@
       });
     })();
 
-    // 富文本「⬆ 上传图」按钮（事件委托：data-rte-upload 指向编辑器 id，覆盖详情/公告/类型插图四处）
-    document.addEventListener('click', function (ev) {
-      var t = ev.target;
-      var btn = t && t.closest ? t.closest('[data-rte-upload]') : null;
-      if (!btn) return;
-      var editorId = btn.getAttribute('data-rte-upload');
-      var inp = document.createElement('input');
-      inp.type = 'file';
-      inp.accept = 'image/png,image/jpeg,image/webp,image/gif';
-      inp.addEventListener('change', function () {
-        uploadToBucket(inp.files && inp.files[0], function (url) {
-          var editor = document.getElementById(editorId);
-          if (editor) {
-            rteInsert(editor, '<img src="' + url.replace(/"/g, '&quot;') + '" alt="" style="max-width:100%;border-radius:8px;" />');
-            toast('图片已上传并插入', 'success');
-          }
-        });
-      });
-      inp.click();
-    });
+    // R36：插入图片/视频统一弹窗（网络地址 + 右侧本地上传按钮共用一个输入框）
+    function showMediaInput(kind, onInsert) {
+      var isVideo = kind === 'video';
+      showInput(isVideo ? '插入视频' : '插入图片',
+        isVideo ? '粘贴网络视频地址，或点右侧按钮从电脑上传本地视频' : '粘贴网络图片地址，或点右侧按钮从电脑上传本地图片',
+        isVideo ? 'https://.../xx.mp4' : 'https://...',
+        onInsert, '', kind);
+    }
 
-    // 插入图片
     document.getElementById('detailRteImg').addEventListener('click', function () {
-      showInput('插入图片', '请输入图片 URL', 'https://...', function (url) {
+      showMediaInput('image', function (url) {
         if (!url) return;
         url = url.trim();
         var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="" style="max-width:100%;border-radius:8px;" />';
-        rteInsert(__rte.editor, html);
+        rteInsert(__rte.editor || document.getElementById('fDetail'), html);
         toast('图片已插入', 'success');
       });
     });
 
-    // 插入视频
     document.getElementById('detailRteVideo').addEventListener('click', function () {
-      showInput('插入视频', '请输入视频 URL（mp4）', 'https://.../xx.mp4', function (url) {
+      showMediaInput('video', function (url) {
         if (!url) return;
         url = url.trim();
         var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
-        rteInsert(__rte.editor, html);
+        rteInsert(__rte.editor || document.getElementById('fDetail'), html);
         toast('视频已插入', 'success');
       });
     });
@@ -1927,7 +1954,7 @@
         txt.addEventListener('click', function (e) { e.stopPropagation(); });
         txt.addEventListener('input', function () { a.title = this.value; });
         txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '(未命名公告)'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
-        // 公告隐藏状态由下方状态下拉框控制（不再使用徽章标识）
+        // 公告隐藏状态由下方状态下拉框直接切换
         var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;min-width:56px;text-align:left;flex-shrink:0;'; sortEl.textContent = '排序:' + (idx + 1);
         var annStatusSel = document.createElement('select'); annStatusSel.className = 'status-select ' + (a.hidden ? 'status-hidden' : 'status-online'); annStatusSel.title = '直接切换公告显示/隐藏'; [['show', '显示'], ['hidden', '隐藏']].forEach(function (op) { var o = document.createElement('option'); o.value = op[0]; o.textContent = op[1]; if ((a.hidden ? 'hidden' : 'show') === op[0]) o.selected = true; annStatusSel.appendChild(o); });
         annStatusSel.addEventListener('change', function () { a.hidden = this.value === 'hidden' ? 1 : 0; }); annStatusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (annStatusSel.parentNode && typeof makeSelectPicker === 'function') { var _spa = makeSelectPicker(annStatusSel); if (_spa) { _spa.el.style.width = 'auto'; _spa.el.style.flexShrink = '0'; var _da = _spa.el.querySelector('.cat-picker-display'); if (_da) _da.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:0;width:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;'; var _aa = _spa.el.querySelector('.cpd-arrow'); if (_aa) _aa.style.cssText = 'width:14px;height:14px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-90deg);transition:transform .3s ease;color:#1688FF;'; } } }, 0);
@@ -2118,22 +2145,22 @@
 
     // 插入图片
     document.getElementById('announcementRteImg').addEventListener('click', function () {
-      showInput('插入图片', '请输入图片 URL', 'https://...', function (url) {
+      showMediaInput('image', function (url) {
         if (!url) return;
         url = url.trim();
         var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="图片" style="max-width:100%;border-radius:8px;" />';
-        rteInsert(__rte.editor, html);
+        rteInsert(__rte.editor || document.getElementById('setAnnouncement'), html);
         toast('图片已插入', 'success');
       });
     });
 
     // 插入视频
     document.getElementById('announcementRteVideo').addEventListener('click', function () {
-      showInput('插入视频', '请输入视频 URL', 'https://.../xx.mp4', function (url) {
+      showMediaInput('video', function (url) {
         if (!url) return;
         url = url.trim();
         var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
-        rteInsert(__rte.editor, html);
+        rteInsert(__rte.editor || document.getElementById('setAnnouncement'), html);
         toast('视频已插入', 'success');
       });
     });
@@ -2339,26 +2366,26 @@
           });
         });
       }
-      // 插入图片
+      // 插入图片（R36：网络地址 + 本地上传共用弹窗）
       if (imgBtnId) {
         document.getElementById(imgBtnId).addEventListener('click', function () {
-          showInput('插入图片', '请输入图片 URL', 'https://...', function (url) {
+          showMediaInput('image', function (url) {
             if (!url) return;
             url = url.trim();
             var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="图片" style="max-width:100%;border-radius:8px;" />';
-            rteInsert(__rte.editor, html);
+            rteInsert(__rte.editor || editor, html);
             toast('图片已插入', 'success');
           });
         });
       }
-      // 插入视频
+      // 插入视频（R36：网络地址 + 本地上传共用弹窗）
       if (videoBtnId) {
         document.getElementById(videoBtnId).addEventListener('click', function () {
-          showInput('插入视频', '请输入视频 URL', 'https://.../xx.mp4', function (url) {
+          showMediaInput('video', function (url) {
             if (!url) return;
             url = url.trim();
             var html = '<video src="' + url.replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
-            rteInsert(__rte.editor, html);
+            rteInsert(__rte.editor || editor, html);
             toast('视频已插入', 'success');
           });
         });
@@ -2587,6 +2614,12 @@
 
     // ---------- 数据统计 ----------
     function loadStats(startDate, endDate, force) {
+      // R33：默认档为 1 天时，无参调用（首次打开统计页/刷新）自动按"今天"发同口径请求，
+      // 与点 1 天按钮行为完全一致（概览/明细/趋势全部单日+按小时），避免默认口径不一致
+      if (!startDate && !endDate && state.statsDays === 1) {
+        var _d1 = new Date().toISOString().slice(0, 10);
+        startDate = _d1; endDate = _d1;
+      }
       if (!force && !startDate && !endDate && state.statsTrendAll && state.statsTrendAll.length) { applyStatsDays(); return; }
       var url = 'admin/stats';
       var params = [];
@@ -3604,12 +3637,7 @@ refreshCatCnts();
       document.documentElement.setAttribute('data-theme', 'dark');
     }
 
-    // ---------- PWA Service Worker ----------
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').then(function(reg){ try{reg.update();}catch(e){} var _f=false; navigator.serviceWorker.addEventListener('controllerchange',function(){ if(_f)return; _f=true; window.location.reload(); }); }).catch(function () {});
-      });
-    }
+    // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
 
     // ---------- 分类数据本地缓存 ----------
     var CAT_CACHE_KEY = 'wnzyq_admin_cats';

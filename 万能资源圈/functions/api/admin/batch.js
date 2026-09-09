@@ -29,14 +29,24 @@ export async function onRequestPost(context) {
 
   if (action === 'delete') {
     // R31-#7：批量删除前先取出图片字段，删除后联动清理图仓里的自有图片
+    // R36：清理范围扩到详情视频 + 类型富文本字段
     try {
-      const { results: imgRows } = await env.DB.prepare(`SELECT img, detail, detail_images FROM products WHERE id IN (${placeholders})`).bind(...ids).all();
-      if (imgRows && imgRows.length) {
-        const sources = [];
-        for (const r of imgRows) sources.push(r.img, r.detail, r.detail_images);
+      const { results: imgRows } = await env.DB.prepare(`SELECT img, detail, detail_images, detail_videos FROM products WHERE id IN (${placeholders})`).bind(...ids).all();
+      const { results: vRows } = await env.DB.prepare(`SELECT "desc", img, video, resource_content FROM product_variants WHERE product_id IN (${placeholders})`).bind(...ids).all();
+      const sources = [];
+      for (const r of (imgRows || [])) sources.push(r.img, r.detail, r.detail_images, r.detail_videos);
+      for (const v of (vRows || [])) sources.push(v.desc, v.img, v.video, v.resource_content);
+      if (sources.length) {
+        // 先删库再清图（deleteBucketImages 里的引用保护按"删完后库里还有谁在用"判断）
+        await Promise.all([
+          env.DB.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).bind(...ids).run(),
+          env.DB.prepare(`DELETE FROM product_variants WHERE product_id IN (${placeholders})`).bind(...ids).run(),
+          env.DB.prepare(`DELETE FROM stats WHERE product_id IN (${placeholders})`).bind(...ids).run(),
+        ]);
         await deleteBucketImages(env, sources);
+        return json({ ok: true, count: ids.length });
       }
-    } catch (e) { console.error('批量删除取图失败(不影响删除):', e); }
+    } catch (e) { console.error('批量删除取媒体字段失败(不影响删除):', e); }
     // 性能：三条删除并行执行（原先串行三次 D1 往返），批量删除耗时约降为 1/3
     await Promise.all([
       env.DB.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).bind(...ids).run(),

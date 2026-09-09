@@ -51,7 +51,48 @@ export async function onRequestGet(context) {
     ).run();
     results.login_attempts_deleted = r3.meta.changes || 0;
 
-    // 4. 统计当前各表行数（用于监控）
+    // 4. R36：图仓孤儿清理——列出存储里全部自有图片/视频，没有任何资源/类型引用的就删掉
+    //    （编辑时换图、上传后取消保存等都会留下孤儿；删除资源时已即时清理，这里是兜底）
+    //    KV 命名空间 list() 与 R2 list() 返回结构不同，分别兼容；单次最多处理 500 个防超时
+    try {
+      if (env.IMAGE_BUCKET) {
+        const bucket = env.IMAGE_BUCKET;
+        const isKV = typeof bucket.getWithMetadata === 'function';
+        const allKeys = [];
+        for (const prefix of ['images/', 'videos/']) {
+          let cursor = null;
+          for (let page = 0; page < 5; page++) { // 每个前缀最多翻 5 页
+            const res = cursor ? await bucket.list({ prefix, cursor }) : await bucket.list({ prefix });
+            const items = isKV ? (res.keys || []).map((k) => k.name) : (res.objects || []).map((o) => o.key);
+            allKeys.push(...items);
+            const done = isKV ? res.list_complete : !res.truncated;
+            if (done || !res.cursor) break;
+            cursor = res.cursor;
+          }
+        }
+        if (allKeys.length) {
+          const mediaRe = /^(?:images|videos)\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:png|jpg|jpeg|webp|gif|mp4|webm|mov)$/;
+          const valid = allKeys.filter((k) => mediaRe.test(k)).slice(0, 500);
+          const orphans = [];
+          for (const key of valid) {
+            const like = '%' + key + '%';
+            const usedBy = await env.DB.prepare(
+              `SELECT (SELECT COUNT(*) FROM products WHERE img LIKE ? OR detail LIKE ? OR detail_images LIKE ? OR detail_videos LIKE ?)
+                    + (SELECT COUNT(*) FROM product_variants WHERE "desc" LIKE ? OR img LIKE ? OR video LIKE ? OR resource_content LIKE ?) AS n`
+            ).bind(like, like, like, like, like, like, like, like).first();
+            if (!usedBy || usedBy.n === 0) orphans.push(key);
+          }
+          if (orphans.length) await Promise.all(orphans.map((k) => env.IMAGE_BUCKET.delete(k)));
+          results.orphan_media_scanned = valid.length;
+          results.orphan_media_deleted = orphans.length;
+        }
+      }
+    } catch (e) {
+      console.error('R36 图仓孤儿清理失败(不影响其它清理):', e);
+      results.orphan_media_error = e.message;
+    }
+
+    // 5. 统计当前各表行数（用于监控）
     const counts = {};
     for (const table of ['products', 'categories', 'stats', 'sessions', 'login_attempts']) {
       try {

@@ -4,6 +4,23 @@
  */
 window.__uiCommonLoaded = true;
 
+/* ===== R34 全站统一 PWA Service Worker 注册（一处定义四页生效；原导航页/资源页各自的注册已收编于此） =====
+ * 注册后每次打开都主动检查更新；新版 SW 接管（controllerchange）时自动刷新一次页面——
+ * 配合 sw.js 的导航网络竞速策略，部署新版后访客刷新一次即拿到全新页面，不再先闪旧版。 */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').then(function (reg) {
+      try { reg.update(); } catch (e) {}
+      var _swReloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (_swReloaded) return;
+        _swReloaded = true;
+        window.location.reload();
+      });
+    }).catch(function () {});
+  });
+}
+
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页，一处定义全站生效） =====
  * window.openContactModal(url, qrImg, tip, btnText)
  *  - url:     客服跳转链接（优先类型→资源→全局默认，由各页面传入）
@@ -229,7 +246,7 @@ window.__uiCommonLoaded = true;
   var __touchLocked = false;
   function __blockTouch(e) {
     if (!e.target || !e.target.closest) return;
-    var allow = e.target.closest('.modal-box,.kf-box,.share-box,.modal-inner,.lightbox-box,.lb-box,.rte-panel,.ann-box');
+    var allow = e.target.closest('.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.ann-box');
     if (!allow) e.preventDefault();
   }
   window.lockBodyScroll = function (lock) {
@@ -267,7 +284,7 @@ window.__uiCommonLoaded = true;
   // window.buildUniPager(container, { page, totalPages, total, unit, onPage })：
   //   page=当前页(1起) totalPages=总页数 total=总条数(可选) unit=单位文案(默认"条") onPage=点上一页/下一页/跳页后的回调
   // 交互要点（对应本轮反馈）：
-  //   1) 结构：上一页 | 页码信息 N / M（共X条）| 跳页输入+跳转键 | 下一页
+  //   1) 结构（R35 两组，换行按组折行不拆散）：[上一页 | 页码信息 N / M（共X条）| 下一页] 一组，[跳页输入+跳转键] 一组
   //   2) 跳页输入框 clamp 到 [1, totalPages]；回车 = 点跳转
   //   3) 点击即时反馈：按钮无过渡延迟、渲染由调用方同步完成，不做平滑滚动（平滑滚动正是统计翻页"屏幕抖一下"的根因）
   //   4) 只有一页时组件整体隐藏（无翻页必要不占位）
@@ -301,7 +318,12 @@ window.__uiCommonLoaded = true;
     next.type = 'button'; next.className = 'pg-btn'; next.textContent = '下一页';
 
     jump.appendChild(input); jump.appendChild(goBtn);
-    container.appendChild(prev); container.appendChild(info); container.appendChild(jump); container.appendChild(next);
+    // R35：prev+info+next 包成一组（.pg-main），jump 自成一组——容器 flex-wrap 换行时按组整体折行，
+    // 不会出现"上一页在上一行末尾、下一页被拆到下一行"的拆组错乱
+    var main = document.createElement('span');
+    main.className = 'pg-main';
+    main.appendChild(prev); main.appendChild(info); main.appendChild(next);
+    container.appendChild(main); container.appendChild(jump);
 
     function render() {
       prev.disabled = page <= 1;

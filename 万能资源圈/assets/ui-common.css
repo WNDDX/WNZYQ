@@ -45,7 +45,7 @@
 @keyframes kfQrIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 .kf-qr img.kf-qr-in { animation: kfQrIn 0.32s ease; }
 /* 二维码统一出场动画（导航页公众号/群聊二维码与客服二维码同一套动效，全站复用） */
-#modalImg.kf-qr-in, .modal-qr-img.kf-qr-in { animation: kfQrIn 0.32s ease; }
+#modalImg.kf-qr-in { animation: kfQrIn 0.32s ease; }
 .kf-tip { font-size: 16px; color: var(--gray-text); margin-bottom: 16px; letter-spacing: 0.9px; word-break: break-word; }
 .kf-jump {
   width: 80%; margin: 0 auto 14px; border: none; border-radius: var(--radius); padding: 11px 32px;
@@ -85,8 +85,7 @@
 
 /* ===== 全站统一关闭 ×：32px 圆形淡灰底 #666，hover 变红（弹窗/客服/放大预览通用） ===== */
 .modal-close-x,
-.kf-x,
-.lb-close {
+.kf-x {
   position: absolute; top: 12px; right: 12px; z-index: 10;
   width: 32px !important; height: 32px !important;
   border-radius: 50% !important; border: none !important;
@@ -97,13 +96,11 @@
   transition: all 0.10s ease !important;
 }
 .modal-close-x:hover,
-.kf-x:hover,
-.lb-close:hover {
+.kf-x:hover {
   background: var(--red) !important; color: #fff !important; transform: scale(0.97); opacity: 0.9;
 }
 .modal-close-x:active,
-.kf-x:active,
-.lb-close:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+.kf-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 
 /* ===== 全站统一图片/视频放大查看器（lightbox） ===== */
 .lightbox {
@@ -133,7 +130,7 @@
 .share-ok:hover { transform: scale(0.97); opacity: 0.9; }
 #rteExitZoom { z-index: 6001 !important; }
 .kf-mask, #kfFallback { z-index: 10001 !important; }
-.lightbox, .lb { z-index: 100000 !important; }
+.lightbox { z-index: 100000 !important; }
 .toast { z-index: 100001 !important; }
 
 /* ===== 全站弹窗底部按键区统一：一行 N 键 N 等分、统一间距、等高、文字居中（所有弹窗复用） ===== */
@@ -288,11 +285,14 @@
 
 
 /* ===== R14 全站统一翻页组件（.uni-pager）：复用数据统计翻页样式（胶囊按钮），两页三处共用 =====
-   结构：上一页 | 页码信息（N / M（共X条））| 跳页输入+跳转键 | 下一页 */
+   结构（R35 两组，换行按组折行不拆散）：
+   [上一页 | 页码信息（N / M（共X条））| 下一页] 一组  +  [跳页输入+跳转键] 一组 */
 .uni-pager {
   display: flex; justify-content: center; align-items: center;
   gap: 8px; padding: 14px 4px 2px; flex-wrap: wrap;
 }
+/* R35：翻页主组（上一页/页码/下一页）永不拆散——窄屏整体换行 */
+.uni-pager .pg-main { display: inline-flex; align-items: center; gap: 8px; }
 .uni-pager button.pg-btn {
   padding: 8px 16px; border: 1px solid var(--blue2, #90CAF9); background: #fff;
   color: var(--blue1, #1565c0); border-radius: 20px; cursor: pointer; font-size: 13px;

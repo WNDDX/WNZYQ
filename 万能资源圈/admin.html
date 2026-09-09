@@ -51,7 +51,7 @@
           <button class="tab" data-tab="settings">平台设置</button>
         </div>
         <div class="topbar-right">
-          <button class="tab" id="logoutBtn">退出</button>
+          <button class="logout-btn" id="logoutBtn">退出</button>
         </div>
       </div>
     </header>
@@ -108,8 +108,8 @@
             <h3 style="margin:0;">访问趋势</h3>
             <div style="display:flex;align-items:center;justify-content:flex-end;flex:1;gap:8px;flex-wrap:wrap;">
               <div class="time-filter">
-                <button class="time-btn" data-days="1">1天</button>
-                <button class="time-btn active" data-days="7">7天</button>
+                <button class="time-btn active" data-days="1">1天</button>
+                <button class="time-btn" data-days="7">7天</button>
                 <button class="time-btn" data-days="30">30天</button>
               </div>
               <div style="display:flex;align-items:center;gap:4px;font-size:13px;color:#666;">
@@ -207,7 +207,7 @@
       <section id="panel-settings" style="display:none">
         <div class="setting-group">
           <h3>图片存储（自有图仓）</h3>
-          <div style="font-size:11px;color:#999;line-height:1.7;">上传图片只需两步（全程免费、不用绑卡）：① Cloudflare 控制台 → 存储和数据库 → KV → 创建命名空间；② Pages 项目「设置 → 函数 → KV 命名空间绑定」添加 IMAGE_BUCKET，保存后重新部署。之后后台所有「⬆ 上传」按钮即可用，图片通过本站地址自动展示，无需填任何链接前缀。</div>
+          <div style="font-size:11px;color:#999;line-height:1.7;">上传图片只需两步（全程免费、不用绑卡）：① Cloudflare 控制台 → 存储和数据库 → KV → 创建命名空间；② Pages 项目「设置 → 函数 → KV 命名空间绑定」添加 IMAGE_BUCKET，保存后重新部署。之后后台所有「上传本地图片 / 上传本地视频」按钮即可用，图片通过本站地址自动展示，无需填任何链接前缀。</div>
           <div class="setting-row">
             <label>图仓直连地址（可选，仅 R2 桶用户填写：公开访问前缀，如 https://pub-xxxxxxxx.r2.dev；KV 用户留空即可）</label>
             <input class="input" id="setR2Base" placeholder="留空即可（图片自动走本站 /img/ 地址）" />
@@ -249,8 +249,8 @@
               <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="setAnnouncement"><s>S</s></button>
               </span><span class="rte-group">
               <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement">⬅</button>
-              <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement">⬌</button>
-              <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement">➡</button>
+              <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement">⬌</button></button>
+              <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement">➡</button></button>
               </span><span class="rte-group">
               <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="setAnnouncement">• 列表</button>
               <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="setAnnouncement">1. 列表</button>
@@ -284,18 +284,16 @@
                 <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
               </div>
               </span><span class="rte-group">
-              <button type="button" class="rte-btn" id="announcementRteLink">🔗 链接</button>
-              <button type="button" class="rte-btn" id="announcementRteImg">🖼 图片</button>
-              <button type="button" class="rte-btn" data-rte-upload="setAnnouncement" title="从电脑选图，自动上传到自有图仓并插入">⬆ 上传图</button>
-              <button type="button" class="rte-btn" id="announcementRteVideo">🎬 视频</button>
+              <button type="button" class="rte-btn" id="announcementRteLink">🔗 链接</button></button>
+              <button type="button" class="rte-btn" id="announcementRteImg">🖼 图片</button></button>
+              <button type="button" class="rte-btn" id="announcementRteVideo">🎬 视频</button></button>
               </span><span class="rte-group">
-              <button type="button" class="rte-btn" id="announcementFormatBrush">🖌 格式刷</button>
-              <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button>
-              <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button></span>
+              <button type="button" class="rte-btn" id="announcementFormatBrush">🖌 格式刷</button></button>
+              <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button></button>
+              <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button></button></span>
             </div>
             <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></div>
           </div>
-          <!-- 保存设置按钮已移除：客服链接、平台公告均在各自弹窗内保存 -->
         </div>
         <div class="setting-group">
           <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">修改密码</label>
@@ -376,7 +374,7 @@
       <div class="form">
         <label>标题</label><input id="fTitle" placeholder="资源标题" />
         <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
-        <label>资源封面图</label><div style="display:flex;gap:8px;align-items:stretch;"><input id="fImg" placeholder="图片地址，或点右侧按钮从电脑上传" style="flex:1;min-width:0;" /><button type="button" class="btn-blue" id="fImgUpload" style="white-space:nowrap;width:auto;padding:0 16px;" title="从电脑选图，自动上传到自有图仓并填入链接">⬆ 上传图片</button></div>
+        <label>资源封面图</label><div style="display:flex;gap:8px;align-items:stretch;"><input id="fImg" placeholder="图片地址，或点右侧按钮从电脑上传" style="flex:1;min-width:0;" /><button type="button" class="btn-blue" id="fImgUpload" style="white-space:nowrap;width:auto;padding:0 16px;" title="从电脑选图，自动上传到自有图仓并填入链接">上传本地图片</button></div>
         <div style="font-size:11px;color:#999;margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" />
         <label>简介</label><input id="fDesc" placeholder="列表卡片上显示的一句话简介" />
@@ -407,8 +405,8 @@
           <button type="button" class="rte-btn" data-cmd="strikeThrough" title="删除线"><s>S</s></button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="justifyLeft" title="左对齐">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" title="居中">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" title="右对齐">➡</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" title="居中">⬌</button></button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" title="右对齐">➡</button></button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="有序列表">1. 列表</button>
@@ -442,14 +440,13 @@
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接">🔗 链接</button>
-          <button type="button" class="rte-btn" id="detailRteImg" title="插入图片">🖼 图片</button>
-          <button type="button" class="rte-btn" data-rte-upload="fDetail" title="从电脑选图，自动上传到自有图仓并插入">⬆ 上传图</button>
-          <button type="button" class="rte-btn" id="detailRteVideo" title="插入视频">🎬 视频</button>
+          <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接">🔗 链接</button></button>
+          <button type="button" class="rte-btn" id="detailRteImg" title="插入网络图片或从电脑上传">🖼 图片</button></button>
+          <button type="button" class="rte-btn" id="detailRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷">🖌 格式刷</button>
-          <button type="button" class="rte-btn" data-cmd="removeFormat" title="清除格式">✕ 格式</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶ 放大</button></span>
+          <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷">🖌 格式刷</button></button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" title="清除格式">✕ 格式</button></button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶ 放大</button></button></span>
         </div>
         <div class="rte-editor" id="fDetail" contenteditable="true" placeholder="支持文字、图片、视频混排，像文章一样展示"></div>
 
@@ -531,7 +528,7 @@
       <button class="modal-close-x" data-close="inputMask">×</button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
       <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
-      <input class="input" id="inputValue" placeholder="请输入..." style="margin-bottom:16px;" />
+      <div class="input-row" id="inputRow"><input class="input" id="inputValue" placeholder="请输入..." /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="inputOk">确定</button>
         <button class="modal-close" id="inputCancel">关闭</button>
@@ -573,8 +570,8 @@
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vDescEditor"><s>S</s></button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor">➡</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor">⬌</button></button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor">➡</button></button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vDescEditor">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vDescEditor">1. 列表</button>
@@ -608,14 +605,13 @@
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vDescRteLink">🔗 链接</button>
-          <button type="button" class="rte-btn" id="vDescRteImg">🖼 图片</button>
-          <button type="button" class="rte-btn" data-rte-upload="vDescEditor" title="从电脑选图，自动上传到自有图仓并插入">⬆ 上传图</button>
-          <button type="button" class="rte-btn" id="vDescRteVideo">🎬 视频</button>
+          <button type="button" class="rte-btn" id="vDescRteLink">🔗 链接</button></button>
+          <button type="button" class="rte-btn" id="vDescRteImg">🖼 图片</button></button>
+          <button type="button" class="rte-btn" id="vDescRteVideo">🎬 视频</button></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vDescFormatBrush">🖌 格式刷</button>
-          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor">✕ 格式</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button></span>
+          <button type="button" class="rte-btn" id="vDescFormatBrush">🖌 格式刷</button></button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor">✕ 格式</button></button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button></button></span>
         </div>
         <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;" placeholder="该类型的说明，支持文字、图片、视频、超链接"></div>
         <label class="checkbox-row"><input type="checkbox" id="vHidden" /> 隐藏该类型（资源页不显示，仅管理页可见）</label>
@@ -653,8 +649,8 @@
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vContentEditor"><s>S</s></button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor">➡</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor">⬌</button></button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor">➡</button></button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vContentEditor">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vContentEditor">1. 列表</button>
@@ -688,14 +684,13 @@
             <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
           </div>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vContentRteLink">🔗 链接</button>
-          <button type="button" class="rte-btn" id="vContentRteImg">🖼 图片</button>
-          <button type="button" class="rte-btn" data-rte-upload="vContentEditor" title="从电脑选图，自动上传到自有图仓并插入">⬆ 上传图</button>
-          <button type="button" class="rte-btn" id="vContentRteVideo">🎬 视频</button>
+          <button type="button" class="rte-btn" id="vContentRteLink">🔗 链接</button></button>
+          <button type="button" class="rte-btn" id="vContentRteImg">🖼 图片</button></button>
+          <button type="button" class="rte-btn" id="vContentRteVideo">🎬 视频</button></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vContentFormatBrush">🖌 格式刷</button>
-          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor">✕ 格式</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶ 放大</button></span>
+          <button type="button" class="rte-btn" id="vContentFormatBrush">🖌 格式刷</button></button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor">✕ 格式</button></button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶ 放大</button></button></span>
         </div>
         <div class="rte-editor" id="vContentEditor" contenteditable="true" style="min-height:80px;max-height:200px;border-radius:0 0 8px 8px;" placeholder="输入正确资源码后显示的内容，支持文字、图片、视频、超链接"></div>
       </div>

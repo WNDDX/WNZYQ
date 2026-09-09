@@ -81,7 +81,7 @@ body{
 }
 .logo-wrap{
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 32px; /* R33：与标题下方间距对称（原20/44不均，用户要求上下居中） */
     position: relative;
 }
 .logo-box{
@@ -117,7 +117,7 @@ body{
     font-size: 38px;
     font-weight: 600;
     text-align: center;
-    margin-bottom: 44px;
+    margin-bottom: 32px; /* R33：与标题上方间距对称（原44/20不均） */
     opacity: 0.95;
     letter-spacing: 2.4px;
     /* R20：抵消字距尾随空隙使视觉居中（与错误页大字同款修法） */
@@ -130,8 +130,8 @@ body{
     margin-bottom: 18px;
     display: flex;
     align-items: center;
-    justify-content: center; /* R20：内容（图标+文字）上下左右居中（用户要求全系统按键内容居中） */
-    gap: 20px;
+    justify-content: center;
+    gap: 14px; /* R35：回退组合居中——图标+文字并排成组、整组居中（用户定稿：恢复几轮前的居中方式） */
     border: none;
     font-size: 26px;
     color: #ffffff;
@@ -169,7 +169,7 @@ body{
 .icon-svg{
     width: 36px;
     height: 36px;
-    flex-shrink: 0;
+    flex-shrink: 0; /* R35：恢复 flex 布局成员（图标在文字左侧，随组合一起居中） */
 }
 .modal-mask{
     position: fixed;
@@ -268,8 +268,9 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 .modal-mask > *, .share-mask > *, .lightbox > * { margin: auto !important; float: none !important; }
 @media (max-width: 600px) {
   .logo-box { width: 100px; height: 100px; }
+  .logo-wrap { margin-bottom: 28px; } /* R33：移动端同步上下间距对称 */
   .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.6px; padding-left: 1.6px; }
-  .btn-item { padding: 15px 18px; font-size: 19px; gap: 14px; margin-bottom: 12px; border-radius: 10px; }
+  .btn-item { padding: 15px 18px; font-size: 19px; margin-bottom: 12px; border-radius: 10px; gap: 10px; }
   .icon-svg { width: 28px; height: 28px; }
   .qrcode-wrap { width: 200px; height: 200px; }
   .modal-box { padding: 20px 16px; }
@@ -470,12 +471,7 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
     document.documentElement.setAttribute('data-theme', 'dark');
 }
 
-// PWA Service Worker 注册
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js').then(function(reg){ try{reg.update();}catch(e){} var _f=false; navigator.serviceWorker.addEventListener('controllerchange',function(){ if(_f)return; _f=true; window.location.reload(); }); }).catch(function(){});
-    });
-}
+// PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34）
 
 //页面按钮事件
 function openResource() {window.location.href = CONFIG.resourceUrl;}

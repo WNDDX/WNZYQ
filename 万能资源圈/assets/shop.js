@@ -1433,7 +1433,7 @@
           });
           productGrid.appendChild(frag);
           // 更新分页控件的当前页
-          var pagerInfo = document.querySelector('#pager span');
+          var pagerInfo = document.querySelector('#pager .pg-info'); // R35：pg-main 组盒后不能再取第一个 span（会命中组盒、textContent 清空整组按钮），改精确取 .pg-info
           if (pagerInfo) pagerInfo.textContent = currentPage + ' / ' + totalPages;
           setTimeout(function () { window.__loadingNextPage = false; }, 300);
         }
@@ -1499,12 +1499,7 @@
       document.documentElement.setAttribute('data-theme', 'dark');
     }
 
-    // ---------- PWA Service Worker ----------
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').then(function(reg){ try{reg.update();}catch(e){} var _f=false; navigator.serviceWorker.addEventListener('controllerchange',function(){ if(_f)return; _f=true; window.location.reload(); }); }).catch(function () {});
-      });
-    }
+    // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
 
     // ---------- 滚动位置记忆 ----------
     var SCROLL_KEY = 'wnzyq_shop_scroll';

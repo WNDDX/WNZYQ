@@ -127,36 +127,7 @@
       gap: 8px;
       flex-shrink: 0;
     }
-    /* 废弃：.top-btn 旧样式已整体移除（咨询客服/分享已复用 .tab 公共组件），以下为残留无效声明
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      padding: 6px 16px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,0.6);
-      background: #fff;
-      color: var(--blue1);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.10s ease;
-      white-space: nowrap;
-      letter-spacing: 0.5px;
-      line-height: 1;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .top-btn:hover 旧规则已移除（废弃注释内）
-      transform: scale(0.96);
-      opacity: 0.9;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-    }
-    .top-btn:active 旧规则已移除（废弃注释内）
-    */
     /* 顶栏 tab 按钮：直接引用 ui-common.css 全站公共 .tab（与管理页【资源管理/分类管理】同一份样式，零复制） */
-    /* 废弃：.top-btn 覆盖规则已移除（咨询客服/分享已复用 .tab 公共组件） */
-    .top-btn:hover 旧规则已移除（废弃注释内）
-    .top-btn:active 旧规则已移除（废弃注释内）
 
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
@@ -586,12 +557,14 @@
       color: #fff;
     }
     .modal-share-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+    /* R36：封面图完整显示（原先 object-fit:cover 把大图裁得只显示中间一块——"显示不全"）；
+       contain 保证整张图都在框内、不超框，比例不符时两侧留浅蓝底色 */
     .modal-cover {
       width: calc(100% - 32px);
       margin: 16px 16px 0;
       max-height: 320px;
       aspect-ratio: 16 / 9;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
       background: #eef4fb;
       border-radius: 10px;
@@ -656,9 +629,10 @@
       background: #000;
     }
 
-    /* 弹窗内富文本图片/视频自适应（不超模、居中） */
+    /* 弹窗内富文本图片/视频自适应（不超模、居中；R36 加高度上限——竖长图不再把弹窗撑爆） */
     .modal-detail img, .modal-detail video {
       max-width: 100%;
+      max-height: 60vh;
       height: auto;
       display: block;
       margin: 10px auto;
@@ -672,22 +646,6 @@
       background: rgba(0, 0, 0, 0.92); touch-action: none;
     }
     .lightbox.open { display: flex; }
-    .lb-media {
-      max-width: 94vw; max-height: 94vh;
-      object-fit: contain; border-radius: 6px;
-      will-change: transform; cursor: zoom-out;
-    }
-    .lb-close {
-      position: absolute; top: 14px; right: 14px; z-index: 10;
-      width: 40px; height: 40px; border-radius: 50%;
-      border: none; background: #f0f2f5; color: #666;
-      font-size: 22px; line-height: 1; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.12s ease;
-    }
-    .lb-close:hover { transform: scale(1.1); background: #ff4444; color: #fff; }
-    .lb-tip { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.65); font-size: 13px; white-space: nowrap; }
-
     /* 类型切换 */
     .variant-tabs {
       display: flex;
@@ -1081,7 +1039,7 @@
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
       .modal-box { max-width: 100%; max-height: 92vh; border-radius: 12px; }
-      .modal-cover { width: calc(100% - 24px); margin: 12px 12px 0; max-height: 220px; }
+      .modal-cover { width: calc(100% - 24px); margin: 12px 12px 0; max-height: 220px; object-fit: contain; }
       .modal-content { padding: 12px 16px 16px; }
       .modal-title { font-size: 18px; }
       .modal-price { font-size: 20px; }

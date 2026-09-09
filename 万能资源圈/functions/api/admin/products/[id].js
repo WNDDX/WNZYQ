@@ -54,11 +54,16 @@ export async function onRequestDelete(context) {
   if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
 
   // R31-#7：删除资源前先取出图片字段，删除后联动清理图仓里的自有图片（外链图不归我们管，跳过）
-  const row = await env.DB.prepare('SELECT img, detail, detail_images FROM products WHERE id = ?').bind(id).first();
+  // R36：清理范围扩到详情视频 + 类型（desc/img/video/resource_code 之外的富文本字段）
+  const row = await env.DB.prepare('SELECT img, detail, detail_images, detail_videos FROM products WHERE id = ?').bind(id).first();
+  const vrows = await env.DB.prepare('SELECT "desc", img, video, resource_content FROM product_variants WHERE product_id = ?').bind(id).all();
   await env.DB.prepare('DELETE FROM products WHERE id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM product_variants WHERE product_id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM stats WHERE product_id = ?').bind(id).run();
-  if (row) await deleteBucketImages(env, [row.img, row.detail, row.detail_images]);
+  const sources = [];
+  if (row) sources.push(row.img, row.detail, row.detail_images, row.detail_videos);
+  (vrows.results || []).forEach(function (v) { sources.push(v.desc, v.img, v.video, v.resource_content); });
+  if (sources.length) await deleteBucketImages(env, sources);
 
   return json({ ok: true });
 }
