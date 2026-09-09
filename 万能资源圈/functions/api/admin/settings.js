@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GET  /api/admin/settings   → 获取全部平台设置（需登录）
  * PUT  /api/admin/settings   → 批量更新平台设置（需登录）
  * body (PUT): { shop_name, shop_logo, contact_url, ... }
@@ -6,7 +6,7 @@
 import { json, requireAuth, readJSON } from '../../_utils.js';
 
 // 允许设置的 key 白名单
-const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements'];
+const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements', 'r2_public_base']; // R31：r2_public_base = 图仓公开地址前缀
 
 export async function onRequestGet(context) {
   const { env, request } = context;

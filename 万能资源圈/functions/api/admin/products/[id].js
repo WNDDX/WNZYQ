@@ -1,9 +1,9 @@
-﻿/**
+/**
  * PUT    /api/admin/products/:id   → 更新资源（含显示/隐藏 is_online）
  * DELETE /api/admin/products/:id   → 删除资源（同时删其类型和统计）
  * 均需登录
  */
-import { json, requireAuth, readJSON } from '../../../_utils.js';
+import { json, requireAuth, readJSON, deleteBucketImages } from '../../../_utils.js';
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
@@ -53,9 +53,12 @@ export async function onRequestDelete(context) {
   const id = Number(params.id);
   if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
 
+  // R31-#7：删除资源前先取出图片字段，删除后联动清理图仓里的自有图片（外链图不归我们管，跳过）
+  const row = await env.DB.prepare('SELECT img, detail, detail_images FROM products WHERE id = ?').bind(id).first();
   await env.DB.prepare('DELETE FROM products WHERE id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM product_variants WHERE product_id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM stats WHERE product_id = ?').bind(id).run();
+  if (row) await deleteBucketImages(env, [row.img, row.detail, row.detail_images]);
 
   return json({ ok: true });
 }

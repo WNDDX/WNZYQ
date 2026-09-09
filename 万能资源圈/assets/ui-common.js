@@ -134,7 +134,7 @@ window.__uiCommonLoaded = true;
           '<button type="button" class="modal-close-x" aria-label="关闭">×</button>' +
           '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;"></div>' +
           '<div class="alert-body" style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
-          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:opacity 0.12s ease, filter 0.12s ease;box-shadow:0 2px 6px rgba(30,136,229,0.25);-webkit-tap-highlight-color:transparent;">确定</button></div>' +
+          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:all 0.10s ease;box-shadow:0 2px 6px rgba(30,136,229,0.25);-webkit-tap-highlight-color:transparent;">确定</button></div>' +
         '</div>';
       var titleEl = mask.querySelector('.modal-title');
       var bodyEl = mask.querySelector('.alert-body');
@@ -164,16 +164,29 @@ window.__uiCommonLoaded = true;
       mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
         '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.25s ease;">' +
-          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:all 0.12s ease;">×</button>' +
+          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:all 0.10s ease;">×</button>' +
           '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
           '<div style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
           '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
-          '<button data-share-ok type="button" style="width:100%;border:none;border-radius:8px;padding:11px 0;background:#1688FF;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;">确定</button>' +
+          '<button data-share-ok type="button" class="share-ok">确定</button>' +
         '</div>';
       var tEl = mask.querySelector('[data-share-title]');
       var uEl = mask.querySelector('[data-share-url]');
       if (tEl) tEl.textContent = title || '分享';
       if (uEl) uEl.textContent = url || '';
+      // R22：蓝色链接本身可点击=再次复制并提示（复用页面级 toast，无 toast 时兜底一个轻提示条）
+      if (uEl) {
+        uEl.style.cursor = 'pointer';
+        uEl.title = '点击复制链接';
+        uEl.addEventListener('click', function () {
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(uEl.textContent || '').catch(function () { try { __fallbackCopyText(uEl.textContent || ''); } catch (e) {} });
+            } else { __fallbackCopyText(uEl.textContent || ''); }
+          } catch (e) {}
+          __shareToast('链接已复制到剪贴板');
+        });
+      }
       document.body.appendChild(mask);
       function close() {
         try { document.body.removeChild(mask); } catch (e) {}
@@ -197,6 +210,19 @@ window.__uiCommonLoaded = true;
     document.body.appendChild(ta); ta.select();
     try { document.execCommand('copy'); } catch (e) {}
     document.body.removeChild(ta);
+  }
+  // R22：分享链接复制提示——优先复用页面级 toast（资源页 showToast / 管理页 toast），都没有时兜底一个轻提示条
+  function __shareToast(msg) {
+    try {
+      if (typeof window.showToast === 'function') { window.showToast(msg); return; }
+      if (typeof window.toast === 'function') { window.toast(msg, 'success'); return; }
+    } catch (e) {}
+    var t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;left:50%;bottom:72px;transform:translateX(-50%);background:rgba(0,0,0,0.78);color:#fff;font-size:14px;padding:10px 18px;border-radius:8px;z-index:100000;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:86vw;box-sizing:border-box;';
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.style.opacity = '1'; });
+    setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { try { document.body.removeChild(t); } catch (e) {} }, 250); }, 2000);
   }
 
   // ===== 弹窗滚动锁：打开弹窗锁定背景滚动（PC overflow + 移动端拦截穿透），弹窗内部内容仍可正常滚动 =====
@@ -291,11 +317,33 @@ window.__uiCommonLoaded = true;
       if (p === page) { input.value = page; return; }
       page = p; render(); onPage(page);
     }
+    // 修复跳页失效：点击跳转键时浏览器事件顺序是 mousedown → input.blur → mouseup → click，
+    // 旧的 blur 处理无条件把输入值重置回当前页码，click 读到的已是重置后的旧页码 → 点跳转没反应。
+    // 现改为：mousedown 时先记住用户输入值，click 用记住的值；blur 只在输入无效（空/越界）时才重置。
+    var pendingJump = null;
     prev.addEventListener('click', function () { go(page - 1); });
     next.addEventListener('click', function () { go(page + 1); });
-    goBtn.addEventListener('click', function () { go(input.value); });
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(input.value); } });
-    input.addEventListener('blur', function () { input.value = page; });
+    goBtn.addEventListener('mousedown', function () { pendingJump = input.value; });
+    goBtn.addEventListener('click', function () { go(pendingJump !== null ? pendingJump : input.value); pendingJump = null; });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); pendingJump = null; go(input.value); } });
+    input.addEventListener('blur', function () { var v = parseInt(input.value, 10); if (isNaN(v) || v < 1 || v > totalPages) input.value = page; });
     render();
   };
 })();
+
+
+// ---------- R20：跨页跳转公共函数（淡出 + 兜底恢复 + bfcache 恢复） ----------
+// 原 4 处 inline 跳转淡出（导航页→资源页 / 资源页→管理页 / 管理登录卡→资源页 / 管理顶栏→资源页）收口到这里：
+// 1) 180ms 淡出后跳转；2) 网络慢导致导航迟迟未完成时 1.2s 后恢复可见，避免页面长时间全透明像白屏；
+// 3) 手机返回键从 bfcache 恢复本页时，若 body 还停留在淡出透明态，立即恢复不透明白屏。
+window.jumpTo = function (href) {
+  var b = document.body;
+  if (!b || !href) return;
+  b.style.transition = 'opacity .18s ease';
+  b.style.opacity = '0';
+  setTimeout(function () { b.style.opacity = '1'; b.style.transition = ''; }, 1200);
+  setTimeout(function () { window.location.href = href; }, 180);
+};
+window.addEventListener('pageshow', function (e) {
+  if (e.persisted && document.body && document.body.style.opacity === '0') { document.body.style.opacity = '1'; document.body.style.transition = ''; }
+});

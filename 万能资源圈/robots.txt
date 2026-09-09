@@ -1,0 +1,5 @@
+# 万能资源圈 robots.txt
+# 管理后台与 API 不参与搜索引擎收录
+User-agent: *
+Disallow: /admin
+Disallow: /api/

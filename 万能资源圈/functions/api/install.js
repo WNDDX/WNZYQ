@@ -8,7 +8,7 @@
  *   5. 写入默认平台设置（含类型表资源码/隐藏字段）
  * 首次部署后手动调用：curl -X POST https://你的域名/api/install -d '{"username":"...","password":"..."}'
  */
-import { json, hashPasswordWithSalt, randomSalt } from '../_utils.js';
+import { json, hashPasswordNew } from '../_utils.js';
 
 // 建表 SQL（与 schema.sql 一致）
 const CREATE_SQL = `
@@ -180,8 +180,8 @@ export async function onRequestPost(context) {
       if (!/^[A-Za-z0-9_]{3,32}$/.test(initUser) || initPass.length < 8 || initPass.length > 64) {
         return json({ ok: false, msg: '首次初始化需指定管理员：POST /api/install，body 为 {"username":"3-32位字母数字下划线","password":"8-64位"}' }, 400);
       }
-      const salt = randomSalt();
-      const hash = await hashPasswordWithSalt(initPass, salt);
+      // R29：新管理员密码一律 PBKDF2 多轮哈希
+      const { salt, hash } = await hashPasswordNew(initPass);
       await env.DB.prepare('INSERT INTO admins (username, password_hash, salt) VALUES (?, ?, ?)')
         .bind(initUser, hash, salt).run();
     }
@@ -197,7 +197,8 @@ export async function onRequestPost(context) {
 
     return json({ ok: true, msg: '初始化完成（管理员账号以本次请求指定的为准，请妥善保管）' });
   } catch (e) {
+    // R29：错误细节只进服务端日志，对外返回通用提示（与全局错误策略对齐）
     console.error('初始化失败:', e);
-    return json({ ok: false, msg: '初始化失败: ' + e.message, error: e.message }, 500);
+    return json({ ok: false, msg: '初始化失败，请稍后再试' }, 500);
   }
 }

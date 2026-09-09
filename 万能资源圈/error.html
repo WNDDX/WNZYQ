@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>万能资源圈・错误</title>
+<meta name="description" content="万能资源圈错误提示页。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#1E88E5">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="stylesheet" href="/assets/ui-common.css">
 <style>
@@ -11,7 +14,7 @@
 *,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
 body{background:linear-gradient(180deg,#1E88E5 0%,#64B5F6 48%,#BBDEFB 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 .box{text-align:center;color:#fff;max-width:400px;}
-.code{font-size:80px;font-weight:700;opacity:0.9;margin-bottom:10px;}
+.code{font-size:38px;font-weight:600;letter-spacing:2.4px;opacity:0.95;margin:8px 0 24px;line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中（字距尾隙会使视觉中心偏左） */}
 .title{font-size:24px;font-weight:600;margin-bottom:12px;}
 .desc{font-size:15px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius:25px;text-decoration:none;font-size:16px;font-weight:600;transition:all 0.2s;}
@@ -27,7 +30,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 @keyframes prtspin{to{transform:rotate(360deg);}}
 /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
 @media (max-width: 600px) {
-  .code { font-size: 52px; }
+  .code { font-size: 26px; padding-left: 2.4px; }
   .title { font-size: 20px; }
   .desc { font-size: 14px; }
   .logo { width: 80px; height: 80px; margin-bottom: 16px; }
@@ -40,8 +43,8 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 </head>
 <body>
 <div class="box">
-  <a class="logo" href="index" title="返回导航" onclick="event.preventDefault();var t=this;document.body.style.transition='opacity .18s ease';document.body.style.opacity='0';setTimeout(function(){window.location.href=t.getAttribute('href');},180)"><img id="errLogo" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></a>
-  <div class="code" id="errorCode">错误</div>
+  <a class="logo" href="index" title="返回导航" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))"><img id="errLogo" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></a>
+  <div class="code" id="errorCode">万能资源圈・错误</div>
   <div class="title" id="errorTitle">页面访问异常</div>
   <div class="desc" id="errorDesc">抱歉！您访问的页面出现了问题<br>①地址有误　②页面已删除　③服务暂不可用<br>请点击【返回导航】继续浏览</div>
   <a href="index" class="btn" id="errBack">返回导航</a>
@@ -63,12 +66,28 @@ var errorMap = {
 // 任何错误都只显示通用内容，客户无法区分是地址错了还是服务器坏了）
 if (code && errorMap[code]) {
   var info = errorMap[code];
-  document.getElementById('errorCode').textContent = code;
+  /* R19：不再显示错误码数字——所有错误都统一导向本错误页，大字固定「万能资源圈・错误」；错误标题和说明保留 */
   document.getElementById('errorTitle').textContent = info.title;
   document.getElementById('errorDesc').innerHTML = info.desc;
 }
 // 智能识别部署根：本站页面部署在「万能资源圈」子目录下，错误页可能从任意路径（含根级 /xxx）进入，
 // 因此返回导航按钮与 logo 需根据当前路径自动计算正确地址，保证任何情况都能跳回导航页。
+// R30-补全：错误页也挂全局媒体兜底——页面上任何图片/视频（含将来新增的）加载失败统一换感叹号占位，
+// 与导航页/资源页/管理页同一套机制，做到全站四个页面全覆盖
+document.addEventListener('error', function (e) {
+  var t = e.target;
+  if (!t || !t.tagName || t.dataset.fh) return;
+  var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3, 11.2, 9.6, 13.1, 11 13.6 C 11.6, 13.8, 12.4, 13.8, 13 13.6 C 14.4, 13.1, 15.7, 11.2, 15.7, 8.4 C 15.7, 5.6, 14.6, 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+  if (t.tagName === 'IMG') {
+    t.dataset.fh = '1';
+    t.src = EXC_PH; t.style.objectFit = 'contain'; t.style.display = 'block'; t.style.opacity = '1';
+  } else if (t.tagName === 'VIDEO') {
+    t.dataset.fh = '1';
+    var ph = document.createElement('img');
+    ph.src = EXC_PH; ph.style.cssText = 'width:100%;height:auto;display:block;';
+    if (t.parentNode) t.parentNode.replaceChild(ph, t);
+  }
+}, true);
 (function () {
   var logo = document.getElementById('errLogo');
   if (logo) {

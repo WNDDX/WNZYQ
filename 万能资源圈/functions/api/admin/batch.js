@@ -1,4 +1,4 @@
-﻿/**
+/**
  * POST /api/admin/batch
  * 批量操作资源（需登录）
  * body: { ids: [1,2,3], action: 'online'|'offline'|'hide'|'show'|'delete'|'changeCat'|'changePrice', cid?: number, price?: number }
@@ -9,7 +9,7 @@
  *   changeCat   批量改分类（需 cid）
  *   changePrice 批量改价格（需 price）
  */
-import { json, requireAuth, readJSON } from '../../_utils.js';
+import { json, requireAuth, readJSON, deleteBucketImages } from '../../_utils.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -28,6 +28,15 @@ export async function onRequestPost(context) {
   const placeholders = ids.map(() => '?').join(',');
 
   if (action === 'delete') {
+    // R31-#7：批量删除前先取出图片字段，删除后联动清理图仓里的自有图片
+    try {
+      const { results: imgRows } = await env.DB.prepare(`SELECT img, detail, detail_images FROM products WHERE id IN (${placeholders})`).bind(...ids).all();
+      if (imgRows && imgRows.length) {
+        const sources = [];
+        for (const r of imgRows) sources.push(r.img, r.detail, r.detail_images);
+        await deleteBucketImages(env, sources);
+      }
+    } catch (e) { console.error('批量删除取图失败(不影响删除):', e); }
     // 性能：三条删除并行执行（原先串行三次 D1 往返），批量删除耗时约降为 1/3
     await Promise.all([
       env.DB.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).bind(...ids).run(),

@@ -40,7 +40,7 @@ export async function onRequestGet(context) {
   // 性能修复：原先 10+ 个 D1 查询逐个 await 串行执行（每次往返 50-200ms，累计 1-2.5 秒），
   // 现改为 Promise.all 全并行，总耗时 ≈ 最慢单查询，统计接口从 2.35s 级降到亚秒级
   const byProductDateFilter = statsDateFilter.replace(/stats\.created_at/g, 's.created_at');
-  const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, byProductRes, trendRowsRes, byCategoryRes, recentRes] = await Promise.all([
+  const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, byProductRes, trendRowsRes, byCategoryRes, recentRes, hourlyRowsRes] = await Promise.all([
     count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
     // 两态口径：显示 = is_online=1 且未隐藏；隐藏 = 其余全部（历史遗留数据统一归入隐藏）
     count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0'),
@@ -84,6 +84,15 @@ export async function onRequestGet(context) {
        WHERE s.created_at >= datetime('now', '-30 days')
        ORDER BY s.id DESC`
     ).all(),
+    // R29（优化项8）：单日范围时按小时聚合（1天档/自定义同日选择走这里，与趋势同口径 UTC）
+    effectiveStart === effectiveEnd
+      ? env.DB.prepare(
+          `SELECT strftime('%H', stats.created_at) AS hour, stats.type, COUNT(*) AS cnt
+           FROM stats
+           WHERE date(stats.created_at) = ?
+           GROUP BY hour, stats.type ORDER BY hour ASC`
+        ).bind(effectiveStart).all()
+      : Promise.resolve(null),
   ]);
 
   const overview = {
@@ -117,8 +126,26 @@ export async function onRequestGet(context) {
   // 历史串行版本代码（重复声明 byCategory/recent 且 recent 带 LIMIT 20）已删除——
   // 重复 const 声明会直接抛 SyntaxError 导致接口 500，串行 await 也会把耗时拖回 2 秒级
 
+  // R29（优化项8）：单日范围时组装 24 小时粒度序列（无数据的小时补 0），与 trend 同形状
+  let hourly = null;
+  if (hourlyRowsRes) {
+    const hourRows = hourlyRowsRes.results || [];
+    hourly = [];
+    for (let h = 0; h < 24; h++) {
+      const hh = String(h).padStart(2, '0');
+      const rows = hourRows.filter((r) => r.hour === hh);
+      hourly.push({
+        hour: hh,
+        views: rows.find((r) => r.type === 'view')?.cnt || 0,
+        contacts: rows.find((r) => r.type === 'contact')?.cnt || 0,
+        resource_unlocks: rows.find((r) => r.type === 'resource_unlock')?.cnt || 0,
+      });
+    }
+  }
+
   return new Response(JSON.stringify({
     ok: true,
+    hourly,
     overview,
     byProduct: byProduct.map((r) => ({
       id: r.id, title: r.title, is_online: r.is_online, is_hidden: r.is_hidden,

@@ -51,29 +51,31 @@
   width: 80%; margin: 0 auto 14px; border: none; border-radius: var(--radius); padding: 11px 32px;
   background: var(--green); color: #fff; font-size: 18px; font-weight: 500; cursor: pointer;
   letter-spacing: 0.9px; display: inline-flex; align-items: center; justify-content: center;
-  transition: opacity 0.12s ease, filter 0.12s ease;
+  transition: all 0.10s ease;
 }
 .kf-close {
   background: var(--red); color: #fff; border: none; padding: 11px 32px; border-radius: var(--radius);
-  font-size: 18px; cursor: pointer; letter-spacing: 0.9px; transition: opacity 0.12s ease, filter 0.12s ease;
+  font-size: 18px; cursor: pointer; letter-spacing: 0.9px; transition: all 0.10s ease;
 }
-/* ===== 全站统一弹窗按键按压效果（唯一实现，所有弹窗确定/取消键复用这一份）=====
-   按压反馈统一为"变暗 + 微降透明度"，刻意不用 transform: scale 缩放——按钮整体缩放会
-   触发文字重新栅格化，观感上像字重突然变细/变粗（公告确定键曾出现此问题）。
-   统一后所有弹窗按键按压期间字形恒定、字重不变，效果全站一致；
+/* ===== 全站统一弹窗按键动效（R17 唯一标准，所有弹窗确定/关闭键复用这一份）=====
+   标准 = 资源页资源弹窗底部「咨询客服/关闭」两键的动效：
+   鼠标经过 hover：轻微缩小 + 微降透明度（scale 0.97 / opacity 0.9）
+   按压 active：更小 + 更淡 + 变暗（scale 0.94 / opacity 0.8 / brightness 0.9）
+   过渡时长统一 0.10s ease；文字、颜色、大小等外观各键保持自身样式不变。
    各页面禁止再为弹窗按键写本地 hover/active 缩放副本。 */
 .alert-ok, .ann-ok, .btn-item, .modal-inner-btn, .modal-close, .kf-jump, .kf-close {
   -webkit-tap-highlight-color: transparent;
+  transition: all 0.10s ease;
 }
 .alert-ok:hover, .ann-ok:hover, .btn-item:hover, .modal-inner-btn:hover, .modal-close:hover, .kf-jump:hover, .kf-close:hover {
-  opacity: 0.92; filter: brightness(0.97);
+  transform: scale(0.97); opacity: 0.9;
 }
 .alert-ok:active, .ann-ok:active, .btn-item:active, .modal-inner-btn:active, .modal-close:active, .kf-jump:active, .kf-close:active {
-  opacity: 0.85; filter: brightness(0.88);
+  transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
 }
-.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s ease; line-height: 1; }
-.kf-x:hover { background: var(--red); color: #fff; transform: scale(1.1); }
-.kf-x:active { transform: scale(0.92); }
+.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.10s ease; line-height: 1; }
+.kf-x:hover { background: var(--red); color: #fff; transform: scale(0.97); opacity: 0.9; }
+.kf-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 @media (max-width: 600px) {
   .kf-box { padding: 20px 16px; }
   .kf-title { font-size: 19px; }
@@ -92,16 +94,16 @@
   font-size: 19px !important; line-height: 1 !important; cursor: pointer !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
   padding: 0 !important; margin: 0 !important;
-  transition: all 0.12s ease !important;
+  transition: all 0.10s ease !important;
 }
 .modal-close-x:hover,
 .kf-x:hover,
 .lb-close:hover {
-  background: var(--red) !important; color: #fff !important; transform: scale(1.1);
+  background: var(--red) !important; color: #fff !important; transform: scale(0.97); opacity: 0.9;
 }
 .modal-close-x:active,
 .kf-x:active,
-.lb-close:active { transform: scale(0.92); }
+.lb-close:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 
 /* ===== 全站统一图片/视频放大查看器（lightbox） ===== */
 .lightbox {
@@ -121,6 +123,14 @@
 .modal-mask { z-index: 2000 !important; }
 #inputMask { z-index: 6002 !important; } /* R15：编辑器插入图片/视频等"弹窗里的输入弹窗"，必须高于业务弹窗与放大编辑器 */
 .share-mask, .confirm-mask { z-index: 3000 !important; }
+/* R16c：分享链接弹窗确定键——与资源页分享本站弹窗 .share-close 逐字复用（含按压动画，此前动态弹窗为纯内联样式无反馈） */
+.share-ok {
+  display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;
+  background: #1E88E5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: all 0.10s ease; letter-spacing: 1px; -webkit-tap-highlight-color: transparent;
+}
+.share-ok:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+.share-ok:hover { transform: scale(0.97); opacity: 0.9; }
 #rteExitZoom { z-index: 6001 !important; }
 .kf-mask, #kfFallback { z-index: 10001 !important; }
 .lightbox, .lb { z-index: 100000 !important; }

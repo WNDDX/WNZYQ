@@ -9,7 +9,7 @@
  *  - /api/ 一律不缓存，始终走网络。
  *  - 任何非 200、或内容类型为 HTML 的 /assets 响应一律不缓存（防止错误页伪装成脚本/样式）。
  */
-const CACHE_NAME = 'wnzyq-v25'; // R16b：行状态文案改「显示/隐藏」两字，与分类管理框宽度一致
+const CACHE_NAME = 'wnzyq-v42'; // R32：图仓改免绑卡方案——KV 命名空间（免费层）替代 R2 绑卡；图片走本站 /img/ 路由直出+边缘缓存，无需配置公开地址
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -20,6 +20,10 @@ const STATIC_ASSETS = [
   './favicon.ico',
   './assets/ui-common.css',
   './assets/ui-common.js',
+  './assets/admin.css',
+  './assets/admin.js',
+  './assets/shop.css',
+  './assets/shop.js',
   './assets/images/logo.png',
   './assets/images/kefu.png',
   './assets/images/qun.png',
@@ -75,15 +79,18 @@ self.addEventListener('fetch', function (event) {
   var url = req.url.split('?')[0];
   var isCode = /\.(js|css)($|\?)/.test(url);   // JS/CSS：网络优先
 
-  // 页面导航：网络优先，保证每次拿到最新代码
+  // 页面导航：R20 缓存立即回（秒开，修复手机端跨页跳转白屏/久等）+ 后台拉最新版写缓存供下次使用。
+  // 一致性保障：每次 SW 版本升级时 activate 会清掉旧缓存（见上方 CACHE 管理），因此缓存里的 HTML 始终与当前 js/css 同代，不存在旧 HTML 配新 CSS 的混搭。
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).then(function (res) {
-        if (res && res.status === 200) event.waitUntil(putCache(req, res));
-        return res;
-      }).catch(function () {
-        return caches.match(req).then(function (cached) {
-          return cached || caches.match('./error.html');
+      caches.match(req).then(function (cached) {
+        var network = fetch(req).then(function (res) {
+          if (res && res.status === 200) event.waitUntil(putCache(req, res));
+          return res;
+        }).catch(function () { return null; });
+        if (cached) { event.waitUntil(network); return cached; } // 有缓存：秒开，后台静默更新
+        return network.then(function (res) {       // 无缓存（首次/刚升级）：走网络，失败回错误页
+          return res || caches.match('./error.html').then(function (e) { return e || Response.error(); });
         });
       })
     );

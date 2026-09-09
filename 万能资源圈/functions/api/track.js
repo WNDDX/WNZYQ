@@ -1,4 +1,4 @@
-﻿/**
+/**
  * POST /api/track
  * 前台埋点（公开接口）：记录资源浏览 / 点击咨询客服
  * body: { product_id: 1, type: 'view' | 'contact' | 'resource_unlock' }
@@ -17,6 +17,11 @@ export async function onRequestPost(context) {
   if (!pid) return json({ ok: false, msg: '缺少 product_id' }, 400);
 
   const ip = request.headers.get('CF-Connecting-IP') || '';
+  // R30-#10：统计流水属"只增不能自管"的数据——每次埋点顺带删掉 30 天前的旧记录，
+  // 数据库只保留滚动 30 天窗口，无需外部定时触发即可长期不膨胀（失败不影响埋点）
+  try {
+    await env.DB.prepare("DELETE FROM stats WHERE created_at < datetime('now', '-30 days')").run();
+  } catch (e) { console.error('统计滚动清理失败(不影响埋点):', e); }
   await env.DB.prepare('INSERT INTO stats (product_id, type, ip) VALUES (?, ?, ?)')
     .bind(pid, type, ip)
     .run();

@@ -1,16 +1,27 @@
-﻿/**
+/**
  * 共享工具函数（被各个 API 引用）
  */
 
 // 返回 JSON 响应（自动带 CORS 头）
-export function json(data, status = 200) {
+export function json(data, status = 200, extraHeaders) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       ...corsHeaders(),
+      ...(extraHeaders || {}),
     },
   });
+}
+
+// 解析请求 Cookie 中的指定字段（R30：登录令牌迁移到 HttpOnly Cookie）
+export function getCookie(request, name) {
+  const raw = request.headers.get('Cookie') || '';
+  for (const part of raw.split(';')) {
+    const kv = part.trim().split('=');
+    if (kv[0] === name) return decodeURIComponent(kv.slice(1).join('=') || '');
+  }
+  return '';
 }
 
 // CORS 头：只放行同源（站点页面与 API 部署在同一个 Cloudflare Pages 域名下，全是同源请求）。
@@ -56,9 +67,58 @@ export async function hashPassword(text) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 带盐哈希：SHA-256(salt + password)
+// 带盐哈希：SHA-256(salt + password)（旧格式，仅用于兼容验证，不再用于新写入）
 export async function hashPasswordWithSalt(password, salt) {
   return hashPassword(salt + password);
+}
+
+// ===== PBKDF2 多轮哈希（R29/优化项2：防拖库后显卡暴力破解） =====
+// 旧格式单轮 SHA-256 一次运算即得哈希，数据库被拖走后可用 GPU 每秒试数十亿次；
+// PBKDF2 故意重复运算 60000 轮，单次验证约 10ms，暴力试密码速度被拖慢数万倍。
+// 实测本地单核 60000 迭代 ≈10ms，登录属低频操作，代价可接受。
+export const PBKDF2_ITERATIONS = 60000;
+
+// PBKDF2-SHA256(password, salt, iterations) → 256bit hex
+export async function pbkdf2Hash(password, salt, iterations) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: iterations },
+    key, 256
+  );
+  return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 生成新格式哈希。存储格式：pbkdf2$<iterations>$<salt_hex>$<hash_hex>（参数自包含，便于将来调迭代数）
+export async function hashPasswordNew(password) {
+  const salt = randomSalt();
+  const hash = await pbkdf2Hash(password, salt, PBKDF2_ITERATIONS);
+  return { salt, hash: 'pbkdf2$' + PBKDF2_ITERATIONS + '$' + salt + '$' + hash };
+}
+
+// 统一密码验证（兼容新旧格式）：row = { password_hash, salt }
+// 返回 { ok, needUpgrade }：needUpgrade=true 表示命中旧格式且密码正确，调用方应顺手升级重哈希
+export async function verifyPassword(password, row) {
+  const stored = String(row.password_hash || '');
+  if (stored.startsWith('pbkdf2$')) {
+    const parts = stored.split('$');
+    const iter = parseInt(parts[1], 10) || PBKDF2_ITERATIONS;
+    const salt = parts[2] || '';
+    const expect = parts[3] || '';
+    const hash = await pbkdf2Hash(password, salt, iter);
+    return { ok: hash === expect, needUpgrade: false };
+  }
+  // 旧格式：SHA-256(salt + password)
+  const old = await hashPasswordWithSalt(password, String(row.salt || ''));
+  const ok = old === stored;
+  return { ok, needUpgrade: ok };
+}
+
+// 旧格式密码验证通过后升级为 PBKDF2（用户无感知，老密码照用）
+export async function upgradePasswordHash(env, adminId, password) {
+  const { salt, hash } = await hashPasswordNew(password);
+  await env.DB.prepare('UPDATE admins SET password_hash = ?, salt = ? WHERE id = ?')
+    .bind(hash, salt, adminId).run();
 }
 
 // 生成随机盐（32 字节 hex）
@@ -77,7 +137,10 @@ export function randomToken() {
 
 // 解析请求里的 Bearer token 并返回管理员信息；未登录或已过期返回 null
 export async function getAuthAdmin(env, request) {
-  const auth = (request.headers.get('Authorization') || '').replace('Bearer ', '').trim();
+  // R30：令牌优先从 HttpOnly Cookie 读取（JS 脚本不可见，防窃取）；
+  // 同时兼容旧版 Authorization 头（老会话 24 小时内自然过期后统一走 Cookie）
+  let auth = getCookie(request, 'wnzyq_token');
+  if (!auth) auth = (request.headers.get('Authorization') || '').replace('Bearer ', '').trim();
   if (!auth) return null;
   const row = await env.DB.prepare(
     'SELECT s.admin_id AS id, a.username, s.expires_at FROM sessions s LEFT JOIN admins a ON a.id = s.admin_id WHERE s.token = ?'
@@ -192,4 +255,36 @@ export function cleanVariant(v) {
     resourceContent: v.resource_content || '',
     isHidden: v.is_hidden || 0,
   };
+}
+
+// ============ R31（优化项7）：自有图仓（R2 绑定 IMAGE_BUCKET）============
+// 从任意文本（单个 URL / HTML / JSON 数组字符串）里提取属于图仓的图片 key 并删除。
+// 调用场景：删除资源 / 批量删除时联动清理图仓图片（删图失败不阻塞删资源）。
+export async function deleteBucketImages(env, sources) {
+  try {
+    if (!env.IMAGE_BUCKET || !Array.isArray(sources) || !sources.length) return;
+    const baseRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'r2_public_base'").first();
+    const base = baseRow ? String(baseRow.value || '').trim().replace(/\/+$/, '') : '';
+    const keys = new Set();
+    // R32：图片统一走自家路由 /img/images/...（相对路径或任意域名的绝对 URL）；
+    // 兼容旧 R2 公开地址（base 前缀）。
+    const imgPathRe = /(?:https?:\/\/[^\s"'<>)]+)?\/img\/(images\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:png|jpg|webp|gif))/g;
+    const baseRe = base ? new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\/(images\/[^\s"\'<>)]+)', 'g') : null;
+    for (const src of sources) {
+      if (!src) continue;
+      const text = String(src);
+      let m;
+      imgPathRe.lastIndex = 0;
+      while ((m = imgPathRe.exec(text)) !== null) keys.add(m[1].split('?')[0]);
+      if (baseRe) {
+        baseRe.lastIndex = 0;
+        while ((m = baseRe.exec(text)) !== null) keys.add(m[1].split('?')[0].replace(/&amp;.*$/, ''));
+      }
+    }
+    if (!keys.size) return;
+    await Promise.all([...keys].map((k) => env.IMAGE_BUCKET.delete(k)));
+    console.log('R31 图仓联动清理:', keys.size, '张图片');
+  } catch (e) {
+    console.error('R31 图仓图片清理失败(不影响资源删除):', e);
+  }
 }

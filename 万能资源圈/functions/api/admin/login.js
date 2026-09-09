@@ -5,7 +5,7 @@
  * body: { username, password }
  * 成功返回 { token, username }
  */
-import { json, readJSON, hashPasswordWithSalt, randomToken } from '../../_utils.js';
+import { json, readJSON, verifyPassword, upgradePasswordHash, randomToken } from '../../_utils.js';
 
 // 获取客户端 IP
 function getClientIP(request) {
@@ -61,12 +61,14 @@ export async function onRequestPost(context) {
       return json({ ok: false, msg: '账号或密码错误' }, 401);
     }
 
-    // 3. 带盐验证密码
-    const salt = row.salt || '';
-    const hash = await hashPasswordWithSalt(password, salt);
-    if (hash !== row.password_hash) {
+    // 3. 验证密码（R29：兼容旧 SHA256 与新 PBKDF2；旧格式验证通过后自动升级重哈希，用户无感知）
+    const v = await verifyPassword(password, row);
+    if (!v.ok) {
       await recordFailure(env, ip, username, attempt);
       return json({ ok: false, msg: '账号或密码错误' }, 401);
+    }
+    if (v.needUpgrade) {
+      try { await upgradePasswordHash(env, row.id, password); } catch (e) { console.error('密码哈希升级失败(不影响登录):', e); }
     }
 
     // 4. 登录成功：清除失败记录
@@ -81,10 +83,28 @@ export async function onRequestPost(context) {
       "INSERT INTO sessions (token, admin_id, expires_at) VALUES (?, ?, datetime('now', '+24 hours'))"
     ).bind(token, row.id).run();
 
-    return json({ ok: true, token, username: row.username });
+    // R30-#4：令牌只写进 HttpOnly Cookie（网页脚本读不到），不再随响应体下发
+    // R30-#10：顺带滚动清理 30 天前的登录失败记录与旧会话（失败不影响登录）
+    try {
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-30 days')"),
+        env.DB.prepare("DELETE FROM sessions WHERE expires_at < datetime('now', '-30 days')"),
+      ]);
+    } catch (e) { console.error('滚动清理失败(不影响登录):', e); }
+
+    const cookie = [
+      'wnzyq_token=' + encodeURIComponent(token),
+      'HttpOnly',
+      'Secure',
+      'SameSite=Lax',
+      'Path=/',
+      'Max-Age=86400',
+    ].join('; ');
+    return json({ ok: true, username: row.username }, 200, { 'Set-Cookie': cookie });
   } catch (e) {
+    // R27：错误细节只进服务端日志，对外返回通用提示（与 _middleware.js 全局错误策略对齐，避免泄露内部信息）
     console.error('登录失败:', e);
-    return json({ ok: false, msg: '登录失败: ' + e.message, error: e.message }, 500);
+    return json({ ok: false, msg: '服务器开小差了，请稍后再试' }, 500);
   }
 }
 
