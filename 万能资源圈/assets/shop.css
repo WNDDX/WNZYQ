@@ -559,13 +559,16 @@
     .modal-share-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
     /* R36：封面图完整显示（原先 object-fit:cover 把大图裁得只显示中间一块——"显示不全"）；
        contain 保证整张图都在框内、不超框，比例不符时两侧留浅蓝底色 */
-    .modal-cover {
-      width: calc(100% - 32px);
-      margin: 16px 16px 0;
+    /* R43：封面按内在比例自适应（用户"看情况用最大宽或最大高"的正解）：
+       width/height 都 auto → 图片本体等比缩到 max-width/max-height 限制内；
+       圆角直接裁在真实图片内容上（旧版固定 16:9 框 + contain 时竖图四周留白，
+       圆角只裁到背景色，视觉上"没有圆角"）。占位符/加载失败态由专门的 !important 规则兜底保持 16:9 */
+    img.modal-cover { /* R43：选择器升级为 img.modal-cover——505 行 .modal-box img{max-width:100%} 同特异性但位置靠前，被它压掉导致 max-width 计算值失效（图片满宽贴边）；升级后同特异性、位置靠后者胜 */
+      width: auto; height: auto;
+      max-width: calc(100% - 32px);
       max-height: 320px;
-      aspect-ratio: 16 / 9;
-      object-fit: contain;
       display: block;
+      margin: 16px auto 0;
       background: #eef4fb;
       border-radius: 10px;
       border: 1px solid #e0e0e0;
@@ -1039,7 +1042,7 @@
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
       .modal-box { max-width: 100%; max-height: 92vh; border-radius: 12px; }
-      .modal-cover { width: calc(100% - 24px); margin: 12px 12px 0; max-height: 220px; object-fit: contain; }
+      img.modal-cover { width: auto; max-width: calc(100% - 24px); margin: 12px auto 0; max-height: 220px; }
       .modal-content { padding: 12px 16px 16px; }
       .modal-title { font-size: 18px; }
       .modal-price { font-size: 20px; }

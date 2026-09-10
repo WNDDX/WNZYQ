@@ -104,6 +104,8 @@ if ('serviceWorker' in navigator) {
       img.onload = function () { void img.offsetWidth; img.classList.add('kf-qr-in'); };
       img.src = qrImg || '/assets/images/kefu.png';
       if (img.complete && img.naturalWidth) { void img.offsetWidth; img.classList.add('kf-qr-in'); }
+      // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
+      if (window.__bindQrLightbox) window.__bindQrLightbox(img);
     }
     var tipEl = document.getElementById('kfTip');
     if (tipEl) tipEl.textContent = tip || '长按图片识别-添加人工客服';
@@ -117,6 +119,76 @@ if ('serviceWorker' in navigator) {
       __hideBgVideos(true);
       window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     }
+  };
+
+  // ===== R45：全站统一图片/视频放大灯箱 =====
+  // 服务无页面级灯箱实现的场景（导航页二维码弹窗、全站客服二维码弹窗等）。
+  // shop/admin 页面内有各自同款局部 openLightbox（函数声明遮蔽本全局属性，互不干扰；
+  // 双指缩放/ESC 监听各自检查自己的遮罩，不重复生效）。样式走 ui-common.css 的 .lightbox（z-index 100000，
+  // 高于客服 10001）。灯箱内是真实 <img>（非 CSS 背景）——微信/手机浏览器内长按识别二维码可用。
+  var __lbMask = null, __lbScale = 1, __lbStartDist = 0;
+  window.closeLightbox = function () {
+    if (!__lbMask) return;
+    try { __lbMask.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {}
+    __lbMask.classList.remove('open');
+    // 不直接解锁：若底下还有弹窗（二维码弹窗/客服弹窗）开着，必须保持背景锁定
+    if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overflow = '');
+  };
+  window.openLightbox = function (src) {
+    if (!src) return;
+    if (!__lbMask) {
+      __lbMask = document.createElement('div');
+      __lbMask.className = 'lightbox';
+      __lbMask.onclick = window.closeLightbox;
+      document.body.appendChild(__lbMask);
+    }
+    __lbMask.textContent = '';
+    var x = document.createElement('button');
+    x.type = 'button'; x.className = 'modal-close-x'; x.textContent = '×';
+    x.onclick = function (e) { e.stopPropagation(); window.closeLightbox(); };
+    __lbMask.appendChild(x);
+    var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src);
+    var im = document.createElement(isVideo ? 'video' : 'img');
+    im.src = src;
+    if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
+    im.style.cssText = 'max-width:92%;max-height:92%;object-fit:contain;border-radius:8px;transition:transform .05s linear;' + (isVideo ? 'width:92%;aspect-ratio:16/9;background:#000;' : '');
+    __lbMask.appendChild(im);
+    __lbScale = 1;
+    window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
+    __lbMask.classList.add('open');
+  };
+  // 灯箱双指缩放（与 shop/admin 页面级实现同款：仅双指 touchmove 时接管，不影响单指长按识别）
+  document.addEventListener('touchstart', function (e) {
+    if (!__lbMask || !__lbMask.classList.contains('open')) return;
+    if (e.touches.length === 2) __lbStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!__lbMask || !__lbMask.classList.contains('open')) return;
+    if (e.touches.length === 2 && __lbStartDist > 0) {
+      var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      __lbScale = Math.min(4, Math.max(1, __lbScale * (d / __lbStartDist)));
+      var el = __lbMask.querySelector('img, video');
+      if (el) el.style.transform = 'scale(' + __lbScale + ')';
+      __lbStartDist = d;
+      e.preventDefault();
+    }
+  }, { passive: false });
+  document.addEventListener('touchend', function () { if (__lbMask && __lbMask.classList.contains('open')) __lbStartDist = 0; });
+  document.addEventListener('dblclick', function (e) {
+    if (!__lbMask || !__lbMask.classList.contains('open')) return;
+    if (__lbMask.contains(e.target)) { __lbScale = 1; var el = __lbMask.querySelector('img, video'); if (el) el.style.transform = 'scale(1)'; }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && __lbMask && __lbMask.classList.contains('open')) window.closeLightbox();
+  });
+  // 客服二维码单击放大（R45：与图片统一体验；加载失败占位符不放大——仅真实图可点）
+  window.__bindQrLightbox = function (img) {
+    if (!img || img.dataset.lbBound) return;
+    img.dataset.lbBound = '1';
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', function () {
+      if (img.src && !img.src.startsWith('data:') && img.complete && img.naturalWidth) window.openLightbox(img.currentSrc || img.src);
+    });
   };
 
   // 公共媒体占位：加载前预留 16:9 高度防止弹窗先小后大；加载完成同一帧用真实宽高比接管（图片已在缓存，无等待撑开感）；失败交给感叹号兜底

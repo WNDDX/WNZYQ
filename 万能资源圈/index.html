@@ -126,14 +126,14 @@ body{
 .btn-item{
     width: 100%;
     border-radius: 12px;
-    padding: 22px 24px;
+    padding: 24px 26px; /* R46：随字号增大同步微调 */
     margin-bottom: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px; /* R35：回退组合居中——图标+文字并排成组、整组居中（用户定稿：恢复几轮前的居中方式） */
+    gap: 16px; /* R46：回退组合居中（R35/R44 前定稿）——图标+文字并排成组、整组居中；图标仍在文字左侧 */
     border: none;
-    font-size: 26px;
+    font-size: 30px; /* R46：图标文字整体调大（原 26px），按钮观感更饱满 */
     color: #ffffff;
     font-weight: 500;
     cursor: pointer;
@@ -167,9 +167,9 @@ body{
 .btn-blue{background-color: #1688FF;}
 .btn-cyan{background-color: #008C8C;}
 .icon-svg{
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0; /* R35：恢复 flex 布局成员（图标在文字左侧，随组合一起居中） */
+    width: 44px; /* R46：图标随文字同步调大（原 36px） */
+    height: 44px;
+    flex-shrink: 0; /* R46：flex 布局成员（图标在文字左侧，随组合一起居中） */
 }
 .modal-mask{
     position: fixed;
@@ -205,14 +205,13 @@ body{
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 6px;
+    justify-content: center; border-radius: 12px; overflow: hidden; /* R42：二维码容器圆角（全站图框统一；原 6px 升级统一 12px） */
     background: #f3f4f6;
 }
 .modal-qrcode{
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain;
+    object-fit: contain; border-radius: 8px; /* R42：二维码图圆角 */
 }
 img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
 /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
@@ -270,8 +269,8 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   .logo-box { width: 100px; height: 100px; }
   .logo-wrap { margin-bottom: 28px; } /* R33：移动端同步上下间距对称 */
   .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.6px; padding-left: 1.6px; }
-  .btn-item { padding: 15px 18px; font-size: 19px; margin-bottom: 12px; border-radius: 10px; gap: 10px; }
-  .icon-svg { width: 28px; height: 28px; }
+  .btn-item { padding: 16px 18px; font-size: 22px; margin-bottom: 12px; border-radius: 10px; gap: 12px; }
+  .icon-svg { width: 34px; height: 34px; }
   .qrcode-wrap { width: 200px; height: 200px; }
   .modal-box { padding: 20px 16px; }
   .modal-title { font-size: 19px; }
@@ -458,6 +457,15 @@ function closeModal() {
     dom.modalJumpBtn.onclick = null;
     dom.modalCloseBtn.style.display = 'none';
 }
+
+// R45：弹窗二维码单击放大（复用全站灯箱：右上角×/点遮罩关/双指缩放/ESC；真实 <img> 放大后长按识别二维码仍可用；失败占位符不放大）
+dom.modalImg.style.cursor = 'zoom-in';
+dom.modalImg.addEventListener('click', function () {
+    var s = dom.modalImg.currentSrc || dom.modalImg.src;
+    if (s && !s.startsWith('data:') && dom.modalImg.complete && dom.modalImg.naturalWidth && window.openLightbox) {
+        window.openLightbox(s);
+    }
+});
 
 // ESC 关闭弹窗
 document.addEventListener('keydown', function(e) {
