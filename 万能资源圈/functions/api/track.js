@@ -17,10 +17,10 @@ export async function onRequestPost(context) {
   if (!pid) return json({ ok: false, msg: '缺少 product_id' }, 400);
 
   const ip = request.headers.get('CF-Connecting-IP') || '';
-  // R30-#10：统计流水属"只增不能自管"的数据——每次埋点顺带删掉 30 天前的旧记录，
-  // 数据库只保留滚动 30 天窗口，无需外部定时触发即可长期不膨胀（失败不影响埋点）
+  // R30-#10：统计流水属"只增不能自管"的数据——每次埋点顺带删掉 60 天前的旧记录，
+  // R72：滚动窗口 30→60 天，保证 30 天档「对比上期」（31~60 天前那段）有真实数据（失败不影响埋点）
   try {
-    await env.DB.prepare("DELETE FROM stats WHERE created_at < datetime('now', '-30 days')").run();
+    await env.DB.prepare("DELETE FROM stats WHERE created_at < datetime('now', '-60 days')").run();
   } catch (e) { console.error('统计滚动清理失败(不影响埋点):', e); }
   await env.DB.prepare('INSERT INTO stats (product_id, type, ip) VALUES (?, ?, ?)')
     .bind(pid, type, ip)

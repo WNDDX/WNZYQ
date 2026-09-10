@@ -354,49 +354,7 @@
       font-weight: 400;
     }
 
-    /* ===== R55：骨架屏（数据加载前占位；排版对齐两种视图的真实卡片：网格视图=3/2 图+两行文，列表视图=左 96px 方图+右两行；变量接线暗色自动适配） ===== */
-.sk-card {
-  background: var(--card-bg);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
-  display: flex;
-  flex-direction: column;
-}
-.sk-img {
-  width: 100%;
-  box-sizing: border-box;
-  aspect-ratio: 3 / 2;
-  background: linear-gradient(100deg, var(--bg-light) 30%, var(--hover-bg) 50%, var(--bg-light) 70%);
-  background-size: 200% 100%;
-  animation: skShimmer 1.3s ease-in-out infinite;
-}
-.sk-line {
-  height: 15px;
-  margin: 12px 14px 0;
-  border-radius: 6px;
-  background: linear-gradient(100deg, var(--bg-light) 30%, var(--hover-bg) 50%, var(--bg-light) 70%);
-  background-size: 200% 100%;
-  animation: skShimmer 1.3s ease-in-out infinite;
-}
-.sk-line:last-child { margin-bottom: 14px; height: 12px; }
-.sk-line.w95{width:95%} .sk-line.w93{width:93%} .sk-line.w92{width:92%} .sk-line.w91{width:91%}
-.sk-line.w90{width:90%} .sk-line.w88{width:88%} .sk-line.w87{width:87%} .sk-line.w85{width:85%}
-.sk-line.w80{width:80%} .sk-line.w78{width:78%} .sk-line.w75{width:75%} .sk-line.w72{width:72%}
-.sk-line.w70{width:70%} .sk-line.w66{width:66%} .sk-line.w65{width:65%} .sk-line.w62{width:62%}
-.sk-line.w60{width:60%} .sk-line.w58{width:58%} .sk-line.w55{width:55%} .sk-line.w52{width:52%}
-/* 列表视图（站点默认视图）：对齐 .product-grid.list-view .product-card 的横排结构 */
-.product-grid.list-view .sk-card { flex-direction: row; align-items: stretch; }
-.product-grid.list-view .sk-img { width: 96px; min-width: 96px; aspect-ratio: 1 / 1; height: auto; }
-.product-grid.list-view .sk-line { flex: 1 1 0%; margin: 8px 12px 0; height: 14px; }
-.product-grid.list-view .sk-line:last-child { margin-bottom: 10px; height: 12px; }
-@media (max-width: 600px) {
-  .product-grid.list-view .sk-img { width: 108px; min-width: 108px; }
-  .product-grid .sk-img { aspect-ratio: 16 / 10; }
-}
-@keyframes skShimmer { to { background-position: -200% 0; } }
-
-.empty-tip {
+    .empty-tip {
       text-align: center;
       color: var(--text-light);
       padding: 60px 20px;

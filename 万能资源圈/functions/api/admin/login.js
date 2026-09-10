@@ -87,8 +87,9 @@ export async function onRequestPost(context) {
     // R30-#10：顺带滚动清理 30 天前的登录失败记录与旧会话（失败不影响登录）
     try {
       await env.DB.batch([
-        env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-30 days')"),
-        env.DB.prepare("DELETE FROM sessions WHERE expires_at < datetime('now', '-30 days')"),
+        // R73：滚动清理窗口统一 60 天（与全系统保留策略一致）
+        env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-60 days')"),
+        env.DB.prepare("DELETE FROM sessions WHERE expires_at < datetime('now', '-60 days')"),
       ]);
     } catch (e) { console.error('滚动清理失败(不影响登录):', e); }
 

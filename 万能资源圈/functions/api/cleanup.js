@@ -2,10 +2,10 @@
  * GET /api/cleanup
  * 定期清理旧数据（由 Cron Trigger 每天触发，或手动调用）
  * 清理内容：
- *   1. stats 表：只保留最近 30 天（避免数据库无限增长）
- *   2. sessions 表：删除 30 天前的会话
- *   3. login_attempts 表：删除 30 天前的记录
- * 全系统统一保留最近 30 天数据
+ *   1. stats 表：只保留最近 60 天（R72：为 30 天档环比对比保留上期数据）
+ *   2. sessions 表：删除 60 天前的会话（R73 统一）
+ *   3. login_attempts 表：删除 60 天前的记录（R73 统一）
+ * 全系统统一保留 60 天（R73 用户定稿）：stats / sessions / login_attempts 一律 60 天
  * 需要 header: x-cleanup-token = 环境变量 CLEANUP_TOKEN
  * 安全策略：设置了 CLEANUP_TOKEN 就必须带对 token；
  * 未设置 CLEANUP_TOKEN 时仅允许本地调试（localhost/127.0.0.1）调用，
@@ -33,21 +33,21 @@ export async function onRequestGet(context) {
   const results = {};
 
   try {
-    // 1. 清理 stats：只保留最近 30 天
+    // 1. 清理 stats：保留最近 60 天（R72：30→60，让 30 天档「对比上期」有完整上期数据）
     const r1 = await env.DB.prepare(
-      `DELETE FROM stats WHERE created_at < datetime('now', '-30 days')`
+      `DELETE FROM stats WHERE created_at < datetime('now', '-60 days')`
     ).run();
     results.stats_deleted = r1.meta.changes || 0;
 
-    // 2. 清理 sessions：只保留最近 30 天（含未过期的，过期的也删）
+    // 2. 清理 sessions：只保留最近 60 天（R73：全系统统一 60 天保留；含未过期的，过期的也删）
     const r2 = await env.DB.prepare(
-      `DELETE FROM sessions WHERE created_at < datetime('now', '-30 days')`
+      `DELETE FROM sessions WHERE created_at < datetime('now', '-60 days')`
     ).run();
     results.sessions_deleted = r2.meta.changes || 0;
 
-    // 3. 清理 login_attempts：只保留最近 30 天
+    // 3. 清理 login_attempts：只保留最近 60 天（R73 统一；锁定判断用 locked_until 分钟级时间戳不受影响）
     const r3 = await env.DB.prepare(
-      `DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-30 days')`
+      `DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-60 days')`
     ).run();
     results.login_attempts_deleted = r3.meta.changes || 0;
 

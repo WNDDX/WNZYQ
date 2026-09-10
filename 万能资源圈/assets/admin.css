@@ -382,9 +382,16 @@
       background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       color: #fff; border-radius: 12px; padding: 18px;
       text-align: center; box-shadow: 0 4px 12px rgba(30, 136, 229, 0.25);
+      /* R71：卡片内容(数字/标签/环比)在框内垂直居中——不管开不开对比上期，数字都处于卡中央 */
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
     }
     .stat-card .num { font-size: 30px; font-weight: 700; }
     .stat-card .label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+    /* R57：环比「较上期」小字——涨绿降红（蓝底上用亮色变体保证可读） */
+    .stat-card .delta { font-size: 12px; margin-top: 3px; font-weight: 500; }
+    .stat-card .delta.up { color: #8df7b0; }
+    .stat-card .delta.down { color: #ffb1b1; }
+    .stat-card .delta.flat { color: rgba(255, 255, 255, 0.78); }
     .stat-table-wrap {
       background: var(--card-bg); border-radius: 12px; padding: 16px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
@@ -875,18 +882,44 @@
     @keyframes slspin { to { transform: rotate(360deg); } }
     .stats-fade-in { animation: statFade .3s ease; }
     @keyframes statFade { from { opacity:.2; } to { opacity:1; } }
-    .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding: 10px 2.5% 0 5%; }
+    /* R70：灰底/圆角上收到 chart-box 外层容器（与 line-chart 同构：灰盒装图表+图例）；柱区高度由 JS 按折线图实际高同步写入 --barZone */
+    .chart-box { background: var(--bg-light); border-radius: 10px; padding: 0; margin-bottom: 8px; overflow: hidden; }
+    .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding: 12px 2.5% 0 5%; position: relative; }
+    /* R66：柱状图网格层——对齐柱状区（bottom 24px 高 100px），折线图同款灰线 #e8e8e8 与左侧数字 #999；
+       grid 先插 DOM、柱列（relative）靠后绘制，网格线在柱子后面 */
+    /* R68：网格对齐柱状绘图区（left 与 .trend-bars 的 padding-left 5% 一致），数字紧贴柱区左缘——与折线图数字贴折线区同理；R70 高度跟随 --barZone */
+    .trend-grid { position: absolute; left: 5%; right: 2.5%; bottom: 24px; height: var(--barZone, 100px); pointer-events: none; }
+    .trend-grid .tg-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid #e8e8e8; }
+    .trend-grid .tg-num { position: absolute; right: calc(100% + 2px); top: -5px; font-size: 10px; color: #999; text-align: right; line-height: 1; }
     .trend-bars::-webkit-scrollbar { display: none; }
     .trend-col { flex: 1 1 0; min-width: 0; position: relative; height: 100%; }
-    .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: 24px; display: flex; flex-direction: column; justify-content: flex-end; height: 100px; gap: 2px; }
+    .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: 24px; display: flex; flex-direction: row; justify-content: flex-end; height: var(--barZone, 100px); gap: 3px; }
+    /* R57：每列两组并排——左本期实色、右上期浅色半透明；组内仍是浏览/咨询客服纵向堆叠 */
+    .trend-bar-group { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 2px; }
+    .trend-bar.ghost { opacity: 0.32; }
+    /* R58：箭头不再是列顶固定定位，而是放进本期组内（浏览柱上方）——组是 column 底对齐，箭头 DOM 在柱前面即贴柱顶、跟随柱高度 */
+    .trend-arrow { text-align: center; font-size: 10px; line-height: 1; margin-bottom: 2px; }
+    .trend-arrow.up { color: #1a9e4a; }
+    .trend-arrow.down { color: #d43c3c; }
+    .trend-arrow.flat { color: #9aa4b2; }
     .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
     .trend-bar.view { background: var(--blue1); }
     .trend-bar.contact { background: #ff9900; }
     .trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--text-faint); white-space: nowrap; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; box-sizing: border-box; max-width: 100%; }
-    .trend-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--text-light); justify-content: center; }
+    .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-light); justify-content: center; }
     .trend-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
     .trend-legend .lg-contact::before { background: #ff9900; }
+    /* R64：图例逐系列×逐期（4项）——本期=系列色实块，上期=同色 32% 透明块（与图中的 ghost 柱一致） */
+    .trend-legend { flex-wrap: wrap; }
+    .trend-legend .lg-view-cur::before { background: var(--blue1); }
+    .trend-legend .lg-view-prev::before { background: rgba(30, 136, 229, 0.32); }
+    .trend-legend .lg-contact-cur::before { background: #ff9900; }
+    .trend-legend .lg-contact-prev::before { background: rgba(255, 153, 0, 0.32); }
+    /* R65：对比上期按钮（复用 btn-blue 应用键样式）——开启态绿底提示已开启 */
+    /* R67：对比上期键尺寸完全复用应用键（admin.html inline 与其一致），此处只留开启态配色 */
+    /* R70：开启态淡蓝——实测取自顶栏「资源管理」等 tab 胶囊的视觉色 rgb(100,176,241)（半透白叠蓝渐变合成），更贴页面审美 */
+    .cmp-btn.cmp-on { background: #64B0F1 !important; }
 
     /* 时间筛选 */
     .time-filter { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -921,6 +954,19 @@
     .line-legend .lg-view i { background: var(--blue1); }
     .line-legend .lg-contact i { background: #ff9900; }
     .line-legend .lg-resource i { background: #4CAF50; }
+    /* R64：图例逐系列×逐期（6项）——本期=系列色实线段，上期=同系列色虚线段（35% 透明度与图中一致） */
+    .line-legend { flex-wrap: wrap; }
+    .line-legend .lg-view-cur i { background: var(--blue1); }
+    .line-legend .lg-view-prev i { background: none; height: 0; border-top: 3px dashed rgba(30, 136, 229, 0.5); }
+    .line-legend .lg-contact-cur i { background: #ff9900; }
+    .line-legend .lg-contact-prev i { background: none; height: 0; border-top: 3px dashed rgba(255, 153, 0, 0.5); }
+    .line-legend .lg-resource-cur i { background: #4CAF50; }
+    .line-legend .lg-resource-prev i { background: none; height: 0; border-top: 3px dashed rgba(76, 175, 80, 0.5); }
+    /* R65：上期图例项默认隐藏（对比上期关闭时只显示本期），.show-prev 时显示；本期左/上期右以竖线分隔 */
+    .lg-prev-sep { width: 1px; height: 14px; background: #d8dee8; align-self: center; margin: 0 6px; }
+    .line-legend:not(.show-prev) .lg-prev-sep, .line-legend:not(.show-prev) [class$="-prev"] { display: none; }
+    .trend-legend:not(.show-prev) .lg-prev-sep, .trend-legend:not(.show-prev) [class$="-prev"] { display: none; }
+    .trend-legend { flex-wrap: wrap; }
 
     /* 手机端适配 */
     @media (max-width: 600px) {

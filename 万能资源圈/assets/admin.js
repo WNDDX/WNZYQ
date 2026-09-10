@@ -2463,14 +2463,104 @@
     variantCancel.addEventListener('click', function () { variantDraftPending = false; variantMask.classList.remove('open'); });
     variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = true; variantDraftFor = state.editingVariantId; variantMask.classList.remove('open'); } });
 
-    function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? String(Number(p[2])) : s; } // R52：图表标签只显号数（用户要求去掉月份）    // ---------- 折线图渲染 ----------
-    function renderLineChart(trend) {
+    function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? String(Number(p[2])) : s; } // R52：图表标签只显号数（用户要求去掉月份）
+    // R62：悬浮提示的时间标签——小时数据（1天档）加「时」，日期数据显示「几月几日」
+    function fmtPointLabel(day) {
+      var s = String(day == null ? '' : day);
+      if (s.indexOf('-') >= 0) { var p = s.split('-'); if (p.length >= 3) return Number(p[1]) + '月' + Number(p[2]) + '日'; return s; }
+      var n = Number(s); return (isNaN(n) ? s : n) + '时';
+    }
+
+    // ---------- R59：折线图悬浮提示 ----------
+    // 鼠标移到折线图任意位置：取最近数据点，画竖参考线 + 数值框（本期三指标具体数，有上期时括号并列上期值）
+    var SVG_NS = 'http://www.w3.org/2000/svg';
+    var lineHover = { svg: null, attached: false, data: null, prev: null, hasPrev: false, stepX: 0, padL: 40, padT: 20, padB: 30, W: 800, H: 200 };
+    function clearLineHover(svg) {
+      var g = svg.querySelector('#lhGroup');
+      if (g && g.parentNode) g.parentNode.removeChild(g);
+    }
+    function drawLineHover(svg, i) {
+      clearLineHover(svg);
+      var d = lineHover.data[i]; if (!d) return;
+      var p = lineHover.prev;
+      var g = document.createElementNS(SVG_NS, 'g');
+      g.setAttribute('id', 'lhGroup');
+      var px = lineHover.padL + i * lineHover.stepX;
+      var yTop = lineHover.padT, yBot = lineHover.H - lineHover.padB;
+      // 竖参考线（跟随最近数据点）
+      var ln = document.createElementNS(SVG_NS, 'line');
+      ln.setAttribute('x1', px); ln.setAttribute('x2', px);
+      ln.setAttribute('y1', yTop); ln.setAttribute('y2', yBot);
+      ln.setAttribute('stroke', '#c3ccd9'); ln.setAttribute('stroke-width', '1'); ln.setAttribute('stroke-dasharray', '3 3');
+      g.appendChild(ln);
+      // 数值框内容：点标签（R62：小时加「时」/日期显「几月几日」，居中）+ 三条指标（各用系列色）
+      var lines = [{ text: fmtPointLabel(d.day), color: '#555', center: true }];
+      [
+        { name: '浏览', key: 'views', color: '#1E88E5' },
+        { name: '咨询客服', key: 'contacts', color: '#ff9900' },
+        { name: '解锁', key: 'resource_unlocks', color: '#4CAF50' }
+      ].forEach(function (s) {
+        var txt = s.name + ': ' + (d[s.key] || 0);
+        if (lineHover.hasPrev && p && p[i]) txt += '（上期 ' + (p[i][s.key] || 0) + '）';
+        lines.push({ text: txt, color: s.color });
+      });
+      // 框位置：参考线右侧，右侧放不下翻到左侧
+      var boxW = 150, boxH = 20 + lines.length * 16;
+      var bx = px + 8;
+      if (bx + boxW > lineHover.W - 10) bx = px - 8 - boxW;
+      if (bx < 4) bx = 4;
+      var by = yTop + 2;
+      var rect = document.createElementNS(SVG_NS, 'rect');
+      rect.setAttribute('x', bx); rect.setAttribute('y', by);
+      rect.setAttribute('width', boxW); rect.setAttribute('height', boxH);
+      rect.setAttribute('rx', 4);
+      rect.setAttribute('fill', 'rgba(255,255,255,0.96)');
+      rect.setAttribute('stroke', '#d8dee8');
+      g.appendChild(rect);
+      lines.forEach(function (l, li) {
+        var t = document.createElementNS(SVG_NS, 'text');
+        if (l.center) { // R62：时间行居中（框宽中点）
+          t.setAttribute('x', bx + boxW / 2); t.setAttribute('text-anchor', 'middle');
+        } else {
+          t.setAttribute('x', bx + 8);
+        }
+        t.setAttribute('y', by + 18 + li * 16);
+        t.setAttribute('font-size', '11');
+        t.setAttribute('fill', l.color);
+        if (l.center) t.setAttribute('font-weight', '600');
+        t.textContent = l.text;
+        g.appendChild(t);
+      });
+      svg.appendChild(g);
+    }
+    function ensureLineHover(svg) {
+      if (lineHover.svg === svg && lineHover.attached) return;
+      lineHover.svg = svg; lineHover.attached = true;
+      // svg 元素本身不重建（每轮只重设 innerHTML），监听挂一次即可
+      svg.addEventListener('mousemove', function (evt) {
+        if (!lineHover.data || !lineHover.data.length) return;
+        var rect = svg.getBoundingClientRect();
+        var scale = (rect.width || lineHover.W) / lineHover.W;
+        var x = (evt.clientX - rect.left) / (scale || 1);
+        var i = lineHover.stepX > 0 ? Math.round((x - lineHover.padL) / lineHover.stepX) : 0;
+        if (i < 0) i = 0;
+        if (i > lineHover.data.length - 1) i = lineHover.data.length - 1;
+        drawLineHover(svg, i);
+      });
+      svg.addEventListener('mouseleave', function () { clearLineHover(svg); });
+    }
+
+    // ---------- 折线图渲染 ----------
+    function renderLineChart(trend, prev) {
       var svg = document.getElementById('lineSvg');
       if (!svg || !trend || !trend.length) { svg.innerHTML = ''; return; }
       var W = 800, H = 200, padL = 40, padR = 20, padT = 20, padB = 30;
       var chartW = W - padL - padR, chartH = H - padT - padB;
+      // R58：上期数据（折线图环比）——等长对齐才画；量纲同时计入上期，保证虚线不出顶
+      var hasPrev = !!(prev && prev.length === trend.length);
       var maxVal = 1;
       trend.forEach(function (d) { maxVal = Math.max(maxVal, d.views, d.contacts, d.resource_unlocks || 0); });
+      if (hasPrev) prev.forEach(function (d) { maxVal = Math.max(maxVal, d.views, d.contacts, d.resource_unlocks || 0); });
       maxVal = Math.ceil(maxVal / 5) * 5 || 5;
       var stepX = trend.length > 1 ? chartW / (trend.length - 1) : 0;
 
@@ -2494,6 +2584,20 @@
           html += '<text x="' + px + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#999">' + label + '</text>';
         }
       });
+      // R58：上期三条虚线（同色 35% 透明、dash 6 4）——画在实线前面，本期实线覆盖在上层；悬浮 title 显示上期值
+      if (hasPrev) {
+        var seriesPrev = [
+          { key: 'views', color: '#1E88E5', name: '浏览' },
+          { key: 'contacts', color: '#ff9900', name: '咨询客服' },
+          { key: 'resource_unlocks', color: '#4CAF50', name: '资源码解锁' }
+        ];
+        seriesPrev.forEach(function (s) {
+          var pPrev = '';
+          prev.forEach(function (d, i) { var p = pt(i, d[s.key] || 0); pPrev += (i === 0 ? 'M' : 'L') + p.x + ',' + p.y + ' '; });
+          html += '<path d="' + pPrev + '" fill="none" stroke="' + s.color + '" stroke-width="2" stroke-dasharray="6 4" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"><title>' + s.name + '(上期)</title></path>';
+        });
+        // R61：本期/上期说明移到图下方 line-legend（不再画在 SVG 右上角）
+      }
       // 浏览折线
       var pathV = '';
       trend.forEach(function (d, i) { var p = pt(i, d.views); pathV += (i === 0 ? 'M' : 'L') + p.x + ',' + p.y + ' '; });
@@ -2512,10 +2616,16 @@
         var pc = pt(i, d.contacts);
         var pr = pt(i, d.resource_unlocks || 0);
         html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="3.5" fill="#fff" stroke="#1E88E5" stroke-width="2"><title>浏览: ' + d.views + '</title></circle>';
-        html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="3.5" fill="#fff" stroke="#ff9900" stroke-width="2"><title>联系: ' + d.contacts + '</title></circle>';
+        html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="3.5" fill="#fff" stroke="#ff9900" stroke-width="2"><title>咨询客服: ' + d.contacts + '</title></circle>';
         html += '<circle cx="' + pr.x + '" cy="' + pr.y + '" r="3.5" fill="#fff" stroke="#4CAF50" stroke-width="2"><title>资源码解锁: ' + (d.resource_unlocks || 0) + '</title></circle>';
       });
       svg.innerHTML = html;
+      // R59：记录本轮渲染数据/几何，并给 svg 挂悬浮提示（mousemove 最近点 → 参考线+数值框）
+      lineHover.data = trend;
+      lineHover.prev = hasPrev ? prev : null;
+      lineHover.hasPrev = hasPrev;
+      lineHover.stepX = stepX;
+      ensureLineHover(svg);
     }
 
     // ---------- 导出 CSV ----------
@@ -2615,6 +2725,149 @@
     }
 
     // ---------- 数据统计 ----------
+    // R60：环比小字全量百分比（含资源码解锁卡）——上期为 0 且本期有量时按从零起算显示 ↑100%（不再显示「新增」）；
+    // 悬浮 title 仍显示上期具体数（上期为 0 时 title 也能看出来）
+    function fmtStatDelta(cur, prev) {
+      if (prev === 0 && cur === 0) return { text: '0%', cls: 'flat' };
+      if (prev === 0) return { text: '↑100%', cls: 'up' };
+      var pct = Math.round((cur - prev) / prev * 100);
+      if (pct === 0) return { text: '0%', cls: 'flat' };
+      return { text: (pct > 0 ? '↑' : '↓') + Math.abs(pct) + '%', cls: pct > 0 ? 'up' : 'down' };
+    }
+
+    // R57：柱状图公共渲染——每列左右两组：本期实色柱 + 上期浅色半透明柱；列顶涨跌箭头（以浏览为主指标），
+    // 悬浮显示本期/上期具体数字。loadStats 与 applyStatsDays 共用，避免两处分叉
+    function renderTrendBars(trendData, prevData) {
+      var trendBox = document.getElementById('trendBars');
+      trendBox.innerHTML = '';
+      // R70：柱状图高度与折线图统一（以折线为准）——读折线 svg 实际渲染高同步容器与柱区（--barZone）
+      // 初次渲染时统计面板可能尚未显示（svg 布局为瞬时小值），用 ResizeObserver 监听 svg 尺寸稳定/变化时再同步（含窗口缩放）
+      var lineSvgEl = document.getElementById('lineSvg');
+      var syncBarHeight = function (el, box) {
+        var h2 = el ? el.getBoundingClientRect().height : 0;
+        if (h2 >= 100) {
+          box.style.height = h2 + 'px';
+          box.style.setProperty('--barZone', Math.max(60, Math.round(h2) - 24 - 12) + 'px');
+          return true;
+        }
+        return false;
+      };
+      syncBarHeight(lineSvgEl, trendBox);
+      if (lineSvgEl && !lineSvgEl.__barHObserved) {
+        lineSvgEl.__barHObserved = true;
+        if (window.ResizeObserver) {
+          new ResizeObserver(function () {
+            syncBarHeight(document.getElementById('lineSvg'), document.getElementById('trendBars'));
+          }).observe(lineSvgEl);
+        }
+      }
+      var hasPrev = !!(prevData && prevData.length === trendData.length);
+      var maxVal = 1;
+      trendData.forEach(function (d, i) {
+        // R66：与折线图严格同口径——量纲同时计入 resource_unlocks 与上期数据，
+        // 保证两图左侧网格刻度数值完全一致（用户要求严谨同步）
+        maxVal = Math.max(maxVal, d.views || 0, d.contacts || 0, d.resource_unlocks || 0);
+        if (hasPrev) { var p = prevData[i] || {}; maxVal = Math.max(maxVal, p.views || 0, p.contacts || 0, p.resource_unlocks || 0); }
+      });
+      // R66：maxVal 取整到 5 的倍数——与折线图同口径，两图网格刻度数值一致
+      maxVal = Math.ceil(maxVal / 5) * 5 || 5;
+      // R66：灰色网格线 + 左侧数字刻度（折线图同款：#e8e8e8 横线、#999 数字、4 格 5 条）
+      var grid = document.createElement('div');
+      grid.className = 'trend-grid';
+      var gridHtml = '';
+      for (var g = 0; g <= 4; g++) {
+        var gPct = (100 / 4) * g;
+        var gVal = Math.round((maxVal / 4) * g);
+        gridHtml += '<div class="tg-line" style="bottom:' + gPct + '%"><span class="tg-num">' + gVal + '</span></div>';
+      }
+      grid.innerHTML = gridHtml;
+      trendBox.appendChild(grid);
+      trendData.forEach(function (d, i) {
+        var col = document.createElement('div');
+        col.className = 'trend-col';
+        var wrap = document.createElement('div');
+        wrap.className = 'trend-bar-wrap';
+        // R59：悬浮 title 同时给本期与上期的具体数（悬浮任一根柱都能看到对比）
+        // R62：title 首行加时间——小时数据（1天档）「N时」、日期数据「几月几日」
+        function mkGroup(data, ghost, other, timeLabel) {
+          var g = document.createElement('div');
+          g.className = 'trend-bar-group';
+          var tHead = timeLabel ? (timeLabel + '\n') : '';
+          // R65：对比上期关闭时 other 为 null——先安全取值再拼（原来 other.views 在判空前求值会崩）
+          function tag(x) { var v = x || 0; return other ? ((ghost ? '（本期 ' : '（上期 ') + v + '）') : ''; }
+          var barV = document.createElement('div');
+          barV.className = 'trend-bar view' + (ghost ? ' ghost' : '');
+          barV.style.height = ((data.views || 0) / maxVal * 100) + '%';
+          barV.title = tHead + '浏览' + (ghost ? '(上期)' : '') + ': ' + (data.views || 0) + tag(other && other.views);
+          var barC = document.createElement('div');
+          barC.className = 'trend-bar contact' + (ghost ? ' ghost' : '');
+          barC.style.height = ((data.contacts || 0) / maxVal * 100) + '%';
+          barC.title = tHead + '咨询客服' + (ghost ? '(上期)' : '') + ': ' + (data.contacts || 0) + tag(other && other.contacts);
+          g.appendChild(barV);
+          g.appendChild(barC);
+          return g;
+        }
+        // R58：箭头放进本期组内第一个位置（浏览柱上方）——组是 column 底对齐，箭头自然贴柱顶、跟随柱高
+        var timeLabel = fmtPointLabel(d.day);
+        var curGroup = mkGroup(d, false, hasPrev ? (prevData[i] || null) : null, timeLabel);
+        if (hasPrev) {
+          // 涨跌箭头：以浏览为主指标，悬浮给出浏览/咨询客服两行的上期→本期
+          var pv = prevData[i] || {};
+          var dv = (d.views || 0) - (pv.views || 0);
+          var dc = (d.contacts || 0) - (pv.contacts || 0);
+          var ar = document.createElement('div');
+          ar.className = 'trend-arrow ' + (dv > 0 ? 'up' : dv < 0 ? 'down' : 'flat');
+          ar.textContent = dv > 0 ? '▲' : dv < 0 ? '▼' : '▬';
+          ar.title = timeLabel + '\n浏览: ' + (pv.views || 0) + ' → ' + (d.views || 0) + '；咨询客服: ' + (pv.contacts || 0) + ' → ' + (d.contacts || 0) + (dc > 0 ? '（涨）' : dc < 0 ? '（降）' : '');
+          curGroup.insertBefore(ar, curGroup.firstChild);
+        }
+        wrap.appendChild(curGroup);
+        if (hasPrev) wrap.appendChild(mkGroup(prevData[i] || {}, true, d, timeLabel));
+        var label = document.createElement('div');
+        label.className = 'trend-label';
+        label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? fmtDay(d.day) : '') : '';
+        col.appendChild(wrap);
+        col.appendChild(label);
+        trendBox.appendChild(col);
+      });
+    }
+
+    // R65：统计卡片渲染（拆成函数，供 loadStats 与「对比上期」开关切换重渲染共用）
+    function renderStatCards(ov, ovp) {
+      var cards = [
+        { label: '资源总数', num: ov.products || 0 },
+        { label: '显示资源', num: ov.online || 0 },
+        { label: '隐藏资源', num: ov.hidden || 0 },
+        { label: '总浏览', num: ov.views || 0, prev: ovp ? (ovp.views || 0) : null },
+        { label: '咨询客服', num: ov.contacts || 0, prev: ovp ? (ovp.contacts || 0) : null },
+        { label: '资源码解锁', num: ov.resource_unlocks || 0, prev: ovp ? (ovp.resource_unlocks || 0) : null },
+      ];
+      var cbox = document.getElementById('statCards');
+      cbox.innerHTML = '';
+      cards.forEach(function (c) {
+        var d = document.createElement('div');
+        d.className = 'stat-card';
+        var n = document.createElement('div');
+        n.className = 'num';
+        n.textContent = c.num;
+        var l = document.createElement('div');
+        l.className = 'label';
+        l.textContent = c.label;
+        d.appendChild(n);
+        d.appendChild(l);
+        // R57：涨跌小字（涨绿降红）——R65：仅「对比上期」开关开启时显示
+        if (state.statsCmpPrev && c.prev !== null && c.prev !== undefined) {
+          var delta = fmtStatDelta(c.num, c.prev);
+          var dl = document.createElement('div');
+          dl.className = 'delta ' + delta.cls;
+          dl.textContent = delta.text;
+          dl.title = '上期: ' + c.prev;
+          d.appendChild(dl);
+        }
+        cbox.appendChild(d);
+      });
+    }
+
     function loadStats(startDate, endDate, force) {
       // R33：默认档为 1 天时，无参调用（首次打开统计页/刷新）自动按"今天"发同口径请求，
       // 与点 1 天按钮行为完全一致（概览/明细/趋势全部单日+按小时），避免默认口径不一致
@@ -2640,74 +2893,38 @@
         }
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var ov = res.overview || {};
-        var cards = [
-          { label: '资源总数', num: ov.products || 0 },
-          { label: '显示资源', num: ov.online || 0 },
-          { label: '隐藏资源', num: ov.hidden || 0 },
-          { label: '总浏览', num: ov.views || 0 },
-          { label: '咨询客服', num: ov.contacts || 0 },
-          { label: '资源码解锁', num: ov.resource_unlocks || 0 },
-        ];
-        var cbox = document.getElementById('statCards');
-        cbox.innerHTML = '';
-        cards.forEach(function (c) {
-          var d = document.createElement('div');
-          d.className = 'stat-card';
-          var n = document.createElement('div');
-          n.className = 'num';
-          n.textContent = c.num;
-          var l = document.createElement('div');
-          l.className = 'label';
-          l.textContent = c.label;
-          d.appendChild(n);
-          d.appendChild(l);
-          cbox.appendChild(d);
-        });
+        // R57：环比——前三个是库存快照（不适用环比），只给后三个流量卡配涨跌小字；
+        // R65：「对比上期」开关关闭时小字不显示（数据仍保存，开关重渲染）
+        var ovp = res.overview_prev || null;
+        state.statsOverview = ov; state.statsOverviewPrev = ovp;
+        renderStatCards(ov, ovp);
 
         // 趋势图（按时间筛选）
         var allTrend = res.trend || []; if (!startDate && !endDate) state.statsTrendAll = allTrend;
+        var allTrendPrev = res.trend_prev || []; if (!startDate && !endDate) state.statsTrendAllPrev = allTrendPrev;
         var days = state.statsDays || 7;
-        var trendData;
+        var trendData, trendPrev;
         if (res.hourly && res.hourly.length) {
           // R29（优化项8）：单日范围（1天档/自定义同日）按小时粒度展示，统计页所有区块同口径（概览/明细/分类均来自同一范围请求）
           trendData = res.hourly.map(function (h) {
             return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks }; // R52：小时图标签去「时」字
           });
+          // R57：1天档的上期=昨日同小时（同形状才能逐柱对比）
+          trendPrev = (res.hourly_prev && res.hourly_prev.length === res.hourly.length) ? res.hourly_prev.map(function (h) {
+            return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
+          }) : null;
         } else {
           trendData = allTrend.slice(-days);
+          trendPrev = allTrendPrev.length ? allTrendPrev.slice(-days) : null;
         }
-        // 保存统计数据到 state，供导出使用
+        // 保存统计数据到 state，供导出与「对比上期」开关重渲染使用
         state.statsTrend = trendData;
+        state.statsTrendPrev = trendPrev || null;
         state.statsByProduct = res.byProduct || [];
-        // 折线图
-        renderLineChart(trendData);
-        // 柱状图
-        var trendBox = document.getElementById('trendBars');
-        trendBox.innerHTML = '';
-        var maxVal = 1;
-        trendData.forEach(function (d, i) { maxVal = Math.max(maxVal, d.views, d.contacts); });
-        trendData.forEach(function (d, i) {
-          var col = document.createElement('div');
-          col.className = 'trend-col';
-          var wrap = document.createElement('div');
-          wrap.className = 'trend-bar-wrap';
-          var barV = document.createElement('div');
-          barV.className = 'trend-bar view';
-          barV.style.height = (d.views / maxVal * 100) + '%';
-          barV.title = '浏览: ' + d.views;
-          var barC = document.createElement('div');
-          barC.className = 'trend-bar contact';
-          barC.style.height = (d.contacts / maxVal * 100) + '%';
-          barC.title = '联系: ' + d.contacts;
-          wrap.appendChild(barV);
-          wrap.appendChild(barC);
-          var label = document.createElement('div');
-          label.className = 'trend-label';
-          label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? fmtDay(d.day) : '') : '';
-          col.appendChild(wrap);
-          col.appendChild(label);
-          trendBox.appendChild(col);
-        });
+        // 折线图（R58：上期虚线；R65：仅开关开启时显示）
+        renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
+        // 柱状图（R57：上期浅色对比柱与涨跌箭头；R65：仅开关开启时显示）
+        renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
 
         // 三个统计表：全量数据（后端仅按 30 天范围过滤，不再截断条数）+ 前端分页（一页 20 条，全系统统一）
         state.statByProduct = res.byProduct || [];
@@ -2833,34 +3050,13 @@
       if (!state.statsTrendAll || !state.statsTrendAll.length) { loadStats(); return; }
       var days = state.statsDays || 7;
       var trendData = state.statsTrendAll.slice(-days);
+      // R57：上期趋势同样取末 N 天（与本期按索引对齐）
+      var allPrev = state.statsTrendAllPrev || [];
+      var trendPrev = allPrev.length ? allPrev.slice(-days) : null;
       state.statsTrend = trendData;
-      renderLineChart(trendData);
-      var trendBox = document.getElementById('trendBars');
-      trendBox.innerHTML = '';
-      var maxVal = 1;
-      trendData.forEach(function (d, i) { maxVal = Math.max(maxVal, d.views, d.contacts); });
-      trendData.forEach(function (d, i) {
-        var col = document.createElement('div');
-        col.className = 'trend-col';
-        var wrap = document.createElement('div');
-        wrap.className = 'trend-bar-wrap';
-        var barV = document.createElement('div');
-        barV.className = 'trend-bar view';
-        barV.style.height = (d.views / maxVal * 100) + '%';
-        barV.title = '浏览: ' + d.views;
-        var barC = document.createElement('div');
-        barC.className = 'trend-bar contact';
-        barC.style.height = (d.contacts / maxVal * 100) + '%';
-        barC.title = '联系: ' + d.contacts;
-        wrap.appendChild(barV);
-        wrap.appendChild(barC);
-        var label = document.createElement('div');
-        label.className = 'trend-label';
-        label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? fmtDay(d.day) : '') : '';
-        col.appendChild(wrap);
-        col.appendChild(label);
-        trendBox.appendChild(col);
-      });
+      state.statsTrendPrev = trendPrev || null;
+      renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
+      renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
       var _ps2 = document.getElementById('panel-stats'); if (_ps2) { _ps2.classList.remove('stats-fade-in'); void _ps2.offsetWidth; _ps2.classList.add('stats-fade-in'); }
     }
 
@@ -3369,6 +3565,24 @@ refreshCatCnts();
     bindFieldClear(vName);
 
     // ---------- 统计时间筛选 ----------
+    // R65：「对比上期」开关（默认关闭只显示本期）——点击切换后重渲染卡片/折线/柱状与图例，不重新发请求
+    state.statsCmpPrev = false;
+    var _cmpBtn = document.getElementById('cmpPrevBtn');
+    if (_cmpBtn) _cmpBtn.addEventListener('click', function () {
+      state.statsCmpPrev = !state.statsCmpPrev;
+      this.classList.toggle('cmp-on', state.statsCmpPrev);
+      // R69：文字随状态切换——关闭态=对比上期（点击开启对比），开启态=显示本期（点击退回只看本期）；配色：蓝=应用键色、开启态淡蓝
+      this.textContent = state.statsCmpPrev ? '显示本期' : '对比上期';
+      var _ll = document.querySelector('.line-legend'); if (_ll) _ll.classList.toggle('show-prev', state.statsCmpPrev);
+      var _tl = document.querySelector('.trend-legend'); if (_tl) _tl.classList.toggle('show-prev', state.statsCmpPrev);
+      // 卡片小字
+      if (state.statsOverview) renderStatCards(state.statsOverview, state.statsOverviewPrev || null);
+      // 折线/柱状（数据已存 state，直接重渲染）
+      if (state.statsTrend && state.statsTrend.length) {
+        renderLineChart(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null);
+        renderTrendBars(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null);
+      }
+    });
     document.querySelectorAll('.time-btn[data-days]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         document.querySelectorAll('.time-btn').forEach(function (b) { b.classList.remove('active'); });

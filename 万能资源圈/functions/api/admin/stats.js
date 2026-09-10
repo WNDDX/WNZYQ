@@ -23,6 +23,15 @@ export async function onRequestGet(context) {
   let effectiveStart = maxStartStr;
   let effectiveEnd = new Date().toISOString().slice(0, 10);
 
+  // R57：环比上期——与当前查询范围等长、紧邻之前的一段（1天档=昨天；默认30天=前30天；自定义N天=前N天）
+  const rangeDays = Math.round((new Date(effectiveEnd) - new Date(effectiveStart)) / 86400000) + 1;
+  const prevEndD = new Date(effectiveStart); prevEndD.setDate(prevEndD.getDate() - 1);
+  const prevStartD = new Date(effectiveStart); prevStartD.setDate(prevStartD.getDate() - rangeDays);
+  const prevStart = prevStartD.toISOString().slice(0, 10);
+  const prevEnd = prevEndD.toISOString().slice(0, 10);
+  const prevDateFilter = ` AND date(stats.created_at) >= ? AND date(stats.created_at) <= ?`;
+  const prevDateParams = [prevStart, prevEnd];
+
   // stats表单表用的日期过滤（明确指定 stats.created_at）
   // 安全修复：日期值一律通过 SQL 绑定参数（?）传入，不再拼接进 SQL 字符串
   let statsDateFilter, statsDateParams;
@@ -40,7 +49,7 @@ export async function onRequestGet(context) {
   // 性能修复：原先 10+ 个 D1 查询逐个 await 串行执行（每次往返 50-200ms，累计 1-2.5 秒），
   // 现改为 Promise.all 全并行，总耗时 ≈ 最慢单查询，统计接口从 2.35s 级降到亚秒级
   const byProductDateFilter = statsDateFilter.replace(/stats\.created_at/g, 's.created_at');
-  const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, byProductRes, trendRowsRes, byCategoryRes, recentRes, hourlyRowsRes] = await Promise.all([
+  const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, byProductRes, trendRowsRes, byCategoryRes, recentRes, hourlyRowsRes, prevTotalRes, prevTrendRes, prevHourlyRes] = await Promise.all([
     count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
     // 两态口径：显示 = is_online=1 且未隐藏；隐藏 = 其余全部（历史遗留数据统一归入隐藏）
     count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0'),
@@ -76,12 +85,12 @@ export async function onRequestGet(context) {
        GROUP BY c.id
        ORDER BY c.sort ASC, c.id ASC`
     ).bind(...statsDateParams).all(),
-    // 浏览记录：不再 LIMIT 20（前端翻页每页 20 条），仅保留 30 天范围限制（按需求只查近 30 天，不删历史数据）
+    // 浏览记录：不再 LIMIT 20（前端翻页每页 20 条）；R73：查询窗口 30→60 天，与全系统 60 天保留统一（保留的都查得到）
     env.DB.prepare(
       `SELECT s.id, s.type, s.created_at, p.title, p.img
        FROM stats s
        LEFT JOIN products p ON p.id = s.product_id
-       WHERE s.created_at >= datetime('now', '-30 days')
+       WHERE s.created_at >= datetime('now', '-60 days')
        ORDER BY s.id DESC`
     ).all(),
     // R29（优化项8）：单日范围时按小时聚合（1天档/自定义同日选择走这里，与趋势同口径 UTC）
@@ -93,6 +102,29 @@ export async function onRequestGet(context) {
            GROUP BY hour, stats.type ORDER BY hour ASC`
         ).bind(effectiveStart).all()
       : Promise.resolve(null),
+    // R57：上期总量（三项流量指标一次聚合）
+    env.DB.prepare(
+      `SELECT stats.type, COUNT(*) AS cnt
+       FROM stats
+       WHERE stats.type IN ('view','contact','resource_unlock')${prevDateFilter}
+       GROUP BY stats.type`
+    ).bind(...prevDateParams).all(),
+    // R57：上期按日趋势（与当前 trend 同形状，按索引对齐）
+    env.DB.prepare(
+      `SELECT date(stats.created_at) AS day, stats.type, COUNT(*) AS cnt
+       FROM stats
+       WHERE 1=1${prevDateFilter}
+       GROUP BY day, stats.type ORDER BY day ASC`
+    ).bind(...prevDateParams).all(),
+    // R57：单日范围时上期（昨日）按小时聚合（与 hourly 同形状）
+    effectiveStart === effectiveEnd
+      ? env.DB.prepare(
+          `SELECT strftime('%H', stats.created_at) AS hour, stats.type, COUNT(*) AS cnt
+           FROM stats
+           WHERE date(stats.created_at) = ?
+           GROUP BY hour, stats.type ORDER BY hour ASC`
+        ).bind(prevEnd).all()
+      : Promise.resolve(null),
   ]);
 
   const overview = {
@@ -102,6 +134,13 @@ export async function onRequestGet(context) {
     views: oViews,
     contacts: oContacts,
     resource_unlocks: oUnlocks,
+  };
+  // R57：上期总量（供概览卡「较上期 ±x%」小字）
+  const prevTotals = (prevTotalRes && prevTotalRes.results) || [];
+  const overview_prev = {
+    views: prevTotals.find((r) => r.type === 'view')?.cnt || 0,
+    contacts: prevTotals.find((r) => r.type === 'contact')?.cnt || 0,
+    resource_unlocks: prevTotals.find((r) => r.type === 'resource_unlock')?.cnt || 0,
   };
   const byProduct = byProductRes.results || [];
   const trendRows = trendRowsRes.results || [];
@@ -115,6 +154,21 @@ export async function onRequestGet(context) {
     const day = d.toISOString().slice(0, 10);
     const dayRows = trendRows.filter((r) => r.day === day);
     trend.push({
+      day,
+      views: dayRows.find((r) => r.type === 'view')?.cnt || 0,
+      contacts: dayRows.find((r) => r.type === 'contact')?.cnt || 0,
+      resource_unlocks: dayRows.find((r) => r.type === 'resource_unlock')?.cnt || 0,
+    });
+  }
+
+  // R57：上期日趋势——按当前范围逐日偏移到上期同位置（与 trend 一一对应，供柱状图浅色对比柱）
+  const prevTrendRows = (prevTrendRes && prevTrendRes.results) || [];
+  const trend_prev = [];
+  for (let i = 0; i < trend.length; i++) {
+    const d = new Date(prevStartD); d.setDate(d.getDate() + i);
+    const day = d.toISOString().slice(0, 10);
+    const dayRows = prevTrendRows.filter((r) => r.day === day);
+    trend_prev.push({
       day,
       views: dayRows.find((r) => r.type === 'view')?.cnt || 0,
       contacts: dayRows.find((r) => r.type === 'contact')?.cnt || 0,
@@ -143,9 +197,29 @@ export async function onRequestGet(context) {
     }
   }
 
+  // R57：单日范围时组装上期（昨日）24 小时序列（与 hourly 同形状，供柱状图对比）
+  let hourly_prev = null;
+  if (prevHourlyRes) {
+    const prevHourRows = prevHourlyRes.results || [];
+    hourly_prev = [];
+    for (let h = 0; h < 24; h++) {
+      const hh = String(h).padStart(2, '0');
+      const rows = prevHourRows.filter((r) => r.hour === hh);
+      hourly_prev.push({
+        hour: hh,
+        views: rows.find((r) => r.type === 'view')?.cnt || 0,
+        contacts: rows.find((r) => r.type === 'contact')?.cnt || 0,
+        resource_unlocks: rows.find((r) => r.type === 'resource_unlock')?.cnt || 0,
+      });
+    }
+  }
+
   return new Response(JSON.stringify({
     ok: true,
     hourly,
+    hourly_prev,
+    overview_prev,
+    trend_prev,
     overview,
     byProduct: byProduct.map((r) => ({
       id: r.id, title: r.title, is_online: r.is_online, is_hidden: r.is_hidden,

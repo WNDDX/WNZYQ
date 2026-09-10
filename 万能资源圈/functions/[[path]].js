@@ -16,7 +16,10 @@
 const HTML_HEADERS = { 'content-type': 'text/html; charset=utf-8' };
 
 // 已知页面：clean URL 名 → 实际文件名
-const PAGES = { index: 'index.html', shop: 'shop.html', admin: 'admin.html' };
+// R63：error 恢复直达页面——/error 作为 sitemap 列出的正式地址返回 200（用户要求 sitemap 加 /error），
+// /error.html 直接访问也兼容 200；除此之外的任何未知路径仍统一走 serveError 返回 404 + 错误页，
+// 「全页面的报错都处理」语义不变（404 状态码 + 错误页内容兜底）。
+const PAGES = { index: 'index.html', shop: 'shop.html', admin: 'admin.html', error: 'error.html', 'error.html': 'error.html' };
 
 /** 统一返回错误页（HTTP 404） */
 async function serveError(context) {
