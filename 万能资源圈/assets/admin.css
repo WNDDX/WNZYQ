@@ -210,6 +210,8 @@
     }
     .logout-btn:hover { transform: scale(0.97); opacity: 0.9; }
     .logout-btn:active { background: #fff; color: var(--blue1); transform: scale(0.94); }
+    /* R39：退出确认弹窗打开期间退出键变白——复用资源页顶栏分享键的 .active 白底蓝字观感（ui-common.css .tab.active） */
+    .logout-btn.active { background: #fff; color: var(--blue1); font-weight: 600; transform: none; opacity: 1; }
     .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
     .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -462,16 +464,25 @@
     .input-row.has-upload .input-upload-btn { display: inline-flex; }
     /* 弹窗关闭（open 移除）后按钮隐藏——三种关闭路径（确定/关闭/点蒙层）都不用各改一遍 */
     #inputMask:not(.open) .input-upload-btn { display: none !important; }
-    /* 手机端：上传按钮换行也不拆散整行结构（按钮文字缩一点保证同行放下） */
+    /* 手机端：上传按钮换行也不拆散整行结构（按钮文字缩一点保证同行放下）；
+       新增类型按钮同步同款缩小，保持"除文字外一模一样"（R40） */
     @media (max-width: 600px) {
       .input-row { flex-wrap: wrap; }
       .input-row .input-upload-btn { font-size: 12px; padding: 0 12px; }
     }
-    /* R36：新增类型按钮——用户要求复用"上传本地图片"那种蓝色按键效果（与表单主按钮统一） */
+    /* R40：新增类型按钮——与「上传本地图片」按钮一模一样（除文字）。
+       值全部取自实测渲染值：纯蓝底 var(--blue1)、白字 13px/500、8px 圆角、
+       0 16px 内边距、40px 高、normal 字距（R36 旧版渐变小键与上传键不一致，本轮对齐） */
     .variant-add {
-      border: none; background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
-      color: #fff; padding: 6px 16px; border-radius: 6px;
-      font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+      border: none; background: var(--blue1);
+      color: #fff; padding: 0 16px; height: 40px;
+      box-sizing: border-box; border-radius: 8px;
+      font-size: 13px; font-weight: 500; letter-spacing: normal;
+      white-space: nowrap; margin-bottom: 0;
+    }
+    /* 手机端与上传按钮同步缩小（必须位于上面的主规则之后——同优先级后者覆盖前者） */
+    @media (max-width: 600px) {
+      .variant-add { font-size: 12px; padding: 0 12px; }
     }
     .variant-item {
       background: #f7faff; border: 1px solid #e3eefc; border-radius: 8px;

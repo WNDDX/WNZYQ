@@ -1214,8 +1214,11 @@
         preview.classList.add('show');
         preview.onerror = function () { this.onerror = null; this.dataset.fh = '1'; this.src = EXC_PLACEHOLDER; };
       } else {
-        preview.classList.remove('show');
-        try { preview.removeAttribute('src'); } catch (e) {}
+        // R41：没填链接也显示感叹号占位符（与加载失败显示完全一致，用户要求）
+        preview.onerror = null;
+        preview.dataset.fh = '1';
+        preview.src = EXC_PLACEHOLDER;
+        preview.classList.add('show');
       }
     }
     fImg.addEventListener('input', updateImgPreview);
@@ -3335,12 +3338,24 @@ refreshCatCnts();
 
     // ---------- 退出 ----------
     logoutBtn.addEventListener('click', function () {
+      logoutBtn.classList.add('active'); // R39：确认弹窗打开期间变白（复用资源页顶栏分享键 .active 白底蓝字）
       showConfirm('退出登录', '确定要退出管理页吗？', function () {
         api('admin/logout', { method: 'POST' });
         localStorage.removeItem(TOKEN_KEY);
         showLogin();
       });
     });
+    // R39：确认弹窗关闭后移除退出键白底（与弹窗开合同步；机制复用资源页 R20 顶栏分享/客服键的 observer+兜底轮询）
+    (function () {
+      function sync() {
+        var cm = document.getElementById('confirmMask');
+        if (!cm || !cm.classList.contains('open')) logoutBtn.classList.remove('active');
+      }
+      var mo = new MutationObserver(sync);
+      var cm = document.getElementById('confirmMask');
+      if (cm) mo.observe(cm, { attributes: true, attributeFilter: ['class'] });
+      setInterval(sync, 800); // 兜底轮询：observer 意外失效时也能恢复
+    })();
 
     // ---------- 资源搜索 ----------
     document.getElementById('adminSearch').addEventListener('input', function () {
