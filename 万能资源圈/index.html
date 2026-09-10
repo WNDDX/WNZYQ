@@ -19,7 +19,8 @@
   <link rel="stylesheet" href="/assets/ui-common.css">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
-<meta name="theme-color" content="#1E88E5">
+<meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e2a4f" media="(prefers-color-scheme: dark)">
 <link rel="preload" href="/assets/images/logo.png" as="image">
 <style>
 :root{
@@ -30,17 +31,11 @@
     --green:#01C000;
     --cyan:#008C8C;
     --red:#ff4444;
-    --text:#222;
-    --text-light:#666;
-    --bg:#fff;
-    --bg-light:#f3f4f6;
+    /* R50：暗色变量统一在 ui-common.css；此处仅覆盖品牌渐变为夜间深蓝 */
 }
-[data-theme="dark"]{
-    --text:#eee;
-    --text-light:#aaa;
-    --bg:#1a1a2e;
-    --bg-light:#2a2a3e;
-}
+/* R50：暗色模式——页面渐变换夜间深蓝（按钮白字/白边在深蓝上依旧清晰） */
+[data-theme="dark"]{ --blue1:#0e2a4f; --blue2:#15365f; --blue3:#1c2c4e; }
+/* R49：暗色变量块为死代码（全站 0 处 var(--bg/--text) 引用，暗色模式实际不存在），已删——待将来真做暗色时按新颜色体系重写 */
 *{
     -webkit-tap-highlight-color: transparent;
     margin: 0;
@@ -110,7 +105,7 @@ body{
     display: none;
     align-items: center;
     justify-content: center;
-    color: #888;
+    color: var(--text-faint);
 }
 .page-title{
     color: #ffffff;
@@ -182,7 +177,7 @@ body{
     padding: 16px;
 }
 .modal-box{
-    background: #ffffff;
+    background: var(--card-bg);
     border-radius: 14px;
     padding: 26px 22px;
     position: relative; max-width: 480px; max-height: 84vh; overflow-y: auto;
@@ -191,7 +186,7 @@ body{
 }
 .modal-title{
     font-size: 22px;
-    color: #222222;
+    color: var(--text);
     margin-bottom: 16px;
     letter-spacing: 1.3px;
     padding: 0 34px;
@@ -200,20 +195,20 @@ body{
 .qrcode-wrap{
     width: 250px;
     height: 250px;
-    border: 1px solid #eee;
+    border: 1px solid var(--border);
     margin: 0 auto 14px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center; border-radius: 12px; overflow: hidden; /* R42：二维码容器圆角（全站图框统一；原 6px 升级统一 12px） */
-    background: #f3f4f6;
+    background: var(--bg-light);
 }
 .modal-qrcode{
     max-width: 100%;
     max-height: 100%;
     object-fit: contain; border-radius: 8px; /* R42：二维码图圆角 */
 }
-img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
+img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;}
 /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
 .modal-box img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; }
 /* R21：弹窗内视频固定 16:9 占位，加载前后尺寸一致，弹窗不跳动（与资源页/管理页统一） */
@@ -224,11 +219,11 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
     display: none;
     align-items: center;
     justify-content: center;
-    color: #999;
+    color: var(--text-faint);
 }
 .modal-tip{
     font-size: 16px;
-    color: #666666;
+    color: var(--text-light);
     margin-bottom: 16px;
     letter-spacing: 0.9px;
 }
@@ -255,7 +250,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 .prt-icon{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.6);border-top-color:#fff;border-radius:50%;animation:prtspin .8s linear infinite;}
 @keyframes prtspin{to{transform:rotate(360deg);}}
 /* 弹窗右上角关闭按钮（与资源页/管理页一致） */
-.modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.10s ease;line-height:1;}
+.modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background: var(--bg-light);color: var(--text-light);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.10s ease;line-height:1;}
 .modal-close-x:hover{background:#ff4444;color:#fff;transform:scale(0.97);opacity:0.9;}
 .modal-close-x:active{transform:scale(0.94);opacity:0.8;filter:brightness(0.9);}
 /* === 弹窗横向溢出防护：禁止底部滑轮 === */
@@ -283,18 +278,21 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 </style>
+  <!-- R55：搜索引擎收录策略 -->
+  <meta name="robots" content="index,follow">
+  <!-- 首页：允许收录 -->
 </head>
 <body>
 <div class="wrap">
     <div class="logo-wrap">
-        <a class="logo-box" href="shop" title="进入资源页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
+        <div class="logo-box"><!-- R53：logo 去链接（特效 hover/active/进场动画全保留） -->
             <img class="logo-img" id="logoImage" src="/assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="this.style.opacity='1';var p=this.parentNode;if(p){p.style.opacity='1';if(!p.classList.contains('logo-enter'))p.classList.add('logo-enter');}this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';">
             <div class="logo-fail-icon" id="logoFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
             </div>
-        </a>
+        </div>
     </div>
     <div class="page-title">万能资源圈・导航</div>
 
@@ -474,10 +472,6 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// 暗色模式（跟随系统）
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-}
 
 // PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34）
 

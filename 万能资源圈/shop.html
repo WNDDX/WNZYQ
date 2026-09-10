@@ -19,10 +19,14 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="stylesheet" href="/assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
-  <meta name="theme-color" content="#1E88E5">
+  <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)">
   <link rel="preload" href="/assets/images/logo.png" as="image">
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <link rel="stylesheet" href="/assets/shop.css">
+  <!-- R55：搜索引擎收录策略 -->
+  <meta name="robots" content="index,follow">
+  <!-- 资源页：允许收录（详情是弹窗无独立 URL，sitemap 只列 / 与 /shop） -->
 </head>
 
 <body>
@@ -108,7 +112,19 @@
   </div>
 
   <!-- ============ 资源网格 ============ -->
-  <main class="product-grid" id="productGrid"></main>
+  <!-- R55：骨架屏——数据加载前占位（与真实卡片同排版），renderProducts 首次渲染时自动替换；搜索/切分类是在数据已就位后过滤，不会重新出现骨架 -->
+  <main class="product-grid" id="productGrid">
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w70"></div><div class="sk-line w95"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w55"></div><div class="sk-line w90"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w80"></div><div class="sk-line w65"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w62"></div><div class="sk-line w88"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w75"></div><div class="sk-line w92"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w58"></div><div class="sk-line w85"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w78"></div><div class="sk-line w60"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w66"></div><div class="sk-line w93"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w72"></div><div class="sk-line w87"></div></div>
+    <div class="sk-card" aria-hidden="true"><div class="sk-img"></div><div class="sk-line w52"></div><div class="sk-line w91"></div></div>
+  </main>
   <div class="empty-tip" id="emptyTip">
     <div class="empty-icon">📦</div>
     <div class="empty-title" id="emptyTitle">暂无资源</div>

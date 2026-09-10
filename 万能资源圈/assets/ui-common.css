@@ -15,6 +15,26 @@
   --radius: 8px;
   --radius-lg: 14px;
   --gap: 10px;
+
+  /* ===== R50：全站暗色模式变量（亮色值；[data-theme=dark] 覆盖为暗色值） ===== */
+  --bg-page: #f2f7fd;    /* 页面底色 */
+  --bg-light: #f5f7fa;   /* 浅色区块（次级底/占位/灰块） */
+  --card-bg: #ffffff;    /* 卡片/弹窗/输入框/白底组件 */
+  --border: #e8e8e8;     /* 分隔线/描边 */
+  --text: #222;          /* 主文字 */
+  --text-light: #666;    /* 次要文字 */
+  --text-faint: #999;    /* 提示/占位文字（placeholder/hint） */
+  --hover-bg: #f0f7ff;   /* 悬停浅蓝底 */
+}
+[data-theme="dark"] {
+  --bg-page: #14151f;
+  --bg-light: #1b1d29;
+  --card-bg: #20232f;
+  --border: #2e3348;
+  --text: #e8eaf0;
+  --text-light: #9aa0b5;
+  --text-faint: #7a8098;
+  --hover-bg: #1d2b45;
 }
 
 /* 隐藏所有滚动条（页面/弹窗/列表），滚动手势照常可用 */
@@ -28,14 +48,14 @@
 .kf-mask.open { display: flex; animation: kfMaskIn 0.22s ease; }
 @keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
 .kf-box {
-  background: #fff; border-radius: var(--radius-lg); padding: 26px 22px; position: relative;
+  background: var(--card-bg); border-radius: var(--radius-lg); padding: 26px 22px; position: relative;
   max-width: 480px; width: 100%; max-height: 84vh; overflow-y: auto; text-align: center;
   animation: kfBoxIn 0.25s ease;
 }
 @keyframes kfBoxIn { from { opacity: 0; } to { opacity: 1; } }
-.kf-title { font-size: 22px; color: #222; margin-bottom: 16px; letter-spacing: 1.3px; padding: 0 34px; text-align: center; }
+.kf-title { font-size: 22px; color: var(--text); margin-bottom: 16px; letter-spacing: 1.3px; padding: 0 34px; text-align: center; }
 .kf-qr {
-  width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border-soft);
+  width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border); background: var(--bg-light);
   margin: 0 auto 14px; position: relative; display: flex; align-items: center;
   justify-content: center; border-radius: 6px; background: #f3f4f6;
 }
@@ -268,11 +288,11 @@
 .modal-box img, .modal-box video, .kf-box img, .ann-box img, .ann-box video, .preview-box img, .preview-box video {
   max-width: 100%; box-sizing: border-box;
 }
-.m-loading { aspect-ratio: 16 / 9; background: #f5f5f5; border-radius: var(--radius); width: 100%; }
+.m-loading { aspect-ratio: 16 / 9; background: var(--bg-light); border-radius: var(--radius); width: 100%; }
 .m-loading.is-video { background: #000; }
 .modal-box, .ann-box, .kf-box, .preview-box { overflow-x: hidden; }
 /* 富文本内媒体（尺寸未知不锁比例）：统一加载底色，避免加载中空白塌陷的突兀跳动 */
-.modal-detail img, .resource-content img, .ann-body img, .rte-editor img, .variant-detail img, .preview-detail img { background: #f5f5f5; }
+.modal-detail img, .resource-content img, .ann-body img, .rte-editor img, .variant-detail img, .preview-detail img { background: var(--bg-light); }
 .modal-detail video, .resource-content video, .ann-body video, .rte-editor video, .variant-detail video, .preview-detail video { background: #000; }
 
 /* ===== 全站统一加载失败占位图（感叹号）尺寸：固定 16:9 + 最小高度，任何位置都不撑破容器、不引起弹窗高度跳动 ===== */
@@ -294,27 +314,27 @@
 /* R35：翻页主组（上一页/页码/下一页）永不拆散——窄屏整体换行 */
 .uni-pager .pg-main { display: inline-flex; align-items: center; gap: 8px; }
 .uni-pager button.pg-btn {
-  padding: 8px 16px; border: 1px solid var(--blue2, #90CAF9); background: #fff;
+  padding: 8px 16px; border: 1px solid var(--blue2, #90CAF9); background: var(--card-bg);
   color: var(--blue1, #1565c0); border-radius: 20px; cursor: pointer; font-size: 13px;
   -webkit-tap-highlight-color: transparent;
 }
-.uni-pager button.pg-btn:hover:not(:disabled) { background: #E3F2FD; }
+.uni-pager button.pg-btn:hover:not(:disabled) { background: var(--hover-bg); }
 .uni-pager button.pg-btn:disabled { opacity: 0.4; cursor: default; }
-.uni-pager .pg-info { color: #666; font-size: 13px; }
+.uni-pager .pg-info { color: var(--text-light); font-size: 13px; }
 .uni-pager .pg-jump { display: inline-flex; align-items: center; gap: 6px; }
 .uni-pager .pg-jump input {
   width: 52px; padding: 7px 4px; border: 1px solid var(--blue2, #90CAF9); border-radius: 8px;
-  text-align: center; font-size: 13px; box-sizing: border-box; color: #333;
+  text-align: center; font-size: 13px; box-sizing: border-box; color: var(--text);
   -moz-appearance: textfield; appearance: textfield;
 }
 .uni-pager .pg-jump input::-webkit-outer-spin-button,
 .uni-pager .pg-jump input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .uni-pager .pg-jump button {
-  padding: 7px 12px; border: 1px solid var(--blue2, #90CAF9); background: #fff;
+  padding: 7px 12px; border: 1px solid var(--blue2, #90CAF9); background: var(--card-bg);
   color: var(--blue1, #1565c0); border-radius: 8px; cursor: pointer; font-size: 13px;
   -webkit-tap-highlight-color: transparent;
 }
-.uni-pager .pg-jump button:hover { background: #E3F2FD; }
+.uni-pager .pg-jump button:hover { background: var(--hover-bg); }
 @media (max-width: 600px) {
   .uni-pager { gap: 6px; }
   .uni-pager button.pg-btn { padding: 7px 12px; font-size: 12px; }

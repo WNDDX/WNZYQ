@@ -6,20 +6,26 @@
 <title>万能资源圈・错误</title>
 <meta name="description" content="万能资源圈错误提示页。">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#1E88E5">
+<meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e2a4f" media="(prefers-color-scheme: dark)">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="stylesheet" href="/assets/ui-common.css">
 <style>
+:root{--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;}
+/* R50：暗色模式——错误页渐变换夜间深蓝（白底按钮/白字在深蓝上依旧清晰，按钮两种主题下同款） */
+[data-theme="dark"]{--blue1:#0e2a4f;--blue2:#15365f;--blue3:#1c2c4e;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;}
 *,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
-body{background:linear-gradient(180deg,#1E88E5 0%,#64B5F6 48%,#BBDEFB 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+body{background:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 .box{text-align:center;color:#fff;max-width:400px;}
 .code{font-size:38px;font-weight:600;letter-spacing:2.4px;opacity:0.95;margin:0 0 24px; /* R33：与logo间距对称（原上方20+8、下方24不均） */line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中（字距尾隙会使视觉中心偏左） */}
 .title{font-size:24px;font-weight:600;margin-bottom:12px;}
 .desc{font-size:15px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius:25px;text-decoration:none;font-size:16px;font-weight:600;transition:all 0.2s;}
 .btn:hover{transform:scale(1.05);box-shadow:0 4px 15px rgba(0,0,0,0.2);}
-.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 24px;opacity:0;overflow:hidden; /* R33：logo下方24px与大标题下方24px对称 */background:transparent;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease;}.logo:hover{box-shadow:0 0 0 3px rgba(255,255,255,0.45);}.logo:active{transform:scale(0.9);opacity:0.8;}
+.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 24px;opacity:0;overflow:hidden; /* R33：logo下方24px与大标题下方24px对称 */background:transparent;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22); /* R53：logo 无链接但特效全保留（与导航页 logo 同款 hover/active） */text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease,opacity 0.8s ease;}
+.logo:hover{box-shadow:0 0 0 3px rgba(255,255,255,0.45);}
+.logo:active{transform:scale(0.9);opacity:0.8;}
 .logo img{width:100%;height:100%;object-fit:cover;}
 img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
@@ -44,11 +50,13 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 </head>
 <body>
 <div class="box">
-  <a class="logo" href="index" title="返回导航" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))"><img id="errLogo" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></a>
+  <div class="logo"><!-- R51：logo 去掉链接纯展示（跳转由下方「导航页」按钮承担） --><img id="errLogo" alt="万能资源圈" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></div></a>
   <div class="code" id="errorCode">万能资源圈・错误</div>
   <div class="title" id="errorTitle">页面访问异常</div>
-  <div class="desc" id="errorDesc">抱歉！您访问的页面出现了问题<br>①地址有误　②页面已删除　③服务暂不可用<br>请点击【返回导航】继续浏览</div>
-  <a href="index" class="btn" id="errBack">返回导航</a>
+  <div class="desc" id="errorDesc">抱歉！您访问的页面出现了问题<br>①地址有误　②页面已删除　③服务暂不可用<br>可点击【导航页】或【资源页】继续浏览</div>
+  <a href="index" class="btn" id="errBack">导航页</a>
+  <!-- R50：右按钮「资源页」样式完全复用左侧导航页按钮（白底蓝字+同款hover），仅保留间距 -->
+  <a href="shop" class="btn" id="errShop" style="margin-left:14px;">资源页</a>
 </div>
 <script>
 // 根据URL参数显示不同的错误信息
@@ -58,7 +66,7 @@ var errorMap = {
   '400': { title: '请求错误', desc: '你的请求格式不正确，请检查后重试' },
   '401': { title: '未授权访问', desc: '你没有权限访问此页面，请先登录' },
   '403': { title: '禁止访问', desc: '服务器拒绝了你的访问请求' },
-  '404': { title: '页面不存在', desc: '抱歉！您访问的页面出现了问题<br>①地址有误　②页面已删除　③服务暂不可用<br>请点击【返回导航】继续浏览' },
+  '404': { title: '页面访问异常', desc: '抱歉！您访问的页面出现了问题<br>①地址有误　②页面已删除　③服务暂不可用<br>可点击【导航页】或【资源页】继续浏览' },
   '500': { title: '服务器错误', desc: '服务器内部出现错误，请稍后重试' },
   '502': { title: '网关错误', desc: '服务器暂时不可用，请稍后重试' },
   '503': { title: '服务不可用', desc: '服务器正在维护中，请稍后重试' }
@@ -102,23 +110,26 @@ document.addEventListener('error', function (e) {
     };
   }
   var back = document.getElementById('errBack');
-  // 返回导航：探测候选导航页，取第一个能访问的（兼容根部署与子目录部署两种结构）
-  if (back) {
+  var shopBtn = document.getElementById('errShop');
+  // 导航页/资源页按钮：探测候选页面，取第一个能访问的（兼容根部署与子目录部署两种结构）
+  // R50：资源页按钮复用同款探测逻辑，两种部署结构下都能跳对
+  if (back || shopBtn) {
     var here2 = window.location.pathname || '';
-    var candidates = [];
-    if (here2.indexOf('/万能资源圈/') !== -1) {
-      var dir = here2.substring(0, here2.lastIndexOf('/'));
-      candidates.push(dir + '/index', '/万能资源圈/index');
-    } else {
-      candidates.push('/index', '/万能资源圈/index');
+    var dir2 = '';
+    if (here2.indexOf('/万能资源圈/') !== -1) dir2 = here2.substring(0, here2.lastIndexOf('/'));
+    function probe(el, suffixes) {
+      if (!el) return;
+      var candidates = suffixes.map(function (sf) { return dir2 ? dir2 + sf : sf; });
+      (function tryNext(i) {
+        if (i >= candidates.length) { el.href = candidates[0]; return; }
+        fetch(candidates[i], { method: 'GET' }).then(function (r) {
+          if (r && r.ok) { el.href = candidates[i]; }
+          else { tryNext(i + 1); }
+        }).catch(function () { tryNext(i + 1); });
+      })(0);
     }
-    (function tryNext(i) {
-      if (i >= candidates.length) { back.href = candidates[0]; return; }
-      fetch(candidates[i], { method: 'GET' }).then(function (r) {
-        if (r && r.ok) { back.href = candidates[i]; }
-        else { tryNext(i + 1); }
-      }).catch(function () { tryNext(i + 1); });
-    })(0);
+    probe(back, ['/index', '/万能资源圈/index']);
+    probe(shopBtn, ['/shop', '/万能资源圈/shop']);
   }
 })();
 // 下拉刷新（与其它三页统一，静默刷新，不阻塞操作）

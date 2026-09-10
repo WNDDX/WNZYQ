@@ -191,6 +191,18 @@ if ('serviceWorker' in navigator) {
     });
   };
 
+
+  // ===== R50：全站统一暗色模式触发（跟随系统，系统切换实时跟随） =====
+  // 变量体系在 ui-common.css（:root 亮色 / [data-theme=dark] 暗色），四页组件已全部接线；
+  // 亮色时显式设 data-theme="light"（无 CSS 覆盖，仅语义标记）。
+  var __mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+  if (__mq) {
+    var __applyTheme = function () { document.documentElement.setAttribute('data-theme', __mq.matches ? 'dark' : 'light'); };
+    __applyTheme();
+    if (__mq.addEventListener) __mq.addEventListener('change', __applyTheme);
+    else if (__mq.addListener) __mq.addListener(__applyTheme);
+  }
+
   // 公共媒体占位：加载前预留 16:9 高度防止弹窗先小后大；加载完成同一帧用真实宽高比接管（图片已在缓存，无等待撑开感）；失败交给感叹号兜底
   window.mediaStable = function (el, isVideo, keepRatio) {
     if (!el) return el;

@@ -9,7 +9,8 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="stylesheet" href="/assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
-  <meta name="theme-color" content="#1E88E5">
+  <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)">
   <link rel="preload" href="/assets/images/logo.png" as="image">
 
   <link rel="stylesheet" href="/assets/admin.css">
@@ -205,14 +206,7 @@
 
       <!-- 平台设置 -->
       <section id="panel-settings" style="display:none">
-        <div class="setting-group">
-          <h3>图片存储（自有图仓）</h3>
-          <div style="font-size:11px;color:#999;line-height:1.7;">上传图片只需两步（全程免费、不用绑卡）：① Cloudflare 控制台 → 存储和数据库 → KV → 创建命名空间；② Pages 项目「设置 → 函数 → KV 命名空间绑定」添加 IMAGE_BUCKET，保存后重新部署。之后后台所有「上传本地图片 / 上传本地视频」按钮即可用，图片通过本站地址自动展示，无需填任何链接前缀。</div>
-          <div class="setting-row">
-            <label>图仓直连地址（可选，仅 R2 桶用户填写：公开访问前缀，如 https://pub-xxxxxxxx.r2.dev；KV 用户留空即可）</label>
-            <input class="input" id="setR2Base" placeholder="留空即可（图片自动走本站 /img/ 地址）" />
-          </div>
-        </div>
+        <!-- R54：图片存储（图仓直连地址）整组已删——图片实际走 /img/ 自家路由，该配置仅兼容早期 R2 直链，确认无旧直链后删除；图仓本体（IMAGE_BUCKET 绑定）不受影响 -->
         <div class="setting-group">
           <h3>基本设置</h3>
           <div class="setting-row">

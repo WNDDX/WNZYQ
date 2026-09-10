@@ -36,6 +36,7 @@
     var currentProduct = null;
     var currentVariant = null;
     var usingRemote = false;
+    var productsLoaded = false; // R55：数据是否就位；未就位时 renderProducts 保留骨架屏占位，不清空网格
     var catIsOverflow = false;    // 一级分类是否超出一行（渲染时判断一次）
     var subCatIsOverflow = false; // 二级分类是否超出一行（渲染时判断一次）
     var catExpanded = false;      // 一级分类是否展开（保存状态，重新渲染后恢复）
@@ -487,7 +488,9 @@
             if (cid !== currentCat && subCatIds.indexOf(cid) === -1) return false;
           }
         }
-        if (kw && String(p.title || '').toLowerCase().indexOf(kw) === -1) return false;
+        // R49：搜索范围完善——标题 + 描述都匹配（原仅匹配标题）
+        if (kw && String(p.title || '').toLowerCase().indexOf(kw) === -1
+            && String(p.desc || '').toLowerCase().indexOf(kw) === -1) return false;
         return true;
       });
     }
@@ -497,6 +500,8 @@
     var PAGE_SIZE = 20;
 
     function renderProducts() {
+      // R55：数据未就位（首次加载、缓存与远程数据都还没到）时直接返回，保留 HTML 预置的骨架屏占位
+      if (!productsLoaded) { return; }
       var list = getFilteredProducts();
       productGrid.innerHTML = '';
       emptyTip.classList.toggle('show', list.length === 0);
@@ -1159,6 +1164,8 @@
           is_online: p.is_online, is_hidden: p.is_hidden || 0
         };
       }) : [];
+      // R55：兜底真有数据才算就位；兜底为空（如 config.js 拉取失败）时保留骨架等待远程，避免「暂无资源」空态闪现误导
+      if (DATA.products.length) { productsLoaded = true; }
     }
 
     function renderAll() {
@@ -1204,6 +1211,7 @@
             if (c.shop_name) DATA.shopName = c.shop_name;
             usingRemote = true;
             hasCache = true;
+            productsLoaded = true; // R55：缓存命中，骨架屏可替换
           }
         }
       } catch (e) {}
@@ -1255,11 +1263,13 @@
           } catch (e) {}
         }
         // 无论成功失败，都渲染一次（隐藏骨架屏，显示资源或空状态）
+        productsLoaded = true; // R55：远程流程结束（成功或失败），骨架屏必须让位给真实内容/空态
         renderAll();
         // R10 分享链接：远端数据已到，处理 ?pid= 自动打开资源弹窗（此数据源可信，查不到则提示失效）
         checkSharePid(true);
       }).catch(function () {
         // 请求异常时也渲染一次（隐藏骨架屏，显示本地数据或空状态）
+        productsLoaded = true; // R55：网络失败也不能永远停在骨架，显示空态/缓存
         renderAll();
         // R10 分享链接：网络失败时基于缓存尽力打开（缓存查不到不提示失效——可能是缓存过期误报）
         checkSharePid(false);
@@ -1493,11 +1503,6 @@
         if (lightboxMask && lightboxMask.classList.contains('open')) closeLightbox();
       }
     });
-
-    // ---------- 暗色模式（跟随系统） ----------
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
 
     // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
 

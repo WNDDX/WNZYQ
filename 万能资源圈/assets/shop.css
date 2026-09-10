@@ -20,21 +20,10 @@
       --blue:  #1688FF;
       --red:   #ff4444;
       --topbar-h: 64px;
-      --text: #222;
-      --text-light: #666;
-      --bg: #fff;
-      --bg-light: #f5f7fa;
-      --card-bg: #fff;
-      --border: #eee;
+      /* R50：暗色相关变量（--bg-page/--bg-light/--card-bg/--border/--text/--text-light/--hover-bg）
+         统一移至 ui-common.css 定义（含 [data-theme=dark] 暗色值），此处不再重复定义 */
     }
-    [data-theme="dark"] {
-      --text: #eee;
-      --text-light: #aaa;
-      --bg: #1a1a2e;
-      --bg-light: #16213e;
-      --card-bg: #1f2940;
-      --border: #2a3a5a;
-    }
+    /* R49：暗色变量块为死代码（0 处引用），已删，勿再空挂 */
     @keyframes pageFadeIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -50,13 +39,13 @@
       to { opacity: 1; transform: scale(1); }
     }
     html {
-      background: #f2f7fd;
+      background: var(--bg-page);
       max-width: 100%; overflow-x: hidden; overflow-y: scroll; /* 阻止移动端整页橡皮筋下拉，避免露出蓝色底，自定义下拉刷新不受影响 */
       overscroll-behavior: none;
     }
     body {
-      background: #f2f7fd;
-      color: #333;
+      background: var(--bg-page);
+      color: var(--text);
       min-height: 100vh; max-width: 100%; overflow-x: hidden;
       padding-top: 0;
       opacity: 1;
@@ -143,16 +132,16 @@
     }
     .share-mask.open { display: flex; }
     .share-box {
-      background: #fff; border-radius: 14px;
+      background: var(--card-bg); border-radius: 14px;
       position: relative; padding: 26px 20px; width: 100%; max-width: 400px;
       text-align: center; animation: modalIn 0.25s ease;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
-    .share-title { font-size: 18px; font-weight: 600; color: #222; margin-bottom: 10px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
-    .share-tip { font-size: 14px; color: #666; margin-bottom: 14px; }
+    .share-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 10px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
+    .share-tip { font-size: 14px; color: var(--text-light); margin-bottom: 14px; }
     .share-link {
       /* R15：与分享资源弹窗（showShareLinkModal）链接样式统一——蓝字居中 */
-      background: #f5f8fb; border-radius: 8px;
+      background: var(--bg-light); border-radius: 8px;
       padding: 10px 12px; font-size: 14px; color: #1565c0;
       word-break: break-all; margin-bottom: 16px; text-align: center;
       user-select: all; line-height: 1.5; max-height: 100px; overflow-y: auto;
@@ -175,7 +164,7 @@
       border-radius: 19px;
       padding: 0 36px 0 38px;
       font-size: 14px;
-      background: rgba(255,255,255,0.95);
+      background: var(--card-bg);
       outline: none;
     }
     .search-icon {
@@ -184,7 +173,7 @@
       top: 50%;
       transform: translateY(-50%);
       width: 18px; height: 18px;
-      color: #999;
+      color: var(--text-light);
     }
     .search-clear {
       position: absolute;
@@ -195,7 +184,7 @@
       height: 20px;
       border-radius: 50%;
       border: none;
-      background: #f0f2f5;
+      background: var(--bg-light);
       color: #fff;
       font-size: 14px;
       cursor: pointer;
@@ -208,14 +197,14 @@
     .search-clear:hover { background: #ff4444; color: #fff; }
     .search-clear.show { display: flex; }
     /* 搜索清除 × 与全站 × 统一：淡灰底 #666 */
-    .search-clear { color: #666; }
+    .search-clear { color: var(--text-light); }
 
     /* ---------- 分类标签栏 ---------- */
     .category-bar {
       position: sticky;
       top: var(--topbar-h);
       z-index: 90;
-      background: #fff;
+      background: var(--card-bg);
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       overflow-x: auto;
       white-space: nowrap;
@@ -230,9 +219,9 @@
       padding: 8px 20px;
       margin-right: 8px;
       border-radius: 18px;
-      border: 1px solid #e0e0e0;
-      background: #fff;
-      color: #666;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-light);
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
@@ -242,7 +231,7 @@
     .category-tag:hover {
       border-color: var(--blue1);
       color: var(--blue1);
-      background: #f0f7ff;
+      background: var(--hover-bg);
       transform: translateY(-1px);
     }
     .category-tag.active {
@@ -307,14 +296,14 @@
     .product-card { transition: transform 0.10s ease, box-shadow 0.10s ease !important; }
     .card-img, .card-body { transition: none !important; }
     /* 感叹号占位自适应：容器内完整显示、居中、淡白填充、不溢出 */
-    img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
+    img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;}
     /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
     .modal-box img[src^="data:image/svg+xml"], .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain; }
     .modal-cover[src^="data:image/svg+xml"] { aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px !important; object-fit: contain !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important; }
-    .modal-cover.m-loading { aspect-ratio: 16 / 9 !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important; max-height: 320px !important; background: #eef4fb; border-radius: 10px; }
+    .modal-cover.m-loading { aspect-ratio: 16 / 9 !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important; max-height: 320px !important; background: var(--bg-light); border-radius: 10px; }
 
     .product-card {
-      background: #fff;
+      background: var(--card-bg);
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
@@ -330,9 +319,9 @@
       box-sizing: border-box;
       aspect-ratio: 3 / 2;
       object-fit: cover;
-      background: #eef4fb;
+      background: var(--bg-light);
       display: block;
-      border: 1px solid #e8e8e8;
+      border: 1px solid var(--border);
       border-bottom: none;
       transition: all 0.2s ease;
     }
@@ -344,7 +333,7 @@
     .card-title {
       font-size: 15px;
       font-weight: 700;
-      color: #1a1a1a;
+      color: var(--text);
       margin-bottom: 6px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -365,9 +354,51 @@
       font-weight: 400;
     }
 
-    .empty-tip {
+    /* ===== R55：骨架屏（数据加载前占位；排版对齐两种视图的真实卡片：网格视图=3/2 图+两行文，列表视图=左 96px 方图+右两行；变量接线暗色自动适配） ===== */
+.sk-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+}
+.sk-img {
+  width: 100%;
+  box-sizing: border-box;
+  aspect-ratio: 3 / 2;
+  background: linear-gradient(100deg, var(--bg-light) 30%, var(--hover-bg) 50%, var(--bg-light) 70%);
+  background-size: 200% 100%;
+  animation: skShimmer 1.3s ease-in-out infinite;
+}
+.sk-line {
+  height: 15px;
+  margin: 12px 14px 0;
+  border-radius: 6px;
+  background: linear-gradient(100deg, var(--bg-light) 30%, var(--hover-bg) 50%, var(--bg-light) 70%);
+  background-size: 200% 100%;
+  animation: skShimmer 1.3s ease-in-out infinite;
+}
+.sk-line:last-child { margin-bottom: 14px; height: 12px; }
+.sk-line.w95{width:95%} .sk-line.w93{width:93%} .sk-line.w92{width:92%} .sk-line.w91{width:91%}
+.sk-line.w90{width:90%} .sk-line.w88{width:88%} .sk-line.w87{width:87%} .sk-line.w85{width:85%}
+.sk-line.w80{width:80%} .sk-line.w78{width:78%} .sk-line.w75{width:75%} .sk-line.w72{width:72%}
+.sk-line.w70{width:70%} .sk-line.w66{width:66%} .sk-line.w65{width:65%} .sk-line.w62{width:62%}
+.sk-line.w60{width:60%} .sk-line.w58{width:58%} .sk-line.w55{width:55%} .sk-line.w52{width:52%}
+/* 列表视图（站点默认视图）：对齐 .product-grid.list-view .product-card 的横排结构 */
+.product-grid.list-view .sk-card { flex-direction: row; align-items: stretch; }
+.product-grid.list-view .sk-img { width: 96px; min-width: 96px; aspect-ratio: 1 / 1; height: auto; }
+.product-grid.list-view .sk-line { flex: 1 1 0%; margin: 8px 12px 0; height: 14px; }
+.product-grid.list-view .sk-line:last-child { margin-bottom: 10px; height: 12px; }
+@media (max-width: 600px) {
+  .product-grid.list-view .sk-img { width: 108px; min-width: 108px; }
+  .product-grid .sk-img { aspect-ratio: 16 / 10; }
+}
+@keyframes skShimmer { to { background-position: -200% 0; } }
+
+.empty-tip {
       text-align: center;
-      color: #999;
+      color: var(--text-light);
       padding: 60px 20px;
       font-size: 14px;
       display: none;
@@ -380,13 +411,13 @@
     }
     .empty-tip .empty-title {
       font-size: 16px;
-      color: #666;
+      color: var(--text-light);
       margin-bottom: 6px;
       font-weight: 500;
     }
     .empty-tip .empty-desc {
       font-size: 13px;
-      color: #999;
+      color: var(--text-light);
     }
 
     /* ---------- 下拉刷新 ---------- */
@@ -493,7 +524,7 @@
       max-width: 680px;
     }
     .modal-box {
-      background: #fff;
+      background: var(--card-bg);
       border-radius: 14px;
       width: 100%;
       max-height: 88vh;
@@ -515,8 +546,8 @@
       width: 32px; height: 32px;
       border-radius: 50%;
       border: none;
-      background: #f0f2f5;
-      color: #666;
+      background: var(--bg-light);
+      color: var(--text-light);
       font-size: 18px;
       cursor: pointer;
       display: flex;
@@ -527,8 +558,8 @@
     .modal-close-x:hover {
       transform: scale(0.97);
       opacity: 0.9;
-      background: #e4e7eb;
-      color: #333;
+      background: var(--hover-bg);
+      color: var(--text);
     }
     /* R10 资源弹窗左上角分享键：与右上角×成对角，规格（32px 圆形/12px 距角/过渡动效）完全复用×，
        但底色淡蓝、图标蓝色、悬停蓝底白图标，与×（灰底/悬停深灰）明确区分 */
@@ -584,7 +615,7 @@
     .modal-title {
       font-size: 22px;
       font-weight: 700;
-      color: #1a1a1a;
+      color: var(--text);
       flex: 1;
       line-height: 1.4;
       letter-spacing: 0.5px;
@@ -605,11 +636,11 @@
       line-height: 1.6;
     }
     .modal-detail {
-      background: #f7faff;
+      background: var(--bg-light);
       border-radius: 10px;
       padding: 14px 16px;
       font-size: 14px;
-      color: #555;
+      color: var(--text-light);
       line-height: 1.9;
       white-space: pre-wrap;
       margin-bottom: 14px;
@@ -659,9 +690,9 @@
     .variant-tab {
       padding: 6px 16px;
       border-radius: 16px;
-      border: 1px solid #ddd;
-      background: #fff;
-      color: #666;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-light);
       font-size: 13px;
       cursor: pointer;
       transition: all 0.15s ease;
@@ -670,7 +701,7 @@
     .variant-tab:hover {
       border-color: var(--blue1);
       color: var(--blue1);
-      background: #f0f7ff;
+      background: var(--hover-bg);
       transform: translateY(-1px);
     }
     .variant-tab.active {
@@ -682,11 +713,11 @@
     }
     /* 公告小项 tabs（与类型切换 tabs 完全同款，保证关联性） */
     .ann-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 0 2px; }
-    .ann-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: #fff; color: #666; font-size: 13px; cursor: pointer; transition: all 0.15s ease; user-select: none; }
-    .ann-tab:hover { border-color: var(--blue1); color: var(--blue1); background: #f0f7ff; transform: translateY(-1px); }
+    .ann-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: all 0.15s ease; user-select: none; }
+    .ann-tab:hover { border-color: var(--blue1); color: var(--blue1); background: var(--hover-bg); transform: translateY(-1px); }
     .ann-tab.active { background: var(--blue1); color: #fff; border-color: transparent; font-weight: 600; box-shadow: 0 2px 8px rgba(30,136,229,0.3); }
     .variant-detail {
-      background: #f7faff;
+      background: var(--bg-light);
       border-radius: 8px;
       padding: 12px 14px;
       margin-bottom: 12px;
@@ -697,12 +728,12 @@
       justify-content: space-between;
       margin-bottom: 8px;
       padding-bottom: 8px;
-      border-bottom: 1px dashed #d8e4f0;
+      border-bottom: 1px dashed var(--border);
     }
     .variant-name {
       font-size: 15px;
       font-weight: 600;
-      color: #222;
+      color: var(--text);
     }
     .variant-price {
       color: #ff6b35;
@@ -711,7 +742,7 @@
     }
     .variant-detail .v-desc {
       font-size: 13px;
-      color: #555;
+      color: var(--text-light);
       line-height: 1.8;
       white-space: pre-wrap;
       margin-bottom: 8px;
@@ -729,7 +760,7 @@
       padding: 16px;
       background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
       border-radius: 12px;
-      border: 1px solid #d0e8ff;
+      border: 1px solid var(--border);
     }
     .resource-code-header {
       display: flex;
@@ -757,8 +788,8 @@
       border: 1.5px solid #c8e0f5;
       border-radius: 8px;
       font-size: 14px;
-      color: #333;
-      background: #fff;
+      color: var(--text);
+      background: var(--card-bg);
       outline: none;
       transition: border-color 0.2s;
       box-sizing: border-box;
@@ -794,11 +825,11 @@
     .resource-content {
       margin-top: 12px;
       padding: 14px;
-      background: #fff;
+      background: var(--card-bg);
       border-radius: 8px;
-      border: 1px solid #e0f0ff;
+      border: 1px solid var(--border);
       font-size: 13px;
-      color: #444;
+      color: var(--text);
       line-height: 1.8;
       animation: fadeInUp 0.3s ease;
     }
@@ -881,11 +912,11 @@
 
 
     /* 平台公告 */
-    .ann-modal .ann-box { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto; padding: 26px 22px; animation: modalIn 0.25s ease; text-align: left; }
-    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color 0.15s ease; }
+    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto; padding: 26px 22px; animation: modalIn 0.25s ease; text-align: left; }
+    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color 0.15s ease; }
     .ann-modal .ann-title:hover { color: var(--blue1); }
     .ann-modal .ann-title.active { color: var(--blue1); }
-    .ann-modal .ann-body { font-size: 14px; color: #333; line-height: 1.75; word-break: break-word; overflow-wrap: anywhere; }
+    .ann-modal .ann-body { font-size: 14px; color: var(--text); line-height: 1.75; word-break: break-word; overflow-wrap: anywhere; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; border-radius: 8px; margin: 6px 0; }
     .ann-modal .ann-body a { color: #1e88e5; }
     .ann-modal .ann-body p { margin: 6px 0; }
@@ -1002,9 +1033,9 @@
       display: inline-block;
       padding: 4px 14px;
       border-radius: 14px;
-      border: 1px solid #e8e8e8;
-      background: #fafafa;
-      color: #888;
+      border: 1px solid var(--border);
+      background: var(--bg-light);
+      color: var(--text-light);
       font-size: 12px;
       cursor: pointer;
       transition: all 0.15s ease;
@@ -1015,10 +1046,10 @@
     .sub-category-tag:hover {
       border-color: var(--blue2);
       color: var(--blue1);
-      background: #f5faff;
+      background: var(--hover-bg);
     }
     .sub-category-tag.active {
-      background: #fff;
+      background: var(--card-bg);
       color: var(--blue1);
       border-color: var(--blue2);
       font-weight: 600;
@@ -1082,7 +1113,7 @@
     .modal-mask#annModal > .ann-box { height: min(72vh, 600px) !important; max-height: none !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
     .modal-mask#annModal > .ann-box > * { box-sizing: border-box; max-width: 100%; }
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
-    .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 13px; padding: 24px 0; box-sizing: border-box; text-align: center; }
+    .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 13px; padding: 24px 0; box-sizing: border-box; text-align: center; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; box-sizing: border-box; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }

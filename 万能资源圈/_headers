@@ -1,4 +1,6 @@
 /*
+  # R49：补齐 CSP（此前缺）：允许自身+内联脚本/样式（各页内联代码所需）、data/blob 图片（占位符/上传预览）、任意 https 图片（外链封面）；禁 object/base 注入与被嵌框架
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

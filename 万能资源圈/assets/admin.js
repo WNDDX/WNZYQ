@@ -75,7 +75,7 @@
       try { if (!contactDraftPending && window.__plSet) document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; } catch (e) {}
       try { contactDraftPending = false; } catch (e) {}
       try { document.getElementById('contactMask').classList.add('open'); } catch (e) {}
-      if (!window.__plSet) {
+     if (!window.__plSet) {
         api('admin/settings').then(function (res) {
           try {
             if (res && res.ok && document.getElementById('contactMask').classList.contains('open') && !contactDraftPending) {
@@ -496,7 +496,7 @@
       if (name === 'products' && !window.__plP) { window.__plP = 1; loadProducts(); }
       if (name === 'stats' && !window.__plS) { window.__plS = 1; loadStats(); }
       if (name === 'categories' && !window.__plC) { window.__plC = 1; loadCategories(); }
-      if (name === 'settings') { (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = ''; _fg.appendChild(_pg); } })(); if (!window.__plSet) loadSettings(); }
+      if (name === 'settings') { if (!window.__plSet) loadSettings(); }
     }
 
     // ---------- 平台设置 ----------
@@ -504,11 +504,11 @@
       api('admin/settings').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var s = res.settings || {};
-        window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || ''; try { document.getElementById('setR2Base').value = s.r2_public_base || ''; } catch (e2) {} if (document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = s.contact_url || '';
+        window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || ''; if (document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = s.contact_url || '';
         // 客服状态文字已按需求移除
         document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
         if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; if (document.getElementById('annMask').classList.contains('open')) { try { if (typeof renderAnnList === 'function') renderAnnList(); var _dlx = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dlx && typeof selectAnnItem === 'function') selectAnnItem(_dlx.id); else if (typeof clearAnnEdit === 'function') clearAnnEdit(); } catch (e) {} } }
-        (function () { var _pg = document.querySelector('#panel-settings .setting-group:last-child'), _fg = document.querySelector('#panel-settings .setting-group:first-child'); if (_pg && _fg && _pg !== _fg) { _pg.className = 'setting-row'; _pg.style.cssText = ''; _fg.appendChild(_pg); } })();
+        
         document.getElementById('annMode').value = s.announcement_mode || 'always';
         // 公告状态文字已按需求移除
       });
@@ -518,8 +518,7 @@
       var data = {
         contact_url: document.getElementById('setContactUrl').value.trim(),
         announcement: document.getElementById('setAnnouncement').innerHTML,
-        announcement_mode: document.getElementById('annMode').value,
-        r2_public_base: (document.getElementById('setR2Base') || {}).value ? document.getElementById('setR2Base').value.trim() : ''
+        announcement_mode: document.getElementById('annMode').value
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
         if (res.ok) toast('设置已保存', 'success');
@@ -2464,7 +2463,7 @@
     variantCancel.addEventListener('click', function () { variantDraftPending = false; variantMask.classList.remove('open'); });
     variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = true; variantDraftFor = state.editingVariantId; variantMask.classList.remove('open'); } });
 
-    function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? (Number(p[1]) + '/' + Number(p[2])) : s; }    // ---------- 折线图渲染 ----------
+    function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? String(Number(p[2])) : s; } // R52：图表标签只显号数（用户要求去掉月份）    // ---------- 折线图渲染 ----------
     function renderLineChart(trend) {
       var svg = document.getElementById('lineSvg');
       if (!svg || !trend || !trend.length) { svg.innerHTML = ''; return; }
@@ -2672,7 +2671,7 @@
         if (res.hourly && res.hourly.length) {
           // R29（优化项8）：单日范围（1天档/自定义同日）按小时粒度展示，统计页所有区块同口径（概览/明细/分类均来自同一范围请求）
           trendData = res.hourly.map(function (h) {
-            return { day: String(Number(h.hour)) + '时', views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
+            return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks }; // R52：小时图标签去「时」字
           });
         } else {
           trendData = allTrend.slice(-days);
@@ -3646,11 +3645,6 @@ refreshCatCnts();
         // 重做交由浏览器原生处理，不再自定义拦截
       }
     });
-
-    // ---------- 暗色模式（跟随系统） ----------
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
 
     // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
 

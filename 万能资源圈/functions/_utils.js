@@ -266,13 +266,13 @@ export function cleanVariant(v) {
 export async function deleteBucketImages(env, sources) {
   try {
     if (!env.IMAGE_BUCKET || !Array.isArray(sources) || !sources.length) return;
-    const baseRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'r2_public_base'").first();
-    const base = baseRow ? String(baseRow.value || '').trim().replace(/\/+$/, '') : '';
+    /* R54：图仓直连地址——图片统一走 /img/ 自家路由（mediaPathRe 匹配任意域名），不再查直连地址，顺带省一次 DB 查询 */
+    const base = '';
     const keys = new Set();
     // R32：图片统一走自家路由 /img/images/...（相对路径或任意域名的绝对 URL）；
     // R36：新增本地视频 /img/videos/...；兼容旧 R2 公开地址（base 前缀）。
     const mediaPathRe = /(?:https?:\/\/[^\s"'<>)]+)?\/img\/((?:images|videos)\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:png|jpg|jpeg|webp|gif|mp4|webm|mov))/g;
-    const baseRe = base ? new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\/((?:images|videos)\/[^\s"\'<>)]+)', 'g') : null;
+    const baseRe = null; // R54：直连地址兼容已废弃
     for (const src of sources) {
       if (!src) continue;
       const text = String(src);
