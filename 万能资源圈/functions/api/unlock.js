@@ -20,7 +20,7 @@
  *
  * 统计：resource_unlock 埋点仍由前台在内容渲染成功后统一上报（口径不变），本接口不写 stats。
  */
-import { json, readJSON, corsHeaders, randomToken, ensureBindingsTable, getSetting } from '../_utils.js';
+import { json, readJSON, corsHeaders, randomToken, ensureBindingsTable, ensureVariantColumns, getSetting } from '../_utils.js';
 
 // 设备 Cookie 名与有效期（10 年，等效永久设备标识）
 const DEVICE_COOKIE = 'wnzyq_device';
@@ -52,14 +52,29 @@ export async function onRequestPost(context) {
   }
 
   await ensureBindingsTable(env);
+  // R106：确保 product_variants 有 bind_limit 列（老库自动补列；前台链路原本不走列确保）
+  await ensureVariantColumns(env);
 
   // 1. 查类型 + 校验资源在线显示（下架/隐藏的类型不可解锁）
-  const v = await env.DB.prepare(
-    `SELECT v.id, v.product_id, v.resource_code, v.resource_content,
-            p.is_online, p.is_hidden
-     FROM product_variants v JOIN products p ON p.id = v.product_id
-     WHERE v.id = ? AND v.product_id = ?`
-  ).bind(variantId, productId).first();
+  //    R106 防御：极端情况下列补齐失败（如库只读）会令带 bind_limit 的查询报"无此列"——
+  //    降级为去掉该列重查一次（上限按全局设置兜底），不再 500
+  let v = null;
+  try {
+    v = await env.DB.prepare(
+      `SELECT v.id, v.product_id, v.resource_code, v.resource_content, v.bind_limit,
+              p.is_online, p.is_hidden
+       FROM product_variants v JOIN products p ON p.id = v.product_id
+       WHERE v.id = ? AND v.product_id = ?`
+    ).bind(variantId, productId).first();
+  } catch (e) {
+    console.error('R106 类型查询失败（无 bind_limit 降级重查）:', e && e.message);
+    v = await env.DB.prepare(
+      `SELECT v.id, v.product_id, v.resource_code, v.resource_content,
+              p.is_online, p.is_hidden
+       FROM product_variants v JOIN products p ON p.id = v.product_id
+       WHERE v.id = ? AND v.product_id = ?`
+    ).bind(variantId, productId).first();
+  }
   if (!v || !v.is_online || v.is_hidden) {
     return json({ ok: false, msg: '资源不存在或已下架' }, 404);
   }
@@ -87,9 +102,13 @@ export async function onRequestPost(context) {
   }
 
   // 4. 有码：先查通行证——已绑定设备直接放行（宽松模式，不验码、换码不影响）
-  const boundRow = await env.DB.prepare(
-    'SELECT id FROM resource_bindings WHERE variant_id = ? AND device_token = ?'
-  ).bind(variantId, device).first();
+  // R106：绑定表查询防御——表异常时按"未绑定"继续验码，不再直接 500
+  let boundRow = null;
+  try {
+    boundRow = await env.DB.prepare(
+      'SELECT id FROM resource_bindings WHERE variant_id = ? AND device_token = ?'
+    ).bind(variantId, device).first();
+  } catch (e) { console.error('R106 通行证查询失败（按未绑定降级）:', e && e.message); }
   if (boundRow) {
     // 顺手更新最近访问时间（供后台绑定清单展示）
     try {
@@ -108,12 +127,17 @@ export async function onRequestPost(context) {
   }
 
   // 6. 码正确：检查"当前码"周期的绑定上限（R96 按码计数；后台可调，默认 1 台）
-  const limitRaw = await getSetting(env, 'resource_bind_limit', '1');
-  const limit = Math.max(1, parseInt(limitRaw, 10) || 2);
+  // R106：绑定设备上限挪进类型编辑表单——类型自身设置优先，未设置再按全局设置（默认 1）
+  const vLimit = parseInt(v.bind_limit, 10);
+  const limit = vLimit >= 1 ? vLimit : Math.max(1, parseInt(await getSetting(env, 'resource_bind_limit', '1'), 10) || 1);
   const curCode = String(v.resource_code).trim();
-  const cnt = await env.DB.prepare(
-    'SELECT COUNT(*) AS n FROM resource_bindings WHERE variant_id = ? AND code = ?'
-  ).bind(variantId, curCode).first();
+  // R106：计数查询防御——表异常时按 0 计，不再直接 500
+  let cnt = null;
+  try {
+    cnt = await env.DB.prepare(
+      'SELECT COUNT(*) AS n FROM resource_bindings WHERE variant_id = ? AND code = ?'
+    ).bind(variantId, curCode).first();
+  } catch (e) { console.error('R106 绑定计数查询失败（按0降级）:', e && e.message); }
   if (cnt && cnt.n >= limit) {
     // 兜底场景（如后台调小上限后当前码已超额）：自动换码开新一轮，本次仍拒绝
     try { await autoRotateCode(env, variantId); } catch (e) { /* 换码失败不影响提示 */ }
@@ -121,17 +145,24 @@ export async function onRequestPost(context) {
   }
 
   // 7. 绑定本设备（记录当时的码）并返回内容
+  //    R106 防御：绑定表异常导致写不进去时降级放行（码已验对，只是这台记不上账），不再 500
   const ua = (request.headers.get('User-Agent') || '').slice(0, 200);
-  await env.DB.prepare(
-    'INSERT INTO resource_bindings (variant_id, product_id, device_token, ua, code) VALUES (?, ?, ?, ?, ?)'
-  ).bind(variantId, productId, device, ua, curCode).run();
+  let bound = true;
+  try {
+    await env.DB.prepare(
+      'INSERT INTO resource_bindings (variant_id, product_id, device_token, ua, code) VALUES (?, ?, ?, ?, ?)'
+    ).bind(variantId, productId, device, ua, curCode).run();
+  } catch (e) {
+    bound = false;
+    console.error('R106 绑定记录写入失败（降级放行）:', e && e.message);
+  }
 
   // 8. R96 绑满自动换码：本台绑定后当前码周期达到上限 → 系统随机换新码
   //    （旧码入场资格作废、已绑定设备照常解锁；管理员从后台拿最新码给下一个访客）
-  if ((cnt ? cnt.n : 0) + 1 >= limit) {
+  if (bound && (cnt ? cnt.n : 0) + 1 >= limit) {
     try { await autoRotateCode(env, variantId); } catch (e) { /* 换码失败不影响本次解锁 */ }
   }
-  return json({ ok: true, content, bound: true }, 200, extraHeaders);
+  return json({ ok: true, content, bound }, 200, extraHeaders);
 }
 
 export async function onRequestOptions(context) {

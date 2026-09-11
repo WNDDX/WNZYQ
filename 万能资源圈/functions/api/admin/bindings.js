@@ -3,7 +3,7 @@
  * 响应: { ok, limit, count, list: [{ id, device, ua, created_at, last_access }] }
  *   device 显示为 token 前 12 位 + …（完整 token 不下发，避免被拿到后伪造设备）
  */
-import { json, requireAuth, ensureBindingsTable, getSetting } from '../../_utils.js';
+import { json, requireAuth, ensureBindingsTable, ensureVariantColumns, getSetting } from '../../_utils.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -14,23 +14,41 @@ export async function onRequestGet(context) {
   const variantId = Number(url.searchParams.get('variant_id') || 0);
   if (!variantId) return json({ ok: false, msg: '缺少 variant_id' }, 400);
   await ensureBindingsTable(env);
+  // R106：确保 product_variants 有 bind_limit 列（老库自动补列）
+  await ensureVariantColumns(env);
 
-  const { results } = await env.DB.prepare(
-    'SELECT id, device_token, ua, created_at, last_access FROM resource_bindings WHERE variant_id = ? ORDER BY id ASC'
-  ).bind(variantId).all();
+  // R106：绑定表查询防御——表异常时按空清单返回（弹窗提示"暂无绑定"），不再 500
+  let results = [];
+  try {
+    const r = await env.DB.prepare(
+      'SELECT id, device_token, ua, created_at, last_access FROM resource_bindings WHERE variant_id = ? ORDER BY id ASC'
+    ).bind(variantId).all();
+    results = r.results || [];
+  } catch (e) { console.error('R106 绑定清单查询失败（按空降级）:', e && e.message); }
 
   const limitRaw = await getSetting(env, 'resource_bind_limit', '1');
-  const limit = Math.max(1, parseInt(limitRaw, 10) || 2);
 
   // R96：返回当前资源码 + 当前码周期的已绑数（绑满自动换码后管理员从这里拿最新码）
-  const vRow = await env.DB.prepare('SELECT resource_code FROM product_variants WHERE id = ?').bind(variantId).first();
+  // R106 防御：列补齐失败时降级去掉 bind_limit 重查（上限按全局设置兜底）
+  let vRow = null;
+  try {
+    vRow = await env.DB.prepare('SELECT resource_code, bind_limit FROM product_variants WHERE id = ?').bind(variantId).first();
+  } catch (e) {
+    console.error('R106 类型上限查询失败（无 bind_limit 降级重查）:', e && e.message);
+    vRow = await env.DB.prepare('SELECT resource_code FROM product_variants WHERE id = ?').bind(variantId).first();
+  }
   const curCode = vRow ? String(vRow.resource_code || '').trim() : '';
+  // R106：绑定设备上限挪进类型编辑表单——类型自身设置优先，未设置再按全局设置（默认 1）
+  const vLimit = vRow ? parseInt(vRow.bind_limit, 10) : NaN;
+  const limit = vLimit >= 1 ? vLimit : Math.max(1, parseInt(limitRaw, 10) || 1);
   let curCount = 0;
   if (curCode) {
-    const c = await env.DB.prepare(
-      'SELECT COUNT(*) AS n FROM resource_bindings WHERE variant_id = ? AND code = ?'
-    ).bind(variantId, curCode).first();
-    curCount = c ? c.n : 0;
+    try {
+      const c = await env.DB.prepare(
+        'SELECT COUNT(*) AS n FROM resource_bindings WHERE variant_id = ? AND code = ?'
+      ).bind(variantId, curCode).first();
+      curCount = c ? c.n : 0;
+    } catch (e) { /* 计数失败按 0 */ }
   }
 
   return json({

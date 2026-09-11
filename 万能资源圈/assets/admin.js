@@ -510,9 +510,7 @@
         if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; if (document.getElementById('annMask').classList.contains('open')) { try { if (typeof renderAnnList === 'function') renderAnnList(); var _dlx = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dlx && typeof selectAnnItem === 'function') selectAnnItem(_dlx.id); else if (typeof clearAnnEdit === 'function') clearAnnEdit(); } catch (e) {} } }
         
         document.getElementById('annMode').value = s.announcement_mode || 'always';
-        // R92：资源码绑定设备上限（默认 2 台）
-        var _bl = document.getElementById('setBindLimit'); if (_bl) _bl.value = s.resource_bind_limit || '2';
-        // 公告状态文字已按需求移除
+        // R106：资源码绑定设备上限已挪到类型编辑表单（类型级），设置面板不再回填/保存该值
       });
     }
 
@@ -528,24 +526,8 @@
       });
     });
 
-    // R92：保存资源码绑定设备上限（复用设置保存链路；调上限不会改码、不影响已绑定设备）
-    var _blsBtn = document.getElementById('bindLimitSaveBtn');
-    if (_blsBtn) _blsBtn.addEventListener('click', function () {
-      var btn = this;
-      var input = document.getElementById('setBindLimit');
-      var n = parseInt(input.value, 10);
-      if (!n || n < 1) { toast('请输入不小于 1 的整数', 'error'); input.focus(); return; } // R94：上限不封顶，可填任意大
-      var btnText = btn.textContent;
-      btn.disabled = true; btn.textContent = '确定中…';
-      api('admin/settings', { method: 'PUT', body: JSON.stringify({ resource_bind_limit: String(n) }) }).then(function (res) {
-        btn.disabled = false; btn.textContent = btnText;
-        if (res && res.ok) toast('设置已保存', 'success');
-        else toast((res && res.msg) || '保存失败', 'error');
-      }).catch(function () {
-        btn.disabled = false; btn.textContent = btnText;
-        toast('保存失败', 'error');
-      });
-    });
+    // R106：绑定设备上限已挪到类型编辑表单（原全局保存按钮已随 admin.html 一并移除）
+
 
     // ---------- 批量操作 / 全选 ----------
     document.getElementById('selectAll').addEventListener('change', function () {
@@ -2264,6 +2246,9 @@
       vPrice.value = v ? (v.price || '') : '';
       vSort.value = v ? (v.sort || 0) : 0;
       vResourceCode.value = v ? (v.resourceCode || '') : '';
+      // R106：绑定设备上限挪进类型表单（未单独设置=1，与后台默认口径一致）
+      var _vbl = document.getElementById('vBindLimit');
+      _vbl.value = v && v.bindLimit ? v.bindLimit : 1;
       document.getElementById('vContentEditor').innerHTML = v ? (v.resourceContent || '') : '';
       variantMask.classList.add('open');
     }
@@ -2437,7 +2422,9 @@
         price: Number(vPrice.value) || 0,
         sort: Number(vSort.value) || 0,
         resourceCode: vResourceCode.value.trim(),
-        resourceContent: document.getElementById('vContentEditor').innerHTML
+        resourceContent: document.getElementById('vContentEditor').innerHTML,
+        // R106：绑定设备上限（<1 或非法一律按 1；不封顶，可填任意大）
+        bindLimit: Math.max(1, parseInt(document.getElementById('vBindLimit').value, 10) || 1)
       };
       if (isLocalVariant) {
         var _li = (typeof state._editVariantIdx === 'number') ? state._editVariantIdx : -1;
@@ -4066,12 +4053,15 @@ refreshCatCnts();
   }
   function hide() { if (tip) tip.style.display = 'none'; cur = null; }
   var SKIP = 'input,textarea,select,button,a,.rte-editor,pre,code,canvas,svg,video,img,iframe';
+  // R106 修复：只对「无子元素的文本叶子」弹小框——带子元素的容器（如限高滚动的 .form 表单）
+  // 也会 scrollHeight 溢出被 clipped() 误判成"截断文本"，划过字段间隙就会把整个表单的文字全弹出来
+  function leafText(el) { return el.children.length === 0 && (el.textContent || '').trim().length > 0; }
   // 电脑：鼠标悬停
   document.addEventListener('mouseover', function (ev) {
     var el = ev.target;
     if (!(el instanceof Element) || !el.closest) return;
     if (el.closest(SKIP)) return;
-    if (!clipped(el)) { if (cur && !cur.contains(el)) hide(); return; }
+    if (!leafText(el) || !clipped(el)) { if (cur && !cur.contains(el)) hide(); return; }
     show(el);
   });
   document.addEventListener('mouseout', function (ev) {
@@ -4086,7 +4076,8 @@ refreshCatCnts();
     if (!(el instanceof Element) || !el.closest) { hide(); return; }
     if (el.closest(SKIP)) { hide(); return; }
     var hit = el.closest(TAPSEL);
-    if (hit && clipped(hit) && (hit.textContent || '').trim()) { show(hit); return; }
+    // R106：手机点按同样只认文本叶子（容器误弹同上）
+    if (hit && leafText(hit) && clipped(hit)) { show(hit); return; }
     hide();
   });
   window.addEventListener('scroll', hide, true);

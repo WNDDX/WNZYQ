@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS product_variants (
   resource_code    TEXT NOT NULL DEFAULT '',
   resource_content TEXT NOT NULL DEFAULT '',
   is_hidden        INTEGER NOT NULL DEFAULT 0,
+  bind_limit       INTEGER,              -- R106：类型级绑定设备上限（NULL=按全局设置兜底）
   created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );

@@ -22,9 +22,14 @@ export async function onRequestGet(context) {
 
   // R92：顺带返回每类型的已绑定设备数（后台类型行的「绑定 N」徽章用）
   await ensureBindingsTable(env);
-  const { results: bindRows } = await env.DB.prepare(
-    'SELECT variant_id, COUNT(*) AS n FROM resource_bindings WHERE product_id = ? GROUP BY variant_id'
-  ).bind(productId).all();
+  // R106：绑定计数查询防御——表异常时按 0 处理，不再让整个类型列表 500
+  let bindRows = [];
+  try {
+    const r = await env.DB.prepare(
+      'SELECT variant_id, COUNT(*) AS n FROM resource_bindings WHERE product_id = ? GROUP BY variant_id'
+    ).bind(productId).all();
+    bindRows = r.results || [];
+  } catch (e) { console.error('R106 绑定计数查询失败（按0兜底）:', e && e.message); }
   const bindMap = {};
   for (const r of bindRows) bindMap[r.variant_id] = r.n;
 
@@ -43,9 +48,11 @@ export async function onRequestPost(context) {
   if (!name) return json({ ok: false, msg: '请填写类型名称' }, 400);
   await ensureVariantColumns(env);
 
+  // R106：绑定设备上限挪进类型表单（<1 或非法一律按 1）
+  const bindLimit = Math.max(1, parseInt(b.bindLimit, 10) || 1);
   const r = await env.DB.prepare(
-    `INSERT INTO product_variants (product_id, name, "desc", img, video, contact_url, price, sort, resource_code, resource_content, is_hidden)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO product_variants (product_id, name, "desc", img, video, contact_url, price, sort, resource_code, resource_content, is_hidden, bind_limit)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
   )
     .bind(
       productId,
@@ -58,7 +65,8 @@ export async function onRequestPost(context) {
       Number(b.sort) || 0,
       String(b.resourceCode || ''),
       String(b.resourceContent || ''),
-      b.isHidden ? 1 : 0
+      b.isHidden ? 1 : 0,
+      bindLimit
     )
     .run();
 

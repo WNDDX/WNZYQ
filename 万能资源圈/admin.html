@@ -231,13 +231,7 @@
             <input class="input" id="setContactUrl" style="display:none" />
             <button type="button" class="btn-blue" id="openContactBtn" style="width:auto;padding:0 24px;">设置客服</button>
           </div>
-          <div class="setting-row">
-            <label>资源码绑定设备上限（每个资源码最多可绑定的设备台数，改完点保存立即生效）</label>
-            <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;">
-              <input class="input" id="setBindLimit" type="number" min="1" step="1" placeholder="默认 1，不限上限" style="width:110px;text-align:center;" />
-              <button type="button" class="btn-blue" id="bindLimitSaveBtn" style="width:auto;padding:0 24px;">保存</button>
-            </div>
-          </div>
+          <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
             <button type="button" class="btn-blue" id="openAnnBtn" style="width:auto;padding:0 24px;">设置公告</button>
@@ -665,6 +659,8 @@
         <label>排序</label><input id="vSort" type="number" value="0" placeholder="数值越小越靠前" />
         <label>资源码</label>
         <input id="vResourceCode" placeholder="可不填，访客咨询客服后获取的专属码" />
+        <label>绑定设备上限</label>
+        <input id="vBindLimit" type="number" min="1" step="1" value="1" placeholder="该类型资源码最多可绑定的设备台数（默认 1）" />
         <label>资源码专属内容（支持文字/链接/图片/视频）</label>
         <div class="rte-toolbar" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vContentEditor">

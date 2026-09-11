@@ -210,9 +210,11 @@ export async function ensureVariantColumns(env) {
   try {
     const cols = await env.DB.prepare("PRAGMA table_info(product_variants)").all();
     const names = cols.results.map((c) => c.name);
-    if (!names.includes('resource_code')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN resource_code TEXT NOT NULL DEFAULT ''");
-    if (!names.includes('resource_content')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN resource_content TEXT NOT NULL DEFAULT ''");
-    if (!names.includes('is_hidden')) await env.DB.exec("ALTER TABLE product_variants ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0");
+    if (!names.includes('resource_code')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN resource_code TEXT NOT NULL DEFAULT ''").run();
+    if (!names.includes('resource_content')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN resource_content TEXT NOT NULL DEFAULT ''").run();
+    if (!names.includes('is_hidden')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0").run();
+    // R106：绑定设备上限挪到类型编辑表单——老库补 bind_limit 列（NULL=未单独设置，按全局设置兜底）
+    if (!names.includes('bind_limit')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN bind_limit INTEGER").run();
     _variantColsEnsured = true;
   } catch (e) { /* 表尚未创建时忽略，install 会按新结构建表 */ }
 }
@@ -274,6 +276,7 @@ export function cleanVariant(v) {
     resourceCode: v.resource_code || '',
     resourceContent: v.resource_content || '',
     isHidden: v.is_hidden || 0,
+    bindLimit: v.bind_limit || 0,   // R106：类型级绑定上限（0/未设置=按全局设置兜底）
   };
 }
 
@@ -284,7 +287,7 @@ let _bindingsEnsured = false;
 export async function ensureBindingsTable(env) {
   if (_bindingsEnsured) return;
   try {
-    await env.DB.exec(`CREATE TABLE IF NOT EXISTS resource_bindings (
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS resource_bindings (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       variant_id   INTEGER NOT NULL,
       product_id   INTEGER NOT NULL,
@@ -293,15 +296,17 @@ export async function ensureBindingsTable(env) {
       code         TEXT NOT NULL DEFAULT '',
       created_at   TEXT NOT NULL DEFAULT (datetime('now')),
       last_access  TEXT NOT NULL DEFAULT (datetime('now'))
-    )`);
-    await env.DB.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_bindings_variant_device ON resource_bindings(variant_id, device_token)');
-    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_bindings_variant ON resource_bindings(variant_id)');
-    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_bindings_product ON resource_bindings(product_id)');
+    )`).run();
+    // R106：exec() 在线上 D1 不稳定且失败会被下方 catch 静默吞掉，导致后续 SELECT 报"表不存在"直接 500；
+    // 改为 prepare().run() 逐条执行（与全站 SELECT/INSERT 同一通道，可靠性一致）
+    await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_bindings_variant_device ON resource_bindings(variant_id, device_token)').run();
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bindings_variant ON resource_bindings(variant_id)').run();
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bindings_product ON resource_bindings(product_id)').run();
     // R96：老表补 code 列（记录绑定时的资源码，"绑满自动换码"按码周期计数）；列已存在时报错忽略
-    try { await env.DB.exec("ALTER TABLE resource_bindings ADD COLUMN code TEXT NOT NULL DEFAULT ''"); } catch (e) { /* 已有该列 */ }
-    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_bindings_variant_code ON resource_bindings(variant_id, code)');
+    try { await env.DB.prepare("ALTER TABLE resource_bindings ADD COLUMN code TEXT NOT NULL DEFAULT ''").run(); } catch (e) { /* 已有该列 */ }
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bindings_variant_code ON resource_bindings(variant_id, code)').run();
     _bindingsEnsured = true;
-  } catch (e) { /* 建表失败时调用方按无绑定数据兜底 */ }
+  } catch (e) { console.error('R106 ensureBindingsTable 失败（调用方按无绑定数据兜底）:', e && e.message); /* 建表失败时调用方按无绑定数据兜底 */ }
 }
 
 // R92：读取平台设置（settings 键值表），失败/未设置返回默认值

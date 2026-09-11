@@ -18,8 +18,10 @@ export async function onRequestPut(context) {
   if (!name) return json({ ok: false, msg: '请填写类型名称' }, 400);
   await ensureVariantColumns(env);
 
+  // R106：绑定设备上限挪进类型表单（<1 或非法一律按 1）
+  const bindLimit = Math.max(1, parseInt(b.bindLimit, 10) || 1);
   await env.DB.prepare(
-    `UPDATE product_variants SET name=?, "desc"=?, img=?, video=?, contact_url=?, price=?, sort=?, resource_code=?, resource_content=?, is_hidden=?
+    `UPDATE product_variants SET name=?, "desc"=?, img=?, video=?, contact_url=?, price=?, sort=?, resource_code=?, resource_content=?, is_hidden=?, bind_limit=?
      WHERE id=?`
   )
     .bind(
@@ -33,6 +35,7 @@ export async function onRequestPut(context) {
       String(b.resourceCode || ''),
       String(b.resourceContent || ''),
       b.isHidden ? 1 : 0,
+      bindLimit,
       id
     )
     .run();
