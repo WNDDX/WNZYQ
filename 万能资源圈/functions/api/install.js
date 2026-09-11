@@ -98,6 +98,18 @@ CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);
 CREATE INDEX IF NOT EXISTS idx_stats_type_created ON stats(type, created_at);
 CREATE INDEX IF NOT EXISTS idx_stats_product_type ON stats(product_id, type);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+CREATE TABLE IF NOT EXISTS resource_bindings (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  variant_id   INTEGER NOT NULL,
+  product_id   INTEGER NOT NULL,
+  device_token TEXT NOT NULL,
+  ua           TEXT NOT NULL DEFAULT '',
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  last_access  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bindings_variant_device ON resource_bindings(variant_id, device_token);
+CREATE INDEX IF NOT EXISTS idx_bindings_variant ON resource_bindings(variant_id);
+CREATE INDEX IF NOT EXISTS idx_bindings_product ON resource_bindings(product_id);
 `;
 
 // 固定分类：只有"全部"，其他分类由管理员自行添加
@@ -114,6 +126,7 @@ const DEFAULT_SETTINGS = [
   { key: 'shop_name', value: '万能资源圈' },
   { key: 'shop_logo', value: '/assets/images/logo.png' },
   { key: 'contact_url', value: 'https://work.weixin.qq.com/kfid/kfc39748ad948e8b691' },
+  { key: 'resource_bind_limit', value: '1' }, // R92→R94：一码允绑设备上限，默认 1 台（后台可调，无上限）
 ];
 
 export async function onRequestPost(context) {
@@ -193,7 +206,15 @@ export async function onRequestPost(context) {
         await env.DB.prepare('INSERT INTO settings (key, value) VALUES (?, ?)')
           .bind(s.key, s.value).run();
       }
+    } else {
+      // R92 迁移：已部署库补写 resource_bind_limit 默认值（已有该键则不动）
+      // R94：默认改为 1 台——补写用 1；R92 部署后仍是默认 2（用户没手动调过）的也归一到 1，手动调过的值不动
+      await env.DB.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)')
+        .bind('resource_bind_limit', '1').run();
+      await env.DB.prepare("UPDATE settings SET value='1' WHERE key='resource_bind_limit' AND value='2'").run();
     }
+
+    // 5.1 R92 迁移：建绑定表（CREATE IF NOT EXISTS 幂等，重跑 install 或任意 unlock/统计请求都会自动补建）
 
     return json({ ok: true, msg: '初始化完成（管理员账号以本次请求指定的为准，请妥善保管）' });
   } catch (e) {

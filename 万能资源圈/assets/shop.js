@@ -84,11 +84,13 @@
           t.style.objectFit = 'contain';
           t.style.display = 'block'; t.style.opacity = '1';
         } else if (t.tagName === 'VIDEO') {
+          // R81：视频失败不再换感叹号死图，统一兜底卡（可点新窗口打开原链接）
+          // R97：无地址不再渲染空卡，直接移除（灰字已全删，无链接卡没有内容）
           t.dataset.fh = '1';
-          var ph = document.createElement('img');
-          ph.src = IMG_PLACEHOLDER;
-          ph.style.cssText = 'width:100%;height:auto;display:block;';
-          if (t.parentNode) t.parentNode.replaceChild(ph, t);
+          var _href0 = t.getAttribute('src') || t.currentSrc || '';
+          var vf = makeVideoFallback(_href0);
+          if (vf && t.parentNode) t.parentNode.replaceChild(vf, t);
+          else if (t.parentNode) t.parentNode.removeChild(t);
         }
       }, true);
       document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; } });
@@ -116,20 +118,38 @@
       for (var j = 0; j < vids.length; j++) (function (vd) {
         if (vd.dataset.fh) return;
         vd.addEventListener('error', function () {
-          var ph = document.createElement('img');
-          ph.src = IMG_PLACEHOLDER;
-          ph.style.cssText = 'width:100%;height:auto;display:block;';
-          if (vd.parentNode) vd.parentNode.replaceChild(ph, vd);
+          // R81：视频加载失败(多为格式/编码不兼容，如 .mov 在 Chrome/安卓上)不再换成感叹号死图，
+          // 改为可操作兜底卡——新窗口打开链接，内容不丢失；R97：无链接直接移除（灰字已全删）
+          var vf = makeVideoFallback(_vs || (vd.currentSrc || ''));
+          if (vf && vd.parentNode) vd.parentNode.replaceChild(vf, vd);
+          else if (vd.parentNode) vd.parentNode.removeChild(vd);
         });
         var _vs = vd.getAttribute('src') || '';
         if (!_vs && !vd.querySelector('source')) {
+          // R97：无地址视频不再渲染空卡（灰字已全删，无链接卡没有内容），直接移除元素
           vd.dataset.fh = '1';
-          var ph2 = document.createElement('img');
-          ph2.src = IMG_PLACEHOLDER;
-          ph2.style.cssText = 'width:100%;height:auto;display:block;';
-          if (vd.parentNode) vd.parentNode.replaceChild(ph2, vd);
+          if (vd.parentNode) vd.parentNode.removeChild(vd);
         }
       })(vids[j]);
+    }
+
+    // R81：视频加载失败/无地址的统一兜底卡（全站三处兜底逻辑共用）
+    // R97 定稿（用户）：卡内灰字全部删除——只留按键
+    // 「点击在新窗口播放视频」，flex column 纵横居中=按键天然上下左右居中；
+    // 无链接（含无地址视频）不再渲染空卡，返回 null 由调用方直接移除元素（回 R91 口径）
+    function makeVideoFallback(href) {
+      var u = href && String(href).trim();
+      if (!u) return null;
+      var vf = document.createElement('div');
+      vf.className = 'video-fallback';
+      var vl = document.createElement('a');
+      vl.className = 'vf-link';
+      vl.href = u;
+      vl.target = '_blank';
+      vl.rel = 'noopener';
+      vl.textContent = '点击在新窗口播放视频';
+      vf.appendChild(vl);
+      return vf;
     }
 
     function loadImg(img, src) {
@@ -142,7 +162,8 @@
       };
       img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; };
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
-      if (!src) { img.src = IMG_PLACEHOLDER; img.style.display = 'block'; img.style.opacity = '1'; }
+      // R93：封面缺省/加载失败回退感叹号占位（R91 文字版已被用户否决回退）
+      if (!src) { img.src = IMG_PLACEHOLDER; img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
 
     /* 全局媒体兜底已上移至脚本顶部统一注册（见 loadImg 上方），此处旧实现不再执行
     document.addEventListener('error', function (e) {
@@ -154,11 +175,10 @@
         t.style.objectFit = 'contain';
         t.style.display = 'block';
       } else if (t.tagName === 'VIDEO') {
+        // R81：视频失败不再换感叹号死图，统一兜底卡（可点新窗口打开原链接）
         t.dataset.fh = '1';
-        var ph = document.createElement('img');
-        ph.src = IMG_PLACEHOLDER;
-        ph.style.cssText = 'width:100%;height:auto;display:block;';
-        if (t.parentNode) t.parentNode.replaceChild(ph, t);
+        var vf = makeVideoFallback(t.getAttribute('src') || t.currentSrc || '');
+        if (t.parentNode) t.parentNode.replaceChild(vf, t);
       }
     }, true); } */
     }
@@ -687,17 +707,48 @@
 
     // 获取当前应使用的资源码（优先类型级，其次资源级）
     // 获取当前类型的资源码（只在类型里配置，没有类型或类型没配置则不显示资源码）
-    function getCurrentResourceCode() {
-      if (currentVariant && currentVariant.resourceCode && currentVariant.resourceCode.trim()) {
-        return currentVariant.resourceCode;
-      }
-      return '';
+    // R92 一机一码：公开接口不再下发资源码/专属内容明文，改给 hasCode/hasContent 标志；
+    // 明文内容由 /api/unlock 服务端验证（或已绑定设备直接放行）后单发。
+    // 兼容旧 localStorage 缓存里残留的明文字段——有则派生标志。
+    function variantHasCode() {
+      if (!currentVariant) return false;
+      if (currentVariant.hasCode) return true;
+      return !!(currentVariant.resourceCode && String(currentVariant.resourceCode).trim());
     }
-    function getCurrentResourceContent() {
-      if (currentVariant && currentVariant.resourceContent) {
-        return currentVariant.resourceContent;
-      }
-      return '';
+    function variantHasContent() {
+      if (!currentVariant) return false;
+      if (currentVariant.hasContent) return true;
+      return !!(currentVariant.resourceContent && String(currentVariant.resourceContent).trim());
+    }
+    // 请求服务端解锁：code 传空 = 自动检查（已绑定设备/无码类型直接拿内容）
+    var unlockBusy = false;
+    function requestResourceUnlock(code) {
+      if (!currentProduct || !currentVariant || unlockBusy) return Promise.resolve(null);
+      var pid = currentProduct.id, vid = currentVariant.id;
+      unlockBusy = true;
+      return fetch('/api/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: pid, variantId: vid, code: code || '' })
+      }).then(function (r) { return r.json(); }).catch(function () {
+        return { ok: false, msg: '网络异常，请稍后重试' };
+      }).then(function (res) {
+        unlockBusy = false;
+        // 弹窗已切换/关闭时丢弃过期响应
+        if (!currentProduct || !currentVariant || currentProduct.id !== pid || currentVariant.id !== vid) return null;
+        if (res && res.ok && res.content) {
+          var resourceContent = document.getElementById('resourceContent');
+          if (resourceContent && resourceContent.style.display === 'none') {
+            var inputRow = document.getElementById('resourceCodeInputRow');
+            if (inputRow) inputRow.style.display = 'none';
+            var directRow = document.getElementById('resourceDirectRow');
+            if (directRow) directRow.style.display = 'none';
+            unlockResourceContent(res.content);
+          }
+        }
+        // 失败时静默返回（提示由 verifyResourceCode / 直接获取键按场景处理）
+        return res;
+      });
     }
     // 初始化/重置专属内容解锁区域
     // 逻辑：有 resourceContent 才显示区域；有 resourceCode 则输入解锁，无 resourceCode 则直接查看
@@ -709,10 +760,10 @@
       var resourceInput = document.getElementById('resourceCodeInput');
       var resourceError = document.getElementById('resourceCodeError');
       var resourceContent = document.getElementById('resourceContent');
-      var code = getCurrentResourceCode();
-      var content = getCurrentResourceContent();
+      var hasCode = variantHasCode();
+      var hasContent = variantHasContent();
 
-      if (!content) {
+      if (!hasContent) {
         // 没有配置专属内容，隐藏整个区域
         resourceSection.style.display = 'none';
         return;
@@ -724,7 +775,7 @@
       resourceContent.style.display = 'none';
       resourceContent.innerHTML = '';
 
-      if (code) {
+      if (hasCode) {
         // 有资源码：显示输入框+解锁按钮
         resourceTitle.textContent = '输入资源码获取专属内容';
         resourceInputRow.style.display = 'flex';
@@ -736,12 +787,16 @@
         resourceInputRow.style.display = 'none';
         resourceDirectRow.style.display = 'block';
       }
+
+      // R92 宽松模式通行证体验：打开弹窗即静默检查一次——
+      // 已绑定设备（或无码类型）直接拿到内容并展示，老访客无需再输一遍码
+      requestResourceUnlock('');
     }
 
-    // 通用：显示专属内容并统计（资源码验证成功 / 直接查看 都走这里）
-    function unlockResourceContent() {
+    // 通用：显示专属内容并统计（服务端验证成功 / 已绑定设备 / 直接查看 都走这里）
+    // R92：内容由 /api/unlock 服务端返回传入，前台不再持有明文
+    function unlockResourceContent(content) {
       var resourceContent = document.getElementById('resourceContent');
-      var content = getCurrentResourceContent();
       resourceContent.innerHTML = sanitizeHTML(content || '<p>专属内容</p>');
       bindMediaFail(resourceContent); bindLightbox(resourceContent);
       resourceContent.style.display = 'block';
@@ -886,7 +941,7 @@
           if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
         };
       } else {
-        btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未配置客服'); };
+        btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未设置客服链接'); };
       }
     }
 
@@ -956,7 +1011,7 @@
       if (!currentProduct || !currentProduct.id) { showToast('该资源暂不能分享'); return; }
       var url = window.location.origin + window.location.pathname + '?pid=' + currentProduct.id;
       if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
-      else showToast('资源链接已复制到剪贴板');
+      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) {} } showToast('链接已复制到剪贴板'); }
     });
 
     // ---------- 资源码验证 ----------
@@ -967,28 +1022,33 @@
     var resourceCodeInputRow = document.getElementById('resourceCodeInputRow');
 
     function verifyResourceCode() {
-      if (!currentProduct) return;
-      var correctCode = getCurrentResourceCode();
-      if (!correctCode) return; // 当前类型没有配置资源码
+      if (!currentProduct || !currentVariant) return;
+      if (!variantHasCode()) return; // 当前类型没有配置资源码
       var input = resourceCodeInput.value.trim();
       if (!input) {
         resourceCodeError.textContent = '请输入资源码';
         resourceCodeError.style.display = 'block';
         return;
       }
-      // 不区分大小写验证，更友好
-      if (input.toLowerCase() === correctCode.toLowerCase()) {
-        // 验证成功，隐藏输入框，显示专属内容
-        resourceCodeError.style.display = 'none';
-        resourceCodeInputRow.style.display = 'none';
-        unlockResourceContent();
-      } else {
-        // 验证失败
-        resourceCodeError.textContent = '资源码错误，请检查后重试';
-        resourceCodeError.style.display = 'block';
-        resourceCodeInput.style.borderColor = '#ff4444';
-        setTimeout(function () { resourceCodeInput.style.borderColor = ''; }, 1500);
-      }
+      // R92：验证移到服务端（大小写不敏感由服务端比对），前台不再持有明文码；
+      // 码正确且未超绑定上限 → 绑定本设备并返回专属内容；已绑定设备直接放行
+      var btn = document.getElementById('resourceCodeBtn');
+      var btnText = btn.textContent;
+      btn.disabled = true; btn.textContent = '解锁中・・・';
+      requestResourceUnlock(input).then(function (res) {
+        btn.disabled = false; btn.textContent = btnText;
+        if (res === null) return; // 过期响应（弹窗已切换），不提示
+        if (res && res.ok && res.content) {
+          // 内容已由 requestResourceUnlock 统一渲染并隐藏输入行
+          resourceCodeError.style.display = 'none';
+        } else {
+          // 验证失败（资源码错误 / 绑定设备数超上限），提示语由服务端下发
+          resourceCodeError.textContent = (res && res.msg) || '资源码错误，请检查后重试';
+          resourceCodeError.style.display = 'block';
+          resourceCodeInput.style.borderColor = '#ff4444';
+          setTimeout(function () { resourceCodeInput.style.borderColor = ''; }, 1500);
+        }
+      });
     }
     resourceCodeBtn.addEventListener('click', verifyResourceCode);
     resourceCodeInput.addEventListener('keydown', function (e) {
@@ -1003,13 +1063,25 @@
       }, 300);
     });
 
-    // 无资源码时：直接查看按钮，点击即显示专属内容
+    // 无资源码时：直接查看按钮，点击向服务端请求专属内容（R92：内容不再随公开接口下发）
     var resourceDirectBtn = document.getElementById('resourceDirectBtn');
     var resourceDirectRow = document.getElementById('resourceDirectRow');
     if (resourceDirectBtn) {
       resourceDirectBtn.addEventListener('click', function () {
-        resourceDirectRow.style.display = 'none';
-        unlockResourceContent();
+        var btn = this;
+        var btnText = btn.textContent;
+        if (btn.disabled) return;
+        btn.disabled = true; btn.textContent = '获取中・・・';
+        requestResourceUnlock('').then(function (res) {
+          btn.disabled = false; btn.textContent = btnText;
+          if (res === null) return;
+          if (res && res.ok && res.content) {
+            resourceDirectRow.style.display = 'none';
+          } else {
+            resourceCodeError.textContent = (res && res.msg) || '获取失败';
+            resourceCodeError.style.display = 'block';
+          }
+        });
       });
     }
 
@@ -1034,12 +1106,15 @@
 
     // ---------- Toast 轻提示 ----------
     function showToast(msg) {
+      // R80：全站 toast 统一规格——与下拉刷新提示胶囊一字不差（白底0.92+蓝1字+蓝2边+圆角20+同投影）
+      // R83：位置统一 top:80px（四页同位），淡入0.2s→停留2s→淡出0.3s；转圈图标仅下拉刷新保留
       var t = document.createElement('div');
-      t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.78);color:#fff;padding:10px 22px;border-radius:20px;font-size:14px;z-index:100002;pointer-events:none;animation:toastIn 0.2s ease;';
       t.textContent = msg;
+      t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:rgba(255,255,255,0.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;max-width:90%;text-align:center;opacity:0;transition:opacity 0.2s ease;';
       document.body.appendChild(t);
-      setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; }, 1800);
-      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+      requestAnimationFrame(function () { t.style.opacity = '1'; });
+      setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s ease'; }, 2000);
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2300);
     }
 
     // ---------- 顶栏：咨询客服 ----------
@@ -1088,15 +1163,14 @@
         topShareBtn.classList.add('active'); // R20：弹窗打开期间白底
         var url = window.location.href;
         if (shareLinkText) shareLinkText.textContent = url;
-        // 复制链接到剪贴板
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(url).then(function () {
-            showToast('链接已复制到剪贴板');
-          }).catch(function () { try { fallbackCopy(url); } catch(e){} showToast('链接已复制'); });
+        // R79：统一分享复制链路——与资源卡片分享/预览分享/弹窗链接点击同一套
+        // （同步 execCommand 手势内执行 + clipboard API 双保险），提示文案全站统一
+        if (window.__shareCopyText) {
+          try { window.__shareCopyText(url); } catch(e){}
         } else {
           try { fallbackCopy(url); } catch(e){}
-          showToast('链接已复制');
         }
+        showToast('链接已复制到剪贴板');
         if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       } catch (e) {
         console.error('分享失败:', e);
@@ -1116,13 +1190,10 @@
       shareLinkText.addEventListener('click', function () {
         var url = shareLinkText.textContent || '';
         if (!url) return;
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(function () {
-              showToast('链接已复制到剪贴板');
-            }).catch(function () { try { fallbackCopy(url); } catch(e){} showToast('链接已复制'); });
-          } else { try { fallbackCopy(url); } catch(e){} showToast('链接已复制'); }
-        } catch (e) {}
+        // R79：统一走公共复制链路（同步 execCommand + clipboard API 双保险），文案统一
+        if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch(e){} }
+        else { try { fallbackCopy(url); } catch(e){} }
+        showToast('链接已复制到剪贴板');
       });
     }
     shareMask.addEventListener('click', function (e) {
@@ -1155,7 +1226,9 @@
             return {
               id: v.id, name: v.name, desc: v.desc, img: v.img, video: v.video,
               contactUrl: v.contactUrl || '', price: v.price || 0, sort: v.sort || 0,
-              resourceCode: v.resourceCode || '', resourceContent: v.resourceContent || ''
+              // R92：只保留标志不存明文（旧 config 兜底数据里若有码也一并派生标志）
+              hasCode: !!(v.hasCode || (v.resourceCode && String(v.resourceCode).trim())),
+              hasContent: !!(v.hasContent || (v.resourceContent && String(v.resourceContent).trim()))
             };
           }),
           is_online: p.is_online, is_hidden: p.is_hidden || 0
@@ -1198,7 +1271,18 @@
         if (cached) {
           var c = JSON.parse(cached);
           if (c.products && c.categories) {
-            DATA.products = c.products;
+            // R92：旧缓存可能存有资源码/专属内容明文（现在明文只走服务端解锁接口）——
+            // 派生标志后删明文字段，并写回缓存，升级后老访客本地也立即干净
+            DATA.products = (c.products || []).map(function (p) {
+              (p.variants || []).forEach(function (v) {
+                if (v.hasCode === undefined) v.hasCode = !!(v.resourceCode && String(v.resourceCode).trim());
+                if (v.hasContent === undefined) v.hasContent = !!(v.resourceContent && String(v.resourceContent).trim());
+                delete v.resourceCode; delete v.resourceContent;
+              });
+              return p;
+            });
+            c.products = DATA.products;
+            try { localStorage.setItem('wnzyq_shop_data', JSON.stringify(c)); } catch (e2) {}
             DATA.categories = c.categories;
             if (c.announcement !== undefined) DATA.announcement = c.announcement;
             if (c.announcement_mode !== undefined) DATA.announcementMode = c.announcement_mode;
@@ -1345,7 +1429,7 @@
       if (pullDistance > PULL_THRESHOLD) {
         // 触发刷新
         pullRefreshEl.style.height = '50px';
-        document.getElementById('pullRefreshText').textContent = '正在刷新...';
+        document.getElementById('pullRefreshText').textContent = '正在刷新・・・';
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
         try { localStorage.removeItem('wnzyq_shop_data'); } catch (e) {}

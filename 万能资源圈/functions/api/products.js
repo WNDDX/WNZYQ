@@ -2,10 +2,12 @@
  * GET /api/products
  * 返回所有【显示中】的资源（公开接口，前台用）
  * 每个资源同时带上其类型列表（variants），前台详情弹窗直接用
+ * R92：类型不再下发 resourceCode/resourceContent 明文，改发 hasCode/hasContent 标志；
+ * 明文内容只在 /api/unlock 验证（或已绑定设备）后单发
  * 分类/搜索过滤由前台完成
  * 带 20 秒边缘缓存（Cache API），管理员修改后自动失效
  */
-import { json, cleanProduct, cleanVariant, ensureVariantColumns } from '../_utils.js';
+import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns } from '../_utils.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -50,7 +52,8 @@ export async function onRequestGet(context) {
     for (const v of vrows) {
       if (!variantsByProduct[v.product_id]) variantsByProduct[v.product_id] = [];
       if (v.is_hidden) continue; // 隐藏的类型不在资源页显示
-      variantsByProduct[v.product_id].push(cleanVariant(v));
+      // R92：公开接口剥离资源码/专属内容明文（防 F12 直接偷码偷内容），只留 hasCode/hasContent 标志
+      variantsByProduct[v.product_id].push(cleanVariantPublic(v));
     }
   }
 

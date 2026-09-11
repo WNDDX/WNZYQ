@@ -6,7 +6,7 @@
 import { json, requireAuth, readJSON } from '../../_utils.js';
 
 // 允许设置的 key 白名单
-const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements'] /* R54：r2_public_base 已废弃删除（图片走 /img/ 路由，无需直连地址） */
+const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'] /* R54：r2_public_base 已废弃删除（图片走 /img/ 路由，无需直连地址） */
 
 export async function onRequestGet(context) {
   const { env, request } = context;

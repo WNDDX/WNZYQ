@@ -107,7 +107,7 @@
     function showInput(title, tip, placeholder, callback, defaultValue, uploadKind) {
       inputTitle.textContent = title || '请输入';
       inputTip.innerHTML = tip || '';
-      inputValue.placeholder = placeholder || '请输入...';
+      inputValue.placeholder = placeholder || '请输入・・・';
       inputValue.value = defaultValue || '';
       inputCallback = callback;
       // R36：媒体插入统一弹窗——uploadKind('image'/'video') 时显示输入框右侧的本地上传按钮，
@@ -202,7 +202,7 @@
       el.textContent = msg;
       el.className = 'toast show' + (type ? ' ' + type : '');
       if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(function () { el.className = 'toast'; }, 2200);
+      toastTimer = setTimeout(function () { el.className = 'toast'; }, 2000); // R80：统一节奏 停留2s+淡出0.3s
     }
 
     // ---------- 通用确认弹窗 ----------
@@ -421,7 +421,7 @@
       document.addEventListener('touchend', function () {
         if (!pulling) return; pulling = false;
         if (dist > TH) {
-          tip.style.height = '46px'; tip.querySelector('.prt').textContent = '正在刷新...';
+          tip.style.height = '46px'; tip.querySelector('.prt').textContent = '正在刷新・・・';
           var loginVisible = document.getElementById('loginView') && document.getElementById('loginView').style.display !== 'none';
           if (loginVisible) { /* R20：登录页下拉刷新=整页重载（未登录无数据面板可刷新） */
             setTimeout(function () { location.reload(); }, 400);
@@ -510,6 +510,8 @@
         if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; if (document.getElementById('annMask').classList.contains('open')) { try { if (typeof renderAnnList === 'function') renderAnnList(); var _dlx = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dlx && typeof selectAnnItem === 'function') selectAnnItem(_dlx.id); else if (typeof clearAnnEdit === 'function') clearAnnEdit(); } catch (e) {} } }
         
         document.getElementById('annMode').value = s.announcement_mode || 'always';
+        // R92：资源码绑定设备上限（默认 2 台）
+        var _bl = document.getElementById('setBindLimit'); if (_bl) _bl.value = s.resource_bind_limit || '2';
         // 公告状态文字已按需求移除
       });
     }
@@ -523,6 +525,25 @@
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
         if (res.ok) toast('设置已保存', 'success');
         else toast(res.msg || '保存失败', 'error');
+      });
+    });
+
+    // R92：保存资源码绑定设备上限（复用设置保存链路；调上限不会改码、不影响已绑定设备）
+    var _blsBtn = document.getElementById('bindLimitSaveBtn');
+    if (_blsBtn) _blsBtn.addEventListener('click', function () {
+      var btn = this;
+      var input = document.getElementById('setBindLimit');
+      var n = parseInt(input.value, 10);
+      if (!n || n < 1) { toast('请输入不小于 1 的整数', 'error'); input.focus(); return; } // R94：上限不封顶，可填任意大
+      var btnText = btn.textContent;
+      btn.disabled = true; btn.textContent = '确定中・・・';
+      api('admin/settings', { method: 'PUT', body: JSON.stringify({ resource_bind_limit: String(n) }) }).then(function (res) {
+        btn.disabled = false; btn.textContent = btnText;
+        if (res && res.ok) toast('设置已保存', 'success');
+        else toast((res && res.msg) || '保存失败', 'error');
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = btnText;
+        toast('保存失败', 'error');
       });
     });
 
@@ -585,7 +606,7 @@
       var p = loginPass.value;
       if (!u || !p) { if (window.showAlert) window.showAlert('请输入账号和密码'); else toast('请输入账号和密码', 'error'); return; }
       loginBtn.disabled = true;
-      loginBtn.textContent = '登录中…';
+      loginBtn.textContent = '登录中・・・';
       api('admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) })
         .then(function (res) {
           if (res && res.ok) {
@@ -764,21 +785,17 @@
         info.appendChild(t);
         info.appendChild(s);
 
-        // 显示/隐藏直接切换下拉（与分类管理的显示/隐藏框同款复用），无需进入编辑
+        // R82：显示/隐藏切换改用与编辑/复制/删除同款的胶囊按钮（点击直接切换），不再用下拉框
         var curStatus = (p.is_online && !p.is_hidden) ? 'online' : 'offline';
-        var statusSel = document.createElement('select');
-        statusSel.className = 'status-select status-' + (curStatus === 'online' ? 'online' : 'hidden');
-        statusSel.title = '直接切换资源显示/隐藏';
-        [['online', '显示'], ['offline', '隐藏']].forEach(function (op) {
-          var o = document.createElement('option');
-          o.value = op[0]; o.textContent = op[1];
-          if (op[0] === curStatus) o.selected = true;
-          statusSel.appendChild(o);
+        var statusBtn = document.createElement('button');
+        statusBtn.className = 'row-btn status-btn status-' + (curStatus === 'online' ? 'online' : 'hidden');
+        statusBtn.textContent = curStatus === 'online' ? '显示' : '隐藏';
+        statusBtn.title = '点击切换为' + (curStatus === 'online' ? '隐藏（资源页不显示）' : '显示');
+        statusBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var next = (p.is_online && !p.is_hidden) ? 'offline' : 'online';
+          setProductStatus(p.id, next);
         });
-        statusSel.addEventListener('change', function () {
-          setProductStatus(p.id, this.value);
-        });
-        statusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (statusSel.parentNode && typeof makeSelectPicker === 'function') { var _sp = makeSelectPicker(statusSel); if (_sp) { _sp.el.style.width = 'auto'; _sp.el.style.flexShrink = '0'; var _d = _sp.el.querySelector('.cat-picker-display'); if (_d) _d.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:0;width:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;'; var _a = _sp.el.querySelector('.cpd-arrow'); if (_a) _a.style.cssText = 'width:14px;height:14px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-90deg);transition:transform .3s ease;color:#1688FF;'; } } }, 0);
 
         // 资源码/专属内容状态标记（三种状态规范用词）
         var variants = p.variants || [];
@@ -820,7 +837,7 @@
         row.appendChild(cb);
         row.appendChild(img);
         row.appendChild(info);
-        row.appendChild(statusSel);
+        row.appendChild(statusBtn);
         row.appendChild(ops);
         box.appendChild(row); box.style.minHeight = '';
       });
@@ -895,7 +912,7 @@
             });
           });
           _chain.then(function () { clearCache(); loadProducts(); });
-          toast('复制成功！新资源已创建（默认隐藏状态）', 'success');
+          toast('复制成功，新资源已创建（默认隐藏状态）', 'success');
           loadProducts();
         } else {
           toast(res.msg || '复制失败', 'error');
@@ -1109,7 +1126,7 @@
       // 立即在本地生效并重渲染，保证“点击即响应”（显示=资源页可见，隐藏=不可见）
       target.is_online = (status === 'online');
       target.is_hidden = false;
-      window.__skipRenderOnce = true; var _sr = document.querySelector('#productList [data-id="' + id + '"]'); if (_sr) { var _spk = _sr.querySelector('.select-picker'); if (_spk) { var _stx = _spk.querySelector('.cpd-text'); if (_stx) _stx.textContent = status === 'online' ? '显示' : '隐藏'; _spk.classList.remove('status-online', 'status-offline', 'status-hidden'); _spk.classList.add(status === 'online' ? 'status-online' : 'status-hidden'); } }
+      window.__skipRenderOnce = true; var _sr = document.querySelector('#productList [data-id="' + id + '"]'); if (_sr) { var _sb = _sr.querySelector('.status-btn'); if (_sb) { _sb.textContent = status === 'online' ? '显示' : '隐藏'; _sb.classList.remove('status-online', 'status-hidden'); _sb.classList.add(status === 'online' ? 'status-online' : 'status-hidden'); _sb.title = '点击切换为' + (status === 'online' ? '隐藏（资源页不显示）' : '显示'); } }
       renderProducts();
       var data = {
         cid: target.cid, title: target.title, desc: target.desc, detail: target.detail,
@@ -1468,7 +1485,7 @@
       saveProductBtn.disabled = true;
       saveProductBtn.style.opacity = '0.6';
       var _saveBtnText = saveProductBtn.textContent;
-      saveProductBtn.textContent = '确定中…';
+      saveProductBtn.textContent = '确定中・・・';
 
       // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗——网络一旦失败，用户以为已保存，数据实际没写入。
       // 现在提示与关窗只在请求成功后发生（见下方 then 分支）。
@@ -1496,7 +1513,7 @@
           editMask.classList.remove('open');
           if (isNewSave) localStorage.removeItem('product_draft_new'); // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
           clearDraft(); // 保存成功后清除草稿
-          toast('保存成功', 'success');
+          toast('资源已保存', 'success');
           clearCache();
           loadProducts();
         } else {
@@ -1549,14 +1566,35 @@
           name.appendChild(hideBadge);
         }
 
-        // 资源码（有码显示码，无码显示"无资源码"）
+        // 资源码（有码显示码，无码显示"无资源码"）；R98：点击码直接复制（不放复制键）
         var codeSpan = document.createElement('span');
         if (v.resourceCode && v.resourceCode.trim()) {
-          codeSpan.style.cssText = 'font-size:12px;color:#1565c0;background:#e3f2fd;padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:600;';
+          codeSpan.style.cssText = 'font-size:12px;color:#1565c0;background:#e3f2fd;padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:600;cursor:pointer;';
           codeSpan.textContent = v.resourceCode;
+          codeSpan.title = '点击复制';
+          (function (cv) {
+            codeSpan.addEventListener('click', function (ev) {
+              // 绑定徽章在 codeSpan 内部，点徽章开弹窗、点码本体复制
+              if (ev.target !== codeSpan) return;
+              var ok = window.__shareCopyText ? window.__shareCopyText(cv) : false;
+              toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
+            });
+          })(v.resourceCode);
         } else {
           codeSpan.style.cssText = 'font-size:12px;color:#999;background:#f5f5f5;padding:2px 8px;border-radius:4px;margin-left:8px;';
           codeSpan.textContent = '无资源码';
+        }
+
+        // R92：绑定设备徽章（一机一码·宽松模式）——只有配了资源码的类型才统计绑定，
+        // 点击打开绑定设备管理弹窗（查看清单 / 解绑）
+        if (v.resourceCode && v.resourceCode.trim()) {
+          var bindSpan = document.createElement('span');
+          var bindN = Number(v.bindings) || 0;
+          bindSpan.style.cssText = 'font-size:12px;color:#00695c;background:#e0f2f1;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;cursor:pointer;';
+          bindSpan.textContent = '绑定 ' + bindN;
+          bindSpan.title = '查看该资源码已绑定的设备';
+          bindSpan.addEventListener('click', function () { openBindings(v); });
+          codeSpan.appendChild(bindSpan);
         }
 
         var sort = document.createElement('span');
@@ -1811,7 +1849,7 @@
         var fd = new FormData();
         var name = file.name || ('upload.' + (String(file.type).split('/')[1] || 'png'));
         fd.append('file', blob, name);
-        toast('正在上传图片...', 'info');
+        toast('正在上传图片・・・', 'info');
         // 注意：不能用 api()（它强制 JSON 头会破坏文件上传），直接 fetch 走 multipart
         fetch('/api/admin/upload-image', { method: 'POST', body: fd })
           .then(function (r) { return r.json(); })
@@ -1846,7 +1884,7 @@
       if (!file) return;
       var fd = new FormData();
       fd.append('file', file, file.name || 'video.mp4');
-      toast('正在上传视频，大文件可能要等一会儿...', 'info');
+      toast('正在上传视频，大文件可能要等一会儿・・・', 'info');
       fetch('/api/admin/upload-video', { method: 'POST', body: fd })
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -1881,7 +1919,25 @@
       showInput(isVideo ? '插入视频' : '插入图片',
         isVideo ? '粘贴网络视频地址，或点右侧按钮从电脑上传本地视频' : '粘贴网络图片地址，或点右侧按钮从电脑上传本地图片',
         isVideo ? 'https://.../xx.mp4' : 'https://...',
-        onInsert, '', kind);
+        function (url) {
+          // R81：视频插入统一过这里做格式兼容预警（粘贴/上传全覆盖）；
+          // 预警放在 onInsert 之后弹，避免被「视频已插入」提示反向覆盖
+          // （R86：R83 的源头硬拦截方案已按用户要求回退）
+          if (onInsert) onInsert(url);
+          if (isVideo && url) warnVideoCompat(url);
+        }, '', kind);
+    }
+
+    // R81：.mov/.avi/.wmv/.flv/.mkv 等格式在 Chrome/安卓/部分浏览器无法播放（线上感叹号占位问题的根因之一），
+    // 插入时立即提醒管理员转 MP4 (H.264)
+    // （R86：R83 曾升级为源头硬拦截 gateVideoInsert，已按用户要求回退为预警方案）
+    function warnVideoCompat(url) {
+      var m = (url || '').split('?')[0].toLowerCase().match(/\.([a-z0-9]+)$/);
+      var ext = m ? m[1] : '';
+      var risky = { mov: 1, avi: 1, wmv: 1, flv: 1, mkv: 1, m4v: 1, mpg: 1, mpeg: 1, ts: 1, '3gp': 1 };
+      if (risky[ext]) {
+        toast('已插入。注意：' + ext.toUpperCase() + ' 格式部分浏览器（Chrome/安卓）可能无法播放，建议转成 MP4 (H.264)', 'error');
+      }
     }
 
     document.getElementById('detailRteImg').addEventListener('click', function () {
@@ -1958,8 +2014,12 @@
         txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '(未命名公告)'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
         // 公告隐藏状态由下方状态下拉框直接切换
         var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;min-width:56px;text-align:left;flex-shrink:0;'; sortEl.textContent = '排序:' + (idx + 1);
-        var annStatusSel = document.createElement('select'); annStatusSel.className = 'status-select ' + (a.hidden ? 'status-hidden' : 'status-online'); annStatusSel.title = '直接切换公告显示/隐藏'; [['show', '显示'], ['hidden', '隐藏']].forEach(function (op) { var o = document.createElement('option'); o.value = op[0]; o.textContent = op[1]; if ((a.hidden ? 'hidden' : 'show') === op[0]) o.selected = true; annStatusSel.appendChild(o); });
-        annStatusSel.addEventListener('change', function () { a.hidden = this.value === 'hidden' ? 1 : 0; }); annStatusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (annStatusSel.parentNode && typeof makeSelectPicker === 'function') { var _spa = makeSelectPicker(annStatusSel); if (_spa) { _spa.el.style.width = 'auto'; _spa.el.style.flexShrink = '0'; var _da = _spa.el.querySelector('.cat-picker-display'); if (_da) _da.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:0;width:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;'; var _aa = _spa.el.querySelector('.cpd-arrow'); if (_aa) _aa.style.cssText = 'width:14px;height:14px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-90deg);transition:transform .3s ease;color:#1688FF;'; } } }, 0);
+        // R82：显示/隐藏切换改用与编辑同款的胶囊按钮（点击直接切换），不再用下拉框
+        var annStatusBtn = document.createElement('button');
+        annStatusBtn.className = 'row-btn status-btn ' + (a.hidden ? 'status-hidden' : 'status-online');
+        annStatusBtn.textContent = a.hidden ? '隐藏' : '显示';
+        annStatusBtn.title = '点击切换为' + (a.hidden ? '显示' : '隐藏');
+        annStatusBtn.addEventListener('click', function (e) { e.stopPropagation(); a.hidden = a.hidden ? 0 : 1; this.textContent = a.hidden ? '隐藏' : '显示'; this.classList.remove('status-online', 'status-hidden'); this.classList.add(a.hidden ? 'status-hidden' : 'status-online'); this.title = '点击切换为' + (a.hidden ? '显示' : '隐藏'); });
         // 点击公告项整行即可选中编辑（无需单独编辑按钮）
         var delBtn = document.createElement('button'); delBtn.className = 'row-btn danger'; delBtn.textContent = '删除';
         delBtn.addEventListener('click', function (e) {
@@ -1987,7 +2047,7 @@
           stateAnn.list.forEach(function (v2, i) { v2.sort = i + 1; });
           renderAnnList();
         });
-        item.appendChild(handle); item.appendChild(txt); item.appendChild(sortEl); item.appendChild(annStatusSel); item.appendChild(delBtn);
+        item.appendChild(handle); item.appendChild(txt); item.appendChild(sortEl); item.appendChild(annStatusBtn); item.appendChild(delBtn);
         annListEl.appendChild(item);
       });
     }
@@ -2045,7 +2105,7 @@
       var annBtn = this;
       var _annBtnText = annBtn.textContent;
       annBtn.disabled = true;
-      annBtn.textContent = '确定中…';
+      annBtn.textContent = '确定中・・・';
       flushAnnEdit();
       var data = {
         announcement: '',
@@ -2095,7 +2155,7 @@
       var cBtn = this;
       var _cBtnText = cBtn.textContent;
       cBtn.disabled = true;
-      cBtn.textContent = '确定中…';
+      cBtn.textContent = '确定中・・・';
       var v = document.getElementById('contactUrlInput').value.trim();
       document.getElementById('setContactUrl').value = v;
       var st = document.getElementById('contactStatus'); if (st) st.textContent = '';
@@ -2429,7 +2489,7 @@
       // 修复：原先请求发出前就提示"保存成功"并关闭弹窗，失败时造成"假成功"；提示与关窗移到成功分支
       var _variantOkText = variantOk.textContent;
       variantOk.disabled = true;
-      variantOk.textContent = '确定中…';
+      variantOk.textContent = '确定中・・・';
       var req = state.editingVariantId
         ? api('admin/variants/' + state.editingVariantId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/variants', { method: 'POST', body: JSON.stringify(data) });
@@ -2438,7 +2498,7 @@
         variantOk.textContent = _variantOkText;
         if (res && res.ok) {
           variantDraftPending = false; variantMask.classList.remove('open');
-          toast('保存成功', 'success');
+          toast('类型已保存', 'success');
           loadVariants(state.editingId);
         } else {
           toast(res.msg || '保存失败', 'error');
@@ -2449,6 +2509,75 @@
         toast('保存失败，请重试', 'error');
       });
     });
+
+    // ---------- R92 绑定设备管理（一机一码）----------
+    // 打开绑定设备清单弹窗：复用 modal-mask 弹窗外壳 + 统计表样式（全系统统一观感）
+    var _bindingsVariant = null;
+    function openBindings(v) {
+      _bindingsVariant = v;
+      document.getElementById('bindingsTitle').textContent = '绑定设备（' + (v.name || '(未命名)') + '）';
+      document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="4" style="color:#999;">加载中・・・</td></tr>';
+      document.getElementById('bindingsSummary').textContent = '';
+      document.getElementById('bindingsMask').classList.add('open');
+      refreshBindings(v.id);
+    }
+    function refreshBindings(variantId) {
+      api('admin/bindings?variant_id=' + variantId).then(function (res) {
+        if (!res || !res.ok) { toast((res && res.msg) || '加载失败', 'error'); return; }
+        var rows = res.list || [];
+        var summary = document.getElementById('bindingsSummary');
+        // R96：上限按"当前码"周期计数；绑满后系统自动换新码（已绑定设备不受影响）
+        summary.textContent = '当前码已绑 ' + (res.cur_count || 0) + ' / 上限 ' + res.limit + ' 台，绑满后自动换新码；累计绑定 ' + rows.length + ' 台';
+        // R96 当前资源码展示行；R100（回退 R98）：复制按键恢复——点按键、点码文本都能复制（同一条复制链路）
+        var codeBox = document.getElementById('bindingsCode');
+        var codeVal = document.getElementById('bindingsCodeVal');
+        var codeCopy = document.getElementById('bindingsCodeCopy');
+        if (res.code) {
+          codeVal.textContent = res.code;
+          codeVal.title = '点击复制';
+          codeBox.style.display = 'flex';
+          var _copyCode = function () {
+            var ok = window.__shareCopyText ? window.__shareCopyText(res.code) : false;
+            toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
+          };
+          codeVal.onclick = _copyCode;
+          codeCopy.onclick = _copyCode;
+        } else {
+          codeBox.style.display = 'none';
+        }
+        var tbody = document.getElementById('bindingsRows');
+        tbody.innerHTML = '';
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="4" style="color:#999;">暂无绑定设备，访客输入正确资源码后将自动绑定其设备</td></tr>';
+          return;
+        }
+        rows.forEach(function (r) {
+          var tr = document.createElement('tr');
+          var td1 = document.createElement('td');
+          td1.textContent = r.device || '-';
+          td1.title = '设备凭据标识（仅前12位）';
+          var td2 = document.createElement('td');
+          td2.textContent = r.created_at || '-';
+          var td3 = document.createElement('td');
+          td3.textContent = r.last_access || '-';
+          var td4 = document.createElement('td');
+          var unBtn = document.createElement('button');
+          unBtn.className = 'row-btn danger';
+          unBtn.textContent = '解绑';
+          unBtn.addEventListener('click', function () {
+            showConfirm('解绑设备', '确定解绑该设备？解绑后此设备需重新输入资源码才能解锁（其它设备不受影响）。', function () {
+              api('admin/bindings/' + r.id, { method: 'DELETE' }).then(function (res2) {
+                if (res2 && res2.ok) { toast('已解绑', 'success'); refreshBindings(variantId); loadVariants(state.editingId); }
+                else toast((res2 && res2.msg) || '解绑失败', 'error');
+              });
+            });
+          });
+          td4.appendChild(unBtn);
+          tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+          tbody.appendChild(tr);
+        });
+      });
+    }
 
     function delVariant(id) {
       showConfirm('删除类型', '确定删除该类型？', function () {
@@ -2500,9 +2629,10 @@
         { name: '咨询客服', key: 'contacts', color: '#ff9900' },
         { name: '解锁', key: 'resource_unlocks', color: '#4CAF50' }
       ].forEach(function (s) {
+        // R75：本期值靠左、（上期 N）整体靠框右缘对齐——两列各自动右对齐成列，数字不随宽度漂移
         var txt = s.name + ': ' + (d[s.key] || 0);
-        if (lineHover.hasPrev && p && p[i]) txt += '（上期 ' + (p[i][s.key] || 0) + '）';
-        lines.push({ text: txt, color: s.color });
+        var prevTxt = (lineHover.hasPrev && p && p[i]) ? '（上期 ' + (p[i][s.key] || 0) + '）' : '';
+        lines.push({ text: txt, color: s.color, right: prevTxt });
       });
       // 框位置：参考线右侧，右侧放不下翻到左侧
       var boxW = 150, boxH = 20 + lines.length * 16;
@@ -2530,6 +2660,16 @@
         if (l.center) t.setAttribute('font-weight', '600');
         t.textContent = l.text;
         g.appendChild(t);
+        // R75：该行的（上期 N）贴框右缘（text-anchor:end），与其它行右对齐成一列
+        if (l.right) {
+          var tr = document.createElementNS(SVG_NS, 'text');
+          tr.setAttribute('x', bx + boxW - 8); tr.setAttribute('text-anchor', 'end');
+          tr.setAttribute('y', by + 18 + li * 16);
+          tr.setAttribute('font-size', '11');
+          tr.setAttribute('fill', l.color);
+          tr.textContent = l.right;
+          g.appendChild(tr);
+        }
       });
       svg.appendChild(g);
     }
@@ -2721,7 +2861,7 @@
         { name: '每日趋势', rows: daily },
         { name: '按资源统计', rows: byRes }
       ]);
-      toast('导出成功（含每日趋势、按资源统计两个工作表）', 'success');
+      toast('导出成功：每日趋势、按资源统计分两个工作表', 'success');
     }
 
     // ---------- 数据统计 ----------
@@ -2803,8 +2943,14 @@
           barC.className = 'trend-bar contact' + (ghost ? ' ghost' : '');
           barC.style.height = ((data.contacts || 0) / maxVal * 100) + '%';
           barC.title = tHead + '咨询客服' + (ghost ? '(上期)' : '') + ': ' + (data.contacts || 0) + tag(other && other.contacts);
+          // R78：柱状图补资源码解锁系列（跟折线图一样三系列）——绿色 #4CAF50，ghost 沿用 opacity .32
+          var barR = document.createElement('div');
+          barR.className = 'trend-bar resource' + (ghost ? ' ghost' : '');
+          barR.style.height = ((data.resource_unlocks || 0) / maxVal * 100) + '%';
+          barR.title = tHead + '资源码解锁' + (ghost ? '(上期)' : '') + ': ' + (data.resource_unlocks || 0) + tag(other && other.resource_unlocks);
           g.appendChild(barV);
           g.appendChild(barC);
+          g.appendChild(barR);
           return g;
         }
         // R58：箭头放进本期组内第一个位置（浏览柱上方）——组是 column 底对齐，箭头自然贴柱顶、跟随柱高
@@ -2818,7 +2964,7 @@
           var ar = document.createElement('div');
           ar.className = 'trend-arrow ' + (dv > 0 ? 'up' : dv < 0 ? 'down' : 'flat');
           ar.textContent = dv > 0 ? '▲' : dv < 0 ? '▼' : '▬';
-          ar.title = timeLabel + '\n浏览: ' + (pv.views || 0) + ' → ' + (d.views || 0) + '；咨询客服: ' + (pv.contacts || 0) + ' → ' + (d.contacts || 0) + (dc > 0 ? '（涨）' : dc < 0 ? '（降）' : '');
+          ar.title = timeLabel + '\n浏览: ' + (pv.views || 0) + ' → ' + (d.views || 0) + '；咨询客服: ' + (pv.contacts || 0) + ' → ' + (d.contacts || 0) + (dc > 0 ? '（涨）' : dc < 0 ? '（降）' : '') + '；资源码解锁: ' + (pv.resource_unlocks || 0) + ' → ' + (d.resource_unlocks || 0);
           curGroup.insertBefore(ar, curGroup.firstChild);
         }
         wrap.appendChild(curGroup);
@@ -2830,6 +2976,77 @@
         col.appendChild(label);
         trendBox.appendChild(col);
       });
+      // R76：柱状图悬浮与折线图一模一样——竖虚线+数值框（时间居中+三指标行、本期左/（上期 N）右）
+      ensureBarHover(trendBox, trendData, hasPrev ? prevData : null);
+    }
+
+    // ---------- 柱状图悬浮（R76：复刻折线图 drawLineHover 的交互与样式） ----------
+    var barHover = { box: null, data: null, prev: null, attached: false };
+    function clearBarHover() {
+      var box = barHover.box;
+      if (!box) return;
+      var l = box.querySelector('.bar-hover-line'); if (l) l.remove();
+      var b = box.querySelector('.bar-hover-box'); if (b) b.remove();
+    }
+    function drawBarHover(i) {
+      var box = barHover.box; if (!box || !barHover.data || !barHover.data[i]) return;
+      clearBarHover();
+      var d = barHover.data[i]; var p = barHover.prev;
+      // 列中心横坐标（等宽列，用各列实际 rect 取第 i 列）
+      var cols = box.querySelectorAll('.trend-col');
+      var col = cols[i]; if (!col) return;
+      var br = box.getBoundingClientRect(), cr = col.getBoundingClientRect();
+      var px = cr.left - br.left + cr.width / 2;
+      // 竖参考线（折线图同款 #c3ccd9 虚线）
+      var ln = document.createElement('div');
+      ln.className = 'bar-hover-line';
+      ln.style.left = px + 'px';
+      box.appendChild(ln);
+      // 数值框内容：时间行（R62 格式、居中）+ 三指标行（系列色、本期左/（上期 N）右——与折线悬浮完全一致）
+      var series = [
+        { name: '浏览', key: 'views', color: '#1E88E5' },
+        { name: '咨询客服', key: 'contacts', color: '#ff9900' },
+        { name: '解锁', key: 'resource_unlocks', color: '#4CAF50' }
+      ];
+      var html = '<div class="bhb-time">' + fmtPointLabel(d.day) + '</div>';
+      series.forEach(function (s) {
+        var prevTxt = (p && p[i]) ? '（上期 ' + (p[i][s.key] || 0) + '）' : '';
+        html += '<div class="bhb-row"><span class="bhb-cur" style="color:' + s.color + '">' + s.name + ': ' + (d[s.key] || 0) + '</span>' +
+                (prevTxt ? '<span class="bhb-prev" style="color:' + s.color + '">' + prevTxt + '</span>' : '') + '</div>';
+      });
+      var hb = document.createElement('div');
+      hb.className = 'bar-hover-box';
+      hb.innerHTML = html;
+      // 框位置：参考线右侧 8px，右侧放不下翻到左侧（折线悬浮同逻辑），并钳制在容器内
+      var boxW = 150;
+      var bx = px + 8;
+      if (bx + boxW > br.width - 2) bx = px - 8 - boxW;
+      if (bx < 2) bx = 2;
+      hb.style.left = bx + 'px';
+      hb.style.top = '2px';
+      box.appendChild(hb);
+    }
+    function ensureBarHover(box, data, prev) {
+      barHover.box = box; barHover.data = data; barHover.prev = prev;
+      if (barHover.attached) return;
+      barHover.attached = true;
+      box.addEventListener('mousemove', function (evt) {
+        if (!barHover.data || !barHover.data.length) return;
+        // 最近列：按鼠标 x 找最近的 .trend-col 中心
+        var cols = box.querySelectorAll('.trend-col');
+        if (!cols.length) return;
+        var br = box.getBoundingClientRect();
+        var mx = evt.clientX - br.left;
+        var best = 0, bestD = Infinity;
+        for (var k = 0; k < cols.length; k++) {
+          var cr = cols[k].getBoundingClientRect();
+          var c = cr.left - br.left + cr.width / 2;
+          var dd = Math.abs(mx - c);
+          if (dd < bestD) { bestD = dd; best = k; }
+        }
+        drawBarHover(best);
+      });
+      box.addEventListener('mouseleave', function () { clearBarHover(); });
     }
 
     // R65：统计卡片渲染（拆成函数，供 loadStats 与「对比上期」开关切换重渲染共用）
@@ -2960,7 +3177,7 @@
           row: function (r) {
             var tr = document.createElement('tr');
             var status = (r.is_online && !r.is_hidden) ? '显示' : '隐藏';
-            tr.innerHTML = '<td>' + (r.title || '(无标题)') + '</td><td>' + status + '</td><td>' + (r.views || 0) + '</td><td>' + (r.contacts || 0) + '</td><td>' + (r.resource_unlocks || 0) + '</td>';
+            tr.innerHTML = '<td>' + (r.title || '(无标题)') + '</td><td>' + status + '</td><td>' + (r.views || 0) + '</td><td>' + (r.contacts || 0) + '</td><td>' + (r.resource_unlocks || 0) + '</td><td>' + (r.bindings || 0) + '</td>';
             return tr;
           }
         },
@@ -3244,13 +3461,21 @@ refreshCatCnts();
         levelBadge.style.color = c.id === 0 ? '#ef6c00' : (isTop ? '#1976d2' : '#999');
         levelBadge.textContent = ''; levelBadge.style.display = 'none';
 
-        // 显示/隐藏状态下拉框（复用资源管理的商品状态框，点击展开选择显示或隐藏）
+        // R82：显示/隐藏切换改用与编辑同款的胶囊按钮（点击直接切换），不再用下拉框
         if (Number(c.id) !== 0) {
-          var catStatusSel = document.createElement('select');
-          catStatusSel.className = 'status-select ' + (c.is_hidden ? 'status-hidden' : 'status-online');
-          catStatusSel.title = '直接切换分类显示/隐藏';
-          [['show', '显示'], ['hidden', '隐藏']].forEach(function (op) { var o = document.createElement('option'); o.value = op[0]; o.textContent = op[1]; if ((c.is_hidden ? 'hidden' : 'show') === op[0]) o.selected = true; catStatusSel.appendChild(o); });
-          catStatusSel.addEventListener('change', function () { var nowHidden = this.value === 'hidden'; var prev = !!c.is_hidden; if (prev === nowHidden) return; c.is_hidden = nowHidden; api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ is_hidden: nowHidden }) }).then(function (res) { if (!res.ok) { c.is_hidden = prev; toast(res.msg || '更新失败', 'error'); } else { clearCache(); } }); }); catStatusSel.addEventListener('click', function (e) { e.stopPropagation(); }); setTimeout(function () { if (catStatusSel.parentNode && typeof makeSelectPicker === 'function') { var _spc = makeSelectPicker(catStatusSel); if (_spc) { _spc.el.style.width = 'auto'; _spc.el.style.flexShrink = '0'; var _dc = _spc.el.querySelector('.cat-picker-display'); if (_dc) _dc.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:0;width:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;'; var _ac = _spc.el.querySelector('.cpd-arrow'); if (_ac) _ac.style.cssText = 'width:14px;height:14px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-90deg);transition:transform .3s ease;color:#1688FF;'; } } }, 0); row.appendChild(catStatusSel);
+          var catStatusBtn = document.createElement('button');
+          catStatusBtn.className = 'row-btn status-btn ' + (c.is_hidden ? 'status-hidden' : 'status-online');
+          catStatusBtn.textContent = c.is_hidden ? '隐藏' : '显示';
+          catStatusBtn.title = '点击切换为' + (c.is_hidden ? '显示' : '隐藏（资源页不显示）');
+          catStatusBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var nowHidden = !c.is_hidden; var prev = !!c.is_hidden; if (prev === nowHidden) return;
+            c.is_hidden = nowHidden;
+            this.textContent = nowHidden ? '隐藏' : '显示';
+            this.classList.remove('status-online', 'status-hidden'); this.classList.add(nowHidden ? 'status-hidden' : 'status-online');
+            this.title = '点击切换为' + (nowHidden ? '显示' : '隐藏（资源页不显示）');
+            api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ is_hidden: nowHidden }) }).then(function (res) { if (!res.ok) { c.is_hidden = prev; toast(res.msg || '更新失败', 'error'); } else { clearCache(); } });
+          }); row.appendChild(catStatusBtn);
         }
 
         var sort = document.createElement('span');
@@ -3465,7 +3690,7 @@ refreshCatCnts();
       var data = { name: name, sort: sort, parent_id: parentId, is_hidden: isHidden };
       // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗，失败时造成"假成功"；提示与关窗移到成功分支
       var _catOkText = catOk.textContent;
-      catOk.textContent = '确定中…';
+      catOk.textContent = '确定中・・・';
       var req = state.catEditingId
         ? api('admin/categories/' + state.catEditingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/categories', { method: 'POST', body: JSON.stringify(data) });
@@ -3477,7 +3702,7 @@ refreshCatCnts();
         catOk.textContent = _catOkText;
         if (res && res.ok) {
           catDraftPending = false; catMask.classList.remove('open');
-          toast('保存成功', 'success');
+          toast('分类已保存', 'success');
           clearCache();
           loadCategories();
         } else {
@@ -3523,7 +3748,7 @@ refreshCatCnts();
       api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
         .then(function (res) {
           if (res && res.ok) {
-            toast('密码修改成功', 'success');
+            toast('密码已修改', 'success');
             pwdMask.classList.remove('open');
           } else {
             if (window.showAlert) window.showAlert(res.msg || '修改失败（原密码可能不正确）'); else toast(res.msg || '修改失败', 'error');
@@ -3781,7 +4006,7 @@ refreshCatCnts();
       if (!state.editingId) { toast('新增资源请先保存后再分享', 'error'); return; }
       var url = window.location.origin + '/shop?pid=' + state.editingId;
       if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
-      else toast('资源链接已复制：' + url, 'success');
+      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) {} } toast('链接已复制到剪贴板', 'success'); }
     });
     // 咨询客服兜底弹窗：ui-common.js 加载失败时使用（样式对齐导航页，杜绝直达链接）
     // 关闭兜底客服：恢复背景视频显示并隐藏弹窗（与公共客服弹窗行为一致）

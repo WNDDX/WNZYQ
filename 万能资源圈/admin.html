@@ -102,7 +102,7 @@
 
       <!-- 数据统计 -->
       <section id="panel-stats" style="display:none">
-        <div class="stats-loading" id="statsLoading"><div class="sl-spin"></div><div>加载中…</div></div>
+        <div class="stats-loading" id="statsLoading"><div class="sl-spin"></div><div>加载中・・・</div></div>
         <div class="stat-cards" id="statCards"></div>
         <div class="trend-chart">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
@@ -149,9 +149,11 @@
               <!-- R65：本期项在左（不带「本期」字样），上期项在右（竖线分隔）；对比上期关闭时上期项隐藏 -->
               <span class="lg-view-cur">浏览</span>
               <span class="lg-contact-cur">咨询客服</span>
+              <span class="lg-resource-cur">资源码解锁</span>
               <span class="lg-prev-sep"></span>
               <span class="lg-view-prev">浏览·上期</span>
               <span class="lg-contact-prev">咨询客服·上期</span>
+              <span class="lg-resource-prev">资源码解锁·上期</span>
             </div>
           </div>
         </div>
@@ -164,7 +166,7 @@
           </div>
           <div class="stat-wrap-body" id="statBodyProduct">
             <table class="stat-table">
-              <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>咨询客服</th><th>资源码解锁</th></tr></thead>
+              <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>咨询客服</th><th>资源码解锁</th><th>绑定设备</th></tr></thead>
               <tbody id="statRows"></tbody>
             </table>
             <div class="stat-pager" id="statPagerProduct"></div>
@@ -228,6 +230,13 @@
             <label>全局客服链接（资源没填专属链接时用这个）</label>
             <input class="input" id="setContactUrl" style="display:none" />
             <button type="button" class="btn-blue" id="openContactBtn" style="width:auto;padding:0 24px;">设置客服</button>
+          </div>
+          <div class="setting-row">
+            <label>资源码绑定设备上限（每个资源码最多可绑定的设备台数，改完点保存立即生效）</label>
+            <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+              <input class="input" id="setBindLimit" type="number" min="1" step="1" placeholder="默认 1，不限上限" style="width:110px;text-align:center;" />
+              <button type="button" class="btn-blue" id="bindLimitSaveBtn" style="width:auto;padding:0 24px;">保存</button>
+            </div>
           </div>
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
@@ -301,7 +310,7 @@
               <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button></button>
               <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button></button></span>
             </div>
-            <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中..."></div>
+            <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中・・・"></div>
           </div>
         </div>
         <div class="setting-group">
@@ -537,10 +546,35 @@
       <button class="modal-close-x" data-close="inputMask">×</button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
       <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
-      <div class="input-row" id="inputRow"><input class="input" id="inputValue" placeholder="请输入..." /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
+      <div class="input-row" id="inputRow"><input class="input" id="inputValue" placeholder="请输入・・・" /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="inputOk">确定</button>
         <button class="modal-close" id="inputCancel">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ R92 绑定设备管理弹窗（类型行「绑定 N」徽章进入） ============ -->
+  <div class="modal-mask" id="bindingsMask">
+    <div class="modal-box">
+      <button class="modal-close-x" data-close="bindingsMask">×</button>
+      <h2 class="modal-title" id="bindingsTitle">绑定设备</h2>
+      <div style="font-size:13px;color:var(--text-faint);margin:6px 0 12px;" id="bindingsSummary"></div>
+      <!-- R96 当前资源码展示行：绑满自动换码后从这里拿最新码发给访客
+           R100（用户回退 R98）：复制按键恢复——点按键复制 + 点码文本也能复制，两个都行 -->
+      <div id="bindingsCode" style="display:none;font-size:13px;margin:0 0 12px;padding:9px 12px;background:var(--bg-light);border-radius:8px;align-items:center;gap:8px;">
+        <span style="color:var(--text-faint);">当前资源码</span>
+        <b id="bindingsCodeVal" style="font-family:monospace;letter-spacing:1px;font-size:14px;cursor:pointer;" title="点击复制"></b>
+        <button class="row-btn" id="bindingsCodeCopy" style="margin-left:auto;">复制</button>
+      </div>
+      <div style="max-height:46vh;overflow:auto;">
+        <table class="stat-table" id="bindingsTable">
+          <thead><tr><th>设备</th><th>绑定时间</th><th>最近访问</th><th>操作</th></tr></thead>
+          <tbody id="bindingsRows"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-close" data-close="bindingsMask">关闭</button>
       </div>
     </div>
   </div>
@@ -630,7 +664,7 @@
         <input id="vPrice" type="number" step="0.01" min="0" placeholder="单位元，不填或 0 则用资源价格" />
         <label>排序</label><input id="vSort" type="number" value="0" placeholder="数值越小越靠前" />
         <label>资源码</label>
-        <input id="vResourceCode" placeholder="可不填，买家咨询客服交易后获取的专属码" />
+        <input id="vResourceCode" placeholder="可不填，访客咨询客服后获取的专属码" />
         <label>资源码专属内容（支持文字/链接/图片/视频）</label>
         <div class="rte-toolbar" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vContentEditor">
@@ -770,7 +804,7 @@
     var uv = (u.value || '').trim();
     var pv = p.value || '';
     if (!uv || !pv) { if (window.showAlert) window.showAlert('请输入账号和密码'); else alert('请输入账号和密码'); return; }
-    btn.disabled = true; btn.textContent = '登录中…';
+    btn.disabled = true; btn.textContent = '登录中・・・';
     fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: uv, password: pv }) })
       .then(function (r) { return r.json(); })
       .then(function (res) {

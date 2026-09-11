@@ -4,7 +4,7 @@
  * POST /api/admin/variants                   → 新增类型
  * body: { productId, name, desc, img, video, contactUrl, sort, resourceCode, resourceContent, isHidden }
  */
-import { json, requireAuth, readJSON, cleanVariant, ensureVariantColumns } from '../../_utils.js';
+import { json, requireAuth, readJSON, cleanVariant, ensureVariantColumns, ensureBindingsTable } from '../../_utils.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -20,7 +20,15 @@ export async function onRequestGet(context) {
     'SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort ASC, id ASC'
   ).bind(productId).all();
 
-  return json({ ok: true, list: results.map(cleanVariant) });
+  // R92：顺带返回每类型的已绑定设备数（后台类型行的「绑定 N」徽章用）
+  await ensureBindingsTable(env);
+  const { results: bindRows } = await env.DB.prepare(
+    'SELECT variant_id, COUNT(*) AS n FROM resource_bindings WHERE product_id = ? GROUP BY variant_id'
+  ).bind(productId).all();
+  const bindMap = {};
+  for (const r of bindRows) bindMap[r.variant_id] = r.n;
+
+  return json({ ok: true, list: results.map((v) => Object.assign(cleanVariant(v), { bindings: bindMap[v.id] || 0 })) });
 }
 
 export async function onRequestPost(context) {

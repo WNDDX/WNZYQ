@@ -239,6 +239,26 @@ export async function ensureProductColumns(env) {
   } catch (e) { /* 表尚未创建时忽略，install 会按新结构建表 */ }
 }
 
+// R92：公开版类型字段——资源码与专属内容只保存在服务端，公开接口一律剥离明文，
+// 只下发 hasCode / hasContent 两个布尔标志（前台据此决定显示输入框还是直接获取键）；
+// 明文仅通过 /api/unlock 验证成功后单发。管理端接口继续用 cleanVariant 拿全量。
+export function cleanVariantPublic(v) {
+  return {
+    id: v.id,
+    productId: v.product_id,
+    name: v.name,
+    desc: v.desc,
+    img: v.img,
+    video: v.video,
+    contactUrl: v.contact_url,
+    price: v.price || 0,
+    sort: v.sort,
+    hasCode: !!(v.resource_code && String(v.resource_code).trim()),
+    hasContent: !!(v.resource_content && String(v.resource_content).trim()),
+    isHidden: v.is_hidden || 0,
+  };
+}
+
 // 把数据库行转成资源类型字段
 export function cleanVariant(v) {
   return {
@@ -255,6 +275,43 @@ export function cleanVariant(v) {
     resourceContent: v.resource_content || '',
     isHidden: v.is_hidden || 0,
   };
+}
+
+// R92：一机一码·设备绑定表（幂等创建，已部署库无需重跑 install 自动建表）
+// 一行 = 某设备（device_token）绑定了某类型（variant_id）；宽松模式下绑定记录永久有效，
+// 换码只废旧码的入场资格，不触碰已有绑定（已绑定设备照常解锁）。
+let _bindingsEnsured = false;
+export async function ensureBindingsTable(env) {
+  if (_bindingsEnsured) return;
+  try {
+    await env.DB.exec(`CREATE TABLE IF NOT EXISTS resource_bindings (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      variant_id   INTEGER NOT NULL,
+      product_id   INTEGER NOT NULL,
+      device_token TEXT NOT NULL,
+      ua           TEXT NOT NULL DEFAULT '',
+      code         TEXT NOT NULL DEFAULT '',
+      created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      last_access  TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
+    await env.DB.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_bindings_variant_device ON resource_bindings(variant_id, device_token)');
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_bindings_variant ON resource_bindings(variant_id)');
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_bindings_product ON resource_bindings(product_id)');
+    // R96：老表补 code 列（记录绑定时的资源码，"绑满自动换码"按码周期计数）；列已存在时报错忽略
+    try { await env.DB.exec("ALTER TABLE resource_bindings ADD COLUMN code TEXT NOT NULL DEFAULT ''"); } catch (e) { /* 已有该列 */ }
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_bindings_variant_code ON resource_bindings(variant_id, code)');
+    _bindingsEnsured = true;
+  } catch (e) { /* 建表失败时调用方按无绑定数据兜底 */ }
+}
+
+// R92：读取平台设置（settings 键值表），失败/未设置返回默认值
+export async function getSetting(env, key, fallback) {
+  try {
+    const row = await env.DB.prepare('SELECT value FROM settings WHERE key = ?').bind(key).first();
+    return row && row.value !== '' ? row.value : fallback;
+  } catch (e) {
+    return fallback;
+  }
 }
 
 // ============ R31（优化项7）：自有图仓（R2 绑定 IMAGE_BUCKET）============

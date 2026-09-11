@@ -290,15 +290,7 @@
     .badge.off { background: #f2f2f2; color: var(--text-faint); }
 
     /* 显示/隐藏直接切换下拉（显示/隐藏，与分类管理同款，两字宽度一致） */
-    .status-select {
-      flex-shrink: 0; padding: 6px 10px; border-radius: 14px; font-size: 12px; font-weight: 600;
-      border: 1px solid transparent; cursor: pointer; outline: none; transition: all 0.10s ease;
-    }
-    .status-select.status-online { background: #e6f7e6; color: var(--green); border-color: #bfe6bf; }
-    .status-select.status-offline { background: #f2f2f2; color: #777; border-color: #e0e0e0; }
-    .status-select.status-hidden { background: #fff4e5; color: #e8890c; border-color: #ffe0b3; }
-    .status-select:hover { transform: scale(1.04); }
-    .status-select:active { transform: scale(0.96); }    .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: var(--text-light); }
+                            .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: var(--text-light); }
 
     .product-row .p-ops { display: flex; align-items: center; gap: 12px; }    .row-btn {
       border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light);
@@ -379,6 +371,7 @@
       gap: 14px; margin-bottom: 18px;
     }
     .stat-card {
+      position: relative; /* R81：delta 绝对定位锚点 */
       background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       color: #fff; border-radius: 12px; padding: 18px;
       text-align: center; box-shadow: 0 4px 12px rgba(30, 136, 229, 0.25);
@@ -388,7 +381,7 @@
     .stat-card .num { font-size: 30px; font-weight: 700; }
     .stat-card .label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
     /* R57：环比「较上期」小字——涨绿降红（蓝底上用亮色变体保证可读） */
-    .stat-card .delta { font-size: 12px; margin-top: 3px; font-weight: 500; }
+    .stat-card .delta { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 500; margin-top: 0; white-space: nowrap; } /* R81：改放白色数据右中侧，脱离文档流，卡片高度不再被撑大 */
     .stat-card .delta.up { color: #8df7b0; }
     .stat-card .delta.down { color: #ffb1b1; }
     .stat-card .delta.flat { color: rgba(255, 255, 255, 0.78); }
@@ -514,8 +507,8 @@
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
     .modal-wide { max-width: 520px; }
-    /* 按内容量分配档位：大(编辑资源/公告) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
-    .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box { max-width: 680px; }
+    /* 按内容量分配档位：大(编辑资源/公告/绑定设备清单 R94) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
+    .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box, .modal-mask#bindingsMask > .modal-box { max-width: 680px; }
     .modal-mask#catMask > .modal-box, .modal-mask#batchCatMask > .modal-box { max-width: 520px; }
     /* 弹窗宽度由各弹窗 modal-wide/modal-lg 类控制 */
     @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
@@ -825,17 +818,20 @@
       transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
     }
 
-    /* toast 轻提示 */
+    /* toast 轻提示（R80 规格不变；R83：位置全站统一 top:80px 居中） */
     .toast {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.82); color: #fff; padding: 10px 24px;
-      border-radius: 8px; font-size: 14px; z-index: 9999;
-      opacity: 0; transition: opacity 0.25s; pointer-events: none;
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+      color: var(--blue1, #1E88E5); background: rgba(255,255,255,0.92);
+      border: 1px solid var(--blue2, #64B5F6);
+      padding: 6px 16px; border-radius: 20px; font-size: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100002;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
       max-width: 90%; text-align: center;
     }
     .toast.show { opacity: 1; }
-    .toast.error { background: rgba(220,53,69,0.92); }
-    .toast.success { background: rgba(40,167,69,0.92); }
+    .toast.error { color: #e53935; border-color: #e57373; }
+    /* R80：成功/信息/警示统一蓝胶囊（success 类仅保留不覆盖颜色） */
+    .toast.success { }
 
     /* 批量操作工具栏 */
     .batch-bar {
@@ -883,7 +879,7 @@
     .stats-fade-in { animation: statFade .3s ease; }
     @keyframes statFade { from { opacity:.2; } to { opacity:1; } }
     /* R70：灰底/圆角上收到 chart-box 外层容器（与 line-chart 同构：灰盒装图表+图例）；柱区高度由 JS 按折线图实际高同步写入 --barZone */
-    .chart-box { background: var(--bg-light); border-radius: 10px; padding: 0; margin-bottom: 8px; overflow: hidden; }
+    .chart-box { background: var(--bg-light); border-radius: 10px; padding: 0 0 12px; margin-bottom: 8px; overflow: hidden; }
     .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding: 12px 2.5% 0 5%; position: relative; }
     /* R66：柱状图网格层——对齐柱状区（bottom 24px 高 100px），折线图同款灰线 #e8e8e8 与左侧数字 #999；
        grid 先插 DOM、柱列（relative）靠后绘制，网格线在柱子后面 */
@@ -905,7 +901,16 @@
     .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
     .trend-bar.view { background: var(--blue1); }
     .trend-bar.contact { background: #ff9900; }
-    .trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--text-faint); white-space: nowrap; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; box-sizing: border-box; max-width: 100%; }
+    /* R78：资源码解锁柱（与折线图系列色一致 #4CAF50，ghost 由统一 opacity .32 处理） */
+    .trend-bar.resource { background: #4CAF50; }
+    /* R76：柱状图悬浮层——竖参考线+数值框，与折线图悬浮一模一样（同色同虚线同框样式同两列布局） */
+    .bar-hover-line { position: absolute; top: 12px; bottom: 24px; width: 0; border-left: 1px dashed #c3ccd9; pointer-events: none; z-index: 5; }
+    .bar-hover-box { position: absolute; background: rgba(255,255,255,0.96); border: 1px solid #d8dee8; border-radius: 4px; width: 150px; pointer-events: none; z-index: 6; padding: 0; }
+    .bar-hover-box .bhb-row { height: 16px; line-height: 16px; font-size: 11px; display: flex; justify-content: space-between; padding: 0 8px; }
+    .bar-hover-box .bhb-time { height: 20px; line-height: 20px; font-size: 11px; font-weight: 600; color: #555; text-align: center; }
+    .bar-hover-box .bhb-cur { flex: 1 1 auto; }
+    .bar-hover-box .bhb-prev { flex: 0 0 auto; text-align: right; }
+.trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--text-faint); white-space: nowrap; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; box-sizing: border-box; max-width: 100%; }
     .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-light); justify-content: center; }
     .trend-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
@@ -915,7 +920,10 @@
     .trend-legend .lg-view-cur::before { background: var(--blue1); }
     .trend-legend .lg-view-prev::before { background: rgba(30, 136, 229, 0.32); }
     .trend-legend .lg-contact-cur::before { background: #ff9900; }
+    /* R78：柱状图图例补资源码解锁（绿色 #4CAF50、上期 0.32 透明——与折线图系列色一致） */
+    .lg-resource-cur::before { background: #4CAF50; }
     .trend-legend .lg-contact-prev::before { background: rgba(255, 153, 0, 0.32); }
+    .lg-resource-prev::before { background: rgba(76, 175, 80, 0.32); }
     /* R65：对比上期按钮（复用 btn-blue 应用键样式）——开启态绿底提示已开启 */
     /* R67：对比上期键尺寸完全复用应用键（admin.html inline 与其一致），此处只留开启态配色 */
     /* R70：开启态淡蓝——实测取自顶栏「资源管理」等 tab 胶囊的视觉色 rgb(100,176,241)（半透白叠蓝渐变合成），更贴页面审美 */
@@ -1064,7 +1072,7 @@
        ui-common.css「全站统一弹窗按键按压效果」（变暗+降透明、不缩放、字重恒定），此处不再重复。 */
     .btn-blue, .btn-cyan, .export-btn, .batch-btn,
     .variant-add, .time-btn, .cat-toggle,
-    .preview-btn, .status-select, .row-btn {
+    .preview-btn, .row-btn {
       transition: all 0.10s ease;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -1090,8 +1098,7 @@
     .topbar-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; }
     .topbar-brand span { line-height: 1; display: flex; align-items: center; }
     /* 原生状态 select 在转换为自制选择框前不可见，避免闪现绿色默认样式（分类/公告/资源） */
-    .status-select { opacity: 0; }
-    /* 弹窗底部按钮宽度统一：2 个等宽、3 个等分 */
+        /* 弹窗底部按钮宽度统一：2 个等宽、3 个等分 */
     .modal-footer button { flex: 1 1 0; min-width: 0; }
     .modal-footer .preview-btn { flex-basis: auto; }
     /* 列表/网格按键：完全复用 ui-common.css 公共 .view-btn（与资源页同一份，零复制）。
@@ -1156,8 +1163,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* ===== R50：状态色块暗色适配（浅绿/浅灰/浅黄底在暗色下换半透明深色，保持语义可辨） ===== */
 [data-theme="dark"] .badge.on,
-[data-theme="dark"] .status-select.status-online { background: rgba(46,160,67,0.25); }
 [data-theme="dark"] .badge.off,
-[data-theme="dark"] .status-select.status-offline { background: rgba(158,158,158,0.2); }
-[data-theme="dark"] .status-select.status-hidden { background: rgba(232,137,12,0.25); color: #ffb056; }
 [data-theme="dark"] .badge.hidden { background: rgba(240,180,60,0.2); color: #ffcc80; }
+
+/* ===== R84：显示/隐藏切换按钮配色定稿——参考数据统计「对比上期/显示本期」按钮：
+   显示=应用键蓝（var(--blue1) 蓝底白字），隐藏=淡蓝 #64B0F1（R70 实测顶栏 tab 胶囊同色）；
+   蓝底白字在暗色下同样成立，不再需要暗色覆写 ===== */
+.row-btn.status-online { background: var(--blue1); color: #fff; border-color: var(--blue1); }
+.row-btn.status-hidden { background: #64B0F1; color: #fff; border-color: #64B0F1; }

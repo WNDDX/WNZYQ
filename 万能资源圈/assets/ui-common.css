@@ -228,13 +228,14 @@
 /* ===== 全站统一列表/网格切换（唯一实现，两页同色）=====
    R8 统一配色（用户定稿）：激活按键 = 淡白色底，未激活按键 = 淡蓝色底，
    两页（资源页蓝顶栏 / 管理页白背景工具栏）完全同一套色值，不再区分上下文。
+   R87（用户定稿）：未激活改为「淡蓝底白字」#64B0F1——与显示/隐藏状态按钮的淡蓝同色（全系统统一）；激活态不变（淡白底蓝字）。
    两页禁止各自再写 view-btn 样式（复用，非复制）。 */
 .view-toggle {
   display: flex; align-items: center; gap: 4px;
 }
 .view-btn {
-  padding: 0 10px; border: 1px solid #90CAF9; border-radius: 6px;
-  background: #E3F2FD; color: #1565c0; cursor: pointer;   /* 未激活：淡蓝底蓝字 */
+  padding: 0 10px; border: 1px solid #64B0F1; border-radius: 6px;
+  background: #64B0F1; color: #fff; cursor: pointer;   /* 未激活（R87）：淡蓝底白字，与状态按钮隐藏态同色 */
   font-size: 13px; height: 38px; box-sizing: border-box;
   display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; gap: 4px;
   transition: background .15s ease, color .15s ease, transform .1s ease;
@@ -243,16 +244,7 @@
 .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
 .view-btn:active { transform: scale(0.92); opacity: 0.8; }
 .view-btn.active {
-  background: #FFFFFF; color: #1565c0; border-color: #90CAF9; font-weight: 600; /* 激活：淡白底蓝字 */
-}
-/* R9 边框统一：激活/未激活边框统一为 #90CAF9（此前未激活为 #BBDEFB），两页同值 */
-.view-toggle.on-blue {
-  --vb-border: #90CAF9;
-  --vb-bg: #E3F2FD;
-  --vb-color: #1565c0;
-  --vb-on-bg: #FFFFFF;
-  --vb-on-color: #1565c0;
-  --vb-on-border: #90CAF9;
+  background: #FFFFFF; color: #1565c0; border-color: #90CAF9; font-weight: 600; /* 激活：淡白底蓝字（R87 保持不变） */
 }
 
 /* 窄屏统一适配（tab 与 view-btn 同步缩放，两页一致） */

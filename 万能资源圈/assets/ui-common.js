@@ -258,6 +258,9 @@ if ('serviceWorker' in navigator) {
   // ===== R14 全站统一「分享链接」弹窗（复刻资源页分享本站弹窗观感：400px 白卡/标题/tip/链接/确定）=====
   // window.showShareLinkModal(title, url)：标题、链接自动复制到剪贴板并展示
   window.showShareLinkModal = function (title, url) {
+    // R79：分享按键点击那一刻统一复制链接（同步 execCommand + clipboard API 双保险）+ 即时 toast
+    // 与资源页顶栏分享、资源卡片分享、预览分享、弹窗链接点击全部同链路同提示
+    try { __shareCopy(url || ''); __shareToast('链接已复制到剪贴板'); } catch (e0) {}
     try {
       var mask = document.createElement('div');
       mask.className = 'share-mask';
@@ -280,11 +283,7 @@ if ('serviceWorker' in navigator) {
         uEl.style.cursor = 'pointer';
         uEl.title = '点击复制链接';
         uEl.addEventListener('click', function () {
-          try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(uEl.textContent || '').catch(function () { try { __fallbackCopyText(uEl.textContent || ''); } catch (e) {} });
-            } else { __fallbackCopyText(uEl.textContent || ''); }
-          } catch (e) {}
+          try { __shareCopy(uEl.textContent || ''); } catch (e) {}
           __shareToast('链接已复制到剪贴板');
         });
       }
@@ -296,34 +295,49 @@ if ('serviceWorker' in navigator) {
       mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
       mask.querySelector('[data-share-x]').addEventListener('click', close);
       mask.querySelector('[data-share-ok]').addEventListener('click', close);
-      // 复制（clipboard 优先 + textarea 兜底，链路与顶栏分享一致）
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(url || '').catch(function () { try { __fallbackCopyText(url || ''); } catch (e) {} });
-        } else { __fallbackCopyText(url || ''); }
-      } catch (e) {}
+      // R79：复制已在函数入口（点击那一刻）同步完成，这里只负责弹窗与滚动锁
       window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     } catch (e) {}
   };
   function __fallbackCopyText(text) {
     var ta = document.createElement('textarea');
-    ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0;';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch (e) {}
+    ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+    document.body.appendChild(ta);
+    // R79：移动端 webview 需先 focus 再 select，execCommand 才可靠
+    try { ta.focus(); } catch (e) {}
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
     document.body.removeChild(ta);
+    return ok;
   }
+  // R79：全站统一分享复制链路——同步 execCommand（点击手势内最可靠、兼容各类 webview）
+  // + clipboard API 并行双保险；所有分享按键点击那一刻与弹窗链接点击都走这一个函数
+  function __shareCopy(text) {
+    text = (text == null) ? '' : String(text);
+    var ok = false;
+    try { ok = __fallbackCopyText(text); } catch (e) {}
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(function () {});
+      }
+    } catch (e) {}
+    return ok;
+  }
+  window.__shareCopyText = __shareCopy;
   // R22：分享链接复制提示——优先复用页面级 toast（资源页 showToast / 管理页 toast），都没有时兜底一个轻提示条
   function __shareToast(msg) {
     try {
       if (typeof window.showToast === 'function') { window.showToast(msg); return; }
       if (typeof window.toast === 'function') { window.toast(msg, 'success'); return; }
     } catch (e) {}
+    // R83：兜底 toast 位置与全站统一 top:80px 居中（白底蓝字蓝边圆角20）
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;left:50%;bottom:72px;transform:translateX(-50%);background:rgba(0,0,0,0.78);color:#fff;font-size:14px;padding:10px 18px;border-radius:8px;z-index:100000;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:86vw;box-sizing:border-box;';
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:rgba(255,255,255,0.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;';
     document.body.appendChild(t);
     requestAnimationFrame(function () { t.style.opacity = '1'; });
-    setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { try { document.body.removeChild(t); } catch (e) {} }, 250); }, 2000);
+    setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { try { document.body.removeChild(t); } catch (e) {} }, 300); }, 2000);
   }
 
   // ===== 弹窗滚动锁：打开弹窗锁定背景滚动（PC overflow + 移动端拦截穿透），弹窗内部内容仍可正常滚动 =====

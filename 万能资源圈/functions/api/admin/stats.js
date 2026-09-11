@@ -2,7 +2,7 @@
  * GET /api/admin/stats
  * 数据统计（需登录）
  */
-import { json, requireAuth } from '../../_utils.js';
+import { json, requireAuth, ensureBindingsTable } from '../../_utils.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -48,8 +48,11 @@ export async function onRequestGet(context) {
   // 1. 总览 + 2. 按资源统计 + 3. 趋势 + 4. 按分类统计 + 5. 浏览记录
   // 性能修复：原先 10+ 个 D1 查询逐个 await 串行执行（每次往返 50-200ms，累计 1-2.5 秒），
   // 现改为 Promise.all 全并行，总耗时 ≈ 最慢单查询，统计接口从 2.35s 级降到亚秒级
+  // R92：绑定统计（存量口径，不按 30 天窗口过滤）——ensure 幂等建表，旧库未重跑 install 也能查
+  await ensureBindingsTable(env);
+
   const byProductDateFilter = statsDateFilter.replace(/stats\.created_at/g, 's.created_at');
-  const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, byProductRes, trendRowsRes, byCategoryRes, recentRes, hourlyRowsRes, prevTotalRes, prevTrendRes, prevHourlyRes] = await Promise.all([
+  const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, oBindings, byProductRes, trendRowsRes, byCategoryRes, recentRes, hourlyRowsRes, prevTotalRes, prevTrendRes, prevHourlyRes] = await Promise.all([
     count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
     // 两态口径：显示 = is_online=1 且未隐藏；隐藏 = 其余全部（历史遗留数据统一归入隐藏）
     count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0'),
@@ -57,11 +60,14 @@ export async function onRequestGet(context) {
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'view'${statsDateFilter}`, statsDateParams),
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'contact'${statsDateFilter}`, statsDateParams),
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'resource_unlock'${statsDateFilter}`, statsDateParams),
+    // R92：绑定设备总数（存量，与 30 天窗口无关——绑定数是"当前多少设备持有通行证"的概念）
+    count(env.DB, 'SELECT COUNT(*) AS n FROM resource_bindings'),
     env.DB.prepare(
       `SELECT p.id, p.title, p.is_online, p.is_hidden,
               COALESCE(SUM(CASE WHEN s.type='view' THEN 1 ELSE 0 END),0) AS views,
               COALESCE(SUM(CASE WHEN s.type='contact' THEN 1 ELSE 0 END),0) AS contacts,
-              COALESCE(SUM(CASE WHEN s.type='resource_unlock' THEN 1 ELSE 0 END),0) AS resource_unlocks
+              COALESCE(SUM(CASE WHEN s.type='resource_unlock' THEN 1 ELSE 0 END),0) AS resource_unlocks,
+              COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.product_id = p.id),0) AS bindings
        FROM products p
        LEFT JOIN stats s ON s.product_id = p.id${byProductDateFilter}
        GROUP BY p.id
@@ -134,6 +140,7 @@ export async function onRequestGet(context) {
     views: oViews,
     contacts: oContacts,
     resource_unlocks: oUnlocks,
+    bindings: oBindings, // R92：已绑定设备总数（存量口径，不参与环比——环比体系仅流量三卡）
   };
   // R57：上期总量（供概览卡「较上期 ±x%」小字）
   const prevTotals = (prevTotalRes && prevTotalRes.results) || [];
@@ -224,6 +231,7 @@ export async function onRequestGet(context) {
     byProduct: byProduct.map((r) => ({
       id: r.id, title: r.title, is_online: r.is_online, is_hidden: r.is_hidden,
       views: r.views, contacts: r.contacts, resource_unlocks: r.resource_unlocks,
+      bindings: r.bindings, // R92：该资源已绑定设备数（存量）
     })),
     trend,
     byCategory,
