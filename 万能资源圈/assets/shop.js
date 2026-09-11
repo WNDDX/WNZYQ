@@ -1034,7 +1034,7 @@
       // 码正确且未超绑定上限 → 绑定本设备并返回专属内容；已绑定设备直接放行
       var btn = document.getElementById('resourceCodeBtn');
       var btnText = btn.textContent;
-      btn.disabled = true; btn.textContent = '解锁中・・・';
+      btn.disabled = true; btn.textContent = '解锁中…';
       requestResourceUnlock(input).then(function (res) {
         btn.disabled = false; btn.textContent = btnText;
         if (res === null) return; // 过期响应（弹窗已切换），不提示
@@ -1071,7 +1071,7 @@
         var btn = this;
         var btnText = btn.textContent;
         if (btn.disabled) return;
-        btn.disabled = true; btn.textContent = '获取中・・・';
+        btn.disabled = true; btn.textContent = '获取中…';
         requestResourceUnlock('').then(function (res) {
           btn.disabled = false; btn.textContent = btnText;
           if (res === null) return;
@@ -1429,7 +1429,7 @@
       if (pullDistance > PULL_THRESHOLD) {
         // 触发刷新
         pullRefreshEl.style.height = '50px';
-        document.getElementById('pullRefreshText').textContent = '正在刷新・・・';
+        document.getElementById('pullRefreshText').textContent = '正在刷新…';
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
         try { localStorage.removeItem('wnzyq_shop_data'); } catch (e) {}

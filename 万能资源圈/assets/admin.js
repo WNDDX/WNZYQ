@@ -107,7 +107,7 @@
     function showInput(title, tip, placeholder, callback, defaultValue, uploadKind) {
       inputTitle.textContent = title || '请输入';
       inputTip.innerHTML = tip || '';
-      inputValue.placeholder = placeholder || '请输入・・・';
+      inputValue.placeholder = placeholder || '请输入…';
       inputValue.value = defaultValue || '';
       inputCallback = callback;
       // R36：媒体插入统一弹窗——uploadKind('image'/'video') 时显示输入框右侧的本地上传按钮，
@@ -421,7 +421,7 @@
       document.addEventListener('touchend', function () {
         if (!pulling) return; pulling = false;
         if (dist > TH) {
-          tip.style.height = '46px'; tip.querySelector('.prt').textContent = '正在刷新・・・';
+          tip.style.height = '46px'; tip.querySelector('.prt').textContent = '正在刷新…';
           var loginVisible = document.getElementById('loginView') && document.getElementById('loginView').style.display !== 'none';
           if (loginVisible) { /* R20：登录页下拉刷新=整页重载（未登录无数据面板可刷新） */
             setTimeout(function () { location.reload(); }, 400);
@@ -536,7 +536,7 @@
       var n = parseInt(input.value, 10);
       if (!n || n < 1) { toast('请输入不小于 1 的整数', 'error'); input.focus(); return; } // R94：上限不封顶，可填任意大
       var btnText = btn.textContent;
-      btn.disabled = true; btn.textContent = '确定中・・・';
+      btn.disabled = true; btn.textContent = '确定中…';
       api('admin/settings', { method: 'PUT', body: JSON.stringify({ resource_bind_limit: String(n) }) }).then(function (res) {
         btn.disabled = false; btn.textContent = btnText;
         if (res && res.ok) toast('设置已保存', 'success');
@@ -606,7 +606,7 @@
       var p = loginPass.value;
       if (!u || !p) { if (window.showAlert) window.showAlert('请输入账号和密码'); else toast('请输入账号和密码', 'error'); return; }
       loginBtn.disabled = true;
-      loginBtn.textContent = '登录中・・・';
+      loginBtn.textContent = '登录中…';
       api('admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) })
         .then(function (res) {
           if (res && res.ok) {
@@ -1066,45 +1066,7 @@
       }, 600);
     }
 
-    function batchUpdateFields(ids, fields, label) {
-      var done = 0;
-      var fail = 0;
-      ids.forEach(function (id) {
-        var target = state.products.filter(function (p) { return p.id === id; })[0];
-        if (!target) { fail++; return; }
-        var data = {
-          cid: fields.cid !== undefined ? fields.cid : target.cid,
-          title: target.title, desc: target.desc, detail: target.detail,
-          img: target.img, detailImages: target.detailImages || [],
-          detailVideos: target.detailVideos || [], contactUrl: target.contactUrl || '',
-          price: fields.price !== undefined ? fields.price : (target.price || 0),
-          sort: target.sort, is_online: target.is_online, is_hidden: target.is_hidden || 0
-        };
-        api('admin/products/' + id, { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
-          if (res.ok) done++; else fail++;
-          if (done + fail === ids.length) {
-            toast(label + '完成：成功 ' + done + ' 项，失败 ' + fail + ' 项', fail > 0 ? 'error' : 'success');
-            clearCache();
-            loadProducts();
-          }
-        });
-      });
-    }
 
-    function toggleOnline(id, online) {
-      var target = state.products.filter(function (p) { return p.id === id; })[0];
-      if (!target) return;
-      var data = {
-        cid: target.cid, title: target.title, desc: target.desc, detail: target.detail,
-        img: target.img, detailImages: target.detailImages || [],
-        detailVideos: target.detailVideos || [], contactUrl: target.contactUrl || '',
-        sort: target.sort, is_online: online
-      };
-      api('admin/products/' + id, { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
-        if (res && res.ok) { clearCache(); loadProducts(); }
-        else toast(res.msg || '操作失败', 'error');
-      });
-    }
 
     function delProduct(id) {
       showConfirm('删除资源', '确定删除该资源？其类型和统计数据也会一并删除。', function () {
@@ -1485,7 +1447,7 @@
       saveProductBtn.disabled = true;
       saveProductBtn.style.opacity = '0.6';
       var _saveBtnText = saveProductBtn.textContent;
-      saveProductBtn.textContent = '确定中・・・';
+      saveProductBtn.textContent = '确定中…';
 
       // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗——网络一旦失败，用户以为已保存，数据实际没写入。
       // 现在提示与关窗只在请求成功后发生（见下方 then 分支）。
@@ -1849,7 +1811,7 @@
         var fd = new FormData();
         var name = file.name || ('upload.' + (String(file.type).split('/')[1] || 'png'));
         fd.append('file', blob, name);
-        toast('正在上传图片・・・', 'info');
+        toast('正在上传图片…', 'info');
         // 注意：不能用 api()（它强制 JSON 头会破坏文件上传），直接 fetch 走 multipart
         fetch('/api/admin/upload-image', { method: 'POST', body: fd })
           .then(function (r) { return r.json(); })
@@ -1884,7 +1846,7 @@
       if (!file) return;
       var fd = new FormData();
       fd.append('file', file, file.name || 'video.mp4');
-      toast('正在上传视频，大文件可能要等一会儿・・・', 'info');
+      toast('正在上传视频，大文件可能要等一会儿…', 'info');
       fetch('/api/admin/upload-video', { method: 'POST', body: fd })
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -2105,7 +2067,7 @@
       var annBtn = this;
       var _annBtnText = annBtn.textContent;
       annBtn.disabled = true;
-      annBtn.textContent = '确定中・・・';
+      annBtn.textContent = '确定中…';
       flushAnnEdit();
       var data = {
         announcement: '',
@@ -2155,7 +2117,7 @@
       var cBtn = this;
       var _cBtnText = cBtn.textContent;
       cBtn.disabled = true;
-      cBtn.textContent = '确定中・・・';
+      cBtn.textContent = '确定中…';
       var v = document.getElementById('contactUrlInput').value.trim();
       document.getElementById('setContactUrl').value = v;
       var st = document.getElementById('contactStatus'); if (st) st.textContent = '';
@@ -2489,7 +2451,7 @@
       // 修复：原先请求发出前就提示"保存成功"并关闭弹窗，失败时造成"假成功"；提示与关窗移到成功分支
       var _variantOkText = variantOk.textContent;
       variantOk.disabled = true;
-      variantOk.textContent = '确定中・・・';
+      variantOk.textContent = '确定中…';
       var req = state.editingVariantId
         ? api('admin/variants/' + state.editingVariantId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/variants', { method: 'POST', body: JSON.stringify(data) });
@@ -2516,7 +2478,7 @@
     function openBindings(v) {
       _bindingsVariant = v;
       document.getElementById('bindingsTitle').textContent = '绑定设备（' + (v.name || '(未命名)') + '）';
-      document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="4" style="color:#999;">加载中・・・</td></tr>';
+      document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="4" style="color:#999;">加载中…</td></tr>';
       document.getElementById('bindingsSummary').textContent = '';
       document.getElementById('bindingsMask').classList.add('open');
       refreshBindings(v.id);
@@ -2768,8 +2730,6 @@
       ensureLineHover(svg);
     }
 
-    // ---------- 导出 CSV ----------
-    function exportCSV() { return exportAllData(); }
 
     // 多工作表导出（SpreadsheetML，.xls，Excel/WPS 可直接打开；不同结构的数据分开放不同工作表）
     function xlsEscape(v) {
@@ -2848,21 +2808,7 @@
         toast('导出成功：资源清单、资源类型、分类清单、每日趋势、按资源统计分工作表', 'success');
       } catch (e) { toast('导出失败：' + e.message, 'error'); }
     }
-    // 导出资源码解锁记录（30天内，每日趋势 / 按资源统计 分两个工作表）
-    function _legacyExportUnlock() {
-      var trend = state.statsTrend || [];
-      var byProduct = state.statsByProduct || [];
-      var daily = [['日期', '浏览量', '咨询客服', '资源码解锁']];
-      trend.forEach(function (d) { daily.push([d.day || '', d.views || 0, d.contacts || 0, d.resource_unlocks || 0]); });
-      var byRes = [['资源名称', '浏览量', '咨询客服', '资源码解锁']];
-      byProduct.forEach(function (p) { byRes.push([String(p.title || ''), p.views || 0, p.contacts || 0, p.resource_unlocks || 0]); });
-      if (!trend.length && !byProduct.length) { toast('暂无可导出的统计数据', 'warn'); return; }
-      downloadMultiSheetXLS('万能资源圈_解锁记录_' + new Date().toISOString().slice(0, 10) + '.xls', [
-        { name: '每日趋势', rows: daily },
-        { name: '按资源统计', rows: byRes }
-      ]);
-      toast('导出成功：每日趋势、按资源统计分两个工作表', 'success');
-    }
+
 
     // ---------- 数据统计 ----------
     // R60：环比小字全量百分比（含资源码解锁卡）——上期为 0 且本期有量时按从零起算显示 ↑100%（不再显示「新增」）；
@@ -3690,7 +3636,7 @@ refreshCatCnts();
       var data = { name: name, sort: sort, parent_id: parentId, is_hidden: isHidden };
       // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗，失败时造成"假成功"；提示与关窗移到成功分支
       var _catOkText = catOk.textContent;
-      catOk.textContent = '确定中・・・';
+      catOk.textContent = '确定中…';
       var req = state.catEditingId
         ? api('admin/categories/' + state.catEditingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/categories', { method: 'POST', body: JSON.stringify(data) });
@@ -4087,20 +4033,62 @@ refreshCatCnts();
 
     // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
 
-    // ---------- 分类数据本地缓存 ----------
-    var CAT_CACHE_KEY = 'wnzyq_admin_cats';
-    function cacheCategories(cats) {
-      try { localStorage.setItem(CAT_CACHE_KEY, JSON.stringify({ data: cats, time: Date.now() })); } catch (e) {}
-    }
-    function getCachedCategories() {
-      try {
-        var c = localStorage.getItem(CAT_CACHE_KEY);
-        if (!c) return null;
-        var obj = JSON.parse(c);
-        if (Date.now() - obj.time < 300000) return obj.data; // 5分钟缓存
-        return null;
-      } catch (e) { return null; }
-    }
-
+  
     // ---------- 初始化 ----------
     boot();
+
+
+/* ===== R102（用户定稿·只做后台）：截断文字悬停/点按小框 #uiTip =====
+   电脑：mouseover 全局委托——文字实际被截断（scrollWidth/Height 超出）才弹，显示全的不弹；
+   手机：click 白名单委托（表格单元格/分类名/类型名/产品标题）——点一下弹小框，点别处关闭；
+   前台四页不受影响（本段只在 admin.js）。样式见 admin.css #uiTip */
+(function () {
+  var tip = null, cur = null;
+  function getTip() {
+    if (!tip) { tip = document.createElement('div'); tip.id = 'uiTip'; document.body.appendChild(tip); }
+    return tip;
+  }
+  function clipped(el) { return el.scrollWidth - el.clientWidth > 1 || el.scrollHeight - el.clientHeight > 1; }
+  function show(el) {
+    var txt = (el.textContent || '').trim();
+    if (!txt) return;
+    cur = el;
+    var t = getTip();
+    t.textContent = txt;
+    t.style.display = 'block';
+    var r = el.getBoundingClientRect();
+    t.style.left = '0px'; t.style.top = '0px';
+    var w = t.offsetWidth, h = t.offsetHeight;
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+    var y = r.bottom + 6;
+    if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
+    t.style.left = x + 'px'; t.style.top = y + 'px';
+  }
+  function hide() { if (tip) tip.style.display = 'none'; cur = null; }
+  var SKIP = 'input,textarea,select,button,a,.rte-editor,pre,code,canvas,svg,video,img,iframe';
+  // 电脑：鼠标悬停
+  document.addEventListener('mouseover', function (ev) {
+    var el = ev.target;
+    if (!(el instanceof Element) || !el.closest) return;
+    if (el.closest(SKIP)) return;
+    if (!clipped(el)) { if (cur && !cur.contains(el)) hide(); return; }
+    show(el);
+  });
+  document.addEventListener('mouseout', function (ev) {
+    if (!cur) return;
+    var to = ev.relatedTarget;
+    if (!to || (to !== cur && !cur.contains(to))) hide();
+  });
+  // 手机：点一下被截断的信息文本弹小框（白名单，避开按钮/链接/码复制等点击行为）；点别处关闭
+  var TAPSEL = 'td, th, .c-name, .v-name, .p-title, .p-sub';
+  document.addEventListener('click', function (ev) {
+    var el = ev.target;
+    if (!(el instanceof Element) || !el.closest) { hide(); return; }
+    if (el.closest(SKIP)) { hide(); return; }
+    var hit = el.closest(TAPSEL);
+    if (hit && clipped(hit) && (hit.textContent || '').trim()) { show(hit); return; }
+    hide();
+  });
+  window.addEventListener('scroll', hide, true);
+  window.addEventListener('resize', hide);
+})();

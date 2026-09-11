@@ -102,7 +102,7 @@
 
       <!-- 数据统计 -->
       <section id="panel-stats" style="display:none">
-        <div class="stats-loading" id="statsLoading"><div class="sl-spin"></div><div>加载中・・・</div></div>
+        <div class="stats-loading" id="statsLoading"><div class="sl-spin"></div><div>加载中…</div></div>
         <div class="stat-cards" id="statCards"></div>
         <div class="trend-chart">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
@@ -310,7 +310,7 @@
               <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button></button>
               <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button></button></span>
             </div>
-            <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中・・・"></div>
+            <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中…"></div>
           </div>
         </div>
         <div class="setting-group">
@@ -546,7 +546,7 @@
       <button class="modal-close-x" data-close="inputMask">×</button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
       <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
-      <div class="input-row" id="inputRow"><input class="input" id="inputValue" placeholder="请输入・・・" /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
+      <div class="input-row" id="inputRow"><input class="input" id="inputValue" placeholder="请输入…" /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="inputOk">确定</button>
         <button class="modal-close" id="inputCancel">关闭</button>
@@ -804,7 +804,7 @@
     var uv = (u.value || '').trim();
     var pv = p.value || '';
     if (!uv || !pv) { if (window.showAlert) window.showAlert('请输入账号和密码'); else alert('请输入账号和密码'); return; }
-    btn.disabled = true; btn.textContent = '登录中・・・';
+    btn.disabled = true; btn.textContent = '登录中…';
     fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: uv, password: pv }) })
       .then(function (r) { return r.json(); })
       .then(function (res) {

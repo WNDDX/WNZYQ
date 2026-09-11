@@ -806,15 +806,15 @@
       flex: 1; background-color: var(--red); color: #fff; border: none;
       padding: 0 24px; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 600;
     }
-    .modal-inner-btn, .modal-close, .btn-blue, .row-btn, .switch, .variant-add {
+    .modal-inner-btn, .modal-close, .btn-blue, .row-btn, .variant-add {
       transition: all 0.10s ease;
     }
     .modal-inner-btn:hover, .modal-close:hover, .btn-blue:hover,
-    .row-btn:hover, .switch:hover, .variant-add:hover {
+    .row-btn:hover, .variant-add:hover {
       transform: scale(0.97); opacity: 0.9;
     }
     .modal-inner-btn:active, .modal-close:active, .btn-blue:active,
-    .row-btn:active, .switch:active, .variant-add:active {
+    .row-btn:active, .variant-add:active {
       transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
     }
 
@@ -1171,3 +1171,25 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    蓝底白字在暗色下同样成立，不再需要暗色覆写 ===== */
 .row-btn.status-online { background: var(--blue1); color: #fff; border-color: var(--blue1); }
 .row-btn.status-hidden { background: #64B0F1; color: #fff; border-color: #64B0F1; }
+
+
+/* ===== R102（用户定稿·只做后台）：表格文字列单行 + 悬停/点按小框看全文 =====
+   统计三表 + 绑定设备表共用 .stat-table（table-layout:fixed 下 ellipsis 生效）；
+   电脑鼠标悬停、手机点一下被截断的文字，弹 #uiTip 小框看全文（admin.js 委托实现） */
+.stat-table th, .stat-table td {
+  text-align: center; padding: 10px 8px; font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 分类名/类型名单行截断，配小框看全文 */
+.cat-row .c-name { flex: 1 1 140px; font-size: 15px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.variant-item .v-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 小框本体：弹窗同款（白底/细边/圆角/投影），内部允许换行，只在文字真的被截断时出现 */
+#uiTip {
+  position: fixed; z-index: 10000; display: none;
+  max-width: 340px; padding: 8px 12px;
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font-size: 13px; line-height: 1.6; color: var(--text);
+  white-space: normal; word-break: break-all; pointer-events: none;
+}
