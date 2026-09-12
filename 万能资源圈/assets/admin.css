@@ -121,7 +121,7 @@
     /* ---------- 主视图 ---------- */
     .topbar {
       position: sticky; top: 0; z-index: 100;
-      transition: transform .28s ease, box-shadow .28s ease; will-change: transform;
+      transition: transform .2s ease, box-shadow .2s ease; will-change: transform;
     }
     .topbar.nav-hidden { transform: translateY(-100%); box-shadow: none; }
     .back-top {
@@ -131,7 +131,7 @@
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 14px rgba(30,136,229,0.4);
       opacity: 0; visibility: hidden; transform: translateY(10px);
-      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.2s;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s;
     }
     .back-top.show { opacity: 0.72; visibility: visible; transform: translateY(0); }
     .back-top:hover { opacity: 1; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(30,136,229,0.5); }
@@ -411,7 +411,7 @@
     }
     .stat-toggle:hover { color: var(--blue2); }
     .stat-toggle .toggle-arrow {
-      width: 20px; height: 20px; transition: transform 0.3s ease;
+      width: 20px; height: 20px; transition: transform 0.15s ease;
       transform: rotate(-90deg); /* 收起状态：箭头向左（与资源页分类三角一致） */
       filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
     }
@@ -499,11 +499,11 @@
       background: rgba(0, 0, 0, 0.76);
       display: none; align-items: center; justify-content: center; padding: 16px;
     }
-    .modal-mask.open { display: flex; animation: maskIn 0.22s ease; }
+    .modal-mask.open { display: flex; animation: maskIn 0.18s ease; }
     .modal-box {
       position: relative; background: var(--card-bg); border-radius: 14px;
       width: 100%; max-width: 400px; max-height: 88vh; overflow-y: auto; min-height: 160px;
-      padding: 26px 22px; text-align: left; animation: modalIn 0.25s ease;
+      padding: 26px 22px; text-align: left; animation: modalIn 0.18s ease;
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
     .modal-wide { max-width: 520px; }
@@ -558,7 +558,7 @@
     .cat-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
     .cat-picker-display .cpd-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cat-picker-display .cpd-text.placeholder { color: var(--text-faint); }
-    .cat-picker-display .cpd-arrow { width: 16px; height: 16px; color: var(--blue1); transition: transform 0.3s ease, color 0.2s ease; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); }
+    .cat-picker-display .cpd-arrow { width: 16px; height: 16px; color: var(--blue1); transition: transform 0.15s ease, color 0.2s ease; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); }
     .cat-picker-display:hover .cpd-arrow { color: var(--blue1); }
     .cat-picker-display .cpd-arrow svg { width: 100%; height: 100%; display: block; }
     .cat-picker.open .cpd-arrow { transform: rotate(0deg); }
@@ -583,7 +583,7 @@
     .cp-item .cp-name { flex: 1; }
     .cp-item .cp-chevron {
       width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-      color: var(--blue1); transition: transform 0.3s ease, color 0.2s ease; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
+      color: var(--blue1); transition: transform 0.15s ease, color 0.2s ease; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
     }
     .cp-item .cp-chevron svg { width: 100%; height: 100%; display: block; }
     .cp-item .cp-chevron:hover { color: var(--blue1); }
@@ -724,7 +724,7 @@
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
     .view-switch-anim { animation: viewSwitch 0.18s ease; }
     /* 预览弹窗 */
-    .preview-box { position: relative; animation: modalIn 0.25s ease; } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; } .preview-box img { display: block; margin: 8px auto; } .preview-box video { width: 100%; display: block; }
+    .preview-box { position: relative; animation: modalIn 0.18s ease; } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; } .preview-box img { display: block; margin: 8px auto; } .preview-box video { width: 100%; display: block; }
     /* R15：预览弹窗与资源页资源弹窗逐项完全同步（尺寸/字号/颜色/按键宽度/动画/移动端全一致）
        同步目标：shop.html 的 .modal-wrap(680px) / .modal-cover / .modal-title / .modal-price /
        .modal-desc / .modal-detail / .variant-tab(s) / .variant-detail / .btn-contact / .btn-close-modal */
@@ -825,7 +825,7 @@
       border: 1px solid var(--blue2, #64B5F6);
       padding: 6px 16px; border-radius: 20px; font-size: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100002;
-      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
       max-width: 90%; text-align: center;
     }
     .toast.show { opacity: 1; }
@@ -876,7 +876,7 @@
     .stats-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 0; color: var(--text-faint); font-size:14px; gap:12px; }
     .stats-loading .sl-spin { width:30px; height:30px; border:3px solid var(--border); border-top-color:var(--blue1); border-radius:50%; animation:slspin .8s linear infinite; }
     @keyframes slspin { to { transform: rotate(360deg); } }
-    .stats-fade-in { animation: statFade .3s ease; }
+    .stats-fade-in { animation: statFade .18s ease; }
     @keyframes statFade { from { opacity:.2; } to { opacity:1; } }
     /* R70：灰底/圆角上收到 chart-box 外层容器（与 line-chart 同构：灰盒装图表+图例）；柱区高度由 JS 按折线图实际高同步写入 --barZone */
     .chart-box { background: var(--bg-light); border-radius: 10px; padding: 0 0 12px; margin-bottom: 8px; overflow: hidden; }
@@ -898,7 +898,7 @@
     .trend-arrow.up { color: #1a9e4a; }
     .trend-arrow.down { color: #d43c3c; }
     .trend-arrow.flat { color: #9aa4b2; }
-    .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
+    .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.2s; }
     .trend-bar.view { background: var(--blue1); }
     .trend-bar.contact { background: #ff9900; }
     /* R78：资源码解锁柱（与折线图系列色一致 #4CAF50，ghost 由统一 opacity .32 处理） */
@@ -912,7 +912,7 @@
     .bar-hover-box .bhb-prev { flex: 0 0 auto; text-align: right; }
 .trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--text-faint); white-space: nowrap; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; box-sizing: border-box; max-width: 100%; }
     .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-light); justify-content: center; }
-    .trend-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+    .trend-legend span:not(.lg-group)::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
     .trend-legend .lg-contact::before { background: #ff9900; }
     /* R64：图例逐系列×逐期（4项）——本期=系列色实块，上期=同色 32% 透明块（与图中的 ghost 柱一致） */
@@ -975,6 +975,11 @@
     .line-legend:not(.show-prev) .lg-prev-sep, .line-legend:not(.show-prev) [class$="-prev"] { display: none; }
     .trend-legend:not(.show-prev) .lg-prev-sep, .trend-legend:not(.show-prev) [class$="-prev"] { display: none; }
     .trend-legend { flex-wrap: wrap; }
+    /* R109：图例按组换行——本期/上期各自整组一行（跟编辑器组模式一样），组内不拆行，换行只发生在组与组之间 */
+    .lg-group { display: flex; flex-wrap: nowrap; align-items: center; }
+    .line-legend .lg-group, .trend-legend .lg-group { gap: 16px; }
+    /* 关对比上期时整组隐藏（组 class 以 -prev 结尾，也被 [class$="-prev"] 规则命中，此处显式声明双保险） */
+    .line-legend:not(.show-prev) .lg-group-prev, .trend-legend:not(.show-prev) .lg-group-prev { display: none; }
 
     /* 手机端适配 */
     @media (max-width: 600px) {

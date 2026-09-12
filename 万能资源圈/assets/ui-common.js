@@ -85,6 +85,8 @@ if ('serviceWorker' in navigator) {
       if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overflow = '');
     }
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    // R111：注册进 __modalKit——Esc 走暂存通道（纯展示弹窗=直接关）
+    if (window.__modalKit) window.__modalKit.register(m, { discard: close, stash: close });
     document.getElementById('kfCloseX').addEventListener('click', close);
     document.getElementById('kfCloseBtn').addEventListener('click', close);
     document.getElementById('kfJumpBtn').addEventListener('click', function () {
@@ -139,8 +141,11 @@ if ('serviceWorker' in navigator) {
     if (!__lbMask) {
       __lbMask = document.createElement('div');
       __lbMask.className = 'lightbox';
-      __lbMask.onclick = window.closeLightbox;
+      // R111：点图片本身不算「弹窗外」，只有点空白遮罩才关（与全站口径一致）
+      __lbMask.onclick = function (e) { if (e.target === __lbMask) window.closeLightbox(); };
       document.body.appendChild(__lbMask);
+      // R111：注册进统一弹窗栈，Esc 逐层路由（只关最上层）
+      if (window.__modalKit) window.__modalKit.register(__lbMask, { discard: window.closeLightbox, stash: window.closeLightbox });
     }
     __lbMask.textContent = '';
     var x = document.createElement('button');
@@ -178,9 +183,7 @@ if ('serviceWorker' in navigator) {
     if (!__lbMask || !__lbMask.classList.contains('open')) return;
     if (__lbMask.contains(e.target)) { __lbScale = 1; var el = __lbMask.querySelector('img, video'); if (el) el.style.transform = 'scale(1)'; }
   });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && __lbMask && __lbMask.classList.contains('open')) window.closeLightbox();
-  });
+  // R111：Esc 关灯箱改由 __modalKit 统一路由（逐层：只关最上层弹窗），此处不再单独监听
   // 客服二维码单击放大（R45：与图片统一体验；加载失败占位符不放大——仅真实图可点）
   window.__bindQrLightbox = function (img) {
     if (!img || img.dataset.lbBound) return;
@@ -267,7 +270,7 @@ if ('serviceWorker' in navigator) {
       mask.setAttribute('role', 'dialog');
       mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
-        '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.25s ease;">' +
+        '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
           '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:all 0.10s ease;">×</button>' +
           '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
           '<div style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
@@ -295,6 +298,8 @@ if ('serviceWorker' in navigator) {
       mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
       mask.querySelector('[data-share-x]').addEventListener('click', close);
       mask.querySelector('[data-share-ok]').addEventListener('click', close);
+      // R111：注册进 __modalKit——Esc 走暂存通道（纯展示弹窗=直接关）
+      if (window.__modalKit) window.__modalKit.register(mask, { discard: close, stash: close });
       // R79：复制已在函数入口（点击那一刻）同步完成，这里只负责弹窗与滚动锁
       window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     } catch (e) {}
@@ -467,3 +472,41 @@ window.jumpTo = function (href) {
 window.addEventListener('pageshow', function (e) {
   if (e.persisted && document.body && document.body.style.opacity === '0') { document.body.style.opacity = '1'; document.body.style.transition = ''; }
 });
+
+/* ---------- R111：弹窗三模式统一关闭 kit（全站共用） ----------
+   口径：×/取消 = 丢弃；点外 / Esc = 暂存草稿；确定/保存 = 保存数据。
+   各页 register(mask, {discard, stash})（两个 fn 自行完成关窗）；kit 维护「打开栈」，
+   Esc 只关最上面一层并走该层的暂存通道（admin 旧的一刀切全关已废除）。
+   先行 Esc 处理器（如 admin 富文本放大态退出）置 e.__escPre = true 后本 kit 不再动作。 */
+window.__modalKit = (function () {
+  var stack = [];
+  var reg = [];
+  function entry(m) { for (var i = 0; i < reg.length; i++) if (reg[i].mask === m) return reg[i]; return null; }
+  function sync(m) {
+    var open = !!(m.classList && m.classList.contains('open'));
+    var idx = stack.indexOf(m);
+    if (open && idx < 0) stack.push(m);
+    else if (!open && idx >= 0) stack.splice(idx, 1);
+  }
+  function register(mask, handlers) {
+    if (!mask || entry(mask)) return; // 幂等
+    reg.push({ mask: mask, discard: handlers && handlers.discard, stash: handlers && handlers.stash });
+    try { new MutationObserver(function () { sync(mask); }).observe(mask, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+    sync(mask);
+  }
+  function close(mask, mode) {
+    var h = entry(mask);
+    if (!h) return;
+    var fn = mode === 'discard' ? (h.discard || h.stash) : (h.stash || h.discard);
+    try { if (fn) fn.call(mask, mask); } catch (err) { try { console.error(err); } catch (e2) {} }
+    try { mask.classList.remove('open'); } catch (e) {}
+    try { mask.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {}
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || e.__escPre) return;
+    if (!stack.length) return;
+    e.preventDefault();
+    close(stack[stack.length - 1], 'stash');
+  });
+  return { register: register, close: close, stack: stack };
+})();

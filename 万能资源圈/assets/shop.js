@@ -346,6 +346,9 @@
     function renderAnnouncement() {
       try { var mask = document.getElementById('annModal');
       if (!mask) return;
+      // R108：首访无缓存且接口未返回时不弹空公告窗（此前先弹"暂无内容"再闪一次刷新）——
+      // 数据到位后 renderAll 会再次走到这里，弹窗出现即完整内容
+      if (!(DATA.announcements || []).length && !String(DATA.announcement || '').trim()) { mask.classList.remove('open'); return; }
       var mode = DATA.announcementMode || 'always';
       if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) {} } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) {} }
         // 修复（首次开屏）：弹窗已打开但此前数据未到（首访无缓存先弹空窗），接口返回后在此用最新数据刷新 tabs/默认选中/默认内容
@@ -862,7 +865,7 @@
       if (hasContent) {
         variantDetail.style.animation = 'none';
         variantDetail.offsetHeight;
-        variantDetail.style.animation = 'fadeInUp 0.3s ease';
+        variantDetail.style.animation = 'fadeInUp 0.18s ease';
       }
     }
 
@@ -1428,7 +1431,7 @@
       isPulling = false;
       if (pullDistance > PULL_THRESHOLD) {
         // 触发刷新
-        pullRefreshEl.style.height = '50px';
+        pullRefreshEl.style.height = '28px';
         document.getElementById('pullRefreshText').textContent = '正在刷新…';
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
@@ -1573,11 +1576,14 @@
     }
 
     // ---------- ESC 关闭弹窗 ----------
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        if (modalMask.classList.contains('open')) closeModal();
-        if (lightboxMask && lightboxMask.classList.contains('open')) closeLightbox();
-      }
+    // R111：Esc 统一走 __modalKit（ui-common.js）逐层关闭——只关最上层并走该层「暂存」通道；
+    // 旧的「一次 Esc 同时关资源弹窗+灯箱」handler 已删；灯箱在 openLightbox 创建时注册
+    window.addEventListener('DOMContentLoaded', function () {
+      var kit = window.__modalKit; if (!kit) return;
+      // 资源详情 / 公告 / 分享 / 客服：纯展示，四通道=直接关（客服 kfMask 在 ui-common 创建处注册）
+      kit.register(modalMask, { discard: closeModal, stash: closeModal });
+      var __am = document.getElementById('annModal'); if (__am) kit.register(__am, { discard: closeAnnModal, stash: closeAnnModal });
+      kit.register(shareMask, { discard: closeShare, stash: closeShare });
     });
 
     // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
@@ -1634,8 +1640,10 @@
       if (!lightboxMask) {
         lightboxMask = document.createElement('div');
         lightboxMask.className = 'lightbox';
-        lightboxMask.onclick = closeLightbox;
+        // R111：点图片本身不算「弹窗外」，只有点空白遮罩才关（与全站口径一致）
+        lightboxMask.onclick = function (e) { if (e.target === lightboxMask) closeLightbox(); };
         document.body.appendChild(lightboxMask);
+        if (window.__modalKit) window.__modalKit.register(lightboxMask, { discard: closeLightbox, stash: closeLightbox });
       }
       lightboxMask.textContent = ''; var _lbx = document.createElement('button'); _lbx.type = 'button'; _lbx.className = 'modal-close-x'; _lbx.textContent = '×'; _lbx.onclick = closeLightbox; lightboxMask.appendChild(_lbx);
       var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src); var _lbImg = document.createElement(isVideo ? 'video' : 'img');

@@ -60,7 +60,7 @@
       z-index: 100;
       background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       box-shadow: 0 2px 10px rgba(30, 136, 229, 0.35);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .topbar.hidden {
       transform: translateY(-100%);
@@ -130,7 +130,7 @@
     .share-box {
       background: var(--card-bg); border-radius: 14px;
       position: relative; padding: 26px 20px; width: 100%; max-width: 400px;
-      text-align: center; animation: modalIn 0.25s ease;
+      text-align: center; animation: modalIn 0.18s ease;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
     .share-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 10px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
@@ -377,15 +377,15 @@
     /* ---------- 下拉刷新 ---------- */
     .pull-refresh {
       position: fixed;
-      top: 0;
+      /* R108：与全站 toast 同位 top:80px（用户反馈手机上两处提示高度不一致） */
+      top: 80px;
       left: 0;
       right: 0;
       height: 0;
       overflow: hidden;
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: center;
-      padding-bottom: 10px;
       z-index: 101;
       transition: height 0.2s ease;
       pointer-events: none;
@@ -393,7 +393,7 @@
       background: transparent;
     }
     .pull-refresh.show {
-      height: 46px;
+      height: 28px;
     }
     .pull-refresh-text {
       font-size: 12px;
@@ -440,7 +440,7 @@
       opacity: 0;
       visibility: hidden;
       transform: translateY(10px);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .back-top.show {
       opacity: 0.72;
@@ -785,7 +785,7 @@
       font-size: 13px;
       color: var(--text);
       line-height: 1.8;
-      animation: fadeInUp 0.3s ease;
+      animation: fadeInUp 0.18s ease;
     }
     .resource-content img, .resource-content video {
       max-width: 100%;
@@ -857,7 +857,7 @@
 
 
     /* 平台公告 */
-    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto; padding: 26px 22px; animation: modalIn 0.25s ease; text-align: left; }
+    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto; padding: 26px 22px; animation: modalIn 0.18s ease; text-align: left; }
     .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color 0.15s ease; }
     .ann-modal .ann-title:hover { color: var(--blue1); }
     .ann-modal .ann-title.active { color: var(--blue1); }
@@ -905,7 +905,7 @@
     .cat-toggle .toggle-arrow {
       width: 20px;
       height: 20px;
-      transition: transform 0.3s ease;
+      transition: transform 0.15s ease;
       transform: rotate(-90deg); /* 收起状态：箭头向左 */
       filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
     }
@@ -913,7 +913,7 @@
       transform: rotate(0deg); /* 展开状态：箭头向下 */
     }
     .category-bar {
-      transition: min-height 0.3s ease, padding-bottom 0.3s ease;
+      transition: min-height 0.2s ease, padding-bottom 0.2s ease;
     }
     .category-bar.expanded {
       flex-wrap: wrap;
@@ -934,7 +934,7 @@
       -ms-overflow-style: none;
       padding: 6px 24px 8px;
       gap: 6px;
-      transition: min-height 0.3s ease, padding-bottom 0.3s ease;
+      transition: min-height 0.2s ease, padding-bottom 0.2s ease;
     }
     .sub-category-bar::-webkit-scrollbar { display: none; }
     /* 二级分类展开按钮 - 更小更浅，体现层次感 */
@@ -960,7 +960,7 @@
     .sub-cat-toggle .toggle-arrow {
       width: 15px;
       height: 15px;
-      transition: transform 0.3s ease;
+      transition: transform 0.15s ease;
       transform: rotate(-90deg); /* 收起状态：向左 */
     }
     .sub-cat-toggle.open .toggle-arrow {
@@ -1097,6 +1097,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   padding: 14px 14px;
   text-align: center;
   width: 100%;
+  /* R108：按视频通用 16:9 占位（宽撑满、高跟随；高度受限时宽随之收敛），
+     视频替换兜底卡前后容器尺寸一致，不再"加载出来窗口才变大" */
+  aspect-ratio: 16 / 9;
+  max-height: 60vh;
   box-sizing: border-box;
   margin: 4px 0;
   display: flex;

@@ -250,10 +250,10 @@
         if (closeBtn.dataset.close === 'pwdMask') { var _o=document.getElementById('oldPwd'),_n=document.getElementById('newPwd'),_c=document.getElementById('confirmPwd'); if(_o)_o.value=''; if(_n)_n.value=''; if(_c)_c.value=''; } // ×=取消：清空密码框
         if (mask) {
           mask.classList.remove('open');
-          // 清除输入弹窗回调
-          if (closeBtn.dataset.close === 'inputMask') inputCallback = null;
-          // 清除确认弹窗回调
-          if (closeBtn.dataset.close === 'confirmMask') confirmCallback = null;
+          // R111：输入弹窗×=丢弃——清输入+清回调
+          if (closeBtn.dataset.close === 'inputMask') { inputCallback = null; try { var _iv = document.getElementById('inputValue'); if (_iv) _iv.value = ''; } catch (e) {} }
+          // R111：确认弹窗×=取消语义——执行取消回调（与点外/Esc 同口径）
+          if (closeBtn.dataset.close === 'confirmMask') { if (confirmCancelCallback) { var _ccb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; _ccb(); } else { confirmCallback = null; confirmCancelCallback = null; } }
         }
       }
     });
@@ -1100,12 +1100,11 @@
       editTitle.textContent = p ? '编辑资源' : '新增资源';
       fillCidSelect(p ? p.cid : 0);
       fillProductForm(p);
-      // 有草稿直接恢复，不弹确认框（取消=丢弃；×/窗外=暂存草稿，下次打开自动恢复）
+      // 有草稿直接恢复，不弹确认框（R111 口径：×/取消=丢弃；点外/Esc=暂存草稿，下次打开自动恢复；
+      // 草稿改内存存取——刷新即清，与其它弹窗的暂存口径统一）
       try {
-        var draftKey = 'product_draft_' + (p ? p.id : 'new');
-        var draft = localStorage.getItem(draftKey);
-        if (draft) {
-          var dd = JSON.parse(draft);
+        var dd = __editDrafts[p ? p.id : 'new'];
+        if (dd) {
           fTitle.value = dd.title || ''; fDesc.value = dd.desc || ''; fDetail.innerHTML = dd.detail || ''; fImg.value = dd.img || ''; fContactUrl.value = dd.contactUrl || ''; fPrice.value = dd.price || ''; fSort.value = dd.sort || 0; fOnline.checked = !!dd.online && !dd.hidden; fillCidSelect(dd.cid || 0);
         }
       } catch (e) {}
@@ -1136,9 +1135,12 @@
     function stopAutoSaveDraft() {
       if (draftTimer) { clearInterval(draftTimer); draftTimer = null; }
     }
+    // R111：草稿改内存对象（用户定稿：所有页面草稿刷新页面就没）——不再落 localStorage；
+    // 顺手清掉历史版本遗留的 product_draft_* 旧键
+    var __editDrafts = {};
+    try { for (var __lk = localStorage.length - 1; __lk >= 0; __lk--) { var __lkn = localStorage.key(__lk); if (__lkn && __lkn.indexOf('product_draft_') === 0) localStorage.removeItem(__lkn); } } catch (e) {}
     function saveDraft() {
       if (!editMask.classList.contains('open')) return;
-      var draftKey = 'product_draft_' + (state.editingId || 'new');
       var draftData = {
         title: fTitle.value,
         desc: fDesc.value,
@@ -1152,11 +1154,10 @@
         cid: fCid.value,
         savedAt: new Date().toISOString()
       };
-      localStorage.setItem(draftKey, JSON.stringify(draftData));
+      __editDrafts[state.editingId || 'new'] = draftData;
     }
     function clearDraft() {
-      var draftKey = 'product_draft_' + (state.editingId || 'new');
-      localStorage.removeItem(draftKey);
+      try { delete __editDrafts[state.editingId || 'new']; } catch (e) {}
       stopAutoSaveDraft();
     }
 
@@ -1455,7 +1456,7 @@
             })(0);
           }
           editMask.classList.remove('open');
-          if (isNewSave) localStorage.removeItem('product_draft_new'); // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
+          if (isNewSave) { try { delete __editDrafts['new']; } catch (e) {} } // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
           clearDraft(); // 保存成功后清除草稿
           toast('资源已保存', 'success');
           clearCache();
@@ -1671,6 +1672,7 @@
       if (e.key === 'Escape') {
         var bigEd = document.querySelector('.rte-editor.rte-large');
         if (bigEd) {
+          e.__escPre = true; // R111：本次 Esc 只退出富文本放大态，__modalKit 不再关弹窗
           bigEd.classList.remove('rte-large'); var _tb = bigEd.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar-large')) _tb.classList.remove('rte-toolbar-large');
           document.querySelectorAll('.rte-zoom.rte-zoom-on').forEach(function (b) { b.classList.remove('rte-zoom-on'); b.textContent = '⛶ 放大'; }); window.__syncBodyLock && window.__syncBodyLock();
           var _ex = document.getElementById('rteExitZoom'); if (_ex) _ex.style.display = 'none';
@@ -2254,7 +2256,7 @@
     }
 
     // 通用超链接弹窗（一个弹窗两个输入框）
-    var linkDialogMask = null;
+    var linkDialogMask = null; var __linkStashOn = false; // R111：链接弹窗暂存标记
     function showLinkDialog(defaultUrl, defaultText, callback) {
       // 创建弹窗
       if (!linkDialogMask) {
@@ -2273,20 +2275,30 @@
           '<button class="modal-close" id="linkDialogCancel">关闭</button>' +
           '</div></div>';
         document.body.appendChild(linkDialogMask);
-        // 关闭事件
+        // R111：×/关闭=丢弃（清两个输入）；点外/Esc=暂存（保留输入，下次打开接着填）
         linkDialogMask.querySelector('[data-link-close]').addEventListener('click', function () {
+          try { document.getElementById('linkDialogUrl').value = ''; document.getElementById('linkDialogText').value = ''; } catch (e) {}
+          __linkStashOn = false;
           linkDialogMask.classList.remove('open');
         });
         linkDialogMask.querySelector('#linkDialogCancel').addEventListener('click', function () {
+          try { document.getElementById('linkDialogUrl').value = ''; document.getElementById('linkDialogText').value = ''; } catch (e) {}
+          __linkStashOn = false;
           linkDialogMask.classList.remove('open');
         });
         linkDialogMask.addEventListener('click', function (e) {
-          if (e.target === linkDialogMask) linkDialogMask.classList.remove('open');
+          if (e.target === linkDialogMask) { __linkStashOn = true; linkDialogMask.classList.remove('open'); }
+        });
+        if (window.__modalKit) window.__modalKit.register(linkDialogMask, {
+          discard: function () { try { document.getElementById('linkDialogUrl').value = ''; document.getElementById('linkDialogText').value = ''; } catch (e) {} __linkStashOn = false; linkDialogMask.classList.remove('open'); },
+          stash: function () { __linkStashOn = true; linkDialogMask.classList.remove('open'); }
         });
       }
-      // 填充默认值
-      document.getElementById('linkDialogUrl').value = defaultUrl || '';
-      document.getElementById('linkDialogText').value = defaultText || '';
+      // R111：暂存草稿优先回填（点外/Esc 关闭后重开接着填）；无暂存才填默认值
+      if (!__linkStashOn) {
+        document.getElementById('linkDialogUrl').value = defaultUrl || '';
+        document.getElementById('linkDialogText').value = defaultText || '';
+      }
       linkDialogMask.classList.add('open');
       // 确定按钮
       var okBtn = document.getElementById('linkDialogOk');
@@ -2296,6 +2308,7 @@
         if (!url) { toast('请输入链接地址', 'error'); return; }
         if (!text) text = url;
         linkDialogMask.classList.remove('open');
+        __linkStashOn = false; // 确定即保存，草稿标记清除
         if (callback) callback(url, text);
       };
     }
@@ -3297,7 +3310,7 @@ refreshCatCnts();
 
       ordered.forEach(function (c) {
         if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row cat-sub'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; // “全部”项不渲染选中框（固定项）
-          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vph = document.createElement('span'); _vph.style.cssText = 'display:flex;align-items:center;justify-content:center;min-width:0;width:72px;order:50;height:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;color:#bbb;background:#fafafa;flex-shrink:0;cursor:default;visibility:hidden;'; _vph.textContent = '固定'; _vrow.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vrow.appendChild(_vedit); _vrow.appendChild(_vdel); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
+          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vrow.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vrow.appendChild(_vedit); _vrow.appendChild(_vdel); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
         var row = document.createElement('div');
         row.className = 'cat-row';
         row.draggable = false;
@@ -3359,7 +3372,7 @@ refreshCatCnts();
         // 一级分类展开/收起箭头
         if (isTop && c.id !== 0) {
           var toggleBtn = document.createElement('span');
-          toggleBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;cursor:pointer;margin-right:4px;color:var(--blue1);transition:transform 0.3s ease;user-select:none;filter:drop-shadow(0 1px 2px rgba(30,136,229,0.3));';
+          toggleBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;cursor:pointer;margin-right:4px;color:var(--blue1);transition:transform 0.15s ease;user-select:none;filter:drop-shadow(0 1px 2px rgba(30,136,229,0.3));';
           var hasChildren = list.some(function (sub) { return sub.parent_id === c.id; }) || ordered.some(function (x) { return x.virtual && Number(x.parent_id) === Number(c.id); });
           if (hasChildren) {
             toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;display:block"><path d="M7 10l5 5 5-5z"/></svg>';
@@ -3461,7 +3474,7 @@ refreshCatCnts();
           row.appendChild(delBtn);
         }
         else { // 根"全部"(id=0)：右侧用隐藏占位对齐状态框/按钮列（与虚拟"全部"行同一套占位方式，保证列对齐）
-          var _ph0 = document.createElement('span'); _ph0.style.cssText = 'display:flex;align-items:center;justify-content:center;min-width:0;width:72px;order:50;height:auto;border:1px solid #ddd;border-radius:6px;padding:6px 12px;font-size:13px;color:#bbb;background:#fafafa;flex-shrink:0;cursor:default;visibility:hidden;'; _ph0.textContent = '固定'; _ph0.setAttribute('aria-hidden', 'true'); row.appendChild(_ph0);
+          var _ph0 = document.createElement('span'); _ph0.className = 'row-btn'; _ph0.style.cssText = 'visibility:hidden;pointer-events:none;'; _ph0.textContent = '固定'; _ph0.setAttribute('aria-hidden', 'true'); row.appendChild(_ph0);
           var _pe0 = document.createElement('button'); _pe0.className = 'row-btn'; _pe0.textContent = '编辑'; _pe0.style.cssText = 'visibility:hidden;pointer-events:none;';
           var _pd0 = document.createElement('button'); _pd0.className = 'row-btn danger'; _pd0.textContent = '删除'; _pd0.style.cssText = 'visibility:hidden;pointer-events:none;';
           row.appendChild(_pe0); row.appendChild(_pd0);
@@ -3657,9 +3670,7 @@ refreshCatCnts();
     var pwdMask = document.getElementById('pwdMask');
     // 点击"修改密码"按钮弹出弹窗
     document.getElementById('showPwdFormBtn').addEventListener('click', function () {
-      document.getElementById('oldPwd').value = '';
-      document.getElementById('newPwd').value = '';
-      document.getElementById('confirmPwd').value = '';
+      // R111：不在打开时清空——×/取消=丢弃（清三框）；点外/Esc=暂存，重开自动回填
       pwdMask.classList.add('open');
     });
     // 点击"关闭"按钮关闭弹窗
@@ -3998,10 +4009,8 @@ refreshCatCnts();
 
     // ---------- ESC 关闭弹窗 ----------
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        var masks = document.querySelectorAll('.modal-mask.open, .preview-mask.open');
-        masks.forEach(function (m) { m.classList.remove('open'); try { m.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} });
-      }
+      // R111：Esc 改由 __modalKit（ui-common.js）逐层路由——只关最上层并走该层「暂存」通道；
+      // 旧的一刀切全关（绕过草稿暂存/密码保留/取消回调）已废除
       // Ctrl+S 保存资源
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
@@ -4016,6 +4025,67 @@ refreshCatCnts();
       if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
         // 重做交由浏览器原生处理，不再自定义拦截
       }
+    });
+
+    // ---------- R111：弹窗三模式统一注册（×/取消=丢弃；点外/Esc=暂存） ----------
+    // ui-common.js 在本文件之后加载，等 DOMContentLoaded 再注册（此时 kit 必已就绪）；
+    // 各 handler 自行完成关窗；Esc 由 kit 逐层路由到最上层弹窗的「暂存」通道
+    window.addEventListener('DOMContentLoaded', function () {
+      var kit = window.__modalKit; if (!kit) return;
+      var el = function (id) { return document.getElementById(id); };
+      // 资源编辑：丢弃=清草稿；暂存=存草稿（重开自动回填；草稿为内存态，刷新即清）
+      kit.register(el('editMask'), {
+        discard: function () { try { clearDraft(); } catch (e) {} editMask.classList.remove('open'); },
+        stash: function () { try { saveDraft(); } catch (e) {} editMask.classList.remove('open'); }
+      });
+      // 类型编辑 / 分类编辑：丢弃=丢输入；暂存=保留同一条目输入
+      kit.register(el('variantMask'), {
+        discard: function () { variantDraftPending = false; variantDraftFor = null; variantMask.classList.remove('open'); },
+        stash: function () { variantDraftPending = true; variantDraftFor = state.editingVariantId; variantMask.classList.remove('open'); }
+      });
+      kit.register(el('catMask'), {
+        discard: function () { catDraftPending = false; catDraftFor = null; catMask.classList.remove('open'); },
+        stash: function () { catDraftPending = true; catDraftFor = state.catEditingId; catMask.classList.remove('open'); }
+      });
+      // 公告设置：丢弃=恢复备份重载；暂存=保留当前编辑
+      kit.register(el('annMask'), {
+        discard: function () { try { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } } catch (e) {} annDraftPending = false; stateAnn.loaded = false; el('annMask').classList.remove('open'); },
+        stash: function () { annDraftPending = true; el('annMask').classList.remove('open'); }
+      });
+      // 设置客服：丢弃=清输入；暂存=保留
+      kit.register(el('contactMask'), {
+        discard: function () { contactDraftPending = false; var _cu = el('contactUrlInput'); if (_cu) _cu.value = ''; el('contactMask').classList.remove('open'); },
+        stash: function () { contactDraftPending = true; el('contactMask').classList.remove('open'); }
+      });
+      // 修改密码：统一三模式——丢弃=清三框；暂存=保留（刷新即清）
+      kit.register(el('pwdMask'), {
+        discard: function () { var _o = el('oldPwd'), _n = el('newPwd'), _c = el('confirmPwd'); if (_o) _o.value = ''; if (_n) _n.value = ''; if (_c) _c.value = ''; pwdMask.classList.remove('open'); },
+        stash: function () { pwdMask.classList.remove('open'); }
+      });
+      // 确认框：四通道统一=取消语义（执行取消回调并清回调）
+      var __confirmCancel = function () {
+        el('confirmMask').classList.remove('open');
+        if (confirmCancelCallback) { var cb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
+        else { confirmCallback = null; confirmCancelCallback = null; }
+      };
+      kit.register(el('confirmMask'), { discard: __confirmCancel, stash: __confirmCancel });
+      // 通用输入框：丢弃=清输入；暂存=保留输入（回调两种关闭都清）
+      kit.register(el('inputMask'), {
+        discard: function () { inputCallback = null; try { el('inputValue').value = ''; } catch (e) {} inputMask.classList.remove('open'); },
+        stash: function () { inputCallback = null; inputMask.classList.remove('open'); }
+      });
+      // 绑定设备：纯展示，任何通道=直接关；并补「点外关闭」（原先 admin 唯一点外关不掉的弹窗）
+      var __bm = el('bindingsMask');
+      if (__bm) __bm.addEventListener('click', function (e) { if (e.target === this) this.classList.remove('open'); });
+      kit.register(__bm, { discard: function () { __bm.classList.remove('open'); }, stash: function () { __bm.classList.remove('open'); } });
+      // 预览：直接关 + 暂停视频
+      var __pm = el('previewMask');
+      var __previewClose = function () { if (__pm) { __pm.classList.remove('open'); try { __pm.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} } };
+      kit.register(__pm, { discard: __previewClose, stash: __previewClose });
+      // 批量改分类：直接关
+      var __bc = el('batchCatMask');
+      var __bcClose = function () { if (__bc) __bc.classList.remove('open'); };
+      kit.register(__bc, { discard: __bcClose, stash: __bcClose });
     });
 
     // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
