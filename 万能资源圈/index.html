@@ -154,7 +154,7 @@ body{
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
-    background-color: #01C000;
+    background-color: #1E88E5; /* R145：四色规范，绿→主蓝 */
     letter-spacing: 0.9px;
 }
 .btn-orange{background-color: #FF9900;}
@@ -245,10 +245,10 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
 }
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
-/* R135：容器恒高 32px（不可见、不占交互）——入场不再高度 0→32 撑开+overflow 裁剪（胶囊被裁切下滑、帘式揭开观感奇怪），改为与全站 toast 一致的原位淡入（.prt-text opacity） */
-.pull-refresh{position:fixed;top:80px;left:0;right:0;height:32px;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:998;pointer-events:none;background:transparent;}
-.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);opacity:0;transition:opacity .2s ease;}
-.pull-refresh.show .prt-text{opacity:1;}
+/* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */
+.pull-refresh{position:fixed;top:80px;left:0;right:0;height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:998;transition:height .2s ease;pointer-events:none;background:transparent;}
+.pull-refresh.show{height:32px;}
+.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
 .prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:prtspin .8s linear infinite;}
 @keyframes prtspin{to{transform:rotate(360deg);}}
 /* 弹窗右上角关闭按钮（与资源页/管理页一致） */
@@ -507,15 +507,14 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
         if(!pulling)return;
         var dy=e.touches[0].clientY-sy,dx=e.touches[0].clientX-sx;
         if(dy>0&&Math.abs(dy)>Math.abs(dx)){
-            /* R135：入场统一原位淡入（.show 切 opacity），不再操作容器高度 */
-            dist=Math.min(dy*0.5,80);tip.classList.add('show');
+            dist=Math.min(dy*0.5,80);tip.style.height=dist+'px';tip.classList.add('show');/* R146（用户 00:36）：恢复随手指从上往下展开 */
             tip.querySelector('.prt-label').textContent=dist>TH?'释放立即刷新':'下拉刷新';
         }
     },{passive:true});
     document.addEventListener('touchend',function(){
         if(!pulling)return;pulling=false;
-        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新…';setTimeout(function(){try{loadImg(dom.logoImage,CONFIG.logoImg);}catch(e){}tip.classList.remove('show');tip.querySelector('.prt-label').textContent='下拉刷新';},600);}
-        else{tip.classList.remove('show');}
+        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新…';tip.style.height='32px';setTimeout(function(){try{loadImg(dom.logoImage,CONFIG.logoImg);}catch(e){}tip.classList.remove('show');tip.style.height='0';tip.querySelector('.prt-label').textContent='下拉刷新';},600);}
+        else{tip.classList.remove('show');tip.style.height='0';}
         dist=0;
     },{passive:true});
 })();

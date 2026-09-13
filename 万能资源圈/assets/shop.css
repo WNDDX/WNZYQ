@@ -377,10 +377,9 @@
       top: 80px;
       left: 0;
       right: 0;
-      /* R135：容器恒高 32px（不可见、不占交互）——入场不再用高度 0→32 撑开+overflow 裁剪，
-         那会让胶囊被上下裁切且随容器生长下滑（帘式揭开，观感奇怪）；
-         改为与全站 toast 完全一致的原位淡入（见 .pull-refresh-text） */
-      height: 32px;
+      /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition，随手指从上往下揭开） */
+      height: 0;
+      transition: height 0.2s ease;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -390,6 +389,7 @@
       /* 修复：去掉整块蓝色渐变遮挡，改为轻量提示条，悬浮在内容上方不遮内容 */
       background: transparent;
     }
+    .pull-refresh.show { height: 32px; } /* R146：恢复（R115/R116 口径 32px，容器随手指从上往下展开） */
     .pull-refresh-text {
       font-size: 12px;
       color: var(--blue1);
@@ -402,11 +402,8 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      /* R135：入场=原位淡入（与全站 toast 同款 opacity 0.2s，出场同 0.2s 收回） */
-      opacity: 0;
-      transition: opacity 0.2s ease;
+
     }
-    .pull-refresh.show .pull-refresh-text { opacity: 1; }
     .pull-refresh-icon {
       display: inline-block;
       width: 14px;

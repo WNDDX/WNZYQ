@@ -142,6 +142,7 @@
       if (!u) return null;
       var vf = document.createElement('div');
       vf.className = 'video-fallback';
+      vf.setAttribute('contenteditable', 'false'); // R144：兜底卡是按键不是可编辑内容（与 admin.js 同步）
       var vl = document.createElement('a');
       vl.className = 'vf-link';
       vl.href = u;
@@ -721,6 +722,42 @@
       if (currentVariant.hasContent) return true;
       return !!(currentVariant.resourceContent && String(currentVariant.resourceContent).trim());
     }
+    // R146（用户 00:25）：已解锁内容本地缓存（7 天）——重开弹窗立即渲染专属内容，
+    // 不再等 /api/unlock 返回（已绑定设备每次都要"加载一下"观感差）；后台仍静默刷新覆盖缓存
+    var UNLOCK_CACHE_TTL = 7 * 86400000;
+    function __unlockCacheKey(pid, vid) { return 'wnzyq_unlock_' + pid + '_' + vid; }
+    function __saveUnlockCache(pid, vid, content) {
+      if (!pid || !vid || !content) return;
+      try {
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf('wnzyq_unlock_') === 0) keys.push(k);
+        }
+        if (keys.length >= 50) {
+          keys.sort(function (a, b) {
+            var ta = 0, tb = 0;
+            try { ta = (JSON.parse(localStorage.getItem(a) || '{}').t) || 0; } catch (e) {}
+            try { tb = (JSON.parse(localStorage.getItem(b) || '{}').t) || 0; } catch (e) {}
+            return ta - tb;
+          });
+          for (var j = 0; j < keys.length - 49; j++) { try { localStorage.removeItem(keys[j]); } catch (e) {} }
+        }
+        localStorage.setItem(__unlockCacheKey(pid, vid), JSON.stringify({ t: Date.now(), c: content }));
+      } catch (e) {}
+    }
+    function __readUnlockCache(pid, vid) {
+      try {
+        var raw = localStorage.getItem(__unlockCacheKey(pid, vid));
+        if (!raw) return null;
+        var d = JSON.parse(raw);
+        if (!d || !d.c || (Date.now() - (d.t || 0)) > UNLOCK_CACHE_TTL) {
+          try { localStorage.removeItem(__unlockCacheKey(pid, vid)); } catch (e) {}
+          return null;
+        }
+        return d.c;
+      } catch (e) { return null; }
+    }
     // 请求服务端解锁：code 传空 = 自动检查（已绑定设备/无码类型直接拿内容）
     var unlockBusy = false;
     function requestResourceUnlock(code) {
@@ -738,6 +775,7 @@
         // 弹窗已切换/关闭时丢弃过期响应
         if (!currentProduct || !currentVariant || currentProduct.id !== pid || currentVariant.id !== vid) return null;
         if (res && res.ok && res.content) {
+          __saveUnlockCache(pid, vid, res.content); // R146：解锁成功写缓存（重开弹窗即时渲染）
           var resourceContent = document.getElementById('resourceContent');
           if (resourceContent && resourceContent.style.display === 'none') {
             var inputRow = document.getElementById('resourceCodeInputRow');
@@ -776,7 +814,15 @@
       resourceContent.style.display = 'none';
       resourceContent.innerHTML = '';
 
-      if (hasCode) {
+      // R146（用户 00:25）：已解锁过（本地缓存命中）→ 立即显示专属内容，不等接口
+      var _cached = (currentProduct && currentVariant) ? __readUnlockCache(currentProduct.id, currentVariant.id) : null;
+
+      if (_cached) {
+        resourceTitle.textContent = hasCode ? '输入资源码获取专属内容' : '获取专属内容';
+        resourceInputRow.style.display = 'none';
+        resourceDirectRow.style.display = 'none';
+        unlockResourceContent(_cached, true); // true=缓存渲染不重复统计
+      } else if (hasCode) {
         // 有资源码：显示输入框+解锁按钮
         resourceTitle.textContent = '输入资源码获取专属内容';
         resourceInputRow.style.display = 'flex';
@@ -791,12 +837,13 @@
 
       // R92 宽松模式通行证体验：打开弹窗即静默检查一次——
       // 已绑定设备（或无码类型）直接拿到内容并展示，老访客无需再输一遍码
-      requestResourceUnlock('');
+      // R146：缓存已命中时本次请求只作后台校验/刷新（内容已在展示，接口返回不重复渲染）
+      if (!_cached) requestResourceUnlock('');
     }
 
     // 通用：显示专属内容并统计（服务端验证成功 / 已绑定设备 / 直接查看 都走这里）
     // R92：内容由 /api/unlock 服务端返回传入，前台不再持有明文
-    function unlockResourceContent(content) {
+    function unlockResourceContent(content, noTrack) {
       var resourceContent = document.getElementById('resourceContent');
       resourceContent.innerHTML = sanitizeHTML(content || '<p>专属内容</p>');
       bindMediaFail(resourceContent); bindLightbox(resourceContent);
@@ -805,9 +852,11 @@
       resourceContent.style.animation = 'none';
       void resourceContent.offsetWidth;
       resourceContent.style.animation = '';
-      // 统计解锁（记录资源ID和类型ID，30天内有效）
-      var variantId = currentVariant ? currentVariant.id : 0;
-      track(currentProduct.id, 'resource_unlock', {variant_id: variantId});
+      // 统计解锁（记录资源ID和类型ID，30天内有效）；R146：缓存命中渲染不重复上报
+      if (!noTrack) {
+        var variantId = currentVariant ? currentVariant.id : 0;
+        track(currentProduct.id, 'resource_unlock', {variant_id: variantId});
+      }
     }
 
     function renderVariantDetail() {
@@ -815,12 +864,12 @@
       variantDetail.innerHTML = '';
       var hasContent = false;
 
-      // 类型标题行：类型名 + 价格（有价格才显示）
+      // 类型标题行：类型标题（R148：新增字段，空=回退类型名称）+ 价格（有价格才显示）
       var header = document.createElement('div');
       header.className = 'variant-header';
       var vName = document.createElement('span');
       vName.className = 'variant-name';
-      vName.textContent = currentVariant.name || '';
+      vName.textContent = (currentVariant.title && String(currentVariant.title).trim()) || currentVariant.name || '';
       header.appendChild(vName);
       var vPriceText = formatPrice(currentVariant.price);
       if (vPriceText) {
@@ -956,7 +1005,7 @@
       var ri = document.getElementById('resourceCodeInput');
       if (ri && __codeDraft.code) ri.value = __codeDraft.code;
     }
-    function closeModalStash() {
+    function closeModalStash() { // R147：暂存通道已废除（点外/Esc 全走 closeModalDiscard），保留函数体仅为兼容注册结构
       try {
         var ri = document.getElementById('resourceCodeInput');
         __codeDraft = currentProduct ? { pid: currentProduct.id, vid: currentVariant ? currentVariant.id : null, code: ri ? String(ri.value || '') : '' } : null;
@@ -1020,7 +1069,7 @@
     btnCloseModal.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
     modalCloseX.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
     modalMask.addEventListener('click', function (e) {
-      if (e.target === modalMask) closeModalStash(); // R112：点外=暂存资源码草稿
+      if (e.target === modalMask) closeModalDiscard(); // R147：点外=丢弃草稿（暂存语义全站废除）
     });
 
     // ---------- R10 资源分享（弹窗左上角转发键） ----------
@@ -1437,7 +1486,8 @@
       if (deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
         pullDistance = Math.min(deltaY * 0.5, 80); // 阻尼效果，最大80px
         // 顶栏常驻：下拉刷新不再隐藏顶栏
-        // R135：入场统一为原位淡入（.show 切 opacity）——不再操作容器高度（帘式揭开观感奇怪）
+        // R146（用户 00:36）：恢复 R135 之前的下拉展开动画——容器高度随手指下拉实时生长
+        pullRefreshEl.style.height = pullDistance + 'px'; // R146：恢复随手指从上往下展开
         pullRefreshEl.classList.add('show');
         document.getElementById('pullRefreshText').textContent = pullDistance > PULL_THRESHOLD ? '释放立即刷新' : '下拉刷新';
       }
@@ -1447,6 +1497,7 @@
       isPulling = false;
       if (pullDistance > PULL_THRESHOLD) {
         // 触发刷新
+        pullRefreshEl.style.height = '32px'; // R146（用户 00:36）：恢复展开动画
         document.getElementById('pullRefreshText').textContent = '正在刷新…';
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
@@ -1459,12 +1510,14 @@
           }
           renderAll();
           pullRefreshEl.classList.remove('show');
+          pullRefreshEl.style.height = '0'; // R146：恢复收回
           // 刷新结束后显示顶部栏
           if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
         }, 400);
       } else {
         // 未达到阈值，收回
         pullRefreshEl.classList.remove('show');
+        pullRefreshEl.style.height = '0'; // R146：恢复收回
         // 收回后显示顶部栏
         if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
       }
@@ -1594,7 +1647,7 @@
     window.addEventListener('DOMContentLoaded', function () {
       var kit = window.__modalKit; if (!kit) return;
       // R112：资源详情弹窗——×=丢弃资源码草稿；点外/Esc=暂存（重开自动回填）；公告/分享纯展示直接关（客服 kfMask 在 ui-common 创建处注册）
-      kit.register(modalMask, { discard: closeModalDiscard, stash: closeModalStash });
+      kit.register(modalMask, { discard: closeModalDiscard, stash: closeModalDiscard }); // R147：Esc=丢弃（暂存废除）
       var __am = document.getElementById('annModal'); if (__am) kit.register(__am, { discard: closeAnnModal, stash: closeAnnModal });
       kit.register(shareMask, { discard: closeShare, stash: closeShare });
     });

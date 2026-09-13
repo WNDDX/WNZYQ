@@ -21,11 +21,12 @@ export async function onRequestPut(context) {
   // R106：绑定设备上限挪进类型表单（<1 或非法一律按 1）
   const bindLimit = Math.max(1, parseInt(b.bindLimit, 10) || 1);
   await env.DB.prepare(
-    `UPDATE product_variants SET name=?, "desc"=?, img=?, video=?, contact_url=?, price=?, sort=?, resource_code=?, resource_content=?, is_hidden=?, bind_limit=?
+    `UPDATE product_variants SET name=?, title=?, "desc"=?, img=?, video=?, contact_url=?, price=?, sort=?, resource_code=?, resource_content=?, is_hidden=?, bind_limit=?
      WHERE id=?`
   )
     .bind(
       name,
+      String(b.title || '').trim(),
       String(b.desc || ''),
       String(b.img || ''),
       String(b.video || ''),

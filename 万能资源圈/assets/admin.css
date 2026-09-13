@@ -138,10 +138,10 @@
     html, body { overscroll-behavior: none; }
     @media (hover: hover) and (pointer: fine) { html, body { overscroll-behavior: auto; } }
     /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
-    /* R135：容器恒高 32px（不可见、不占交互）——入场不再高度 0→32 撑开+overflow 裁剪（胶囊被裁切下滑、帘式揭开观感奇怪），改为与全站 toast 一致的原位淡入（.pull-refresh-text opacity） */
-    .pull-refresh { position: fixed; top: 80px; left: 0; right: 0; height: 32px; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 300; pointer-events: none; background: transparent; }
-    .pull-refresh-text { font-size: 12px; line-height: 18px; color: var(--blue1); background: rgba(255,255,255,.92); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); opacity: 0; transition: opacity .2s ease; }
-    .pull-refresh.show .pull-refresh-text { opacity: 1; } /* R116：32px=胶囊单行总高(6+18+6+1+1)，与 toast 逐像素一致 */
+    /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */
+    .pull-refresh { position: fixed; top: 80px; left: 0; right: 0; height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 300; transition: height .2s ease; pointer-events: none; background: transparent; }
+    .pull-refresh-text { font-size: 12px; line-height: 18px; color: var(--blue1); background: rgba(255,255,255,.92); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    .pull-refresh.show { height: 32px; } /* R116：32px=胶囊单行总高(6+18+6+1+1)，与 toast 逐像素一致 */
     .pull-refresh-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2); border-top-color: var(--blue1); border-radius: 50%; animation: prspin .8s linear infinite; }
     @keyframes prspin { to { transform: rotate(360deg); } }
     .topbar {
@@ -285,6 +285,9 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .product-row .p-sub .p-desc { color: var(--blue1); } /* R24：简介字体颜色复用资源页弹窗简介的蓝色 */
+    /* R146（用户 00:34）：副标题分隔点黑色 + 金额橙色（与资源页 .variant-price #ff6b35 同色） */
+    .product-row .p-sub .p-dot { color: var(--text); }
+    .product-row .p-sub .p-price { color: #ff6b35; font-weight: 600; }
     .badge {
       display: inline-block; padding: 2px 10px; border-radius: 10px;
       font-size: 12px; flex-shrink: 0;
@@ -508,6 +511,7 @@
       display: flex; align-items: center; gap: 10px;
     }
     .variant-item .v-name { flex: 1; font-size: 14px; font-weight: 500; }
+    .variant-item .v-price { color: #ff6b35; font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .variant-item .v-sort { color: var(--text-faint); font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
     .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-bottom: 6px; background: var(--bg-light); }
@@ -612,6 +616,7 @@
     .cp-item.cp-sub { padding-left: 30px; font-weight: 400; color: var(--text); font-size: 14px; }
     .cp-item.cp-all { font-weight: 400; color: var(--text); font-size: 14px; }
     .cp-item .cp-name { flex: 1; }
+    .cp-item .cp-price { color: #ff6b35; font-weight: 600; font-size: 13px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .cp-item .cp-chevron {
       width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
       color: var(--blue1); transition: transform 0.15s ease, color 0.2s ease; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
@@ -912,12 +917,13 @@
     /* R70：灰底/圆角上收到 chart-box 外层容器（与 line-chart 同构：灰盒装图表+图例）；柱区高度由 JS 按折线图实际高同步写入 --barZone */
     .chart-box { background: var(--bg-light); border-radius: 10px; padding: 0 0 12px; margin-bottom: 8px; overflow: hidden; }
     .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding: 12px 2.5% 0 5%; position: relative; }
+    #lineSvg { overflow: visible; } /* R145：折线悬浮框去 viewBox 封顶后，超出部分照常渲染，两框全视口恒等 */
     /* R66：柱状图网格层——对齐柱状区（bottom 24px 高 100px），折线图同款灰线 #e8e8e8 与左侧数字 #999；
        grid 先插 DOM、柱列（relative）靠后绘制，网格线在柱子后面 */
     /* R68：网格对齐柱状绘图区（left 与 .trend-bars 的 padding-left 5% 一致），数字紧贴柱区左缘——与折线图数字贴折线区同理；R70 高度跟随 --barZone */
     .trend-grid { position: absolute; left: 5%; right: 2.5%; bottom: 24px; height: var(--barZone, 100px); pointer-events: none; }
     .trend-grid .tg-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid #e8e8e8; }
-    .trend-grid .tg-num { position: absolute; right: calc(100% + 2px); top: -5.8px; font-size: 10px; color: #999; text-align: right; line-height: 1.16; }
+    .trend-grid .tg-num { position: absolute; right: calc(100% + 2px); top: -5.8px; font-size: 10px; color: #999; text-align: right; line-height: 1.16; } /* R147：两图轴数字统一取小 10px（用户 00:50①）；数字顶距网格线 4.8px 口径，折线 Y 轴已对齐 */
     .trend-bars::-webkit-scrollbar { display: none; }
     .trend-col { flex: 1 1 0; min-width: 0; position: relative; height: 100%; }
     .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: 24px; display: flex; flex-direction: row; justify-content: flex-end; height: var(--barZone, 100px); gap: 3px; }
@@ -948,8 +954,8 @@
     .bar-hover-box .bhb-row:nth-child(4) { top: calc(54.14px * var(--bhs, 1) - 1px); }
     .bar-hover-box .bhb-cur { flex: 1 1 auto; }
     .bar-hover-box .bhb-prev { flex: 0 0 auto; text-align: right; }
-.trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #999; white-space: nowrap; line-height: 1.16; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; box-sizing: border-box; max-width: 100%; }
-    .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-light); justify-content: center; }
+.trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #999; white-space: nowrap; line-height: 1.16; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; box-sizing: border-box; max-width: 100%; } /* R145：同 tg-num 统一 13px */
+    .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; line-height: 1.16; color: var(--text-light); justify-content: center; } /* R145：图例与轴数字统一 13px/1.16 同高 */
     .trend-legend span:not(.lg-group)::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
     .trend-legend .lg-contact::before { background: #ff9900; }
@@ -994,7 +1000,7 @@
     /* 折线图 */
     .line-chart { position: relative; background: var(--bg-light); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .line-chart svg { display: block; }
-    .line-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-light); justify-content: center; }
+    .line-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; line-height: 1.16; color: var(--text-light); justify-content: center; }
     .line-legend span { display: flex; align-items: center; gap: 6px; }
     .line-legend i { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
     .line-legend .lg-view i { background: var(--blue1); }
@@ -1262,6 +1268,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* R137（用户 18:14）：后台视频加载失败兜底卡——与前台 shop.css 同款逐参数照抄（复用，不搞差异化），
    后台编辑器/预览里插入的视频失败时显示「点击在新窗口播放视频」按键卡，不再用图片感叹号占位 */
 .video-fallback {
+  position: relative; /* R147：编辑器内删除键定位基准（前台卡无删除键不受影响） */
   border: 1px solid var(--border);
   background: #f5f5f5;
   border-radius: 10px;
@@ -1297,6 +1304,21 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   -webkit-tap-highlight-color: transparent;
   cursor: pointer;
 }
+.video-fallback .vf-del { /* R147（用户 00:56）：编辑器内卡右上角删除键；R151（用户 02:47）：内缩与全站弹窗 .modal-close-x 同口径（距上/右 12px，完全陷入卡内不出框） */
+  position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; padding: 0;
+  border: none; border-radius: 50%; background: rgba(0,0,0,0.45); color: #fff;
+  font-size: 14px; line-height: 22px; text-align: center; cursor: pointer;
+}
+.video-fallback .vf-del:hover { background: rgba(220,53,69,0.85); }
+.video-fallback .vf-del:active { transform: scale(0.94); }
+.rte-img-del { /* R149（用户 02:15）：编辑器内图片右上角删除浮层——与视频卡 .vf-del / 全局 × 同家族形态（圆形/右上角/悬停红底白×/按压 0.94），fixed 挂 body 不污染编辑内容 */
+  position: fixed; z-index: 12000; width: 22px; height: 22px; padding: 0;
+  border: none; border-radius: 50%; background: rgba(0,0,0,0.45); color: #fff;
+  font-size: 14px; line-height: 22px; text-align: center; cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3); display: none;
+}
+.rte-img-del:hover { background: rgba(220,53,69,0.85); }
+.rte-img-del:active { transform: scale(0.94); }
 .video-fallback .vf-link:hover { transform: scale(0.97); opacity: 0.9; }
 .video-fallback .vf-link:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 

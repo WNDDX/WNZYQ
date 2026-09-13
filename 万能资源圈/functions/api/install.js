@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS product_variants (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   product_id  INTEGER NOT NULL,
   name        TEXT    NOT NULL DEFAULT '',
+  title       TEXT    NOT NULL DEFAULT '',    -- R148：类型标题（前台选中类型信息栏第一行黑字显示；空=回退类型名称）
   "desc"      TEXT    NOT NULL DEFAULT '',
   img         TEXT    NOT NULL DEFAULT '',
   video       TEXT    NOT NULL DEFAULT '',

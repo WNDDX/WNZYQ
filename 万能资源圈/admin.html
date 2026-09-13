@@ -315,7 +315,7 @@
         </div>
         <div class="setting-group">
           <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">修改密码</label>
-          <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 24px;background:#4CAF50;">修改密码</button>
+          <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 24px;">修改密码</button>
         </div>
       </section>
 
@@ -336,7 +336,7 @@
         <input class="input" id="confirmPwd" type="password" placeholder="请再次输入新密码" />
       </div>
       <div class="modal-footer">
-        <button class="modal-inner-btn" id="changePwdBtn" style="background:#4CAF50;">确定</button>
+        <button class="modal-inner-btn" id="changePwdBtn">确定</button>
         <button class="modal-close" id="cancelPwdBtn">关闭</button>
       </div>
     </div>
@@ -570,7 +570,7 @@
            R100（用户回退 R98）：复制按键恢复——点按键复制 + 点码文本也能复制，两个都行 -->
       <div id="bindingsCode" style="display:none;font-size:13px;margin:0 0 12px;align-items:center;gap:8px;">
         <span style="color:var(--text-faint);">当前资源码</span>
-        <button type="button" class="row-btn" id="bindingsCodeVal" style="font-family:monospace;letter-spacing:1px;font-weight:600;" title="点击复制"></button>
+        <button type="button" class="row-btn" id="bindingsCodeVal" style="font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);" title="点击复制"></button>
         <button type="button" class="row-btn" id="bindingsCodeCopy" style="margin-left:auto;">复制</button>
       </div>
       <div style="max-height:46vh;overflow:auto;">
@@ -592,6 +592,8 @@
       <h2 class="modal-title" id="variantModalTitle">新增类型</h2>
       <div class="form">
         <label>类型名称</label><input id="vName" placeholder="如：基础版 / 高级版 / 单月卡" />
+        <!-- R148（用户 01:50）：类型名称输入框下新增类型标题——前台资源类型信息栏第一行黑字显示此内容，留空回退类型名称 -->
+        <label>类型标题</label><input id="vTitle" placeholder="展示在前台类型信息第一行，留空显示类型名称" />
         <label>类型描述</label>
         <div class="rte-toolbar" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vDescEditor">

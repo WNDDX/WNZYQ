@@ -517,7 +517,7 @@ window.__modalKit = (function () {
     if (e.key !== 'Escape' || e.__escPre) return;
     if (!stack.length) return;
     e.preventDefault();
-    close(stack[stack.length - 1], 'stash');
+    close(stack[stack.length - 1], 'discard'); // R147：Esc=丢弃（全站弹窗统一：取消/点外/Esc=丢弃未保存修改）
   });
   return { register: register, close: close, stack: stack };
 })();

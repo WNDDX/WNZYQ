@@ -26,14 +26,37 @@
         // R137（用户 18:14）：视频失败用视频兜底卡（点击新窗口打开原链接），与前台 makeVideoFallback 同款；
         // 不再替换成图片感叹号占位——视频失败该是视频失败的占位样式。无地址视频直接移除（与前台 R91 口径一致）
         var _vu = t.getAttribute('src') || t.currentSrc || '';
+        var _inRte = !!(t.closest && t.closest('[contenteditable=\"true\"]'));
         if (_vu) {
           var vf = document.createElement('div');
           vf.className = 'video-fallback';
+          // R144（用户 23:50）：兜底卡是按键不是可编辑内容——落在富文本编辑器（contenteditable）内时
+          // 必须整体锁定不可编辑，点击就是"新窗口播放"按键行为；全系统两处生成点同步（shop.js 同款）
+          vf.setAttribute('contenteditable', 'false');
+          // R147（用户 00:56）：编辑器内的卡必须可删除（否则坏视频卡删不掉）——
+          // 记录原始地址 data-vsrc（保存时还原成 video 标签，内容不被卡污染）+ 卡右上角加删除键
+          if (_inRte) vf.setAttribute('data-vsrc', _vu);
           var vl = document.createElement('a');
           vl.className = 'vf-link';
           vl.href = _vu; vl.target = '_blank'; vl.rel = 'noopener';
           vl.textContent = '点击在新窗口播放视频';
           vf.appendChild(vl);
+          if (_inRte) {
+            var vd = document.createElement('button');
+            vd.type = 'button'; vd.className = 'vf-del'; vd.title = '删除这个视频';
+            vd.setAttribute('contenteditable', 'false');
+            vd.textContent = '×';
+            vd.addEventListener('click', function (ev) {
+              ev.preventDefault(); ev.stopPropagation();
+              var card = vd.closest('.video-fallback');
+              if (card) {
+                var ed = card.closest('[contenteditable=\"true\"]');
+                card.remove();
+                if (ed) { try { ed.dispatchEvent(new Event('input', { bubbles: true })); } catch (e2) {} }
+              }
+            });
+            vf.appendChild(vd);
+          }
           if (t.parentNode) t.parentNode.replaceChild(vf, t);
         } else if (t.parentNode) {
           t.parentNode.removeChild(t);
@@ -174,6 +197,7 @@
     var variantMask = document.getElementById('variantMask');
     var variantModalTitle = document.getElementById('variantModalTitle');
     var vName = document.getElementById('vName');
+    var vTitle = document.getElementById('vTitle'); // R148：类型标题（前台类型信息栏第一行，空=回退名称）
     var vDesc = document.getElementById('vDesc');
     var vHidden = document.getElementById('vHidden');
     // 类型图片/视频已并入“类型描述”编辑器，不再单独设字段
@@ -246,7 +270,17 @@
 
     // 滚动锁已取消（用户要求恢复自由滚动）：不再锁定页面滚动，弹窗/编辑器放大时页面仍可自由滚动
     (function () { window.__syncBodyLock = function () {}; window.__syncBodyLock(); })();
-    (function () { function _r(){ document.querySelectorAll('.rte-editor.rte-large').forEach(function(e){ e.classList.remove('rte-large'); e.style.top=''; e.style.height=''; }); document.querySelectorAll('.rte-toolbar-large').forEach(function(e){ e.classList.remove('rte-toolbar-large'); }); document.querySelectorAll('.rte-zoom-on').forEach(function(e){ e.classList.remove('rte-zoom-on'); e.textContent='⛶ 放大'; }); if(window.__rteRO&&window.__rteRO.disconnect){ try{ window.__rteRO.disconnect(); }catch(e){} } } window.__resetRteAll=_r; document.querySelectorAll('.modal-mask').forEach(function(m){ new MutationObserver(function(){ if(m.classList.contains('open')) _r(); }).observe(m,{attributes:true,attributeFilter:['class']}); }); })();
+    (function () {
+  function _r(){ document.querySelectorAll('.rte-editor.rte-large').forEach(function(e){ e.classList.remove('rte-large'); e.style.top=''; e.style.height=''; }); document.querySelectorAll('.rte-toolbar-large').forEach(function(e){ e.classList.remove('rte-toolbar-large'); }); document.querySelectorAll('.rte-zoom-on').forEach(function(e){ e.classList.remove('rte-zoom-on'); e.textContent='⛶ 放大'; }); if(window.__rteRO&&window.__rteRO.disconnect){ try{ window.__rteRO.disconnect(); }catch(e){} } }
+  window.__resetRteAll=_r;
+  // R144（用户 23:52）：放大态重置只挂在"编辑器宿主弹窗"关闭时——原实现对任意弹窗打开都重置，
+  // 导致放大态下点插入图片/视频（inputMask 打开）编辑器就自动缩小；inputMask 层级本就高于放大态
+  // （ui-common.css #inputMask z-index 6002 > rte-large 6000），插入操作全程保持放大
+  ['editMask','variantMask','annMask'].forEach(function(id){
+    var m = document.getElementById(id); if (!m) return;
+    new MutationObserver(function(){ if (!m.classList.contains('open')) _r(); }).observe(m, { attributes: true, attributeFilter: ['class'] });
+  });
+})();
     // 弹窗右上角×按钮统一关闭（事件委托）
     document.addEventListener('click', function (e) {
       var closeBtn = e.target.closest('.modal-close-x, .modal-close[data-close]');
@@ -255,7 +289,7 @@
         if (closeBtn.dataset.close === 'editMask') { try { clearDraft(); } catch (e) {} } // ×=取消：丢弃草稿
         if (closeBtn.dataset.close === 'catMask') { catDraftPending = false; catDraftFor = null; } // ×=取消：丢弃分类草稿
         if (closeBtn.dataset.close === 'variantMask') { variantDraftPending = false; variantDraftFor = null; } // ×=取消：丢弃类型草稿
-        if (closeBtn.dataset.close === 'annMask') { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } annDraftPending = false; stateAnn.loaded = false; try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; } catch (e) {} } // ×=取消：恢复备份+显示频率（R135），重新加载已保存
+        if (closeBtn.dataset.close === 'annMask') { try { window.__annDiscard(); } catch (e) {} } // ×=取消：R145 全量恢复（数据+编辑器+频率+列表），见 annDiscard
         if (closeBtn.dataset.close === 'contactMask') { contactDraftPending = false; var _cu=document.getElementById('contactUrlInput'); if(_cu)_cu.value=''; } // ×=取消：清空输入
         if (closeBtn.dataset.close === 'pwdMask') { var _o=document.getElementById('oldPwd'),_n=document.getElementById('newPwd'),_c=document.getElementById('confirmPwd'); if(_o)_o.value=''; if(_n)_n.value=''; if(_c)_c.value=''; } // ×=取消：清空密码框
         if (mask) {
@@ -424,14 +458,15 @@
         if (!pulling) return;
         var dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
         if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-          // R135：入场统一原位淡入（.show 切 opacity），不再操作容器高度
-          dist = Math.min(dy * 0.5, 80); tip.classList.add('show');
+          // R146（用户 00:36）：恢复 R135 之前随手指从上往下展开动画
+          dist = Math.min(dy * 0.5, 80); tip.style.height = dist + 'px'; tip.classList.add('show');
           tip.querySelector('.prt').textContent = dist > TH ? '释放立即刷新' : '下拉刷新';
         }
       }, { passive: true });
       document.addEventListener('touchend', function () {
         if (!pulling) return; pulling = false;
         if (dist > TH) {
+          tip.style.height = '32px'; // R146：恢复展开态高度
           tip.querySelector('.prt').textContent = '正在刷新…';
           var loginVisible = document.getElementById('loginView') && document.getElementById('loginView').style.display !== 'none';
           if (loginVisible) { /* R20：登录页下拉刷新=整页重载（未登录无数据面板可刷新） */
@@ -444,8 +479,8 @@
           else if (t === 'stats' && typeof loadStats === 'function') loadStats(undefined, undefined, 1);
           else if (t === 'categories' && typeof loadCategories === 'function') loadCategories();
           else if (t === 'settings' && typeof loadSettings === 'function') loadSettings();
-          setTimeout(function () { tip.classList.remove('show'); }, 400);
-        } else { tip.classList.remove('show'); }
+          setTimeout(function () { tip.classList.remove('show'); tip.style.height = '0'; }, 400); // R146：恢复收回
+        } else { tip.classList.remove('show'); tip.style.height = '0'; }
         dist = 0;
       }, { passive: true });
     })();
@@ -506,6 +541,7 @@
       document.getElementById('panel-settings').style.display = name === 'settings' ? '' : 'none';
       if (name === 'products' && !window.__plP) { window.__plP = 1; loadProducts(); }
       if (name === 'stats' && !window.__plS) { window.__plS = 1; loadStats(); }
+      if (name === 'stats') { try { if (window.__rerenderLine) window.__rerenderLine(); } catch (e) {} } // R145：面板可见后重画，轴字号按真实宽度补偿
       if (name === 'categories' && !window.__plC) { window.__plC = 1; loadCategories(); }
       if (name === 'settings') { if (!window.__plSet) loadSettings(); }
     }
@@ -662,6 +698,15 @@
     var adminPage = 1;
     var ADMIN_PAGE_SIZE = 20; // 全系统统一：一页 20 条（与资源页/统计面板一致），配合翻页控件使用
 
+    // R146（用户 00:34）：admin 端价格格式化（与前台 shop.js formatPrice 同口径）
+    // 0/空返回 ''（免费不显示），整数 ¥99，小数 ¥99.00
+    function formatPrice(price) {
+      var p = Number(price) || 0;
+      if (p <= 0) return '';
+      if (p === Math.floor(p)) return '¥' + p;
+      return '¥' + p.toFixed(2);
+    }
+
     function renderProducts() {
       if (window.__skipRenderOnce) { window.__skipRenderOnce = false; return; }
       refreshCatCnts();
@@ -771,13 +816,29 @@
         var s = document.createElement('div');
         s.className = 'p-sub';
         // R24：简介部分颜色复用资源页弹窗简介的蓝色（var(--blue1)），分类名保持灰色
+        // R146（用户 00:34）：分隔点改黑色；简介后追加深色点+橙色金额（无金额整段不渲染）
         var _sc = document.createElement('span');
-        _sc.textContent = (catName[p.cid] || '未分类') + ' · ';
+        _sc.textContent = (catName[p.cid] || '未分类');
+        var _sdot = document.createElement('span');
+        _sdot.className = 'p-dot';
+        _sdot.textContent = ' · ';
         var _sd = document.createElement('span');
         _sd.className = 'p-desc';
         _sd.textContent = p.desc || '';
         s.appendChild(_sc);
+        s.appendChild(_sdot);
         s.appendChild(_sd);
+        var _pPriceText = formatPrice(p.price);
+        if (_pPriceText) {
+          var _pdot = document.createElement('span');
+          _pdot.className = 'p-dot';
+          _pdot.textContent = ' · ';
+          var _pp = document.createElement('span');
+          _pp.className = 'p-price';
+          _pp.textContent = _pPriceText;
+          s.appendChild(_pdot);
+          s.appendChild(_pp);
+        }
         info.appendChild(t);
         info.appendChild(s);
 
@@ -839,15 +900,25 @@
             item.className = 'cp-item';
             var nm = document.createElement('span');
             nm.textContent = v.name || '(未命名)';
-            nm.style.cssText = 'font-weight:500;';
+            // R146：类型名不折行（面板窄于内容时截断省略，绝不竖排换行）
+            nm.style.cssText = 'font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;';
             item.appendChild(nm);
+            // R146（用户 00:34）：类型名与码键之间加各自金额（橙色，与资源页价格同色）
+            var _vPriceText = formatPrice(v.price);
+            if (_vPriceText) {
+              var _vp = document.createElement('span');
+              _vp.className = 'cp-price';
+              _vp.textContent = _vPriceText;
+              item.appendChild(_vp);
+            }
             if (v.resourceCode && v.resourceCode.trim()) {
               // R139（用户定稿）：码按键与编辑弹窗类型列表 codeBtn 同款（row-btn+monospace+600+letter-spacing），
               // 替换 R98 浅蓝胶囊——字体样式统一用"编辑弹窗类型列表那套"；点按键复制并收起面板
               var cd = document.createElement('button');
               cd.type = 'button';
               cd.className = 'row-btn';
-              cd.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;';
+              // R144（用户 23:57）：有码=蓝底白字（参考"显示"按键配色），宽高不变
+              cd.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);';
               cd.textContent = v.resourceCode;
               cd.title = '点击复制';
               item.appendChild(cd);
@@ -863,7 +934,8 @@
               var nc = document.createElement('button');
               nc.type = 'button';
               nc.className = 'row-btn';
-              nc.style.cssText = 'color:var(--text-faint);cursor:default;';
+              // R144：无码键字体颜色参考编辑按键（var(--text-light)）
+              nc.style.cssText = 'color:var(--text-light);cursor:default;';
               nc.textContent = '无资源码';
               item.appendChild(nc);
               item.style.cursor = 'default';
@@ -1041,7 +1113,7 @@
         var select = document.getElementById('batchCatSelect');
         buildCatPicker(document.getElementById('batchCatPicker'), select,
           document.getElementById('batchCatDisplay'), document.getElementById('batchCatPanel'),
-          Number(select.value) || 0, { allowUncategorized: true, placeholder: '请选择目标分类' });
+          Number(select.value) || 0, { allowUncategorized: true, noSubAll: true, placeholder: '请选择目标分类' });
         document.getElementById('batchCatMask').classList.add('open'); if (!document.getElementById('batchCatMask')._bm) { document.getElementById('batchCatMask')._bm = 1; document.getElementById('batchCatMask').addEventListener('click', function (e) { if (e.target === this) { this.classList.remove('open'); try { this.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} } }); }
         // 确认按钮事件（只绑定一次）
         var okBtn = document.getElementById('batchCatOk');
@@ -1229,7 +1301,7 @@
       var draftData = {
         title: fTitle.value,
         desc: fDesc.value,
-        detail: fDetail.innerHTML,
+        detail: serializeDetail(), /* R147：兜底卡还原成 video */
         img: fImg.value,
         contactUrl: fContactUrl.value,
         price: fPrice.value,
@@ -1320,7 +1392,9 @@
         var childBox = document.createElement('div');
         childBox.className = 'cp-children';
         // 一级分类下的"全部"（等价选中该一级全部子分类）；已有同名"全部"二级则不重复插入
-        if (_hasAllV) { var _allr = document.createElement('div'); _allr.className = 'cp-item cp-sub' + (Number(selected) === top.id ? ' selected' : ''); var _alln = document.createElement('span'); _alln.className = 'cp-name'; _alln.textContent = '全部'; _allr.appendChild(_alln); _allr.addEventListener('click', (function (ti, tn) { return function () { pickCatValue(pickerEl, hiddenInput, displayEl, ti, tn); }; })(top.id, top.name)); childBox.appendChild(_allr); }
+        // R147（用户 01:07）：资源分类选择（编辑/批量移动）禁用该虚拟行——选它会把 cid 设为一级 id（伪分类）；
+        // 筛选场景（filterCatPicker showAll）保留。一级行本身仍可直接点选（合法：一级可挂资源）。
+        if (_hasAllV && !opts.noSubAll) { var _allr = document.createElement('div'); _allr.className = 'cp-item cp-sub' + (Number(selected) === top.id ? ' selected' : ''); var _alln = document.createElement('span'); _alln.className = 'cp-name'; _alln.textContent = '全部'; _allr.appendChild(_alln); _allr.addEventListener('click', (function (ti, tn) { return function () { pickCatValue(pickerEl, hiddenInput, displayEl, ti, tn); }; })(top.id, top.name)); childBox.appendChild(_allr); }
         subs.forEach(function (sub) {
           var srow = document.createElement('div');
           srow.className = 'cp-item cp-sub' + (Number(selected) === sub.id ? ' selected' : '');
@@ -1375,7 +1449,20 @@
       if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 4);
       panel.style.left = left + 'px';
       panel.style.top = top + 'px';
-      panel.style.width = Math.max(r.width, 180) + 'px';
+      // R146（用户 00:34）：码面板项=类型名+金额+码键，180px 装不下会把类型名挤成竖排换行——
+      // 先按内容自然宽度测量，再取 max(触发键宽, 自然宽)，上限视口-16px 防溢出
+      var w = Math.max(r.width, 180);
+      if (picker.classList.contains('code-picker')) {
+        var _prevW = panel.style.width;
+        panel.style.width = 'auto';
+        panel.style.maxWidth = 'none';
+        var _nat = panel.scrollWidth || 0;
+        panel.style.maxWidth = '';
+        panel.style.width = _prevW;
+        w = Math.max(w, _nat + 2);
+        w = Math.min(w, (window.innerWidth || 390) - 16);
+      }
+      panel.style.width = w + 'px';
     }
     // 通用自制下拉选择器：把原生 select 替换为与分类选择器一致的美观选择框
     // 原 select 保留（隐藏）作为值载体，选择后派发 change 事件，原逻辑无需改动
@@ -1453,13 +1540,13 @@
       buildCatPicker(
         document.getElementById('fCidPicker'), fCid,
         document.getElementById('fCidDisplay'), document.getElementById('fCidPanel'),
-        selected, { allowUncategorized: true, placeholder: '请选择分类' }
+        selected, { allowUncategorized: true, noSubAll: true, placeholder: '请选择分类' }
       );
     }
 
     saveProductBtn.addEventListener('click', saveProduct);
     editCancel.addEventListener('click', function () { editMask.classList.remove('open'); clearDraft(); });
-    editMask.addEventListener('click', function (e) { if (e.target === editMask) { saveDraft(); editMask.classList.remove('open'); } });
+    editMask.addEventListener('click', function (e) { if (e.target === editMask) { clearDraft(); editMask.classList.remove('open'); } }); // R145：点外=取消（丢草稿，与×/取消键同口径）
 
     // ---------- 表单必填校验 ----------
     function validateField(input, msg) {
@@ -1489,13 +1576,30 @@
 
     var saving = false;
     // （catSaving 在分类管理区域声明）
+    // R147（用户 00:56）：detail 序列化——编辑器里的视频兜底卡还原成原始 video 标签，
+    // 保存/草稿/预览内容永远干净（前台加载失败会用自己的逻辑再渲染卡，无删除键）
+    function serializeDetail() {
+      var clone = fDetail.cloneNode(true);
+      var cards = clone.querySelectorAll('.video-fallback');
+      cards.forEach(function (fb) {
+        var vs = fb.getAttribute('data-vsrc');
+        if (!vs) { var _a = fb.querySelector('.vf-link'); vs = _a ? _a.getAttribute('href') : ''; }
+        if (vs) {
+          var tmp = document.createElement('div');
+          tmp.innerHTML = '<video src="' + String(vs).replace(/"/g, '&quot;') + '" controls style="max-width:100%;border-radius:8px;"></video>';
+          fb.parentNode ? fb.parentNode.replaceChild(tmp.firstChild, fb) : fb.remove();
+        } else { fb.remove(); }
+      });
+      return clone.innerHTML;
+    }
+    window.__serializeDetail = serializeDetail;
     function saveProduct() {
       if (saving) return; // 防重复提交
       var data = {
         cid: Number(fCid.value) || 0,
         title: fTitle.value.trim(),
         desc: fDesc.value.trim(),
-        detail: fDetail.innerHTML,
+        detail: serializeDetail(), /* R147：兜底卡还原成 video */
         img: fImg.value.trim(),
         detailImages: [],
         detailVideos: [],
@@ -1602,13 +1706,24 @@
         // 资源码/绑定/无码统一做成按键（R136 用户定稿）：全部复用全站 row-btn 按键样式——
         // 有码=码按键（点击复制）、绑定 N=独立按键（点击开绑定设备弹窗）、无码=同款按键（灰字）
         // 三种按键高度/圆角/按压反馈完全一致，天然对齐（无差异化）
+        // R146（用户 00:34）：类型名称与资源码之间加金额（橙色，无金额不渲染）
+        var _viPriceText = formatPrice(v.price);
+        var _vipEl = null;
+        if (_viPriceText) {
+          var _vip = document.createElement('span');
+          _vip.className = 'v-price';
+          _vip.textContent = _viPriceText;
+          _vipEl = _vip; /* R148（用户 01:26）：金额位置修正——不在创建时 append（会排到行最左），挪到 name 之后、码键之前 */
+        }
+
         var codeSpan = document.createElement('span');
         codeSpan.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex-shrink:0;';
         if (v.resourceCode && v.resourceCode.trim()) {
           var codeBtn = document.createElement('button');
           codeBtn.type = 'button';
           codeBtn.className = 'row-btn';
-          codeBtn.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;';
+          // R144（用户 23:57）：有码=蓝底白字（参考"显示"按键 .row-btn.status-online 的配色），宽高不变
+          codeBtn.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);';
           codeBtn.textContent = v.resourceCode;
           codeBtn.title = '点击复制';
           (function (cv) {
@@ -1622,7 +1737,8 @@
           var noCodeBtn = document.createElement('button');
           noCodeBtn.type = 'button';
           noCodeBtn.className = 'row-btn';
-          noCodeBtn.style.cssText = 'color:var(--text-faint);cursor:default;';
+          // R144：无码键字体颜色参考编辑按键（var(--text-light)），原 text-faint 偏浅
+          noCodeBtn.style.cssText = 'color:var(--text-light);cursor:default;';
           noCodeBtn.textContent = '无资源码';
           codeSpan.appendChild(noCodeBtn);
         }
@@ -1685,6 +1801,7 @@
 
         item.appendChild(handle);
         item.appendChild(name);
+        if (_vipEl) item.appendChild(_vipEl); /* R148：金额在类型名称与资源码中间 */
         item.appendChild(codeSpan);
         item.appendChild(sort);
         item.appendChild(editBtn);
@@ -1749,7 +1866,123 @@
       __rte.editor = editor;
       try { __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (e) {}
     }
+    // ===== R147（用户 00:56）：编辑器视频无法删除修复 =====
+    // 根因：Chromium contenteditable 中点击 <video>（尤其控制条区域）不会建立元素选区，
+    // 随后 Backspace/Delete 只作用于文字/无效，视频删不掉（图片无此缺陷，原生可选中）。
+    // 修法：点击编辑器内视频 → selection.selectNode(video) 原子选中，退格/删除键即可整段移除。
     document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t) return;
+      if (t.classList && t.classList.contains('rte-img-del')) return; // R149：浮层删除键自身，其 click 已自处理
+      var ed = t.closest ? t.closest('[contenteditable="true"]') : null;
+      if (!ed) { __hideImgDel(); return; } // R149：点编辑器外收起图片删除浮层
+      // 点到视频本身，或点到兜底卡的非链接区域（点 vf-link 仍走 R144 跳转行为）→ 原子选中
+      var pick = null;
+      if (t.tagName === 'VIDEO') pick = t;
+      else if (t.tagName === 'IMG') pick = t; // R149（用户 02:15）：图片同步视频的选中/删除机制
+      else {
+        var fb = t.closest ? t.closest('.video-fallback') : null;
+        if (fb && !t.closest('.vf-link')) pick = fb;
+      }
+      if (!pick) { __hideImgDel(); return; } // R149：选中对象变了（文字/视频）→ 收起浮层
+      try {
+        var sel = window.getSelection();
+        var range = document.createRange();
+        range.selectNode(pick);
+        sel.removeAllRanges(); sel.addRange(range);
+      } catch (err) {}
+      if (pick.tagName === 'IMG') __showImgDel(pick); else __hideImgDel(); // R149：图片原子选中时右上角浮出删除键
+    });
+    // 退格/删除键兜底：光标紧邻编辑器内视频/兜底卡时（Chromium 对 contenteditable=false 块的原生退格不可靠），手动整块删除
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+      var sel = window.getSelection();
+      if (!sel || !sel.isCollapsed || !sel.rangeCount) return;
+      try {
+        var r = sel.getRangeAt(0);
+        var node = r.startContainer;
+        var host = node.nodeType === 1 ? node : node.parentElement;
+        var ed = host && host.closest ? host.closest('[contenteditable="true"]') : null;
+        if (!ed || !ed.contains(node)) return;
+        var sib = null;
+        if (e.key === 'Backspace') {
+          if (node.nodeType === 3 && r.startOffset === 0) sib = node.previousSibling;
+          else if (node.nodeType === 1) sib = r.startOffset > 0 ? node.childNodes[r.startOffset - 1] : null;
+        } else {
+          if (node.nodeType === 3 && r.startOffset === (node.textContent || '').length) sib = node.nextSibling;
+          else if (node.nodeType === 1) sib = r.startOffset < node.childNodes.length ? node.childNodes[r.startOffset] : null;
+        }
+        if (!sib) return;
+        var isV = sib.nodeType === 1 && (sib.tagName === 'VIDEO' || sib.tagName === 'IMG' || (sib.classList && sib.classList.contains('video-fallback'))); // R149：图片同步退格删除
+        if (!isV) return;
+        e.preventDefault();
+        try { sib.remove(); } catch (err2) {}
+        ed.dispatchEvent(new Event('input', { bubbles: true }));
+      } catch (err) {}
+    });
+    // ===== R149（用户 02:15）：编辑器图片删除键——同步 R147 视频四件套 =====
+    // 图片选中（click 原子选中）时在其右上角浮出「×」删除键；形态与视频卡 .vf-del / 全局弹窗
+    // 右上角 ×（.modal-close-x）同一家族：圆形、右上角、悬停红底白×、按压缩放 0.94，尺寸按宿主适配。
+    // 浮层挂 body（fixed 定位跟随图片），不进编辑器 DOM → 保存/草稿/预览内容零污染（serializeDetail 无需处理）。
+    var __imgDelBtn = null, __imgDelTarget = null;
+    function __placeImgDel() {
+      if (!__imgDelBtn || !__imgDelTarget) return;
+      if (!__imgDelTarget.isConnected || !__imgDelTarget.offsetParent) { __hideImgDel(); return; } // 图片被删/弹窗关闭 → 收起
+      var r = __imgDelTarget.getBoundingClientRect();
+      // R151（用户 02:47）：×完全陷入图片内部，与全站弹窗 .modal-close-x 同口径（距上/右 12px 内缩）；小图放不下 12px 时按剩余半宽居中，保证不出框
+      var ix = Math.min(12, Math.max(0, (r.width - 22) / 2));
+      var iy = Math.min(12, Math.max(0, (r.height - 22) / 2));
+      __imgDelBtn.style.left = (r.right - 22 - ix) + 'px';
+      __imgDelBtn.style.top = (r.top + iy) + 'px';
+    }
+    function __showImgDel(img) {
+      if (!__imgDelBtn) {
+        __imgDelBtn = document.createElement('button');
+        __imgDelBtn.type = 'button';
+        __imgDelBtn.className = 'rte-img-del';
+        __imgDelBtn.title = '删除这张图片';
+        __imgDelBtn.setAttribute('contenteditable', 'false');
+        __imgDelBtn.textContent = '×';
+        __imgDelBtn.addEventListener('click', function (ev) {
+          ev.preventDefault(); ev.stopPropagation();
+          var im = __imgDelTarget;
+          __hideImgDel();
+          if (im && im.isConnected) {
+            var ed2 = im.closest('[contenteditable="true"]');
+            im.remove();
+            if (ed2) { try { ed2.dispatchEvent(new Event('input', { bubbles: true })); } catch (e2) {} }
+          }
+        });
+        document.body.appendChild(__imgDelBtn);
+      }
+      __imgDelTarget = img;
+      __imgDelBtn.style.display = 'block';
+      __placeImgDel();
+    }
+    function __hideImgDel() {
+      if (__imgDelBtn) __imgDelBtn.style.display = 'none';
+      __imgDelTarget = null;
+    }
+    window.__hideImgDel = __hideImgDel;
+    // 选区变化：只有「原子选中目标图片」才保留浮层（拖蓝选文字/光标落别处 → 收起）
+    document.addEventListener('selectionchange', function () {
+      if (!__imgDelBtn || !__imgDelTarget || __imgDelBtn.style.display === 'none') return;
+      var keep = false;
+      try {
+        var sel = window.getSelection();
+        if (sel && sel.rangeCount === 1) {
+          var r = sel.getRangeAt(0);
+          // 注意：Range.selectNode(img) 的边界落在 img 的父节点（start/end 为父节点+索引），不是 img 自身
+          var pn = __imgDelTarget.parentNode;
+          if (!r.collapsed && r.startContainer === pn && r.endContainer === pn && (r.endOffset - r.startOffset) === 1 && pn.childNodes[r.startOffset] === __imgDelTarget) keep = true;
+        }
+      } catch (e) {}
+      if (!keep) __hideImgDel(); else __placeImgDel();
+    });
+    // 滚动/缩放：浮层跟随图片位置（capture 兜住弹窗内滚动容器与编辑器放大态）
+    window.addEventListener('scroll', function () { if (__imgDelBtn && __imgDelTarget && __imgDelBtn.style.display !== 'none') __placeImgDel(); }, true);
+    window.addEventListener('resize', function () { if (__imgDelBtn && __imgDelTarget && __imgDelBtn.style.display !== 'none') __placeImgDel(); });
+document.addEventListener('click', function (e) {
       var z = e.target.closest ? e.target.closest('.rte-zoom') : null;
       if (!z) return;
       var ed = document.getElementById(z.getAttribute('data-editor'));
@@ -2114,6 +2347,22 @@
       if (annEditLabel) annEditLabel.textContent = '编辑公告';
       renderAnnList();
     }
+    // R145：公告弹窗「取消」全量恢复——不止恢复数据层（R135 只恢复了 list+annMode，编辑器 DOM
+    // 仍是草稿，重开瞬间/拉取失败时草稿可见，且 flushAnnEdit 会把草稿写回已恢复列表污染备份）。
+    // 现在：备份列表 + 编辑器内容 + 显示频率 + 列表渲染 + 选中态 一次性全部回到已保存状态
+    function annDiscard() {
+      try { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } } catch (e) {}
+      annDraftPending = false; stateAnn.loaded = false;
+      stateAnn.curId = null; // 置空选中，杜绝后续 flushAnnEdit 把编辑器草稿写回已恢复列表
+      try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; } catch (e) {}
+      var _dl = null;
+      try { _dl = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; } catch (e) {}
+      if (annEditor) annEditor.innerHTML = _dl ? (_dl.content || '') : '';
+      if (annEditLabel) annEditLabel.textContent = _dl ? ('编辑公告：' + (_dl.title || '(未命名)')) : '编辑公告';
+      try { renderAnnList(); } catch (e) {}
+      try { document.getElementById('annMask').classList.remove('open'); } catch (e) {}
+    }
+    window.__annDiscard = annDiscard;
     // 打开公告设置弹窗：把公告编辑器移入弹窗，并从服务器拉取最新公告
     document.getElementById('openAnnBtn').addEventListener('click', function () {
       var slot = document.getElementById('annEditorSlot');
@@ -2174,18 +2423,12 @@
     });
     // 取消公告（不保存，下次打开重新加载已保存状态）
     document.getElementById('cancelAnnBtn').addEventListener('click', function () {
-      if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; }
-      annDraftPending = false; stateAnn.loaded = false;
-      // R135：显示频率一并恢复为已保存值——取消（不保存）后重开不能再显示未保存的选中值
-      try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; } catch (e) {}
-      document.getElementById('annMask').classList.remove('open');
+      annDiscard(); // R145：取消=全量恢复（数据+编辑器+频率+列表），与×/点外/Esc 同口径
     });
     // 遮罩关闭：暂存当前编辑状态，下次打开可继续编辑
     document.getElementById('annMask').addEventListener('click', function (e) {
-      if (e.target === document.getElementById('annMask')) {
-        annDraftPending = true;
-        document.getElementById('annMask').classList.remove('open');
-      }
+      // R145：点外关闭=取消（丢弃未保存修改）——旧「暂存草稿」语义被用户否决（重开仍见未保存频率/内容）
+      if (e.target === document.getElementById('annMask')) { annDiscard(); }
     });
 
     // ---------- 全局客服链接（弹窗设置，与公告一致） ----------
@@ -2219,7 +2462,7 @@
       });
     });
     document.getElementById('cancelContactBtn').addEventListener('click', function () { contactDraftPending = false; document.getElementById('contactUrlInput').value = ''; document.getElementById('contactMask').classList.remove('open'); });
-    document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) { contactDraftPending = true; document.getElementById('contactMask').classList.remove('open'); } }); // 遮罩关闭：保留输入可继续编辑
+    document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) { contactDraftPending = false; var _cu = document.getElementById('contactUrlInput'); if (_cu) _cu.value = ''; document.getElementById('contactMask').classList.remove('open'); } }); // R145：点外=取消（清输入，与×/取消键同口径）
 
     // 工具栏按钮点击执行命令
     document.querySelectorAll('#announcementRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
@@ -2343,6 +2586,7 @@
       state._editVariantIdx = v ? state.variants.indexOf(v) : -1;
       variantModalTitle.textContent = v ? '编辑类型' : '新增类型';
       vName.value = v ? (v.name || '') : '';
+      vTitle.value = v ? (v.title || '') : ''; // R148：类型标题回填
       document.getElementById('vDescEditor').innerHTML = v ? (v.desc || '') : '';
       vHidden.checked = v ? !!v.isHidden : false;
       // 类型图片/视频已并入类型描述编辑器
@@ -2528,6 +2772,7 @@
       var data = {
         productId: state.editingId,
         name: name,
+        title: vTitle.value.trim(), // R148：类型标题随类型一起保存
         desc: document.getElementById('vDescEditor').innerHTML,
         img: '',
         video: '',
@@ -2673,7 +2918,7 @@
     }
 
     variantCancel.addEventListener('click', function () { variantDraftPending = false; variantMask.classList.remove('open'); });
-    variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = true; variantDraftFor = state.editingVariantId; variantMask.classList.remove('open'); } });
+    variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = false; variantDraftFor = null; variantMask.classList.remove('open'); } }); // R145：点外=取消（丢输入）
 
     function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? String(Number(p[2])) : s; } // R52：图表标签只显号数（用户要求去掉月份）
     // R62：悬浮提示的时间标签——小时数据（1天档）加「时」，日期数据显示「几月几日」
@@ -2718,12 +2963,10 @@
         lines.push({ text: txt, color: s.color, right: prevTxt });
       });
       // 框位置：参考线右侧，右侧放不下翻到左侧
-      // R135：框不随窄屏缩小——SVG 坐标系内按渲染宽度补偿（渲染尺寸尽量保持基准 150×84/字号11，「取大的那个」口径）
-      // 补偿倍数上限：viewBox 高度 200 有限，k 过大框会超出 SVG 底边被裁剪——按「框顶偏移 2k + 框高 (20+n*16)k 不超底边」封顶
+      // R145：框不随窄屏缩小（R135 口径）且两框全视口恒等——去掉 viewBox 高度封顶（它是窄屏折线框 75px<柱框 84px
+      // 一高一低的根因），配合 admin.css #lineSvg overflow:visible，超出 viewBox 的部分照常渲染、不被裁剪
       var _rs = svg.getBoundingClientRect();
       var _k = (_rs && _rs.width) ? Math.max(1, 800 / _rs.width) : 1;
-      var _kMax = (lineHover.H - lineHover.padT) / (22 + lines.length * 16);
-      if (_k > _kMax) _k = _kMax;
       var boxW = 150 * _k, boxH = (20 + lines.length * 16) * _k;
       var bx = px + 8 * _k;
       if (bx + boxW > lineHover.W - 10) bx = px - 8 * _k - boxW;
@@ -2783,6 +3026,9 @@
     function renderLineChart(trend, prev) {
       var svg = document.getElementById('lineSvg');
       if (!svg || !trend || !trend.length) { svg.innerHTML = ''; return; }
+      // R147（用户 00:50①）：轴文字恒定渲染 10px（两图统一取小口径，R145 的 13px 推翻）——
+      // SVG 有 viewBox 缩放，字号按 800/渲染宽 反补偿，任何视口下渲染尺寸都等于柱图 .tg-num 的 CSS 10px
+      var _ax = 10, _asr = svg.getBoundingClientRect(); if (_asr && _asr.width) _ax = +(10 * 800 / _asr.width).toFixed(2); /* R147（用户 00:50①）：轴数字取小口径 10px（R145 的 13 改 10）——SVG 有 viewBox 缩放，按 800/渲染宽 反补偿保证任何视口渲染恒 10px，与柱图 .tg-num 一致 */
       var W = 800, H = 200, padL = 40, padR = 20, padT = 20, padB = 30;
       var chartW = W - padL - padR, chartH = H - padT - padB;
       // R58：上期数据（折线图环比）——等长对齐才画；量纲同时计入上期，保证虚线不出顶
@@ -2803,14 +3049,14 @@
         var gy = padT + (chartH / 4) * g;
         var gval = Math.round(maxVal - (maxVal / 4) * g);
         html += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#e8e8e8" stroke-width="1"/>';
-        html += '<text x="' + (padL - 6) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10" fill="#999">' + gval + '</text>';
+        html += '<text x="' + (padL - 6) + '" y="' + (gy + 0.44 * _ax) + '" text-anchor="end" font-size="' + _ax + '" fill="#999">' + gval + '</text>'; /* R147（用户 00:59）：Y 轴数字与网格线的垂直关系向柱图看齐——数字顶恒在网格线上方 4.8px（柱图 .tg-num top:-5.8px 口径），原 gy+4 在不同缩放下忽近忽远 */
       }
       // X轴标签
       trend.forEach(function (d, i) {
         var px = pt(i, 0).x;
         var label = d.day ? fmtDay(d.day) : '';
         if (trend.length <= 10 || i % Math.ceil(trend.length / 8) === 0) {
-          html += '<text x="' + px + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#999">' + label + '</text>';
+          html += '<text x="' + px + '" y="' + (H - 8) + '" text-anchor="middle" font-size="' + _ax + '" fill="#999">' + label + '</text>';
         }
       });
       // R58：上期三条虚线（同色 35% 透明、dash 6 4）——画在实线前面，本期实线覆盖在上层；悬浮 title 显示上期值
@@ -2855,6 +3101,19 @@
       lineHover.hasPrev = hasPrev;
       lineHover.stepX = stepX;
       ensureLineHover(svg);
+      // R145：图表常在统计面板隐藏时首绘（登录后默认落在资源页即已画图）——此时渲染宽度为 0，
+      // 轴字号走了回退值。注册重渲染入口：切到统计页（面板可见）与窗口 resize（防抖）时重画，字号按真实宽度补偿
+      if (!window.__rlInit) {
+        window.__rlInit = true;
+        window.addEventListener('resize', function () {
+          clearTimeout(window.__rlT);
+          window.__rlT = setTimeout(function () { try { if (window.__rerenderLine) window.__rerenderLine(); } catch (e) {} }, 200);
+        });
+      }
+      window.__rerenderLine = function () {
+        if (!lineHover.data || !lineHover.data.length) return;
+        try { renderLineChart(lineHover.data, lineHover.hasPrev ? lineHover.prev : null); } catch (e) {}
+      };
     }
 
 
@@ -3804,7 +4063,7 @@ refreshCatCnts();
     });
 
     catCancel.addEventListener('click', function () { catDraftPending = false; catMask.classList.remove('open'); });
-    catMask.addEventListener('click', function (e) { if (e.target === catMask) { catDraftPending = true; catDraftFor = state.catEditingId; catMask.classList.remove('open'); } });
+    catMask.addEventListener('click', function (e) { if (e.target === catMask) { catDraftPending = false; catDraftFor = null; catMask.classList.remove('open'); } }); // R145：点外=取消（丢输入）
 
     // ---------- 平台设置：修改密码（弹窗形式） ----------
     var pwdMask = document.getElementById('pwdMask');
@@ -3872,6 +4131,7 @@ refreshCatCnts();
     bindFieldClear(fDesc);
     bindFieldClear(fImg);
     bindFieldClear(vName);
+    bindFieldClear(vTitle);
 
     // ---------- 统计时间筛选 ----------
     // R65：「对比上期」开关（默认关闭只显示本期）——点击切换后重渲染卡片/折线/柱状与图例，不重新发请求
@@ -4016,7 +4276,7 @@ refreshCatCnts();
       header.className = 'variant-header';
       var vName = document.createElement('span');
       vName.className = 'variant-name';
-      vName.textContent = v.name || '';
+      vName.textContent = (v.title && String(v.title).trim()) || v.name || ''; // R148：预览同前台口径，类型标题优先
       header.appendChild(vName);
       var vpText = fmtPrice(Number(v.price) || 0);
       if (vpText) {
@@ -4036,7 +4296,7 @@ refreshCatCnts();
       previewCurVariant = 0;
       document.getElementById('previewTitle').textContent = fTitle.value || '(未填写标题)';
       document.getElementById('previewDesc').textContent = fDesc.value || '';
-      document.getElementById('previewDetail').innerHTML = fDetail.innerHTML || '<span style="color:#aaa;">暂无详细描述</span>';
+      document.getElementById('previewDetail').innerHTML = serializeDetail() || '<span style="color:#aaa;">暂无详细描述</span>'; /* R147：预览同步还原 */
       var cover = document.getElementById('previewCover');
       if (fImg.value.trim()) {
         cover.src = fImg.value.trim();
@@ -4176,31 +4436,31 @@ refreshCatCnts();
       // 资源编辑：丢弃=清草稿；暂存=存草稿（重开自动回填；草稿为内存态，刷新即清）
       kit.register(el('editMask'), {
         discard: function () { try { clearDraft(); } catch (e) {} editMask.classList.remove('open'); },
-        stash: function () { try { saveDraft(); } catch (e) {} editMask.classList.remove('open'); }
+        stash: function () { try { clearDraft(); } catch (e) {} editMask.classList.remove('open'); } // R145：Esc=丢弃
       });
       // 类型编辑 / 分类编辑：丢弃=丢输入；暂存=保留同一条目输入
       kit.register(el('variantMask'), {
         discard: function () { variantDraftPending = false; variantDraftFor = null; variantMask.classList.remove('open'); },
-        stash: function () { variantDraftPending = true; variantDraftFor = state.editingVariantId; variantMask.classList.remove('open'); }
+        stash: function () { variantDraftPending = false; variantDraftFor = null; variantMask.classList.remove('open'); } // R145：Esc=丢弃
       });
       kit.register(el('catMask'), {
         discard: function () { catDraftPending = false; catDraftFor = null; catMask.classList.remove('open'); },
-        stash: function () { catDraftPending = true; catDraftFor = state.catEditingId; catMask.classList.remove('open'); }
+        stash: function () { catDraftPending = false; catDraftFor = null; catMask.classList.remove('open'); } // R145：Esc=丢弃
       });
       // 公告设置：丢弃=恢复备份重载；暂存=保留当前编辑
       kit.register(el('annMask'), {
-        discard: function () { try { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } } catch (e) {} annDraftPending = false; stateAnn.loaded = false; try { el('annMode').value = stateAnn._modeSaved || 'always'; } catch (e) {} el('annMask').classList.remove('open'); },
-        stash: function () { annDraftPending = true; el('annMask').classList.remove('open'); }
+        discard: function () { try { window.__annDiscard(); } catch (e) {} },
+        stash: function () { try { window.__annDiscard(); } catch (e) {} } // R145：Esc=丢弃（原暂存语义废除）
       });
       // 设置客服：丢弃=清输入；暂存=保留
       kit.register(el('contactMask'), {
         discard: function () { contactDraftPending = false; var _cu = el('contactUrlInput'); if (_cu) _cu.value = ''; el('contactMask').classList.remove('open'); },
-        stash: function () { contactDraftPending = true; el('contactMask').classList.remove('open'); }
+        stash: function () { contactDraftPending = false; var _cu2 = el('contactUrlInput'); if (_cu2) _cu2.value = ''; el('contactMask').classList.remove('open'); } // R145：Esc=丢弃
       });
       // 修改密码：统一三模式——丢弃=清三框；暂存=保留（刷新即清）
       kit.register(el('pwdMask'), {
         discard: function () { var _o = el('oldPwd'), _n = el('newPwd'), _c = el('confirmPwd'); if (_o) _o.value = ''; if (_n) _n.value = ''; if (_c) _c.value = ''; pwdMask.classList.remove('open'); },
-        stash: function () { pwdMask.classList.remove('open'); }
+        stash: function () { var _o = el('oldPwd'), _n = el('newPwd'), _c = el('confirmPwd'); if (_o) _o.value = ''; if (_n) _n.value = ''; if (_c) _c.value = ''; pwdMask.classList.remove('open'); } // R145：Esc=丢弃（清三框，与×同口径）
       });
       // 确认框：四通道统一=取消语义（执行取消回调并清回调）
       var __confirmCancel = function () {

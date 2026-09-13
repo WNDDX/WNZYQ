@@ -210,6 +210,7 @@ export async function ensureVariantColumns(env) {
   try {
     const cols = await env.DB.prepare("PRAGMA table_info(product_variants)").all();
     const names = cols.results.map((c) => c.name);
+    if (!names.includes('title')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN title TEXT NOT NULL DEFAULT ''").run(); // R148：类型标题（老库自动补列）
     if (!names.includes('resource_code')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN resource_code TEXT NOT NULL DEFAULT ''").run();
     if (!names.includes('resource_content')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN resource_content TEXT NOT NULL DEFAULT ''").run();
     if (!names.includes('is_hidden')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0").run();
@@ -249,6 +250,7 @@ export function cleanVariantPublic(v) {
     id: v.id,
     productId: v.product_id,
     name: v.name,
+    title: v.title || '',  // R148：类型标题（前台展示用，空=回退名称）
     desc: v.desc,
     img: v.img,
     video: v.video,
@@ -267,6 +269,7 @@ export function cleanVariant(v) {
     id: v.id,
     productId: v.product_id,
     name: v.name,
+    title: v.title || '',            // R148：类型标题（前台选中类型信息栏第一行黑字，空=回退名称）
     desc: v.desc,
     img: v.img,
     video: v.video,
