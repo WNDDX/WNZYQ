@@ -102,7 +102,7 @@ if ('serviceWorker' in navigator) {
     if (img) {
       // 二维码统一出场动画：每次打开都重放（先移除→重排→加载完成后播放），全站任何入口时序一致
       img.classList.remove('kf-qr-in');
-      img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; };
+      img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; if (this.classList) this.classList.add('media-fail'); };
       img.onload = function () { void img.offsetWidth; img.classList.add('kf-qr-in'); };
       img.src = qrImg || '/assets/images/kefu.png';
       if (img.complete && img.naturalWidth) { void img.offsetWidth; img.classList.add('kf-qr-in'); }
@@ -339,7 +339,7 @@ if ('serviceWorker' in navigator) {
     // R83：兜底 toast 位置与全站统一 top:80px 居中（白底蓝字蓝边圆角20）
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:rgba(255,255,255,0.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;';
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:rgba(255,255,255,0.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;line-height:18px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;'; /* R116：line-height 显式 18，单行总高恒 32px，与下拉刷新条逐像素一致 */
     document.body.appendChild(t);
     requestAnimationFrame(function () { t.style.opacity = '1'; });
     setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { try { document.body.removeChild(t); } catch (e) {} }, 300); }, 2000);
@@ -509,4 +509,16 @@ window.__modalKit = (function () {
     close(stack[stack.length - 1], 'stash');
   });
   return { register: register, close: close, stack: stack };
+})();
+
+// ===== R119：图片占位符统一灰色线边框（全站兜底）=====
+// 捕获阶段监听 IMG 加载失败（error 不冒泡但捕获可达），失败即加 .media-fail 灰边类；
+// 与各页占位替换逻辑叠加（class 幂等，重复添加无害），换上占位图后边框保留，失败边界始终可见。
+(function () {
+  document.addEventListener('error', function (e) {
+    try {
+      var t = e.target;
+      if (t && t.tagName === 'IMG' && !t.classList.contains('media-fail')) t.classList.add('media-fail');
+    } catch (err) {}
+  }, true);
 })();

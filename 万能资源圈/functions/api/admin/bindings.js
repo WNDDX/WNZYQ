@@ -12,6 +12,53 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const variantId = Number(url.searchParams.get('variant_id') || 0);
+
+  // R114（无感预载）：prefetch=1 不带 variant_id——一次性批量返回全部类型的绑定数据，
+  // 后台登录后静默拉取缓存，点「绑定 N」徽章时弹窗即开即显（打开后再后台刷新保最新）
+  if (url.searchParams.get('prefetch') === '1') {
+    await ensureBindingsTable(env);
+    await ensureVariantColumns(env);
+    const limitRaw = await getSetting(env, 'resource_bind_limit', '1');
+    const globalLimit = Math.max(1, parseInt(limitRaw, 10) || 1);
+    let vrows = [];
+    try {
+      const r = await env.DB.prepare('SELECT id, resource_code, bind_limit FROM product_variants').all();
+      vrows = r.results || [];
+    } catch (e) { console.error('R114 预载类型查询失败（按空降级）:', e && e.message); }
+    let brows = [];
+    try {
+      const r = await env.DB.prepare(
+        'SELECT variant_id, code, id, device_token, ua, created_at, last_access FROM resource_bindings ORDER BY variant_id ASC, id ASC'
+      ).all();
+      brows = r.results || [];
+    } catch (e) { console.error('R114 预载绑定清单查询失败（按空降级）:', e && e.message); }
+    const byV = {};
+    (brows || []).forEach((r) => {
+      if (!byV[r.variant_id]) byV[r.variant_id] = [];
+      byV[r.variant_id].push({
+        id: r.id,
+        device: String(r.device_token || '').slice(0, 12) + '…',
+        ua: r.ua || '',
+        created_at: r.created_at,
+        last_access: r.last_access,
+      });
+    });
+    const map = {};
+    (vrows || []).forEach((v) => {
+      const code = String(v.resource_code || '').trim();
+      const vLimit = parseInt(v.bind_limit, 10);
+      const limit = vLimit >= 1 ? vLimit : globalLimit;
+      const list = byV[v.id] || [];
+      let curCount = 0;
+      if (code) {
+        // R96：上限按当前码周期计数（code 记录在绑定行里）
+        for (const r of brows) if (r.variant_id === v.id && r.code === code) curCount++;
+      }
+      map[v.id] = { limit, code, cur_count: curCount, count: list.length, list };
+    });
+    return json({ ok: true, map });
+  }
+
   if (!variantId) return json({ ok: false, msg: '缺少 variant_id' }, 400);
   await ensureBindingsTable(env);
   // R106：确保 product_variants 有 bind_limit 列（老库自动补列）

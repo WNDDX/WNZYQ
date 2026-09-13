@@ -244,10 +244,11 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
     -webkit-tap-highlight-color: transparent;
 }
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
-.pull-refresh{position:fixed;top:0;left:0;right:0;height:0;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;z-index:998;transition:height .2s ease;pointer-events:none;background:transparent;}
-.pull-refresh.show{height:46px;}
-.prt-text{font-size:12px;color:#fff;background:rgba(30,136,229,.92);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
-.prt-icon{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.6);border-top-color:#fff;border-radius:50%;animation:prtspin .8s linear infinite;}
+/* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
+.pull-refresh{position:fixed;top:80px;left:0;right:0;height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:998;transition:height .2s ease;pointer-events:none;background:transparent;}
+.pull-refresh.show{height:32px;}
+.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:prtspin .8s linear infinite;}
 @keyframes prtspin{to{transform:rotate(360deg);}}
 /* 弹窗右上角关闭按钮（与资源页/管理页一致） */
 .modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background: var(--bg-light);color: var(--text-light);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.10s ease;line-height:1;}
@@ -286,7 +287,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 <div class="wrap">
     <div class="logo-wrap">
         <div class="logo-box"><!-- R53：logo 去链接（特效 hover/active/进场动画全保留） -->
-            <img class="logo-img" id="logoImage" src="/assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="this.style.opacity='1';var p=this.parentNode;if(p){p.style.opacity='1';if(!p.classList.contains('logo-enter'))p.classList.add('logo-enter');}this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';">
+            <img class="logo-img" id="logoImage" src="/assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="this.style.opacity='1';var p=this.parentNode;if(p){p.style.opacity='1';if(!p.classList.contains('logo-enter'))p.classList.add('logo-enter');}this.onerror=null;this.classList&&this.classList.add('media-fail');this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';">
             <div class="logo-fail-icon" id="logoFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -393,7 +394,7 @@ function loadImg(imgDom, src, retryCount = 0) {
         }else{
             imgDom.style.display = 'none';
             imgDom.onerror = null;
-            imgDom.src = EXC_PH;
+            imgDom.src = EXC_PH; if (imgDom.classList) imgDom.classList.add('media-fail');
             imgDom.style.objectFit = 'contain';
             imgDom.style.display = 'block';
             imgDom.style.opacity = '1';
@@ -411,20 +412,20 @@ document.addEventListener('error', function (e) {
   if (!t || !t.tagName || t.dataset.fh) return;
   if (t.tagName === 'IMG') {
     t.dataset.fh = '1';
-    t.src = EXC_PH;
+    t.src = EXC_PH; if (t.classList) t.classList.add('media-fail');
     t.style.objectFit = 'contain';
     t.style.display = 'block';
   } else if (t.tagName === 'VIDEO') {
     t.dataset.fh = '1';
     var ph = document.createElement('img');
-    ph.src = EXC_PH;
+    ph.src = EXC_PH; ph.classList.add('media-fail');
     ph.style.cssText = 'width:100%;height:auto;display:block;';
     if (t.parentNode) t.parentNode.replaceChild(ph, t);
   }
 }, true);
 document.querySelectorAll('img').forEach(function (im) {
   if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) {
-    im.dataset.fh = '1'; im.src = EXC_PH; im.style.objectFit = 'contain'; im.style.display = 'block';
+    im.dataset.fh = '1'; im.src = EXC_PH; if (im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block';
   }
 });
 
@@ -433,6 +434,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
     dom.modalTitle.textContent = title;
     dom.modalTip.textContent = tipText;
     dom.mask.style.display = 'flex';
+    dom.mask.classList.add('open'); // R114：同步 .open class 供 __modalKit 维护弹窗栈（Esc 逐层路由）
     if (window.lockBodyScroll) window.lockBodyScroll(true);
     dom.modalImg.style.display = 'block';
     dom.qrFail.style.display = 'none';
@@ -450,6 +452,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
 }
 function closeModal() {
     dom.mask.style.display = 'none';
+    dom.mask.classList.remove('open'); // R114：与打开侧同步摘除
     dom.modalJumpBtn.style.display = 'none';
     if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
     dom.modalJumpBtn.onclick = null;
@@ -465,12 +468,21 @@ dom.modalImg.addEventListener('click', function () {
     }
 });
 
-// ESC 关闭弹窗
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && dom.mask.style.display === 'flex') {
-        closeModal();
-    }
-});
+// R114：本弹窗注册进 __modalKit 统一弹窗栈（三模式：纯展示弹窗，关闭即丢弃，无草稿可暂存）；
+// Esc 由 kit 逐层路由只关最上层——开着灯箱（二维码放大）时按 Esc 不再把底下弹窗一起关掉。
+// 本内联脚本先于 ui-common.js 执行，此时 kit 可能尚未定义，用短轮询等它就绪后注册（register 幂等）。
+(function () {
+  var tryReg = function () {
+    if (window.__modalKit && dom.mask) { window.__modalKit.register(dom.mask, { discard: closeModal, stash: closeModal }); return true; }
+    return false;
+  };
+  if (!tryReg()) {
+    var n = 0;
+    var t = setInterval(function () {
+      if (tryReg() || ++n > 40) clearInterval(t); // 最多重试 2 秒
+    }, 50);
+  }
+})();
 
 
 // PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34）
@@ -500,7 +512,7 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
     },{passive:true});
     document.addEventListener('touchend',function(){
         if(!pulling)return;pulling=false;
-        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新…';tip.style.height='46px';setTimeout(function(){try{loadImg(dom.logoImage,CONFIG.logoImg);}catch(e){}tip.classList.remove('show');tip.style.height='0';tip.querySelector('.prt-label').textContent='下拉刷新';},600);}
+        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新…';tip.style.height='32px';setTimeout(function(){try{loadImg(dom.logoImage,CONFIG.logoImg);}catch(e){}tip.classList.remove('show');tip.style.height='0';tip.querySelector('.prt-label').textContent='下拉刷新';},600);}
         else{tip.classList.remove('show');tip.style.height='0';}
         dist=0;
     },{passive:true});

@@ -23,15 +23,13 @@
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
         <div class="login-logo">
-          <img src="/assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          <img src="/assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
         </div>
       </a>
       <h1>万能资源圈・管理</h1>
-      <p class="login-tip" id="loginTip"></p>
       <input id="loginUser" class="input" placeholder="账号" autocomplete="off" />
       <input id="loginPass" class="input" type="password" placeholder="密码" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" />
       <button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登 录</button>
-      <p class="login-foot">万能资源圈・管理</p>
     </div>
   </div>
 
@@ -41,7 +39,7 @@
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
-            <img class="topbar-logo" src="/assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+            <img class="topbar-logo" src="/assets/images/logo.png" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -138,7 +136,6 @@
                 <span class="lg-resource-cur"><i></i>资源码解锁</span>
               </span>
               <span class="lg-group lg-group-prev">
-                <span class="lg-prev-sep"></span>
                 <span class="lg-view-prev"><i></i>浏览·上期</span>
                 <span class="lg-contact-prev"><i></i>咨询客服·上期</span>
                 <span class="lg-resource-prev"><i></i>资源码解锁·上期</span>
@@ -159,7 +156,6 @@
                 <span class="lg-resource-cur">资源码解锁</span>
               </span>
               <span class="lg-group lg-group-prev">
-                <span class="lg-prev-sep"></span>
                 <span class="lg-view-prev">浏览·上期</span>
                 <span class="lg-contact-prev">咨询客服·上期</span>
                 <span class="lg-resource-prev">资源码解锁·上期</span>
@@ -487,10 +483,16 @@
         <input id="fContactUrl" placeholder="可不填，没填则用全局默认，如 https://work.weixin.qq.com/..." />
         <label>排序</label><input id="fSort" type="number" value="0" placeholder="数值越小越靠前" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 显示（勾选后资源页可见，取消则隐藏）</label>
-        <label>定时显示</label>
-        <input id="fScheduleOn" type="text" readonly class="dt-field" placeholder="点击选择，可不填=不定时自动显示" data-dt="datetime" />
-        <label>定时隐藏</label>
-        <input id="fScheduleOff" type="text" readonly class="dt-field" placeholder="点击选择，可不填=不定时自动隐藏" data-dt="datetime" />
+        <div class="sch-row">
+          <div class="sch-col">
+            <label>定时显示</label>
+            <input id="fScheduleOn" type="text" readonly class="dt-field" placeholder="点击选择，可不填=不定时自动显示" data-dt="datetime" />
+          </div>
+          <div class="sch-col">
+            <label>定时隐藏</label>
+            <input id="fScheduleOff" type="text" readonly class="dt-field" placeholder="点击选择，可不填=不定时自动隐藏" data-dt="datetime" />
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="preview-btn" id="previewProductBtn">预览效果</button>

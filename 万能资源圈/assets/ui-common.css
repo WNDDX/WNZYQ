@@ -332,3 +332,6 @@
   .uni-pager button.pg-btn { padding: 7px 12px; font-size: 12px; }
   .uni-pager .pg-info { font-size: 12px; }
 }
+
+/* R119：图片占位符（加载失败换感叹号占位）统一灰色线边框——失败边界可见；颜色复用全局 --border 灰 */
+img.media-fail { border: 1px solid var(--border); }

@@ -70,7 +70,7 @@
     }
 
     // logo 加载失败兜底：替换为感叹号占位（与全站一致）
-    window.__logoFail = function (im) { try { im.onerror = null; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) {} };
+    window.__logoFail = function (im) { try { im.onerror = null; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) {} };
     (function () { var _sl = document.getElementById('shopLogo'); if (_sl && _sl.complete && _sl.naturalWidth === 0 && String(_sl.getAttribute('src')).indexOf('data:') !== 0) window.__logoFail(_sl); })();
     // 全局媒体加载失败兜底：任何 IMG/VIDEO 加载失败统一替换为感叹号占位（页面加载即注册，与导航页一致）
     if (!window.__mediaErrOnce) {
@@ -80,7 +80,7 @@
         if (!t || !t.tagName || t.dataset.fh) return;
         if (t.tagName === 'IMG') {
           t.dataset.fh = '1';
-          t.src = IMG_PLACEHOLDER;
+          t.src = IMG_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
           t.style.objectFit = 'contain';
           t.style.display = 'block'; t.style.opacity = '1';
         } else if (t.tagName === 'VIDEO') {
@@ -93,7 +93,7 @@
           else if (t.parentNode) t.parentNode.removeChild(t);
         }
       }, true);
-      document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; } });
+      document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; } });
     }
 
     // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
@@ -104,14 +104,14 @@
         if (im.dataset.fh) return;
         im.addEventListener('error', function () {
           im.onerror = null;
-          im.src = IMG_PLACEHOLDER;
+          im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail');
           im.style.objectFit = 'contain';
           im.style.display = 'block';
         });
-        im.addEventListener('load', function () { if (!im.dataset.fh && im.naturalWidth === 0 && String(im.getAttribute('src') || '').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; } });
+        im.addEventListener('load', function () { if (!im.dataset.fh && im.naturalWidth === 0 && String(im.getAttribute('src') || '').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; } });
         var _s = im.getAttribute('src') || '';
         if (!_s || _s.indexOf('data:') === 0 || (im.complete && im.naturalWidth === 0)) {
-          im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block';
+          im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block';
         }
       })(imgs[i]);
       var vids = root.querySelectorAll('video');
@@ -156,14 +156,14 @@
       if (img.getAttribute('src') === src && img.src && img.complete) { img.style.display = 'block'; img.style.opacity = '1'; return; }
       img.onerror = function () {
         this.onerror = null; // 防止占位图也加载失败导致死循环
-        this.src = IMG_PLACEHOLDER; this.style.opacity = '1';
+        this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.style.opacity = '1';
         this.style.display = 'block';
         this.style.objectFit = 'contain';
       };
       img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; };
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
       // R93：封面缺省/加载失败回退感叹号占位（R91 文字版已被用户否决回退）
-      if (!src) { img.src = IMG_PLACEHOLDER; img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
+      if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) img.classList.add('media-fail'); img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
 
     /* 全局媒体兜底已上移至脚本顶部统一注册（见 loadImg 上方），此处旧实现不再执行
     document.addEventListener('error', function (e) {
@@ -171,7 +171,7 @@
       if (!t || !t.tagName || t.dataset.fh) return;
       if (t.tagName === 'IMG') {
         t.dataset.fh = '1';
-        t.src = IMG_PLACEHOLDER;
+        t.src = IMG_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
         t.style.objectFit = 'contain';
         t.style.display = 'block';
       } else if (t.tagName === 'VIDEO') {
@@ -530,21 +530,12 @@
       var oldPager = document.getElementById('pager');
       if (oldPager) oldPager.parentNode.removeChild(oldPager);
 
-      // 空状态：根据不同场景显示不同提示
+      // 空状态（R124 用户定稿 15:06）：三分支统一只显示标题、副文案全删——
+      // 搜索=「该搜索暂无资源」；分类/全部=「该分类暂无资源」
       if (list.length === 0) {
         var emptyTitle = document.getElementById('emptyTitle');
-        var emptyDesc = document.getElementById('emptyDesc');
         var kw = searchInput.value.trim();
-        if (kw) {
-          emptyTitle.textContent = '没有找到相关资源';
-          emptyDesc.textContent = '换个关键词试试，或浏览其他分类';
-        } else if (currentCat !== 0) {
-          emptyTitle.textContent = '该分类暂无资源';
-          emptyDesc.textContent = '看看其他分类吧，更多精彩等你发现';
-        } else {
-          emptyTitle.textContent = '暂无资源';
-          emptyDesc.textContent = '平台正在上新中，敬请期待';
-        }
+        emptyTitle.textContent = kw ? '该搜索暂无资源' : '该分类暂无资源';
         return;
       }
 
@@ -673,9 +664,14 @@
       if (variants.length > 0) {
         variantTabs.style.display = 'flex';
         variantTabs.innerHTML = '';
+        // R112：默认优先选中草稿暂存的类型（点外/Esc 关闭后重开接着刚才的），无草稿选第一个
+        var __draftIdx = 0;
+        if (__codeDraft && __codeDraft.pid === p.id) {
+          variants.forEach(function (v, di) { if (v.id === __codeDraft.vid) __draftIdx = di; });
+        }
         variants.forEach(function (v, idx) {
           var tab = document.createElement('div');
-          tab.className = 'variant-tab' + (idx === 0 ? ' active' : '');
+          tab.className = 'variant-tab' + (idx === __draftIdx ? ' active' : '');
           tab.textContent = v.name || '类型' + (idx + 1);
           tab.addEventListener('click', function () {
             currentVariant = v;
@@ -686,11 +682,12 @@
             updatePrice();
             updateContactBtn();
             initResourceCodeSection(); // 切换类型时重置资源码区域
+            __tryRefillCode(); // R112：切到草稿暂存的类型时回填资源码
           });
           variantTabs.appendChild(tab);
         });
-        // 默认选中第一个类型，显示其价格和详情
-        currentVariant = variants[0];
+        // 默认选中草稿类型（无草稿=第一个），显示其价格和详情
+        currentVariant = variants[__draftIdx];
         renderVariantDetail();
       } else {
         variantTabs.style.display = 'none';
@@ -703,6 +700,7 @@
 
       // 资源码区域初始化（基于当前选中的类型，没有类型则用资源级资源码）
       initResourceCodeSection();
+      __tryRefillCode(); // R112：点外/Esc 暂存的资源码自动回填
 
       modalMask.classList.add('open');
       setBodyLock(true);
@@ -916,7 +914,7 @@
         document.body.appendChild(m);
         m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); });
         var im = document.getElementById('kfFallbackImg');
-        if (im) im.onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
+        if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
       }
       var jb = m.querySelector('button[data-u]');
       if (jb) jb.setAttribute('data-u', url || '');
@@ -947,6 +945,25 @@
         btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未设置客服链接'); };
       }
     }
+
+    // ---------- R112：资源码草稿（三模式统一——点外/Esc=暂存，重开自动回填；×/关闭=丢弃） ----------
+    // 草稿为内存级（刷新即清，与全站弹窗草稿口径一致），按 资源id+类型id 匹配才回填
+    var __codeDraft = null;
+    function __tryRefillCode() {
+      if (!__codeDraft || !currentProduct || __codeDraft.pid !== currentProduct.id) return;
+      var vid = currentVariant ? currentVariant.id : null;
+      if (__codeDraft.vid !== vid) return;
+      var ri = document.getElementById('resourceCodeInput');
+      if (ri && __codeDraft.code) ri.value = __codeDraft.code;
+    }
+    function closeModalStash() {
+      try {
+        var ri = document.getElementById('resourceCodeInput');
+        __codeDraft = currentProduct ? { pid: currentProduct.id, vid: currentVariant ? currentVariant.id : null, code: ri ? String(ri.value || '') : '' } : null;
+      } catch (e) { __codeDraft = null; }
+      closeModal();
+    }
+    function closeModalDiscard() { __codeDraft = null; closeModal(); }
 
     function closeModal() { try { document.querySelectorAll('#modalBox video, #modalMedia video').forEach(function (v) { v.pause(); }); } catch (e) {}
       modalMask.classList.remove('open');
@@ -1000,10 +1017,10 @@
       }, { passive: true });
     }
 
-    btnCloseModal.addEventListener('click', closeModal);
-    modalCloseX.addEventListener('click', closeModal);
+    btnCloseModal.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
+    modalCloseX.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
     modalMask.addEventListener('click', function (e) {
-      if (e.target === modalMask) closeModal();
+      if (e.target === modalMask) closeModalStash(); // R112：点外=暂存资源码草稿
     });
 
     // ---------- R10 资源分享（弹窗左上角转发键） ----------
@@ -1113,7 +1130,7 @@
       // R83：位置统一 top:80px（四页同位），淡入0.2s→停留2s→淡出0.3s；转圈图标仅下拉刷新保留
       var t = document.createElement('div');
       t.textContent = msg;
-      t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:rgba(255,255,255,0.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;max-width:90%;text-align:center;opacity:0;transition:opacity 0.2s ease;';
+      t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:rgba(255,255,255,0.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;line-height:18px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;max-width:90%;text-align:center;opacity:0;transition:opacity 0.2s ease;'; /* R116：line-height 显式 18，单行总高恒 32px，与下拉刷新条逐像素一致 */
       document.body.appendChild(t);
       requestAnimationFrame(function () { t.style.opacity = '1'; });
       setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s ease'; }, 2000);
@@ -1369,8 +1386,7 @@
       if (p) {
         try { openModal(p); } catch (e) {}
       } else if (fromRemote) {
-        if (window.showAlert) window.showAlert('该资源已隐藏或不存在');
-        else showToast('该资源已隐藏或不存在');
+        showToast('该资源已隐藏或不存在'); /* R118：与全站 toast 胶囊统一 */
       }
       try {
         var u = new URL(window.location.href);
@@ -1431,7 +1447,7 @@
       isPulling = false;
       if (pullDistance > PULL_THRESHOLD) {
         // 触发刷新
-        pullRefreshEl.style.height = '28px';
+        pullRefreshEl.style.height = '32px';
         document.getElementById('pullRefreshText').textContent = '正在刷新…';
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
@@ -1580,8 +1596,8 @@
     // 旧的「一次 Esc 同时关资源弹窗+灯箱」handler 已删；灯箱在 openLightbox 创建时注册
     window.addEventListener('DOMContentLoaded', function () {
       var kit = window.__modalKit; if (!kit) return;
-      // 资源详情 / 公告 / 分享 / 客服：纯展示，四通道=直接关（客服 kfMask 在 ui-common 创建处注册）
-      kit.register(modalMask, { discard: closeModal, stash: closeModal });
+      // R112：资源详情弹窗——×=丢弃资源码草稿；点外/Esc=暂存（重开自动回填）；公告/分享纯展示直接关（客服 kfMask 在 ui-common 创建处注册）
+      kit.register(modalMask, { discard: closeModalDiscard, stash: closeModalStash });
       var __am = document.getElementById('annModal'); if (__am) kit.register(__am, { discard: closeAnnModal, stash: closeAnnModal });
       kit.register(shareMask, { discard: closeShare, stash: closeShare });
     });

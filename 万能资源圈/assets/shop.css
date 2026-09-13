@@ -366,13 +366,9 @@
     .empty-tip .empty-title {
       font-size: 16px;
       color: var(--text-light);
-      margin-bottom: 6px;
       font-weight: 500;
     }
-    .empty-tip .empty-desc {
-      font-size: 13px;
-      color: var(--text-light);
-    }
+
 
     /* ---------- 下拉刷新 ---------- */
     .pull-refresh {
@@ -392,9 +388,7 @@
       /* 修复：去掉整块蓝色渐变遮挡，改为轻量提示条，悬浮在内容上方不遮内容 */
       background: transparent;
     }
-    .pull-refresh.show {
-      height: 28px;
-    }
+    .pull-refresh.show { height: 32px; } /* R116：32px=胶囊单行总高(6+18+6+1+1)，与 toast 逐像素一致 */
     .pull-refresh-text {
       font-size: 12px;
       color: var(--blue1);
@@ -402,6 +396,7 @@
       border: 1px solid var(--blue2);
       border-radius: 20px;
       padding: 6px 16px;
+      line-height: 18px; /* R116：行盒显式化，与 toast 同源 */
       display: flex;
       align-items: center;
       gap: 6px;
@@ -1092,7 +1087,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* R81：视频加载失败兜底卡（格式/编码不兼容时替代原感叹号占位图）——样式与页面灰底卡同语言 */
 /* R97 定稿（用户）：卡内灰字全部删除，只留按键「点击新窗口播放视频」——flex 纵横居中=按键天然上下左右居中，无需补偿 */
 .video-fallback {
-  background: var(--bg-light, #f5f7fa);
+  border: 1px solid var(--border); /* R119：占位卡灰色线边框，失败边界可见（复用全局 --border 灰） */
+  /* R123（用户定稿 15:03）：背景与图片感叹号占位符统一——图片占位 SVG 底色即 #f5f5f5（写死、不随暗色变），视频卡同色对齐 */
+  background: #f5f5f5;
   border-radius: 10px;
   padding: 14px 14px;
   text-align: center;
@@ -1108,13 +1105,38 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   align-items: center;
   justify-content: center;
 }
+/* R121（用户点名 13:59）：按键复用后台顶栏 tab 胶囊（截图参照=资源管理/分类管理 tab 那套），不是资源面板行按钮
+   ——逐参数照抄 ui-common.css 全站公共 .tab：无边框/38px 高/18px 全弧胶囊/0 16px 内边距/14px 字号/line-height 1.2/
+     inline-flex 居中/white-space nowrap/hover scale.97 opa.9/active scale.94；
+   配色：tab 在蓝底上是 rgba(255,255,255,0.18) 半透明白（观感=淡蓝胶囊），兜底卡是浅灰底，
+     用顶栏 tab 胶囊实测淡蓝 #64B0F1（R70 定稿色）等效复刻，白字同 tab；
+   宽度=内容自适应（R123：去 stretch，tab 胶囊内容形态；.video-fallback flex column 居中定稿不动） */
 .video-fallback .vf-link {
-  display: inline-block;
-  font-size: 13px;
-  color: var(--blue1, #1E88E5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  border: none;
+  background: #64B0F1;
+  color: #fff;
+  padding: 0 16px;
+  height: 38px;
+  border-radius: 18px;
+  font-size: 14px;
+  white-space: nowrap;
+  text-align: center;
+  box-sizing: border-box;
+  /* R123（用户定稿 15:03）：不再通栏固定宽（stretch 会把按键拉满整卡显得空框）——
+     tab 胶囊的内容自适应形态=宽度贴合文字+左右 16px 内边距，卡片 flex column 居中天然水平居中 */
   text-decoration: none;
-  border: 1px solid var(--blue2, #64B5F6);
-  border-radius: 16px;
-  padding: 4px 14px;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
 }
-.video-fallback .vf-link:hover { opacity: 0.85; }
+.video-fallback .vf-link:hover { transform: scale(0.97); opacity: 0.9; }
+.video-fallback .vf-link:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+
+@media (max-width: 600px) {
+  /* 窄屏与全站 .tab 窄屏档同步（仅 padding/字号缩小，height 38px 与胶囊圆角同 tab 保持） */
+  .video-fallback .vf-link { padding: 7px 12px; font-size: 13px; }
+}

@@ -18,19 +18,19 @@
       if (!t || !t.tagName) return;
       if (t.tagName === 'IMG' && !t.dataset.fh) {
         t.dataset.fh = '1';
-        t.src = EXC_PLACEHOLDER;
+        t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
         t.style.objectFit = 'contain';
         t.style.display = 'block'; t.style.opacity = '1';
       } else if (t.tagName === 'VIDEO' && !t.dataset.fh) {
         t.dataset.fh = '1';
         var ph = document.createElement('img');
-        ph.src = EXC_PLACEHOLDER;
+        ph.src = EXC_PLACEHOLDER; if (ph && ph.classList) ph.classList.add('media-fail');
         ph.style.cssText = 'width:100%;height:auto;display:block;';
         if (t.parentNode) t.parentNode.replaceChild(ph, t);
       }
     }, true);
-    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; t.style.objectFit = 'contain'; t.style.display = 'block'; t.style.opacity = '1'; } }, true);
-    document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; im.style.objectFit = 'contain'; im.style.display = 'block'; } });
+    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail'); t.style.objectFit = 'contain'; t.style.display = 'block'; t.style.opacity = '1'; } }, true);
+    document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; } });
 
     // ---------- DOM ----------
     var loginView = document.getElementById('loginView');
@@ -38,7 +38,6 @@
     var loginUser = document.getElementById('loginUser');
     var loginPass = document.getElementById('loginPass');
     var loginBtn  = document.getElementById('loginBtn');
-    var loginTip  = document.getElementById('loginTip');
     var logoutBtn = document.getElementById('logoutBtn');
 
     // 资源编辑弹窗
@@ -421,7 +420,7 @@
       document.addEventListener('touchend', function () {
         if (!pulling) return; pulling = false;
         if (dist > TH) {
-          tip.style.height = '46px'; tip.querySelector('.prt').textContent = '正在刷新…';
+          tip.style.height = '32px'; tip.querySelector('.prt').textContent = '正在刷新…';
           var loginVisible = document.getElementById('loginView') && document.getElementById('loginView').style.display !== 'none';
           if (loginVisible) { /* R20：登录页下拉刷新=整页重载（未登录无数据面板可刷新） */
             setTimeout(function () { location.reload(); }, 400);
@@ -586,7 +585,7 @@
       if (loginBtn.disabled) return; // 防重复提交：onclick+addEventListener 双绑只执行一次
       var u = loginUser.value.trim();
       var p = loginPass.value;
-      if (!u || !p) { if (window.showAlert) window.showAlert('请输入账号和密码'); else toast('请输入账号和密码', 'error'); return; }
+      if (!u || !p) { toast('请输入账号和密码', 'error'); return; } /* R118：登录提示统一 toast 胶囊（top:80/32px） */
       loginBtn.disabled = true;
       loginBtn.textContent = '登录中…';
       api('admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) })
@@ -600,9 +599,9 @@
           } else {
             // 失败路径只弹一个弹窗（此前 toast+showAlert+分支内 showAlert 会叠出两个弹窗，已修复去重）
             var _local = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (_local) { if (window.showAlert) window.showAlert('本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev'); loginTip.textContent = '本地预览模式：无后端接口，请部署线上或运行 wrangler dev'; }
-            else if (res._status === 429) { if (window.showAlert) window.showAlert(res.msg || '尝试次数过多，请稍后再试'); loginTip.textContent = res.msg || ''; }
-            else { if (window.showAlert) window.showAlert(res.msg || '登录失败'); loginTip.textContent = '登录失败：' + (res.msg || ('HTTP ' + (res._status || '网络错误'))); }
+            if (_local) { toast('本地预览模式：无后端接口，请部署线上或运行 wrangler dev', 'error'); }
+            else if (res._status === 429) { toast(res.msg || '尝试次数过多，请稍后再试', 'error'); }
+            else { toast('登录失败：' + (res.msg || ('HTTP ' + (res._status || '网络错误'))), 'error'); }
           }
         })
         .finally(function () {
@@ -628,6 +627,7 @@
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         state.products = res.list || [];
         renderProducts();
+        prefetchBindings(); // R114：随产品列表一起静默预载全部类型绑定数据，点「绑定 N」即开即显
       });
     }
 
@@ -747,7 +747,7 @@
         img.alt = '';
         img.loading = 'lazy';
         img.src = p.img || EXC_PLACEHOLDER;
-        img.onerror = function () { this.onerror = null; this.src = EXC_PLACEHOLDER; };
+        img.onerror = function () { this.onerror = null; this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); };
 
         var info = document.createElement('div');
         info.className = 'info';
@@ -779,23 +779,6 @@
           setProductStatus(p.id, next);
         });
 
-        // 资源码/专属内容状态标记（三种状态规范用词）
-        var variants = p.variants || [];
-        var hasCode = variants.some(function (v) { return v.resourceCode && v.resourceCode.trim(); });
-        var hasDirect = variants.some(function (v) { return v.resourceContent && !v.resourceCode; });
-        if (hasCode || hasDirect) {
-          var resBadge = document.createElement('span');
-          resBadge.className = 'badge';
-          resBadge.style.cssText = 'background:#e3f2fd;color:#1565c0;margin-left:6px;';
-          if (hasCode && hasDirect) {
-            resBadge.textContent = '🔒 资源码 + 🔓 直接获取';
-          } else if (hasCode) {
-            resBadge.textContent = '🔒 需资源码';
-          } else {
-            resBadge.textContent = '🔓 直接获取';
-          }
-          info.appendChild(resBadge);
-        }
 
         var ops = document.createElement('div');
         ops.className = 'p-ops';
@@ -812,14 +795,85 @@
         delBtn.className = 'row-btn danger';
         delBtn.textContent = '删除';
         delBtn.addEventListener('click', function () { delProduct(p.id); });
-        ops.appendChild(editBtn);
+        // R126（用户定稿 15:21）：资源码改为下拉选项查看框（优先复用全站 select-picker 下拉组件，
+        // 与显示/隐藏下拉同款结构；码胶囊样式复用编辑弹窗类型行 codeSpan 同款）——
+        // 点开展示该资源各类型的资源码（无码显示"无资源码"），点码即复制
+        var codePicker = document.createElement('div');
+        // R131（用户 16:14 定稿）：code-picker 钩子类用于容器布局对齐 .p-ops .row-btn（CSS 处理）
+        codePicker.className = 'select-picker code-picker';
+        var cpDisp = document.createElement('div');
+        // R131：display 挂 row-btn 类——视觉/按压反馈/各断点布局全部继承旁边按键，仅保留下拉开合
+        cpDisp.className = 'cat-picker-display row-btn';
+        var cpTxt = document.createElement('span');
+        cpTxt.className = 'cpd-text';
+        cpTxt.textContent = '资源码';
+        var cpArrow = document.createElement('span');
+        cpArrow.className = 'cpd-arrow';
+        cpArrow.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>';
+        cpDisp.appendChild(cpTxt); cpDisp.appendChild(cpArrow);
+        var cpPanel = document.createElement('div');
+        cpPanel.className = 'cat-picker-panel';
+        codePicker.appendChild(cpDisp); codePicker.appendChild(cpPanel);
+        function renderCodePanel(variants) {
+          cpPanel.innerHTML = '';
+          if (!variants || !variants.length) {
+            cpPanel.innerHTML = '<div style="color:#bbb;font-size:12px;padding:8px 10px">暂无类型</div>';
+            return;
+          }
+          variants.forEach(function (v) {
+            var item = document.createElement('div');
+            item.className = 'cp-item';
+            var nm = document.createElement('span');
+            nm.textContent = v.name || '(未命名)';
+            nm.style.cssText = 'font-weight:500;';
+            item.appendChild(nm);
+            if (v.resourceCode && v.resourceCode.trim()) {
+              var cd = document.createElement('span');
+              // 码胶囊样式与编辑弹窗类型行 codeSpan 同款（R98 定稿内联样式）
+              cd.style.cssText = 'font-size:12px;color:#1565c0;background:#e3f2fd;padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:600;cursor:pointer;';
+              cd.textContent = v.resourceCode;
+              cd.title = '点击复制';
+              item.appendChild(cd);
+              item.addEventListener('click', function () {
+                var ok = window.__shareCopyText ? window.__shareCopyText(v.resourceCode) : false;
+                toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
+                document.querySelectorAll('.select-picker.open').forEach(function (q) { q.classList.remove('open'); });
+              });
+            } else {
+              var nc = document.createElement('span');
+              // 无码样式与编辑弹窗 codeSpan 无码态同款
+              nc.style.cssText = 'font-size:12px;color:#999;background:#f5f5f5;padding:2px 8px;border-radius:4px;margin-left:8px;';
+              nc.textContent = '无资源码';
+              item.appendChild(nc);
+              item.style.cursor = 'default';
+            }
+            cpPanel.appendChild(item);
+          });
+        }
+        renderCodePanel(p.variants);
+        // 无 variants 缓存时首次打开拉取（复用 loadVariants 的回写口径）
+        cpDisp.addEventListener('click', function () {
+          if (!p.variants) {
+            api('admin/variants?product_id=' + p.id).then(function (res) {
+              if (res && res.ok) {
+                p.variants = (res.list || []).slice();
+                var _pp = (state.products || []).find(function (x) { return x.id === p.id; });
+                if (_pp) _pp.variants = (res.list || []).slice();
+                renderCodePanel(p.variants);
+              }
+            });
+          }
+        });
+        // R123（用户定稿 14:59）：复制换到显示前面——显示、编辑、删除三个连在一起（与分类管理按钮排布一致）
+        ops.appendChild(codePicker);
         ops.appendChild(copyBtn);
+        ops.appendChild(statusBtn);
+        ops.appendChild(editBtn);
         ops.appendChild(delBtn);
 
         row.appendChild(cb);
         row.appendChild(img);
         row.appendChild(info);
-        row.appendChild(statusBtn);
         row.appendChild(ops);
         box.appendChild(row); box.style.minHeight = '';
       });
@@ -1110,9 +1164,12 @@
       } catch (e) {}
       updateImgPreview();
       editMask.classList.add('open');
-      state.variants = [];
+      // R113：类型列表复用产品列表随接口已带回的 variants（进后台时已加载好，点开即显；
+      // 原先点开弹窗才现场发请求等返回，是「点进去才加载、卡卡的」根因）。
+      // 保存/删除/解绑等操作后仍走 loadVariants 刷新并回写缓存，保证下次打开也是最新。
+      state.variants = (p && p.id && Array.isArray(p.variants)) ? p.variants.slice() : [];
       renderVariants();
-      if (p && p.id) loadVariants(p.id);
+      if (p && p.id && !Array.isArray(p.variants)) loadVariants(p.id); // 兜底：旧缓存无 variants 字段才现场拉
     }
 
     // 填充资源表单
@@ -1173,12 +1230,12 @@
         if (preview.dataset.fh) delete preview.dataset.fh;
         if (preview.getAttribute('src') !== url) preview.src = url;
         preview.classList.add('show');
-        preview.onerror = function () { this.onerror = null; this.dataset.fh = '1'; this.src = EXC_PLACEHOLDER; };
+        preview.onerror = function () { this.onerror = null; this.dataset.fh = '1'; this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); };
       } else {
         // R41：没填链接也显示感叹号占位符（与加载失败显示完全一致，用户要求）
         preview.onerror = null;
         preview.dataset.fh = '1';
-        preview.src = EXC_PLACEHOLDER;
+        preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
         preview.classList.add('show');
       }
     }
@@ -1478,6 +1535,9 @@
       api('admin/variants?product_id=' + productId).then(function (res) {
         if (res && res.ok) {
           state.variants = res.list || [];
+          // R113：回写产品列表缓存，下次打开编辑弹窗即显最新类型（不发请求）
+          var _p = (state.products || []).find(function (x) { return x.id === productId; });
+          if (_p) _p.variants = (res.list || []).slice();
           renderVariants();
         }
       });
@@ -2475,19 +2535,26 @@
     // ---------- R92 绑定设备管理（一机一码）----------
     // 打开绑定设备清单弹窗：复用 modal-mask 弹窗外壳 + 统计表样式（全系统统一观感）
     var _bindingsVariant = null;
+    // R114（无感预载）：登录后随产品列表一起静默预载全部类型绑定数据，点「绑定 N」徽章
+    // 弹窗即开即显；打开后仍后台刷新一次保最新（refreshBindings 成功会回写缓存）。
+    var __bindingsCache = {};
+    function prefetchBindings() {
+      api('admin/bindings?prefetch=1').then(function (res) {
+        if (res && res.ok && res.map) __bindingsCache = res.map;
+      });
+    }
     function openBindings(v) {
       _bindingsVariant = v;
       document.getElementById('bindingsTitle').textContent = '绑定设备（' + (v.name || '(未命名)') + '）';
-      document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="4" style="color:#999;">加载中…</td></tr>';
-      document.getElementById('bindingsSummary').textContent = '';
       document.getElementById('bindingsMask').classList.add('open');
-      refreshBindings(v.id);
+      var _hit = __bindingsCache[v.id];
+      if (_hit) renderBindings(_hit); // 命中预载缓存：内容立即上屏，零等待
+      else document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="4" style="color:#999;">加载中…</td></tr>';
+      refreshBindings(v.id); // 后台刷新（预载缓存兜底 + 解绑等操作后保最新）
     }
-    function refreshBindings(variantId) {
-      api('admin/bindings?variant_id=' + variantId).then(function (res) {
-        if (!res || !res.ok) { toast((res && res.msg) || '加载失败', 'error'); return; }
-        var rows = res.list || [];
-        var summary = document.getElementById('bindingsSummary');
+    function renderBindings(res) {
+      var rows = res.list || [];
+      var summary = document.getElementById('bindingsSummary');
         // R96：上限按"当前码"周期计数；绑满后系统自动换新码（已绑定设备不受影响）
         summary.textContent = '当前码已绑 ' + (res.cur_count || 0) + ' / 上限 ' + res.limit + ' 台，绑满后自动换新码；累计绑定 ' + rows.length + ' 台';
         // R96 当前资源码展示行；R100（回退 R98）：复制按键恢复——点按键、点码文本都能复制（同一条复制链路）
@@ -2529,7 +2596,7 @@
           unBtn.addEventListener('click', function () {
             showConfirm('解绑设备', '确定解绑该设备？解绑后此设备需重新输入资源码才能解锁（其它设备不受影响）。', function () {
               api('admin/bindings/' + r.id, { method: 'DELETE' }).then(function (res2) {
-                if (res2 && res2.ok) { toast('已解绑', 'success'); refreshBindings(variantId); loadVariants(state.editingId); }
+                if (res2 && res2.ok) { toast('已解绑', 'success'); refreshBindings(_bindingsVariant && _bindingsVariant.id); loadVariants(state.editingId); }
                 else toast((res2 && res2.msg) || '解绑失败', 'error');
               });
             });
@@ -2538,6 +2605,18 @@
           tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
           tbody.appendChild(tr);
         });
+    }
+
+    // R114：后台刷新（预载缓存兜底 + 解绑/换码后保最新）；成功回写 __bindingsCache
+    function refreshBindings(variantId) {
+      api('admin/bindings?variant_id=' + variantId).then(function (res) {
+        if (!res || !res.ok) {
+          if (!__bindingsCache[variantId]) document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="4" style="color:#999;">加载失败</td></tr>';
+          return;
+        }
+        __bindingsCache[variantId] = res;
+        var _open = document.getElementById('bindingsMask').classList.contains('open');
+        if (_open && _bindingsVariant && _bindingsVariant.id === variantId) renderBindings(res);
       });
     }
 
@@ -2963,8 +3042,14 @@
       var hb = document.createElement('div');
       hb.className = 'bar-hover-box';
       hb.innerHTML = html;
+      // R115：两图悬浮框同步——折线 SVG 框随 viewBox 缩放（渲染尺寸 = 150×84 × scale、字号 11 × scale），
+      // 柱状框读取折线 SVG 当前缩放比（--bhs）跟随缩放，两框在任何宽度下外框尺寸/字号完全一致
+      var _ls = document.getElementById('lineSvg');
+      var _sc = 1;
+      if (_ls) { var _lw = _ls.getBoundingClientRect().width; if (_lw) _sc = _lw / 800; }
+      try { hb.style.setProperty('--bhs', _sc); } catch (e) {}
       // 框位置：参考线右侧 8px，右侧放不下翻到左侧（折线悬浮同逻辑），并钳制在容器内
-      var boxW = 150;
+      var boxW = 150 * _sc;
       var bx = px + 8;
       if (bx + boxW > br.width - 2) bx = px - 8 - boxW;
       if (bx < 2) bx = 2;
@@ -3310,7 +3395,7 @@ refreshCatCnts();
 
       ordered.forEach(function (c) {
         if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row cat-sub'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; // “全部”项不渲染选中框（固定项）
-          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vrow.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vrow.appendChild(_vedit); _vrow.appendChild(_vdel); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
+          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vmeta.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vmeta.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; } box.appendChild(_vrow); return; }
         var row = document.createElement('div');
         row.className = 'cat-row';
         row.draggable = false;
@@ -3360,6 +3445,10 @@ refreshCatCnts();
           cb.checked = !!state.catSelected[c.id]; cb.addEventListener('change', function () { state.catSelected[c.id] = this.checked; updateCatBatchBar(); });
           row.appendChild(cb); } else { var _cbp = document.createElement('span'); _cbp.style.cssText = 'width:20px;flex-shrink:0;'; _cbp.setAttribute('aria-hidden', 'true'); row.appendChild(_cbp); }
         }
+
+        // R120：c-meta 包裹排序/资源数/状态/操作按钮——手机端两行网格第二行（与所有行同构，列严格对齐）
+        var meta = document.createElement('div');
+        meta.className = 'c-meta';
 
         var name = document.createElement('span');
         name.className = 'c-name';
@@ -3421,7 +3510,7 @@ refreshCatCnts();
             this.classList.remove('status-online', 'status-hidden'); this.classList.add(nowHidden ? 'status-hidden' : 'status-online');
             this.title = '点击切换为' + (nowHidden ? '显示' : '隐藏（资源页不显示）');
             api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ is_hidden: nowHidden }) }).then(function (res) { if (!res.ok) { c.is_hidden = prev; toast(res.msg || '更新失败', 'error'); } else { clearCache(); } });
-          }); row.appendChild(catStatusBtn);
+          }); meta.appendChild(catStatusBtn);
         }
 
         var sort = document.createElement('span');
@@ -3451,8 +3540,8 @@ refreshCatCnts();
         row.appendChild(name);
         // 级别标签放到最前（复选框之后、展开箭头之前），一眼看出层级
         row.insertBefore(levelBadge, (typeof toggleBtn !== 'undefined' && toggleBtn) || (row.firstChild && row.firstChild.nextSibling && row.firstChild.nextSibling.nextSibling) || null);
-        row.appendChild(sort);
-        row.appendChild(cnt);
+        meta.appendChild(sort);
+        meta.appendChild(cnt);
 
         if (Number(c.id) !== 0) {
           var editBtn = document.createElement('button');
@@ -3470,16 +3559,17 @@ refreshCatCnts();
               });
             });
           });
-          row.appendChild(editBtn);
-          row.appendChild(delBtn);
+          meta.appendChild(editBtn);
+          meta.appendChild(delBtn);
         }
         else { // 根"全部"(id=0)：右侧用隐藏占位对齐状态框/按钮列（与虚拟"全部"行同一套占位方式，保证列对齐）
-          var _ph0 = document.createElement('span'); _ph0.className = 'row-btn'; _ph0.style.cssText = 'visibility:hidden;pointer-events:none;'; _ph0.textContent = '固定'; _ph0.setAttribute('aria-hidden', 'true'); row.appendChild(_ph0);
+          var _ph0 = document.createElement('span'); _ph0.className = 'row-btn'; _ph0.style.cssText = 'visibility:hidden;pointer-events:none;'; _ph0.textContent = '固定'; _ph0.setAttribute('aria-hidden', 'true'); meta.appendChild(_ph0);
           var _pe0 = document.createElement('button'); _pe0.className = 'row-btn'; _pe0.textContent = '编辑'; _pe0.style.cssText = 'visibility:hidden;pointer-events:none;';
           var _pd0 = document.createElement('button'); _pd0.className = 'row-btn danger'; _pd0.textContent = '删除'; _pd0.style.cssText = 'visibility:hidden;pointer-events:none;';
-          row.appendChild(_pe0); row.appendChild(_pd0);
+          meta.appendChild(_pe0); meta.appendChild(_pd0);
         }
 
+        row.appendChild(meta);
         box.appendChild(row); box.style.minHeight = '';
       });
     }
@@ -3687,15 +3777,15 @@ refreshCatCnts();
       var oldPwd = document.getElementById('oldPwd').value;
       var newPwd = document.getElementById('newPwd').value;
       var confirmPwd = document.getElementById('confirmPwd').value;
-      if (!oldPwd || !newPwd || !confirmPwd) { if (window.showAlert) window.showAlert('请填写完整密码信息'); else toast('请填写完整密码信息', 'error'); return; }
-      if (newPwd !== confirmPwd) { if (window.showAlert) window.showAlert('两次输入的新密码不一致'); else toast('两次输入的新密码不一致', 'error'); return; }
+      if (!oldPwd || !newPwd || !confirmPwd) { toast('请填写完整密码信息', 'error'); return; }
+      if (newPwd !== confirmPwd) { toast('两次输入的新密码不一致', 'error'); return; }
       api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
         .then(function (res) {
           if (res && res.ok) {
             toast('密码已修改', 'success');
             pwdMask.classList.remove('open');
           } else {
-            if (window.showAlert) window.showAlert(res.msg || '修改失败（原密码可能不正确）'); else toast(res.msg || '修改失败', 'error');
+            toast(res.msg || '修改失败（原密码可能不正确）', 'error');
           }
         });
     });
@@ -3977,7 +4067,7 @@ refreshCatCnts();
         document.body.appendChild(m);
         m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); });
         var im = document.getElementById('kfFallbackImg');
-        if (im) im.onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
+        if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
       }
       var jb = m.querySelector('button[data-u]');
       if (jb) jb.setAttribute('data-u', url || '');

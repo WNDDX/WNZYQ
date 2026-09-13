@@ -54,7 +54,7 @@
     .login-card {
       background: var(--card-bg);
       border-radius: 14px;
-      padding: 30px 26px 24px;
+      padding: 30px 26px 30px; /* R118：删底部灰字后上下对称，框内内容垂直居中 */
       width: 100%;
       max-width: 360px;
       text-align: center;
@@ -99,14 +99,15 @@
       height: 100%;
       object-fit: cover;
     }
-    .login-card h1 { font-size: 20px; letter-spacing: 1.5px; margin-bottom: 6px; }
-    .login-tip { font-size: 13px; color: var(--text-faint); margin-bottom: 16px; }
+    .login-card h1 { font-size: 20px; letter-spacing: 1.5px; margin-bottom: 22px; /* R118：原空提示位 16px 并入标题间距 */ }
     .login-card .input {
       width: 100%; height: 44px;
       border: 1px solid var(--border); border-radius: 8px;
       padding: 0 14px; margin-bottom: 12px; outline: none;
     }
     .login-card .input:focus { border-color: var(--blue1); }
+    /* R118：登录卡内按钮去掉通用 10px 下边距，框内内容上下真正对称居中 */
+    .login-card .btn-blue { margin-bottom: 0; }
 
     .btn-blue {
       width: 100%; height: 44px;
@@ -116,7 +117,6 @@
       letter-spacing: 1.2px; margin-bottom: 10px;
     }
     .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
-    .login-foot { font-size: 12px; color: var(--text-faint); line-height: 1.6; }
 
     /* ---------- 主视图 ---------- */
     .topbar {
@@ -138,9 +138,10 @@
     .back-top:active { transform: scale(0.9); }
     html, body { overscroll-behavior: none; }
     @media (hover: hover) and (pointer: fine) { html, body { overscroll-behavior: auto; } }
-    .pull-refresh { position: fixed; top: 0; left: 0; right: 0; height: 0; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; z-index: 300; transition: height .2s ease; pointer-events: none; background: transparent; }
-    .pull-refresh.show { height: 46px; }
-    .pull-refresh-text { font-size: 12px; color: var(--blue1); background: rgba(255,255,255,.94); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
+    .pull-refresh { position: fixed; top: 80px; left: 0; right: 0; height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 300; transition: height .2s ease; pointer-events: none; background: transparent; }
+    .pull-refresh.show { height: 32px; } /* R116：32px=胶囊单行总高(6+18+6+1+1)，与 toast 逐像素一致 */
+    .pull-refresh-text { font-size: 12px; line-height: 18px; color: var(--blue1); background: rgba(255,255,255,.92); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
     .pull-refresh-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2); border-top-color: var(--blue1); border-radius: 50%; animation: prspin .8s linear infinite; }
     @keyframes prspin { to { transform: rotate(360deg); } }
     .topbar {
@@ -297,6 +298,27 @@
       padding: 6px 12px; border-radius: 6px; font-size: 13px; flex-shrink: 0;
     }
     .row-btn.danger { color: var(--red); border-color: #ffc8c8; }
+    /* R131（用户 16:14 定稿）：资源行「资源码」下拉按键与旁边 .row-btn 同款——
+       display 已挂 row-btn 类，视觉/按压反馈/各断点布局全部继承现成规则（零新增视觉参数）；
+       此处仅修正容器与旁边按键的布局差异（去掉下拉默认 margin/width:100%，随各视图 .p-ops .row-btn 同步伸缩） */
+    .p-ops .select-picker.code-picker { margin: 0; width: auto; align-self: auto; }
+    .p-ops .select-picker.code-picker .cat-picker-display { height: 100%; box-sizing: border-box; }
+    /* R131 补：cpd-arrow 原 16px 高 vs 文字行盒 15.6px(13px*1.2)，把按键撑高 0.4px——
+       改为随字号的行高 1.2em，使资源码按键内容高与纯文字 row-btn 完全一致（桌面实测 29.594=29.594） */
+    .p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { height: 1.2em; }
+    #productList.card-view .product-row .p-ops .select-picker.code-picker { margin: 0; flex: 1; min-width: 0; align-self: auto; }
+    @media (max-width: 600px) {
+      /* 手机窄列：旁边按键为等分平铺（两行文字 ~48px 宽）；资源码带箭头+三字，
+         等分宽会挤掉文字——改为内容自适应宽（white-space nowrap 同 card-view 下拉口径），高度仍 stretch 等高 */
+      .p-ops .select-picker.code-picker { flex: 0 0 auto; }
+      .p-ops .select-picker.code-picker .cat-picker-display { white-space: nowrap; }
+      #productList.card-view .product-row .p-ops .select-picker.code-picker { margin: 0; flex: 0 0 auto; align-self: auto; }
+      /* 手机窄列下旁边按键为两行文字高（~45px），资源码按键 stretch 等高对齐（旁边按键高度不变）；
+         align-self:auto 覆盖列表模式给 .select-picker 的 center（L1032 后代选择器误伤） */
+      #productList .product-row .p-ops { align-items: stretch; }
+      #productList .product-row .p-ops .select-picker.code-picker { align-self: auto; }
+      .p-ops .select-picker.code-picker .cat-picker-display { height: 100%; }
+    }
     .empty { text-align: center; color: var(--text-faint); padding: 60px 0; font-size: 14px; }
 
     .prod-fade { animation: prodFade 0.22s ease; }
@@ -348,13 +370,13 @@
     }
     #productList.card-view .product-row .info {
       flex-basis: 100%;
-      padding: 10px 12px 6px;
+      padding: 12px 12px 8px;
     }
     #productList.card-view .product-row .p-ops {
       width: 100%;
       display: flex;
       gap: 12px;
-      padding: 0 12px 10px;
+      padding: 2px 12px 12px;
       justify-content: flex-start;
     }
     #productList.card-view .product-row .p-ops .row-btn {
@@ -546,6 +568,9 @@
       padding: 10px 12px; outline: none; background: var(--card-bg);
     }
     .form input:focus, .form textarea:focus, .form select:focus, .input:focus { border-color: var(--blue1); }
+    /* R117：定时显示/隐藏左右并排——显示在左、隐藏在右，两列等宽自适应 */
+    .sch-row { display: flex; gap: 12px; }
+    .sch-col { flex: 1 1 0; min-width: 0; }
     /* ===== 级联分类选择器（一级可直接选，展开看二级） ===== */
     .cat-picker { position: relative; width: 100%; user-select: none; }
     .cat-picker-display {
@@ -823,7 +848,7 @@
       position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
       color: var(--blue1, #1E88E5); background: rgba(255,255,255,0.92);
       border: 1px solid var(--blue2, #64B5F6);
-      padding: 6px 16px; border-radius: 20px; font-size: 12px;
+      padding: 6px 16px; border-radius: 20px; font-size: 12px; line-height: 18px; /* R116：行盒显式化，单行总高恒 32px=6+18+6+1+1，与下拉刷新条逐像素一致 */
       box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100002;
       opacity: 0; transition: opacity 0.2s; pointer-events: none;
       max-width: 90%; text-align: center;
@@ -886,7 +911,7 @@
     /* R68：网格对齐柱状绘图区（left 与 .trend-bars 的 padding-left 5% 一致），数字紧贴柱区左缘——与折线图数字贴折线区同理；R70 高度跟随 --barZone */
     .trend-grid { position: absolute; left: 5%; right: 2.5%; bottom: 24px; height: var(--barZone, 100px); pointer-events: none; }
     .trend-grid .tg-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid #e8e8e8; }
-    .trend-grid .tg-num { position: absolute; right: calc(100% + 2px); top: -5px; font-size: 10px; color: #999; text-align: right; line-height: 1; }
+    .trend-grid .tg-num { position: absolute; right: calc(100% + 2px); top: -5.8px; font-size: 10px; color: #999; text-align: right; line-height: 1.16; }
     .trend-bars::-webkit-scrollbar { display: none; }
     .trend-col { flex: 1 1 0; min-width: 0; position: relative; height: 100%; }
     .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: 24px; display: flex; flex-direction: row; justify-content: flex-end; height: var(--barZone, 100px); gap: 3px; }
@@ -905,12 +930,19 @@
     .trend-bar.resource { background: #4CAF50; }
     /* R76：柱状图悬浮层——竖参考线+数值框，与折线图悬浮一模一样（同色同虚线同框样式同两列布局） */
     .bar-hover-line { position: absolute; top: 12px; bottom: 24px; width: 0; border-left: 1px dashed #c3ccd9; pointer-events: none; z-index: 5; }
-    .bar-hover-box { position: absolute; background: rgba(255,255,255,0.96); border: 1px solid #d8dee8; border-radius: 4px; width: 150px; pointer-events: none; z-index: 6; padding: 0; }
-    .bar-hover-box .bhb-row { height: 16px; line-height: 16px; font-size: 11px; display: flex; justify-content: space-between; padding: 0 8px; }
-    .bar-hover-box .bhb-time { height: 20px; line-height: 20px; font-size: 11px; font-weight: 600; color: #555; text-align: center; }
+    /* R115：柱状悬浮框与折线 SVG 悬浮框同步——折线框随 viewBox 缩放（外框 150×84、字号 11、行距 16，均乘渲染缩放比）；
+       柱状框经 --bhs（JS 每次绘制时写入折线当前缩放比）跟随缩放，两框在任何宽度下外框尺寸/字号一致 */
+    .bar-hover-box { position: absolute; background: rgba(255,255,255,0.96); border: 1px solid #d8dee8; border-radius: calc(4px * var(--bhs, 1)); width: calc(150px * var(--bhs, 1)); height: calc(84px * var(--bhs, 1)); box-sizing: border-box; pointer-events: none; z-index: 6; padding: 0; }
+    /* R117：行位置逐行对齐折线 SVG 框——折线侧文字基线=18/34/50/66（框顶起、基准单位），柱侧各行改绝对定位，
+       行中心落在 14.14/30.14/46.14/62.14（=折线同字体的字形中心，实测校准），1px 为盒边框偏移 */
+    .bar-hover-box .bhb-time { position: absolute; left: 0; right: 0; top: calc(4.14px * var(--bhs, 1) - 1px); height: calc(20px * var(--bhs, 1)); line-height: calc(20px * var(--bhs, 1)); font-size: calc(11px * var(--bhs, 1)); font-weight: 600; color: #555; text-align: center; }
+    .bar-hover-box .bhb-row { position: absolute; left: 0; right: 0; height: calc(16px * var(--bhs, 1)); line-height: calc(16px * var(--bhs, 1)); font-size: calc(11px * var(--bhs, 1)); display: flex; justify-content: space-between; padding: 0 calc(8px * var(--bhs, 1)); }
+    .bar-hover-box .bhb-row:nth-child(2) { top: calc(22.14px * var(--bhs, 1) - 1px); }
+    .bar-hover-box .bhb-row:nth-child(3) { top: calc(38.14px * var(--bhs, 1) - 1px); }
+    .bar-hover-box .bhb-row:nth-child(4) { top: calc(54.14px * var(--bhs, 1) - 1px); }
     .bar-hover-box .bhb-cur { flex: 1 1 auto; }
     .bar-hover-box .bhb-prev { flex: 0 0 auto; text-align: right; }
-.trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--text-faint); white-space: nowrap; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; box-sizing: border-box; max-width: 100%; }
+.trend-label { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #999; white-space: nowrap; line-height: 1.16; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; box-sizing: border-box; max-width: 100%; }
     .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-light); justify-content: center; }
     .trend-legend span:not(.lg-group)::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
@@ -970,10 +1002,10 @@
     .line-legend .lg-contact-prev i { background: none; height: 0; border-top: 3px dashed rgba(255, 153, 0, 0.5); }
     .line-legend .lg-resource-cur i { background: #4CAF50; }
     .line-legend .lg-resource-prev i { background: none; height: 0; border-top: 3px dashed rgba(76, 175, 80, 0.5); }
-    /* R65：上期图例项默认隐藏（对比上期关闭时只显示本期），.show-prev 时显示；本期左/上期右以竖线分隔 */
-    .lg-prev-sep { width: 1px; height: 14px; background: #d8dee8; align-self: center; margin: 0 6px; }
-    .line-legend:not(.show-prev) .lg-prev-sep, .line-legend:not(.show-prev) [class$="-prev"] { display: none; }
-    .trend-legend:not(.show-prev) .lg-prev-sep, .trend-legend:not(.show-prev) [class$="-prev"] { display: none; }
+    /* R65：上期图例项默认隐藏（对比上期关闭时只显示本期），.show-prev 时显示 */
+    /* R115：图例「本期/上期」之间的灰色竖线分隔符（.lg-prev-sep）已按用户要求移除 */
+    .line-legend:not(.show-prev) [class$="-prev"] { display: none; }
+    .trend-legend:not(.show-prev) [class$="-prev"] { display: none; }
     .trend-legend { flex-wrap: wrap; }
     /* R109：图例按组换行——本期/上期各自整组一行（跟编辑器组模式一样），组内不拆行，换行只发生在组与组之间 */
     .lg-group { display: flex; flex-wrap: nowrap; align-items: center; }
@@ -1065,7 +1097,6 @@
       .trend-chart .time-filter + div { flex-basis: 100%; max-width: 100%; }
       .trend-chart .stat-date-input { flex: 1; min-width: 0 !important; }
       .trend-bars { gap: 2px; }
-      .trend-label { font-size: 9px; }
       /* 批量栏按钮紧凑换行，不超出画面 */
       .batch-bar { gap: 6px; padding: 8px 10px; }
       .batch-btn { padding: 5px 9px; font-size: 12px; }
@@ -1138,11 +1169,11 @@
     #panel-products .tb-row2 label { display: none !important; }
     /* 手机端网格卡片：操作按钮（状态/编辑/复制/删除）完整可见，不被裁剪或换行竖排 */
     @media (max-width: 600px) {
-      #productList.card-view .product-row .select-picker { margin: 2px 8px 6px; width: auto; max-width: calc(100% - 16px); flex-shrink: 0; }
+      #productList.card-view .product-row .select-picker { margin: 2px 10px 8px; width: auto; max-width: calc(100% - 20px); flex-shrink: 0; }
       #productList.card-view .product-row .select-picker .cat-picker-display { white-space: nowrap; }
-      #productList.card-view .product-row .p-ops { padding: 0 8px 10px; gap: 6px; }
+      #productList.card-view .product-row .p-ops { padding: 2px 10px 12px; gap: 6px; }
       #productList.card-view .product-row .p-ops .row-btn { white-space: nowrap; min-width: 0; }
-      #productList.card-view .product-row .info { padding: 8px 8px 4px; }
+      #productList.card-view .product-row .info { padding: 10px 10px 8px; }
       #productList.card-view .product-row .thumb { aspect-ratio: 4/3; }
     }
     /* 公告项名字直接在项内编辑 */
@@ -1197,4 +1228,27 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   font-size: 13px; line-height: 1.6; color: var(--text);
   white-space: normal; word-break: break-all; pointer-events: none;
+}
+
+
+/* ===== R120：分类管理行结构化对齐（用户定稿：该对齐的不管什么尺寸都要对齐）=====
+   admin.js 已把 排序/资源数/状态按钮/编辑/删除 包进 .c-meta：
+   - 桌面：display:contents 让 .c-meta 子项直接参与 .cat-row 扁平 flex，观感与旧版完全一致；
+   - 手机：.cat-row 改两行网格——第一行[拖拽柄|复选框|展开箭头|名称(省略号)]，第二行 .c-meta 横排
+     [排序|资源数|显示|编辑|删除]。一级/二级/根"全部"/虚拟"全部"行同构，列坐标逐像素对齐；
+     一级名称不再换行（grid 1fr + ellipsis），排序/资源数所有行同一行同一起点。 */
+.cat-row .c-meta { display: contents; }
+
+@media (max-width: 600px) {
+  .cat-row {
+    display: grid;
+    grid-template-columns: 28px 20px 24px minmax(0, 1fr);
+    column-gap: 10px; row-gap: 8px;
+    align-items: center;
+  }
+  .cat-row .c-name { grid-row: 1; grid-column: 4; }
+  .cat-row .c-meta {
+    grid-row: 2; grid-column: 1 / -1;
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+  }
 }

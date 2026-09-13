@@ -3,7 +3,7 @@
  * POST /api/admin/products        → 新增资源（需登录）
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  */
-import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns } from '../../_utils.js';
+import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable } from '../../_utils.js';
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
 async function attachVariants(env, list) {
@@ -13,10 +13,20 @@ async function attachVariants(env, list) {
   const { results: vrows } = await env.DB.prepare(
     `SELECT * FROM product_variants WHERE product_id IN (${placeholders}) ORDER BY sort ASC, id ASC`
   ).bind(...ids).all();
+  // R113：顺带批量返回每类型已绑定设备数（编辑弹窗即开即显时的「绑定 N」徽章，
+  // 口径与 /api/admin/variants 完全一致）；查询失败按 0 兜底，不让整个列表 500
+  const bindMap = {};
+  try {
+    await ensureBindingsTable(env);
+    const { results: bindRows } = await env.DB.prepare(
+      `SELECT variant_id, COUNT(*) AS n FROM resource_bindings WHERE product_id IN (${placeholders}) GROUP BY variant_id`
+    ).bind(...ids).all();
+    (bindRows || []).forEach((r) => { bindMap[r.variant_id] = r.n; });
+  } catch (e) { console.error('R113 绑定计数批量查询失败（按0兜底）:', e && e.message); }
   const map = {};
   (vrows || []).forEach((v) => {
     if (!map[v.product_id]) map[v.product_id] = [];
-    map[v.product_id].push(cleanVariant(v));
+    map[v.product_id].push(Object.assign(cleanVariant(v), { bindings: bindMap[v.id] || 0 }));
   });
   list.forEach((p) => { p.variants = map[p.id] || []; });
   return list;
