@@ -17,7 +17,7 @@
     :root {
       --blue1: #1E88E5;
       --blue2: #64B5F6;
-      --blue:  #1688FF;
+      --blue:  var(--blue1);
       --red:   #ff4444;
       --topbar-h: 64px;
       /* R50：暗色相关变量（--bg-page/--bg-light/--card-bg/--border/--text/--text-light/--hover-bg）
@@ -377,18 +377,19 @@
       top: 80px;
       left: 0;
       right: 0;
-      height: 0;
+      /* R135：容器恒高 32px（不可见、不占交互）——入场不再用高度 0→32 撑开+overflow 裁剪，
+         那会让胶囊被上下裁切且随容器生长下滑（帘式揭开，观感奇怪）；
+         改为与全站 toast 完全一致的原位淡入（见 .pull-refresh-text） */
+      height: 32px;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 101;
-      transition: height 0.2s ease;
       pointer-events: none;
       /* 修复：去掉整块蓝色渐变遮挡，改为轻量提示条，悬浮在内容上方不遮内容 */
       background: transparent;
     }
-    .pull-refresh.show { height: 32px; } /* R116：32px=胶囊单行总高(6+18+6+1+1)，与 toast 逐像素一致 */
     .pull-refresh-text {
       font-size: 12px;
       color: var(--blue1);
@@ -401,7 +402,11 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      /* R135：入场=原位淡入（与全站 toast 同款 opacity 0.2s，出场同 0.2s 收回） */
+      opacity: 0;
+      transition: opacity 0.2s ease;
     }
+    .pull-refresh.show .pull-refresh-text { opacity: 1; }
     .pull-refresh-icon {
       display: inline-block;
       width: 14px;
@@ -520,8 +525,8 @@
       width: 32px; height: 32px;
       border-radius: 50%;
       border: none;
-      background: #E3F2FD;
-      color: #1565c0;
+      background: rgba(100,176,241,0.18);
+      color: var(--blue1); /* R141：材质蓝→站点蓝 */
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -533,7 +538,7 @@
     .modal-share-x:hover {
       transform: scale(0.97);
       opacity: 0.9;
-      background: #1688FF;
+      background: var(--blue1);
       color: #fff;
     }
     .modal-share-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
@@ -562,7 +567,7 @@
       margin-bottom: 8px;
     }
     .modal-title {
-      font-size: 22px;
+      font-size: 20px; /* R141：与管理端弹窗标题统一 20px */
       font-weight: 700;
       color: var(--text);
       flex: 1;
@@ -1015,7 +1020,7 @@
       .modal-box { max-width: 100%; max-height: 92vh; border-radius: 12px; }
       img.modal-cover { width: auto; max-width: calc(100% - 24px); margin: 12px auto 0; max-height: 220px; }
       .modal-content { padding: 12px 16px 16px; }
-      .modal-title { font-size: 18px; }
+      /* R141：手机档 18px 删除，与管理端全档 20px 统一 */
       .modal-price { font-size: 20px; }
       .modal-desc { font-size: 14px; }
       .modal-detail { font-size: 13px; padding: 10px 12px; }
@@ -1041,8 +1046,8 @@
       .modal-box { max-width: 90%; }
       /* 平板端文字不隐藏：与管理页 tab 按钮表现一致（.tab 样式统一由 ui-common.css 提供） */
     }
-    /* logo 统一为名称大小（覆盖上方定义） */
-    .shop-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; }
+    /* logo 统一为名称大小（覆盖上方定义）；R140（用户 20:27）：R138 的 40px 是误解，回退回 38px 原值（顶栏 logo 不是改造对象） */
+    .shop-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; } /* R140：回退 R138 调大到原 38px */
     .shop-name { line-height: 1; display: flex; align-items: center; }
     /* 弹窗底部按钮宽度统一：2 个等宽 */
     .modal-footer button { flex: 1; min-width: 0; }

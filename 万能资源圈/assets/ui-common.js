@@ -261,7 +261,7 @@ if ('serviceWorker' in navigator) {
   // ===== R14 全站统一「分享链接」弹窗（复刻资源页分享本站弹窗观感：400px 白卡/标题/tip/链接/确定）=====
   // window.showShareLinkModal(title, url)：标题、链接自动复制到剪贴板并展示
   window.showShareLinkModal = function (title, url) {
-    // R79：分享按键点击那一刻统一复制链接（同步 execCommand + clipboard API 双保险）+ 即时 toast
+    // R79+R138：分享按键点击那一刻统一复制链接（异步 clipboard.writeText，零主线程阻塞）+ 即时 toast
     // 与资源页顶栏分享、资源卡片分享、预览分享、弹窗链接点击全部同链路同提示
     try { __shareCopy(url || ''); __shareToast('链接已复制到剪贴板'); } catch (e0) {}
     try {
@@ -309,25 +309,36 @@ if ('serviceWorker' in navigator) {
     ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
     document.body.appendChild(ta);
     // R79：移动端 webview 需先 focus 再 select，execCommand 才可靠
-    try { ta.focus(); } catch (e) {}
+    // R138：focus 加 preventScroll——旧 focus() 在移动端会引发视口滚动/重排（点击分享卡一下的帮凶）
+    try { ta.focus({ preventScroll: true }); } catch (e) { try { ta.focus(); } catch (e2) {} }
     ta.select();
     var ok = false;
     try { ok = document.execCommand('copy'); } catch (e) {}
     document.body.removeChild(ta);
     return ok;
   }
-  // R79：全站统一分享复制链路——同步 execCommand（点击手势内最可靠、兼容各类 webview）
-  // + clipboard API 并行双保险；所有分享按键点击那一刻与弹窗链接点击都走这一个函数
+  // R79：全站统一分享复制链路——所有分享按键点击那一刻与弹窗链接点击都走这一个函数
+  // R138（用户 18:22 修复分享卡顿）：旧实现是「同步 execCommand + clipboard API 双保险」——
+  // 每次点击都在手势内【同步】创建 textarea + focus + select + execCommand('copy')。
+  // 移动端 execCommand 是出了名的主线程阻塞点（数百毫秒），focus 还会触发视口滚动/重排，
+  // 叠加起来就是「点击分享卡一下、连点被吞、弹窗不消失（close 的 click 事件在阻塞窗口里
+  // 被浏览器丢弃/合并）」——这不是动画问题，是同步长任务冻结主线程。
+  // 现改为：优先 navigator.clipboard.writeText（https 部署环境全支持；在用户手势（点击）内
+  // 发起即享有 transient activation 授权，写入成功率与 execCommand 等同甚至更高），异步执行
+  // 零阻塞；仅在 clipboard API 不可用（旧 webview / 非安全上下文 http）时才退回 execCommand，
+  // 且 fallback 的 focus 带 preventScroll。
   function __shareCopy(text) {
     text = (text == null) ? '' : String(text);
-    var ok = false;
-    try { ok = __fallbackCopyText(text); } catch (e) {}
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).catch(function () {});
+        navigator.clipboard.writeText(text).catch(function () {
+          // 写入被拒（罕见，如部分 webview 权限策略）：退回同步复制兜底
+          try { __fallbackCopyText(text); } catch (e) {}
+        });
+        return true;
       }
     } catch (e) {}
-    return ok;
+    return __fallbackCopyText(text);
   }
   window.__shareCopyText = __shareCopy;
   // R22：分享链接复制提示——优先复用页面级 toast（资源页 showToast / 管理页 toast），都没有时兜底一个轻提示条
@@ -365,7 +376,7 @@ if ('serviceWorker' in navigator) {
     }
   };
   window.syncBodyLock = function () {
-    var open = document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open,.confirm-mask.open,.lightbox.open');
+    var open = document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open,.lightbox.open');
     window.lockBodyScroll(!!open);
   };
   // ===== 全站弹窗滚动锁自动同步（修复滚动穿透）=====

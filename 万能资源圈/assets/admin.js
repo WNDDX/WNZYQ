@@ -23,10 +23,21 @@
         t.style.display = 'block'; t.style.opacity = '1';
       } else if (t.tagName === 'VIDEO' && !t.dataset.fh) {
         t.dataset.fh = '1';
-        var ph = document.createElement('img');
-        ph.src = EXC_PLACEHOLDER; if (ph && ph.classList) ph.classList.add('media-fail');
-        ph.style.cssText = 'width:100%;height:auto;display:block;';
-        if (t.parentNode) t.parentNode.replaceChild(ph, t);
+        // R137（用户 18:14）：视频失败用视频兜底卡（点击新窗口打开原链接），与前台 makeVideoFallback 同款；
+        // 不再替换成图片感叹号占位——视频失败该是视频失败的占位样式。无地址视频直接移除（与前台 R91 口径一致）
+        var _vu = t.getAttribute('src') || t.currentSrc || '';
+        if (_vu) {
+          var vf = document.createElement('div');
+          vf.className = 'video-fallback';
+          var vl = document.createElement('a');
+          vl.className = 'vf-link';
+          vl.href = _vu; vl.target = '_blank'; vl.rel = 'noopener';
+          vl.textContent = '点击在新窗口播放视频';
+          vf.appendChild(vl);
+          if (t.parentNode) t.parentNode.replaceChild(vf, t);
+        } else if (t.parentNode) {
+          t.parentNode.removeChild(t);
+        }
       }
     }, true);
     document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail'); t.style.objectFit = 'contain'; t.style.display = 'block'; t.style.opacity = '1'; } }, true);
@@ -244,7 +255,7 @@
         if (closeBtn.dataset.close === 'editMask') { try { clearDraft(); } catch (e) {} } // ×=取消：丢弃草稿
         if (closeBtn.dataset.close === 'catMask') { catDraftPending = false; catDraftFor = null; } // ×=取消：丢弃分类草稿
         if (closeBtn.dataset.close === 'variantMask') { variantDraftPending = false; variantDraftFor = null; } // ×=取消：丢弃类型草稿
-        if (closeBtn.dataset.close === 'annMask') { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } annDraftPending = false; stateAnn.loaded = false; } // ×=取消：恢复备份，重新加载已保存
+        if (closeBtn.dataset.close === 'annMask') { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } annDraftPending = false; stateAnn.loaded = false; try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; } catch (e) {} } // ×=取消：恢复备份+显示频率（R135），重新加载已保存
         if (closeBtn.dataset.close === 'contactMask') { contactDraftPending = false; var _cu=document.getElementById('contactUrlInput'); if(_cu)_cu.value=''; } // ×=取消：清空输入
         if (closeBtn.dataset.close === 'pwdMask') { var _o=document.getElementById('oldPwd'),_n=document.getElementById('newPwd'),_c=document.getElementById('confirmPwd'); if(_o)_o.value=''; if(_n)_n.value=''; if(_c)_c.value=''; } // ×=取消：清空密码框
         if (mask) {
@@ -311,8 +322,8 @@
         '</div>' +
         '<div class="dt-btns">' +
           '<button type="button" class="dt-now" id="dtNow">当前</button>' +
-          '<button type="button" id="dtClear">清除</button>' +
           '<button type="button" class="dt-ok" id="dtOk">确定</button>' +
+          '<button type="button" id="dtClear">清除</button>' +
         '</div>';
       document.body.appendChild(pop);
       var dInput = pop.querySelector('#dtDate');
@@ -413,14 +424,15 @@
         if (!pulling) return;
         var dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
         if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-          dist = Math.min(dy * 0.5, 80); tip.style.height = dist + 'px'; tip.classList.add('show');
+          // R135：入场统一原位淡入（.show 切 opacity），不再操作容器高度
+          dist = Math.min(dy * 0.5, 80); tip.classList.add('show');
           tip.querySelector('.prt').textContent = dist > TH ? '释放立即刷新' : '下拉刷新';
         }
       }, { passive: true });
       document.addEventListener('touchend', function () {
         if (!pulling) return; pulling = false;
         if (dist > TH) {
-          tip.style.height = '32px'; tip.querySelector('.prt').textContent = '正在刷新…';
+          tip.querySelector('.prt').textContent = '正在刷新…';
           var loginVisible = document.getElementById('loginView') && document.getElementById('loginView').style.display !== 'none';
           if (loginVisible) { /* R20：登录页下拉刷新=整页重载（未登录无数据面板可刷新） */
             setTimeout(function () { location.reload(); }, 400);
@@ -432,8 +444,8 @@
           else if (t === 'stats' && typeof loadStats === 'function') loadStats(undefined, undefined, 1);
           else if (t === 'categories' && typeof loadCategories === 'function') loadCategories();
           else if (t === 'settings' && typeof loadSettings === 'function') loadSettings();
-          setTimeout(function () { tip.classList.remove('show'); tip.style.height = '0'; }, 400);
-        } else { tip.classList.remove('show'); tip.style.height = '0'; }
+          setTimeout(function () { tip.classList.remove('show'); }, 400);
+        } else { tip.classList.remove('show'); }
         dist = 0;
       }, { passive: true });
     })();
@@ -509,6 +521,8 @@
         if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; if (document.getElementById('annMask').classList.contains('open')) { try { if (typeof renderAnnList === 'function') renderAnnList(); var _dlx = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dlx && typeof selectAnnItem === 'function') selectAnnItem(_dlx.id); else if (typeof clearAnnEdit === 'function') clearAnnEdit(); } catch (e) {} } }
         
         document.getElementById('annMode').value = s.announcement_mode || 'always';
+        // R135：记录已保存的显示频率——取消/×/关闭（丢弃）时据此恢复，不再保留未保存的选中值
+        if (typeof stateAnn !== 'undefined' && stateAnn) stateAnn._modeSaved = s.announcement_mode || 'always';
         // R106：资源码绑定设备上限已挪到类型编辑表单（类型级），设置面板不再回填/保存该值
       });
     }
@@ -520,7 +534,7 @@
         announcement_mode: document.getElementById('annMode').value
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
-        if (res.ok) toast('设置已保存', 'success');
+        if (res.ok) { toast('设置已保存', 'success'); if (typeof stateAnn !== 'undefined' && stateAnn) stateAnn._modeSaved = document.getElementById('annMode').value; } // R135：设置页保存同样提交显示频率，成功后同步已保存值
         else toast(res.msg || '保存失败', 'error');
       });
     });
@@ -795,9 +809,9 @@
         delBtn.className = 'row-btn danger';
         delBtn.textContent = '删除';
         delBtn.addEventListener('click', function () { delProduct(p.id); });
-        // R126（用户定稿 15:21）：资源码改为下拉选项查看框（优先复用全站 select-picker 下拉组件，
-        // 与显示/隐藏下拉同款结构；码胶囊样式复用编辑弹窗类型行 codeSpan 同款）——
-        // 点开展示该资源各类型的资源码（无码显示"无资源码"），点码即复制
+        // R126（用户定稿 15:21）：资源码改为下拉选项查看框（复用全站 select-picker 下拉组件，
+        // 与显示/隐藏下拉同款结构）——点开展示该资源各类型的资源码（无码显示"无资源码"），点码即复制。
+        // R139（用户定稿）：下拉内码/无码项按键化，与编辑弹窗类型列表 codeBtn/noCodeBtn 完全同款（row-btn）
         var codePicker = document.createElement('div');
         // R131（用户 16:14 定稿）：code-picker 钩子类用于容器布局对齐 .p-ops .row-btn（CSS 处理）
         codePicker.className = 'select-picker code-picker';
@@ -828,21 +842,28 @@
             nm.style.cssText = 'font-weight:500;';
             item.appendChild(nm);
             if (v.resourceCode && v.resourceCode.trim()) {
-              var cd = document.createElement('span');
-              // 码胶囊样式与编辑弹窗类型行 codeSpan 同款（R98 定稿内联样式）
-              cd.style.cssText = 'font-size:12px;color:#1565c0;background:#e3f2fd;padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:600;cursor:pointer;';
+              // R139（用户定稿）：码按键与编辑弹窗类型列表 codeBtn 同款（row-btn+monospace+600+letter-spacing），
+              // 替换 R98 浅蓝胶囊——字体样式统一用"编辑弹窗类型列表那套"；点按键复制并收起面板
+              var cd = document.createElement('button');
+              cd.type = 'button';
+              cd.className = 'row-btn';
+              cd.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;';
               cd.textContent = v.resourceCode;
               cd.title = '点击复制';
               item.appendChild(cd);
-              item.addEventListener('click', function () {
-                var ok = window.__shareCopyText ? window.__shareCopyText(v.resourceCode) : false;
-                toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
-                document.querySelectorAll('.select-picker.open').forEach(function (q) { q.classList.remove('open'); });
-              });
+              (function (cv) {
+                cd.addEventListener('click', function () {
+                  var ok = window.__shareCopyText ? window.__shareCopyText(cv) : false;
+                  toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
+                  document.querySelectorAll('.select-picker.open').forEach(function (q) { q.classList.remove('open'); });
+                });
+              })(v.resourceCode);
             } else {
-              var nc = document.createElement('span');
-              // 无码样式与编辑弹窗 codeSpan 无码态同款
-              nc.style.cssText = 'font-size:12px;color:#999;background:#f5f5f5;padding:2px 8px;border-radius:4px;margin-left:8px;';
+              // R139：无码按键与类型列表 noCodeBtn 同款（row-btn 灰字、无动作），同步替换灰胶囊
+              var nc = document.createElement('button');
+              nc.type = 'button';
+              nc.className = 'row-btn';
+              nc.style.cssText = 'color:var(--text-faint);cursor:default;';
               nc.textContent = '无资源码';
               item.appendChild(nc);
               item.style.cursor = 'default';
@@ -930,6 +951,9 @@
           detailVideos: p.detailVideos || [],
           contactUrl: p.contactUrl || '',
           price: p.price || 0,
+          // R137（用户 18:14）：复制补齐定时显示/隐藏时间——此前漏传，副本定时信息丢失
+          schedule_on: p.schedule_on || null,
+          schedule_off: p.schedule_off || null,
           variants: p.variants ? JSON.parse(JSON.stringify(p.variants)) : [],
         is_online: false,
         is_hidden: 0,
@@ -937,19 +961,23 @@
       };
       api('admin/products', { method: 'POST', body: JSON.stringify(newProduct) }).then(function (res) {
         if (res && res.ok) {
-          var _vs = newProduct.variants || [], _chain = Promise.resolve(), _newId = res.id;
+          var _vs = newProduct.variants || [], _chain = Promise.resolve(), _newId = res.id, _fail = 0;
           _vs.forEach(function (v) {
             _chain = _chain.then(function () {
+              // R137（用户 18:14）：复制类型补齐 bindLimit（绑定上限）——此前漏传，复制后一律归 1
               return api('admin/variants', { method: 'POST', body: JSON.stringify({
                 productId: _newId, name: v.name, desc: v.desc || '', img: v.img || '', video: v.video || '',
                 contactUrl: v.contactUrl || '', price: v.price || 0, sort: v.sort || 0,
-                resourceCode: v.resourceCode || '', resourceContent: v.resourceContent || '', isHidden: v.isHidden || 0
-              }) });
+                resourceCode: v.resourceCode || '', resourceContent: v.resourceContent || '', isHidden: v.isHidden || 0,
+                bindLimit: Math.max(1, parseInt(v.bindLimit, 10) || 1)
+              }) }).then(function (r2) { if (!r2 || !r2.ok) _fail++; return r2; }).catch(function () { _fail++; });
             });
           });
-          _chain.then(function () { clearCache(); loadProducts(); });
+          _chain.then(function () {
+            clearCache(); loadProducts();
+            if (_fail) toast('资源已复制，但有 ' + _fail + ' 个类型复制失败，请检查新资源的类型列表', 'error');
+          }).catch(function () { clearCache(); loadProducts(); });
           toast('复制成功，新资源已创建（默认隐藏状态）', 'success');
-          loadProducts();
         } else {
           toast(res.msg || '复制失败', 'error');
         }
@@ -1571,31 +1599,41 @@
           name.appendChild(hideBadge);
         }
 
-        // 资源码（有码显示码，无码显示"无资源码"）；R98：点击码直接复制（不放复制键）
+        // 资源码/绑定/无码统一做成按键（R136 用户定稿）：全部复用全站 row-btn 按键样式——
+        // 有码=码按键（点击复制）、绑定 N=独立按键（点击开绑定设备弹窗）、无码=同款按键（灰字）
+        // 三种按键高度/圆角/按压反馈完全一致，天然对齐（无差异化）
         var codeSpan = document.createElement('span');
+        codeSpan.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex-shrink:0;';
         if (v.resourceCode && v.resourceCode.trim()) {
-          codeSpan.style.cssText = 'font-size:12px;color:#1565c0;background:#e3f2fd;padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:600;cursor:pointer;';
-          codeSpan.textContent = v.resourceCode;
-          codeSpan.title = '点击复制';
+          var codeBtn = document.createElement('button');
+          codeBtn.type = 'button';
+          codeBtn.className = 'row-btn';
+          codeBtn.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;';
+          codeBtn.textContent = v.resourceCode;
+          codeBtn.title = '点击复制';
           (function (cv) {
-            codeSpan.addEventListener('click', function (ev) {
-              // 绑定徽章在 codeSpan 内部，点徽章开弹窗、点码本体复制
-              if (ev.target !== codeSpan) return;
+            codeBtn.addEventListener('click', function () {
               var ok = window.__shareCopyText ? window.__shareCopyText(cv) : false;
               toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
             });
           })(v.resourceCode);
+          codeSpan.appendChild(codeBtn);
         } else {
-          codeSpan.style.cssText = 'font-size:12px;color:#999;background:#f5f5f5;padding:2px 8px;border-radius:4px;margin-left:8px;';
-          codeSpan.textContent = '无资源码';
+          var noCodeBtn = document.createElement('button');
+          noCodeBtn.type = 'button';
+          noCodeBtn.className = 'row-btn';
+          noCodeBtn.style.cssText = 'color:var(--text-faint);cursor:default;';
+          noCodeBtn.textContent = '无资源码';
+          codeSpan.appendChild(noCodeBtn);
         }
 
         // R92：绑定设备徽章（一机一码·宽松模式）——只有配了资源码的类型才统计绑定，
         // 点击打开绑定设备管理弹窗（查看清单 / 解绑）
         if (v.resourceCode && v.resourceCode.trim()) {
-          var bindSpan = document.createElement('span');
+          var bindSpan = document.createElement('button');
           var bindN = Number(v.bindings) || 0;
-          bindSpan.style.cssText = 'font-size:12px;color:#00695c;background:#e0f2f1;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;cursor:pointer;';
+          bindSpan.type = 'button';
+          bindSpan.className = 'row-btn';
           bindSpan.textContent = '绑定 ' + bindN;
           bindSpan.title = '查看该资源码已绑定的设备';
           bindSpan.addEventListener('click', function () { openBindings(v); });
@@ -2092,6 +2130,7 @@
             stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 }); stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
             stateAnn.loaded = true;
             document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
+            stateAnn._modeSaved = (res.settings || {}).announcement_mode || 'always'; // R135：记录已保存频率供丢弃恢复
             if (stateAnn.list.length) { var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; renderAnnList(); selectAnnItem(_defAnn.id); } else { renderAnnList(); clearAnnEdit(); }
           }
         }).catch(function () {});
@@ -2124,6 +2163,7 @@
         if (res && res.ok) {
           toast('公告已保存', 'success');
           stateAnn.loaded = true; annDraftPending = false; stateAnn._backup = null;
+          stateAnn._modeSaved = document.getElementById('annMode').value; // R135：保存成功后同步已保存频率
           document.getElementById('annMask').classList.remove('open');
         } else toast(res.msg || '保存失败', 'error');
       }).catch(function () {
@@ -2136,6 +2176,8 @@
     document.getElementById('cancelAnnBtn').addEventListener('click', function () {
       if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; }
       annDraftPending = false; stateAnn.loaded = false;
+      // R135：显示频率一并恢复为已保存值——取消（不保存）后重开不能再显示未保存的选中值
+      try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; } catch (e) {}
       document.getElementById('annMask').classList.remove('open');
     });
     // 遮罩关闭：暂存当前编辑状态，下次打开可继续编辑
@@ -2583,8 +2625,8 @@
         rows.forEach(function (r) {
           var tr = document.createElement('tr');
           var td1 = document.createElement('td');
-          td1.textContent = r.device || '-';
-          td1.title = '设备凭据标识（仅前12位）';
+          // R136：设备名合并 UA——长文本靠 .stat-table 截断，悬停/点按复用 #uiTip 小弹窗看全信息
+          td1.textContent = (r.device || '-') + (r.ua ? ' · ' + r.ua : '');
           var td2 = document.createElement('td');
           td2.textContent = r.created_at || '-';
           var td3 = document.createElement('td');
@@ -2676,15 +2718,21 @@
         lines.push({ text: txt, color: s.color, right: prevTxt });
       });
       // 框位置：参考线右侧，右侧放不下翻到左侧
-      var boxW = 150, boxH = 20 + lines.length * 16;
-      var bx = px + 8;
-      if (bx + boxW > lineHover.W - 10) bx = px - 8 - boxW;
+      // R135：框不随窄屏缩小——SVG 坐标系内按渲染宽度补偿（渲染尺寸尽量保持基准 150×84/字号11，「取大的那个」口径）
+      // 补偿倍数上限：viewBox 高度 200 有限，k 过大框会超出 SVG 底边被裁剪——按「框顶偏移 2k + 框高 (20+n*16)k 不超底边」封顶
+      var _rs = svg.getBoundingClientRect();
+      var _k = (_rs && _rs.width) ? Math.max(1, 800 / _rs.width) : 1;
+      var _kMax = (lineHover.H - lineHover.padT) / (22 + lines.length * 16);
+      if (_k > _kMax) _k = _kMax;
+      var boxW = 150 * _k, boxH = (20 + lines.length * 16) * _k;
+      var bx = px + 8 * _k;
+      if (bx + boxW > lineHover.W - 10) bx = px - 8 * _k - boxW;
       if (bx < 4) bx = 4;
-      var by = yTop + 2;
+      var by = yTop + 2 * _k;
       var rect = document.createElementNS(SVG_NS, 'rect');
       rect.setAttribute('x', bx); rect.setAttribute('y', by);
       rect.setAttribute('width', boxW); rect.setAttribute('height', boxH);
-      rect.setAttribute('rx', 4);
+      rect.setAttribute('rx', 4 * _k);
       rect.setAttribute('fill', 'rgba(255,255,255,0.96)');
       rect.setAttribute('stroke', '#d8dee8');
       g.appendChild(rect);
@@ -2693,10 +2741,10 @@
         if (l.center) { // R62：时间行居中（框宽中点）
           t.setAttribute('x', bx + boxW / 2); t.setAttribute('text-anchor', 'middle');
         } else {
-          t.setAttribute('x', bx + 8);
+          t.setAttribute('x', bx + 8 * _k);
         }
-        t.setAttribute('y', by + 18 + li * 16);
-        t.setAttribute('font-size', '11');
+        t.setAttribute('y', by + (18 + li * 16) * _k);
+        t.setAttribute('font-size', String(11 * _k));
         t.setAttribute('fill', l.color);
         if (l.center) t.setAttribute('font-weight', '600');
         t.textContent = l.text;
@@ -2704,9 +2752,9 @@
         // R75：该行的（上期 N）贴框右缘（text-anchor:end），与其它行右对齐成一列
         if (l.right) {
           var tr = document.createElementNS(SVG_NS, 'text');
-          tr.setAttribute('x', bx + boxW - 8); tr.setAttribute('text-anchor', 'end');
-          tr.setAttribute('y', by + 18 + li * 16);
-          tr.setAttribute('font-size', '11');
+          tr.setAttribute('x', bx + boxW - 8 * _k); tr.setAttribute('text-anchor', 'end');
+          tr.setAttribute('y', by + (18 + li * 16) * _k);
+          tr.setAttribute('font-size', String(11 * _k));
           tr.setAttribute('fill', l.color);
           tr.textContent = l.right;
           g.appendChild(tr);
@@ -3047,6 +3095,8 @@
       var _ls = document.getElementById('lineSvg');
       var _sc = 1;
       if (_ls) { var _lw = _ls.getBoundingClientRect().width; if (_lw) _sc = _lw / 800; }
+      // R135：悬浮框不随窄屏缩小——渲染尺寸最小保持基准 150×84/字号11（「取大的那个」口径，恢复之前的大框观感）
+      if (_sc < 1) _sc = 1;
       try { hb.style.setProperty('--bhs', _sc); } catch (e) {}
       // 框位置：参考线右侧 8px，右侧放不下翻到左侧（折线悬浮同逻辑），并钳制在容器内
       var boxW = 150 * _sc;
@@ -4139,7 +4189,7 @@ refreshCatCnts();
       });
       // 公告设置：丢弃=恢复备份重载；暂存=保留当前编辑
       kit.register(el('annMask'), {
-        discard: function () { try { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } } catch (e) {} annDraftPending = false; stateAnn.loaded = false; el('annMask').classList.remove('open'); },
+        discard: function () { try { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } } catch (e) {} annDraftPending = false; stateAnn.loaded = false; try { el('annMode').value = stateAnn._modeSaved || 'always'; } catch (e) {} el('annMask').classList.remove('open'); },
         stash: function () { annDraftPending = true; el('annMask').classList.remove('open'); }
       });
       // 设置客服：丢弃=清输入；暂存=保留

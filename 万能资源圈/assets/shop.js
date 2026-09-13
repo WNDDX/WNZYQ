@@ -1184,7 +1184,7 @@
         var url = window.location.href;
         if (shareLinkText) shareLinkText.textContent = url;
         // R79：统一分享复制链路——与资源卡片分享/预览分享/弹窗链接点击同一套
-        // （同步 execCommand 手势内执行 + clipboard API 双保险），提示文案全站统一
+        // （R138：clipboard.writeText 异步复制零阻塞），提示文案全站统一
         if (window.__shareCopyText) {
           try { window.__shareCopyText(url); } catch(e){}
         } else {
@@ -1210,7 +1210,7 @@
       shareLinkText.addEventListener('click', function () {
         var url = shareLinkText.textContent || '';
         if (!url) return;
-        // R79：统一走公共复制链路（同步 execCommand + clipboard API 双保险），文案统一
+        // R79+R138：统一走公共复制链路（异步 clipboard API），文案统一
         if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch(e){} }
         else { try { fallbackCopy(url); } catch(e){} }
         showToast('链接已复制到剪贴板');
@@ -1437,7 +1437,7 @@
       if (deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
         pullDistance = Math.min(deltaY * 0.5, 80); // 阻尼效果，最大80px
         // 顶栏常驻：下拉刷新不再隐藏顶栏
-        pullRefreshEl.style.height = pullDistance + 'px';
+        // R135：入场统一为原位淡入（.show 切 opacity）——不再操作容器高度（帘式揭开观感奇怪）
         pullRefreshEl.classList.add('show');
         document.getElementById('pullRefreshText').textContent = pullDistance > PULL_THRESHOLD ? '释放立即刷新' : '下拉刷新';
       }
@@ -1447,7 +1447,6 @@
       isPulling = false;
       if (pullDistance > PULL_THRESHOLD) {
         // 触发刷新
-        pullRefreshEl.style.height = '32px';
         document.getElementById('pullRefreshText').textContent = '正在刷新…';
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
@@ -1460,14 +1459,12 @@
           }
           renderAll();
           pullRefreshEl.classList.remove('show');
-          pullRefreshEl.style.height = '0';
           // 刷新结束后显示顶部栏
           if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
         }, 400);
       } else {
         // 未达到阈值，收回
         pullRefreshEl.classList.remove('show');
-        pullRefreshEl.style.height = '0';
         // 收回后显示顶部栏
         if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
       }

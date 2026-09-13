@@ -78,7 +78,7 @@
       margin: 0 auto;
       border-radius: 50%;
       overflow: hidden;
-      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
+      background: var(--blue1); /* R141：纯色（原末尾 !important 覆盖合并进主规则） */
       background: var(--bg-light);
       background: transparent;
       color: #fff; font-size: 34px; font-weight: 700;
@@ -112,11 +112,10 @@
     .btn-blue {
       width: 100%; height: 44px;
       border: none; border-radius: 8px;
-      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
+      background: var(--blue1); /* R141：纯色（原末尾 !important 覆盖合并进主规则） */
       color: #fff; font-size: 16px; font-weight: 600;
       letter-spacing: 1.2px; margin-bottom: 10px;
     }
-    .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
 
     /* ---------- 主视图 ---------- */
     .topbar {
@@ -139,13 +138,14 @@
     html, body { overscroll-behavior: none; }
     @media (hover: hover) and (pointer: fine) { html, body { overscroll-behavior: auto; } }
     /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
-    .pull-refresh { position: fixed; top: 80px; left: 0; right: 0; height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 300; transition: height .2s ease; pointer-events: none; background: transparent; }
-    .pull-refresh.show { height: 32px; } /* R116：32px=胶囊单行总高(6+18+6+1+1)，与 toast 逐像素一致 */
-    .pull-refresh-text { font-size: 12px; line-height: 18px; color: var(--blue1); background: rgba(255,255,255,.92); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    /* R135：容器恒高 32px（不可见、不占交互）——入场不再高度 0→32 撑开+overflow 裁剪（胶囊被裁切下滑、帘式揭开观感奇怪），改为与全站 toast 一致的原位淡入（.pull-refresh-text opacity） */
+    .pull-refresh { position: fixed; top: 80px; left: 0; right: 0; height: 32px; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 300; pointer-events: none; background: transparent; }
+    .pull-refresh-text { font-size: 12px; line-height: 18px; color: var(--blue1); background: rgba(255,255,255,.92); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); opacity: 0; transition: opacity .2s ease; }
+    .pull-refresh.show .pull-refresh-text { opacity: 1; } /* R116：32px=胶囊单行总高(6+18+6+1+1)，与 toast 逐像素一致 */
     .pull-refresh-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2); border-top-color: var(--blue1); border-radius: 50%; animation: prspin .8s linear infinite; }
     @keyframes prspin { to { transform: rotate(360deg); } }
     .topbar {
-      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
+      background: var(--blue1); /* R141：纯色（原末尾 !important 覆盖合并进主规则） */
       box-shadow: 0 2px 10px rgba(30, 136, 229, 0.35);
     }
     .topbar-inner {
@@ -180,6 +180,8 @@
       box-shadow: 0 0 0 3px rgba(255,255,255,0.45);
     }
     .topbar-logo {
+      /* R140（用户 20:27）：R138 的 40px 调整是误解——用户说的「图标」是浏览器标签页 favicon，
+         顶栏 logo 不是改造对象，回退回 32px 原值 */
       width: 32px;
       height: 32px;
       border-radius: 50%;
@@ -305,7 +307,11 @@
     .p-ops .select-picker.code-picker .cat-picker-display { height: 100%; box-sizing: border-box; }
     /* R131 补：cpd-arrow 原 16px 高 vs 文字行盒 15.6px(13px*1.2)，把按键撑高 0.4px——
        改为随字号的行高 1.2em，使资源码按键内容高与纯文字 row-btn 完全一致（桌面实测 29.594=29.594） */
-    .p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { height: 1.2em; }
+    .p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { height: 1.2em; width: 1.2em; }
+    /* R138（用户 18:15 回退 R134 ①）：箭头 path 已恢复原样（M7 10l5 5 5-5z）——
+       R134 把下三角换成饱满 path 是对「图标调大」的误解（用户指的实为浏览器 favicon，见 R140）；
+       下方 space-between（R134 ②两端对齐）与 1.2em 容器等高（R131 补）均保留 */
+    .p-ops .select-picker.code-picker .cp-item { justify-content: space-between; }
     #productList.card-view .product-row .p-ops .select-picker.code-picker { margin: 0; flex: 1; min-width: 0; align-self: auto; }
     @media (max-width: 600px) {
       /* 手机窄列：旁边按键为等分平铺（两行文字 ~48px 宽）；资源码带箭头+三字，
@@ -394,7 +400,7 @@
     }
     .stat-card {
       position: relative; /* R81：delta 绝对定位锚点 */
-      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
+      background: var(--blue1); /* R141：纯色（原末尾 !important 覆盖合并进主规则） */
       color: #fff; border-radius: 12px; padding: 18px;
       text-align: center; box-shadow: 0 4px 12px rgba(30, 136, 229, 0.25);
       /* R71：卡片内容(数字/标签/环比)在框内垂直居中——不管开不开对比上期，数字都处于卡中央 */
@@ -555,12 +561,12 @@
     .modal-share-x {
       position: absolute; top: 12px; left: 12px; z-index: 10;
       width: 32px; height: 32px; border-radius: 50%;
-      border: none; background: #E3F2FD; color: #1565c0;
+      border: none; background: rgba(100,176,241,0.18); color: var(--blue1); /* R141：材质蓝→站点蓝 */
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: all 0.10s ease; -webkit-tap-highlight-color: transparent;
     }
     .modal-share-x svg { width: 15px; height: 15px; display: block; }
-    .modal-share-x:hover { background: #1688FF; color: #fff; transform: scale(0.97); opacity: 0.9; }
+    .modal-share-x:hover { background: var(--blue1); color: #fff; transform: scale(0.97); opacity: 0.9; }
     .modal-share-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
     .form label { display: block; font-size: 13px; color: var(--text-light); margin: 12px 0 5px; }
     .form input, .form textarea, .form select, .input {
@@ -721,7 +727,7 @@
     .rte-editor p { margin: 4px 0; }
     .rte-editor h1,.rte-editor h2,.rte-editor h3 { margin: 8px 0 4px; line-height:1.4; }
     .rte-editor blockquote { border-left: 3px solid var(--border); padding-left:10px; color: var(--text-light); margin:6px 0; }
-    .form .hint { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+/* R141：.form .hint 死规则删除（全站无元素使用） */
     /* ---------- 统一复选框 / 单选框：放大、清晰、易点 ---------- */
     input[type="checkbox"], input[type="radio"] {
       width: 20px; height: 20px; flex-shrink: 0; cursor: pointer;
@@ -825,7 +831,7 @@
     .modal-inner-btn {
       flex: 1; height: 44px; border: none; border-radius: 8px;
       color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 1px;
-      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
+      background: var(--blue1); /* R141：纯色（原末尾 !important 覆盖合并进主规则） */
     }
     .modal-close {
       flex: 1; background-color: var(--red); color: #fff; border: none;
@@ -1128,10 +1134,9 @@
       opacity: 0.8;
       filter: brightness(0.9);
     }
-    /* 按钮统一纯色（取消渐变，与资源页一致） */
-    .btn-blue, .modal-inner-btn { background: var(--blue1) !important; }
+    /* R141：按钮统一纯色已合并进 .btn-blue 主规则，末尾 !important 覆盖删除 */
     /* logo 统一为名称大小（覆盖上方定义） */
-    .topbar-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; }
+    .topbar-logo { width: 38px !important; height: 38px !important; align-self: center; display: block; } /* R140：回退 R138 调大到原 38px */
     .topbar-brand span { line-height: 1; display: flex; align-items: center; }
     /* 原生状态 select 在转换为自制选择框前不可见，避免闪现绿色默认样式（分类/公告/资源） */
         /* 弹窗底部按钮宽度统一：2 个等宽、3 个等分 */
@@ -1251,4 +1256,62 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     grid-row: 2; grid-column: 1 / -1;
     display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
   }
+}
+
+
+/* R137（用户 18:14）：后台视频加载失败兜底卡——与前台 shop.css 同款逐参数照抄（复用，不搞差异化），
+   后台编辑器/预览里插入的视频失败时显示「点击在新窗口播放视频」按键卡，不再用图片感叹号占位 */
+.video-fallback {
+  border: 1px solid var(--border);
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 14px 14px;
+  text-align: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 60vh;
+  box-sizing: border-box;
+  margin: 4px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.video-fallback .vf-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  border: none;
+  background: #64B0F1;
+  color: #fff;
+  padding: 0 16px;
+  height: 38px;
+  border-radius: 18px;
+  font-size: 14px;
+  white-space: nowrap;
+  text-align: center;
+  box-sizing: border-box;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.video-fallback .vf-link:hover { transform: scale(0.97); opacity: 0.9; }
+.video-fallback .vf-link:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+
+@media (max-width: 600px) {
+  .video-fallback .vf-link { padding: 7px 12px; font-size: 13px; }
+}
+
+/* R139：资源码下拉面板（cat-picker-panel）内码/无码 row-btn 按键——p-ops 各视图的通栏
+   flex:1 / 手机压缩 padding 规则不得波及面板内部按键，保持与编辑弹窗类型列表
+   codeBtn/noCodeBtn 完全同款（内容自适应宽、13px、6px 12px padding、白底灰边圆角） */
+.p-ops .cat-picker-panel .row-btn {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  text-align: center !important;
+  box-sizing: border-box;
 }
