@@ -511,10 +511,10 @@
         <label>分类名称</label><input id="catName" class="input" placeholder="请输入分类名称" />
         <label>分类级别</label>
         <div style="display:flex;gap:14px;margin-bottom:4px;flex-wrap:wrap;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:10px;padding:8px 14px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:12px;padding:8px 14px;">
             <input type="radio" name="catLevel" value="0" checked /> 一级分类
           </label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:10px;padding:8px 14px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:12px;padding:8px 14px;">
             <input type="radio" name="catLevel" value="1" /> 二级分类
           </label>
         </div>
@@ -790,6 +790,22 @@
         <div id="previewVariantWrap" style="display:none;">
           <div id="previewVariantTabs" class="variant-tabs"></div>
           <div id="previewVariantDetail" class="variant-detail"></div>
+          <!-- R158（用户 22:42）：预览同步资源页「资源码解锁区」——所见即所得；解锁为本地比对（不调接口/不写绑定/不换码） -->
+          <div class="resource-code-section" id="pvResourceSection" style="display:none">
+            <div class="resource-code-header">
+              <svg class="resource-code-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span id="pvResourceTitle">输入资源码获取专属内容</span>
+            </div>
+            <div class="resource-code-input-row" id="pvResourceInputRow">
+              <input type="text" class="resource-code-input" id="pvResourceCodeInput" placeholder="请输入资源码" />
+              <button class="resource-code-btn" id="pvResourceCodeBtn" type="button">解锁</button>
+            </div>
+            <div class="resource-code-error" id="pvResourceError" style="display:none">资源码错误，请检查后重试</div>
+            <div class="resource-content" id="pvResourceContent" style="display:none"></div>
+          </div>
         </div>
         <div class="modal-footer preview-footer">
           <button type="button" id="previewContactBtn" class="preview-cta">咨询客服</button>

@@ -1598,6 +1598,7 @@
     // 保存/草稿/预览内容永远干净（前台加载失败会用自己的逻辑再渲染卡，无删除键）
     function serializeDetail() {
       var clone = fDetail.cloneNode(true);
+      try { clone.querySelectorAll('.rte-img-del').forEach(function (d) { d.remove(); }); } catch (e0) {} // R158：×浮层兜底剥离（关闭时已摘离编辑器，双保险）
       var cards = clone.querySelectorAll('.video-fallback');
       cards.forEach(function (fb) {
         var vs = fb.getAttribute('data-vsrc');
@@ -1611,6 +1612,14 @@
       return clone.innerHTML;
     }
     window.__serializeDetail = serializeDetail;
+    // R158（用户 22:35）：编辑器内容序列化统一入口——克隆后剥离 .rte-img-del 浮层（×关闭时已从编辑器摘除，此处双保险，
+    // 防止「选中媒体→×正显示→程序化保存」路径把×写进内容）。类型说明/专属内容/公告三个编辑器统一走这里。
+    window.__rteClean = function (el) {
+      if (!el) return '';
+      var c = el.cloneNode(true);
+      try { c.querySelectorAll('.rte-img-del').forEach(function (d) { d.remove(); }); } catch (e0) {}
+      return c.innerHTML;
+    };
     function saveProduct() {
       if (saving) return; // 防重复提交
       var data = {
@@ -1970,21 +1979,35 @@
     // 图片选中（click 原子选中）时在其右上角浮出「×」删除键；形态与视频卡 .vf-del / 全局弹窗
     // 右上角 ×（.modal-close-x）同一家族：圆形、右上角、悬停红底白×、按压缩放 0.94，尺寸按宿主适配。
     // 浮层挂 body（fixed 定位跟随图片），不进编辑器 DOM → 保存/草稿/预览内容零污染（serializeDetail 无需处理）。
-    var __imgDelBtn = null, __imgDelTarget = null, __imgDelRaf = 0;
-    // R155（用户 19:41）：×改为 rAF 每帧跟随宿主——旧 scroll 监听在移动端滚动（惯性滚动期间不派发 scroll 事件）
-    // 会滞后漂移/停止后跳位，很难看；rAF 每帧重定位保证任何滚动容器（页面/弹窗内）下×始终贴合宿主右上角。
-    function __imgDelLoop() { __placeImgDel(); if (__imgDelTarget) { __imgDelRaf = requestAnimationFrame(__imgDelLoop); } else { __imgDelRaf = 0; } }
+    var __imgDelBtn = null, __imgDelTarget = null;
+    // R158（用户 22:35）：×改挂编辑器本体（absolute 同坐标系）。旧方案「挂 body fixed + z-12000 + rAF 每帧追帧」三个毛病：
+    // ① fixed 不受弹窗 overflow 裁剪——×能浮到遮罩外、滑动时甚至出屏幕；② rAF 追帧与浏览器合成帧不同步，滚动中×肉眼可见地抖动/漂移；
+    // ③ z-index 12000 高于一切弹窗层，×会盖在二维码等弹窗外元素上。
+    // 新方案：×作为 .rte-editor（自身即滚动容器，CSS 已加 position:relative）的 absolute 子元素——与媒体同坐标系同滚动，
+    // 浏览器原生同步渲染（零抖动，真·「绑」在媒体上），并被编辑器 overflow 边界裁剪（永不出屏不出弹窗）。
+    // 关闭时从编辑器摘除（btn.remove()），不残留进序列化内容；__rteClean/serializeDetail 仍兜底剥离（双保险）。
     function __placeImgDel() {
       if (!__imgDelBtn || !__imgDelTarget) return;
-      if (!__imgDelTarget.isConnected || !__imgDelTarget.offsetParent) { __hideImgDel(); return; } // 图片被删/弹窗关闭 → 收起
-      var r = __imgDelTarget.getBoundingClientRect();
-      // R151（用户 02:47）：×完全陷入图片内部，与全站弹窗 .modal-close-x 同口径（距上/右 12px 内缩）；小图放不下 12px 时按剩余半宽居中，保证不出框
-      var ix = Math.min(12, Math.max(0, (r.width - 22) / 2));
-      var iy = Math.min(12, Math.max(0, (r.height - 22) / 2));
-      __imgDelBtn.style.left = (r.right - 22 - ix) + 'px';
-      __imgDelBtn.style.top = (r.top + iy) + 'px';
+      var host = __imgDelBtn.parentNode;
+      if (!__imgDelTarget.isConnected || !host || !host.contains(__imgDelTarget) || !__imgDelBtn.isConnected) { __hideImgDel(); return; } // 媒体被删/弹窗关闭/宿主更换 → 收起
+      var hr = host.getBoundingClientRect();
+      var tr = __imgDelTarget.getBoundingClientRect();
+      // R151 口径保留：×完全陷入媒体内部（距上/右 12px 内缩）；小媒体放不下时按剩余半宽居中，保证不出框
+      var ix = Math.min(12, Math.max(0, (tr.width - 22) / 2));
+      var iy = Math.min(12, Math.max(0, (tr.height - 22) / 2));
+      var wantL = tr.right - 22 - ix, wantT = tr.top + iy; // 视口坐标系期望位置
+      __imgDelBtn.style.left = (wantL - hr.left) + 'px';
+      __imgDelBtn.style.top = (wantT - hr.top) + 'px';
+      // 一次性自校准：absolute 定位基准是 host 的 padding box，与 border-box rect 存在边框/内边距差——量按钮实际位置按回差修正
+      var br = __imgDelBtn.getBoundingClientRect();
+      if (br.width > 0 && (Math.abs(br.left - wantL) > 0.5 || Math.abs(br.top - wantT) > 0.5)) {
+        __imgDelBtn.style.left = (parseFloat(__imgDelBtn.style.left) + (wantL - br.left)) + 'px';
+        __imgDelBtn.style.top = (parseFloat(__imgDelBtn.style.top) + (wantT - br.top)) + 'px';
+      }
     }
     function __showImgDel(img) {
+      var host = img && img.closest ? img.closest('.rte-editor') : null;
+      if (!host) { __hideImgDel(); return; } // 防御：找不到编辑器宿主（理论不可达）
       if (!__imgDelBtn) {
         __imgDelBtn = document.createElement('button');
         __imgDelBtn.type = 'button';
@@ -2002,16 +2025,18 @@
             if (ed2) { try { ed2.dispatchEvent(new Event('input', { bubbles: true })); } catch (e2) {} }
           }
         });
-        document.body.appendChild(__imgDelBtn);
       }
+      if (__imgDelBtn.parentNode !== host) host.appendChild(__imgDelBtn); // 切编辑器/旧编辑器 DOM 被丢弃（弹窗关闭）后重新挂载
       __imgDelTarget = img;
       __imgDelBtn.style.display = 'block';
       __placeImgDel();
-      if (!__imgDelRaf) __imgDelRaf = requestAnimationFrame(__imgDelLoop);
     }
     function __hideImgDel() {
-      if (__imgDelBtn) __imgDelBtn.style.display = 'none';
-      __imgDelTarget = null; // rAF 循环检测到 target 清空自动退出（__imgDelLoop 里判断）
+      if (__imgDelBtn) {
+        __imgDelBtn.style.display = 'none';
+        try { __imgDelBtn.remove(); } catch (e1) {} // 摘离编辑器：内容 DOM 始终干净
+      }
+      __imgDelTarget = null;
     }
     window.__hideImgDel = __hideImgDel;
     // 选区变化：只有「原子选中目标图片」才保留浮层（拖蓝选文字/光标落别处 → 收起）
@@ -2029,7 +2054,7 @@
       } catch (e) {}
       if (!keep) __hideImgDel(); else __placeImgDel();
     });
-    // R155：滚动/缩放跟随改由 rAF 循环每帧执行（见 __imgDelLoop），不再依赖 scroll 事件（移动端滚动期间不派发，×会漂移）。
+    // R158：×挂编辑器 absolute 同坐标系——滚动由浏览器原生同步，无需任何 scroll/rAF 跟随（R155 的 rAF 循环已随重构移除）。
 document.addEventListener('click', function (e) {
       var z = e.target.closest ? e.target.closest('.rte-zoom') : null;
       if (!z) return;
@@ -2319,7 +2344,7 @@ document.addEventListener('click', function (e) {
     function flushAnnEdit() {
       if (stateAnn.curId) {
         var cur = stateAnn.list.find(function (x) { return x.id === stateAnn.curId; });
-        if (cur) { if (annEditor) cur.content = annEditor.innerHTML; }
+        if (cur) { if (annEditor) cur.content = window.__rteClean(annEditor); } // R158：统一剥离×浮层再入内容
       }
     }
     // 渲染公告项列表（拖拽排序）
@@ -2823,7 +2848,7 @@ document.addEventListener('click', function (e) {
         productId: state.editingId,
         name: name,
         title: vTitle.value.trim(), // R148：类型标题随类型一起保存
-        desc: document.getElementById('vDescEditor').innerHTML,
+        desc: window.__rteClean(document.getElementById('vDescEditor')),
         img: '',
         video: '',
         isHidden: vHidden.checked,
@@ -2832,7 +2857,7 @@ document.addEventListener('click', function (e) {
         price: Number(vPrice.value) || 0,
         sort: Number(vSort.value) || 0,
         resourceCode: vResourceCode.value.trim(),
-        resourceContent: document.getElementById('vContentEditor').innerHTML,
+        resourceContent: window.__rteClean(document.getElementById('vContentEditor')),
         // R106：绑定设备上限（<1 或非法一律按 1；不封顶，可填任意大）
         bindLimit: Math.max(1, parseInt(document.getElementById('vBindLimit').value, 10) || 1)
       };
@@ -3283,7 +3308,15 @@ document.addEventListener('click', function (e) {
               d = Math.max(0, (r2.top + pt * (r2.height / 200)) - lc.getBoundingClientRect().top);
             }
           } catch (e3) {}
-          box.style.setProperty('--barZone', Math.max(30, Math.round(h2) - 24 - Math.round(d)) + 'px'); // R153: floor 60\u219230, narrow SVG ~85 gives ~40
+          // R162（用户 00:08）：柱图网格/柱底/X标签/Y数字全部按折线几何公式同步（k=SVG渲染高/200）——
+          // 网格顶距 trend-bars 顶 = 20k（=量测 d 减 chart-box 上 padding 12）、网格跨度 = 150k（间距 37.5k 与折线逐像素一致）、
+          // 柱底距底 = 30k、X 标签底距底 = 8k、Y 数字右缘距网格左缘 = 6k
+          var k2 = h2 / 200;
+          box.style.setProperty('--gridTop', Math.max(0, Math.round(d) - 12) + 'px');
+          box.style.setProperty('--barZone', Math.max(30, Math.round(150 * k2)) + 'px');
+          box.style.setProperty('--bLift', Math.max(6, Math.round(30 * k2)) + 'px');
+          box.style.setProperty('--xLift', Math.max(2, Math.round(8 * k2)) + 'px');
+          box.style.setProperty('--numGap', Math.max(2, Math.round(6 * k2)) + 'px');
           return true;
         }
         return false;
@@ -3318,6 +3351,8 @@ document.addEventListener('click', function (e) {
       }
       grid.innerHTML = gridHtml;
       trendBox.appendChild(grid);
+      var labelsEl = document.createElement('div');
+      labelsEl.className = 'trend-labels'; // R162：X 标签独立层（bottom: var(--xLift)，与折线标签底同位）
       trendData.forEach(function (d, i) {
         var col = document.createElement('div');
         col.className = 'trend-col';
@@ -3365,13 +3400,18 @@ document.addEventListener('click', function (e) {
         }
         wrap.appendChild(curGroup);
         if (hasPrev) wrap.appendChild(mkGroup(prevData[i] || {}, true, d, timeLabel));
+        col.appendChild(wrap);
+        trendBox.appendChild(col);
+        // R162（用户 00:08）：X 标签移出列、进独立标签层——与折线 X 标签同 x（点对齐：padL+i*stepX 换百分比）、
+        // 同间隔（折线 stepX 口径），不再按列中心分布导致两图数字间隔不一致
         var label = document.createElement('div');
         label.className = 'trend-label';
         label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? fmtDay(d.day) : '') : '';
-        col.appendChild(wrap);
-        col.appendChild(label);
-        trendBox.appendChild(col);
+        var nD = trendData.length, stepXr = nD > 1 ? 740 / (nD - 1) : 0;
+        label.style.left = ((40 + i * stepXr) / 800 * 100).toFixed(3) + '%';
+        labelsEl.appendChild(label);
       });
+      trendBox.appendChild(labelsEl);
       // R76：柱状图悬浮与折线图一模一样——竖虚线+数值框（时间居中+三指标行、本期左/（上期 N）右）
       ensureBarHover(trendBox, trendData, hasPrev ? prevData : null);
     }
@@ -3427,7 +3467,7 @@ document.addEventListener('click', function (e) {
       if (bx + boxW > br.width - 2) bx = px - 8 - boxW;
       if (bx < 2) bx = 2;
       hb.style.left = bx + 'px';
-      hb.style.top = '2px';
+      hb.style.top = 'calc(var(--gridTop, 20px) + 2px)'; // R162：与折线悬浮框顶同位（折线 by=yTop+2*_k 渲染 20k+2）
       box.appendChild(hb);
     }
     function ensureBarHover(box, data, prev) {
@@ -4329,7 +4369,7 @@ refreshCatCnts();
       var basePrice = Number(fPrice.value) || 0;
       var priceEl = document.getElementById('previewPrice');
       var detailEl = document.getElementById('previewVariantDetail');
-      if (variants.length === 0) { priceEl.textContent = fmtPrice(basePrice); detailEl.innerHTML = ''; return; }
+      if (variants.length === 0) { priceEl.textContent = fmtPrice(basePrice); detailEl.innerHTML = ''; initPvResourceSection(null); return; }
       var v = variants[previewCurVariant] || variants[0];
       // 类型价格优先，否则用资源价格，免费不显示
       var vp = (Number(v.price) || 0) > 0 ? Number(v.price) : basePrice;
@@ -4355,12 +4395,97 @@ refreshCatCnts();
       d.innerHTML = (v.desc && String(v.desc).trim()) ? v.desc : '该类型暂无额外说明';
       detailEl.appendChild(d);
       bindLightbox(detailEl);
+      initPvResourceSection(v); // R158：预览同步资源页——类型内容区下方渲染资源码解锁区
     }
+    // ---------- R158（用户 22:42）：预览同步资源页「资源码解锁区」 ----------
+    // 预览=所见即所得（客户在资源页看到什么，预览就渲染什么）。但解锁是「本地比对」：
+    // 输入码与当前类型（state.variants[previewCurVariant]，含未保存的本地类型表单值）的 resourceCode 比对，
+    // 命中即渲染 resourceContent——全程不调 /api/unlock、不写绑定记录、不消耗绑定名额、不触发绑满换码
+    // （管理员/账号持有者的测试行为不更新线上资源码）。
+    function pvShowContent(v) {
+      var contentEl = document.getElementById('pvResourceContent');
+      if (!contentEl) return;
+      contentEl.innerHTML = (v && v.resourceContent && String(v.resourceContent).trim()) ? v.resourceContent : '<p>专属内容</p>';
+      bindLightbox(contentEl);
+      contentEl.style.display = 'block';
+      contentEl.style.animation = 'none';
+      void contentEl.offsetWidth;
+      contentEl.style.animation = '';
+    }
+    function initPvResourceSection(v) {
+      var sec = document.getElementById('pvResourceSection');
+      if (!sec) return;
+      var errEl = document.getElementById('pvResourceError');
+      var contentEl = document.getElementById('pvResourceContent');
+      var inputRow = document.getElementById('pvResourceInputRow');
+      var inputEl = document.getElementById('pvResourceCodeInput');
+      var titleEl = document.getElementById('pvResourceTitle');
+      var hasCode = !!(v && v.resourceCode && String(v.resourceCode).trim());
+      var hasContent = !!(v && v.resourceContent && String(v.resourceContent).trim());
+      if (!hasContent) { sec.style.display = 'none'; return; } // 与资源页 initResourceCodeSection 同口径：无专属内容整个区域隐藏
+      sec.style.display = 'block';
+      errEl.style.display = 'none';
+      contentEl.style.display = 'none';
+      contentEl.innerHTML = '';
+      inputEl.value = '';
+      if (hasCode) {
+        titleEl.textContent = '输入资源码获取专属内容';
+        inputRow.style.display = 'flex';
+      } else {
+        // 无码类型：资源页由服务端直接下发专属内容；预览本地直接展示（测试行为，零网络、不写统计）
+        titleEl.textContent = '获取专属内容';
+        inputRow.style.display = 'none';
+        pvShowContent(v);
+      }
+    }
+    function pvVerifyCode() {
+      var variants = state.variants || [];
+      var v = variants[previewCurVariant] || variants[0];
+      if (!v) return;
+      var inputEl = document.getElementById('pvResourceCodeInput');
+      var errEl = document.getElementById('pvResourceError');
+      var input = String(inputEl.value || '').trim();
+      if (!input) {
+        errEl.textContent = '请输入资源码';
+        errEl.style.display = 'block';
+        return;
+      }
+      var code = String(v.resourceCode || '').trim(); // 本地比对（与线上验码同为大小写不敏感）
+      if (code && input.toUpperCase() === code.toUpperCase()) {
+        errEl.style.display = 'none';
+        document.getElementById('pvResourceInputRow').style.display = 'none';
+        pvShowContent(v);
+      } else {
+        errEl.textContent = '资源码错误，请检查后重试';
+        errEl.style.display = 'block';
+        inputEl.style.borderColor = '#ff4444';
+        setTimeout(function () { inputEl.style.borderColor = ''; }, 1500);
+      }
+    }
+    (function () {
+      var btn = document.getElementById('pvResourceCodeBtn');
+      var inputEl = document.getElementById('pvResourceCodeInput');
+      if (btn) btn.addEventListener('click', pvVerifyCode);
+      if (inputEl) {
+        inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') pvVerifyCode(); });
+        // R158（用户 22:42）：输满 8 位自动解锁（资源码固定 8 位），不用点右侧「解锁」
+        var __pvLast = '';
+        inputEl.addEventListener('input', function () {
+          var val = String(this.value || '').trim();
+          if (val.length >= 8 && val !== __pvLast) { __pvLast = val; pvVerifyCode(); }
+          else if (val.length < 8) { __pvLast = ''; }
+        });
+      }
+    })();
     document.getElementById('previewProductBtn').addEventListener('click', function () {
       previewCurVariant = 0;
       document.getElementById('previewTitle').textContent = fTitle.value || '(未填写标题)';
       document.getElementById('previewDesc').textContent = fDesc.value || '';
-      document.getElementById('previewDetail').innerHTML = serializeDetail() || '<span style="color:#aaa;">暂无详细描述</span>'; /* R147：预览同步还原 */
+      var __pdHtml = serializeDetail() || ''; /* R147：预览同步还原 */
+      var __pdEmpty = !__pdHtml.replace(/<(br|p|div)\b[^>]*>\s*<\/(br|p|div)>/gi, '').replace(/<br\s*\/?>/gi, '').replace(/&nbsp;/gi, ' ').replace(/<[^>]+>/g, '').trim();
+      var __pdEl = document.getElementById('previewDetail');
+      if (__pdEmpty) { __pdEl.innerHTML = ''; __pdEl.style.display = 'none'; } // R158：资源页口径——无详情整块隐藏（旧版显示「暂无详细描述」占位与资源页不同步）
+      else { __pdEl.innerHTML = __pdHtml; __pdEl.style.display = ''; }
       var cover = document.getElementById('previewCover');
       if (fImg.value.trim()) {
         cover.src = fImg.value.trim();
@@ -4382,6 +4507,7 @@ refreshCatCnts();
           // R15：与资源页 .variant-tab 同款类样式（含 hover 浮起/选中态动画）
           t.className = 'variant-tab' + (i === 0 ? ' active' : '');
           t.textContent = v.name || ('类型' + (i + 1));
+          if (v.name) t.title = v.name; // R160：截断显示不全时鼠标悬停查看全名
           t.addEventListener('click', function () {
             previewCurVariant = i;
             Array.prototype.forEach.call(tabs.children, function (c, j) {

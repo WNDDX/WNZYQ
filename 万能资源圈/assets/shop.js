@@ -674,6 +674,7 @@
           var tab = document.createElement('div');
           tab.className = 'variant-tab' + (idx === __draftIdx ? ' active' : '');
           tab.textContent = v.name || '类型' + (idx + 1);
+          if (v.name) tab.title = v.name; // R160：截断显示不全时鼠标悬停查看全名
           tab.addEventListener('click', function () {
             currentVariant = v;
             variantTabs.querySelectorAll('.variant-tab').forEach(function (t, i) {
@@ -1122,6 +1123,14 @@
     resourceCodeBtn.addEventListener('click', verifyResourceCode);
     resourceCodeInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') verifyResourceCode();
+    });
+    // R158（用户 22:42）：输满 8 位自动解锁——资源码固定 8 位（R96 生成口径），输够 8 位即提交，
+    // 不用再点右侧「解锁」键；改错重输（值变化）会重新自动提交，删回 8 位以下重置。
+    var __lastAutoCode = '';
+    resourceCodeInput.addEventListener('input', function () {
+      var val = String(this.value || '').trim();
+      if (val.length >= 8 && val !== __lastAutoCode) { __lastAutoCode = val; verifyResourceCode(); }
+      else if (val.length < 8) { __lastAutoCode = ''; }
     });
     // 手机端键盘适配：输入框获得焦点时，确保不被软键盘遮挡
     resourceCodeInput.addEventListener('focus', function () {

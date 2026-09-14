@@ -13,7 +13,7 @@
   --gray-text: #666;
   --border-soft: #eee;
   --radius: 8px;
-  --radius-lg: 14px;
+  --radius-lg: 12px;
   --gap: 10px;
 
   /* ===== R50：全站暗色模式变量（亮色值；[data-theme=dark] 覆盖为暗色值） ===== */
@@ -57,7 +57,7 @@
 .kf-qr {
   width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border); background: var(--bg-light);
   margin: 0 auto 14px; position: relative; display: flex; align-items: center;
-  justify-content: center; border-radius: 6px; background: #f3f4f6;
+  justify-content: center; border-radius: 12px; background: #f3f4f6;
 }
 .kf-qr img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
 .kf-qr img[src^="data:image/svg+xml"] { width: 100%; height: 100%; object-fit: contain !important; }
@@ -142,7 +142,7 @@
 .share-mask, .confirm-mask { z-index: 3000 !important; }
 /* R16c：分享链接弹窗确定键——与资源页分享本站弹窗 .share-close 逐字复用（含按压动画，此前动态弹窗为纯内联样式无反馈） */
 .share-ok {
-  display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;
+  display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 12px;
   background: #1E88E5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
   transition: all 0.10s ease; letter-spacing: 1px; -webkit-tap-highlight-color: transparent;
 }
@@ -214,7 +214,7 @@
   border: none; background: rgba(255, 255, 255, 0.18);
   color: #fff; padding: 0 16px; height: 38px;
   display: inline-flex; align-items: center; justify-content: center;
-  box-sizing: border-box; border-radius: 18px;
+  box-sizing: border-box; border-radius: 50%;
   font-size: 14px; white-space: nowrap; line-height: 1.2; gap: 5px;
   transition: all 0.2s; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
@@ -234,7 +234,7 @@
   display: flex; align-items: center; gap: 4px;
 }
 .view-btn {
-  padding: 0 10px; border: 1px solid #64B0F1; border-radius: 6px;
+  padding: 0 10px; border: 1px solid #64B0F1; border-radius: 8px;
   background: #64B0F1; color: #fff; cursor: pointer;   /* 未激活（R87）：淡蓝底白字，与状态按钮隐藏态同色 */
   font-size: 13px; height: 38px; box-sizing: border-box;
   display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; gap: 4px;
@@ -242,7 +242,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .view-btn:hover { transform: scale(0.96); opacity: 0.9; }
-.view-btn:active { transform: scale(0.92); opacity: 0.8; }
+.view-btn:active { transform: scale(0.94); opacity: 0.8; }
 .view-btn.active {
   background: #FFFFFF; color: var(--blue1); border-color: var(--blue2); font-weight: 600; /* 激活：淡白底蓝字（R141 色收敛到站点蓝） */
 }
@@ -280,7 +280,7 @@
 .modal-box img, .modal-box video, .kf-box img, .ann-box img, .ann-box video, .preview-box img, .preview-box video {
   max-width: 100%; box-sizing: border-box;
 }
-.m-loading { aspect-ratio: 16 / 9; background: var(--bg-light); border-radius: var(--radius); width: 100%; }
+.m-loading { aspect-ratio: 16 / 9; background: var(--bg-light); border-radius: 12px; width: 100%; }
 .m-loading.is-video { background: #000; }
 .modal-box, .ann-box, .kf-box, .preview-box { overflow-x: hidden; }
 /* 富文本内媒体（尺寸未知不锁比例）：统一加载底色，避免加载中空白塌陷的突兀跳动 */
@@ -307,7 +307,7 @@
 .uni-pager .pg-main { display: inline-flex; align-items: center; gap: 8px; }
 .uni-pager button.pg-btn {
   padding: 8px 16px; border: 1px solid var(--blue2, #90CAF9); background: var(--card-bg);
-  color: var(--blue1, #1E88E5); border-radius: 20px; cursor: pointer; font-size: 13px;
+  color: var(--blue1, #1E88E5); border-radius: 50%; cursor: pointer; font-size: 13px;
   -webkit-tap-highlight-color: transparent;
 }
 .uni-pager button.pg-btn:hover:not(:disabled) { background: var(--hover-bg); }

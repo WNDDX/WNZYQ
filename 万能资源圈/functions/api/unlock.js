@@ -141,7 +141,7 @@ export async function onRequestPost(context) {
   if (cnt && cnt.n >= limit) {
     // 兜底场景（如后台调小上限后当前码已超额）：自动换码开新一轮，本次仍拒绝
     try { await autoRotateCode(env, variantId); } catch (e) { /* 换码失败不影响提示 */ }
-    return json({ ok: false, msg: '绑定已达上限（' + limit + '台），请联系客服' }, 200, extraHeaders);
+    return json({ ok: false, msg: '该码绑定设备已满（上限 ' + limit + ' 台），请联系客服。注意：换浏览器、无痕模式、清除缓存都会被识别为新设备' }, 200, extraHeaders);
   }
 
   // 7. 绑定本设备（记录当时的码）并返回内容
