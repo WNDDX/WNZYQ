@@ -1337,3 +1337,28 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   text-align: center !important;
   box-sizing: border-box;
 }
+
+    /* R154（用户 19:05）：类型列表/码下拉面板列对齐——金额、码键、绑定键、排序改固定槽位，
+       名称列吸收剩余空间（flex:1+截断），跨行起始位置不再随名称长度/行尾按键有无浮动。
+       码/无码键统一 min-width:112px（8 位码按键实际 ~109px），绑定键 56px、金额右对齐
+       min-width:64/60px、排序 50px；无金额/无码行用空占位（price-slot-ph/bind-slot-ph）
+       保留槽位，视觉上仍是"无金额不渲染金额段"（R146 口径不变） */
+    .variant-item .v-price { min-width: 64px; text-align: right; }
+    .variant-item .price-slot-ph { flex: 0 0 64px; }
+    .variant-item .code-slot { min-width: 112px; }
+    .variant-item .bind-slot { min-width: 72px; }
+    .variant-item .bind-slot-ph { min-width: 72px; flex-shrink: 0; }
+    .variant-item .v-sort { min-width: 50px; }
+    .cp-item .cp-price { min-width: 60px; text-align: right; }
+    .cp-item .price-slot-ph { flex: 0 0 60px; }
+    .cp-item .code-slot { min-width: 112px; }
+    .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 112px !important; }
+    /* 窄屏（≤600px）：固定槽位放宽为自然宽、空占位隐藏，避免固定列挤爆窄屏弹窗（对齐口径为桌面/平板） */
+    @media (max-width: 600px) {
+      .variant-item .v-price, .cp-item .cp-price { min-width: 0; text-align: left; }
+      .variant-item .code-slot, .cp-item .code-slot,
+      .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 0 !important; }
+      .variant-item .bind-slot, .variant-item .bind-slot-ph { min-width: 0; }
+      .variant-item .v-sort { min-width: 0; }
+      .variant-item .price-slot-ph, .cp-item .price-slot-ph, .variant-item .bind-slot-ph { display: none; }
+    }

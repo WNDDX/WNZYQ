@@ -11,6 +11,18 @@
       if (e.key === 'Enter') { var ae = document.activeElement; if (ae && (ae.id === 'loginUser' || ae.id === 'loginPass') && !window.__loginDirect && typeof doLogin === 'function') { try { doLogin(); } catch (err) {} } }
     });
 
+    // ---------- R156（用户 20:30）：时间显示统一转北京时间 ----------
+    // 根因：D1 的 datetime('now') 存的是 UTC，绑定设备弹窗/统计最近动直接原样展示，
+    // 比北京时间早 8 小时（用户 20:18 绑定却显示 12:18）。
+    // 修法：展示层统一按 UTC+8 换算（固定偏移，不依赖浏览器时区），历史行也是 UTC 口径，全量一致。
+    window.__utcToLocal = function (ts) {
+      if (!ts || typeof ts !== 'string') return ts || '-';
+      var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/.exec(ts.trim());
+      if (!m) return ts;
+      var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) + 8 * 3600 * 1000);
+      var p2 = function (n) { return String(n).padStart(2, '0'); };
+      return d.getUTCFullYear() + '-' + p2(d.getUTCMonth() + 1) + '-' + p2(d.getUTCDate()) + ' ' + p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()) + ':' + p2(d.getUTCSeconds());
+    };
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
     var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
     document.addEventListener('error', function (e) {
@@ -910,13 +922,17 @@
               _vp.className = 'cp-price';
               _vp.textContent = _vPriceText;
               item.appendChild(_vp);
+            } else { /* R154：无金额行保留金额槽位（空占位），¥/码键跨行对齐 */
+              var _vpp = document.createElement('span');
+              _vpp.className = 'price-slot-ph';
+              item.appendChild(_vpp);
             }
             if (v.resourceCode && v.resourceCode.trim()) {
               // R139（用户定稿）：码按键与编辑弹窗类型列表 codeBtn 同款（row-btn+monospace+600+letter-spacing），
               // 替换 R98 浅蓝胶囊——字体样式统一用"编辑弹窗类型列表那套"；点按键复制并收起面板
               var cd = document.createElement('button');
               cd.type = 'button';
-              cd.className = 'row-btn';
+              cd.className = 'row-btn code-slot'; /* R154：码键固定槽位，跨行对齐 */
               // R144（用户 23:57）：有码=蓝底白字（参考"显示"按键配色），宽高不变
               cd.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);';
               cd.textContent = v.resourceCode;
@@ -933,7 +949,7 @@
               // R139：无码按键与类型列表 noCodeBtn 同款（row-btn 灰字、无动作），同步替换灰胶囊
               var nc = document.createElement('button');
               nc.type = 'button';
-              nc.className = 'row-btn';
+              nc.className = 'row-btn code-slot'; /* R154：无码键同槽位宽，跨行对齐 */
               // R144：无码键字体颜色参考编辑按键（var(--text-light)）
               nc.style.cssText = 'color:var(--text-light);cursor:default;';
               nc.textContent = '无资源码';
@@ -1012,10 +1028,12 @@
 
     // ---------- 复制资源 ----------
     function copyProduct(p) {
-      showConfirm('复制资源', '确定复制资源「' + (p.title || '未命名') + '」？将创建一个内容相同的新资源（默认隐藏）。', function () {
+      showConfirm('复制资源', '确定复制资源「' + (p.title || '未命名') + '」？将创建一个内容完全相同的新资源（仅状态为隐藏，其余字段含排序全部照复制）。', function () {
         var newProduct = {
           cid: p.cid,
-          title: (p.title || '未命名') + '（副本）',
+          // R155（用户 19:36）：复制=全量复制——title 原样（去掉「（副本）」后缀）、sort 保持原值（不再排到末尾）、
+          // is_hidden 照抄；与原资源唯一差异=is_online 隐藏。
+          title: p.title || '未命名',
           desc: p.desc || '',
           detail: p.detail || '',
           img: p.img || '',
@@ -1028,8 +1046,8 @@
           schedule_off: p.schedule_off || null,
           variants: p.variants ? JSON.parse(JSON.stringify(p.variants)) : [],
         is_online: false,
-        is_hidden: 0,
-        sort: (state.products.length + 1) * 10
+        is_hidden: p.is_hidden ? 1 : 0,
+        sort: p.sort || 0
       };
       api('admin/products', { method: 'POST', body: JSON.stringify(newProduct) }).then(function (res) {
         if (res && res.ok) {
@@ -1038,7 +1056,7 @@
             _chain = _chain.then(function () {
               // R137（用户 18:14）：复制类型补齐 bindLimit（绑定上限）——此前漏传，复制后一律归 1
               return api('admin/variants', { method: 'POST', body: JSON.stringify({
-                productId: _newId, name: v.name, desc: v.desc || '', img: v.img || '', video: v.video || '',
+                productId: _newId, name: v.name, title: v.title || '', desc: v.desc || '', img: v.img || '', video: v.video || '',
                 contactUrl: v.contactUrl || '', price: v.price || 0, sort: v.sort || 0,
                 resourceCode: v.resourceCode || '', resourceContent: v.resourceContent || '', isHidden: v.isHidden || 0,
                 bindLimit: Math.max(1, parseInt(v.bindLimit, 10) || 1)
@@ -1715,13 +1733,17 @@
           _vip.textContent = _viPriceText;
           _vipEl = _vip; /* R148（用户 01:26）：金额位置修正——不在创建时 append（会排到行最左），挪到 name 之后、码键之前 */
         }
+        if (!_vipEl) { /* R154：无金额行保留金额槽位（空占位），¥/码键跨行对齐；视觉上仍不渲染金额段 */
+          _vipEl = document.createElement('span');
+          _vipEl.className = 'price-slot-ph';
+        }
 
         var codeSpan = document.createElement('span');
         codeSpan.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex-shrink:0;';
         if (v.resourceCode && v.resourceCode.trim()) {
           var codeBtn = document.createElement('button');
           codeBtn.type = 'button';
-          codeBtn.className = 'row-btn';
+          codeBtn.className = 'row-btn code-slot'; /* R154：码键固定槽位，跨行对齐 */
           // R144（用户 23:57）：有码=蓝底白字（参考"显示"按键 .row-btn.status-online 的配色），宽高不变
           codeBtn.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);';
           codeBtn.textContent = v.resourceCode;
@@ -1736,11 +1758,14 @@
         } else {
           var noCodeBtn = document.createElement('button');
           noCodeBtn.type = 'button';
-          noCodeBtn.className = 'row-btn';
+          noCodeBtn.className = 'row-btn code-slot'; /* R154：无码键同槽位宽，跨行对齐 */
           // R144：无码键字体颜色参考编辑按键（var(--text-light)），原 text-faint 偏浅
           noCodeBtn.style.cssText = 'color:var(--text-light);cursor:default;';
           noCodeBtn.textContent = '无资源码';
           codeSpan.appendChild(noCodeBtn);
+          var _bph = document.createElement('span'); /* R154：无码行保留绑定键槽位（空占位），列对齐 */
+          _bph.className = 'bind-slot-ph';
+          codeSpan.appendChild(_bph);
         }
 
         // R92：绑定设备徽章（一机一码·宽松模式）——只有配了资源码的类型才统计绑定，
@@ -1749,7 +1774,7 @@
           var bindSpan = document.createElement('button');
           var bindN = Number(v.bindings) || 0;
           bindSpan.type = 'button';
-          bindSpan.className = 'row-btn';
+          bindSpan.className = 'row-btn bind-slot'; /* R154：绑定键固定槽位，跨行对齐 */
           bindSpan.textContent = '绑定 ' + bindN;
           bindSpan.title = '查看该资源码已绑定的设备';
           bindSpan.addEventListener('click', function () { openBindings(v); });
@@ -1870,6 +1895,27 @@
     // 根因：Chromium contenteditable 中点击 <video>（尤其控制条区域）不会建立元素选区，
     // 随后 Backspace/Delete 只作用于文字/无效，视频删不掉（图片无此缺陷，原生可选中）。
     // 修法：点击编辑器内视频 → selection.selectNode(video) 原子选中，退格/删除键即可整段移除。
+    // R155（用户 19:41）：移动端 tap 编辑器内视频无法选中——Chromium 移动端 video 的 tap 手势不派发 click，
+    // R147 的 click 委托在手机上根本不触发。touchend（capture, passive:false）tap 落在 IMG/VIDEO 上时
+    // preventDefault（阻止 tap 播放手势与合成 click 双触发）+ selectNode + 浮出×。
+    document.addEventListener('touchend', function (e) {
+      var t = e.target;
+      if (!t) return;
+      if (t.classList && t.classList.contains('rte-img-del')) return; // 浮层删除键自身：放行合成 click 走删除
+      var ed = t.closest ? t.closest('[contenteditable="true"]') : null;
+      if (!ed) return;
+      var pick = null;
+      if (t.tagName === 'VIDEO' || t.tagName === 'IMG') pick = t;
+      if (!pick) return;
+      try { e.preventDefault(); } catch (err0) {}
+      try {
+        var sel = window.getSelection();
+        var range = document.createRange();
+        range.selectNode(pick);
+        sel.removeAllRanges(); sel.addRange(range);
+      } catch (err) {}
+      __showImgDel(pick);
+    }, { capture: true, passive: false });
     document.addEventListener('click', function (e) {
       var t = e.target;
       if (!t) return;
@@ -1891,7 +1937,7 @@
         range.selectNode(pick);
         sel.removeAllRanges(); sel.addRange(range);
       } catch (err) {}
-      if (pick.tagName === 'IMG') __showImgDel(pick); else __hideImgDel(); // R149：图片原子选中时右上角浮出删除键
+      if (pick.tagName === 'IMG' || pick.tagName === 'VIDEO') __showImgDel(pick); else __hideImgDel(); // R149 图片/R155 视频原子选中时右上角浮出删除键（视频此前没有任何×，用户只能退格）
     });
     // 退格/删除键兜底：光标紧邻编辑器内视频/兜底卡时（Chromium 对 contenteditable=false 块的原生退格不可靠），手动整块删除
     document.addEventListener('keydown', function (e) {
@@ -1924,7 +1970,10 @@
     // 图片选中（click 原子选中）时在其右上角浮出「×」删除键；形态与视频卡 .vf-del / 全局弹窗
     // 右上角 ×（.modal-close-x）同一家族：圆形、右上角、悬停红底白×、按压缩放 0.94，尺寸按宿主适配。
     // 浮层挂 body（fixed 定位跟随图片），不进编辑器 DOM → 保存/草稿/预览内容零污染（serializeDetail 无需处理）。
-    var __imgDelBtn = null, __imgDelTarget = null;
+    var __imgDelBtn = null, __imgDelTarget = null, __imgDelRaf = 0;
+    // R155（用户 19:41）：×改为 rAF 每帧跟随宿主——旧 scroll 监听在移动端滚动（惯性滚动期间不派发 scroll 事件）
+    // 会滞后漂移/停止后跳位，很难看；rAF 每帧重定位保证任何滚动容器（页面/弹窗内）下×始终贴合宿主右上角。
+    function __imgDelLoop() { __placeImgDel(); if (__imgDelTarget) { __imgDelRaf = requestAnimationFrame(__imgDelLoop); } else { __imgDelRaf = 0; } }
     function __placeImgDel() {
       if (!__imgDelBtn || !__imgDelTarget) return;
       if (!__imgDelTarget.isConnected || !__imgDelTarget.offsetParent) { __hideImgDel(); return; } // 图片被删/弹窗关闭 → 收起
@@ -1940,7 +1989,7 @@
         __imgDelBtn = document.createElement('button');
         __imgDelBtn.type = 'button';
         __imgDelBtn.className = 'rte-img-del';
-        __imgDelBtn.title = '删除这张图片';
+        __imgDelBtn.title = '删除这个媒体';
         __imgDelBtn.setAttribute('contenteditable', 'false');
         __imgDelBtn.textContent = '×';
         __imgDelBtn.addEventListener('click', function (ev) {
@@ -1958,10 +2007,11 @@
       __imgDelTarget = img;
       __imgDelBtn.style.display = 'block';
       __placeImgDel();
+      if (!__imgDelRaf) __imgDelRaf = requestAnimationFrame(__imgDelLoop);
     }
     function __hideImgDel() {
       if (__imgDelBtn) __imgDelBtn.style.display = 'none';
-      __imgDelTarget = null;
+      __imgDelTarget = null; // rAF 循环检测到 target 清空自动退出（__imgDelLoop 里判断）
     }
     window.__hideImgDel = __hideImgDel;
     // 选区变化：只有「原子选中目标图片」才保留浮层（拖蓝选文字/光标落别处 → 收起）
@@ -1979,9 +2029,7 @@
       } catch (e) {}
       if (!keep) __hideImgDel(); else __placeImgDel();
     });
-    // 滚动/缩放：浮层跟随图片位置（capture 兜住弹窗内滚动容器与编辑器放大态）
-    window.addEventListener('scroll', function () { if (__imgDelBtn && __imgDelTarget && __imgDelBtn.style.display !== 'none') __placeImgDel(); }, true);
-    window.addEventListener('resize', function () { if (__imgDelBtn && __imgDelTarget && __imgDelBtn.style.display !== 'none') __placeImgDel(); });
+    // R155：滚动/缩放跟随改由 rAF 循环每帧执行（见 __imgDelLoop），不再依赖 scroll 事件（移动端滚动期间不派发，×会漂移）。
 document.addEventListener('click', function (e) {
       var z = e.target.closest ? e.target.closest('.rte-zoom') : null;
       if (!z) return;
@@ -2411,7 +2459,9 @@ document.addEventListener('click', function (e) {
         annBtn.textContent = _annBtnText;
         if (res && res.ok) {
           toast('公告已保存', 'success');
-          stateAnn.loaded = true; annDraftPending = false; stateAnn._backup = null;
+          stateAnn.loaded = true; annDraftPending = false;
+          // R154: 保存成功后立即重建备份（原=null）——保存后再编辑、取消/×时 annDiscard 才有备份可恢复（重开瞬间及拉取失败时不再显示脏草稿）
+          try { stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list)); } catch (e0) { stateAnn._backup = null; }
           stateAnn._modeSaved = document.getElementById('annMode').value; // R135：保存成功后同步已保存频率
           document.getElementById('annMask').classList.remove('open');
         } else toast(res.msg || '保存失败', 'error');
@@ -2873,9 +2923,9 @@ document.addEventListener('click', function (e) {
           // R136：设备名合并 UA——长文本靠 .stat-table 截断，悬停/点按复用 #uiTip 小弹窗看全信息
           td1.textContent = (r.device || '-') + (r.ua ? ' · ' + r.ua : '');
           var td2 = document.createElement('td');
-          td2.textContent = r.created_at || '-';
+          td2.textContent = window.__utcToLocal(r.created_at); /* R156：UTC→北京时间 */
           var td3 = document.createElement('td');
-          td3.textContent = r.last_access || '-';
+          td3.textContent = window.__utcToLocal(r.last_access); /* R156：UTC→北京时间 */
           var td4 = document.createElement('td');
           var unBtn = document.createElement('button');
           unBtn.className = 'row-btn danger';
@@ -3030,6 +3080,7 @@ document.addEventListener('click', function (e) {
       // SVG 有 viewBox 缩放，字号按 800/渲染宽 反补偿，任何视口下渲染尺寸都等于柱图 .tg-num 的 CSS 10px
       var _ax = 10, _asr = svg.getBoundingClientRect(); if (_asr && _asr.width) _ax = +(10 * 800 / _asr.width).toFixed(2); /* R147（用户 00:50①）：轴数字取小口径 10px（R145 的 13 改 10）——SVG 有 viewBox 缩放，按 800/渲染宽 反补偿保证任何视口渲染恒 10px，与柱图 .tg-num 一致 */
       var W = 800, H = 200, padL = 40, padR = 20, padT = 20, padB = 30;
+      try { svg.dataset.padT = padT; } catch (e0) {} // R153（用户 19:00）：padT 供柱状图同步网格顶线距灰盒顶（两图「5」与上边界距离统一）
       var chartW = W - padL - padR, chartH = H - padT - padB;
       // R58：上期数据（折线图环比）——等长对齐才画；量纲同时计入上期，保证虚线不出顶
       var hasPrev = !!(prev && prev.length === trend.length);
@@ -3217,9 +3268,22 @@ document.addEventListener('click', function (e) {
       var lineSvgEl = document.getElementById('lineSvg');
       var syncBarHeight = function (el, box) {
         var h2 = el ? el.getBoundingClientRect().height : 0;
-        if (h2 >= 100) {
+        if (h2 >= 60) { /* R153：门槛 100→60——窄屏 SVG 渲染高 ~85px 被 100 拦住导致 barZone 不同步；隐藏面板时 SVG 高 0 仍被 60 拦住 */
           box.style.height = h2 + 'px';
-          box.style.setProperty('--barZone', Math.max(60, Math.round(h2) - 24 - 12) + 'px');
+          // R153（用户 19:00）：柱状图网格顶线距灰盒顶与折线图逐像素统一——
+          // 折线网格顶线渲染位置 = line-chart 顶 + (padding-top 12) + padT*k（k=SVG渲染高/200，随视口变）；
+          // 柱状 chart-box 上 padding 0、grid bottom:24 + height:barZone，网格顶距 trend-bars 顶 = h2-24-barZone，
+          // 令其等于折线的 d → barZone = h2-24-d。量不到折线时兜底原 12px 口径
+          var d = 12;
+          try {
+            var r2 = el.getBoundingClientRect();
+            var lc = document.getElementById('lineChart');
+            if (lc && r2.height) {
+              var pt = parseFloat(el.dataset.padT); if (!(pt >= 0)) pt = 20;
+              d = Math.max(0, (r2.top + pt * (r2.height / 200)) - lc.getBoundingClientRect().top);
+            }
+          } catch (e3) {}
+          box.style.setProperty('--barZone', Math.max(30, Math.round(h2) - 24 - Math.round(d)) + 'px'); // R153: floor 60\u219230, narrow SVG ~85 gives ~40
           return true;
         }
         return false;
@@ -3536,7 +3600,7 @@ document.addEventListener('click', function (e) {
           row: function (r) {
             var tr = document.createElement('tr');
             var typeText = r.type === 'view' ? '浏览' : (r.type === 'contact' ? '咨询客服' : (r.type === 'resource_unlock' ? '资源码解锁' : r.type));
-            tr.innerHTML = '<td>' + (r.created_at || '') + '</td><td>' + typeText + '</td><td>' + (r.title || '') + '</td>';
+            tr.innerHTML = '<td>' + window.__utcToLocal(r.created_at) + '</td><td>' + typeText + '</td><td>' + (r.title || '') + '</td>'; /* R156：UTC→北京时间 */
             return tr;
           }
         }
