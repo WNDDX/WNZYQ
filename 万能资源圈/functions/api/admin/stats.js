@@ -9,19 +9,22 @@ export async function onRequestGet(context) {
   const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
 
+  // R168-③：时区统一北京时间口径（全系统统一，一天为北京时间 0:00-24:00）——
+  // 存储仍为 UTC，所有按日/按小时聚合一律 date(x, '+8 hours') 切日；"今天/30天前"的默认范围也按北京日期取
+  const bjOffsetMs = 8 * 3600 * 1000;
+  const todayBJ = new Date(Date.now() + bjOffsetMs).toISOString().slice(0, 10);
+
   // 日期范围参数
   const url = new URL(request.url);
   const startDate = url.searchParams.get('start_date') || '';
   const endDate = url.searchParams.get('end_date') || '';
 
-  // 计算30天前的日期（最大可查范围）
-  const maxStart = new Date();
-  maxStart.setDate(maxStart.getDate() - 29);
-  const maxStartStr = maxStart.toISOString().slice(0, 10);
+  // 计算30天前的日期（最大可查范围，北京口径）
+  const maxStartStr = new Date(Date.now() + bjOffsetMs - 29 * 86400000).toISOString().slice(0, 10);
 
-  // 日期范围：自定义则用自定义，但开始日期不能早于30天前；否则默认近30天
+  // 日期范围：自定义则用自定义，但开始日期不能早于30天前；否则默认近30天（均按北京日期）
   let effectiveStart = maxStartStr;
-  let effectiveEnd = new Date().toISOString().slice(0, 10);
+  let effectiveEnd = todayBJ;
 
   // R57：环比上期——与当前查询范围等长、紧邻之前的一段（1天档=昨天；默认30天=前30天；自定义N天=前N天）
   const rangeDays = Math.round((new Date(effectiveEnd) - new Date(effectiveStart)) / 86400000) + 1;
@@ -29,21 +32,20 @@ export async function onRequestGet(context) {
   const prevStartD = new Date(effectiveStart); prevStartD.setDate(prevStartD.getDate() - rangeDays);
   const prevStart = prevStartD.toISOString().slice(0, 10);
   const prevEnd = prevEndD.toISOString().slice(0, 10);
-  const prevDateFilter = ` AND date(stats.created_at) >= ? AND date(stats.created_at) <= ?`;
+  // R168-③：环比日期过滤同样按北京时区切日
+  const prevDateFilter = ` AND date(stats.created_at, '+8 hours') >= ? AND date(stats.created_at, '+8 hours') <= ?`;
   const prevDateParams = [prevStart, prevEnd];
 
-  // stats表单表用的日期过滤（明确指定 stats.created_at）
+  // stats表单表用的日期过滤（明确指定 stats.created_at；北京时区切日）
   // 安全修复：日期值一律通过 SQL 绑定参数（?）传入，不再拼接进 SQL 字符串
   let statsDateFilter, statsDateParams;
   if (startDate && endDate) {
     effectiveStart = String(startDate).slice(0, 10) > maxStartStr ? String(startDate).slice(0, 10) : maxStartStr;
     effectiveEnd = String(endDate).slice(0, 10);
-    statsDateFilter = ` AND date(stats.created_at) >= ? AND date(stats.created_at) <= ?`;
-    statsDateParams = [effectiveStart, effectiveEnd];
-  } else {
-    statsDateFilter = ` AND stats.created_at >= datetime('now', '-30 days')`;
-    statsDateParams = [];
   }
+  // R168-③：自定义与默认走同一套北京时区日过滤（原先默认分支用 UTC now-30days 粗过滤，与按日切分口径不一致）
+  statsDateFilter = ` AND date(stats.created_at, '+8 hours') >= ? AND date(stats.created_at, '+8 hours') <= ?`;
+  statsDateParams = [effectiveStart, effectiveEnd];
 
   // 1. 总览 + 2. 按资源统计 + 3. 趋势 + 4. 按分类统计 + 5. 浏览记录
   // 性能修复：原先 10+ 个 D1 查询逐个 await 串行执行（每次往返 50-200ms，累计 1-2.5 秒），
@@ -74,7 +76,7 @@ export async function onRequestGet(context) {
        ORDER BY views DESC, p.id DESC`
     ).bind(...statsDateParams).all(),
     env.DB.prepare(
-      `SELECT date(stats.created_at) AS day, stats.type, COUNT(*) AS cnt
+      `SELECT date(stats.created_at, '+8 hours') AS day, stats.type, COUNT(*) AS cnt
        FROM stats
        WHERE 1=1${statsDateFilter}
        GROUP BY day, stats.type ORDER BY day ASC`
@@ -99,12 +101,12 @@ export async function onRequestGet(context) {
        WHERE s.created_at >= datetime('now', '-60 days')
        ORDER BY s.id DESC`
     ).all(),
-    // R29（优化项8）：单日范围时按小时聚合（1天档/自定义同日选择走这里，与趋势同口径 UTC）
+    // R29（优化项8）：单日范围时按小时聚合（1天档/自定义同日选择走这里，与趋势同口径）；R168-③：+8 小时=北京时间小时
     effectiveStart === effectiveEnd
       ? env.DB.prepare(
-          `SELECT strftime('%H', stats.created_at) AS hour, stats.type, COUNT(*) AS cnt
+          `SELECT strftime('%H', stats.created_at, '+8 hours') AS hour, stats.type, COUNT(*) AS cnt
            FROM stats
-           WHERE date(stats.created_at) = ?
+           WHERE date(stats.created_at, '+8 hours') = ?
            GROUP BY hour, stats.type ORDER BY hour ASC`
         ).bind(effectiveStart).all()
       : Promise.resolve(null),
@@ -117,17 +119,17 @@ export async function onRequestGet(context) {
     ).bind(...prevDateParams).all(),
     // R57：上期按日趋势（与当前 trend 同形状，按索引对齐）
     env.DB.prepare(
-      `SELECT date(stats.created_at) AS day, stats.type, COUNT(*) AS cnt
+      `SELECT date(stats.created_at, '+8 hours') AS day, stats.type, COUNT(*) AS cnt
        FROM stats
        WHERE 1=1${prevDateFilter}
        GROUP BY day, stats.type ORDER BY day ASC`
     ).bind(...prevDateParams).all(),
-    // R57：单日范围时上期（昨日）按小时聚合（与 hourly 同形状）
+    // R57：单日范围时上期（昨日）按小时聚合（与 hourly 同形状）；R168-③：+8 小时=北京时间小时
     effectiveStart === effectiveEnd
       ? env.DB.prepare(
-          `SELECT strftime('%H', stats.created_at) AS hour, stats.type, COUNT(*) AS cnt
+          `SELECT strftime('%H', stats.created_at, '+8 hours') AS hour, stats.type, COUNT(*) AS cnt
            FROM stats
-           WHERE date(stats.created_at) = ?
+           WHERE date(stats.created_at, '+8 hours') = ?
            GROUP BY hour, stats.type ORDER BY hour ASC`
         ).bind(prevEnd).all()
       : Promise.resolve(null),

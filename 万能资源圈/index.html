@@ -178,7 +178,7 @@ body{
 }
 .modal-box{
     background: var(--card-bg);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 26px 22px;
     position: relative; max-width: 480px; max-height: 84vh; overflow-y: auto;
     width: 100%;
@@ -246,9 +246,9 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
 /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */
-.pull-refresh{position:fixed;top:80px;left:0;right:0;height:0;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;z-index:998;/*R161:顶锚定从顶部拉出*/transition:height .2s ease;pointer-events:none;background:transparent;}
+.pull-refresh{position:fixed;/*R166:top 80→0 从手机物理顶部拉出*/top:0;left:0;right:0;height:0;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;z-index:998;/*R161:顶锚定从顶部拉出*/transition:height .2s ease;pointer-events:none;background:transparent;}
 .pull-refresh.show{height:32px;}
-.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:50%;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
 .prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:prtspin .8s linear infinite;}
 @keyframes prtspin{to{transform:rotate(360deg);}}
 /* 弹窗右上角关闭按钮（与资源页/管理页一致） */
@@ -266,7 +266,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   .logo-box { width: 100px; height: 100px; }
   .logo-wrap { margin-bottom: 28px; } /* R33：移动端同步上下间距对称 */
   .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.6px; padding-left: 1.6px; }
-  .btn-item { padding: 16px 18px; font-size: 22px; margin-bottom: 12px; border-radius: 12px; gap: 12px; }
+  .btn-item { padding: 16px 18px; font-size: 22px; margin-bottom: 12px; border-radius: 10px; gap: 12px; }
   .icon-svg { width: 34px; height: 34px; }
   .qrcode-wrap { width: 200px; height: 200px; }
   .modal-box { padding: 20px 16px; }

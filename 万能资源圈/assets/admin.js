@@ -569,6 +569,7 @@
         if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; if (document.getElementById('annMask').classList.contains('open')) { try { if (typeof renderAnnList === 'function') renderAnnList(); var _dlx = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dlx && typeof selectAnnItem === 'function') selectAnnItem(_dlx.id); else if (typeof clearAnnEdit === 'function') clearAnnEdit(); } catch (e) {} } }
         
         document.getElementById('annMode').value = s.announcement_mode || 'always';
+        syncSelectDisplay(document.getElementById('annMode')); // R166：同步自制下拉显示框
         // R135：记录已保存的显示频率——取消/×/关闭（丢弃）时据此恢复，不再保留未保存的选中值
         if (typeof stateAnn !== 'undefined' && stateAnn) stateAnn._modeSaved = s.announcement_mode || 'always';
         // R106：资源码绑定设备上限已挪到类型编辑表单（类型级），设置面板不再回填/保存该值
@@ -1465,7 +1466,6 @@
       var left = Math.max(8, r.left);
       var top = r.bottom + 4;
       if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 4);
-      panel.style.left = left + 'px';
       panel.style.top = top + 'px';
       // R146（用户 00:34）：码面板项=类型名+金额+码键，180px 装不下会把类型名挤成竖排换行——
       // 先按内容自然宽度测量，再取 max(触发键宽, 自然宽)，上限视口-16px 防溢出
@@ -1480,12 +1480,18 @@
         w = Math.max(w, _nat + 2);
         w = Math.min(w, (window.innerWidth || 390) - 16);
       }
+      // R165（用户 19:07）：面板右缘钳制——手机上触发键靠屏幕右缘时，旧定位 left=触发键左缘，
+      // 面板宽随内容涨（长类型名），left+w 会把面板整块推出屏幕右边界（名称/码键溢出屏幕看不见）。
+      // 定宽后回算：left 夹进 [8, innerWidth-w-8]，面板永远完整落在屏幕内。
+      left = Math.max(8, Math.min(left, (window.innerWidth || 390) - w - 8));
+      panel.style.left = left + 'px';
       panel.style.width = w + 'px';
     }
     // 通用自制下拉选择器：把原生 select 替换为与分类选择器一致的美观选择框
     // 原 select 保留（隐藏）作为值载体，选择后派发 change 事件，原逻辑无需改动
+    var spRefs = new Map(); // R166：select -> picker ref 映射（原先存 sel.dataset.spRef 会字符串化成 "[object Object]"，程序化改值后拿不回 ref，自制下拉显示框无法同步——annMode 取消后仍显示草稿的根因）
     function makeSelectPicker(sel) {
-      if (!sel || sel.dataset.sp) return sel && sel.dataset.spRef;
+      if (!sel || sel.dataset.sp) return spRefs.get(sel);
       sel.dataset.sp = '1';
       var holder = document.createElement('div');
       holder.className = 'select-picker';
@@ -1524,8 +1530,13 @@
       sel.style.display = 'none';
       render();
       var ref = { el: holder, refresh: render, sel: sel };
-      sel.dataset.spRef = ref;
+      spRefs.set(sel, ref);
       return ref;
+    }
+    // R166：程序化修改 select 的 value / selectedIndex 后，同步自制下拉显示框（文本/占位样式/选中项高亮）
+    function syncSelectDisplay(sel) {
+      var ref = spRefs.get(sel);
+      if (ref && ref.refresh) ref.refresh();
     }
     // 统一升级页面里所有原生 select 为自制选择框（编辑器字体/字号、状态筛选、公告频率、分类父级等）
     function upgradeAllSelects() {
@@ -1599,6 +1610,7 @@
     function serializeDetail() {
       var clone = fDetail.cloneNode(true);
       try { clone.querySelectorAll('.rte-img-del').forEach(function (d) { d.remove(); }); } catch (e0) {} // R158：×浮层兜底剥离（关闭时已摘离编辑器，双保险）
+      try { clone.querySelectorAll('.rte-media-sel').forEach(function (m) { m.classList.remove('rte-media-sel'); }); } catch (e1) {} // R165：自绘选中框 class 兜底剥离（__hideImgDel 已清，双保险）
       var cards = clone.querySelectorAll('.video-fallback');
       cards.forEach(function (fb) {
         var vs = fb.getAttribute('data-vsrc');
@@ -1618,6 +1630,7 @@
       if (!el) return '';
       var c = el.cloneNode(true);
       try { c.querySelectorAll('.rte-img-del').forEach(function (d) { d.remove(); }); } catch (e0) {}
+      try { c.querySelectorAll('.rte-media-sel').forEach(function (m) { m.classList.remove('rte-media-sel'); }); } catch (e1) {} // R165：自绘选中框 class 兜底剥离
       return c.innerHTML;
     };
     function saveProduct() {
@@ -1907,6 +1920,26 @@
     // R155（用户 19:41）：移动端 tap 编辑器内视频无法选中——Chromium 移动端 video 的 tap 手势不派发 click，
     // R147 的 click 委托在手机上根本不触发。touchend（capture, passive:false）tap 落在 IMG/VIDEO 上时
     // preventDefault（阻止 tap 播放手势与合成 click 双触发）+ selectNode + 浮出×。
+    // R165（用户 19:06）：pointerdown(touch) 选中兜底——部分浏览器内核（WebView/国产壳）tap 编辑器内媒体时
+    // touchend/click 合成事件被吞，旧链路根本不触发 → ×浮不出来。pointerdown 是触摸链第一个事件、必然派发。
+    // 不 preventDefault：不拦播放手势与后续 touchend/click 委托（重复执行幂等——selectNode/加 class/浮×均可重入）。
+    document.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse') return;
+      var t = e.target;
+      if (!t || !(t instanceof Element)) return;
+      if (t.classList && t.classList.contains('rte-img-del')) return;
+      var ed = t.closest ? t.closest('[contenteditable="true"]') : null;
+      if (!ed) return;
+      if (t.tagName !== 'VIDEO' && t.tagName !== 'IMG') return;
+      try {
+        var sel = window.getSelection();
+        var range = document.createRange();
+        range.selectNode(t);
+        sel.removeAllRanges(); sel.addRange(range);
+      } catch (err) {}
+      t.classList.add('rte-media-sel');
+      __showImgDel(t);
+    }, { capture: true });
     document.addEventListener('touchend', function (e) {
       var t = e.target;
       if (!t) return;
@@ -1923,6 +1956,7 @@
         range.selectNode(pick);
         sel.removeAllRanges(); sel.addRange(range);
       } catch (err) {}
+      if (pick.tagName === 'IMG' || pick.tagName === 'VIDEO') pick.classList.add('rte-media-sel'); // R165：自绘选中框（部分内核原生蓝层越界弹窗，outline 受 contain 裁剪不越界）
       __showImgDel(pick);
     }, { capture: true, passive: false });
     document.addEventListener('click', function (e) {
@@ -1946,7 +1980,7 @@
         range.selectNode(pick);
         sel.removeAllRanges(); sel.addRange(range);
       } catch (err) {}
-      if (pick.tagName === 'IMG' || pick.tagName === 'VIDEO') __showImgDel(pick); else __hideImgDel(); // R149 图片/R155 视频原子选中时右上角浮出删除键（视频此前没有任何×，用户只能退格）
+      if (pick.tagName === 'IMG' || pick.tagName === 'VIDEO') { pick.classList.add('rte-media-sel'); __showImgDel(pick); } else __hideImgDel(); // R149 图片/R155 视频原子选中时右上角浮出删除键（视频此前没有任何×，用户只能退格）；R165 叠加自绘选中框
     });
     // 退格/删除键兜底：光标紧邻编辑器内视频/兜底卡时（Chromium 对 contenteditable=false 块的原生退格不可靠），手动整块删除
     document.addEventListener('keydown', function (e) {
@@ -2025,6 +2059,19 @@
             if (ed2) { try { ed2.dispatchEvent(new Event('input', { bubbles: true })); } catch (e2) {} }
           }
         });
+        // R165（用户 19:03）：×只要单击就能删除——部分内核点按后合成 click 不派发（点不动）。
+        // pointerdown 先于一切合成事件必然到达，直接删除；preventDefault 阻后续合成事件防双触发
+        // （即便仍派发，此时 __imgDelTarget 已清、媒体已 remove，click 侧无操作，天然幂等）。
+        __imgDelBtn.addEventListener('pointerdown', function (ev) {
+          ev.preventDefault(); ev.stopPropagation();
+          var im = __imgDelTarget;
+          __hideImgDel();
+          if (im && im.isConnected) {
+            var ed2 = im.closest('[contenteditable="true"]');
+            im.remove();
+            if (ed2) { try { ed2.dispatchEvent(new Event('input', { bubbles: true })); } catch (e2) {} }
+          }
+        });
       }
       if (__imgDelBtn.parentNode !== host) host.appendChild(__imgDelBtn); // 切编辑器/旧编辑器 DOM 被丢弃（弹窗关闭）后重新挂载
       __imgDelTarget = img;
@@ -2036,6 +2083,7 @@
         __imgDelBtn.style.display = 'none';
         try { __imgDelBtn.remove(); } catch (e1) {} // 摘离编辑器：内容 DOM 始终干净
       }
+      try { document.querySelectorAll('.rte-media-sel').forEach(function (m) { m.classList.remove('rte-media-sel'); }); } catch (e0) {} // R165：收起自绘选中框
       __imgDelTarget = null;
     }
     window.__hideImgDel = __hideImgDel;
@@ -2105,6 +2153,7 @@ document.addEventListener('click', function (e) {
           rteEditor.focus();
         }
         this.selectedIndex = 0; // 重置选择
+        syncSelectDisplay(this); // R166：同步自制下拉显示框回到默认项
       });
     });
 
@@ -2427,7 +2476,7 @@ document.addEventListener('click', function (e) {
       try { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } } catch (e) {}
       annDraftPending = false; stateAnn.loaded = false;
       stateAnn.curId = null; // 置空选中，杜绝后续 flushAnnEdit 把编辑器草稿写回已恢复列表
-      try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; } catch (e) {}
+      try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; syncSelectDisplay(document.getElementById('annMode')); } catch (e) {}
       var _dl = null;
       try { _dl = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; } catch (e) {}
       if (annEditor) annEditor.innerHTML = _dl ? (_dl.content || '') : '';
@@ -2452,6 +2501,7 @@ document.addEventListener('click', function (e) {
             stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 }); stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
             stateAnn.loaded = true;
             document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
+            syncSelectDisplay(document.getElementById('annMode')); // R166：同步自制下拉显示框
             stateAnn._modeSaved = (res.settings || {}).announcement_mode || 'always'; // R135：记录已保存频率供丢弃恢复
             if (stateAnn.list.length) { var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; renderAnnList(); selectAnnItem(_defAnn.id); } else { renderAnnList(); clearAnnEdit(); }
           }
@@ -2559,6 +2609,7 @@ document.addEventListener('click', function (e) {
           annEditor.focus();
         }
         this.selectedIndex = 0;
+        syncSelectDisplay(this); // R166：同步自制下拉显示框回到默认项
       });
     });
 
@@ -2755,6 +2806,7 @@ document.addEventListener('click', function (e) {
             editor.focus();
           }
           this.selectedIndex = 0;
+          syncSelectDisplay(this); // R166：同步自制下拉显示框回到默认项
         });
       });
       // 格式刷
@@ -4684,62 +4736,7 @@ refreshCatCnts();
     // ---------- 初始化 ----------
     boot();
 
-
-/* ===== R102（用户定稿·只做后台）：截断文字悬停/点按小框 #uiTip =====
-   电脑：mouseover 全局委托——文字实际被截断（scrollWidth/Height 超出）才弹，显示全的不弹；
-   手机：click 白名单委托（表格单元格/分类名/类型名/产品标题）——点一下弹小框，点别处关闭；
-   前台四页不受影响（本段只在 admin.js）。样式见 admin.css #uiTip */
-(function () {
-  var tip = null, cur = null;
-  function getTip() {
-    if (!tip) { tip = document.createElement('div'); tip.id = 'uiTip'; document.body.appendChild(tip); }
-    return tip;
-  }
-  function clipped(el) { return el.scrollWidth - el.clientWidth > 1 || el.scrollHeight - el.clientHeight > 1; }
-  function show(el) {
-    var txt = (el.textContent || '').trim();
-    if (!txt) return;
-    cur = el;
-    var t = getTip();
-    t.textContent = txt;
-    t.style.display = 'block';
-    var r = el.getBoundingClientRect();
-    t.style.left = '0px'; t.style.top = '0px';
-    var w = t.offsetWidth, h = t.offsetHeight;
-    var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
-    var y = r.bottom + 6;
-    if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
-    t.style.left = x + 'px'; t.style.top = y + 'px';
-  }
-  function hide() { if (tip) tip.style.display = 'none'; cur = null; }
-  var SKIP = 'input,textarea,select,button,a,.rte-editor,pre,code,canvas,svg,video,img,iframe';
-  // R106 修复：只对「无子元素的文本叶子」弹小框——带子元素的容器（如限高滚动的 .form 表单）
-  // 也会 scrollHeight 溢出被 clipped() 误判成"截断文本"，划过字段间隙就会把整个表单的文字全弹出来
-  function leafText(el) { return el.children.length === 0 && (el.textContent || '').trim().length > 0; }
-  // 电脑：鼠标悬停
-  document.addEventListener('mouseover', function (ev) {
-    var el = ev.target;
-    if (!(el instanceof Element) || !el.closest) return;
-    if (el.closest(SKIP)) return;
-    if (!leafText(el) || !clipped(el)) { if (cur && !cur.contains(el)) hide(); return; }
-    show(el);
-  });
-  document.addEventListener('mouseout', function (ev) {
-    if (!cur) return;
-    var to = ev.relatedTarget;
-    if (!to || (to !== cur && !cur.contains(to))) hide();
-  });
-  // 手机：点一下被截断的信息文本弹小框（白名单，避开按钮/链接/码复制等点击行为）；点别处关闭
-  var TAPSEL = 'td, th, .c-name, .v-name, .p-title, .p-sub';
-  document.addEventListener('click', function (ev) {
-    var el = ev.target;
-    if (!(el instanceof Element) || !el.closest) { hide(); return; }
-    if (el.closest(SKIP)) { hide(); return; }
-    var hit = el.closest(TAPSEL);
-    // R106：手机点按同样只认文本叶子（容器误弹同上）
-    if (hit && leafText(hit) && clipped(hit)) { show(hit); return; }
-    hide();
-  });
-  window.addEventListener('scroll', hide, true);
-  window.addEventListener('resize', hide);
-})();
+/* ===== R102→R167：截断文字悬停/点按小框 #uiTip 已收编至 ui-common.js（全站四页统一） =====
+   本段原 R102/R105/R106/R165 的 admin 专属实现整体迁出，行为不变（悬停/点按、白名单、
+   单行截断容器 clippedX 分支），白名单扩展前台截断元素（.card-title/.card-desc/.shop-name/.variant-tab），
+   弹窗开合经 syncBodyLock 自动隐藏小框。样式在 ui-common.css #uiTip。 */

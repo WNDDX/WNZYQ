@@ -375,9 +375,15 @@ if ('serviceWorker' in navigator) {
       if (__touchLocked) { document.removeEventListener('touchmove', __blockTouch); __touchLocked = false; }
     }
   };
+  var __prevModalOpen = false;
   window.syncBodyLock = function () {
-    var open = document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open,.lightbox.open');
-    window.lockBodyScroll(!!open);
+    var open = !!document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open,.lightbox.open');
+    window.lockBodyScroll(open);
+    // R167：只在弹窗开合状态真正「变迁」时隐藏 #uiTip——本函数由全文档 class/childList
+    // 变化观察器防抖触发（连 uiTip 自身创建都会触发），无条件隐藏会把刚弹出的小框 30ms 后
+    // 无端收掉；状态未变（仅普通 class 变化）时不动小框。
+    if (open !== __prevModalOpen) { try { if (window.__hideUiTip) window.__hideUiTip(); } catch (e0) {} }
+    __prevModalOpen = open;
   };
   // ===== 全站弹窗滚动锁自动同步（修复滚动穿透）=====
   // 此前只有公共组件（客服/提示弹窗）开窗时会锁背景，各页面自建弹窗（admin 的编辑/分类/公告/密码等 mask）
@@ -532,4 +538,89 @@ window.__modalKit = (function () {
       if (t && t.tagName === 'IMG' && !t.classList.contains('media-fail')) t.classList.add('media-fail');
     } catch (err) {}
   }, true);
+})();
+
+
+/* ===== R167（用户 20:27 定稿·全站版）：截断文字悬停/点按小框 #uiTip =====
+   收编自 admin.js 的 R102/R105/R106/R165 实现（原「只做后台」口径由用户新指令推翻：全系统、电脑手机都生效）。
+   电脑：mouseover 全局委托——文字实际被截断（scrollWidth/Height 超出）才弹，显示全的不弹；
+   手机：click 白名单委托——点一下被截断的文本弹小框看全文，点别处关闭。
+   白名单覆盖全站截断元素：后台表格单元格/分类名/类型名/产品标题/副标题 + 前台卡片标题/简介/店铺名/类型tab。
+   命中元素若本身有点击行为（前台资源卡开详情、类型tab切换）不拦截——弹窗一开，
+   syncBodyLock 重算滚动锁时顺带隐藏小框（见上），互不打架；tab 切换重渲染后元素脱离文档也会自动收起。
+   样式在 ui-common.css #uiTip（四页共用，含暗色变量）。 */
+(function () {
+  if (window.__uiTipLoaded) return;
+  window.__uiTipLoaded = true;
+  var tip = null, cur = null;
+  function getTip() {
+    if (!tip) { tip = document.createElement('div'); tip.id = 'uiTip'; document.body.appendChild(tip); }
+    return tip;
+  }
+  function clipped(el) { return el.scrollWidth - el.clientWidth > 1 || el.scrollHeight - el.clientHeight > 1; }
+  // R165：单行截断容器判定——scrollWidth 超宽但行高未超（水平省略号截断），
+  // 区别于 R106 排除的限高滚动容器（垂直溢出误判）。网格卡片副标题 .p-sub 带子元素（分类/简介/金额），
+  // leafText 判 false 旧逻辑弹不出，此分支让「展示不全有省略号」的容器也能点开看全文（复用 #uiTip 查看框）。
+  function clippedX(el) { return el.scrollWidth - el.clientWidth > 1 && el.scrollHeight - el.clientHeight <= 1; }
+  // R167：弹窗已打开时，弹窗外的元素不再弹小框——前台手机点被截断的资源卡标题会同时打开
+  // 详情弹窗（card 的 click 先于 document 委托执行、class 已同步可见），此时小框弹了也会被
+  // syncBodyLock 立刻收起等于闪一下；弹窗内的截断元素（如详情弹窗里的类型 tab）照常弹。
+  function anyModalOpen() {
+    return !!document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.alert-mask.open,.lightbox.open,.ann-modal.open,.ann-box.open,.stat-modal.open');
+  }
+  function show(el) {
+    var txt = (el.textContent || '').trim();
+    if (!txt) return;
+    if (anyModalOpen() && !el.closest('.modal-mask,.kf-mask,.share-mask,.alert-mask,.lightbox,.ann-modal,.ann-box,.stat-modal')) return;
+    cur = el;
+    var t = getTip();
+    t.textContent = txt;
+    t.style.display = 'block';
+    var r = el.getBoundingClientRect();
+    t.style.left = '0px'; t.style.top = '0px';
+    var w = t.offsetWidth, h = t.offsetHeight;
+    // R165/R167 右缘钳制口径（与后台分类下拉面板同款）：左右上下都钳在屏幕内，永不越出
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+    var y = r.bottom + 6;
+    if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
+    t.style.left = x + 'px'; t.style.top = y + 'px';
+    // R167：命中元素的点击若触发重渲染把它换掉（如类型 tab 切换重建），元素脱离文档后小框自动收起
+    setTimeout(function () { if (cur && !cur.isConnected) hide(); }, 350);
+  }
+  function hide() { if (tip) tip.style.display = 'none'; cur = null; }
+  // R167：供 syncBodyLock 调用——任何弹窗开合时隐藏小框（前台点卡片标题：详情弹窗滑入瞬间小框消失）
+  window.__hideUiTip = hide;
+  var SKIP = 'input,textarea,select,button,a,.rte-editor,pre,code,canvas,svg,video,img,iframe';
+  // R106 修复：只对「无子元素的文本叶子」弹小框——带子元素的容器（如限高滚动的 .form 表单）
+  // 也会 scrollHeight 溢出被 clipped() 误判成"截断文本"，划过字段间隙就会把整个表单的文字全弹出来
+  function leafText(el) { return el.children.length === 0 && (el.textContent || '').trim().length > 0; }
+  // R167 全站白名单（桌面悬停与手机点按同源）：后台 + 前台截断元素统一一份
+  var PICKSEL = 'td, th, .c-name, .v-name, .p-title, .p-sub, .card-title, .card-desc, .shop-name, .variant-tab';
+  // 电脑：鼠标悬停
+  document.addEventListener('mouseover', function (ev) {
+    var el = ev.target;
+    if (!(el instanceof Element) || !el.closest) return;
+    if (el.closest(SKIP)) return;
+    if (leafText(el) && clipped(el)) { show(el); return; }
+    var box = el.closest(PICKSEL); // R165：带子元素的单行截断容器（网格卡片副标题等）悬停看全文
+    if (box && clippedX(box)) { show(box); return; }
+    if (cur && !cur.contains(el)) hide();
+  });
+  document.addEventListener('mouseout', function (ev) {
+    if (!cur) return;
+    var to = ev.relatedTarget;
+    if (!to || (to !== cur && !cur.contains(to))) hide();
+  });
+  // 手机：点一下被截断的信息文本弹小框（白名单，避开按钮/链接/码复制等点击行为）；点别处关闭
+  document.addEventListener('click', function (ev) {
+    var el = ev.target;
+    if (!(el instanceof Element) || !el.closest) { hide(); return; }
+    if (el.closest(SKIP)) { hide(); return; }
+    var hit = el.closest(PICKSEL);
+    // R106：手机点按同样只认文本叶子（容器误弹同上）；R165：单行截断容器（.p-sub 等）命中 clippedX 也弹
+    if (hit && ((leafText(hit) && clipped(hit)) || clippedX(hit))) { show(hit); return; }
+    hide();
+  });
+  window.addEventListener('scroll', hide, true);
+  window.addEventListener('resize', hide);
 })();

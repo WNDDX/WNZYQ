@@ -127,7 +127,7 @@
     }
     .share-mask.open { display: flex; }
     .share-box {
-      background: var(--card-bg); border-radius: 12px;
+      background: var(--card-bg); border-radius: 14px;
       position: relative; padding: 26px 20px; width: 100%; max-width: 400px;
       text-align: center; animation: modalIn 0.18s ease;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -142,7 +142,7 @@
       user-select: all; line-height: 1.5; max-height: 100px; overflow-y: auto;
     }
     .share-close {
-      display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 12px;
+      display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;
       background: var(--blue1);
       color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
       transition: all 0.10s ease; letter-spacing: 1px;
@@ -156,7 +156,7 @@
       width: 100%;
       height: 38px;
       border: none;
-      border-radius: 50%;
+      border-radius: 19px;
       padding: 0 36px 0 38px;
       font-size: 14px;
       background: var(--card-bg);
@@ -213,7 +213,7 @@
       display: inline-block;
       padding: 8px 20px;
       margin-right: 8px;
-      border-radius: 50%;
+      border-radius: 18px;
       border: 1px solid var(--border);
       background: var(--card-bg);
       color: var(--text-light);
@@ -295,7 +295,7 @@
     /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
     .modal-box img[src^="data:image/svg+xml"], .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain; }
     .modal-cover[src^="data:image/svg+xml"] { aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px !important; object-fit: contain !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important; }
-    .modal-cover.m-loading { aspect-ratio: 16 / 9 !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important; max-height: 320px !important; background: var(--bg-light); border-radius: 12px; }
+    .modal-cover.m-loading { aspect-ratio: 16 / 9 !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important; max-height: 320px !important; background: var(--bg-light); border-radius: 10px; }
 
     .product-card {
       background: var(--card-bg);
@@ -372,8 +372,9 @@
     /* ---------- 下拉刷新 ---------- */
     .pull-refresh {
       position: fixed;
-      /* R108：与全站 toast 同位 top:80px（用户反馈手机上两处提示高度不一致） */
-      top: 80px;
+      /* R166（用户 19:29）：胶囊从手机物理顶部滑出（手机地址栏+80px 会落在屏幕中上部像"中间出现"），
+         R108 的与 toast 同位 80px 口径对本容器作废（toast 保持 80px 不动） */
+      top: 0;
       left: 0;
       right: 0;
       /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition，随手指从上往下揭开） */
@@ -395,7 +396,7 @@
       color: var(--blue1);
       background: rgba(255,255,255,0.92);
       border: 1px solid var(--blue2);
-      border-radius: 50%;
+      border-radius: 20px;
       padding: 6px 16px;
       line-height: 18px; /* R116：行盒显式化，与 toast 同源 */
       display: flex;
@@ -477,7 +478,7 @@
     }
     .modal-box {
       background: var(--card-bg);
-      border-radius: 12px;
+      border-radius: 14px;
       width: 100%;
       max-height: 88vh;
       max-height: 88dvh; /* R159：动态视口高度——手机地址栏收展时仍按可视区算，不认识 dvh 的老内核自动用上一行 */
@@ -554,7 +555,7 @@
       display: block;
       margin: 16px auto 0;
       background: #eef4fb;
-      border-radius: 12px;
+      border-radius: 10px;
       border: 1px solid #e0e0e0;
     }
     .modal-content { padding: 16px 20px 20px; }
@@ -590,7 +591,7 @@
     }
     .modal-detail {
       background: var(--bg-light);
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 14px 16px;
       font-size: 14px;
       color: var(--text-light);
@@ -643,7 +644,7 @@
     }
     .variant-tab {
       padding: 6px 16px;
-      border-radius: 50%;
+      border-radius: 16px;
       border: 1px solid var(--border);
       background: var(--card-bg);
       color: var(--text-light);
@@ -672,7 +673,7 @@
     }
     /* 公告小项 tabs（与类型切换 tabs 完全同款，保证关联性） */
     .ann-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 0 2px; }
-    .ann-tab { padding: 6px 16px; border-radius: 50%; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: all 0.15s ease; user-select: none; }
+    .ann-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: all 0.15s ease; user-select: none; }
     .ann-tab:hover { border-color: var(--blue1); color: var(--blue1); background: var(--hover-bg); transform: translateY(-1px); }
     .ann-tab.active { background: var(--blue1); color: #fff; border-color: transparent; font-weight: 600; box-shadow: 0 2px 8px rgba(30,136,229,0.3); }
     .variant-detail {
@@ -818,7 +819,7 @@
     }
     .resource-content img, .resource-content video {
       max-width: 100%;
-      border-radius: 8px;
+      border-radius: 6px;
       margin: 8px 0;
     }
 
@@ -833,7 +834,7 @@
       flex: 1;
       height: 46px;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       background: var(--blue1);
       color: #fff;
       font-size: 16px;
@@ -847,7 +848,7 @@
       color: #fff;
       border: none;
       padding: 0 28px;
-      border-radius: 12px;
+      border-radius: 10px;
       font-size: 16px;
       cursor: pointer;
       transition: all 0.10s ease;
@@ -866,7 +867,7 @@
 
 
     /* 平台公告 */
-    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 12px; width: 100%; max-width: 520px; max-height: 80vh; max-height: 80dvh; /* R159 */ overflow-y: auto; padding: 26px 22px; animation: modalIn 0.18s ease; text-align: left; }
+    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; max-height: 80dvh; /* R159 */ overflow-y: auto; padding: 26px 22px; animation: modalIn 0.18s ease; text-align: left; }
     .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color 0.15s ease; }
     .ann-modal .ann-title:hover { color: var(--blue1); }
     .ann-modal .ann-title.active { color: var(--blue1); }
@@ -876,7 +877,7 @@
     .ann-modal .ann-body p { margin: 6px 0; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
     /* 交互动效复用 ui-common.css 全站统一弹窗按键规则（R17 统一标准：hover 缩小变淡、按压更小更暗） */
-    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 12px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.10s ease; }
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.10s ease; }
     .ann-modal .modal-close-x { top: 12px; right: 12px; width: 32px; height: 32px; }
     /* 分类栏 */
     .category-bar-wrap {
@@ -986,7 +987,7 @@
     .sub-category-tag {
       display: inline-block;
       padding: 4px 14px;
-      border-radius: 12px;
+      border-radius: 14px;
       border: 1px solid var(--border);
       background: var(--bg-light);
       color: var(--text-light);
@@ -1105,7 +1106,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   border: 1px solid var(--border); /* R119：占位卡灰色线边框，失败边界可见（复用全局 --border 灰） */
   /* R123（用户定稿 15:03）：背景与图片感叹号占位符统一——图片占位 SVG 底色即 #f5f5f5（写死、不随暗色变），视频卡同色对齐 */
   background: #f5f5f5;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 14px 14px;
   text-align: center;
   width: 100%;
@@ -1137,7 +1138,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   color: #fff;
   padding: 0 16px;
   height: 38px;
-  border-radius: 50%;
+  border-radius: 18px;
   font-size: 14px;
   white-space: nowrap;
   text-align: center;
@@ -1155,4 +1156,15 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 @media (max-width: 600px) {
   /* 窄屏与全站 .tab 窄屏档同步（仅 padding/字号缩小，height 38px 与胶囊圆角同 tab 保持） */
   .video-fallback .vf-link { padding: 7px 12px; font-size: 13px; }
+}
+
+
+/* ===== R165（用户 18:59/19:11）：前台同步 =====
+   ① 展示容器 contain:paint——部分浏览器内核对弹窗内视频/选区绘制不裁剪（浮出弹窗、滚动时视频视觉浮动），
+     与后台 .rte-editor 同根因同修法（admin.css 同段注释）。这些容器内无 fixed/下拉后代，安全。
+   ② 小屏按键自然收敛（全系统统一：桌面密度不动，≤600px 按键 padding/字号收一档、按钮组 gap 收窄可换行）。 */
+.modal-detail, .media-list, .variant-detail, .ann-modal .ann-body { contain: paint; }
+@media (max-width: 600px) {
+  .resource-code-btn { padding: 0 14px; font-size: 13px; height: 38px; }
+  .btn-contact, .btn-close-modal { height: 40px; font-size: 14px; }
 }
