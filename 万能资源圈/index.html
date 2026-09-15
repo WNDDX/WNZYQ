@@ -17,7 +17,7 @@
 <meta name="twitter:description" content="优质虚拟资源导航站，一键获取学习资源、软件工具、设计素材">
 <meta name="twitter:image" content="/assets/images/logo.png">
   <link rel="stylesheet" href="/assets/ui-common.css">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/x-icon" href="/favicon.ico?v=174">
 <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
 <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e2a4f" media="(prefers-color-scheme: dark)">
@@ -246,9 +246,8 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
 /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */
-.pull-refresh{position:fixed;/*R166:top 80→0 从手机物理顶部拉出*/top:0;left:0;right:0;height:0;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;z-index:998;/*R161:顶锚定从顶部拉出*/transition:height .2s ease;pointer-events:none;background:transparent;}
-.pull-refresh.show{height:32px;}
-.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.pull-refresh{position:fixed;/*R170(用户 22:52):位置回到 top:80px——与 toast/之前下拉弹窗同位（用户拍板"高度要跟之前弹窗高度一致"；R166 的 top:0 作废）*/top:80px;left:0;right:0;height:0;/*R170:不裁切+胶囊平移——根治"滑回去中间消失"（原钉顶+overflow:hidden 高度裁切，划回时胶囊从下往上被裁掉）*/overflow:visible;display:flex;/*防拉伸:容器高 0,stretch 会把子项拉成 0 高*/align-items:flex-start;justify-content:center;z-index:998;pointer-events:none;background:transparent;}
+.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);/*R170:胶囊默认藏在 top:80px 上方（占 32~64px 区），跟手滑到 translateY(0)=80px 位*/transform:translateY(-48px);opacity:0;transition:transform .25s ease,opacity .2s ease;}
 .prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:prtspin .8s linear infinite;}
 @keyframes prtspin{to{transform:rotate(360deg);}}
 /* 弹窗右上角关闭按钮（与资源页/管理页一致） */
@@ -507,14 +506,24 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
         if(!pulling)return;
         var dy=e.touches[0].clientY-sy,dx=e.touches[0].clientX-sx;
         if(dy>0&&Math.abs(dy)>Math.abs(dx)){
-            dist=Math.min(dy*0.5,80);tip.style.height=dist+'px';tip.classList.add('show');/* R146（用户 00:36）：恢复随手指从上往下展开 */
+            dist=Math.min(dy*0.5,80);/* R170：胶囊跟手平移渐显，不再用容器高度裁切（划回时会残缺吞掉） */
+            var pill=tip.firstElementChild;
+            pill.style.transition='none';
+            pill.style.transform='translateY('+(-48+dist*0.6)+'px)';
+            pill.style.opacity=dist>0?String(Math.min(1,dist/20)):'0';
             tip.querySelector('.prt-label').textContent=dist>TH?'释放立即刷新':'下拉刷新';
         }
     },{passive:true});
     document.addEventListener('touchend',function(){
         if(!pulling)return;pulling=false;
-        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新…';tip.style.height='32px';setTimeout(function(){try{loadImg(dom.logoImage,CONFIG.logoImg);}catch(e){}tip.classList.remove('show');tip.style.height='0';tip.querySelector('.prt-label').textContent='下拉刷新';},600);}
-        else{tip.classList.remove('show');tip.style.height='0';}
+        var pill=tip.firstElementChild;
+        pill.style.transition='';/* R170：恢复 CSS 回弹动画，完整平移收回 */
+        if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新…';
+            pill.style.transform='translateY(0px)';
+            setTimeout(function(){try{loadImg(dom.logoImage,CONFIG.logoImg);}catch(e){}
+                pill.style.transform='translateY(-48px)';pill.style.opacity='0';
+                tip.querySelector('.prt-label').textContent='下拉刷新';},600);}
+        else{pill.style.transform='translateY(-48px)';pill.style.opacity='0';}
         dist=0;
     },{passive:true});
 })();

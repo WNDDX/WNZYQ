@@ -470,15 +470,22 @@
         if (!pulling) return;
         var dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
         if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-          // R146（用户 00:36）：恢复 R135 之前随手指从上往下展开动画
-          dist = Math.min(dy * 0.5, 80); tip.style.height = dist + 'px'; tip.classList.add('show');
+          // R170（用户 22:52）：胶囊完整平移跟手（关 transition 防滞后），从 -48px 随手指滑到 0px（=top:80px 位），
+          // 替代原"容器高度裁切展开"——划回时胶囊会从下往上被裁掉（残缺消失），平移永不残缺
+          dist = Math.min(dy * 0.5, 80);
+          var pill = tip.firstElementChild;
+          pill.style.transition = 'none';
+          pill.style.transform = 'translateY(' + (-48 + dist * 0.6) + 'px)';
+          pill.style.opacity = dist > 0 ? String(Math.min(1, dist / 20)) : '0';
           tip.querySelector('.prt').textContent = dist > TH ? '释放立即刷新' : '下拉刷新';
         }
       }, { passive: true });
       document.addEventListener('touchend', function () {
         if (!pulling) return; pulling = false;
+        var pill = tip.firstElementChild;
+        pill.style.transition = ''; // R170：恢复 CSS 回弹动画
         if (dist > TH) {
-          tip.style.height = '32px'; // R146：恢复展开态高度
+          pill.style.transform = 'translateY(0px)'; // R170：停在 80px 位显示「正在刷新…」
           tip.querySelector('.prt').textContent = '正在刷新…';
           var loginVisible = document.getElementById('loginView') && document.getElementById('loginView').style.display !== 'none';
           if (loginVisible) { /* R20：登录页下拉刷新=整页重载（未登录无数据面板可刷新） */
@@ -491,8 +498,12 @@
           else if (t === 'stats' && typeof loadStats === 'function') loadStats(undefined, undefined, 1);
           else if (t === 'categories' && typeof loadCategories === 'function') loadCategories();
           else if (t === 'settings' && typeof loadSettings === 'function') loadSettings();
-          setTimeout(function () { tip.classList.remove('show'); tip.style.height = '0'; }, 400); // R146：恢复收回
-        } else { tip.classList.remove('show'); tip.style.height = '0'; }
+          setTimeout(function () { pill.style.transform = 'translateY(-48px)'; pill.style.opacity = '0'; tip.querySelector('.prt').textContent = '下拉刷新'; }, 400); // R170：完整滑回上方淡出 + 文案复位（避免下次下拉闪现「正在刷新…」）
+        } else {
+          // 未达阈值：整体滑回上方淡出——R170：完整收回，不再裁切残缺
+          pill.style.transform = 'translateY(-48px)';
+          pill.style.opacity = '0';
+        }
         dist = 0;
       }, { passive: true });
     })();
@@ -552,7 +563,9 @@
       document.getElementById('panel-categories').style.display = name === 'categories' ? '' : 'none';
       document.getElementById('panel-settings').style.display = name === 'settings' ? '' : 'none';
       if (name === 'products' && !window.__plP) { window.__plP = 1; loadProducts(); }
-      if (name === 'stats' && !window.__plS) { window.__plS = 1; loadStats(); }
+      // R171：__plS 只挡"已有数据"的重复拉取——预加载发生在登录时（面板不可见，trend 可能为空），
+      // 数据为空再切到统计 tab 必须重新 loadStats + loading 立即显示（用户 23:31：点了没反应/慢）
+      if (name === 'stats' && (!window.__plS || !(state.statsTrendAll && state.statsTrendAll.length))) { window.__plS = 1; loadStats(); }
       if (name === 'stats') { try { if (window.__rerenderLine) window.__rerenderLine(); } catch (e) {} } // R145：面板可见后重画，轴字号按真实宽度补偿
       if (name === 'categories' && !window.__plC) { window.__plC = 1; loadCategories(); }
       if (name === 'settings') { if (!window.__plSet) loadSettings(); }
@@ -1923,6 +1936,9 @@
     // R165（用户 19:06）：pointerdown(touch) 选中兜底——部分浏览器内核（WebView/国产壳）tap 编辑器内媒体时
     // touchend/click 合成事件被吞，旧链路根本不触发 → ×浮不出来。pointerdown 是触摸链第一个事件、必然派发。
     // 不 preventDefault：不拦播放手势与后续 touchend/click 委托（重复执行幂等——selectNode/加 class/浮×均可重入）。
+    // R171（用户 23:31）：媒体选中回归「单击才算选中」——pointerdown 只记录 tap 基准，
+    // 不再立即选中（旧实现摸到就选中，滑动/拖选先碰到媒体也被选中）。
+    var __rtePd = null;
     document.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'mouse') return;
       var t = e.target;
@@ -1931,6 +1947,16 @@
       var ed = t.closest ? t.closest('[contenteditable="true"]') : null;
       if (!ed) return;
       if (t.tagName !== 'VIDEO' && t.tagName !== 'IMG') return;
+      __rtePd = { t: t, x: e.clientX, y: e.clientY };
+    }, { capture: true });
+    // R171：pointerup 且位移 <10px（真 tap）才选中——pointerup 是原生 Pointer 事件，
+    // R165 那类吞 touchend/click 合成事件的内核依然可靠；滑动点到媒体、拖选文字扫过媒体都不再选中。
+    document.addEventListener('pointerup', function (e) {
+      if (e.pointerType === 'mouse') return;
+      if (!__rtePd) return;
+      var t = __rtePd.t, x0 = __rtePd.x, y0 = __rtePd.y; __rtePd = null;
+      if (t !== e.target) return; // 手指移出媒体（滑动）不算 tap
+      if (Math.abs(e.clientX - x0) > 10 || Math.abs(e.clientY - y0) > 10) return;
       try {
         var sel = window.getSelection();
         var range = document.createRange();
@@ -1949,6 +1975,12 @@
       var pick = null;
       if (t.tagName === 'VIDEO' || t.tagName === 'IMG') pick = t;
       if (!pick) return;
+      // R171（用户 23:31）：拖选文字/滑动手势结束（位移 >10px）不再当 tap——不选中不出编辑框
+      if (__rtePd) {
+        var _ct = (e.changedTouches && e.changedTouches[0]) || null;
+        var _px = __rtePd.x, _py = __rtePd.y; __rtePd = null;
+        if (_ct && (Math.abs(_ct.clientX - _px) > 10 || Math.abs(_ct.clientY - _py) > 10)) return;
+      }
       try { e.preventDefault(); } catch (err0) {}
       try {
         var sel = window.getSelection();
@@ -3594,7 +3626,9 @@ document.addEventListener('click', function (e) {
       if (startDate) params.push('start_date=' + encodeURIComponent(startDate));
       if (endDate) params.push('end_date=' + encodeURIComponent(endDate));
       if (params.length) url += '?' + params.join('&');
-      var _sl0 = document.getElementById('statsLoading'); if (_sl0 && !(document.getElementById('statCards') || { children: [] }).children.length) _sl0.style.display = 'flex';
+      // R171（用户 23:31）：请求一发就转圈——点 1 天档/自定义日期/缓存缺失时的请求立即有反馈，
+      // 原先仅首开统计页显示转圈，再次点击时界面纹丝不动像没反应
+      var _sl0 = document.getElementById('statsLoading'); if (_sl0) _sl0.style.display = 'flex';
       api(url).then(function (res) {
         // 数据统计表格顺序：资源明细 → 分类统计 → 浏览记录（幂等，仅首次生效）
         var _sec = document.getElementById('panel-stats');

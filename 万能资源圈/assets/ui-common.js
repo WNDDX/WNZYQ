@@ -553,6 +553,7 @@ window.__modalKit = (function () {
   if (window.__uiTipLoaded) return;
   window.__uiTipLoaded = true;
   var tip = null, cur = null;
+  var __lastTxt = null, __lastW = 0, __lastH = 0, __showAt = 0; // R171：文本尺寸缓存 + 显示冷静期时间戳
   function getTip() {
     if (!tip) { tip = document.createElement('div'); tip.id = 'uiTip'; document.body.appendChild(tip); }
     return tip;
@@ -572,20 +573,39 @@ window.__modalKit = (function () {
     var txt = (el.textContent || '').trim();
     if (!txt) return;
     if (anyModalOpen() && !el.closest('.modal-mask,.kf-mask,.share-mask,.alert-mask,.lightbox,.ann-modal,.ann-box,.stat-modal')) return;
-    cur = el;
+    cur = el; __showAt = Date.now();
     var t = getTip();
     t.textContent = txt;
     t.style.display = 'block';
     var r = el.getBoundingClientRect();
-    t.style.left = '0px'; t.style.top = '0px';
-    var w = t.offsetWidth, h = t.offsetHeight;
+    // R171（用户 23:08）：同文本免二次测量——省一次强制回流，点截断文字不再卡顿
+    var w, h;
+    if (__lastTxt === txt) { w = __lastW; h = __lastH; }
+    else {
+      t.style.left = '0px'; t.style.top = '0px';
+      w = t.offsetWidth; h = t.offsetHeight;
+      __lastTxt = txt; __lastW = w; __lastH = h;
+    }
     // R165/R167 右缘钳制口径（与后台分类下拉面板同款）：左右上下都钳在屏幕内，永不越出
     var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
     var y = r.bottom + 6;
     if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
     t.style.left = x + 'px'; t.style.top = y + 'px';
-    // R167：命中元素的点击若触发重渲染把它换掉（如类型 tab 切换重建），元素脱离文档后小框自动收起
-    setTimeout(function () { if (cur && !cur.isConnected) hide(); }, 350);
+    // R171（用户 23:08）：瞬消根治——命中元素被重渲染换掉（类型 tab 切换重建）时，
+    // 先在白名单里找同文本的截断元素接替 cur（小框保留供阅读），找不到才收起；
+    // 旧实现 350ms isConnected 检查直接 hide，正是「显示一瞬间就消失」的元凶
+    setTimeout(function () {
+      if (cur && !cur.isConnected) {
+        var txt2 = (cur.textContent || '').trim(), found = null;
+        try {
+          document.querySelectorAll(PICKSEL).forEach(function (n) {
+            if (!found && n.isConnected && ((n.textContent || '').trim()) === txt2 && (clipped(n) || clippedX(n))) found = n;
+          });
+        } catch (e1) {}
+        if (found) { cur = found; return; }
+        hide();
+      }
+    }, 350);
   }
   function hide() { if (tip) tip.style.display = 'none'; cur = null; }
   // R167：供 syncBodyLock 调用——任何弹窗开合时隐藏小框（前台点卡片标题：详情弹窗滑入瞬间小框消失）
@@ -596,8 +616,10 @@ window.__modalKit = (function () {
   function leafText(el) { return el.children.length === 0 && (el.textContent || '').trim().length > 0; }
   // R167 全站白名单（桌面悬停与手机点按同源）：后台 + 前台截断元素统一一份
   var PICKSEL = 'td, th, .c-name, .v-name, .p-title, .p-sub, .card-title, .card-desc, .shop-name, .variant-tab';
-  // 电脑：鼠标悬停
-  document.addEventListener('mouseover', function (ev) {
+  // R171（用户 23:08）：mouseover/mouseout 只在真 hover 设备绑定——手机 tap 会先派发模拟
+  // mouseover 再派发 click，同一 tap 双份 show（各含强制回流）即「点击卡卡的」主因之一
+  var __hoverDev = window.matchMedia ? window.matchMedia('(hover: hover)').matches : true;
+  if (__hoverDev) document.addEventListener('mouseover', function (ev) {
     var el = ev.target;
     if (!(el instanceof Element) || !el.closest) return;
     if (el.closest(SKIP)) return;
@@ -621,6 +643,8 @@ window.__modalKit = (function () {
     if (hit && ((leafText(hit) && clipped(hit)) || clippedX(hit))) { show(hit); return; }
     hide();
   });
-  window.addEventListener('scroll', hide, true);
+  // R171：show 后 400ms 内忽略 scroll 收框——手机 tap 常伴随视口微滚动（地址栏/焦点重排），
+  // 旧实现小框刚弹出就被 scroll capture hide 收走，即「只显示一瞬间」的另一个元凶
+  window.addEventListener('scroll', function () { if (Date.now() - __showAt < 400) return; hide(); }, true);
   window.addEventListener('resize', hide);
 })();

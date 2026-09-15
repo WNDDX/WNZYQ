@@ -372,25 +372,23 @@
     /* ---------- 下拉刷新 ---------- */
     .pull-refresh {
       position: fixed;
-      /* R166（用户 19:29）：胶囊从手机物理顶部滑出（手机地址栏+80px 会落在屏幕中上部像"中间出现"），
-         R108 的与 toast 同位 80px 口径对本容器作废（toast 保持 80px 不动） */
-      top: 0;
+      /* R170（用户 22:52）：位置回到 top:80px——与 toast/之前下拉弹窗同位（用户拍板"高度要跟之前弹窗高度一致"；
+         R166 的 top:0 在真机上地址栏收展时胶囊位置跳变/被遮挡，作废） */
+      top: 80px;
       left: 0;
       right: 0;
-      /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition，随手指从上往下揭开） */
+      /* R170：容器只做定位锚点（height 恒 0），胶囊完整平移 */
       height: 0;
-      transition: height 0.2s ease;
-      overflow: hidden;
+      overflow: visible; /* R170：不裁切——根治"滑回去中间消失"：原 flex-start 钉顶 + overflow:hidden 高度裁切，
+                            划回时容器高度递减把胶囊从下往上裁掉（残缺消失）；改为胶囊整体平移后无需裁切 */
       display: flex;
-      /* R161（用户 23:48）：胶囊锚定容器顶部——height 0→N 揭开时从手机顶部拉出（第一版口径），高度/阈值不动 */
+      /* 防拉伸：容器高 0，flex 默认 stretch 会把子项拉成 0 高 */
       align-items: flex-start;
       justify-content: center;
       z-index: 101;
       pointer-events: none;
-      /* 修复：去掉整块蓝色渐变遮挡，改为轻量提示条，悬浮在内容上方不遮内容 */
       background: transparent;
     }
-    .pull-refresh.show { height: 32px; } /* R146：恢复（R115/R116 口径 32px，容器随手指从上往下展开） */
     .pull-refresh-text {
       font-size: 12px;
       color: var(--blue1);
@@ -403,7 +401,11 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-
+      /* R170：胶囊完整平移——默认藏在 top:80px 上方（占 32~64px 区，32px 高+16px 间隙），
+         下拉时 JS 跟手滑到 translateY(0)（=80px 位，与 toast 同位）；松手回弹用此 transition */
+      transform: translateY(-48px);
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.2s ease;
     }
     .pull-refresh-icon {
       display: inline-block;

@@ -1495,18 +1495,23 @@
       if (deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
         pullDistance = Math.min(deltaY * 0.5, 80); // 阻尼效果，最大80px
         // 顶栏常驻：下拉刷新不再隐藏顶栏
-        // R146（用户 00:36）：恢复 R135 之前的下拉展开动画——容器高度随手指下拉实时生长
-        pullRefreshEl.style.height = pullDistance + 'px'; // R146：恢复随手指从上往下展开
-        pullRefreshEl.classList.add('show');
+        // R170（用户 22:52）：胶囊完整平移跟手（关 transition 防滞后），从 -48px 随手指滑到 0px（=top:80px 位），
+        // 替代原"容器高度裁切展开"——划回时胶囊会从下往上被裁掉（残缺消失），平移永不残缺
+        var pill = pullRefreshEl.firstElementChild;
+        pill.style.transition = 'none';
+        pill.style.transform = 'translateY(' + (-48 + pullDistance * 0.6) + 'px)';
+        pill.style.opacity = pullDistance > 0 ? String(Math.min(1, pullDistance / 20)) : '0';
         document.getElementById('pullRefreshText').textContent = pullDistance > PULL_THRESHOLD ? '释放立即刷新' : '下拉刷新';
       }
     }, { passive: true });
     document.addEventListener('touchend', function () {
       if (!isPulling) return;
       isPulling = false;
+      var pill = pullRefreshEl.firstElementChild;
+      pill.style.transition = ''; // R170：恢复 CSS 回弹动画
       if (pullDistance > PULL_THRESHOLD) {
         // 触发刷新
-        pullRefreshEl.style.height = '32px'; // R146（用户 00:36）：恢复展开动画
+        pill.style.transform = 'translateY(0px)'; // R170：停在 80px 位显示「正在刷新…」
         document.getElementById('pullRefreshText').textContent = '正在刷新…';
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
@@ -1518,15 +1523,16 @@
             fetchRemote();
           }
           renderAll();
-          pullRefreshEl.classList.remove('show');
-          pullRefreshEl.style.height = '0'; // R146：恢复收回
+          pill.style.transform = 'translateY(-48px)'; // R170：完整滑回上方淡出
+          pill.style.opacity = '0';
+          document.getElementById('pullRefreshText').textContent = '下拉刷新'; // R170：文案复位，避免下次下拉闪现「正在刷新…」
           // 刷新结束后显示顶部栏
           if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
         }, 400);
       } else {
-        // 未达到阈值，收回
-        pullRefreshEl.classList.remove('show');
-        pullRefreshEl.style.height = '0'; // R146：恢复收回
+        // 未达到阈值，收回——R170：整体滑回上方淡出（完整收回，不再裁切残缺）
+        pill.style.transform = 'translateY(-48px)';
+        pill.style.opacity = '0';
         // 收回后显示顶部栏
         if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
       }

@@ -138,9 +138,8 @@
     @media (hover: hover) and (pointer: fine) { html, body { overscroll-behavior: auto; } }
     /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
     /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */
-    .pull-refresh { position: fixed; /* R166：top 80→0，从手机物理顶部拉出（R108 与 toast 同位口径对本容器作废，toast 不动） */ top: 0; left: 0; right: 0; height: 0; overflow: hidden; display: flex; align-items: flex-start; justify-content: center; z-index: 300; /* R161：胶囊顶锚定，从手机顶部拉出，高度/阈值不动 */ transition: height .2s ease; pointer-events: none; background: transparent; }
-    .pull-refresh-text { font-size: 12px; line-height: 18px; color: var(--blue1); background: rgba(255,255,255,.92); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
-    .pull-refresh.show { height: 32px; } /* R116：32px=胶囊单行总高(6+18+6+1+1)，与 toast 逐像素一致 */
+    .pull-refresh { position: fixed; /* R170（用户 22:52）：位置回到 top:80px——与 toast/之前下拉弹窗同位（用户拍板"高度要跟之前弹窗高度一致"；R166 的 top:0 作废） */ top: 80px; left: 0; right: 0; height: 0; /* R170：不裁切+胶囊平移——根治"滑回去中间消失"（原 flex-start 钉顶+overflow:hidden 高度裁切，划回时胶囊从下往上被裁掉） */ overflow: visible; display: flex; /* 防拉伸：容器高 0，stretch 会把子项拉成 0 高 */ align-items: flex-start; justify-content: center; z-index: 300; pointer-events: none; background: transparent; }
+    .pull-refresh-text { font-size: 12px; line-height: 18px; color: var(--blue1); background: rgba(255,255,255,.92); border: 1px solid var(--blue2); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.1); /* R170：胶囊默认藏在 top:80px 上方（占 32~64px 区），跟手滑到 translateY(0)=80px 位；松手回弹用此 transition */ transform: translateY(-48px); opacity: 0; transition: transform .25s ease, opacity .2s ease; }
     .pull-refresh-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2); border-top-color: var(--blue1); border-radius: 50%; animation: prspin .8s linear infinite; }
     @keyframes prspin { to { transform: rotate(360deg); } }
     .topbar {
@@ -903,11 +902,16 @@
     .badge.hidden { background: #fff3cd; color: #856404; }
 
     /* 图片预览 */
+    /* R171（用户 23:08）：固定 120 方槽——假链接加载中/加载失败换占位/真图，
+       都在同一槽位 contain 居中，预览区尺寸恒定，不再时大时小跳动 */
     .img-preview {
-      margin-top: 6px; max-width: 120px; max-height: 120px;
+      margin-top: 6px; max-width: 100%;
       border-radius: 8px; object-fit: contain; display: none;
       border: 1px solid var(--border); background: var(--bg-light);
     } /* R42：表单预览 contain 完整显示（不超框不裁切，与资源弹窗封面同语义） */
+    /* R171：固定 120 方槽——ID+important 只钉尺寸（压过先加载 ui-common.css 的 0-2-1!important data:SVG 规则，B10），
+       不碰 display（否则 1-0-0 压过 .img-preview.show 的显隐切换） */
+    img.img-preview, #fImgPreview { width: 120px !important; height: 120px !important; aspect-ratio: auto !important; }
     .img-preview.show { display: block; }
 
     /* 平台设置表单 */
@@ -1371,12 +1375,22 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 112px !important; }
     /* 窄屏（≤600px）：固定槽位放宽为自然宽、空占位隐藏，避免固定列挤爆窄屏弹窗（对齐口径为桌面/平板） */
     @media (max-width: 600px) {
+      /* R171（用户 23:08/23:31）：手机端不再一律归零挤压——类型列表/码面板换行铺开保对齐：
+         ①码键/无码键统一 88px 槽位（同宽，回答用户「宽高一致吗」）；
+         ②排序 44px + 行尾按键 flex-shrink:0，「排序」「删除」显示全（a6 对齐修复）；
+         ③类型名 flex 保底 120px，绝不一字符就省略号；④面板行同样保底不挤爆 */
       .variant-item .v-price, .cp-item .cp-price { min-width: 0; text-align: left; }
       .variant-item .code-slot, .cp-item .code-slot,
-      .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 0 !important; }
+      .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 88px !important; }
       .variant-item .bind-slot, .variant-item .bind-slot-ph { min-width: 0; }
-      .variant-item .v-sort { min-width: 0; }
+      .variant-item .v-sort { min-width: 44px; flex-shrink: 0; }
       .variant-item .price-slot-ph, .cp-item .price-slot-ph, .variant-item .bind-slot-ph { display: none; }
+      .variant-item { flex-wrap: wrap; }
+      .variant-item .v-name { flex: 1 1 130px; min-width: 120px; }
+      .variant-item > button.row-btn { flex-shrink: 0; }
+      .cp-item { flex-wrap: wrap; }
+      .cp-item .cp-name { flex: 1 1 100px !important; min-width: 80px !important; }
+      .cp-item .cp-price { min-width: 48px; flex-shrink: 0; }
     }
 
 
