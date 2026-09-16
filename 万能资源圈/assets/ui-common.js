@@ -104,7 +104,7 @@ if ('serviceWorker' in navigator) {
       img.classList.remove('kf-qr-in');
       img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; if (this.classList) this.classList.add('media-fail'); };
       img.onload = function () { void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=178';
+      img.src = qrImg || '/assets/images/kefu.png?v=181';
       if (img.complete && img.naturalWidth) { void img.offsetWidth; img.classList.add('kf-qr-in'); }
       // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
       if (window.__bindQrLightbox) window.__bindQrLightbox(img);
@@ -558,11 +558,22 @@ window.__modalKit = (function () {
     if (!tip) { tip = document.createElement('div'); tip.id = 'uiTip'; document.body.appendChild(tip); }
     return tip;
   }
-  function clipped(el) { return el.scrollWidth - el.clientWidth > 1 || el.scrollHeight - el.clientHeight > 1; }
+  function clipped(el) { return el.scrollHeight - el.clientHeight > 1 || clippedX(el); }
   // R165：单行截断容器判定——scrollWidth 超宽但行高未超（水平省略号截断），
   // 区别于 R106 排除的限高滚动容器（垂直溢出误判）。网格卡片副标题 .p-sub 带子元素（分类/简介/金额），
   // leafText 判 false 旧逻辑弹不出，此分支让「展示不全有省略号」的容器也能点开看全文（复用 #uiTip 查看框）。
-  function clippedX(el) { return el.scrollWidth - el.clientWidth > 1 && el.scrollHeight - el.clientHeight <= 1; }
+  // R179（用户 19:29）：有些省略号点击不显示——WebKit/iOS 内核对 text-overflow:ellipsis 的截断
+  // 不计入 scrollWidth（scrollWidth==clientWidth），纯差值判定整类漏弹；补 Range 实测兜底：
+  // Range 选中元素全部内容量布局宽，与 clientWidth 差 >1px 即真截断（Chromium 下与 scrollWidth 同值）。
+  function clippedX(el) {
+    if (el.scrollHeight - el.clientHeight > 1) return false; // 多行限高容器（R106 .form 类）不在水平截断职责内
+    if (el.scrollWidth - el.clientWidth > 1) return true;
+    if (el.clientWidth <= 0) return false;
+    try {
+      var rng = document.createRange(); rng.selectNodeContents(el);
+      return rng.getBoundingClientRect().width - el.clientWidth > 1;
+    } catch (e0) { return false; }
+  }
   // R167：弹窗已打开时，弹窗外的元素不再弹小框——前台手机点被截断的资源卡标题会同时打开
   // 详情弹窗（card 的 click 先于 document 委托执行、class 已同步可见），此时小框弹了也会被
   // syncBodyLock 立刻收起等于闪一下；弹窗内的截断元素（如详情弹窗里的类型 tab）照常弹。
@@ -575,7 +586,10 @@ window.__modalKit = (function () {
     if (anyModalOpen() && !el.closest('.modal-mask,.kf-mask,.share-mask,.alert-mask,.lightbox,.ann-modal,.ann-box,.stat-modal')) return;
     cur = el; __showAt = Date.now();
     var t = getTip();
-    t.textContent = txt;
+    // R179（用户 19:29）：小框展示的文字与原文本一模一样（含颜色）——旧实现 textContent 纯文本+
+    // 容器固定 color:var(--text)，富文本里的彩色字全被染黑不美观；改 innerHTML 克隆原元素内容，
+    // 内联彩色 span 原样保留，无内联色的文字继续继承 #uiTip 默认色
+    t.innerHTML = el.innerHTML;
     t.style.display = 'block';
     var r = el.getBoundingClientRect();
     // R171（用户 23:08）：同文本免二次测量——省一次强制回流，点截断文字不再卡顿
@@ -627,7 +641,9 @@ window.__modalKit = (function () {
   // 也会 scrollHeight 溢出被 clipped() 误判成"截断文本"，划过字段间隙就会把整个表单的文字全弹出来
   function leafText(el) { return el.children.length === 0 && (el.textContent || '').trim().length > 0; }
   // R167 全站白名单（桌面悬停与手机点按同源）：后台 + 前台截断元素统一一份
-  var PICKSEL = 'td, th, .c-name, .v-name, .p-title, .p-sub, .card-title, .card-desc, .shop-name, .variant-tab';
+  // R179（用户 19:29）：补漏——.cpd-text（全站下拉选择框显示文本）、.cp-name（资源码下拉面板类型名，
+  // R177 起截断省略号但不在名单点了没反应）、.v-price（类型行金额，R179 起手机档截断）之前点击不显示
+  var PICKSEL = 'td, th, .c-name, .v-name, .p-title, .p-sub, .card-title, .card-desc, .shop-name, .variant-tab, .cpd-text, .cp-name, .v-price';
   // R171（用户 23:08）：mouseover/mouseout 只在真 hover 设备绑定——手机 tap 会先派发模拟
   // mouseover 再派发 click，同一 tap 双份 show（各含强制回流）即「点击卡卡的」主因之一
   var __hoverDev = window.matchMedia ? window.matchMedia('(hover: hover)').matches : true;

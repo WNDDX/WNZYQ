@@ -708,7 +708,9 @@
     .rte-editor {
       position: relative; /* R158：×浮层（.rte-img-del absolute）的定位基准——编辑器自身即滚动容器，×与媒体同坐标系原生滚动同步 */
       contain: paint; /* R165（用户 18:59/19:03）：部分浏览器内核对滚动容器内的 video/原生选区高亮不裁剪——视频滚动时浮出弹窗、蓝色选层越界、视频划到顶仍挡屏三分之一。contain:paint 强制后代绘制裁剪到本容器（含合成层后代），弹窗边界即视觉边界。不影响自身 rte-large 的 fixed 定位与 box-shadow（只裁后代） */
-      overscroll-behavior: contain; /* R173（用户 00:40）：滚动穿透根治——编辑器滚到边界后继续滑，滚动链穿透到底层 body（用户感觉"滑动的其实是最后面的资源"）；contain 切断滚动链，到头即停 */
+      /* R179（用户 19:35，反转 R173 的 contain）：编辑器滚到顶/底边界后继续滑，滚动链放行穿透到
+         编辑器外的页面（旧 contain 到头即停，手机在长内容编辑器里滑很久都滑不出去）；
+         默认 overscroll-behavior:auto 正是"未到边界留本容器、到边界传给祖先"，无需额外属性 */
       min-height: 150px; max-height: 400px; overflow-y: auto;
       padding: 12px; border: 1px solid var(--border); border-radius: 0 0 10px 10px;
       background: var(--card-bg); line-height: 1.7; font-size: 14px; color: var(--text);
@@ -1120,11 +1122,12 @@
       .stat-date-input { flex: 1 1 130px; min-width: 0 !important; font-size: 12px !important; padding: 7px 8px !important; }
       .trend-chart { padding: 12px; }
       .rte-toolbar { gap: 3px; padding: 6px; }
-      /* R173（用户 00:38）：手机端工具栏"显示不全"根治——17 键 wrap 换 7 行占 200px+ 把编辑器/表单挤出屏；
-         改单行不换行+横向滚动（标准工具栏模式），全部按键滑到即可达，不再被截断 */
-      .rte-toolbar { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+      /* R179b（用户 20:20）：工具栏默认收起态（单行横滚，HTML 初始挂 rte-collapsed），
+         点击展开键挂/摘类切换多行 wrap 全显（基础规则见 1153 段，全端同款）；
+       -webkit-overflow-scrolling 与 flex-shrink 保底保留，收起态横滚体验不变 */
+      .rte-toolbar { -webkit-overflow-scrolling: touch; }
       .rte-toolbar .rte-btn, .rte-toolbar .rte-group, .rte-toolbar .select-picker, .rte-toolbar .rte-palette { flex-shrink: 0; }
-      .rte-toolbar.rte-toolbar-large { flex-wrap: nowrap; overflow-x: auto; } /* 放大态同款单行横滚（后写覆盖 723 行的 wrap） */
+      .rte-toolbar.rte-toolbar-large.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; } /* 放大态收起=单行横滚 */
       .rte-toolbar .rte-btn, .rte-toolbar .rte-select { font-size: 12px; padding: 4px 6px; }
       .tb-row2 { gap: 8px; flex-wrap: wrap; }
       /* R18：手机端两个筛选框并排等宽（升级后的状态筛选外壳 .select-picker 一并覆盖） */
@@ -1148,32 +1151,23 @@
       .back-top { right: 14px; bottom: 18px; width: 40px; height: 40px; }
     }
 
-    /* R176（用户 10:14）：编辑器工具栏展开键——手机单行横滚模式下 17 键要滑动才能到达，
-       复用统计面板三角按键视觉（.stat-toggle 蓝色三角 + 旋转过渡）；sticky 钉在滚动区右缘
-       永远可见可点，点击在「单行滚动」与「多行展开」两种编辑方式间切换；桌面工具栏本来
-       就 wrap 全显，展开键隐藏 */
-    /* R176（用户 10:14）：编辑器工具栏展开键——手机单行横滚模式下 17 键要滑动才能到达，
-       复用统计面板三角按键视觉（.stat-toggle 蓝色三角 + 旋转过渡）；sticky 钉在滚动区右缘
-       永远可见可点，点击在「单行滚动」与「多行展开」两种编辑方式间切换；桌面工具栏本来
-       就 wrap 全显（无横滚），展开键隐藏 */
-    .rte-expand { display: none; }
-    .rte-expand .toggle-arrow { width: 20px; height: 20px; transition: transform 0.15s ease; transform: rotate(0deg); }
-    .rte-expand.open .toggle-arrow { transform: rotate(180deg); }
-    @media (max-width: 600px) {
-      .rte-expand {
-        display: flex; position: sticky; right: 0; flex-shrink: 0; align-self: center;
-        width: 30px; height: 30px; padding: 0; margin-left: 2px;
-        border: 1px solid var(--border); border-radius: 6px;
-        background: var(--card-bg); color: var(--blue1); cursor: pointer;
-        align-items: center; justify-content: center;
-        box-shadow: -8px 0 8px -6px rgba(0,0,0,0.25); /* 左缘渐隐遮住底下滚过的按键 */
-      }
-      .rte-expand:active { transform: scale(0.94); }
-      /* 展开态：工具栏改多行 wrap，全部按键直接可见；展开键脱离 sticky 回流到行尾。
-         同特异性后写覆盖上方的 nowrap（含放大态 rte-toolbar-large） */
-      .rte-toolbar.rte-expanded { flex-wrap: wrap; overflow-x: hidden; }
-      .rte-toolbar.rte-expanded .rte-expand { position: static; margin-left: auto; box-shadow: none; }
+    /* R176（用户 10:14）：编辑器工具栏展开键——复用统计面板三角按键视觉（蓝色三角+旋转过渡）。
+       R179b（用户 20:20）：默认收起态——展开键全端可见（桌面也显示），HTML 初始挂 rte-collapsed
+       （单行横滚，省高度），点击摘类展开成多行 wrap 全显（桌面手机同款）；语义沿用：
+       旧的展开态类已整体废弃，改挂 rte-collapsed；箭头在收起态 0deg（点我展开），展开态 180deg */
+    .rte-expand {
+      display: flex; margin-left: auto; flex-shrink: 0; align-self: center;
+      width: 30px; height: 30px; padding: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--card-bg); color: var(--blue1); cursor: pointer;
+      align-items: center; justify-content: center;
     }
+    .rte-expand .toggle-arrow { width: 20px; height: 20px; transition: transform 0.15s ease; transform: rotate(180deg); }
+    .rte-expand:active { transform: scale(0.94); }
+    /* 收起态：工具栏单行横滚，展开键 sticky 钉在滚动区右缘永远可见可点（桌面手机同款） */
+    .rte-toolbar.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; }
+    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 0; margin-left: 2px; box-shadow: -8px 0 8px -6px rgba(0,0,0,0.25); }
+    .rte-toolbar.rte-collapsed .rte-expand .toggle-arrow { transform: rotate(0deg); }
 
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
        弹窗按键（.modal-inner-btn/.modal-close/.confirm 系）的按压效果已统一抽入
@@ -1412,6 +1406,17 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .cp-item .price-slot-ph { flex: 0 0 60px; }
     .cp-item .code-slot { min-width: 112px; }
     .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 112px !important; }
+    /* R179（用户 19:34）：全系统码键/无码键宽高统一——固定宽+高（桌面 112×30 / 手机 100×30），
+       有码/无码/长短码任意组合宽高恒一致；长码超出截断省略号（键上 title 悬停看全码）。
+       旧口径（R139 面板内容自适应 + R154/R175 min-width 槽位）：长码键撑到 167px、
+       与短码 112px 参差；无码键 112 恰与短码相等但长码破坏统一——本次固定尺寸根治。
+       特异性压过 .p-ops .cat-picker-panel .row-btn（R139 自适应口径作废） */
+    .variant-item .code-slot, .cp-item .code-slot, .p-ops .cat-picker-panel .cp-item .code-slot {
+      width: 112px !important; min-width: 112px !important; height: 30px !important;
+      padding: 0 6px !important; font-size: 13px !important;
+      box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      flex: 0 0 auto;
+    }
     /* 窄屏（≤600px）：手机档对齐根治（R175 用户 10:00 截图实锤）
        病灶（R171 的 wrap 方案）：①短名称行名称占 flex-basis 100px+ → 金额/码键起点随名称长短浮动；
        ②长名称行 wrap 后金额回落行首 → 同面板两行金额错位 125px；③码键 min-width 88 < 8位码实际
@@ -1421,26 +1426,34 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
        与桌面同构（R154 桌面口径本来就是对齐的，手机向它看齐） */
     @media (max-width: 600px) {
       .variant-item .code-slot, .cp-item .code-slot,
-      .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 100px !important; }
+      .p-ops .cat-picker-panel .cp-item .code-slot { width: 100px !important; min-width: 100px !important; }
       .variant-item {
         display: grid;
-        /* 列宽全固定（独立网格的 auto/fr 列会随本行内容浮动，跨行永远对不齐）：
-           col3=码组列（码键100+gap6+绑定键~70），col4=排序列（「排序:10」） */
-        grid-template-columns: 22px minmax(0, 1fr) 178px 76px;
+        /* R179（用户 19:27）：手机档叠层根治——旧 col3=178px 码组列把 1fr 名称列挤到只剩 ~12px，
+           价格/编辑键溢出轨道叠到码键与删除键上（探针实测 390px：价格×码键叠 44px、编辑×删除键叠 22px）。
+           拆列重排：col3=码键列（100px 固定宽，R179 统一口径），col4=绑定/排序列（76px），
+           v-code-group 改 display:contents 让码键/绑定键直接上网格各占一列，1fr 名称列恢复 ~90px */
+        grid-template-columns: 22px minmax(0, 1fr) 100px 76px;
         grid-template-areas:
           "handle name  name  sort"
-          "handle price code  code"
+          "handle price code  bind"
           "handle edit  del   .";
         align-items: center; column-gap: 10px; row-gap: 6px;
       }
       .variant-item .drag-handle { grid-area: handle; width: 22px; height: 22px; }
       .variant-item .v-name { grid-area: name; min-width: 0; }
-      .variant-item .v-price { grid-area: price; justify-self: start; min-width: 0; text-align: left; }
-      .variant-item .v-code-group { grid-area: code; justify-self: start; }
+      /* R179：价格/编辑键所在 1fr 列加截断保护——内容再长也只省略号，绝不再溢出叠到右侧列 */
+      .variant-item .v-price { grid-area: price; justify-self: start; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+      .variant-item .v-edit-btn { grid-area: edit; justify-self: start; max-width: 100%; overflow: hidden; }
+      /* R179b 修复：admin.js 给 .v-code-group 写了内联 display:inline-flex（桌面布局用），
+         无 !important 的 display:contents 被内联压过——有金额行码键碰巧落对列（价格占格把
+         自动布局的 group 挤进 code 格），无金额行 group 被自动布局塞进价格空格（码键错列 82px，
+         探针实测 [159,159,77,77]）。必须 !important 压过内联，码键/绑定键才真正上网格各占一列 */
+      .variant-item .v-code-group { display: contents !important; }
+      .variant-item .code-slot { grid-area: code; }
+      .variant-item .bind-slot { grid-area: bind; min-width: 0; max-width: 100%; overflow: hidden; }
       .variant-item .v-sort { grid-area: sort; justify-self: end; min-width: 0; }
-      .variant-item .v-edit-btn { grid-area: edit; justify-self: start; }
       .variant-item .v-del-btn { grid-area: del; justify-self: start; }
-      .variant-item .bind-slot { min-width: 0; }
       /* grid 列结构本身就是槽位：占位元素隐藏即可，无金额/无码行该列天然空位，跨行对齐不破 */
       .variant-item .price-slot-ph, .cp-item .price-slot-ph, .variant-item .bind-slot-ph { display: none; }
       .cp-item { flex-wrap: nowrap; }

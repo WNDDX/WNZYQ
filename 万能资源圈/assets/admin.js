@@ -925,9 +925,13 @@
             var item = document.createElement('div');
             item.className = 'cp-item';
             var nm = document.createElement('span');
+            nm.className = 'cp-name'; /* R179：挂类进 uiTip 白名单（资源码面板类型名 R177 起截断省略，此前不在名单点了没反应——「有些省略号点击不显示」漏网主角） */
             nm.textContent = v.name || '(未命名)';
             // R146：类型名不折行（面板窄于内容时截断省略，绝不竖排换行）
-            nm.style.cssText = 'font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;';
+            // R177（用户 19:18）：类型名可显示宽度统一上限——原来 flex:1 1 auto 弹性吸收，
+            // 长名称一串显示几十字、短名称只显示一点；统一 max-width:150px 截断，全面板口径一致
+            nm.style.cssText = 'font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;max-width:150px;';
+            nm.title = v.name || '(未命名)'; // 悬停原生提示看全名（超长被截断时）
             item.appendChild(nm);
             // R146（用户 00:34）：类型名与码键之间加各自金额（橙色，与资源页价格同色）
             var _vPriceText = formatPrice(v.price);
@@ -950,7 +954,7 @@
               // R144（用户 23:57）：有码=蓝底白字（参考"显示"按键配色），宽高不变
               cd.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);';
               cd.textContent = v.resourceCode;
-              cd.title = '点击复制';
+              cd.title = v.resourceCode + '（点击复制）'; /* R179：固定宽截断后悬停 title 看全码 */
               item.appendChild(cd);
               (function (cv) {
                 cd.addEventListener('click', function () {
@@ -1078,9 +1082,17 @@
             });
           });
           _chain.then(function () {
-            clearCache(); loadProducts();
+            clearCache();
+            // R178：本地即时插入副本（隐藏状态），后台静默同步；不再 loadProducts() 全量重拉
+            state.products.push({ id: _newId, cid: newProduct.cid, title: newProduct.title, desc: newProduct.desc || '',
+              detail: newProduct.detail || '', img: newProduct.img || '',
+              detailImages: (newProduct.detailImages || []).slice(), detailVideos: (newProduct.detailVideos || []).slice(),
+              contactUrl: newProduct.contactUrl || '', price: newProduct.price || 0,
+              is_online: 0, is_hidden: 1, schedule_on: newProduct.schedule_on || '', schedule_off: newProduct.schedule_off || '',
+              sort: newProduct.sort || 0, variants: (_vs || []).map(function (v) { return Object.assign({}, v); }) });
+            renderProducts(); refreshCatCnts(); silentSyncProducts();
             if (_fail) toast('资源已复制，但有 ' + _fail + ' 个类型复制失败，请检查新资源的类型列表', 'error');
-          }).catch(function () { clearCache(); loadProducts(); });
+          }).catch(function () { clearCache(); silentSyncProducts(); });
           toast('复制成功，新资源已创建（默认隐藏状态）', 'success');
         } else {
           toast(res.msg || '复制失败', 'error');
@@ -1232,6 +1244,14 @@
           if (res && res.ok) { state.products = res.list || []; renderProducts(); }
         }).catch(function () {});
       }, 600);
+    }
+
+    // R178（用户 19:20 评论⑦扩展到全系统）：分类静默同步——本地即时更新后 600ms 防抖重拉一次，
+    // 与服务器对账（loadCategories 本身无 loading 态，用户无感知）
+    var __silentCatT = null;
+    function silentSyncCategories() {
+      clearTimeout(__silentCatT);
+      __silentCatT = setTimeout(function () { loadCategories(); }, 600);
     }
 
 
@@ -1697,12 +1717,31 @@
               api('admin/variants', { method: 'POST', body: JSON.stringify(vd) }).then(function () { next(i + 1); }).catch(function () { next(i + 1); });
             })(0);
           }
+          // R178（用户 19:20 评论⑦扩展到全系统）：保存成功后本地立即更新资源列表——
+          // 不再 loadProducts() 全量重拉（慢网下列表要等第二次网络往返才显示新数据）；
+          // 本地合并/插入后立即渲染，600ms 后 silentSyncProducts 静默同步保证与服务器一致
+          var _sp = (state.products || []).find(function (x) { return x.id === state.editingId; });
+          if (_sp) {
+            _sp.cid = data.cid; _sp.title = data.title; _sp.desc = data.desc; _sp.detail = data.detail;
+            _sp.img = data.img; _sp.contactUrl = data.contactUrl; _sp.price = data.price;
+            _sp.is_online = data.is_online ? 1 : 0; _sp.is_hidden = data.is_hidden ? 1 : 0;
+            _sp.schedule_on = data.schedule_on || ''; _sp.schedule_off = data.schedule_off || ''; _sp.sort = data.sort;
+            _sp.variants = (state.variants || []).slice(); // 类型本地已是最新（新增类型已串行提交）
+          } else if (res.id) {
+            state.products.push({ id: res.id, cid: data.cid, title: data.title, desc: data.desc, detail: data.detail,
+              img: data.img, detailImages: [], detailVideos: [], contactUrl: data.contactUrl, price: data.price,
+              is_online: data.is_online ? 1 : 0, is_hidden: data.is_hidden ? 1 : 0,
+              schedule_on: data.schedule_on || '', schedule_off: data.schedule_off || '', sort: data.sort,
+              variants: (state.variants || []).slice() });
+          }
           editMask.classList.remove('open');
           if (isNewSave) { try { delete __editDrafts['new']; } catch (e) {} } // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
           clearDraft(); // 保存成功后清除草稿
           toast('资源已保存', 'success');
           clearCache();
-          loadProducts();
+          renderProducts();
+          refreshCatCnts();
+          silentSyncProducts();
         } else {
           toast(res.msg || '保存失败', 'error');
         }
@@ -1784,7 +1823,7 @@
           // R144（用户 23:57）：有码=蓝底白字（参考"显示"按键 .row-btn.status-online 的配色），宽高不变
           codeBtn.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);';
           codeBtn.textContent = v.resourceCode;
-          codeBtn.title = '点击复制';
+          codeBtn.title = v.resourceCode + '（点击复制）'; /* R179：固定宽截断后悬停 title 看全码 */
           (function (cv) {
             codeBtn.addEventListener('click', function () {
               var ok = window.__shareCopyText ? window.__shareCopyText(cv) : false;
@@ -1937,12 +1976,36 @@
     // R155（用户 19:41）：移动端 tap 编辑器内视频无法选中——Chromium 移动端 video 的 tap 手势不派发 click，
     // R147 的 click 委托在手机上根本不触发。touchend（capture, passive:false）tap 落在 IMG/VIDEO 上时
     // preventDefault（阻止 tap 播放手势与合成 click 双触发）+ selectNode + 浮出×。
-    // R165（用户 19:06）：pointerdown(touch) 选中兜底——部分浏览器内核（WebView/国产壳）tap 编辑器内媒体时
-    // touchend/click 合成事件被吞，旧链路根本不触发 → ×浮不出来。pointerdown 是触摸链第一个事件、必然派发。
+    // R165（用户 19:06）：pointerdown(touch) 兜底——部分浏览器内核（WebView/国产壳）tap 编辑器内媒体时
+    // touchend/click 合成事件被吞。pointerdown 是触摸链第一个事件、必然派发。
     // 不 preventDefault：不拦播放手势与后续 touchend/click 委托（重复执行幂等——selectNode/加 class/浮×均可重入）。
-    // R171（用户 23:31）：媒体选中回归「单击才算选中」——pointerdown 只记录 tap 基准，
-    // 不再立即选中（旧实现摸到就选中，滑动/拖选先碰到媒体也被选中）。
+    // R171：pointerdown 只记录 tap 基准；R179：双击才选中（判定在 pointerup/touchend/dblclick）。
     var __rtePd = null;
+    // R179（用户 19:24）：媒体（图片/视频/兜底卡）双击才能选中——单击不再选中（太灵敏：
+    // 光标/选区扫过、滑动路过都容易误触出编辑框）。桌面走 dblclick 委托；触屏双 tap 检测
+    // 两次 tap 同一媒体、间隔 <400ms 才选中。__rteLastTap 记录上一次有效 tap 供双击判定。
+    var __rteLastTap = null;
+    function __rteSelect(pick) {
+      try {
+        var sel = window.getSelection();
+        var range = document.createRange();
+        range.selectNode(pick);
+        sel.removeAllRanges(); sel.addRange(range);
+      } catch (err) {}
+      if (pick.tagName === 'IMG' || pick.tagName === 'VIDEO') {
+        pick.classList.add('rte-media-sel'); // R165：自绘选中框（原生蓝层越界弹窗，outline 受 contain 裁剪不越界）
+        __showImgDel(pick);
+      } else __hideImgDel();
+    }
+    function __rteDbltap(t) {
+      var now = Date.now();
+      if (__rteLastTap && __rteLastTap.el === t && now - __rteLastTap.at < 400) {
+        __rteLastTap = null;
+        __rteSelect(t);
+      } else {
+        __rteLastTap = { el: t, at: now };
+      }
+    }
     document.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'mouse') return;
       var t = e.target;
@@ -1953,22 +2016,14 @@
       if (t.tagName !== 'VIDEO' && t.tagName !== 'IMG') return;
       __rtePd = { t: t, x: e.clientX, y: e.clientY };
     }, { capture: true });
-    // R171：pointerup 且位移 <10px（真 tap）才选中——pointerup 是原生 Pointer 事件，
-    // R165 那类吞 touchend/click 合成事件的内核依然可靠；滑动点到媒体、拖选文字扫过媒体都不再选中。
+    // R179：触屏 pointerup——单 tap（位移 <10px）不再直接选中，只做双 tap 判定
     document.addEventListener('pointerup', function (e) {
       if (e.pointerType === 'mouse') return;
       if (!__rtePd) return;
       var t = __rtePd.t, x0 = __rtePd.x, y0 = __rtePd.y; __rtePd = null;
       if (t !== e.target) return; // 手指移出媒体（滑动）不算 tap
       if (Math.abs(e.clientX - x0) > 10 || Math.abs(e.clientY - y0) > 10) return;
-      try {
-        var sel = window.getSelection();
-        var range = document.createRange();
-        range.selectNode(t);
-        sel.removeAllRanges(); sel.addRange(range);
-      } catch (err) {}
-      t.classList.add('rte-media-sel');
-      __showImgDel(t);
+      __rteDbltap(t);
     }, { capture: true });
     document.addEventListener('touchend', function (e) {
       var t = e.target;
@@ -1979,44 +2034,52 @@
       var pick = null;
       if (t.tagName === 'VIDEO' || t.tagName === 'IMG') pick = t;
       if (!pick) return;
-      // R171（用户 23:31）：拖选文字/滑动手势结束（位移 >10px）不再当 tap——不选中不出编辑框
+      try { e.preventDefault(); } catch (err0) {}
+      // R179：仅当 pointerup 未消费 __rtePd（老内核吞 pointer 事件）时兜底做同样的双 tap 判定；
+      // pointerup 正常触发的内核这里 __rtePd 已是 null，直接跳过不重复计数
       if (__rtePd) {
         var _ct = (e.changedTouches && e.changedTouches[0]) || null;
-        var _px = __rtePd.x, _py = __rtePd.y; __rtePd = null;
-        if (_ct && (Math.abs(_ct.clientX - _px) > 10 || Math.abs(_ct.clientY - _py) > 10)) return;
+        var _pt = __rtePd.t, _px = __rtePd.x, _py = __rtePd.y; __rtePd = null;
+        if (_ct && _pt === t && (Math.abs(_ct.clientX - _px) > 10 || Math.abs(_ct.clientY - _py) > 10)) return;
+        __rteDbltap(t);
       }
-      try { e.preventDefault(); } catch (err0) {}
-      try {
-        var sel = window.getSelection();
-        var range = document.createRange();
-        range.selectNode(pick);
-        sel.removeAllRanges(); sel.addRange(range);
-      } catch (err) {}
-      if (pick.tagName === 'IMG' || pick.tagName === 'VIDEO') pick.classList.add('rte-media-sel'); // R165：自绘选中框（部分内核原生蓝层越界弹窗，outline 受 contain 裁剪不越界）
-      __showImgDel(pick);
     }, { capture: true, passive: false });
+    // R179：桌面鼠标单击不再选中媒体——只保留"点编辑器外/点到非媒体收起浮层"的清理职责；
+    // 媒体选中统一交给下方 dblclick 委托（触屏双 tap 的浏览器若也派发合成 dblclick，选中幂等无副作用）
     document.addEventListener('click', function (e) {
       var t = e.target;
       if (!t) return;
       if (t.classList && t.classList.contains('rte-img-del')) return; // R149：浮层删除键自身，其 click 已自处理
       var ed = t.closest ? t.closest('[contenteditable="true"]') : null;
       if (!ed) { __hideImgDel(); return; } // R149：点编辑器外收起图片删除浮层
-      // 点到视频本身，或点到兜底卡的非链接区域（点 vf-link 仍走 R144 跳转行为）→ 原子选中
+      // 点到视频/图片/兜底卡本体：不再选中（等双击），也不收浮层（避免双击第二击把刚选中的收掉）
+      var pick = null;
+      if (t.tagName === 'VIDEO') pick = t;
+      else if (t.tagName === 'IMG') pick = t;
+      else {
+        var fb = t.closest ? t.closest('.video-fallback') : null;
+        if (fb && !t.closest('.vf-link')) pick = fb;
+      }
+      if (!pick) __hideImgDel(); // R149：选中对象变了（文字区域）→ 收起浮层
+    });
+    // R179（用户 19:24）：媒体双击选中（桌面主路径）——dblclick 到图片/视频原子选中出编辑框；
+    // 兜底卡非链接区域同款；vf-link 链接区域双击仍走跳转不选中
+    document.addEventListener('dblclick', function (e) {
+      var t = e.target;
+      if (!t) return;
+      if (t.classList && t.classList.contains('rte-img-del')) return;
+      if (t.closest && t.closest('.vf-link')) return;
+      var ed = t.closest ? t.closest('[contenteditable="true"]') : null;
+      if (!ed) return;
       var pick = null;
       if (t.tagName === 'VIDEO') pick = t;
       else if (t.tagName === 'IMG') pick = t; // R149（用户 02:15）：图片同步视频的选中/删除机制
       else {
         var fb = t.closest ? t.closest('.video-fallback') : null;
-        if (fb && !t.closest('.vf-link')) pick = fb;
+        if (fb) pick = fb;
       }
-      if (!pick) { __hideImgDel(); return; } // R149：选中对象变了（文字/视频）→ 收起浮层
-      try {
-        var sel = window.getSelection();
-        var range = document.createRange();
-        range.selectNode(pick);
-        sel.removeAllRanges(); sel.addRange(range);
-      } catch (err) {}
-      if (pick.tagName === 'IMG' || pick.tagName === 'VIDEO') { pick.classList.add('rte-media-sel'); __showImgDel(pick); } else __hideImgDel(); // R149 图片/R155 视频原子选中时右上角浮出删除键（视频此前没有任何×，用户只能退格）；R165 叠加自绘选中框
+      if (!pick) return;
+      __rteSelect(pick);
     });
     // 退格/删除键兜底：光标紧邻编辑器内视频/兜底卡时（Chromium 对 contenteditable=false 块的原生退格不可靠），手动整块删除
     document.addEventListener('keydown', function (e) {
@@ -2156,15 +2219,15 @@ document.addEventListener('click', function (e) {
         setTimeout(function(){ var _le=document.querySelector('.rte-editor.rte-large'); if(_le){ var _tb2=_le.previousElementSibling; if(_tb2&&_tb2.classList&&_tb2.classList.contains('rte-toolbar')){ var _b2=_tb2.getBoundingClientRect().bottom+0; _le.style.top=_b2+'px'; _le.style.height='calc(100vh - '+(_b2+12)+'px)'; _le.style.height='calc(100dvh - '+(_b2+12)+'px)'; } } }, 80);
       }
     });
-    // R176（用户 10:14）：工具栏展开键——手机单行横滚 ↔ 多行全显两种编辑模式切换（复用统计面板蓝色三角视觉）
+    // R176（用户 10:14）：工具栏展开键；R179b（用户 20:20）：默认收起——
+    // HTML 初始挂 rte-collapsed（单行横滚），点击摘类展开成多行全显（桌面手机同款），再点还原
     document.addEventListener('click', function (e) {
       var x = e.target.closest ? e.target.closest('.rte-expand') : null;
       if (!x) return;
       var tb = x.closest('.rte-toolbar');
       if (!tb) return;
-      var expanded = tb.classList.toggle('rte-expanded');
-      x.classList.toggle('open', expanded);
-      x.title = expanded ? '收起工具栏' : '展开工具栏';
+      var collapsed = tb.classList.toggle('rte-collapsed');
+      x.title = collapsed ? '展开工具栏' : '收起工具栏';
       // 放大态下展开/收起改变工具栏高度，编辑器 top 需跟随；ResizeObserver(_f) 会自动重算，这里兜底补一次
       setTimeout(function () {
         var ed = document.querySelector('.rte-editor.rte-large');
@@ -2992,6 +3055,16 @@ document.addEventListener('click', function (e) {
         if (res && res.ok) {
           variantDraftPending = false; variantMask.classList.remove('open');
           toast('类型已保存', 'success');
+          // R178：本地即时更新类型列表（不等 loadVariants 重拉的网络往返），loadVariants 降级为后台静默同步
+          if (state.editingVariantId) {
+            var _uv = (state.variants || []).find(function (x) { return x.id === state.editingVariantId; });
+            if (_uv) Object.assign(_uv, data);
+          } else if (res.id) {
+            (state.variants = state.variants || []).push(Object.assign({ id: res.id, bindings: 0 }, data));
+          }
+          var _uvp = (state.products || []).find(function (x) { return x.id === state.editingId; });
+          if (_uvp) _uvp.variants = (state.variants || []).slice();
+          renderVariants();
           loadVariants(state.editingId);
         } else {
           toast(res.msg || '保存失败', 'error');
@@ -3095,7 +3168,15 @@ document.addEventListener('click', function (e) {
       showConfirm('删除类型', '确定删除该类型？', function () {
         if (!state.editingId) { var di = state.variants.indexOf(state._delVariantRef); if (di >= 0) state.variants.splice(di, 1); renderVariants(); toast('已删除', 'success'); return; }
         api('admin/variants/' + id, { method: 'DELETE' }).then(function (res) {
-          if (res && res.ok) { toast('已删除', 'success'); loadVariants(state.editingId); }
+          if (res && res.ok) {
+            toast('已删除', 'success');
+            // R178：本地即时移除（不等重拉网络往返），loadVariants 后台静默同步
+            state.variants = (state.variants || []).filter(function (x) { return x.id !== id; });
+            var _dvp = (state.products || []).find(function (x) { return x.id === state.editingId; });
+            if (_dvp) _dvp.variants = (state.variants || []).slice();
+            renderVariants();
+            loadVariants(state.editingId);
+          }
           else toast(res.msg || '删除失败', 'error');
         });
       });
@@ -4115,7 +4196,18 @@ refreshCatCnts();
           delBtn.addEventListener('click', function () {
             showConfirm('删除分类', '删除该分类？其下资源将归入"全部"，子分类也会一并删除。', function () {
               api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
-                if (res && res.ok) { toast('已删除', 'success'); clearCache(); loadCategories(); loadProducts(); }
+                if (res && res.ok) {
+                  toast('已删除', 'success'); clearCache();
+                  // R178：本地即时删除（子分类一并清、其下资源归入"全部"），后台静默同步；
+                  // 原先 loadCategories()+loadProducts() 两次全量重拉，慢网下要等两个网络往返
+                  var _delIds = [Number(c.id)];
+                  state.categories.forEach(function (x) { if (Number(x.parent_id) === Number(c.id)) _delIds.push(Number(x.id)); });
+                  state.categories = state.categories.filter(function (x) { return _delIds.indexOf(Number(x.id)) === -1; });
+                  (state.products || []).forEach(function (p) { if (_delIds.indexOf(Number(p.cid)) !== -1) p.cid = 0; });
+                  renderCategories(state.categories);
+                  refreshCatCnts(); renderProducts(); initFilterCatPicker();
+                  silentSyncCategories(); silentSyncProducts();
+                }
                 else toast(res.msg || '删除失败', 'error');
               });
             });
@@ -4202,9 +4294,22 @@ refreshCatCnts();
           if (done + fail === ids.length) {
             var actionName = action === 'hide' ? '隐藏' : (action === 'show' ? '显示' : '删除');
             toast('批量' + actionName + '完成：成功 ' + done + ' 项，失败 ' + fail + ' 项', fail > 0 ? 'error' : 'success');
-            if (action === 'delete') loadProducts();
             clearCache();
-            loadCategories();
+            // R178：本地即时生效（隐藏/显示/删除按级联集合），后台静默同步；
+            // 原先 loadCategories()（+删除时 loadProducts()）全量重拉，慢网下要等网络往返
+            if (action === 'delete') {
+              var _gone = ids.slice();
+              state.categories.forEach(function (x) { if (ids.indexOf(Number(x.parent_id)) !== -1) _gone.push(Number(x.id)); });
+              state.categories = state.categories.filter(function (x) { return _gone.indexOf(Number(x.id)) === -1; });
+              (state.products || []).forEach(function (p) { if (_gone.indexOf(Number(p.cid)) !== -1) p.cid = 0; });
+              renderProducts(); initFilterCatPicker();
+            } else {
+              state.categories.forEach(function (x) { if (ids.indexOf(Number(x.id)) !== -1) x.is_hidden = (action === 'hide') ? 1 : 0; });
+            }
+            renderCategories(state.categories);
+            refreshCatCnts();
+            silentSyncCategories();
+            if (action === 'delete') silentSyncProducts();
       ;
           }
         });
@@ -4251,7 +4356,13 @@ refreshCatCnts();
       if (!changed.length) return;
       var seq = changed.map(function (c) { return api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ sort: c.sort }) }); });
       Promise.all(seq).then(function (reses) {
-        if (reses.every(function (r) { return r && r.ok; })) { toast('排序已更新', 'success'); clearCache(); loadCategories(); }
+        if (reses.every(function (r) { return r && r.ok; })) {
+          toast('排序已更新', 'success'); clearCache();
+          // R178：拖拽后本地已是目标顺序，静默同步替代 loadCategories() 全量重拉
+          state.categories = orderCats(state.categories);
+          renderCategories(state.categories);
+          silentSyncCategories();
+        }
         else toast('排序保存失败', 'error');
       });
     }
@@ -4301,7 +4412,27 @@ refreshCatCnts();
           catDraftPending = false; catMask.classList.remove('open');
           toast('分类已保存', 'success');
           clearCache();
-          loadCategories();
+          // R178：本地即时更新分类面板（不等 loadCategories 重拉的网络往返）；
+          // 编辑=合并字段重排，新增=后端返回 id 时本地插入（拿不到 id 才退回重拉）
+          var _ce = state.catEditingId
+            ? (state.categories || []).find(function (x) { return Number(x.id) === Number(state.catEditingId); })
+            : null;
+          if (_ce) {
+            Object.assign(_ce, { name: name, sort: sort, parent_id: parentId, is_hidden: isHidden ? 1 : 0 });
+            state.categories = orderCats(state.categories);
+          } else if (res.id) {
+            state.categories.push({ id: Number(res.id), name: name, sort: sort, parent_id: parentId, is_hidden: isHidden ? 1 : 0, cnt: 0 });
+            state.categories = orderCats(state.categories);
+          }
+          if (_ce || res.id) {
+            renderCategories(state.categories);
+            refreshCatCnts();
+            renderProducts(); // 资源行的分类名/筛选口径同步本地生效
+            initFilterCatPicker();
+            silentSyncCategories();
+          } else {
+            loadCategories();
+          }
         } else {
           toast(res.msg || '保存失败', 'error');
         }
@@ -4714,7 +4845,7 @@ refreshCatCnts();
         m.innerHTML = '<div style="background:#fff;border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=178" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=181" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
@@ -4742,7 +4873,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=178', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=181', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
