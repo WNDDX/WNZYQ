@@ -23,15 +23,17 @@
 /assets/*.css
   Cache-Control: no-cache, must-revalidate
 
-# 其他静态资源（图片等）缓存30天
+# R172（用户 00:26）：图片/图标改 no-cache 每次校验（配 SW 网络优先）——
+# 原 30 天 max-age 会让 SW 的 fetch 命中浏览器 HTTP 缓存旧图，图片更新后残留旧图只闪一瞬间
+# must-revalidate 走 ETag 条件请求，未变化时 304 秒回，代价极小
 /assets/*
-  Cache-Control: public, max-age=2592000
+  Cache-Control: no-cache, must-revalidate
 
 /*.png
-  Cache-Control: public, max-age=2592000
+  Cache-Control: no-cache, must-revalidate
 
 /*.ico
-  Cache-Control: public, max-age=2592000
+  Cache-Control: no-cache, must-revalidate
 
 # HTML 不缓存（确保更新即时生效）
 /*.html

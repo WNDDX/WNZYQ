@@ -563,9 +563,9 @@
       document.getElementById('panel-categories').style.display = name === 'categories' ? '' : 'none';
       document.getElementById('panel-settings').style.display = name === 'settings' ? '' : 'none';
       if (name === 'products' && !window.__plP) { window.__plP = 1; loadProducts(); }
-      // R171：__plS 只挡"已有数据"的重复拉取——预加载发生在登录时（面板不可见，trend 可能为空），
-      // 数据为空再切到统计 tab 必须重新 loadStats + loading 立即显示（用户 23:31：点了没反应/慢）
-      if (name === 'stats' && (!window.__plS || !(state.statsTrendAll && state.statsTrendAll.length))) { window.__plS = 1; loadStats(); }
+      // R173（用户 00:28）：回退 R171 的门控放宽——切 tab 只认 __plS 单条件（R170 口径）；
+      // 放宽后每次切 tab 都重新拉数据+全页淡入，用户实测"更难看"
+      if (name === 'stats' && !window.__plS) { window.__plS = 1; loadStats(); }
       if (name === 'stats') { try { if (window.__rerenderLine) window.__rerenderLine(); } catch (e) {} } // R145：面板可见后重画，轴字号按真实宽度补偿
       if (name === 'categories' && !window.__plC) { window.__plC = 1; loadCategories(); }
       if (name === 'settings') { if (!window.__plSet) loadSettings(); }
@@ -3626,9 +3626,9 @@ document.addEventListener('click', function (e) {
       if (startDate) params.push('start_date=' + encodeURIComponent(startDate));
       if (endDate) params.push('end_date=' + encodeURIComponent(endDate));
       if (params.length) url += '?' + params.join('&');
-      // R171（用户 23:31）：请求一发就转圈——点 1 天档/自定义日期/缓存缺失时的请求立即有反馈，
-      // 原先仅首开统计页显示转圈，再次点击时界面纹丝不动像没反应
-      var _sl0 = document.getElementById('statsLoading'); if (_sl0) _sl0.style.display = 'flex';
+      // R173（用户 00:28）：回退 R171 的"请求一发就转圈"——改回 R170 条件口径（统计卡未渲染过才显示转圈）；
+      // 无条件转圈让每次切日期/切 tab 都闪转圈+淡入，用户实测"全页面都闪一次，更难看"
+      var _sl0 = document.getElementById('statsLoading'); if (_sl0 && !(document.getElementById('statCards') || { children: [] }).children.length) _sl0.style.display = 'flex';
       api(url).then(function (res) {
         // 数据统计表格顺序：资源明细 → 分类统计 → 浏览记录（幂等，仅首次生效）
         var _sec = document.getElementById('panel-stats');
@@ -3683,7 +3683,9 @@ document.addEventListener('click', function (e) {
         // 修复：加载完成后才隐藏转圈动画并触发淡入——原先这行写在函数外、页面解析时就执行了一次，
         // 导致首次进统计页时"加载中…"转圈永远不消失
         var _slH = document.getElementById('statsLoading'); if (_slH) _slH.style.display = 'none';
-        var _psH = document.getElementById('panel-stats'); if (_psH) { _psH.classList.remove('stats-fade-in'); void _psH.offsetWidth; _psH.classList.add('stats-fade-in'); }
+        // R173（用户 00:28）：删掉加载完成后的 stats-fade-in 全页重放（remove+强制回流+add）——
+        // 切日期档/切 tab 都会走 loadStats（R29 起每次切档重新拉数），这里的重放正是
+        // 「切换日期全页面都闪一次」的直接根因；数据直接替换渲染，不再全页淡入
       });
     }
 
@@ -3804,7 +3806,8 @@ document.addEventListener('click', function (e) {
       state.statsTrendPrev = trendPrev || null;
       renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
       renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
-      var _ps2 = document.getElementById('panel-stats'); if (_ps2) { _ps2.classList.remove('stats-fade-in'); void _ps2.offsetWidth; _ps2.classList.add('stats-fade-in'); }
+      /* R173（用户 00:28）：删掉切日期档时对 panel-stats 的 stats-fade-in 重触发（remove+强制回流+add）
+         ——正是"切换日期全页面都闪一次"的直接根因（fade 动画整页重放）；切日期只重画图表，不再全页淡入 */
     }
 
     // ---------- 分类管理 ----------
@@ -4575,6 +4578,9 @@ refreshCatCnts();
       var cover = document.getElementById('previewCover');
       if (fImg.value.trim()) {
         cover.src = fImg.value.trim();
+        // R173（用户 00:27）：预览封面假链接兜底——旧版加载失败显示 2px 破图（mediaStable 只清加载态不换图），
+        // 与编辑表单/资源页口径统一：失败换感叹号占位符（居中显示，不再跳位置）
+        cover.onerror = function () { this.onerror = null; this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); };
         if (window.mediaStable) window.mediaStable(cover, false, true);
         cover.style.display = 'block';
       } else {

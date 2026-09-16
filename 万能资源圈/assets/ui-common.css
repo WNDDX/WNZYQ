@@ -291,8 +291,12 @@
 .modal-box img[src^="data:image/svg+xml"], .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] {
   height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain;
 }
+/* R173（用户 00:27）：占位封面与真图统一居中口径——旧满宽 calc(100%-32px)+左右 16px 在
+   真图（auto 居中）/占位符（满宽）/加载失败换占位三态间左右横跳；改 min(320px) 上限居中，
+   与真图 margin auto 同源，任何态都水平居中、不再跳位置 */
 .modal-cover[src^="data:image/svg+xml"], .preview-cover[src^="data:image/svg+xml"] {
-  aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px !important; object-fit: contain !important; width: calc(100% - 32px) !important; margin: 16px 16px 0 !important;
+  aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px !important; object-fit: contain !important;
+  width: min(320px, calc(100% - 32px)) !important; margin: 16px auto 0 !important;
 }
 
 

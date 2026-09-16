@@ -607,7 +607,19 @@ window.__modalKit = (function () {
       }
     }, 350);
   }
-  function hide() { if (tip) tip.style.display = 'none'; cur = null; }
+  function hide() { __pendingEl = null; if (tip) tip.style.display = 'none'; cur = null; }
+  // R173（用户 00:32）：show 的弹出延迟到下一帧（rAF）——点击/悬停处理器先同步返回，
+  // 按键的按压反馈与动作在同一帧完成渲染，小框的测量+定位（含强制回流）不再阻塞点击主线程；
+  // 连续划过/快速连点时只生效最后一次目标，天然去抖。hide() 会取消 pending（先点截断文字再立刻点空白处不会误弹）
+  var __pendingEl = null;
+  function __rAFshow(el) {
+    __pendingEl = el;
+    requestAnimationFrame(function () {
+      if (__pendingEl !== el || !el.isConnected) return;
+      __pendingEl = null;
+      show(el);
+    });
+  }
   // R167：供 syncBodyLock 调用——任何弹窗开合时隐藏小框（前台点卡片标题：详情弹窗滑入瞬间小框消失）
   window.__hideUiTip = hide;
   var SKIP = 'input,textarea,select,button,a,.rte-editor,pre,code,canvas,svg,video,img,iframe';
@@ -623,12 +635,17 @@ window.__modalKit = (function () {
     var el = ev.target;
     if (!(el instanceof Element) || !el.closest) return;
     if (el.closest(SKIP)) return;
-    if (leafText(el) && clipped(el)) { show(el); return; }
+    if (leafText(el) && clipped(el)) { __rAFshow(el); return; }
     var box = el.closest(PICKSEL); // R165：带子元素的单行截断容器（网格卡片副标题等）悬停看全文
-    if (box && clippedX(box)) { show(box); return; }
+    if (box && clippedX(box)) { __rAFshow(box); return; }
     if (cur && !cur.contains(el)) hide();
   });
+  // R173（用户 00:32「显示一瞬间就消失，手机端特别明显」）：补 mouseout 的 __hoverDev 门控——
+  // R171 只给 mouseover 加了门控，mouseout 仍无条件绑定；真机手机 tap 后浏览器清理模拟 hover 状态时
+  // 会派发合成 mouseout（relatedTarget=null），旧实现 if(!to) 直接 hide() 把刚弹的小框瞬间收走，
+  // 这正是手机端"只显示一瞬间"的残留元凶（headless 合成 tap 不派发该事件，此前未抓到）
   document.addEventListener('mouseout', function (ev) {
+    if (!__hoverDev) return;
     if (!cur) return;
     var to = ev.relatedTarget;
     if (!to || (to !== cur && !cur.contains(to))) hide();
@@ -640,11 +657,14 @@ window.__modalKit = (function () {
     if (el.closest(SKIP)) { hide(); return; }
     var hit = el.closest(PICKSEL);
     // R106：手机点按同样只认文本叶子（容器误弹同上）；R165：单行截断容器（.p-sub 等）命中 clippedX 也弹
-    if (hit && ((leafText(hit) && clipped(hit)) || clippedX(hit))) { show(hit); return; }
+    // R173：__rAFshow 延迟一帧弹出——点截断按键时按键动作先完成（不卡），小框下一帧再弹
+    if (hit && ((leafText(hit) && clipped(hit)) || clippedX(hit))) { __rAFshow(hit); return; }
     hide();
   });
   // R171：show 后 400ms 内忽略 scroll 收框——手机 tap 常伴随视口微滚动（地址栏/焦点重排），
   // 旧实现小框刚弹出就被 scroll capture hide 收走，即「只显示一瞬间」的另一个元凶
   window.addEventListener('scroll', function () { if (Date.now() - __showAt < 400) return; hide(); }, true);
-  window.addEventListener('resize', hide);
+  // R173：resize 同款 400ms 冷静期——手机地址栏收起/软键盘弹出都会派发 resize，旧实现立即收框，
+  // 也是「显示一瞬间就消失」的组成路径；真实窗口变化超过冷静期照常收框
+  window.addEventListener('resize', function () { if (Date.now() - __showAt < 400) return; hide(); });
 })();
