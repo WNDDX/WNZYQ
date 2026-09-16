@@ -101,7 +101,7 @@ document.addEventListener('error', function (e) {
 (function () {
   var logo = document.getElementById('errLogo');
   if (logo) {
-    logo.src = '/assets/images/logo.png'; // 绝对路径，加载失败自动显示感叹号占位
+    logo.src = '/assets/images/logo.png?v=178'; // 绝对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
       this.onerror = null;

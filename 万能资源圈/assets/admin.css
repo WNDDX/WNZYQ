@@ -916,7 +916,10 @@
     /* R171：固定 120 方槽——ID+important 只钉尺寸（压过先加载 ui-common.css 的 0-2-1!important data:SVG 规则，B10），
        不碰 display（否则 1-0-0 压过 .img-preview.show 的显隐切换） */
     img.img-preview, #fImgPreview { width: 120px !important; height: 120px !important; aspect-ratio: auto !important; }
-    .img-preview.show { display: block; }
+    /* R176（用户 10:01）：封面预览两态统一居中——真图态（有链接 src=url）原无居中规则靠左，
+       占位态（假链接/失败换 data:SVG）被 ui-common.css .modal-box img[src^=data:] 的 margin auto 居中，
+       输入过程两态左右横跳；show 态统一 margin auto，两态恒居中不再跳 */
+    .img-preview.show { display: block; margin-left: auto; margin-right: auto; }
 
     /* 平台设置表单 */
     .setting-group {
@@ -1145,6 +1148,33 @@
       .back-top { right: 14px; bottom: 18px; width: 40px; height: 40px; }
     }
 
+    /* R176（用户 10:14）：编辑器工具栏展开键——手机单行横滚模式下 17 键要滑动才能到达，
+       复用统计面板三角按键视觉（.stat-toggle 蓝色三角 + 旋转过渡）；sticky 钉在滚动区右缘
+       永远可见可点，点击在「单行滚动」与「多行展开」两种编辑方式间切换；桌面工具栏本来
+       就 wrap 全显，展开键隐藏 */
+    /* R176（用户 10:14）：编辑器工具栏展开键——手机单行横滚模式下 17 键要滑动才能到达，
+       复用统计面板三角按键视觉（.stat-toggle 蓝色三角 + 旋转过渡）；sticky 钉在滚动区右缘
+       永远可见可点，点击在「单行滚动」与「多行展开」两种编辑方式间切换；桌面工具栏本来
+       就 wrap 全显（无横滚），展开键隐藏 */
+    .rte-expand { display: none; }
+    .rte-expand .toggle-arrow { width: 20px; height: 20px; transition: transform 0.15s ease; transform: rotate(0deg); }
+    .rte-expand.open .toggle-arrow { transform: rotate(180deg); }
+    @media (max-width: 600px) {
+      .rte-expand {
+        display: flex; position: sticky; right: 0; flex-shrink: 0; align-self: center;
+        width: 30px; height: 30px; padding: 0; margin-left: 2px;
+        border: 1px solid var(--border); border-radius: 6px;
+        background: var(--card-bg); color: var(--blue1); cursor: pointer;
+        align-items: center; justify-content: center;
+        box-shadow: -8px 0 8px -6px rgba(0,0,0,0.25); /* 左缘渐隐遮住底下滚过的按键 */
+      }
+      .rte-expand:active { transform: scale(0.94); }
+      /* 展开态：工具栏改多行 wrap，全部按键直接可见；展开键脱离 sticky 回流到行尾。
+         同特异性后写覆盖上方的 nowrap（含放大态 rte-toolbar-large） */
+      .rte-toolbar.rte-expanded { flex-wrap: wrap; overflow-x: hidden; }
+      .rte-toolbar.rte-expanded .rte-expand { position: static; margin-left: auto; box-shadow: none; }
+    }
+
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
        弹窗按键（.modal-inner-btn/.modal-close/.confirm 系）的按压效果已统一抽入
        ui-common.css「全站统一弹窗按键按压效果」（变暗+降透明、不缩放、字重恒定），此处不再重复。 */
@@ -1226,7 +1256,7 @@
        同样存在「部分内核不裁剪、浮出弹窗」问题（与 .rte-editor 同根因同修法）。
        注意：.modal-box/.form 不能加（rte-large 是其 fixed 后代，contain 会改 fixed 包含块使放大态错位），
        这四个容器内无 fixed/下拉后代，安全。 */
-    .modal-detail, .ann-body, .variant-detail, .media-list { contain: paint; }
+    .modal-detail, .ann-body, .variant-detail, .media-list { contain: paint; transform: translateZ(0); } /* R176：视频/媒体层老内核合成裁剪兜底（与 shop.css 同步） */
     .modal-detail, .ann-body, .variant-detail, .rte-editor { word-break: break-word; overflow-wrap: anywhere; }
     .modal-detail img, .modal-detail video, .modal-detail table, .modal-detail iframe, .modal-detail svg, .ann-body img, .ann-body video, .ann-body table, .ann-body iframe, .ann-body svg, .variant-detail img, .variant-detail video, .variant-detail table, .variant-detail iframe, .rte-editor img, .rte-editor video, .rte-editor table, .rte-editor iframe, .media-list img, .media-list video, .media-list table, .media-list iframe { max-width: 100% !important; height: auto; }
     /* === R21：弹窗内视频固定 16:9 占位（object-fit:contain 黑底完整显示）=== 未加载/加载完成/加载失败三种状态尺寸完全一致，弹窗不再先小后大跳动；!important 同时压过富文本/RTE 内联样式 */
@@ -1382,24 +1412,40 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .cp-item .price-slot-ph { flex: 0 0 60px; }
     .cp-item .code-slot { min-width: 112px; }
     .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 112px !important; }
-    /* 窄屏（≤600px）：固定槽位放宽为自然宽、空占位隐藏，避免固定列挤爆窄屏弹窗（对齐口径为桌面/平板） */
+    /* 窄屏（≤600px）：手机档对齐根治（R175 用户 10:00 截图实锤）
+       病灶（R171 的 wrap 方案）：①短名称行名称占 flex-basis 100px+ → 金额/码键起点随名称长短浮动；
+       ②长名称行 wrap 后金额回落行首 → 同面板两行金额错位 125px；③码键 min-width 88 < 8位码实际
+       内容宽 97 → 有码键 97px / 无码键 88px 宽度不一。
+       修复：码/无码键统一 100px；variant-item 改 grid 三行固定列（名称/金额/码组/操作各列起点恒定，
+       与名称长短、金额有无、码有无完全无关）；cp-item 改 nowrap——名称自适应收缩截断、金额/码键贴右，
+       与桌面同构（R154 桌面口径本来就是对齐的，手机向它看齐） */
     @media (max-width: 600px) {
-      /* R171（用户 23:08/23:31）：手机端不再一律归零挤压——类型列表/码面板换行铺开保对齐：
-         ①码键/无码键统一 88px 槽位（同宽，回答用户「宽高一致吗」）；
-         ②排序 44px + 行尾按键 flex-shrink:0，「排序」「删除」显示全（a6 对齐修复）；
-         ③类型名 flex 保底 120px，绝不一字符就省略号；④面板行同样保底不挤爆 */
-      .variant-item .v-price, .cp-item .cp-price { min-width: 0; text-align: left; }
       .variant-item .code-slot, .cp-item .code-slot,
-      .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 88px !important; }
-      .variant-item .bind-slot, .variant-item .bind-slot-ph { min-width: 0; }
-      .variant-item .v-sort { min-width: 44px; flex-shrink: 0; }
+      .p-ops .cat-picker-panel .cp-item .code-slot { min-width: 100px !important; }
+      .variant-item {
+        display: grid;
+        /* 列宽全固定（独立网格的 auto/fr 列会随本行内容浮动，跨行永远对不齐）：
+           col3=码组列（码键100+gap6+绑定键~70），col4=排序列（「排序:10」） */
+        grid-template-columns: 22px minmax(0, 1fr) 178px 76px;
+        grid-template-areas:
+          "handle name  name  sort"
+          "handle price code  code"
+          "handle edit  del   .";
+        align-items: center; column-gap: 10px; row-gap: 6px;
+      }
+      .variant-item .drag-handle { grid-area: handle; width: 22px; height: 22px; }
+      .variant-item .v-name { grid-area: name; min-width: 0; }
+      .variant-item .v-price { grid-area: price; justify-self: start; min-width: 0; text-align: left; }
+      .variant-item .v-code-group { grid-area: code; justify-self: start; }
+      .variant-item .v-sort { grid-area: sort; justify-self: end; min-width: 0; }
+      .variant-item .v-edit-btn { grid-area: edit; justify-self: start; }
+      .variant-item .v-del-btn { grid-area: del; justify-self: start; }
+      .variant-item .bind-slot { min-width: 0; }
+      /* grid 列结构本身就是槽位：占位元素隐藏即可，无金额/无码行该列天然空位，跨行对齐不破 */
       .variant-item .price-slot-ph, .cp-item .price-slot-ph, .variant-item .bind-slot-ph { display: none; }
-      .variant-item { flex-wrap: wrap; }
-      .variant-item .v-name { flex: 1 1 130px; min-width: 120px; }
-      .variant-item > button.row-btn { flex-shrink: 0; }
-      .cp-item { flex-wrap: wrap; }
-      .cp-item .cp-name { flex: 1 1 100px !important; min-width: 80px !important; }
-      .cp-item .cp-price { min-width: 48px; flex-shrink: 0; }
+      .cp-item { flex-wrap: nowrap; }
+      .cp-item .cp-name { flex: 1 1 auto !important; min-width: 0 !important; }
+      .cp-item .cp-price { min-width: 0; text-align: right; flex-shrink: 0; }
     }
 
 

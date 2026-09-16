@@ -104,7 +104,7 @@ if ('serviceWorker' in navigator) {
       img.classList.remove('kf-qr-in');
       img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; if (this.classList) this.classList.add('media-fail'); };
       img.onload = function () { void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png';
+      img.src = qrImg || '/assets/images/kefu.png?v=178';
       if (img.complete && img.naturalWidth) { void img.offsetWidth; img.classList.add('kf-qr-in'); }
       // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
       if (window.__bindQrLightbox) window.__bindQrLightbox(img);

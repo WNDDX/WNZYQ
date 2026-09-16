@@ -1774,6 +1774,8 @@
         }
 
         var codeSpan = document.createElement('span');
+        /* R175（用户 10:00）：加稳定类名——手机档 grid 列对齐挂 area 用 */
+        codeSpan.className = 'v-code-group';
         codeSpan.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex-shrink:0;';
         if (v.resourceCode && v.resourceCode.trim()) {
           var codeBtn = document.createElement('button');
@@ -1821,12 +1823,14 @@
         sort.textContent = '排序:' + (idx + 1);
 
         var editBtn = document.createElement('button');
-        editBtn.className = 'row-btn';
+        /* R175：加稳定类名 v-edit-btn——手机档 grid area 用 */
+        editBtn.className = 'row-btn v-edit-btn';
         editBtn.textContent = '编辑';
         editBtn.addEventListener('click', function () { openVariantEdit(v); });
 
         var delBtn = document.createElement('button');
-        delBtn.className = 'row-btn danger';
+        /* R175：加稳定类名 v-del-btn——手机档 grid area 用 */
+        delBtn.className = 'row-btn danger v-del-btn';
         delBtn.textContent = '删除';
         delBtn.addEventListener('click', function () { state._delVariantRef = v; delVariant(v.id); });
 
@@ -2141,15 +2145,36 @@ document.addEventListener('click', function (e) {
       var ed = document.getElementById(z.getAttribute('data-editor'));
       if (!ed) return;
       var big = ed.classList.toggle('rte-large'); var tb = ed.previousElementSibling; if (tb && tb.classList && tb.classList.contains('rte-toolbar')) { if (big) tb.classList.add('rte-toolbar-large'); else tb.classList.remove('rte-toolbar-large'); }
+      if (!big) { ed.style.top = ''; ed.style.height = ''; } /* R176（用户 10:11）：还原时清放大态内联 top/height——旧版残留 top:115px 在 relative 态把编辑器视觉下移盖住下方类型区（盖住/挤到其他东西的根因） */
       z.classList.toggle('rte-zoom-on', big);
       z.textContent = big ? '🗗 还原' : '⛶ 放大'; window.__syncBodyLock && window.__syncBodyLock();
       if (big) {
         ed.focus();
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
-        (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 0; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; }; _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) {} } })();
+        (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 0; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; ed.style.height = 'calc(100dvh - ' + (_b + 12) + 'px)'; }; /* R176：二段赋值 dvh 优先（手机地址栏/软键盘收窄可视区），不支持的内核第二句被忽略自动回退 100vh */ _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) {} } })();
         // 放大态正文起点跟随工具栏底部（退出放大用工具栏"还原"或 Esc）
-        setTimeout(function(){ var _le=document.querySelector('.rte-editor.rte-large'); if(_le){ var _tb2=_le.previousElementSibling; if(_tb2&&_tb2.classList&&_tb2.classList.contains('rte-toolbar')){ var _b2=_tb2.getBoundingClientRect().bottom+0; _le.style.top=_b2+'px'; _le.style.height='calc(100vh - '+(_b2+12)+'px)'; } } }, 80);
+        setTimeout(function(){ var _le=document.querySelector('.rte-editor.rte-large'); if(_le){ var _tb2=_le.previousElementSibling; if(_tb2&&_tb2.classList&&_tb2.classList.contains('rte-toolbar')){ var _b2=_tb2.getBoundingClientRect().bottom+0; _le.style.top=_b2+'px'; _le.style.height='calc(100vh - '+(_b2+12)+'px)'; _le.style.height='calc(100dvh - '+(_b2+12)+'px)'; } } }, 80);
       }
+    });
+    // R176（用户 10:14）：工具栏展开键——手机单行横滚 ↔ 多行全显两种编辑模式切换（复用统计面板蓝色三角视觉）
+    document.addEventListener('click', function (e) {
+      var x = e.target.closest ? e.target.closest('.rte-expand') : null;
+      if (!x) return;
+      var tb = x.closest('.rte-toolbar');
+      if (!tb) return;
+      var expanded = tb.classList.toggle('rte-expanded');
+      x.classList.toggle('open', expanded);
+      x.title = expanded ? '收起工具栏' : '展开工具栏';
+      // 放大态下展开/收起改变工具栏高度，编辑器 top 需跟随；ResizeObserver(_f) 会自动重算，这里兜底补一次
+      setTimeout(function () {
+        var ed = document.querySelector('.rte-editor.rte-large');
+        if (ed && ed.previousElementSibling === tb) {
+          var _b = tb.getBoundingClientRect().bottom + 0;
+          ed.style.top = _b + 'px';
+          ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)';
+          ed.style.height = 'calc(100dvh - ' + (_b + 12) + 'px)';
+        }
+      }, 30);
     });
     // Esc 退出放大编辑（不影响其它弹窗的 Esc 关闭）
     document.addEventListener('keydown', function (e) {
@@ -2157,7 +2182,7 @@ document.addEventListener('click', function (e) {
         var bigEd = document.querySelector('.rte-editor.rte-large');
         if (bigEd) {
           e.__escPre = true; // R111：本次 Esc 只退出富文本放大态，__modalKit 不再关弹窗
-          bigEd.classList.remove('rte-large'); var _tb = bigEd.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar-large')) _tb.classList.remove('rte-toolbar-large');
+          bigEd.classList.remove('rte-large'); bigEd.style.top = ''; bigEd.style.height = ''; var _tb = bigEd.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar-large')) _tb.classList.remove('rte-toolbar-large');
           document.querySelectorAll('.rte-zoom.rte-zoom-on').forEach(function (b) { b.classList.remove('rte-zoom-on'); b.textContent = '⛶ 放大'; }); window.__syncBodyLock && window.__syncBodyLock();
           var _ex = document.getElementById('rteExitZoom'); if (_ex) _ex.style.display = 'none';
         }
@@ -3613,19 +3638,53 @@ document.addEventListener('click', function (e) {
       });
     }
 
+    // R176（用户 10:16）：统计切档极致响应——日期全链北京时间口径（旧 toISOString 取 UTC 日，
+    // 北京 0-8 点差一天）；切档请求与后端 R168 的 +8hours 聚合同口径
+    function __bjToday() { return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10); }
+    function __statsRangeDays(days) {
+      var end = __bjToday();
+      var ms = Date.parse(end + 'T00:00:00Z') - (days - 1) * 86400000;
+      return { start: new Date(ms).toISOString().slice(0, 10), end: end };
+    }
+    // R176：全量趋势（30 天日线）单例预取——供 7/30 天档点击时本地即时切片重绘两图
+    //（applyStatsDays 零等待）；一次会话只拉一次，与范围请求并行互不阻塞。
+    // 旧实现把全量趋势挂在无参 loadStats 的响应上（start/end 一旦有值就永不填充），
+    // 范围推导后无参调用也带参，必须改为独立预取。
+    function __ensureTrendAll() {
+      if (state.statsTrendAll && state.statsTrendAll.length) return;
+      api('admin/stats').then(function (res) {
+        if (res && res.ok && res.trend && res.trend.length) {
+          state.statsTrendAll = res.trend;
+          state.statsTrendAllPrev = res.trend_prev || [];
+        }
+      }).catch(function () {});
+    }
     function loadStats(startDate, endDate, force) {
-      // R33：默认档为 1 天时，无参调用（首次打开统计页/刷新）自动按"今天"发同口径请求，
-      // 与点 1 天按钮行为完全一致（概览/明细/趋势全部单日+按小时），避免默认口径不一致
-      if (!startDate && !endDate && state.statsDays === 1) {
-        var _d1 = new Date().toISOString().slice(0, 10);
-        startDate = _d1; endDate = _d1;
+      // R176：无参调用一律按当前选中档推导范围（旧 R33 仅 1 天档特例，且旧短路
+      // 「无参+已有全量趋势 → applyStatsDays 只重绘两图直接 return」正是 7/30 天档六卡片
+      // 永不刷新的根因——切档按钮现在显式带范围+force，无参调用也按档推导，六卡随档同步）
+      if (!startDate && !endDate) {
+        var _r0 = __statsRangeDays(state.statsDays || 1);
+        startDate = _r0.start; endDate = _r0.end;
       }
-      if (!force && !startDate && !endDate && state.statsTrendAll && state.statsTrendAll.length) { applyStatsDays(); return; }
+      __ensureTrendAll(); // R176：全量趋势并行预取（幂等），7/30 天档点击即可本地即时切片
       var url = 'admin/stats';
       var params = [];
       if (startDate) params.push('start_date=' + encodeURIComponent(startDate));
       if (endDate) params.push('end_date=' + encodeURIComponent(endDate));
       if (params.length) url += '?' + params.join('&');
+      // R176（用户 10:16）：统计表标题随所选范围即时同步（旧静态"（30天内）"文案与切档后
+      // 六卡/图表数据口径不符，切 1/7 天仍写 30 天）；请求发出前就更新，点击即见
+      var _s0 = String(startDate || '').slice(0, 10), _e0 = String(endDate || '').slice(0, 10), _lbl;
+      if (_s0 && _s0 === _e0) _lbl = '今天';
+      else if (_s0 && _e0) {
+        var _span = Math.round((Date.parse(_e0 + 'T00:00:00Z') - Date.parse(_s0 + 'T00:00:00Z')) / 86400000) + 1;
+        _lbl = (_span === 7 || _span === 30) ? '近' + _span + '天' : (_s0 + ' ~ ' + _e0);
+      }
+      if (_lbl) {
+        var _h3p = document.getElementById('statH3Product'); if (_h3p) _h3p.textContent = '资源明细（' + _lbl + '）';
+        var _h3r = document.getElementById('statH3Recent'); if (_h3r) _h3r.textContent = '浏览记录（' + _lbl + '）';
+      }
       // R173（用户 00:28）：回退 R171 的"请求一发就转圈"——改回 R170 条件口径（统计卡未渲染过才显示转圈）；
       // 无条件转圈让每次切日期/切 tab 都闪转圈+淡入，用户实测"全页面都闪一次，更难看"
       var _sl0 = document.getElementById('statsLoading'); if (_sl0 && !(document.getElementById('statCards') || { children: [] }).children.length) _sl0.style.display = 'flex';
@@ -3647,8 +3706,8 @@ document.addEventListener('click', function (e) {
         renderStatCards(ov, ovp);
 
         // 趋势图（按时间筛选）
-        var allTrend = res.trend || []; if (!startDate && !endDate) state.statsTrendAll = allTrend;
-        var allTrendPrev = res.trend_prev || []; if (!startDate && !endDate) state.statsTrendAllPrev = allTrendPrev;
+        var allTrend = res.trend || [];
+        var allTrendPrev = res.trend_prev || [];
         var days = state.statsDays || 7;
         var trendData, trendPrev;
         if (res.hourly && res.hourly.length) {
@@ -4353,11 +4412,16 @@ refreshCatCnts();
         document.getElementById('statStartDate').value = '';
         document.getElementById('statEndDate').value = '';
         if (state.statsDays === 1) {
-          // R29（优化项8）：1天档请求当天单日数据（按小时展示）；日期与趋势序列同口径（UTC 日）
-          var _td = new Date().toISOString().slice(0, 10);
+          // R29（优化项8）：1天档请求当天单日数据（按小时展示）；R176：日期改北京时间口径
+          var _td = __bjToday();
           loadStats(_td, _td, 1);
         } else {
-          loadStats();
+          // R176（用户 10:16）：极致响应两段式——①趋势全量已在 state，先本地即时重绘两图
+          //（点击瞬间图表就切到 7/30 天视图，零等待）；②同时发对应范围请求，回来后六卡片+
+          // 两图+三表全部按新档刷新（旧 loadStats() 无参被短路只重绘两图，六卡永不更新）
+          if (state.statsTrendAll && state.statsTrendAll.length) applyStatsDays();
+          var _r7 = __statsRangeDays(state.statsDays);
+          loadStats(_r7.start, _r7.end, 1);
         }
       });
     });
@@ -4367,10 +4431,9 @@ refreshCatCnts();
       var e = document.getElementById('statEndDate').value;
       if (!s || !e) { toast('请选择开始和结束时间', 'error'); return; }
       if (s.slice(0, 10) > e.slice(0, 10)) { toast('开始时间不能晚于结束时间', 'error'); return; }
-      // 计算30天前的日期
-      var maxStart = new Date();
-      maxStart.setDate(maxStart.getDate() - 29);
-      var maxStartStr = maxStart.toISOString().slice(0, 10);
+      // 计算30天前的日期（R176：北京时间口径，旧 UTC 在北京 0-8 点会误拦/放错一天）
+      var maxStartMs = Date.parse(__bjToday() + 'T00:00:00Z') - 29 * 86400000;
+      var maxStartStr = new Date(maxStartMs).toISOString().slice(0, 10);
       if (s.slice(0, 10) < maxStartStr) {
         toast('最多只能查询最近30天的数据，已自动调整开始时间', 'warn');
         document.getElementById('statStartDate').value = maxStartStr + ' 00:00';
@@ -4651,7 +4714,7 @@ refreshCatCnts();
         m.innerHTML = '<div style="background:#fff;border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=178" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
@@ -4679,7 +4742,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=178', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
