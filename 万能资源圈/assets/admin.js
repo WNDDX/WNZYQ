@@ -609,6 +609,8 @@
       var checked = this.checked;
       document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = checked; state.prodSelected[Number(cb.dataset.id)] = checked; });
       updateBatchBar();
+      // R180（用户 09-16）：渲染完成后移除 loading 态
+      setTimeout(function () { box.classList.remove('loading'); }, 50);
     });
     document.querySelectorAll('.batch-btn').forEach(function (btn) {
       btn.addEventListener('click', function () { batchAction(this.dataset.action); });
@@ -657,6 +659,24 @@
     window.__loginDirect = true; window.doLogin = doLogin;
     loginPass.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
 
+    // R180（用户 09-16）：根因→登录表单不支持回车提交；修法→监听 Enter 键
+    document.getElementById('loginPass').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') doLogin();
+    });
+    // R180（用户 09-16）：根因→密码输入框缺可见性切换；修法→追加眼睛图标按钮
+    function togglePwdVisibility() {
+      var pwd = document.getElementById('loginPass');
+      var btn = document.getElementById('pwdToggleBtn');
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        btn.textContent = '🙈';
+        btn.setAttribute('aria-label', '隐藏密码');
+      } else {
+        pwd.type = 'password';
+        btn.textContent = '👁';
+        btn.setAttribute('aria-label', '显示密码');
+      }
+    }
     function doLogin() {
       if (loginBtn.disabled) return; // 防重复提交：onclick+addEventListener 双绑只执行一次
       var u = loginUser.value.trim();
@@ -738,6 +758,8 @@
       refreshCatCnts();
       var box = document.getElementById('productList'); var _minH = box.offsetHeight; if (_minH > 0) box.style.minHeight = _minH + 'px';
       var empty = document.getElementById('productEmpty');
+      // R180（用户 09-16）：根因→分页按钮快速连点导致页码跳变；修法→渲染期间禁用按钮+loading态
+      box.classList.add('loading');
       box.innerHTML = '';
 
       // 搜索过滤
@@ -1017,7 +1039,14 @@
           totalPages: totalPages,
           total: list.length,
           unit: '件',
-          onPage: function (p) { adminPage = p; renderProducts(); }
+          onPage: function (p) {
+          // R180（用户 09-16）：根因→分页按钮快速连点导致页码跳变；修法→渲染期间禁用按钮
+          var pg = pager.querySelectorAll('button');
+          pg.forEach(function (b) { b.disabled = true; });
+          adminPage = p;
+          renderProducts();
+          setTimeout(function () { pg.forEach(function (b) { b.disabled = false; }); }, 150);
+        }
         });
       } else if (totalPages > 1) {
         // 兜底：公共组件缺失时退回原方块样式（不应发生）
@@ -1042,6 +1071,8 @@
       }
 
       updateBatchBar();
+      // R180（用户 09-16）：渲染完成后移除 loading 态
+      setTimeout(function () { box.classList.remove('loading'); }, 50);
     }
 
     // ---------- 复制资源 ----------
@@ -1135,7 +1166,8 @@
       var bar = document.getElementById('batchBar');
       var countEl = document.getElementById('batchCount');
       var selectAll = document.getElementById('selectAll');
-      countEl.textContent = count;
+      // R180（用户 09-16）：根因→批量栏无选中计数；修法→显示"已选 N 项"
+      countEl.textContent = '已选 ' + count + ' 项';
       bar.classList.toggle('show', count > 0);
       var allChecks = document.querySelectorAll('.row-check');
       selectAll.checked = allChecks.length > 0 && count === allChecks.length;
@@ -1172,6 +1204,8 @@
                 toast('批量改分类完成：成功 ' + res.count + ' 项', 'success');
                 // 性能：本地即时改 cid 并重渲染（毫秒级反馈），后台静默同步一次保证数据一致
                 applyBatchLocal('changeCat', ids, { cid: newCid }); renderProducts(); silentSyncProducts();
+                // R180（用户 09-16）：根因→批量操作成功后选择未清空；修法→清空选中
+                state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); updateBatchBar();
               }
               else toast(res.msg || '操作失败', 'error');
             });
@@ -1191,6 +1225,8 @@
               if (res && res.ok) {
                 toast('批量改价格完成：成功 ' + res.count + ' 项', 'success');
                 applyBatchLocal('changePrice', ids, { price: newPrice }); renderProducts(); silentSyncProducts();
+                // R180（用户 09-16）：根因→批量操作成功后选择未清空；修法→清空选中
+                state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); updateBatchBar();
               }
               else toast(res.msg || '操作失败', 'error');
             });
@@ -1208,6 +1244,8 @@
             // + 整表重渲染，网络往返期间界面毫无反馈；现改为本地即时更新 + 立即渲染（毫秒级），
             // 后台再静默同步一次，保证数据一致的同时操作反馈即时可见
             applyBatchLocal(action, ids); renderProducts(); silentSyncProducts();
+            // R180（用户 09-16）：根因→批量操作成功后选择未清空；修法→清空选中
+            state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); updateBatchBar();
           } else {
             toast(res.msg || '操作失败', 'error');
           }
@@ -1685,7 +1723,9 @@
         schedule_off: fScheduleOff.value || ''
       };
       if (!validateField(fTitle, '请填写资源标题')) return;
-      if (!data.cid) { toast('请选择资源分类', 'error'); document.getElementById('fCidDisplay').style.borderColor = '#ff4444'; document.getElementById('fCidDisplay').style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)'; return; }
+      if (!data.cid) { toast('请选择资源分类', 'error'); document.getElementById('fCidDisplay').style.borderColor = '#ff4444';
+        // R180（用户 09-16）：根因→分类选择器校验失败无自动滚动；修法→scrollIntoView
+        document.getElementById('fCidDisplay').scrollIntoView({ behavior: 'smooth', block: 'center' }); document.getElementById('fCidDisplay').style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)'; return; }
 
       saving = true;
       var isNewSave = !state.editingId; // 记录本次是否为新增（editingId 之后会被赋值）
@@ -3274,17 +3314,26 @@ document.addEventListener('click', function (e) {
       if (lineHover.svg === svg && lineHover.attached) return;
       lineHover.svg = svg; lineHover.attached = true;
       // svg 元素本身不重建（每轮只重设 innerHTML），监听挂一次即可
-      svg.addEventListener('mousemove', function (evt) {
+      function handlePointer(x) {
         if (!lineHover.data || !lineHover.data.length) return;
         var rect = svg.getBoundingClientRect();
         var scale = (rect.width || lineHover.W) / lineHover.W;
-        var x = (evt.clientX - rect.left) / (scale || 1);
-        var i = lineHover.stepX > 0 ? Math.round((x - lineHover.padL) / lineHover.stepX) : 0;
+        var ix = (x - rect.left) / (scale || 1);
+        var i = lineHover.stepX > 0 ? Math.round((ix - lineHover.padL) / lineHover.stepX) : 0;
         if (i < 0) i = 0;
         if (i > lineHover.data.length - 1) i = lineHover.data.length - 1;
         drawLineHover(svg, i);
-      });
+      }
+      svg.addEventListener('mousemove', function (evt) { handlePointer(evt.clientX); });
       svg.addEventListener('mouseleave', function () { clearLineHover(svg); });
+      // R180（用户 09-16）：根因→折线图仅支持鼠标悬浮；修法→追加 touch 事件支持
+      svg.addEventListener('touchstart', function (evt) {
+        if (evt.touches.length === 1) { handlePointer(evt.touches[0].clientX); }
+      }, { passive: true });
+      svg.addEventListener('touchmove', function (evt) {
+        if (evt.touches.length === 1) { evt.preventDefault(); handlePointer(evt.touches[0].clientX); }
+      }, { passive: false });
+      svg.addEventListener('touchend', function () { clearLineHover(svg); });
     }
 
     // ---------- 折线图渲染 ----------

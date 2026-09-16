@@ -192,7 +192,7 @@
        样式与顶栏 tab 同观感（半透明白胶囊），但语义独立：只弹退出确认框，不参与 tab 切换 */
     .logout-btn {
       border: none; background: rgba(255, 255, 255, 0.18);
-      color: #fff; padding: 0 16px; height: 38px;
+      color: #fff; padding: 0 16px; height: 44px;
       display: inline-flex; align-items: center; justify-content: center;
       box-sizing: border-box; border-radius: 18px;
       font-size: 14px; white-space: nowrap; line-height: 1.2;
@@ -230,7 +230,7 @@
     }
     .admin-search input {
       width: 100%;
-      height: 38px;
+      height: 44px;
       border: 1px solid var(--border);
       border-radius: 19px;
       padding: 0 14px 0 36px;
@@ -257,7 +257,8 @@
     .product-row:active { cursor: grabbing; }
     .cat-row.dragging, .ann-item.dragging { opacity: 0.4; transform: scale(0.98); }
     .cat-row.drag-over, .ann-item.drag-over { border-top: 3px solid var(--blue1); margin-top: -3px; }
-    .drag-handle { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; background: rgba(30,136,229,0.12); color: #1E88E5; font-size: 13px; cursor: grab; user-select: none; flex-shrink: 0; touch-action: none; }
+    .drag-handle { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  min-width: var(--touch-target-compact); min-height: var(--touch-target-compact); border-radius: 6px; background: rgba(30,136,229,0.12); color: #1E88E5; font-size: 13px; cursor: grab; user-select: none; flex-shrink: 0; touch-action: none; }
     .drag-handle:hover { background: rgba(30,136,229,0.2); }
     .drag-handle:active { cursor: grabbing; }
     .product-row.dragging {
@@ -284,13 +285,13 @@
     .product-row .p-sub .p-desc { color: var(--blue1); } /* R24：简介字体颜色复用资源页弹窗简介的蓝色 */
     /* R146（用户 00:34）：副标题分隔点黑色 + 金额橙色（与资源页 .variant-price #ff6b35 同色） */
     .product-row .p-sub .p-dot { color: var(--text); }
-    .product-row .p-sub .p-price { color: #ff6b35; font-weight: 600; }
+    .product-row .p-sub .p-price { color: var(--color-price); font-weight: 600; }
     .badge {
       display: inline-block; padding: 2px 10px; border-radius: 10px;
       font-size: 12px; flex-shrink: 0;
     }
     .badge.on { background: #e6f7e6; color: var(--green); }
-    .badge.off { background: #f2f2f2; color: var(--text-faint); }
+    .badge.off { background: var(--gray-100); color: var(--text-faint); }
 
     /* 显示/隐藏直接切换下拉（显示/隐藏，与分类管理同款，两字宽度一致） */
                             .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 6px; padding: 6px 12px; font-size: 13px; color: var(--text-light); }
@@ -313,7 +314,40 @@
        下方 space-between（R134 ②两端对齐）与 1.2em 容器等高（R131 补）均保留 */
     .p-ops .select-picker.code-picker .cp-item { justify-content: space-between; }
     #productList.card-view .product-row .p-ops .select-picker.code-picker { margin: 0; flex: 1; min-width: 0; align-self: auto; }
-    @media (max-width: 600px) {
+    /* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
       /* 手机窄列：旁边按键为等分平铺（两行文字 ~48px 宽）；资源码带箭头+三字，
          等分宽会挤掉文字——改为内容自适应宽（white-space nowrap 同 card-view 下拉口径），高度仍 stretch 等高 */
       .p-ops .select-picker.code-picker { flex: 0 0 auto; }
@@ -484,7 +518,40 @@
     #inputMask:not(.open) .input-upload-btn { display: none !important; }
     /* 手机端：上传按钮换行也不拆散整行结构（按钮文字缩一点保证同行放下）；
        新增类型按钮同步同款缩小，保持"除文字外一模一样"（R40） */
-    @media (max-width: 600px) {
+    /* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
       .input-row { flex-wrap: wrap; }
       .input-row .input-upload-btn { font-size: 12px; padding: 0 12px; }
     }
@@ -499,7 +566,40 @@
       white-space: nowrap; margin-bottom: 0;
     }
     /* 手机端与上传按钮同步缩小（必须位于上面的主规则之后——同优先级后者覆盖前者） */
-    @media (max-width: 600px) {
+    /* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
       .variant-add { font-size: 12px; padding: 0 12px; }
     }
     .variant-item {
@@ -508,7 +608,7 @@
       display: flex; align-items: center; gap: 10px;
     }
     .variant-item .v-name { flex: 1; font-size: 14px; font-weight: 500; }
-    .variant-item .v-price { color: #ff6b35; font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
+    .variant-item .v-price { color: var(--color-price); font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .variant-item .v-sort { color: var(--text-faint); font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
     .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-bottom: 6px; background: var(--bg-light); }
@@ -614,7 +714,7 @@
     .cp-item.cp-sub { padding-left: 30px; font-weight: 400; color: var(--text); font-size: 14px; }
     .cp-item.cp-all { font-weight: 400; color: var(--text); font-size: 14px; }
     .cp-item .cp-name { flex: 1; }
-    .cp-item .cp-price { color: #ff6b35; font-weight: 600; font-size: 13px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
+    .cp-item .cp-price { color: var(--color-price); font-weight: 600; font-size: 13px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .cp-item .cp-chevron {
       width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
       color: var(--blue1); transition: transform 0.15s ease, color 0.2s ease; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
@@ -775,7 +875,7 @@
     #previewMask .preview-body { padding: 16px 20px 20px; }
     #previewMask .preview-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
     #previewMask .preview-title { font-size: 22px; font-weight: 700; color: var(--text); flex: 1; line-height: 1.4; letter-spacing: 0.5px; padding-right: 36px; }
-    #previewMask .preview-price { color: #ff6b35; font-size: 24px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    #previewMask .preview-price { color: var(--color-price); font-size: 24px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     #previewMask .preview-desc { font-size: 15px; color: var(--blue1); margin-bottom: 14px; font-weight: 600; line-height: 1.6; }
     /* R36：预览弹窗富文本图/视频与资源页一致——宽度 100% 且高度上限，竖长图不撑爆弹窗 */
     #previewMask .preview-detail img, #previewMask .preview-detail video { max-width: 100%; max-height: 60vh; max-height: 60dvh; /* R159 */ height: auto; display: block; margin: 10px auto; border-radius: 8px; }
@@ -788,7 +888,7 @@
     #previewMask .variant-detail { background: var(--bg-light); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
     #previewMask .variant-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); }
     #previewMask .variant-name { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; } /* R158：长名称在弹性行内收缩换行，不挤压金额 */
-    #previewMask .variant-price { color: #ff6b35; font-size: 17px; font-weight: 700; white-space: nowrap; flex-shrink: 0; } /* R158：金额永不换行（评论3） */
+    #previewMask .variant-price { color: var(--color-price); font-size: 17px; font-weight: 700; white-space: nowrap; flex-shrink: 0; } /* R158：金额永不换行（评论3） */
     #previewMask .variant-detail .v-desc { font-size: 13px; color: var(--text-light); line-height: 1.8; white-space: pre-wrap; margin-bottom: 8px; }
     #previewMask .variant-detail img, #previewMask .variant-detail video { width: 100%; border-radius: 8px; margin-bottom: 6px; display: block; }
     /* R158（用户 22:42）：预览同步资源页资源码解锁区（与 shop.css 同款观感，作用域限定 #previewMask） */
@@ -832,7 +932,40 @@
       background: var(--bg-light); border-radius: 10px; border: 1px solid var(--border);
     }
     /* 移动端：与资源页 @media(max-width:600px) 弹窗适配逐项一致 */
-    @media (max-width: 600px) {
+    /* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
       #previewMask > .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: 12px; }
       #previewMask .preview-cover { width: auto; max-width: calc(100% - 24px); margin: 12px auto 0; max-height: 220px; aspect-ratio: auto; }
       #previewMask .preview-body { padding: 12px 16px 16px; }
@@ -1056,7 +1189,40 @@
     .line-legend:not(.show-prev) .lg-group-prev, .trend-legend:not(.show-prev) .lg-group-prev { display: none; }
 
     /* 手机端适配 */
-    @media (max-width: 600px) {
+    /* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
       .topbar-inner { gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
       .topbar-logo { width: 30px; height: 30px; }
       .topbar-brand { flex: 1; min-width: 0; font-size: 16px; }
@@ -1080,12 +1246,12 @@
          落格，否则它会挤掉勾选框的格子、后续元素全体错位 */
       #productList:not(.card-view) .product-row {
         display: grid;
-        grid-template-columns: 20px 60px minmax(0, 1fr) 24px;
+        grid-template-columns: 20px 60px minmax(0, 1fr) 44px;
         column-gap: 10px; row-gap: 8px;
         align-items: center;
         padding: 10px 12px;
       }
-      #productList:not(.card-view) .product-row .drag-handle { grid-row: 1; grid-column: 4; width: 24px; height: 24px; font-size: 12px; align-self: start; }
+      #productList:not(.card-view) .product-row .drag-handle { grid-row: 1; grid-column: 4; width: 44px; height: 44px; font-size: 12px; align-self: start; }
       #productList:not(.card-view) .product-row .row-check { grid-row: 1; grid-column: 1; position: static; width: 20px; height: 20px; margin: 0; }
       #productList:not(.card-view) .product-row .thumb { grid-row: 1; grid-column: 2; width: 60px; height: 60px; border-radius: 8px; }
       #productList:not(.card-view) .product-row .info { grid-row: 1; grid-column: 3; min-width: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -1229,11 +1395,77 @@
     /* 管理页 logo 栏与资源页完全一致（复用 shop 样式：名称始终显示、自然宽度） */
     .topbar-brand { flex: 0 0 auto !important; min-width: 0; gap: 12px !important; }
     .topbar-brand span { display: inline !important; }
-    @media (max-width: 600px) { .topbar-brand span { letter-spacing: 1px !important; } }
+    /* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 600px) { .topbar-brand span { letter-spacing: 1px !important; } }
     /* 手机端筛选行收纳：筛选标签行隐藏（全选在“新增资源”右侧另有入口） */
     #panel-products .tb-row2 label { display: none !important; }
     /* 手机端网格卡片：操作按钮（状态/编辑/复制/删除）完整可见，不被裁剪或换行竖排 */
-    @media (max-width: 600px) {
+    /* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
       #productList.card-view .product-row .select-picker { margin: 2px 10px 8px; width: auto; max-width: calc(100% - 20px); flex-shrink: 0; }
       #productList.card-view .product-row .select-picker .cat-picker-display { white-space: nowrap; }
       #productList.card-view .product-row .p-ops { padding: 2px 10px 12px; gap: 6px; }
@@ -1301,6 +1533,39 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
      [排序|资源数|显示|编辑|删除]。一级/二级/根"全部"/虚拟"全部"行同构，列坐标逐像素对齐；
      一级名称不再换行（grid 1fr + ellipsis），排序/资源数所有行同一行同一起点。 */
 .cat-row .c-meta { display: contents; }
+
+/* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
 
 @media (max-width: 600px) {
   .cat-row {
@@ -1375,6 +1640,39 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .video-fallback .vf-link:hover { transform: scale(0.97); opacity: 0.9; }
 .video-fallback .vf-link:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 
+/* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
 @media (max-width: 600px) {
   .video-fallback .vf-link { padding: 7px 12px; font-size: 13px; }
 }
@@ -1424,7 +1722,40 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
        修复：码/无码键统一 100px；variant-item 改 grid 三行固定列（名称/金额/码组/操作各列起点恒定，
        与名称长短、金额有无、码有无完全无关）；cp-item 改 nowrap——名称自适应收缩截断、金额/码键贴右，
        与桌面同构（R154 桌面口径本来就是对齐的，手机向它看齐） */
-    @media (max-width: 600px) {
+    /* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
       .variant-item .code-slot, .cp-item .code-slot,
       .p-ops .cat-picker-panel .cp-item .code-slot { width: 100px !important; min-width: 100px !important; }
       .variant-item {
@@ -1433,14 +1764,14 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
            价格/编辑键溢出轨道叠到码键与删除键上（探针实测 390px：价格×码键叠 44px、编辑×删除键叠 22px）。
            拆列重排：col3=码键列（100px 固定宽，R179 统一口径），col4=绑定/排序列（76px），
            v-code-group 改 display:contents 让码键/绑定键直接上网格各占一列，1fr 名称列恢复 ~90px */
-        grid-template-columns: 22px minmax(0, 1fr) 100px 76px;
+        grid-template-columns: 44px minmax(0, 1fr) 100px 76px;
         grid-template-areas:
           "handle name  name  sort"
           "handle price code  bind"
           "handle edit  del   .";
         align-items: center; column-gap: 10px; row-gap: 6px;
       }
-      .variant-item .drag-handle { grid-area: handle; width: 22px; height: 22px; }
+      .variant-item .drag-handle { grid-area: handle; width: 44px; height: 44px; }
       .variant-item .v-name { grid-area: name; min-width: 0; }
       /* R179：价格/编辑键所在 1fr 列加截断保护——内容再长也只省略号，绝不再溢出叠到右侧列 */
       .variant-item .v-price { grid-area: price; justify-self: start; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
@@ -1466,10 +1797,50 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    原则：桌面密度不动；≤600px 所有按键 padding/字号收一档、按钮组 gap 收窄并允许换行，
    屏幕再小按键也不挤压变形（均分 + 换行自然铺开，不影响观感）。
    网格卡片行内 padding 2px→4px（R35 的 2px 太瘪，观感拥挤——本次用户点名）。 */
+/* R180（用户 09-16）：平板断点 601px-900px —— 产品行/分类/变体提前切 grid，防挤压 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .product-row {
+    display: grid;
+    grid-template-columns: 24px 60px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .product-row .p-ops {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-row .thumb { width: 60px; height: 60px; }
+  /* 分类管理平板切 grid */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  /* 变体管理平板切 grid（R179 手机档扩展） */
+  .variant-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  /* 统计卡片 */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
 @media (max-width: 600px) {
   .row-btn { padding: 5px 9px; font-size: 12px; }
   .product-row .p-ops { gap: 8px; flex-wrap: wrap; }
   .modal-footer { gap: 8px; }
   #productList.card-view .product-row .p-ops .row-btn { padding: 6px 4px; }
   .ann-list { gap: 8px; }
+}
+
+/* R180（用户 09-16）：产品列表加载态 */
+#productList.loading {
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out);
 }

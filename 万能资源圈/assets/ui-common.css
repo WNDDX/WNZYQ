@@ -5,36 +5,145 @@
    ============================================ */
 /* ===== CSS 变量（全站统一，页面样式也复用同一套语义变量） ===== */
 :root {
-  --blue1: #1E88E5;
-  --blue2: #1688FF;
-  --green: #01C000;
-  --red: #ff4444;
-  --gray-bg: #f0f2f5;
-  --gray-text: #666;
-  --border-soft: #eee;
-  --radius: 8px;
+  /* === 品牌主色 === */
+  --brand-primary: #1E88E5;
+  --brand-secondary: #64B5F6;
+  --brand-tertiary: #BBDEFB;
+  --brand-gradient-start: #1E88E5;
+  --brand-gradient-end: #64B5F6;
+
+  /* === 功能色 === */
+  --color-success: #01C000;
+  --color-warning: #FF9900;
+  --color-danger: #ff4444;
+  --color-info: #008C8C;
+  --color-price: #ff6b35;
+
+  /* === 中性色 === */
+  --gray-50: #FAFAFA;
+  --gray-100: #F5F5F5;
+  --gray-200: #EEEEEE;
+  --gray-300: #E0E0E0;
+  --gray-400: #BDBDBD;
+  --gray-500: #9E9E9E;
+  --gray-600: #757575;
+  --gray-700: #616161;
+  --gray-800: #424242;
+  --gray-900: #212121;
+
+  /* === 背景与表面色 === */
+  --bg-page: #f2f7fd;
+  --bg-light: #f5f7fa;
+  --bg-card: #ffffff;
+  --bg-modal: #ffffff;
+  --bg-overlay: rgba(0,0,0,0.5);
+  --bg-tooltip: rgba(0,0,0,0.75);
+
+  /* === 边框色 === */
+  --border-light: #EEEEEE;
+  --border-default: #E0E0E0;
+  --border-focus: #1E88E5;
+
+  /* === 间距体系（8px 基数）=== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* === 圆角 === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+
+  /* === 阴影 === */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-modal: 0 12px 40px rgba(0,0,0,0.20);
+
+  /* === 字号层级 === */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+
+  /* === 字重 === */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* === 行高 === */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* === 过渡动效 === */
+  --duration-instant: 0ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 250ms;
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* === 触控目标 === */
+  --touch-target-min: 44px;
+  --touch-target-compact: 36px;
+
+  /* === 保留旧变量（向后兼容，逐步替换）=== */
+  --blue1: var(--brand-primary);
+  --blue2: var(--brand-secondary);
+  --green: var(--color-success);
+  --red: var(--color-danger);
+  --gray-bg: var(--gray-100);
+  --gray-text: var(--gray-600);
+  --border-soft: var(--border-light);
+  --radius: var(--radius-md);
   --radius-lg: 14px;
   --gap: 10px;
 
-  /* ===== R50：全站暗色模式变量（亮色值；[data-theme=dark] 覆盖为暗色值） ===== */
-  --bg-page: #f2f7fd;    /* 页面底色 */
-  --bg-light: #f5f7fa;   /* 浅色区块（次级底/占位/灰块） */
-  --card-bg: #ffffff;    /* 卡片/弹窗/输入框/白底组件 */
-  --border: #e8e8e8;     /* 分隔线/描边 */
-  --text: #222;          /* 主文字 */
-  --text-light: #666;    /* 次要文字 */
-  --text-faint: #999;    /* 提示/占位文字（placeholder/hint） */
-  --hover-bg: #f0f7ff;   /* 悬停浅蓝底 */
+  /* ===== R50：全站暗色模式变量 ===== */
+  --text: #222;
+  --text-light: #666;
+  --text-faint: #999;
+  --hover-bg: #f0f7ff;
 }
 [data-theme="dark"] {
   --bg-page: #14151f;
   --bg-light: #1b1d29;
-  --card-bg: #20232f;
+  --bg-card: #20232f;
+  --bg-modal: #20232f;
+  --bg-overlay: rgba(0,0,0,0.7);
   --border: #2e3348;
+  --border-light: #3A3A3A;
+  --border-default: #4A4A4A;
   --text: #e8eaf0;
   --text-light: #9aa0b5;
   --text-faint: #7a8098;
   --hover-bg: #1d2b45;
+  --gray-50: #1E1E1E;
+  --gray-100: #2C2C2C;
+  --gray-200: #3A3A3A;
+  --gray-300: #4A4A4A;
+  --gray-400: #6A6A6A;
+  --gray-500: #8A8A8A;
+  --gray-600: #AAAAAA;
+  --gray-700: #BDBDBD;
+  --gray-800: #D6D6D6;
+  --gray-900: #EEEEEE;
 }
 
 /* 隐藏所有滚动条（页面/弹窗/列表），滚动手势照常可用 */
@@ -212,7 +321,7 @@
    两页禁止各自再写 .tab 样式（复用，非复制）。 */
 .tab {
   border: none; background: rgba(255, 255, 255, 0.18);
-  color: #fff; padding: 0 16px; height: 38px;
+  color: #fff; padding: 0 16px; height: 44px;
   display: inline-flex; align-items: center; justify-content: center;
   box-sizing: border-box; border-radius: 18px;
   font-size: 14px; white-space: nowrap; line-height: 1.2; gap: 5px;
@@ -236,7 +345,7 @@
 .view-btn {
   padding: 0 10px; border: 1px solid #64B0F1; border-radius: 6px;
   background: #64B0F1; color: #fff; cursor: pointer;   /* 未激活（R87）：淡蓝底白字，与状态按钮隐藏态同色 */
-  font-size: 13px; height: 38px; box-sizing: border-box;
+  font-size: 13px; height: 44px; box-sizing: border-box;
   display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; gap: 4px;
   transition: background .15s ease, color .15s ease, transform .1s ease;
   -webkit-tap-highlight-color: transparent;
@@ -249,8 +358,8 @@
 
 /* 窄屏统一适配（tab 与 view-btn 同步缩放，两页一致） */
 @media (max-width: 600px) {
-  .tab { padding: 7px 12px; font-size: 13px; }
-  .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
+  .tab { padding: 7px 12px; font-size: 13px; min-height: 44px; }
+  .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; min-height: 44px; }
   /* R8 小屏适配：带图标的按键（咨询客服/分享/列表/网格）窄屏只留图标、隐藏文字，
      title 悬停提示保留——手机顶栏空间有限，图标语义已足够，PC 端仍显示完整"图标+文字" */
   .tab svg + span { display: none; }
@@ -312,6 +421,7 @@
 .uni-pager button.pg-btn {
   padding: 8px 16px; border: 1px solid var(--blue2, #90CAF9); background: var(--card-bg);
   color: var(--blue1, #1E88E5); border-radius: 20px; cursor: pointer; font-size: 13px;
+  min-height: 44px; min-width: 44px;
   -webkit-tap-highlight-color: transparent;
 }
 .uni-pager button.pg-btn:hover:not(:disabled) { background: var(--hover-bg); }
@@ -333,7 +443,7 @@
 .uni-pager .pg-jump button:hover { background: var(--hover-bg); }
 @media (max-width: 600px) {
   .uni-pager { gap: 6px; }
-  .uni-pager button.pg-btn { padding: 7px 12px; font-size: 12px; }
+  .uni-pager button.pg-btn { padding: 7px 12px; font-size: 12px; min-height: 44px; min-width: 44px; }
   .uni-pager .pg-info { font-size: 12px; }
 }
 

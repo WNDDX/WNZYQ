@@ -522,10 +522,55 @@
     var currentPage = 1;
     var PAGE_SIZE = 20;
 
-    function renderProducts() {
+    // R180（用户 09-16）：根因→空状态缺快捷恢复操作；修法→动态插入清除搜索与浏览全部按钮
+function resetLoadState() {
+  currentPage = 1;
+  var sl = document.getElementById('scrollLoading');
+  if (sl) sl.style.display = 'none';
+  var al = document.getElementById('allLoaded');
+  if (al) al.style.display = 'none';
+}
+function addEmptyActions(tipEl) {
+  if (!tipEl) return;
+  var old = tipEl.querySelector('.empty-actions');
+  if (old) old.remove();
+  var box = document.createElement('div');
+  box.className = 'empty-actions';
+  box.style.cssText = 'margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;';
+  var clearBtn = document.createElement('button');
+  clearBtn.textContent = '清除搜索';
+  clearBtn.style.cssText = 'padding:10px 20px;border:none;border-radius:10px;background:var(--blue1);color:#fff;font-size:14px;font-weight:600;cursor:pointer;min-height:44px;';
+  clearBtn.addEventListener('click', function () {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchClear').classList.remove('show');
+    currentSearch = '';
+    resetLoadState();
+    filterProducts();
+  });
+  var browseBtn = document.createElement('button');
+  browseBtn.textContent = '浏览全部分类';
+  browseBtn.style.cssText = 'padding:10px 20px;border:1px solid var(--border);border-radius:10px;background:var(--card-bg);color:var(--text-light);font-size:14px;font-weight:600;cursor:pointer;min-height:44px;';
+  browseBtn.addEventListener('click', function () {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchClear').classList.remove('show');
+    currentSearch = '';
+    switchCategory(0);
+    resetLoadState();
+  });
+  box.appendChild(clearBtn);
+  box.appendChild(browseBtn);
+  tipEl.appendChild(box);
+}
+
+function renderProducts() {
       var list = getFilteredProducts();
       productGrid.innerHTML = '';
       emptyTip.classList.toggle('show', list.length === 0);
+      // R180：切分类/搜索时重置加载完结标识
+      var sl = document.getElementById('scrollLoading');
+      if (sl) sl.style.display = 'none';
+      var al = document.getElementById('allLoaded');
+      if (al) al.style.display = 'none';
 
       // 移除旧分页
       var oldPager = document.getElementById('pager');
@@ -537,6 +582,7 @@
         var emptyTitle = document.getElementById('emptyTitle');
         var kw = searchInput.value.trim();
         emptyTitle.textContent = kw ? '该搜索暂无资源' : '该分类暂无资源';
+        addEmptyActions(emptyTip);
         return;
       }
 
@@ -1116,6 +1162,8 @@
           resourceCodeError.textContent = (res && res.msg) || '资源码错误，请检查后重试';
           resourceCodeError.style.display = 'block';
           resourceCodeInput.style.borderColor = '#ff4444';
+          // R180（用户 09-16）：根因→验证失败需手动全选重输；修法→自动全选
+          resourceCodeInput.select();
           setTimeout(function () { resourceCodeInput.style.borderColor = ''; }, 1500);
         }
       });
@@ -1573,6 +1621,15 @@
         var totalPages = Math.ceil(list.length / PAGE_SIZE);
         if (currentPage < totalPages) {
           window.__loadingNextPage = true;
+          // R180（用户 09-16）：根因→无限滚动无加载态；修法→插入加载提示
+          var loadingTip = document.getElementById('scrollLoading');
+          if (!loadingTip) {
+            loadingTip = document.createElement('div');
+            loadingTip.id = 'scrollLoading';
+            loadingTip.style.cssText = 'text-align:center;padding:16px 0;color:var(--text-light);font-size:13px;';
+            loadingTip.textContent = '加载中…';
+            productGrid.parentNode.insertBefore(loadingTip, productGrid.nextSibling);
+          } else { loadingTip.style.display = 'block'; }
           currentPage++;
           // 追加下一页资源，不重新渲染全部
           var start = (currentPage - 1) * PAGE_SIZE;
@@ -1605,6 +1662,18 @@
           // 更新分页控件的当前页
           var pagerInfo = document.querySelector('#pager .pg-info'); // R35：pg-main 组盒后不能再取第一个 span（会命中组盒、textContent 清空整组按钮），改精确取 .pg-info
           if (pagerInfo) pagerInfo.textContent = currentPage + ' / ' + totalPages;
+          // R180（用户 09-16）：加载完成移除 loading 提示；若全部加载完显示完结标识
+          if (loadingTip) loadingTip.style.display = 'none';
+          if (currentPage >= totalPages) {
+            var allLoaded = document.getElementById('allLoaded');
+            if (!allLoaded) {
+              allLoaded = document.createElement('div');
+              allLoaded.id = 'allLoaded';
+              allLoaded.style.cssText = 'text-align:center;padding:16px 0;color:var(--text-light);font-size:13px;';
+              allLoaded.textContent = '— 已展示全部资源 —';
+              productGrid.parentNode.insertBefore(allLoaded, productGrid.nextSibling);
+            } else { allLoaded.style.display = 'block'; }
+          }
           setTimeout(function () { window.__loadingNextPage = false; }, 300);
         }
       }

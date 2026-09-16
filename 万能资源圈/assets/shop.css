@@ -154,7 +154,7 @@
     }
     .search-input {
       width: 100%;
-      height: 38px;
+      height: 44px;
       border: none;
       border-radius: 19px;
       padding: 0 36px 0 38px;
@@ -214,6 +214,8 @@
       padding: 8px 20px;
       margin-right: 8px;
       border-radius: 18px;
+      min-height: 44px;
+      line-height: 1.2;
       border: 1px solid var(--border);
       background: var(--card-bg);
       color: var(--text-light);
@@ -578,7 +580,7 @@
       padding-right: 36px;
     }
     .modal-price {
-      color: #ff6b35;
+      color: var(--color-price);
       font-size: 24px;
       font-weight: 700;
       white-space: nowrap;
@@ -700,7 +702,7 @@
       min-width: 0;
     }
     .variant-price {
-      color: #ff6b35;
+      color: var(--color-price);
       font-size: 17px;
       font-weight: 700;
       white-space: nowrap; /* R158：金额永不换行（评论3——长数字类型名把 ¥13 挤成竖排换行） */
@@ -724,7 +726,7 @@
     .resource-code-section {
       margin-top: 16px;
       padding: 16px;
-      background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
+      background: linear-gradient(135deg, var(--bg-light) 0%, var(--brand-tertiary) 100%);
       border-radius: 12px;
       border: 1px solid var(--border);
     }
@@ -1049,7 +1051,7 @@
       .product-grid.list-view .card-img { width: 96px; min-width: 96px; aspect-ratio: 1 / 1; }
       .product-grid.list-view .card-body { padding: 10px; }
       .product-grid.list-view .card-title { -webkit-line-clamp: 2; min-height: 38px; }
-      .back-top { right: 16px; bottom: 20px; width: 40px; height: 40px; }
+      .back-top { right: 16px; bottom: 20px; width: 44px; height: 44px; }
       .variant-tab { padding: 5px 14px; font-size: 12px; }
     }
 
