@@ -352,7 +352,7 @@
       api('admin/clear-cache', { method: 'POST' }).catch(function () {});
     }
     // 统计页筛选栏重排（独立函数，初始化时执行一次，不依赖 clearCache 调用时机）
-    function initStatsFilterBar() { var _g = document.querySelector('#panel-stats .time-filter'); var _wrap = _g && _g.parentNode; var _card = document.getElementById('statCards'); if (_wrap && _card && _wrap.parentNode) { var _bar = document.createElement('div'); _bar.id = 'statsFilterBar'; _bar.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px;background:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.07);'; while (_wrap.firstChild) _bar.appendChild(_wrap.firstChild); _wrap.parentNode.removeChild(_wrap); _card.parentNode.insertBefore(_bar, _card.nextSibling); }
+    function initStatsFilterBar() { var _g = document.querySelector('#panel-stats .time-filter'); var _wrap = _g && _g.parentNode; var _card = document.getElementById('statCards'); if (_wrap && _card && _wrap.parentNode) { var _bar = document.createElement('div'); _bar.id = 'statsFilterBar'; _bar.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px;background:var(--card-bg,#fff);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow-card);'; while (_wrap.firstChild) _bar.appendChild(_wrap.firstChild); _wrap.parentNode.removeChild(_wrap); _card.parentNode.insertBefore(_bar, _card.nextSibling); }
     }
 
     // ---------- 统一时间选择弹窗（点击输入框弹出；今天/此刻 + 清除 + 确定） ----------
@@ -609,8 +609,6 @@
       var checked = this.checked;
       document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = checked; state.prodSelected[Number(cb.dataset.id)] = checked; });
       updateBatchBar();
-      // R180（用户 09-16）：渲染完成后移除 loading 态
-      setTimeout(function () { box.classList.remove('loading'); }, 50);
     });
     document.querySelectorAll('.batch-btn').forEach(function (btn) {
       btn.addEventListener('click', function () { batchAction(this.dataset.action); });
@@ -659,37 +657,20 @@
     window.__loginDirect = true; window.doLogin = doLogin;
     loginPass.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
 
-    // R180（用户 09-16）：根因→登录表单不支持回车提交；修法→监听 Enter 键
-    document.getElementById('loginPass').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') doLogin();
-    });
-    // R180（用户 09-16）：根因→密码输入框缺可见性切换；修法→追加眼睛图标按钮
-    function togglePwdVisibility() {
-      var pwd = document.getElementById('loginPass');
-      var btn = document.getElementById('pwdToggleBtn');
-      if (pwd.type === 'password') {
-        pwd.type = 'text';
-        btn.textContent = '🙈';
-        btn.setAttribute('aria-label', '隐藏密码');
-      } else {
-        pwd.type = 'password';
-        btn.textContent = '👁';
-        btn.setAttribute('aria-label', '显示密码');
-      }
-    }
     function doLogin() {
       if (loginBtn.disabled) return; // 防重复提交：onclick+addEventListener 双绑只执行一次
       var u = loginUser.value.trim();
       var p = loginPass.value;
       if (!u || !p) { toast('请输入账号和密码', 'error'); return; } /* R118：登录提示统一 toast 胶囊（top:80/32px） */
       loginBtn.disabled = true;
-      loginBtn.textContent = '登录中…';
+      if (window.__btnBusy) window.__btnBusy(loginBtn, '登录中…'); /* R183 条4：忙碌转圈 */
       api('admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) })
         .then(function (res) {
           if (res && res.ok) {
             // R30-#4：令牌改由后端写入 HttpOnly Cookie（脚本读不到），前端不再保存 token
             // 修复：showMain 内部已统一调用 loadSettings（连同 stats/products/categories），
             // 这里不再单独调一次，避免同一接口登录后被请求两次
+            if (window.__haptic) window.__haptic(); /* R183 条12：登录成功 */
             try { showMain(res.username); }
             catch (e) { setTimeout(function () { location.reload(); }, 300); }
           } else {
@@ -731,13 +712,18 @@
     document.addEventListener('change', function (e) {
       if (e.target.id === 'filterCat' || e.target.id === 'filterStatus') {
         adminPage = 1;
+        /* R183 条21：筛选条件持久化（下次登录自动恢复） */
+        try { localStorage.setItem('wnzyq_admin_filter', JSON.stringify({ c: document.getElementById('filterCat').value, s: document.getElementById('filterStatus').value })); } catch (e0) {}
         renderProducts();
       }
     });
+    // R183 条13：后台搜索 300ms 防抖（与前台同步）；原先与下方直接监听双份渲染，一并收口成单一路由
     document.addEventListener('input', function (e) {
       if (e.target.id === 'adminSearch') {
-        adminPage = 1;
-        renderProducts();
+        clearTimeout(window.__adminSearchTimer);
+        window.__adminSearchTimer = setTimeout(function () { adminPage = 1; renderProducts(); var __sv = document.getElementById('adminSearch').value; if (__sv.trim()) window.pushSearchHist('adminSearchHist', __sv); }, 300); /* R186 建议1：搜索稳定 300ms 后记录 */
+        var __ac = document.getElementById('adminSearchClear');
+        if (__ac) __ac.classList.toggle('show', e.target.value.length > 0);
       }
     });
 
@@ -758,8 +744,6 @@
       refreshCatCnts();
       var box = document.getElementById('productList'); var _minH = box.offsetHeight; if (_minH > 0) box.style.minHeight = _minH + 'px';
       var empty = document.getElementById('productEmpty');
-      // R180（用户 09-16）：根因→分页按钮快速连点导致页码跳变；修法→渲染期间禁用按钮+loading态
-      box.classList.add('loading');
       box.innerHTML = '';
 
       // 搜索过滤
@@ -785,13 +769,33 @@
         if (filterStatus === 'hidden' && (p.is_online && !p.is_hidden)) return false;
         return true;
       });
-      empty.style.display = list.length ? 'none' : 'block';
+      /* R193（用户 22:32 拍板）：后台空态统一前台三件套（📦48px+标题+清除按钮），样式在 ui-common.css 全站同一份 */
+      empty.classList.toggle('show', !list.length);
 
       // 移除旧分页
       var oldPager = document.getElementById('adminPager');
       if (oldPager) oldPager.parentNode.removeChild(oldPager);
 
-      if (list.length === 0) { updateBatchBar(); return; }
+      if (list.length === 0) {
+        /* R193：标题文案对齐前台口径——有搜索词=「该搜索暂无资源」+清除按钮；否则=「暂无资源」 */
+        document.getElementById('productEmptyTitle').textContent = (document.getElementById('adminSearch').value || '').trim() ? '该搜索暂无资源' : '暂无资源';
+        /* R183 条17：搜索空态提供「清除搜索」按钮（与前台同步；非搜索空态不显示） */
+        var __oe = empty.querySelector('.empty-clear-btn');
+        if (__oe) __oe.parentNode.removeChild(__oe);
+        var __kw = (document.getElementById('adminSearch').value || '').trim();
+        if (__kw) {
+          var __cb = document.createElement('button');
+          __cb.type = 'button'; __cb.className = 'empty-clear-btn'; __cb.textContent = '清除搜索';
+          __cb.addEventListener('click', function () {
+            document.getElementById('adminSearch').value = '';
+            var __a2 = document.getElementById('adminSearchClear');
+            if (__a2) __a2.classList.remove('show');
+            adminPage = 1; renderProducts();
+          });
+          empty.appendChild(__cb);
+        }
+        updateBatchBar(); return;
+      }
 
       // 分页
       var totalPages = Math.ceil(list.length / ADMIN_PAGE_SIZE);
@@ -805,6 +809,7 @@
       pageList.forEach(function (p, idx) {
         var row = document.createElement('div');
         row.className = 'product-row';
+        row.classList.add('stagger-in'); row.style.animationDelay = (idx * 30) + 'ms'; /* R192 二②：行错峰入场，与前台卡片同款 */
         row.draggable = false;
         row.dataset.id = p.id;
         row.dataset.idx = idx;
@@ -851,16 +856,27 @@
 
         var img = document.createElement('img');
         img.className = 'thumb';
+        img.decoding = 'async'; /* R193c ⑩：后台缩略图异步解码 */
         img.alt = '';
         img.loading = 'lazy';
         img.src = p.img || EXC_PLACEHOLDER;
-        img.onerror = function () { this.onerror = null; this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); };
+        img.style.opacity = '0';
+        img.onload = function () { this.style.opacity = '1'; this.classList.add('img-in'); }; /* R183 条2：缩略图入场动画（同二维码口径） */
+        img.onerror = function () {
+          this.onerror = null; this.src = EXC_PLACEHOLDER; this.style.opacity = '1'; if (this && this.classList) this.classList.add('media-fail');
+        };
 
         var info = document.createElement('div');
         info.className = 'info';
         var t = document.createElement('div');
         t.className = 'p-title';
-        t.textContent = p.title || '(无标题)';
+        var __kw = ((document.getElementById('adminSearch') || {}).value || '').trim();
+        if (__kw && p.title) { /* R192 二④：搜索命中高亮（安全转义后包 mark.hl，与前台同款） */
+          var __esc = function (x) { return String(x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+          var __lo = String(p.title).toLowerCase(), __k = __kw.toLowerCase(), __o = '', __i = 0, __h;
+          if (__k) { while ((__h = __lo.indexOf(__k, __i)) !== -1) { __o += __esc(p.title.slice(__i, __h)) + '<mark class="hl">' + __esc(p.title.slice(__h, __h + __k.length)) + '</mark>'; __i = __h + __k.length; } }
+          t.innerHTML = __o + __esc(p.title.slice(__i));
+        } else t.textContent = p.title || '(无标题)';
         var s = document.createElement('div');
         s.className = 'p-sub';
         // R24：简介部分颜色复用资源页弹窗简介的蓝色（var(--blue1)），分类名保持灰色
@@ -981,6 +997,7 @@
               (function (cv) {
                 cd.addEventListener('click', function () {
                   var ok = window.__shareCopyText ? window.__shareCopyText(cv) : false;
+                  if (ok && window.__copyOk) window.__copyOk(cd); /* R183 条11：复制成功键变绿 */
                   toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
                   document.querySelectorAll('.select-picker.open').forEach(function (q) { q.classList.remove('open'); });
                 });
@@ -1039,31 +1056,24 @@
           totalPages: totalPages,
           total: list.length,
           unit: '件',
-          onPage: function (p) {
-          // R180（用户 09-16）：根因→分页按钮快速连点导致页码跳变；修法→渲染期间禁用按钮
-          var pg = pager.querySelectorAll('button');
-          pg.forEach(function (b) { b.disabled = true; });
-          adminPage = p;
-          renderProducts();
-          setTimeout(function () { pg.forEach(function (b) { b.disabled = false; }); }, 150);
-        }
+          onPage: function (p) { adminPage = p; renderProducts(); }
         });
       } else if (totalPages > 1) {
         // 兜底：公共组件缺失时退回原方块样式（不应发生）
         var prev = document.createElement('button');
         prev.textContent = '上一页';
-        prev.style.cssText = 'padding:6px 14px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;font-size:13px;';
+        prev.style.cssText = 'padding:6px 14px;border:1px solid var(--border,#ddd);background:var(--card-bg,#fff);color:var(--text,#222);border-radius:6px;cursor:pointer;font-size:13px;';
         prev.disabled = adminPage === 1;
         if (prev.disabled) prev.style.opacity = '0.4';
         prev.onclick = function () { if (adminPage > 1) { adminPage--; renderProducts(); } };
         pager.appendChild(prev);
         var info = document.createElement('span');
         info.textContent = adminPage + ' / ' + totalPages + '（共' + list.length + '件）';
-        info.style.cssText = 'color:#666;font-size:13px;';
+        info.style.cssText = 'color:var(--text-light,#666);font-size:13px;';
         pager.appendChild(info);
         var next = document.createElement('button');
         next.textContent = '下一页';
-        next.style.cssText = 'padding:6px 14px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;font-size:13px;';
+        next.style.cssText = 'padding:6px 14px;border:1px solid var(--border,#ddd);background:var(--card-bg,#fff);color:var(--text,#222);border-radius:6px;cursor:pointer;font-size:13px;';
         next.disabled = adminPage === totalPages;
         if (next.disabled) next.style.opacity = '0.4';
         next.onclick = function () { if (adminPage < totalPages) { adminPage++; renderProducts(); } };
@@ -1071,8 +1081,6 @@
       }
 
       updateBatchBar();
-      // R180（用户 09-16）：渲染完成后移除 loading 态
-      setTimeout(function () { box.classList.remove('loading'); }, 50);
     }
 
     // ---------- 复制资源 ----------
@@ -1166,8 +1174,7 @@
       var bar = document.getElementById('batchBar');
       var countEl = document.getElementById('batchCount');
       var selectAll = document.getElementById('selectAll');
-      // R180（用户 09-16）：根因→批量栏无选中计数；修法→显示"已选 N 项"
-      countEl.textContent = '已选 ' + count + ' 项';
+      countEl.textContent = count;
       bar.classList.toggle('show', count > 0);
       var allChecks = document.querySelectorAll('.row-check');
       selectAll.checked = allChecks.length > 0 && count === allChecks.length;
@@ -1204,8 +1211,6 @@
                 toast('批量改分类完成：成功 ' + res.count + ' 项', 'success');
                 // 性能：本地即时改 cid 并重渲染（毫秒级反馈），后台静默同步一次保证数据一致
                 applyBatchLocal('changeCat', ids, { cid: newCid }); renderProducts(); silentSyncProducts();
-                // R180（用户 09-16）：根因→批量操作成功后选择未清空；修法→清空选中
-                state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); updateBatchBar();
               }
               else toast(res.msg || '操作失败', 'error');
             });
@@ -1225,8 +1230,6 @@
               if (res && res.ok) {
                 toast('批量改价格完成：成功 ' + res.count + ' 项', 'success');
                 applyBatchLocal('changePrice', ids, { price: newPrice }); renderProducts(); silentSyncProducts();
-                // R180（用户 09-16）：根因→批量操作成功后选择未清空；修法→清空选中
-                state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); updateBatchBar();
               }
               else toast(res.msg || '操作失败', 'error');
             });
@@ -1244,8 +1247,6 @@
             // + 整表重渲染，网络往返期间界面毫无反馈；现改为本地即时更新 + 立即渲染（毫秒级），
             // 后台再静默同步一次，保证数据一致的同时操作反馈即时可见
             applyBatchLocal(action, ids); renderProducts(); silentSyncProducts();
-            // R180（用户 09-16）：根因→批量操作成功后选择未清空；修法→清空选中
-            state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); updateBatchBar();
           } else {
             toast(res.msg || '操作失败', 'error');
           }
@@ -1295,10 +1296,27 @@
 
 
     function delProduct(id) {
+      /* R184 条19：撤销删除回退（用户 09-17 12:12 拍板）——恢复「确认后立即真删」，
+         R183 的延迟真删+撤销 toast/keepalive 兜底整段移除；保留本地塌缩动画与静默同步范式 */
       showConfirm('删除资源', '确定删除该资源？其类型和统计数据也会一并删除。', function () {
         api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
-          if (res && res.ok) { toast('已删除', 'success'); clearCache(); state.products = state.products.filter(function(p){ return p.id !== id; }); refreshCatCnts(); var _r2 = document.querySelector('#productList [data-id="' + id + '"]'); if (_r2) { _r2.style.transition='opacity .12s ease'; _r2.style.opacity='0'; setTimeout(function(){ if (_r2.parentNode) _r2.parentNode.removeChild(_r2); if (!document.querySelector('#productList .product-row')) renderProducts(); }, 120); } else renderProducts(); }
-          else toast(res.msg || '删除失败', 'error');
+          if (res && res.ok) {
+            state.products = (state.products || []).filter(function (p) { return p.id !== id; });
+            refreshCatCnts();
+            var _r2 = document.querySelector('#productList [data-id="' + id + '"]');
+            if (_r2) {
+              _r2.style.transition = 'opacity var(--dur-fast) ease';
+              _r2.style.opacity = '0';
+              setTimeout(function () {
+                if (_r2.parentNode) _r2.parentNode.removeChild(_r2);
+                if (!document.querySelector('#productList .product-row')) renderProducts();
+              }, 120);
+            } else renderProducts();
+            toast('资源已删除', 'success');
+            clearCache(); silentSyncProducts();
+          } else {
+            toast((res && res.msg) || '删除失败', 'error');
+          }
         });
       });
     }
@@ -1365,6 +1383,9 @@
     // 填充资源表单
     function fillProductForm(p) {
       fTitle.value = p ? (p.title || '') : '';
+      /* R193c ⑨：程序赋值不触发 input——打开弹窗先清上一轮残留的实时校验红框 */
+      clearFieldErr(fTitle);
+      clearFieldErr(document.getElementById('fCidDisplay'));
       fDesc.value = p ? (p.desc || '') : '';
       fDetail.innerHTML = p ? (p.detail || '') : '';
       fImg.value = p ? (p.img || '') : '';
@@ -1584,6 +1605,7 @@
           var it = document.createElement('div');
           it.className = 'cp-item' + (String(o.value) === String(sel.value) ? ' selected' : '');
           it.textContent = o.textContent;
+          if (o.style && o.style.cssText) it.style.cssText = o.style.cssText; /* R194b：选项内联样式（字体各自体/字号各档）透传到自制下拉条目 */
           it.addEventListener('click', function () {
             sel.value = o.value;
             txt.textContent = o.textContent;
@@ -1628,9 +1650,33 @@
         0,
         { excludeZero: false, showAll: true, allLabel: '全部分类', placeholder: '全部分类' }
       );
+      /* R183 条21：恢复记忆的筛选——首次启动从 localStorage 取值写入 select；每次重建后按 select 当前值同步下拉显示（防重渲染后显示回占位） */
+      try {
+        var __sc = document.getElementById('filterCat');
+        var __ss = document.getElementById('filterStatus');
+        if (!window.__filterRestored) {
+          window.__filterRestored = true;
+          var __f = JSON.parse(localStorage.getItem('wnzyq_admin_filter') || 'null');
+          if (__f && (__f.c !== undefined && __f.c !== null && __f.c !== '')) { if (__sc) __sc.value = __f.c; }
+          if (__f && __f.s) { if (__ss) __ss.value = __f.s; if (typeof syncSelectDisplay === 'function') syncSelectDisplay(__ss); }
+        }
+        var __sv = __sc ? String(__sc.value) : '';
+        if (__sv && __sv !== '' && __sv !== '0') {
+          var __cn = (state.categories || []).filter(function (x) { return String(x.id) === __sv; }).map(function (x) { return x.name; })[0] || '';
+          if (__cn) {
+            var __dt = fp.querySelector('.cat-picker-display .cpd-text');
+            if (__dt) { __dt.textContent = __cn; __dt.classList.remove('placeholder'); }
+            fp.querySelectorAll('.cp-item.selected').forEach(function (el) { el.classList.remove('selected'); });
+          }
+        } else if (__sv === '0') {
+          var __dt0 = fp.querySelector('.cat-picker-display .cpd-text');
+          if (__dt0) { __dt0.textContent = '全部分类'; __dt0.classList.remove('placeholder'); }
+        }
+      } catch (e0) {}
     }
     function onProductCidChange(id) {
       var d = document.getElementById('fCidDisplay'); if (d) { d.style.borderColor = ''; d.style.boxShadow = ''; }
+      clearFieldErr(d); /* R193c ⑨：清除实时校验红框 */
       // 若不在编辑弹窗中（即资源管理分类筛选场景），切换分类即时刷新列表
       var em = document.getElementById('editMask');
       if (em && !em.classList.contains('open')) { adminPage = 1; renderProducts(); }
@@ -1671,6 +1717,32 @@
       input.addEventListener('change', function () {
         this.style.borderColor = '';
         this.style.boxShadow = '';
+      });
+    }
+
+    /* ---------- R193c ⑨（用户 23:10 拍板；23:26 修正：只留红框，去掉框下红字） ----------
+       原先要等点「确定」保存时才发现必填错误 → 改成边填边提示：
+       字段被触碰过（blur 或输入过）后值为空即红框，填上立即消；
+       保存时 validateField 兜底不变（没碰过的字段照样拦）。红框规格与保存时一致。 */
+    function showFieldErr(input, msg) {
+      if (!input) return;
+      input.style.borderColor = '#ff4444';
+      input.style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)';
+    }
+    function clearFieldErr(input) {
+      if (!input) return;
+      input.style.borderColor = '';
+      input.style.boxShadow = '';
+      var err = input.parentNode ? input.parentNode.querySelector('.field-err[data-for="' + (input.id || '') + '"]') : null;
+      if (err) err.remove(); /* 兼容清理：历史版本可能残留的红字节点一并移除 */
+    }
+    function attachLiveCheck(input, msg) {
+      if (!input) return;
+      var touched = false;
+      input.addEventListener('blur', function () { touched = true; if (!String(input.value || '').trim()) showFieldErr(input, msg); });
+      input.addEventListener('input', function () {
+        if (String(input.value || '').trim()) clearFieldErr(input);
+        else if (touched) showFieldErr(input, msg);
       });
     }
 
@@ -1723,16 +1795,14 @@
         schedule_off: fScheduleOff.value || ''
       };
       if (!validateField(fTitle, '请填写资源标题')) return;
-      if (!data.cid) { toast('请选择资源分类', 'error'); document.getElementById('fCidDisplay').style.borderColor = '#ff4444';
-        // R180（用户 09-16）：根因→分类选择器校验失败无自动滚动；修法→scrollIntoView
-        document.getElementById('fCidDisplay').scrollIntoView({ behavior: 'smooth', block: 'center' }); document.getElementById('fCidDisplay').style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)'; return; }
+      if (!data.cid) { toast('请选择资源分类', 'error'); document.getElementById('fCidDisplay').style.borderColor = '#ff4444'; document.getElementById('fCidDisplay').style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)'; return; }
 
       saving = true;
       var isNewSave = !state.editingId; // 记录本次是否为新增（editingId 之后会被赋值）
       saveProductBtn.disabled = true;
       saveProductBtn.style.opacity = '0.6';
       var _saveBtnText = saveProductBtn.textContent;
-      saveProductBtn.textContent = '确定中…';
+      if (window.__btnBusy) window.__btnBusy(saveProductBtn, '确定中…'); /* R183 条4：忙碌转圈 */
 
       // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗——网络一旦失败，用户以为已保存，数据实际没写入。
       // 现在提示与关窗只在请求成功后发生（见下方 then 分支）。
@@ -1777,7 +1847,7 @@
           editMask.classList.remove('open');
           if (isNewSave) { try { delete __editDrafts['new']; } catch (e) {} } // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
           clearDraft(); // 保存成功后清除草稿
-          toast('资源已保存', 'success');
+          toast('资源已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
           clearCache();
           renderProducts();
           refreshCatCnts();
@@ -1818,6 +1888,7 @@
         item.className = 'variant-item';
         item.draggable = false;
         item.dataset.idx = idx;
+        if (v.id) item.dataset.vid = v.id; /* R183 条7：删除塌缩定位用 */
         item.style.cursor = 'default';
 
         // 拖拽手柄
@@ -1867,6 +1938,7 @@
           (function (cv) {
             codeBtn.addEventListener('click', function () {
               var ok = window.__shareCopyText ? window.__shareCopyText(cv) : false;
+              if (ok && window.__copyOk) window.__copyOk(codeBtn); /* R183 条11：复制成功键变绿 */
               toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
             });
           })(v.resourceCode);
@@ -1983,6 +2055,26 @@
     function rteFocusEnd(editor) {
       var r = document.createRange(); r.selectNodeContents(editor); r.collapse(false);
       var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    }
+    // R181（第5项）：格式刷采集/应用公共函数——detail/公告/通用三处编辑器的格式刷原本各复制一份，
+    // 改动需同步三处易漏改，现合并为这一份（行为与原三份逐字一致）
+    function rteReadBrushStyle() {
+      return {
+        fontName: document.queryCommandValue('fontName'),
+        fontSize: document.queryCommandValue('fontSize'),
+        foreColor: document.queryCommandValue('foreColor'),
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline')
+      };
+    }
+    function rteApplyBrushStyle(st) {
+      if (st.fontName) document.execCommand('fontName', false, st.fontName);
+      if (st.fontSize) document.execCommand('fontSize', false, st.fontSize);
+      if (st.foreColor) document.execCommand('foreColor', false, st.foreColor);
+      if (st.bold) document.execCommand('bold', false, null);
+      if (st.italic) document.execCommand('italic', false, null);
+      if (st.underline) document.execCommand('underline', false, null);
     }
     function rteInsert(editor, html) {
       if (!editor) return;
@@ -2332,6 +2424,571 @@ document.addEventListener('click', function (e) {
       editor.focus();
     });
 
+    /* ---------- R194 第一批（用户 00:02 拍板开工）：60 色面板 + 表格全套（四编辑器共用，全局一处实现） ---------- */
+    var RTE60_COLORS = (function () {
+      /* 10 色系（灰红橙黄绿青蓝紫粉棕）× 6 档深浅，用户拍板「全部颜色都要有一点」。
+         行=色系、列=深→浅；网格渲染时转置为 列=色系、行=深→浅。 */
+      var rows = [
+        ['#000000', '#333333', '#666666', '#999999', '#cccccc', '#ffffff'], // 灰
+        ['#7f0000', '#b71c1c', '#e53935', '#ef5350', '#f28b82', '#ffcdd2'], // 红
+        ['#bf360c', '#d84315', '#f4511e', '#ff7043', '#ffb74d', '#ffe0b2'], // 橙
+        ['#827717', '#9e9d24', '#c0ca33', '#fdd835', '#ffeb3b', '#fff59d'], // 黄
+        ['#1b5e20', '#2e7d32', '#43a047', '#66bb6a', '#a5d6a7', '#c8e6c9'], // 绿
+        ['#006064', '#00838f', '#0097a7', '#26c6da', '#80deea', '#e0f7fa'], // 青
+        ['#0d47a1', '#1565c0', '#1e88e5', '#42a5f5', '#90caf9', '#bbdefb'], // 蓝
+        ['#4a148c', '#6a1b9a', '#8e24aa', '#ab47bc', '#ce93d8', '#e1bee7'], // 紫
+        ['#880e4f', '#ad1457', '#c2185b', '#ec407a', '#f48fb1', '#f8bbd0'], // 粉
+        ['#3e2723', '#4e342e', '#6d4c41', '#8d6e63', '#bcaaa4', '#d7ccc8']  // 棕
+      ];
+      var cells = [];
+      for (var c = 0; c < 6; c++) for (var r = 0; r < 10; r++) cells.push(rows[r][c]);
+      return cells; // 顺序即网格顺序：第 c 行（深→浅档位）× 10 色系
+    })();
+
+    var RTE_POP = null; // 当前打开的浮层（颜色面板 / 表格选择器），全局唯一
+    function rteClosePop() { if (RTE_POP) { RTE_POP.remove(); RTE_POP = null; } }
+    function rtePlacePop(pop, anchor) {
+      document.body.appendChild(pop);
+      var r = anchor.getBoundingClientRect();
+      var pw = pop.offsetWidth, ph = pop.offsetHeight;
+      var left = r.left + r.width / 2 - pw / 2;
+      left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+      var top = r.bottom + 6;
+      if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
+      pop.style.left = left + 'px'; pop.style.top = top + 'px';
+    }
+    function rteApplyCmd(editor, cmd, val) {
+      editor.focus();
+      if (__rte.editor === editor && __rte.range) { try { var ps = window.getSelection(); ps.removeAllRanges(); ps.addRange(__rte.range); } catch (e) {} }
+      document.execCommand(cmd, false, val);
+      try { __rte.editor = editor; __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (e) {}
+      editor.focus();
+    }
+
+    /* 60 色面板：点工具栏颜色键弹出（复用资源码下拉同款白卡 .rte-pop） */
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.rte-color-btn') : null;
+      if (!btn) return;
+      e.preventDefault();
+      if (RTE_POP && RTE_POP.getAttribute('data-for') === btn.getAttribute('data-editor') + ':' + btn.getAttribute('data-color-cmd')) { rteClosePop(); return; }
+      rteClosePop();
+      var editor = document.getElementById(btn.getAttribute('data-editor'));
+      if (!editor) return;
+      var cmd = btn.getAttribute('data-color-cmd');
+      var pop = document.createElement('div');
+      pop.className = 'rte-pop color-pop';
+      pop.setAttribute('data-for', btn.getAttribute('data-editor') + ':' + cmd);
+      var head = document.createElement('div');
+      head.className = 'rte-pop-head';
+      head.innerHTML = '<span class="rte-pop-title">' + (cmd === 'foreColor' ? '文字颜色' : '背景颜色') + '</span>';
+      var clr = document.createElement('button');
+      clr.type = 'button'; clr.className = 'rte-pop-clear'; clr.textContent = '清除颜色';
+      clr.addEventListener('click', function () {
+        rteApplyCmd(editor, cmd, cmd === 'foreColor' ? '#333333' : 'transparent');
+        rteClosePop();
+      });
+      head.appendChild(clr);
+      pop.appendChild(head);
+      var grid = document.createElement('div');
+      grid.className = 'color-pop-grid';
+      RTE60_COLORS.forEach(function (color) {
+        var cell = document.createElement('div');
+        cell.className = 'color-pop-cell';
+        cell.style.background = color;
+        cell.setAttribute('data-color', color);
+        if (color === '#ffffff') cell.style.borderColor = '#ccc';
+        cell.title = color;
+        cell.addEventListener('click', function () {
+          rteApplyCmd(editor, cmd, color);
+          rteClosePop();
+        });
+        grid.appendChild(cell);
+      });
+      pop.appendChild(grid);
+      RTE_POP = pop;
+      rtePlacePop(pop, btn);
+    });
+
+    /* ---------- 表格全套：插入选择器 / 操作条 7 键 / 合并拆分 / 行列增删 / 列宽拖拽 ---------- */
+    /* 网格映射：把含 colspan/rowspan 的表展开成 grid[r][c]=td，所有行列运算统一走它 */
+    function rteTblGrid(table) {
+      /* 把含 colspan/rowspan 的表展开成 grid[r][c]=td，所有行列运算统一走它 */
+      var rows = table.rows, grid = [];
+      var maxC = 0;
+      for (var r = 0; r < rows.length; r++) {
+        var idx = 0;
+        for (var c = 0; c < rows[r].cells.length; c++) {
+          var td = rows[r].cells[c], cs2 = td.colSpan || 1, rs2 = td.rowSpan || 1;
+          while (idx < maxC && grid[r] && grid[r][idx]) idx++;
+          for (var rr = r; rr < r + rs2; rr++) {
+            if (!grid[rr]) grid[rr] = [];
+            for (var cc = idx; cc < idx + cs2; cc++) grid[rr][cc] = td;
+          }
+          idx += cs2;
+        }
+        maxC = Math.max(maxC, (grid[r] || []).length); /* 修复：keys 取的是最大索引会少 1，length 才是列数 */
+      }
+      return { grid: grid, rows: rows.length, cols: Math.max(maxC, 0), table: table };
+    }
+    function rteTblAt(editor) { // 光标所在 td / 所在 table
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return null;
+      var node = sel.getRangeAt(0).startContainer;
+      var el = node.nodeType === 1 ? node : node.parentNode;
+      var td = el && el.closest ? el.closest('td,th') : null;
+      if (td && editor.contains(td)) {
+        var table = td.closest('table');
+        if (table && editor.contains(table)) return { td: td, table: table };
+      }
+      return null;
+    }
+
+    /* 插入选择器：6×6 hover 网格 */
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.rte-table-btn') : null;
+      if (!btn) return;
+      e.preventDefault();
+      rteClosePop();
+      var editor = document.getElementById(btn.getAttribute('data-editor'));
+      if (!editor) return;
+      var pop = document.createElement('div');
+      pop.className = 'rte-pop';
+      pop.setAttribute('data-for', 'tblgrid:' + btn.getAttribute('data-editor'));
+      var grid = document.createElement('div');
+      grid.className = 'tbl-grid-pop';
+      var tip = document.createElement('div');
+      tip.className = 'tbl-grid-tip'; tip.textContent = '1 × 1';
+      for (var r = 1; r <= 6; r++) for (var c = 1; c <= 6; c++) {
+        (function (r, c) {
+          var cell = document.createElement('div');
+          cell.className = 'tbl-grid-cell';
+          cell.addEventListener('mouseenter', function () {
+            Array.prototype.forEach.call(grid.children, function (el) {
+              var er = +el.getAttribute('data-r'), ec = +el.getAttribute('data-c');
+              el.classList.toggle('hl', er <= r && ec <= c);
+            });
+            tip.textContent = r + ' 行 × ' + c + ' 列';
+          });
+          cell.addEventListener('click', function () {
+            var html = '<table><tbody>';
+            for (var i = 0; i < r; i++) { html += '<tr>'; for (var j = 0; j < c; j++) html += '<td><br></td>'; html += '</tr>'; }
+            html += '</tbody></table><p><br></p>';
+            rteApplyCmd(editor, 'insertHTML', html);
+            rteClosePop();
+          });
+          cell.setAttribute('data-r', r); cell.setAttribute('data-c', c);
+          grid.appendChild(cell);
+        })(r, c);
+      }
+      pop.appendChild(grid); pop.appendChild(tip);
+      RTE_POP = pop;
+      rtePlacePop(pop, btn);
+    });
+
+    /* 操作条：光标进表即浮现，7 键 = 加行/删行/加列/删列/合并/拆分/删表（用户 23:46 拍板） */
+    var TBL_OPBAR = null;
+    function rteCloseOpbar() { if (TBL_OPBAR) { TBL_OPBAR.remove(); TBL_OPBAR = null; } }
+    function rteShowOpbar(editor, table) {
+      rteCloseOpbar();
+      var bar = document.createElement('div');
+      bar.className = 'tbl-opbar';
+      var ops = [
+        ['加行', rteTblAddRow], ['删行', rteTblDelRow], ['加列', rteTblAddCol], ['删列', rteTblDelCol],
+        ['合并', rteTblMerge], ['拆分', rteTblSplit], ['删表', rteTblDelTable, 'tbl-op-danger']
+      ];
+      ops.forEach(function (op) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.textContent = op[0];
+        if (op[2]) b.className = op[2];
+        b.addEventListener('mousedown', function (ev) { ev.preventDefault(); }); // 保住编辑区选区/光标
+        b.addEventListener('click', function () { op[1](editor); });
+        bar.appendChild(b);
+      });
+      document.body.appendChild(bar);
+      var rect = table.getBoundingClientRect();
+      var top = rect.top - bar.offsetHeight - 6;
+      if (top < 8) top = Math.min(rect.bottom + 6, window.innerHeight - bar.offsetHeight - 8);
+      var left = Math.max(8, Math.min(rect.left, window.innerWidth - bar.offsetWidth - 8));
+      bar.style.top = top + 'px'; bar.style.left = left + 'px';
+      TBL_OPBAR = bar;
+    }
+    /* 选区在编辑器表格内变化时：定位操作条 + 跨格选中给高亮 */
+    function rteTblSelectionChange() {
+      var openEditors = document.querySelectorAll('.rte-editor');
+      var found = null;
+      for (var i = 0; i < openEditors.length; i++) {
+        var at = rteTblAt(openEditors[i]);
+        if (at) { found = { editor: openEditors[i], at: at }; break; }
+      }
+      document.querySelectorAll('.tbl-cell-sel').forEach(function (el) { el.classList.remove('tbl-cell-sel'); });
+      if (!found) { rteCloseOpbar(); return; }
+      rteShowOpbar(found.editor, found.at.table);
+      // 跨格选中（合并预览）：同一表内被选区覆盖的 td 高亮
+      var sel = window.getSelection();
+      if (sel && sel.rangeCount && !sel.isCollapsed) {
+        var range = sel.getRangeAt(0);
+        var tds = found.at.table.querySelectorAll('td,th');
+        Array.prototype.forEach.call(tds, function (td) {
+          try { if (range.intersectsNode(td)) td.classList.add('tbl-cell-sel'); } catch (e) {}
+        });
+      }
+    }
+    document.addEventListener('selectionchange', rteTblSelectionChange);
+    window.addEventListener('scroll', function () { rteCloseOpbar(); }, true);
+    document.addEventListener('click', function (e) {
+      if (TBL_OPBAR && !TBL_OPBAR.contains(e.target) && !e.target.closest('.rte-editor')) rteCloseOpbar();
+    });
+
+    /* —— 行列运算（全部基于 grid 映射，处理 colspan/rowspan 基础正确性） —— */
+    function rteTblAddRow(editor) {
+      var at = rteTblAt(editor); if (!at) return;
+      var g = rteTblGrid(at.table); var td = at.td;
+      // 光标格起始行
+      var r0 = 0; outer: for (var r = 0; r < g.rows; r++) { if (g.grid[r] && g.grid[r].indexOf(td) !== -1) { r0 = r; break outer; } }
+      var newRow = at.table.insertRow(r0 + 1);
+      for (var c = 0; c < g.cols; c++) {
+        var above = g.grid[r0] ? g.grid[r0][c] : null; // 参考行格
+        // 若该列被更上方行的 rowspan 跨入新行位置，跳过（由原格继续覆盖）
+        var covered = false;
+        if (g.grid[r0 + 1] && g.grid[r0 + 1][c] && g.grid[r0 + 1][c] !== undefined) {
+          var cov = g.grid[r0 + 1][c];
+          var covRow = -1;
+          for (var rr = 0; rr <= r0; rr++) if (g.grid[rr] && g.grid[rr][c] === cov) { covRow = rr; break; }
+          if (covRow !== -1 && covRow !== r0 + 1) covered = true;
+        }
+        if (covered) continue;
+        var nc = newRow.insertCell(-1);
+        nc.colSpan = above && above.colSpan > 1 ? above.colSpan : 1;
+        nc.innerHTML = '<br>';
+      }
+    }
+    function rteTblDelRow(editor) {
+      var at = rteTblAt(editor); if (!at) return;
+      var g = rteTblGrid(at.table); var td = at.td;
+      var r0 = 0; outer: for (var r = 0; r < g.rows; r++) { if (g.grid[r] && g.grid[r].indexOf(td) !== -1) { r0 = r; break outer; } }
+      // 本行涉及的 unique 单元格：起始行<r0 的（跨入）rowspan--；起始行==r0 的整格删除
+      var seen = {};
+      for (var c = 0; c < g.cols; c++) {
+        var cell = g.grid[r0] ? g.grid[r0][c] : null;
+        if (!cell || seen[cell._rteId]) continue;
+        var id = cell._rteId || (cell._rteId = 'c' + Math.random());
+        seen[id] = 1;
+        var startRow = -1;
+        for (var rr = 0; rr < r0; rr++) { if (g.grid[rr] && g.grid[rr][c] === cell) { startRow = rr; break; } }
+        if (startRow !== -1 && startRow < r0) {
+          if ((cell.rowSpan || 1) > 1) cell.rowSpan = (cell.rowSpan || 1) - 1; else cell.parentNode.removeChild(cell);
+        } else if (startRow === -1 || startRow === r0) {
+          // 起始行即本行（含跨多行）：整格删除
+          cell.parentNode && cell.parentNode.removeChild(cell);
+        }
+      }
+      // 移除可能残留的空行
+      for (var i = at.table.rows.length - 1; i >= 0; i--) {
+        if (!at.table.rows[i].cells.length) at.table.deleteRow(i);
+      }
+      if (!at.table.rows.length) { at.table.parentNode && at.table.parentNode.removeChild(at.table); rteCloseOpbar(); }
+    }
+    function rteTblAddCol(editor) {
+      var at = rteTblAt(editor); if (!at) return;
+      var g = rteTblGrid(at.table); var td = at.td;
+      var c0 = 0;
+      for (var r = 0; r < g.rows; r++) if (g.grid[r] && g.grid[r].indexOf(td) !== -1) { c0 = g.grid[r].indexOf(td); break; }
+      var newC = c0 + (td.colSpan || 1); // 新列插在光标格右侧
+      for (var r2 = 0; r2 < g.rows; r2++) {
+        var row = at.table.rows[r2]; if (!row) continue;
+        var cover = g.grid[r2] ? g.grid[r2][newC] : null; // 该行 newC 位置的格
+        if (cover) {
+          // cover 在该行的起始列（第一次出现的 index）
+          var startC = -1;
+          for (var k = 0; k < newC; k++) if (g.grid[r2][k] === cover) { startC = k; break; }
+          if (startC !== -1 && startC < newC && (cover.colSpan || 1) > 1) {
+            cover.colSpan = (cover.colSpan || 1) + 1; // 横向合并格覆盖到新列 → 直接扩
+            continue;
+          }
+          // cover 起始于 newC（普通格）→ 在它前面插入空格
+          var insertIdx = Array.prototype.indexOf.call(row.cells, cover);
+          var nc = insertIdx >= 0 ? row.insertCell(insertIdx) : row.insertCell(-1);
+          nc.innerHTML = '<br>';
+        } else {
+          // 该行 newC 无格（被上方 rowspan 跨入的合并格竖向覆盖或行尾）→ 行尾补空格
+          var nc2 = row.insertCell(-1);
+          nc2.innerHTML = '<br>';
+        }
+      }
+    }
+    function rteTblDelCol(editor) {
+      var at = rteTblAt(editor); if (!at) return;
+      var g = rteTblGrid(at.table); var td = at.td;
+      var c0 = 0;
+      for (var r = 0; r < g.rows; r++) if (g.grid[r] && g.grid[r].indexOf(td) !== -1) { c0 = g.grid[r].indexOf(td); break; }
+      var seen = {};
+      for (var r2 = 0; r2 < g.rows; r2++) {
+        var cell = g.grid[r2] ? g.grid[r2][c0] : null;
+        if (!cell) continue;
+        var id = cell._rteId || (cell._rteId = 'c' + Math.random());
+        if (seen[id]) continue;
+        seen[id] = 1;
+        if ((cell.colSpan || 1) > 1) cell.colSpan = (cell.colSpan || 1) - 1;
+        else cell.parentNode && cell.parentNode.removeChild(cell);
+      }
+      if (!at.table.rows.length || !at.table.rows[0].cells.length) { at.table.parentNode && at.table.parentNode.removeChild(at.table); rteCloseOpbar(); }
+    }
+    /* 合并：选区覆盖的矩形区域并一格（仅无合并基础上精确；文字按行拼接保留） */
+    function rteTblMerge(editor) {
+      var at = rteTblAt(editor); if (!at) return;
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      // 锚点格/焦点格 = 拖选对角（支持反向拖），矩形 = 两格在 grid 上的坐标范围
+      function cellOf(node) {
+        var el = node && (node.nodeType === 1 ? node : node.parentNode);
+        var td = el && el.closest ? el.closest('td,th') : null;
+        return (td && at.table.contains(td)) ? td : null;
+      }
+      var aTd = cellOf(sel.anchorNode), fTd = cellOf(sel.focusNode);
+      if (!aTd || !fTd) { toast('请先在表格里拖选要合并的多个单元格'); return; }
+      var g = rteTblGrid(at.table);
+      function posOf(td) {
+        for (var r = 0; r < g.rows; r++) if (g.grid[r]) {
+          var ci = g.grid[r].indexOf(td);
+          if (ci !== -1) return { r: r, c: ci };
+        }
+        return null;
+      }
+      var pa = posOf(aTd), pf = posOf(fTd);
+      if (!pa || !pf) return;
+      var rmin = Math.min(pa.r, pf.r), rmax = Math.max(pa.r, pf.r);
+      var cmin = Math.min(pa.c, pf.c), cmax = Math.max(pa.c, pf.c);
+      // 收集矩形内全部格；若某格自身跨度越出矩形，扩边到完全包含（防半格合并破表）
+      var picked = [], guard = 0, changed = true;
+      while (changed && guard++ < 4) {
+        changed = false; picked = [];
+        for (var r = rmin; r <= rmax; r++) for (var c = cmin; c <= cmax; c++) {
+          var td = g.grid[r] ? g.grid[r][c] : null;
+          if (!td || picked.indexOf(td) !== -1) continue;
+          picked.push(td);
+          var span = { r0: 1e9, r1: -1, c0: 1e9, c1: -1 };
+          for (var rr = 0; rr < g.rows; rr++) if (g.grid[rr]) {
+            var cc = g.grid[rr].indexOf(td);
+            if (cc !== -1) { span.r0 = Math.min(span.r0, rr); span.r1 = Math.max(span.r1, rr); span.c0 = Math.min(span.c0, cc); span.c1 = Math.max(span.c1, cc); }
+          }
+          if (span.r0 < rmin) { rmin = span.r0; changed = true; }
+          if (span.r1 > rmax) { rmax = span.r1; changed = true; }
+          if (span.c0 < cmin) { cmin = span.c0; changed = true; }
+          if (span.c1 > cmax) { cmax = span.c1; changed = true; }
+        }
+      }
+      if (picked.length < 2) { toast('请先在表格里拖选要合并的多个单元格'); return; }
+      // 内容按行拼接，全并进矩形左上格
+      var first = g.grid[rmin][cmin];
+      var parts = [];
+      for (var r2 = rmin; r2 <= rmax; r2++) {
+        var line = [], seenRow = [];
+        for (var c2 = cmin; c2 <= cmax; c2++) {
+          var t2 = g.grid[r2] ? g.grid[r2][c2] : null;
+          if (!t2 || seenRow.indexOf(t2) !== -1) continue;
+          seenRow.push(t2);
+          var txt = t2.innerHTML.replace(/<br\s*\/?>(\s*<br\s*\/?>)*/g, '').trim();
+          if (txt) line.push(txt);
+        }
+        if (line.length) parts.push(line.join(' '));
+      }
+      first.innerHTML = parts.join('<br>') || '<br>';
+      first.colSpan = cmax - cmin + 1; first.rowSpan = rmax - rmin + 1;
+      picked.forEach(function (td) { if (td !== first && td.parentNode) td.parentNode.removeChild(td); });
+      sel.removeAllRanges();
+      var nr = document.createRange(); nr.selectNodeContents(first); nr.collapse(true);
+      sel.addRange(nr);
+    }
+    /* 拆分：光标所在格 colspan/rowspan 还原成独立空格，原内容留在第一格 */
+    function rteTblSplit(editor) {
+      var at = rteTblAt(editor); if (!at) return;
+      var td = at.td, cs = td.colSpan || 1, rs = td.rowSpan || 1;
+      if (cs === 1 && rs === 1) { toast('当前单元格没有合并过，无需拆分'); return; }
+      var g = rteTblGrid(at.table);
+      var r0 = 0, c0 = 0;
+      outer2: for (var r = 0; r < g.rows; r++) { if (g.grid[r]) { var ci = g.grid[r].indexOf(td); if (ci !== -1) { r0 = r; c0 = ci; break outer2; } } }
+      td.colSpan = 1; td.rowSpan = 1;
+      for (var rr = 0; rr < rs; rr++) for (var cc = 0; cc < cs; cc++) {
+        if (rr === 0 && cc === 0) continue;
+        var row = at.table.rows[r0 + rr] || at.table.rows[at.table.rows.length - 1];
+        if (!row) continue;
+        var refTd = g.grid[r0 + rr] ? g.grid[r0 + rr][c0 + cs] : null;
+        var insertIdx = refTd ? Array.prototype.indexOf.call(row.cells, refTd) : -1;
+        var nc = insertIdx >= 0 ? row.insertCell(insertIdx) : row.insertCell(-1);
+        nc.innerHTML = '<br>';
+      }
+      // 修正可能缺行的极端情况
+      while (at.table.rows.length < g.rows + rs - 1) at.table.insertRow(-1);
+    }
+    function rteTblDelTable(editor) {
+      var at = rteTblAt(editor); if (!at) return;
+      if (!confirm('确定删除整个表格？')) return;
+      at.table.parentNode && at.table.parentNode.removeChild(at.table);
+      rteCloseOpbar();
+    }
+
+    /* 列宽拖拽：td 右边缘 6px 热区，拖动落 width 到该列全部格 */
+    (function () {
+      var resizing = null;
+      document.addEventListener('mousemove', function (e) {
+        if (resizing) {
+          var w = Math.max(40, e.clientX - resizing.startX + resizing.startW);
+          resizing.tds.forEach(function (td) { td.style.width = w + 'px'; });
+          e.preventDefault();
+          return;
+        }
+        var el = e.target;
+        if (el && el.closest && (el.tagName === 'TD' || el.tagName === 'TH') && el.closest('.rte-editor')) {
+          var rect = el.getBoundingClientRect();
+          if (rect.width && e.clientX > rect.right - 6 && e.clientX < rect.right + 4) el.style.cursor = 'col-resize';
+          else el.style.cursor = '';
+        }
+      });
+      document.addEventListener('mousedown', function (e) {
+        var el = e.target;
+        if (!el || !el.closest || !el.closest('.rte-editor') || (el.tagName !== 'TD' && el.tagName !== 'TH')) return;
+        var rect = el.getBoundingClientRect();
+        if (!(rect.width && e.clientX > rect.right - 6 && e.clientX < rect.right + 4)) return;
+        var table = el.closest('table');
+        var g = rteTblGrid(table);
+        var c0 = 0, found = false;
+        for (var r = 0; r < g.rows && !found; r++) { if (g.grid[r]) { var ci = g.grid[r].indexOf(el); if (ci !== -1) { c0 = ci; found = true; } } }
+        if (!found) return;
+        var tds = [];
+        for (var r2 = 0; r2 < g.rows; r2++) { var t = g.grid[r2] ? g.grid[r2][c0] : null; if (t && tds.indexOf(t) === -1) tds.push(t); }
+        resizing = { tds: tds, startX: e.clientX, startW: rect.width };
+        table.classList.add('rte-col-resizing');
+        e.preventDefault();
+      });
+      document.addEventListener('mouseup', function () {
+        if (resizing) {
+          resizing.tds[0] && resizing.tds[0].closest('table').classList.remove('rte-col-resizing');
+          resizing = null;
+        }
+      });
+    })();
+    /* 点击浮层外收起（颜色面板/表格选择器共用） */
+    document.addEventListener('mousedown', function (e) {
+      if (RTE_POP && !RTE_POP.contains(e.target) && !e.target.closest('.rte-color-btn') && !e.target.closest('.rte-table-btn') && !e.target.closest('.rte-emoji-btn')) rteClosePop();
+    }, true);
+
+    /* ---------- R194 第二批（用户 00:37 拍板）：表情面板 6 类×60 + 引用块 + 复选框 + 撤销重做 + 字数统计 + 粘贴清理 ---------- */
+    /* 表情库：6 类各 60 个（笑脸/手势/动物自然/食物/活动物品/符号庆祝） */
+    var RTE_EMOJIS = {
+      '笑脸': ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','🙂','🤗','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','😯','😪','😫','🥱','😴','😌','😛','😜','😝','🤤','😒','😓','😔','🙃','🤑','🤡','🤥','🤭','🤫','🤮','🥵','🥶','🥴','😵','🤯','🥳','🥺','😢','😭','😤','😠'],
+      '手势': ['👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💪','🤳','🫱','🫲','🫳','🫴','🫰','👀','👁','👂','👃','👅','👤','👥','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵','💃','🕺','👯','🫂'],
+      '动物自然': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐒','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦗','🦂','🐢','🐍','🦎','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐘','🦒','🦘','🦏','🦛','🐫','🦙','🦥','🦦'],
+      '食物': ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🌽','🥕','🧄','🧅','🥔','🍠','🥐','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🌭','🍔','🍟','🍕','🥪','🌮','🌯','🥙','🧆','🍜','🍝','🍣','🍱','🍛','🍙','🍚'],
+      '活动物品': ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🏒','🏑','🥍','🏏','🥊','🥋','🎽','⛳','⛸️','🎣','🤿','🎿','🛷','🥌','🎯','🪀','🪁','🎮','🕹️','🎲','🧩','🧸','🪆','🖼️','🎨','🧵','🪡','🧶','🎫','🏆','🥇','🥈','🥉','🏅','🎖️','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🎻','📱','💻','⌨️'],
+      '符号庆祝': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','✨','⭐','🌟','💫','⚡️','🔥','💥','💯','🎉','🎊','🎈','🎁','🥂','🍻','🍾','🎂','🍰','🧁','👑','🔔','🎵','🎶','💤','💬','💭','🗯️','♠️','♥️','♦️','♣️','🔶','🔷','🔹','🔺','🔻','⭕','❌','❗','❓','✅','🚀'],
+    };
+    /* 新增浮层类按钮：mousedown 阻止抢焦点，保住编辑器选区（与既有 data-cmd 按钮同口径） */
+    document.addEventListener('mousedown', function (e) {
+      if (e.target.closest && e.target.closest('.rte-emoji-btn,.rte-quote-btn,.rte-check-btn')) e.preventDefault();
+    }, true);
+
+    /* 表情面板：点表情键弹出（复用 .rte-pop 白卡 + 分类 tab + 60 格网格；点击插入不收起，可连续插入） */
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.rte-emoji-btn') : null;
+      if (!btn) return;
+      e.preventDefault();
+      var editor = document.getElementById(btn.getAttribute('data-editor'));
+      if (!editor) return;
+      var forKey = btn.getAttribute('data-editor') + ':emoji';
+      if (RTE_POP && RTE_POP.getAttribute('data-for') === forKey) { rteClosePop(); return; }
+      rteClosePop();
+      var cats = Object.keys(RTE_EMOJIS);
+      var pop = document.createElement('div');
+      pop.className = 'rte-pop emoji-pop';
+      pop.setAttribute('data-for', forKey);
+      var tabs = document.createElement('div');
+      tabs.className = 'emoji-tabs';
+      var grid = document.createElement('div');
+      grid.className = 'emoji-pop-grid';
+      function renderCat(cat) {
+        grid.innerHTML = '';
+        RTE_EMOJIS[cat].forEach(function (em) {
+          var cell = document.createElement('div');
+          cell.className = 'emoji-cell';
+          cell.textContent = em;
+          cell.title = em;
+          cell.addEventListener('click', function () {
+            rteApplyCmd(editor, 'insertHTML', em);
+          });
+          grid.appendChild(cell);
+        });
+      }
+      cats.forEach(function (cat, i) {
+        var tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'emoji-tab' + (i === 0 ? ' active' : '');
+        tab.textContent = cat;
+        tab.addEventListener('click', function () {
+          tabs.querySelectorAll('.emoji-tab').forEach(function (t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          renderCat(cat);
+        });
+        tabs.appendChild(tab);
+      });
+      renderCat(cats[0]);
+      pop.appendChild(tabs);
+      pop.appendChild(grid);
+      RTE_POP = pop;
+      rtePlacePop(pop, btn);
+    });
+
+    /* 引用块：formatBlock 切换 blockquote/p（再点一次取消引用） */
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.rte-quote-btn') : null;
+      if (!btn) return;
+      e.preventDefault();
+      var editor = document.getElementById(btn.getAttribute('data-editor'));
+      if (!editor) return;
+      editor.focus();
+      if (__rte.editor === editor && __rte.range) { try { var ps = window.getSelection(); ps.removeAllRanges(); ps.addRange(__rte.range); } catch (err) {} }
+      var sel = window.getSelection();
+      var bq = null;
+      if (sel && sel.rangeCount) {
+        var n = sel.getRangeAt(0).startContainer;
+        var el = n.nodeType === 1 ? n : n.parentNode;
+        bq = el && el.closest ? el.closest('blockquote') : null;
+        if (bq && !editor.contains(bq)) bq = null;
+      }
+      document.execCommand('formatBlock', false, bq ? 'p' : 'blockquote');
+      try { __rte.editor = editor; __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (err) {}
+      editor.focus();
+    });
+
+    /* 复选框：光标处插入 ☐ + 空格（纯字符，前台零过滤风险） */
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.rte-check-btn') : null;
+      if (!btn) return;
+      e.preventDefault();
+      var editor = document.getElementById(btn.getAttribute('data-editor'));
+      if (!editor) return;
+      rteApplyCmd(editor, 'insertHTML', '☐ ');
+    });
+
+    /* 字数统计：四处编辑器下方计数条，MutationObserver 驱动（输入/工具栏改动都刷新） */
+    function rteCountUpdate(ed) {
+      var c = document.querySelector('.rte-count[data-for="' + ed.id + '"]');
+      if (!c) return;
+      c.textContent = '已输入 ' + ed.textContent.replace(/\s/g, '').length + ' 字';
+    }
+    document.querySelectorAll('.rte-editor').forEach(function (ed) {
+      rteCountUpdate(ed);
+      new MutationObserver(function () { rteCountUpdate(ed); }).observe(ed, { childList: true, subtree: true, characterData: true });
+    });
+
+    /* 粘贴自动清理：编辑器内粘贴一律只留纯文字（用户拍板「什么都不留直接清除格式」） */
+    document.addEventListener('paste', function (e) {
+      var t = e.target;
+      if (!t || !t.closest || !t.closest('.rte-editor')) return;
+      e.preventDefault();
+      var text = (e.clipboardData || window.clipboardData).getData('text/plain') || '';
+      if (text) document.execCommand('insertText', false, text);
+    });
+
     // 更新工具栏按钮激活状态
     function updateRteActive() {
       document.querySelectorAll('#detailRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
@@ -2365,14 +3022,7 @@ document.addEventListener('click', function (e) {
       if (!detailBrushStyle) {
         var sel = window.getSelection();
         if (sel.rangeCount > 0 && !sel.isCollapsed) {
-          detailBrushStyle = {
-            fontName: document.queryCommandValue('fontName'),
-            fontSize: document.queryCommandValue('fontSize'),
-            foreColor: document.queryCommandValue('foreColor'),
-            bold: document.queryCommandState('bold'),
-            italic: document.queryCommandState('italic'),
-            underline: document.queryCommandState('underline')
-          };
+          detailBrushStyle = rteReadBrushStyle();
           brushBtn.classList.add('active');
           toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
         } else {
@@ -2381,12 +3031,7 @@ document.addEventListener('click', function (e) {
       } else {
         var sel2 = window.getSelection();
         if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
-          if (detailBrushStyle.fontName) document.execCommand('fontName', false, detailBrushStyle.fontName);
-          if (detailBrushStyle.fontSize) document.execCommand('fontSize', false, detailBrushStyle.fontSize);
-          if (detailBrushStyle.foreColor) document.execCommand('foreColor', false, detailBrushStyle.foreColor);
-          if (detailBrushStyle.bold) document.execCommand('bold', false, null);
-          if (detailBrushStyle.italic) document.execCommand('italic', false, null);
-          if (detailBrushStyle.underline) document.execCommand('underline', false, null);
+          rteApplyBrushStyle(detailBrushStyle);
           rteEditor.focus();
           toast('格式已应用', 'success');
         } else {
@@ -2682,7 +3327,7 @@ document.addEventListener('click', function (e) {
       var annBtn = this;
       var _annBtnText = annBtn.textContent;
       annBtn.disabled = true;
-      annBtn.textContent = '确定中…';
+      if (window.__btnBusy) window.__btnBusy(annBtn, '确定中…'); /* R183 条4：忙碌转圈 */
       flushAnnEdit();
       var data = {
         announcement: '',
@@ -2693,7 +3338,7 @@ document.addEventListener('click', function (e) {
         annBtn.disabled = false;
         annBtn.textContent = _annBtnText;
         if (res && res.ok) {
-          toast('公告已保存', 'success');
+          toast('公告已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
           stateAnn.loaded = true; annDraftPending = false;
           // R154: 保存成功后立即重建备份（原=null）——保存后再编辑、取消/×时 annDiscard 才有备份可恢复（重开瞬间及拉取失败时不再显示脏草稿）
           try { stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list)); } catch (e0) { stateAnn._backup = null; }
@@ -2731,14 +3376,14 @@ document.addEventListener('click', function (e) {
       var cBtn = this;
       var _cBtnText = cBtn.textContent;
       cBtn.disabled = true;
-      cBtn.textContent = '确定中…';
+      if (window.__btnBusy) window.__btnBusy(cBtn, '确定中…'); /* R183 条4：忙碌转圈 */
       var v = document.getElementById('contactUrlInput').value.trim();
       document.getElementById('setContactUrl').value = v;
       var st = document.getElementById('contactStatus'); if (st) st.textContent = '';
       api('admin/settings', { method: 'PUT', body: JSON.stringify({ contact_url: v }) }).then(function (res) {
         cBtn.disabled = false;
         cBtn.textContent = _cBtnText;
-        if (res && res.ok) { toast('客服链接已保存', 'success'); document.getElementById('contactMask').classList.remove('open'); }
+        if (res && res.ok) { toast('客服链接已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */ document.getElementById('contactMask').classList.remove('open'); }
         else toast(res.msg || '保存失败', 'error');
       }).catch(function () {
         cBtn.disabled = false;
@@ -2812,14 +3457,7 @@ document.addEventListener('click', function (e) {
       if (!annBrushStyle) {
         var sel = window.getSelection();
         if (sel.rangeCount > 0 && !sel.isCollapsed) {
-          annBrushStyle = {
-            fontName: document.queryCommandValue('fontName'),
-            fontSize: document.queryCommandValue('fontSize'),
-            foreColor: document.queryCommandValue('foreColor'),
-            bold: document.queryCommandState('bold'),
-            italic: document.queryCommandState('italic'),
-            underline: document.queryCommandState('underline')
-          };
+          annBrushStyle = rteReadBrushStyle();
           brushBtn.classList.add('active');
           toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
         } else {
@@ -2828,12 +3466,7 @@ document.addEventListener('click', function (e) {
       } else {
         var sel2 = window.getSelection();
         if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
-          if (annBrushStyle.fontName) document.execCommand('fontName', false, annBrushStyle.fontName);
-          if (annBrushStyle.fontSize) document.execCommand('fontSize', false, annBrushStyle.fontSize);
-          if (annBrushStyle.foreColor) document.execCommand('foreColor', false, annBrushStyle.foreColor);
-          if (annBrushStyle.bold) document.execCommand('bold', false, null);
-          if (annBrushStyle.italic) document.execCommand('italic', false, null);
-          if (annBrushStyle.underline) document.execCommand('underline', false, null);
+          rteApplyBrushStyle(annBrushStyle);
           annEditor.focus();
           toast('格式已应用', 'success');
         } else {
@@ -2899,8 +3532,8 @@ document.addEventListener('click', function (e) {
           '<button class="modal-close-x" data-link-close>×</button>' +
           '<h2 class="modal-title">插入超链接</h2>' +
           '<div class="form">' +
-          '<label>链接地址</label><input id="linkDialogUrl" placeholder="https://..." />' +
-          '<label>显示文字</label><input id="linkDialogText" placeholder="不填则显示链接地址" />' +
+          '<label>链接地址</label><input id="linkDialogUrl" />' +
+          '<label>显示文字 <span class="label-hint">不填则显示链接地址</span></label><input id="linkDialogText" />' +
           '</div>' +
           '<div class="modal-footer">' +
           '<button class="modal-inner-btn" id="linkDialogOk">确定</button>' +
@@ -2978,14 +3611,7 @@ document.addEventListener('click', function (e) {
             // 第一次点击：复制样式
             var sel = window.getSelection();
             if (sel.rangeCount > 0 && !sel.isCollapsed) {
-              formatBrushStyle = {
-                fontName: document.queryCommandValue('fontName'),
-                fontSize: document.queryCommandValue('fontSize'),
-                foreColor: document.queryCommandValue('foreColor'),
-                bold: document.queryCommandState('bold'),
-                italic: document.queryCommandState('italic'),
-                underline: document.queryCommandState('underline')
-              };
+              formatBrushStyle = rteReadBrushStyle();
               brushBtn.classList.add('active');
               toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
             } else {
@@ -2995,12 +3621,7 @@ document.addEventListener('click', function (e) {
             // 第二次点击：应用样式
             var sel2 = window.getSelection();
             if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
-              if (formatBrushStyle.fontName) document.execCommand('fontName', false, formatBrushStyle.fontName);
-              if (formatBrushStyle.fontSize) document.execCommand('fontSize', false, formatBrushStyle.fontSize);
-              if (formatBrushStyle.foreColor) document.execCommand('foreColor', false, formatBrushStyle.foreColor);
-              if (formatBrushStyle.bold) document.execCommand('bold', false, null);
-              if (formatBrushStyle.italic) document.execCommand('italic', false, null);
-              if (formatBrushStyle.underline) document.execCommand('underline', false, null);
+              rteApplyBrushStyle(formatBrushStyle);
               editor.focus();
               toast('格式已应用', 'success');
             } else {
@@ -3085,7 +3706,7 @@ document.addEventListener('click', function (e) {
       // 修复：原先请求发出前就提示"保存成功"并关闭弹窗，失败时造成"假成功"；提示与关窗移到成功分支
       var _variantOkText = variantOk.textContent;
       variantOk.disabled = true;
-      variantOk.textContent = '确定中…';
+      if (window.__btnBusy) window.__btnBusy(variantOk, '确定中…'); /* R183 条4：忙碌转圈 */
       var req = state.editingVariantId
         ? api('admin/variants/' + state.editingVariantId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/variants', { method: 'POST', body: JSON.stringify(data) });
@@ -3094,7 +3715,7 @@ document.addEventListener('click', function (e) {
         variantOk.textContent = _variantOkText;
         if (res && res.ok) {
           variantDraftPending = false; variantMask.classList.remove('open');
-          toast('类型已保存', 'success');
+          toast('类型已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
           // R178：本地即时更新类型列表（不等 loadVariants 重拉的网络往返），loadVariants 降级为后台静默同步
           if (state.editingVariantId) {
             var _uv = (state.variants || []).find(function (x) { return x.id === state.editingVariantId; });
@@ -3149,8 +3770,9 @@ document.addEventListener('click', function (e) {
           codeVal.textContent = res.code;
           codeVal.title = '点击复制';
           codeBox.style.display = 'flex';
-          var _copyCode = function () {
+          var _copyCode = function (ev) {
             var ok = window.__shareCopyText ? window.__shareCopyText(res.code) : false;
+            if (ok && window.__copyOk && ev && ev.target) window.__copyOk(ev.target); /* R183 条11：复制成功键变绿 */
             toast(ok ? '已复制' : '复制失败', ok ? 'success' : 'error');
           };
           codeVal.onclick = _copyCode;
@@ -3212,10 +3834,16 @@ document.addEventListener('click', function (e) {
             toast('已删除', 'success');
             // R178：本地即时移除（不等重拉网络往返），loadVariants 后台静默同步
             state.variants = (state.variants || []).filter(function (x) { return x.id !== id; });
-            var _dvp = (state.products || []).find(function (x) { return x.id === state.editingId; });
-            if (_dvp) _dvp.variants = (state.variants || []).slice();
-            renderVariants();
-            loadVariants(state.editingId);
+            /* R183 条7：码删除塌缩动画（120ms 淡出后重渲染） */
+            var __vi = variantListEl.querySelector('.variant-item[data-vid="' + id + '"]');
+            var __post7 = function () {
+              var _dvp = (state.products || []).find(function (x) { return x.id === state.editingId; });
+              if (_dvp) _dvp.variants = (state.variants || []).slice();
+              renderVariants();
+              loadVariants(state.editingId);
+            };
+            if (__vi) { __vi.style.transition = 'opacity var(--dur-fast, .10s) ease'; __vi.style.opacity = '0'; setTimeout(__post7, 120); }
+            else __post7();
           }
           else toast(res.msg || '删除失败', 'error');
         });
@@ -3314,26 +3942,17 @@ document.addEventListener('click', function (e) {
       if (lineHover.svg === svg && lineHover.attached) return;
       lineHover.svg = svg; lineHover.attached = true;
       // svg 元素本身不重建（每轮只重设 innerHTML），监听挂一次即可
-      function handlePointer(x) {
+      svg.addEventListener('mousemove', function (evt) {
         if (!lineHover.data || !lineHover.data.length) return;
         var rect = svg.getBoundingClientRect();
         var scale = (rect.width || lineHover.W) / lineHover.W;
-        var ix = (x - rect.left) / (scale || 1);
-        var i = lineHover.stepX > 0 ? Math.round((ix - lineHover.padL) / lineHover.stepX) : 0;
+        var x = (evt.clientX - rect.left) / (scale || 1);
+        var i = lineHover.stepX > 0 ? Math.round((x - lineHover.padL) / lineHover.stepX) : 0;
         if (i < 0) i = 0;
         if (i > lineHover.data.length - 1) i = lineHover.data.length - 1;
         drawLineHover(svg, i);
-      }
-      svg.addEventListener('mousemove', function (evt) { handlePointer(evt.clientX); });
+      });
       svg.addEventListener('mouseleave', function () { clearLineHover(svg); });
-      // R180（用户 09-16）：根因→折线图仅支持鼠标悬浮；修法→追加 touch 事件支持
-      svg.addEventListener('touchstart', function (evt) {
-        if (evt.touches.length === 1) { handlePointer(evt.touches[0].clientX); }
-      }, { passive: true });
-      svg.addEventListener('touchmove', function (evt) {
-        if (evt.touches.length === 1) { evt.preventDefault(); handlePointer(evt.touches[0].clientX); }
-      }, { passive: false });
-      svg.addEventListener('touchend', function () { clearLineHover(svg); });
     }
 
     // ---------- 折线图渲染 ----------
@@ -3749,7 +4368,17 @@ document.addEventListener('click', function (e) {
         d.className = 'stat-card';
         var n = document.createElement('div');
         n.className = 'num';
-        n.textContent = c.num;
+        n.textContent = '0'; /* R183 条10：数字滚动（0.6s ease-out；系统开了减少动效则直显终值） */
+        (function (__t, __n) {
+          if (!__t || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { __n.textContent = __t; return; }
+          var __t0 = null;
+          requestAnimationFrame(function __step(ts) {
+            if (__t0 === null) __t0 = ts;
+            var __p = Math.min(1, (ts - __t0) / 600);
+            __n.textContent = Math.round(__t * (1 - Math.pow(1 - __p, 3)));
+            if (__p < 1) requestAnimationFrame(__step);
+          });
+        })(c.num, n);
         var l = document.createElement('div');
         l.className = 'label';
         l.textContent = c.label;
@@ -4253,9 +4882,14 @@ refreshCatCnts();
                   state.categories.forEach(function (x) { if (Number(x.parent_id) === Number(c.id)) _delIds.push(Number(x.id)); });
                   state.categories = state.categories.filter(function (x) { return _delIds.indexOf(Number(x.id)) === -1; });
                   (state.products || []).forEach(function (p) { if (_delIds.indexOf(Number(p.cid)) !== -1) p.cid = 0; });
-                  renderCategories(state.categories);
-                  refreshCatCnts(); renderProducts(); initFilterCatPicker();
-                  silentSyncCategories(); silentSyncProducts();
+                  /* R183 条7：分类删除塌缩动画（命中的行 120ms 淡出后重渲染，与资源删除同款） */
+                  var __n7 = 0;
+                  document.querySelectorAll('#catList .cat-row').forEach(function (r) { if (_delIds.indexOf(Number(r.dataset.id)) !== -1) { __n7++; r.style.transition = 'opacity var(--dur-fast, .10s) ease'; r.style.opacity = '0'; } });
+                  setTimeout(function () {
+                    renderCategories(state.categories);
+                    refreshCatCnts(); renderProducts(); initFilterCatPicker();
+                    silentSyncCategories(); silentSyncProducts();
+                  }, __n7 ? 120 : 0);
                 }
                 else toast(res.msg || '删除失败', 'error');
               });
@@ -4346,19 +4980,26 @@ refreshCatCnts();
             clearCache();
             // R178：本地即时生效（隐藏/显示/删除按级联集合），后台静默同步；
             // 原先 loadCategories()（+删除时 loadProducts()）全量重拉，慢网下要等网络往返
+            var __after7 = function () {
+              renderCategories(state.categories);
+              refreshCatCnts();
+              silentSyncCategories();
+              if (action === 'delete') silentSyncProducts();
+            };
             if (action === 'delete') {
               var _gone = ids.slice();
               state.categories.forEach(function (x) { if (ids.indexOf(Number(x.parent_id)) !== -1) _gone.push(Number(x.id)); });
               state.categories = state.categories.filter(function (x) { return _gone.indexOf(Number(x.id)) === -1; });
               (state.products || []).forEach(function (p) { if (_gone.indexOf(Number(p.cid)) !== -1) p.cid = 0; });
+              /* R183 条7：批量删除分类塌缩动画（与单个删除同款） */
+              var __n8 = 0;
+              document.querySelectorAll('#catList .cat-row').forEach(function (r) { if (_gone.indexOf(Number(r.dataset.id)) !== -1) { __n8++; r.style.transition = 'opacity var(--dur-fast, .10s) ease'; r.style.opacity = '0'; } });
               renderProducts(); initFilterCatPicker();
+              setTimeout(__after7, __n8 ? 120 : 0);
             } else {
               state.categories.forEach(function (x) { if (ids.indexOf(Number(x.id)) !== -1) x.is_hidden = (action === 'hide') ? 1 : 0; });
+              __after7();
             }
-            renderCategories(state.categories);
-            refreshCatCnts();
-            silentSyncCategories();
-            if (action === 'delete') silentSyncProducts();
       ;
           }
         });
@@ -4447,7 +5088,7 @@ refreshCatCnts();
       var data = { name: name, sort: sort, parent_id: parentId, is_hidden: isHidden };
       // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗，失败时造成"假成功"；提示与关窗移到成功分支
       var _catOkText = catOk.textContent;
-      catOk.textContent = '确定中…';
+      if (window.__btnBusy) window.__btnBusy(catOk, '确定中…'); /* R183 条4：忙碌转圈 */
       var req = state.catEditingId
         ? api('admin/categories/' + state.catEditingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/categories', { method: 'POST', body: JSON.stringify(data) });
@@ -4459,7 +5100,7 @@ refreshCatCnts();
         catOk.textContent = _catOkText;
         if (res && res.ok) {
           catDraftPending = false; catMask.classList.remove('open');
-          toast('分类已保存', 'success');
+          toast('分类已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
           clearCache();
           // R178：本地即时更新分类面板（不等 loadCategories 重拉的网络往返）；
           // 编辑=合并字段重排，新增=后端返回 id 时本地插入（拿不到 id 才退回重拉）
@@ -4553,13 +5194,39 @@ refreshCatCnts();
     })();
 
     // ---------- 资源搜索 ----------
-    document.getElementById('adminSearch').addEventListener('input', function () {
+    // R183 条17：清除搜索键（与前台 ✗ 同款；空态另有「清除搜索」按钮）
+    /* R186 建议1：搜索历史下拉（值为空 focus 时显示，复用 tab 胶囊 + 灰圆小 ×）；
+       本脚本先于 ui-common.js 加载，同步阶段组件未定义 → load 后兜底绑定 */
+    (function () {
+      var __bindSH = function () { window.bindSearchHist(document.querySelector('.tb-row2 .admin-search'), document.getElementById('adminSearch'), 'adminSearchHist'); };
+      if (window.bindSearchHist) __bindSH(); else window.addEventListener('load', __bindSH);
+    })();
+    document.getElementById('adminSearchClear').addEventListener('click', function () {
+      var inp = document.getElementById('adminSearch');
+      inp.value = '';
+      this.classList.remove('show');
+      adminPage = 1;
       renderProducts();
+      inp.focus();
     });
 
     // ---------- 表单字段清除红色边框 ----------
     bindFieldClear(fTitle);
+    attachLiveCheck(fTitle, '请填写资源标题'); /* R193c ⑨（23:26 修正：只留红框）：标题必填实时校验（blur/输入空即红框） */
     bindFieldClear(fCid);
+    /* R193c ⑨：分类实时校验——下拉面板开过又收起仍未选择（0/空）即红框提示；
+       选择成功在 onProductCidChange 清红框，填上立即消 */
+    (function () {
+      var picker = document.getElementById('fCidPicker');
+      var disp = document.getElementById('fCidDisplay');
+      if (!picker || !disp || !fCid) return;
+      var opened = false;
+      var mo = new MutationObserver(function () {
+        if (picker.classList.contains('open')) { opened = true; return; }
+        if (opened) { opened = false; if (!Number(fCid.value)) showFieldErr(disp, '请选择资源分类'); }
+      });
+      mo.observe(picker, { attributes: true, attributeFilter: ['class'] });
+    })();
     bindFieldClear(fDesc);
     bindFieldClear(fImg);
     bindFieldClear(vName);
@@ -4651,6 +5318,7 @@ refreshCatCnts();
       _lbMask.appendChild(m);
       _lbMask.style.display = 'flex';
       _lbMask.classList.add('open');
+      if (window.__modalKit) window.__modalKit.register(_lbMask, { discard: closeLightbox, stash: closeLightbox }); /* R186 建议3：进统一弹窗栈——Esc/返回键逐层关闭 */
     }
     function closeLightbox() { if (_lbMask) { try { _lbMask.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} _lbMask.style.display = 'none'; _lbMask.classList.remove('open'); } }
     (function () {
@@ -4891,7 +5559,7 @@ refreshCatCnts();
         m = document.createElement('div');
         m.id = 'kfFallback';
         m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;';
-        m.innerHTML = '<div style="background:#fff;border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
+        m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
           '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=181" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
@@ -4939,8 +5607,27 @@ refreshCatCnts();
       // Ctrl+S 保存资源
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
+        /* R183 条22：Ctrl+S 覆盖全部保存弹窗——哪个弹窗开着就保存哪个（确认删除类不绑，防 Ctrl+S 误触危险操作） */
+        var __csMap = [['editMask','saveProductBtn'],['annMask','saveAnnBtn'],['contactMask','saveContactBtn'],['catMask','catOk'],['batchCatMask','batchCatOk'],['variantMask','variantOk'],['inputMask','inputOk']];
+        for (var ci = 0; ci < __csMap.length; ci++) {
+          var __mk = document.getElementById(__csMap[ci][0]);
+          if (__mk && __mk.classList.contains('open')) {
+            var __sb = document.getElementById(__csMap[ci][1]);
+            if (__sb && !__sb.disabled) __sb.click();
+            return;
+          }
+        }
         var saveBtn = document.getElementById('saveProductBtn');
         if (saveBtn && saveBtn.offsetParent !== null) saveBtn.click();
+      }
+      // R192 二⑧：富文本编辑器基本快捷键显式化——Ctrl+B 加粗 / Ctrl+I 斜体 / Ctrl+U 下划线
+      // （contenteditable 原生多已支持，显式绑定兜底防个别浏览器/输入法吃键；仅编辑器聚焦时接管）
+      if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].indexOf(e.key) !== -1) {
+        var __ed = document.activeElement;
+        if (__ed && (__ed.classList.contains('rte-editor') || (__ed.closest && __ed.closest('.rte-editor')))) {
+          e.preventDefault();
+          try { document.execCommand({ b: 'bold', i: 'italic', u: 'underline' }[e.key], false, null); } catch (e2) {}
+        }
       }
       // Ctrl+Z 撤销
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
@@ -4951,6 +5638,86 @@ refreshCatCnts();
         // 重做交由浏览器原生处理，不再自定义拦截
       }
     });
+
+    // ---------- R192 二⑧：后台命令面板（Ctrl+K）----------
+    // 桌面端任意界面 Ctrl+K 呼出：页面导航 / 常用操作 / 资源直达（输资源名回车直接开编辑弹窗）。
+    // ↑↓ 选择、Enter 执行、Esc 关闭（已注册进 __modalKit，Esc 路由与全站弹窗一致）；
+    // 任一编辑类弹窗开着时不抢键（防半开状态下乱切页面）。
+    (function () {
+      var mask = document.createElement('div');
+      mask.className = 'cp-mask'; mask.id = 'cpMask';
+      mask.innerHTML =
+        '<div class="cp-box" role="dialog" aria-label="命令面板">' +
+          '<input class="cp-input" id="cpInput" placeholder="搜索：页面 / 操作 / 资源名…" autocomplete="off" />' +
+          '<div class="cp-list" id="cpList"></div>' +
+        '</div>';
+      document.body.appendChild(mask);
+      var input = mask.querySelector('#cpInput'), listEl = mask.querySelector('#cpList');
+      var items = [], active = 0;
+
+      function __cpClose() { mask.classList.remove('open'); input.value = ''; input.blur(); }
+      function __cpCmds() {
+        var c = [
+          { lab: '资源管理', tag: '页面', kw: '资源管理 资源 列表 products', run: function () { switchTab('products'); } },
+          { lab: '分类管理', tag: '页面', kw: '分类管理 分类 categories', run: function () { switchTab('categories'); } },
+          { lab: '数据统计', tag: '页面', kw: '数据统计 统计 数据 stats', run: function () { switchTab('stats'); } },
+          { lab: '平台设置', tag: '页面', kw: '平台设置 设置 settings', run: function () { switchTab('settings'); } },
+          { lab: '新增资源', tag: '操作', kw: '新增资源 新建 添加资源 add', run: function () { switchTab('products'); document.getElementById('addProductBtn').click(); } },
+          { lab: '新增分类', tag: '操作', kw: '新增分类 新建分类 add', run: function () { switchTab('categories'); document.getElementById('addCatBtn').click(); } },
+          { lab: '设置客服', tag: '操作', kw: '设置客服 客服 联系 contact', run: function () { switchTab('settings'); document.getElementById('openContactBtn').click(); } },
+          { lab: '设置公告', tag: '操作', kw: '设置公告 公告 ann', run: function () { switchTab('settings'); document.getElementById('openAnnBtn').click(); } },
+          { lab: '新增公告项', tag: '操作', kw: '新增公告项 公告 add', run: function () { switchTab('settings'); document.getElementById('addAnnBtn').click(); } },
+          { lab: '修改密码', tag: '操作', kw: '修改密码 密码 pwd', run: function () { switchTab('settings'); document.getElementById('showPwdFormBtn').click(); } }
+        ];
+        (state.products || []).forEach(function (p) {
+          c.push({ lab: '编辑：' + (p.title || '(无标题)'), tag: '资源', kw: '编辑 ' + (p.title || ''), run: function () { switchTab('products'); openEdit(p); } });
+        });
+        return c;
+      }
+      function __cpRender() {
+        var kw = input.value.trim().toLowerCase();
+        var all = __cpCmds();
+        items = !kw ? all : all.filter(function (c) { return (c.lab + ' ' + c.kw).toLowerCase().indexOf(kw) !== -1; });
+        items = items.slice(0, 10); active = Math.min(active, Math.max(0, items.length - 1));
+        if (!items.length) { listEl.innerHTML = '<div class="cp-empty">没有匹配的命令</div>'; return; }
+        listEl.innerHTML = '';
+        items.forEach(function (c, i) {
+          var it = document.createElement('div');
+          it.className = 'cp-item' + (i === active ? ' active' : '');
+          var lab = document.createElement('span'); lab.className = 'cp-lab'; lab.textContent = c.lab;
+          var tag = document.createElement('span'); tag.className = 'cp-tag'; tag.textContent = c.tag;
+          it.appendChild(lab); it.appendChild(tag);
+          it.addEventListener('mouseenter', function () { active = i; __cpPaint(); });
+          it.addEventListener('click', function () { __cpRun(i); });
+          listEl.appendChild(it);
+        });
+      }
+      function __cpPaint() {
+        Array.prototype.forEach.call(listEl.querySelectorAll('.cp-item'), function (el, i) { el.classList.toggle('active', i === active); });
+        var cur = listEl.querySelectorAll('.cp-item')[active]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
+      }
+      function __cpRun(i) { var c = items[i]; if (!c) return; __cpClose(); try { c.run(); } catch (e) { try { console.error(e); } catch (e2) {} } }
+
+      mask.addEventListener('click', function (e) { if (e.target === mask) __cpClose(); });
+      input.addEventListener('input', function () { active = 0; __cpRender(); });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (items.length) { active = (active + 1) % items.length; __cpPaint(); } }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); if (items.length) { active = (active - 1 + items.length) % items.length; __cpPaint(); } }
+        else if (e.key === 'Enter') { e.preventDefault(); __cpRun(active); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); __cpClose(); }
+      });
+      document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+          e.preventDefault();
+          if (mask.classList.contains('open')) { __cpClose(); return; }
+          if (document.querySelector('.modal-mask.open, .kf-mask.open, .share-mask.open, .ann-mask.open')) return;
+          active = 0; __cpRender(); mask.classList.add('open'); setTimeout(function () { input.focus(); }, 0);
+        }
+      });
+      window.addEventListener('DOMContentLoaded', function () {
+        if (window.__modalKit) window.__modalKit.register(mask, { discard: __cpClose, stash: __cpClose });
+      });
+    })();
 
     // ---------- R111：弹窗三模式统一注册（×/取消=丢弃；点外/Esc=暂存） ----------
     // ui-common.js 在本文件之后加载，等 DOMContentLoaded 再注册（此时 kit 必已就绪）；

@@ -16,7 +16,7 @@
   <meta name="twitter:title" content="万能资源圈・资源">
   <meta name="twitter:description" content="优质虚拟资源分享平台，展示与咨询客服获取学习资源、软件工具、设计素材">
   <meta name="twitter:image" content="/assets/images/logo.png?v=181">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=174">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=183">
   <link rel="stylesheet" href="/assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
@@ -71,8 +71,8 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input class="search-input" id="searchInput" placeholder="搜索资源" />
-        <button class="search-clear" id="searchClear" title="清空">×</button>
+        <input class="search-input" id="searchInput"  />
+        <button type="button" class="search-clear" id="searchClear" title="清空" aria-label="清除搜索">×</button>
       </div>
       <!-- 视图切换按钮（公共 .view-btn，R8 统一配色：激活淡白底、未激活淡蓝底，与管理页完全同色） -->
       <div class="view-toggle on-blue">
@@ -152,7 +152,7 @@
             </div>
             <!-- 有资源码时：输入框+解锁按钮 -->
             <div class="resource-code-input-row" id="resourceCodeInputRow">
-              <input type="text" class="resource-code-input" id="resourceCodeInput" placeholder="请输入资源码" />
+              <input type="text" class="resource-code-input" id="resourceCodeInput"  />
               <button class="resource-code-btn" id="resourceCodeBtn">解锁</button>
             </div>
             <!-- 无资源码时：直接查看按钮 -->
@@ -190,10 +190,11 @@
 
   <script>var SHOP_CONFIG = window.SHOP_CONFIG || { shopName: '万能资源圈', shopLogo: '/assets/images/logo.png?v=181', defaultContactUrl: '', categories: [{ id: 0, name: '全部', parent_id: 0 }], productList: [] };</script>
   <script>(function () { var s = document.createElement('script'); s.src = '/config.js'; s.onerror = function () {}; document.head.appendChild(s); })();</script>
+  <!-- R193：ui-common.js 必须先于 shop.js 加载（长按菜单组件 __ctxMenu 在 shop.js 解析时就要用） -->
+  <script src="/assets/ui-common.js"></script>
   <script src="/assets/shop.js"></script>
   <!-- 图片/视频放大查看器 -->
   <!-- lightbox removed: use dynamic openLightbox/bindLightbox -->
-  <script src="/assets/ui-common.js"></script>
   <script>
   (function () {
     function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }

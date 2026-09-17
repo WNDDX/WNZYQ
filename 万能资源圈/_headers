@@ -23,17 +23,17 @@
 /assets/*.css
   Cache-Control: no-cache, must-revalidate
 
-# R172（用户 00:26）：图片/图标改 no-cache 每次校验（配 SW 网络优先）——
-# 原 30 天 max-age 会让 SW 的 fetch 命中浏览器 HTTP 缓存旧图，图片更新后残留旧图只闪一瞬间
-# must-revalidate 走 ETag 条件请求，未变化时 304 秒回，代价极小
-/assets/*
-  Cache-Control: no-cache, must-revalidate
-
+# R181（用户 09-17 拍板第9项）：图片恢复 30 天长缓存——全站图片一律带 ?v= 版本号（R176 起），
+# 换图必换 URL、长缓存永远拿新图，旧顾虑（R172 图片残留）根源已不存在；
+# 收益是省去每次访问 5 张图的条件请求往返（304 也是一次网络行程，弱网手机有感）。
+# JS/CSS/HTML/SW 仍维持 no-cache（R172 口径，更新即时生效）。
+/assets/*.png
+  Cache-Control: public, max-age=2592000, immutable
 /*.png
-  Cache-Control: no-cache, must-revalidate
+  Cache-Control: public, max-age=2592000, immutable
 
 /*.ico
-  Cache-Control: no-cache, must-revalidate
+  Cache-Control: public, max-age=2592000, immutable
 
 # HTML 不缓存（确保更新即时生效）
 /*.html

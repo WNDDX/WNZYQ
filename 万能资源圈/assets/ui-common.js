@@ -96,7 +96,22 @@ if ('serviceWorker' in navigator) {
     window.closeContactModal = close;
   }
 
+  // ===== R189 建议8：通用 preconnect 工具——任何客服/跳转链接打开弹窗前，先对其域名提前建连 =====
+  // （DNS+TLS 握手在用户浏览期间悄悄完成，点「跳转」即达）。同域跳过、同 origin 只插一条。
+  window.__kfPreconnect = function (url) {
+    try {
+      if (!url || !/^https?:\/\//.test(url)) return;
+      var origin = new URL(url, location.href).origin;
+      if (origin === location.origin) return;
+      if (document.querySelector('link[data-pc-origin="' + origin + '"]')) return;
+      var lk = document.createElement('link');
+      lk.rel = 'preconnect'; lk.href = origin;
+      lk.setAttribute('data-pc-origin', origin);
+      document.head.appendChild(lk);
+    } catch (e) {}
+  };
   window.openContactModal = function (url, qrImg, tip, btnText) {
+    window.__kfPreconnect(url); /* R189：弹窗打开即对目标域名提前建连，用户看二维码期间连接已就绪 */
     ensureKfModal();
     var img = document.getElementById('kfQrImg');
     if (img) {
@@ -195,15 +210,20 @@ if ('serviceWorker' in navigator) {
   };
 
 
-  // ===== R50：全站统一暗色模式触发（跟随系统，系统切换实时跟随） =====
+  // ===== R50 基础 + R187：全站深色模式（纯自动跟随系统，无手动开关键——用户 09-17 14:52 拍板撤钮） =====
   // 变量体系在 ui-common.css（:root 亮色 / [data-theme=dark] 暗色），四页组件已全部接线；
-  // 亮色时显式设 data-theme="light"（无 CSS 覆盖，仅语义标记）。
+  // 系统切深/浅色实时跟随；同步 <meta name="theme-color">（浏览器地址栏/状态栏底色跟着变）。
   var __mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+  window.__applyTheme = function () {
+    var dark = !!(__mq && __mq.matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var metas = document.querySelectorAll('meta[name="theme-color"]'); /* 各页本有 light/dark 双 media 版（跟随系统用）；跟随判定后全量同值——地址栏/状态栏与页面主题始终一致 */
+    for (var k = 0; k < metas.length; k++) metas[k].setAttribute('content', dark ? '#14151f' : '#1E88E5');
+  };
+  window.__applyTheme();
   if (__mq) {
-    var __applyTheme = function () { document.documentElement.setAttribute('data-theme', __mq.matches ? 'dark' : 'light'); };
-    __applyTheme();
-    if (__mq.addEventListener) __mq.addEventListener('change', __applyTheme);
-    else if (__mq.addListener) __mq.addListener(__applyTheme);
+    if (__mq.addEventListener) __mq.addEventListener('change', function () { window.__applyTheme(); });
+    else if (__mq.addListener) __mq.addListener(function () { window.__applyTheme(); });
   }
 
   // 公共媒体占位：加载前预留 16:9 高度防止弹窗先小后大；加载完成同一帧用真实宽高比接管（图片已在缓存，无等待撑开感）；失败交给感叹号兜底
@@ -214,6 +234,7 @@ if ('serviceWorker' in navigator) {
     function applyRatio(w, h) {
       if (!keepRatio && w && h) { try { el.style.aspectRatio = (w / h); } catch (e) {} }
       el.classList.remove('m-loading', 'is-video');
+      try { el.classList.add('img-in'); } catch (e) {} /* R183 条2：详情图入场动画（同二维码口径） */
     }
     if (isVideo) {
       el.addEventListener('loadedmetadata', function () { applyRatio(el.videoWidth, el.videoHeight); }, { once: true });
@@ -246,8 +267,13 @@ if ('serviceWorker' in navigator) {
       if (bodyEl) bodyEl.textContent = String(msg == null ? '' : msg);
       document.body.appendChild(mask);
       var close = function () {
-        try { document.body.removeChild(mask); } catch (e) {}
-        if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
+        if (close.__done) return; close.__done = true;
+        /* R183 条8：提示弹窗关闭也走对称收缩（0.18s 后再移除节点；多次触发只执行一次） */
+        try { mask.classList.add('mask-closing'); } catch (e0) {}
+        setTimeout(function () {
+          try { document.body.removeChild(mask); } catch (e) {}
+          if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
+        }, 200);
       };
       mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
       var ok = mask.querySelector('.alert-ok');
@@ -350,7 +376,7 @@ if ('serviceWorker' in navigator) {
     // R83：兜底 toast 位置与全站统一 top:80px 居中（白底蓝字蓝边圆角20）
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:rgba(255,255,255,0.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;line-height:18px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;'; /* R116：line-height 显式 18，单行总高恒 32px，与下拉刷新条逐像素一致 */
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:var(--toast-bg,rgba(255,255,255,0.92));border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;line-height:18px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;'; /* R116：line-height 显式 18，单行总高恒 32px，与下拉刷新条逐像素一致 */
     document.body.appendChild(t);
     requestAnimationFrame(function () { t.style.opacity = '1'; });
     setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { try { document.body.removeChild(t); } catch (e) {} }, 300); }, 2000);
@@ -498,12 +524,35 @@ window.addEventListener('pageshow', function (e) {
 window.__modalKit = (function () {
   var stack = [];
   var reg = [];
+  /* ===== R186 建议3：Android 返回键 / 浏览器返回手势 优先关最上层弹窗（不退出页面，全站）=====
+     原理：弹窗打开 pushState 一条哨兵（URL 不变）；返回键触发 popstate 时关最上层（走 Esc 同款丢弃通道）；
+     用户点 ×/确定等主动关闭时，自动 back 抵消那条哨兵，历史不留垃圾。
+     __navSuppress：popstate 引起的关闭（历史已消耗，不再 back）；__navBack：主动关闭的 back 在途计数。
+     __navLast=-1 基线：页面加载时已开的弹窗不算导航事件。 */
+  var __navLast = -1, __navSuppress = 0, __navBack = 0, __navT = 0;
+  function __navTick() {
+    var cur = stack.length;
+    if (__navLast < 0) { __navLast = cur; return; }
+    if (cur > __navLast) {
+      for (var i = 0; i < cur - __navLast; i++) { try { history.pushState({ __modalNav: 1 }, '', location.href); } catch (e) {} }
+    } else if (cur < __navLast) {
+      var drop = __navLast - cur;
+      if (__navSuppress > 0) { __navSuppress = Math.max(0, __navSuppress - drop); }
+      else { __navBack += drop; for (var j = 0; j < drop; j++) { try { history.back(); } catch (e) {} } }
+    }
+    __navLast = cur;
+  }
+  window.addEventListener('popstate', function () {
+    if (__navBack > 0) { __navBack--; return; } /* 主动关闭弹窗的抵消 back，非返回键 */
+    if (stack.length) { __navSuppress++; close(stack[stack.length - 1], 'discard'); } /* 返回键 = Esc 同款：关最上层 */
+  });
   function entry(m) { for (var i = 0; i < reg.length; i++) if (reg[i].mask === m) return reg[i]; return null; }
   function sync(m) {
     var open = !!(m.classList && m.classList.contains('open'));
     var idx = stack.indexOf(m);
     if (open && idx < 0) stack.push(m);
     else if (!open && idx >= 0) stack.splice(idx, 1);
+    clearTimeout(__navT); __navT = setTimeout(__navTick, 60); /* R186 建议3：开/关变化 → 防抖协调历史栈 */
   }
   function register(mask, handlers) {
     if (!mask || entry(mask)) return; // 幂等
@@ -525,8 +574,103 @@ window.__modalKit = (function () {
     e.preventDefault();
     close(stack[stack.length - 1], 'discard'); // R147：Esc=丢弃（全站弹窗统一：取消/点外/Esc=丢弃未保存修改）
   });
+  /* R192 二③：弹窗下滑手势关闭（微信式，全站同步）——内容区顶部向下拖 >120px 松手关闭；
+     用户拍板：此关闭走「暂存」通道（stash）——编辑中的内容保留，重开弹窗自动回填，不属丢弃。
+     跟手期间内容盒直接位移（无 transition），松手未达阈值回弹（transition .2s）。 */
+  (function () {
+    var sy = -1, box = null, mask = null, dy = 0;
+    document.addEventListener('touchstart', function (e) {
+      if (!stack.length) return;
+      mask = stack[stack.length - 1];
+      var t = e.target;
+      if (!mask || !mask.contains(t)) return;
+      box = t.closest ? t.closest('.modal-box, .kf-box, .ann-box, .share-box, .preview-box') : null;
+      if (!box) return;
+      if (box.scrollTop > 0) { box = null; return; } /* 内容滚到中间时不误触发，先让滚动 */
+      sy = e.touches[0].clientY; dy = 0;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (sy < 0 || !box) return;
+      dy = e.touches[0].clientY - sy;
+      if (dy <= 0) return;
+      if (box.scrollTop > 0) return; /* 拖动中内容可滚则让位给滚动 */
+      box.style.transition = 'none';
+      box.style.transform = 'translateY(' + Math.min(dy, 260) + 'px)';
+      if (mask && mask.style) mask.style.opacity = String(Math.max(0.25, 1 - dy / 320)); /* 背景同步变淡 */
+    }, { passive: true });
+    function __end() {
+      if (sy < 0) { box = null; return; }
+      var __m = mask, __b = box;
+      if (__b) { __b.style.transition = 'transform 0.2s ease'; __b.style.transform = ''; }
+      if (__m && __m.style) { __m.style.transition = 'opacity 0.2s ease'; __m.style.opacity = ''; }
+      if (dy > 120 && __m) close(__m, 'stash'); /* 阈值关闭=暂存：编辑内容保留（R111 草稿体系） */
+      sy = -1; box = null; dy = 0;
+      setTimeout(function () { if (__b) __b.style.transition = ''; if (__m && __m.style) __m.style.transition = ''; }, 220);
+    }
+    document.addEventListener('touchend', __end);
+    document.addEventListener('touchcancel', __end);
+  })();
   return { register: register, close: close, stack: stack };
 })();
+
+/* ===== R186 建议1：搜索历史（前后台搜索框通用组件）=====
+   pushSearchHist(key, kw)：搜索执行时记录（去重置顶、最多 8 条、localStorage）；
+   bindSearchHist(wrap, input, key)：搜索框 focus（值为空）时显示最近搜索下拉——
+   词条按键复用 .tab 淡蓝胶囊家族（R185 用户拍板的搜索场景家族观感）；
+   单条删除复用 R186 × 回退标准（灰圆、hover/点击变红），尾部「清空」一键全删。
+   点词条 = 填入并派发 input 事件（复用两页现有搜索管线），Esc/失焦收起。 */
+window.pushSearchHist = function (key, kw) {
+  kw = (kw || '').trim(); if (!kw) return;
+  try {
+    var arr = JSON.parse(localStorage.getItem(key) || '[]');
+    for (var i = 0; i < arr.length; i++) if (arr[i] === kw) { arr.splice(i, 1); break; }
+    arr.unshift(kw);
+    if (arr.length > 8) arr.length = 8;
+    localStorage.setItem(key, JSON.stringify(arr));
+  } catch (e) {}
+};
+window.bindSearchHist = function (wrap, input, key) {
+  if (!wrap || !input || !window.__uiCommonLoaded) return;
+  var box = document.createElement('div');
+  box.className = 'search-hist';
+  box.style.display = 'none';
+  wrap.appendChild(box);
+  function getArr() { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { return []; } }
+  function setArr(a) { try { localStorage.setItem(key, JSON.stringify(a)); } catch (e) {} }
+  function hide() { box.style.display = 'none'; }
+  function render() {
+    var arr = getArr();
+    if (!arr.length) { hide(); return; }
+    var html = '<div class="sh-head"><span class="sh-title">最近搜索</span><button type="button" class="sh-clear">清空</button></div><div class="sh-list">';
+    for (var i = 0; i < arr.length; i++) {
+      var w = String(arr[i]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+      html += '<span class="sh-item"><button type="button" class="sh-word" data-w="' + w + '">' + w + '</button><button type="button" class="sh-del" data-i="' + i + '" title="删除这条">×</button></span>';
+    }
+    html += '</div>';
+    box.innerHTML = html;
+    box.style.display = 'block';
+  }
+  function pick(w) {
+    input.value = w;
+    hide();
+    try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+  }
+  box.addEventListener('mousedown', function (e) { e.preventDefault(); }); /* 防止点击先触发 input blur 收起 */
+  box.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.classList && t.classList.contains('sh-word')) { pick(t.getAttribute('data-w') || t.textContent); return; }
+    if (t.classList && t.classList.contains('sh-del')) {
+      var arr = getArr(); var i = parseInt(t.getAttribute('data-i'), 10);
+      if (!isNaN(i) && i >= 0 && i < arr.length) { arr.splice(i, 1); setArr(arr); }
+      render(); return;
+    }
+    if (t.classList && t.classList.contains('sh-clear')) { setArr([]); hide(); return; }
+  });
+  input.addEventListener('focus', function () { if (!input.value) render(); });
+  input.addEventListener('input', function () { if (input.value) hide(); else render(); });
+  input.addEventListener('blur', function () { setTimeout(hide, 160); });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+};
 
 // ===== R119：图片占位符统一灰色线边框（全站兜底）=====
 // 捕获阶段监听 IMG 加载失败（error 不冒泡但捕获可达），失败即加 .media-fail 灰边类；
@@ -683,4 +827,192 @@ window.__modalKit = (function () {
   // R173：resize 同款 400ms 冷静期——手机地址栏收起/软键盘弹出都会派发 resize，旧实现立即收框，
   // 也是「显示一瞬间就消失」的组成路径；真实窗口变化超过冷静期照常收框
   window.addEventListener('resize', function () { if (Date.now() - __showAt < 400) return; hide(); });
+})();
+
+// ===== R183（用户 09-17 终极清单拍板）：全站公共小部件 =====
+// 条12：触觉反馈——仅移动端（粗指针）复制/保存成功轻震 10ms；不支持的设备静默跳过
+window.__haptic = function () {
+  try {
+    if (navigator.vibrate && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) navigator.vibrate(10);
+  } catch (e) {}
+};
+// 条4：按钮忙碌态（文字 + 转圈图标；不动 disabled 防重与全屏遮罩——用户拍板「防重复点击，也代替全屏遮罩」不做）
+window.__btnBusy = function (btn, text) {
+  if (!btn) return;
+  btn.textContent = text;
+  var s = document.createElement('span');
+  s.className = 'btn-spin';
+  btn.insertBefore(s, btn.firstChild);
+};
+// 条11：复制成功反馈（键短暂变绿 1.2s + 手机轻震）
+window.__copyOk = function (el) {
+  if (!el) return;
+  window.__haptic();
+  try { el.classList.add('copy-ok'); } catch (e) {}
+  setTimeout(function () { try { el.classList.remove('copy-ok'); } catch (e) {} }, 1500); /* R184 条11：1.2s→1.5s（用户拍板） */
+};
+// 条8：全站弹窗「从哪开、从哪关」对称收缩——观察所有弹窗遮罩的 class 变化：
+// 任何路径移除 .open 的当帧，先补挂 .mask-closing（CSS 维持 display:flex 并播 0.18s 收缩），200ms 后真正隐藏；
+// 收缩期间重新 add('open') 会自然触发生成新记录 → 撤掉收缩态、重放入场动画（无卡死窗口）
+(function () {
+  var MASK_SEL = '.modal-mask, .share-mask, .kf-mask, .lightbox';
+  function hasOpen(cls) { return !!cls && (' ' + cls + ' ').indexOf(' open ') !== -1; }
+  var mo = new MutationObserver(function (muts) {
+    muts.forEach(function (m) {
+      var el = m.target;
+      if (!el || el.nodeType !== 1 || !el.classList) return;
+      var oldCls = m.oldValue || '';
+      if (oldCls.indexOf('mask-closing') !== -1) return; // 自己的收尾清理，忽略
+      if (hasOpen(oldCls) && !hasOpen(el.className)) {
+        if (!(el.matches && el.matches(MASK_SEL))) return;
+        if (el.__mcTimer) { clearTimeout(el.__mcTimer); el.__mcTimer = null; }
+        el.classList.add('mask-closing');
+        el.__mcTimer = setTimeout(function () {
+          el.__mcTimer = null;
+          try { el.classList.remove('mask-closing'); } catch (e) {}
+        }, 200);
+      } else if (hasOpen(el.className) && el.classList.contains('mask-closing')) {
+        // 关闭动画期间又重开：撤掉收缩态，恢复入场
+        if (el.__mcTimer) { clearTimeout(el.__mcTimer); el.__mcTimer = null; }
+        el.classList.remove('mask-closing');
+      }
+    });
+  });
+  mo.observe(document.documentElement, { subtree: true, attributeFilter: ['class'], attributeOldValue: true });
+})();
+
+/* ===== R184 条5：顶部网络进度条（全局 fetch 包装，四页统一）=====
+   快请求（150ms 内完成）不显示——防闪烁噪音；慢请求显示顶部 2px 蓝条渐进推进（渐近 88% 封顶），
+   完成后推满 100% 并 200ms 淡出。覆盖全站所有 fetch（含 shop/admin 各自的 api() 封装）。 */
+(function () {
+  if (window.__fetchBarInstalled) return;
+  window.__fetchBarInstalled = true;
+  var bar = null, active = 0, shown = false, showTimer = null, hideTimer = null, growTimer = null, w = 0;
+  function ensure() {
+    if (!bar) { bar = document.createElement('div'); bar.id = 'fetch-bar'; document.body.appendChild(bar); }
+    return bar;
+  }
+  function start() {
+    active++;
+    if (active === 1 && !shown) {
+      clearTimeout(showTimer);
+      showTimer = setTimeout(function () {
+        if (active <= 0) return;
+        shown = true; w = 12;
+        var b = ensure();
+        b.style.width = '12%'; b.style.opacity = '1';
+        clearInterval(growTimer);
+        growTimer = setInterval(function () {
+          if (active <= 0 || w >= 86) return;
+          w += (88 - w) * 0.08;
+          if (bar) bar.style.width = w + '%';
+        }, 400);
+      }, 150);
+    }
+  }
+  function finish() {
+    if (active > 0) active--;
+    if (active === 0) {
+      clearTimeout(showTimer);
+      clearInterval(growTimer);
+      if (shown) {
+        var b = ensure();
+        b.style.width = '100%';
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(function () {
+          b.style.opacity = '0';
+          setTimeout(function () { if (active === 0 && bar) bar.style.width = '0'; }, 250);
+          shown = false;
+        }, 180);
+      }
+    }
+  }
+  var _fetch = window.fetch.bind(window);
+  window.fetch = function () {
+    var p;
+    try { p = _fetch.apply(window, arguments); } catch (e) { throw e; }
+    if (!p || typeof p.then !== 'function') return p;
+    start();
+    return p.then(function (r) { finish(); return r; }, function (e) { finish(); throw e; });
+  };
+})();
+
+
+/* ===== R193 二⑤⑦（用户 22:32 定稿）：长按小菜单（全站统一组件）=====
+ * 触屏长按 500ms / 桌面右键呼出；条目白卡圆角、hover 灰底，颜色只用现有 Token，深色自动跟随。
+ * window.__ctxMenu.show(x, y, [{label, fn}])  —— 坐标呼出
+ * window.__ctxMenu.bind(root, selector, getItems) —— 容器委托绑定（root 内长按/右键 selector 命中元素）
+ * shop 页用法见 shop.js R193 段：卡片/图片/文字三类绑定。 */
+window.__ctxMenu = (function () {
+  var menuEl = null;
+  function ensure() {
+    if (menuEl) return menuEl;
+    menuEl = document.createElement('div');
+    menuEl.className = 'ctx-menu';
+    menuEl.setAttribute('role', 'menu');
+    document.body.appendChild(menuEl);
+    // 任意处按下/滚动即收起（菜单自身点击除外）
+    document.addEventListener('touchstart', function (e) { if (!menuEl.contains(e.target)) hide(); }, { passive: true, capture: true });
+    document.addEventListener('mousedown', function (e) { if (!menuEl.contains(e.target)) hide(); }, true);
+    window.addEventListener('scroll', hide, { passive: true });
+    window.addEventListener('resize', hide, { passive: true });
+    return menuEl;
+  }
+  function hide() { if (menuEl) menuEl.style.display = 'none'; }
+  function show(x, y, items) {
+    if (!items || !items.length) return;
+    var m = ensure();
+    m.innerHTML = '';
+    items.forEach(function (it) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ctx-item';
+      b.textContent = it.label;
+      b.addEventListener('click', function (e) { e.stopPropagation(); hide(); try { it.fn(); } catch (err) {} });
+      m.appendChild(b);
+    });
+    m.style.display = 'block';
+    m.style.left = '0px';
+    m.style.top = '0px';
+    var r = m.getBoundingClientRect();
+    var px = Math.min(Math.max(8, x), window.innerWidth - r.width - 8);
+    var py = (y + r.height > window.innerHeight - 8) ? Math.max(8, window.innerHeight - r.height - 8) : y;
+    m.style.left = px + 'px';
+    m.style.top = py + 'px';
+  }
+  function bind(root, selector, getItems) {
+    if (!root) return;
+    var timer = null, sx = 0, sy = 0, lastHit = null;
+    root.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) { if (timer) { clearTimeout(timer); timer = null; } return; }
+      var t = e.touches[0];
+      var hit = e.target.closest ? e.target.closest(selector) : null;
+      sx = t.clientX; sy = t.clientY; lastHit = hit;
+      if (!hit) return;
+      var cx = t.clientX, cy = t.clientY;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        timer = null;
+        show(cx, cy, getItems(hit, e));
+      }, 500);
+    }, { passive: true });
+    root.addEventListener('touchmove', function (e) {
+      if (!timer) return;
+      var t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) { clearTimeout(timer); timer = null; }
+    }, { passive: true });
+    root.addEventListener('touchend', function (e) {
+      if (timer) { clearTimeout(timer); timer = null; return; }
+      /* 菜单刚弹出的这次 touchend 吞掉，避免落点处再触发一次点击（比如打开详情弹窗） */
+      if (menuEl && menuEl.style.display === 'block' && lastHit) { lastHit = null; try { e.preventDefault(); } catch (err) {} }
+    }, { passive: false });
+    root.addEventListener('touchcancel', function () { if (timer) { clearTimeout(timer); timer = null; } }, { passive: true });
+    root.addEventListener('contextmenu', function (e) {
+      var hit = e.target.closest ? e.target.closest(selector) : null;
+      if (!hit) return;
+      e.preventDefault();
+      show(e.clientX, e.clientY, getItems(hit, e));
+    });
+  }
+  return { show: show, hide: hide, bind: bind };
 })();

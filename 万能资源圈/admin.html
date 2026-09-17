@@ -6,7 +6,7 @@
   <title>万能资源圈・管理</title>
   <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
   <meta name="robots" content="index,follow">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=174">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=183">
   <link rel="stylesheet" href="/assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
@@ -27,11 +27,10 @@
         </div>
       </a>
       <h1>万能资源圈・管理</h1>
-      <input id="loginUser" class="input" placeholder="账号" autocomplete="off" />
-      <div style="position:relative;width:100%;">
-        <input id="loginPass" class="input" type="password" placeholder="密码" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" style="width:100%;padding-right:44px;" />
-        <button type="button" id="pwdToggleBtn" onclick="if(typeof togglePwdVisibility==='function')togglePwdVisibility();" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码">👁</button>
-      </div>
+      <label for="loginUser" style="display:block;font-size:13px;color:#666;margin:12px 0 5px;">账号</label>
+      <input id="loginUser" class="input" autocomplete="off" />
+      <label for="loginPass" style="display:block;font-size:13px;color:#666;margin:0 0 5px;">密码</label>
+      <input id="loginPass" class="input" type="password" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" />
       <button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登 录</button>
     </div>
   </div>
@@ -84,7 +83,8 @@
           </select>
           <div class="admin-search" style="margin-left:auto;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="adminSearch" placeholder="搜索资源" />
+            <input type="text" id="adminSearch"  />
+            <button type="button" class="search-clear" id="adminSearchClear" title="清空" aria-label="清除搜索">×</button>
           </div>
 
           </div>
@@ -98,7 +98,10 @@
           <button class="batch-btn danger" data-action="delete">批量删除</button>          <button class="batch-btn" data-action="clearSel">取消选中</button>
         </div>
         <div id="productList"></div>
-        <div class="empty" id="productEmpty" style="display:none">暂无资源，点上方"新增资源"添加</div>
+        <div class="empty-tip" id="productEmpty">
+          <div class="empty-icon">📦</div>
+          <div class="empty-title" id="productEmptyTitle">暂无资源</div>
+        </div>
       </section>
 
       <!-- 数据统计 -->
@@ -117,9 +120,9 @@
               <!-- R68：对比上期键独立于时间档组（1/7/30天三键一组不动），紧跟其后；复用应用键样式；文字随状态切换：关闭=对比上期 / 开启=显示本期 -->
               <button class="btn-blue cmp-btn" id="cmpPrevBtn" style="width:auto;padding:0 18px;height:36px;margin:0;flex-shrink:0;white-space:nowrap;" title="开启后卡片小字、折线虚线、柱状浅色对比柱及悬浮数值显示与上期的对比；再点一次恢复只看本期">对比上期</button>
               <div style="display:flex;align-items:center;gap:4px;font-size:13px;color:#666;">
-                <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="开始时间" />
+                <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime"  />
                 <span>至</span>
-                <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime" placeholder="结束时间" />
+                <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime"  />
                 <button class="btn-blue" id="statCustomBtn" style="width:auto;padding:0 18px;height:36px;margin:0;flex-shrink:0;white-space:nowrap;">应用</button>
               </div>
               <button class="export-btn" id="exportBtn">导出资源数据</button>
@@ -242,79 +245,64 @@
           </div>
           <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
           <div class="setting-row">
-            <label>平台公告（显示在资源页顶部）</label>
+            <label>平台公告（显示在资源页顶部） <span class="label-hint">如：欢迎来到万能资源圈，新资源持续更新中</span></label>
             <button type="button" class="btn-blue" id="openAnnBtn" style="width:auto;padding:0 24px;">设置公告</button>
             <div class="rte-toolbar rte-collapsed" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;"><span class="rte-group">
-              <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement">
-                <option value="">字体</option>
-                <option value="Microsoft YaHei">微软雅黑</option>
-                <option value="SimSun">宋体</option>
-                <option value="SimHei">黑体</option>
-                <option value="KaiTi">楷体</option>
-                <option value="Arial">Arial</option>
-                <option value="Times New Roman">Times New Roman</option>
-              </select>
-              <select class="rte-select" data-cmd="fontSize" data-target="setAnnouncement">
-                <option value="">字号</option>
-                <option value="1">小</option>
-                <option value="3">正常</option>
-                <option value="4">大</option>
-                <option value="5">特大</option>
-                <option value="6">超大</option>
-                <option value="7">巨大</option>
-              </select>
-              </span><span class="rte-group">
-              <button type="button" class="rte-btn" data-cmd="bold" data-target="setAnnouncement"><b>B</b></button>
-              <button type="button" class="rte-btn" data-cmd="italic" data-target="setAnnouncement"><i>I</i></button>
-              <button type="button" class="rte-btn" data-cmd="underline" data-target="setAnnouncement"><u>U</u></button>
-              <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="setAnnouncement"><s>S</s></button>
-              </span><span class="rte-group">
-              <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement">⬅</button>
-              <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement">⬌</button>
-              <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement">➡</button>
-              </span><span class="rte-group">
-              <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="setAnnouncement">• 列表</button>
-              <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="setAnnouncement">1. 列表</button>
-              </span><span class="rte-group">
-              <div class="rte-palette" data-cmd="foreColor" data-editor="setAnnouncement" title="文字颜色">
-                <span class="palette-a">A</span>
-                <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
-                <span class="palette-swatch" data-color="#e53935" style="background:#e53935"></span>
-                <span class="palette-swatch" data-color="#fb8c00" style="background:#fb8c00"></span>
-                <span class="palette-swatch" data-color="#43a047" style="background:#43a047"></span>
-                <span class="palette-swatch" data-color="#1e88e5" style="background:#1e88e5"></span>
-                <span class="palette-swatch" data-color="#8e24aa" style="background:#8e24aa"></span>
-            <span class="palette-swatch" data-color="#f9a825" style="background:#f9a825"></span>
-            <span class="palette-swatch" data-color="#ec407a" style="background:#ec407a"></span>
-            <span class="palette-swatch" data-color="#00acc1" style="background:#00acc1"></span>
-            <span class="palette-swatch" data-color="#8d6e63" style="background:#8d6e63"></span>
-            <span class="palette-swatch" data-color="#757575" style="background:#757575"></span>
-                <span class="palette-swatch" data-color="#000000" style="background:#000000"></span>
-                <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
-              </div>
-              <div class="rte-palette" data-cmd="hiliteColor" data-editor="setAnnouncement" title="背景颜色">
-                <span class="palette-a" style="background:#fff8b0;padding:0 1px;">A</span>
-                <span class="palette-swatch" data-color="#fff9c4" style="background:#fff9c4"></span>
-                <span class="palette-swatch" data-color="#ffeb3b" style="background:#ffeb3b"></span>
-                <span class="palette-swatch" data-color="#e3f2fd" style="background:#e3f2fd"></span>
-                <span class="palette-swatch" data-color="#e8f5e9" style="background:#e8f5e9"></span>
-                <span class="palette-swatch" data-color="#fff3e0" style="background:#fff3e0"></span>
-                <span class="palette-swatch" data-color="#fce4ec" style="background:#fce4ec"></span>
-                <span class="palette-swatch" data-color="#f3e5f5" style="background:#f3e5f5"></span>
-                <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
-                <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
-              </div>
-              </span><span class="rte-group">
-              <button type="button" class="rte-btn" id="announcementRteLink">🔗 链接</button>
-              <button type="button" class="rte-btn" id="announcementRteImg">🖼 图片</button>
-              <button type="button" class="rte-btn" id="announcementRteVideo">🎬 视频</button>
-              </span><span class="rte-group">
-              <button type="button" class="rte-btn" id="announcementFormatBrush">🖌 格式刷</button>
-              <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement">✕ 格式</button>
-              <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button></span>
+          <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement" title="字体">
+            <option value="">字体</option>
+            <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
+            <option value="SimSun" style="font-family:SimSun,serif">宋体</option>
+            <option value="SimHei" style="font-family:SimHei,sans-serif">黑体</option>
+            <option value="KaiTi" style="font-family:KaiTi,serif">楷体</option>
+            <option value="FangSong" style="font-family:FangSong,serif">仿宋</option>
+            <option value="LiSu" style="font-family:LiSu">隶书</option>
+            <option value="YouYuan" style="font-family:YouYuan">幼圆</option>
+          </select>
+          <select class="rte-select" data-cmd="fontSize" data-target="setAnnouncement" title="字号">
+            <option value="">字号</option>
+            <option value="1" style="font-size:10px">小</option>
+            <option value="2" style="font-size:13px">偏小</option>
+            <option value="3" style="font-size:16px">正常</option>
+            <option value="4" style="font-size:18px">大</option>
+            <option value="5" style="font-size:24px">特大</option>
+            <option value="6" style="font-size:32px">超大</option>
+            <option value="7" style="font-size:44px">巨大</option>
+          </select>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="setAnnouncement" title="文字颜色"><span class="rte-color-ico" style="color:#e53935">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="setAnnouncement" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl" style="background:#fff59d">A</span></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="setAnnouncement" title="插入表情">😀 表情</button>
+          <button type="button" class="rte-btn" id="announcementRteLink" title="插入超链接">🔗 链接</button>
+          <button type="button" class="rte-btn" id="announcementRteImg" title="插入网络图片或从电脑上传">🖼 图片</button>
+          <button type="button" class="rte-btn" id="announcementRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button>
+          <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="setAnnouncement" title="插入分割线">— 分割线</button>
+          <button type="button" class="rte-btn rte-table-btn" data-editor="setAnnouncement" title="插入表格">▦ 表格</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="setAnnouncement" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="setAnnouncement" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="setAnnouncement" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="setAnnouncement" title="删除线"><s>S</s></button>
+          <button type="button" class="rte-btn rte-quote-btn" data-editor="setAnnouncement" title="引用块">❝ 引用</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement" title="左对齐">⬅</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement" title="居中">⬌</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement" title="右对齐">➡</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="setAnnouncement" title="无序列表">• 列表</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="setAnnouncement" title="有序列表">1. 列表</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="setAnnouncement" title="插入复选框">☑ 复选框</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="undo" data-target="setAnnouncement" title="撤销">↩ 撤销</button>
+          <button type="button" class="rte-btn" data-cmd="redo" data-target="setAnnouncement" title="重做">↪ 重做</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="announcementFormatBrush" title="格式刷">🖌 格式刷</button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement" title="清除格式">✕ 格式</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
-            </div>
-            <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;" placeholder="如：欢迎来到万能资源圈，新资源持续更新中…"></div>
+        </div>
+        <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;"></div>
+        <div class="rte-count" data-for="setAnnouncement">已输入 0 字</div>
           </div>
         </div>
         <div class="setting-group">
@@ -333,11 +321,11 @@
       <h2 class="modal-title">修改密码</h2>
       <div class="form">
         <label>原密码</label>
-        <input class="input" id="oldPwd" type="password" placeholder="请输入原密码" />
+        <input class="input" id="oldPwd" type="password"  />
         <label>新密码</label>
-        <input class="input" id="newPwd" type="password" placeholder="请输入新密码" />
+        <input class="input" id="newPwd" type="password"  />
         <label>确认新密码</label>
-        <input class="input" id="confirmPwd" type="password" placeholder="请再次输入新密码" />
+        <input class="input" id="confirmPwd" type="password"  />
       </div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="changePwdBtn">确定</button>
@@ -362,7 +350,7 @@
         <label>公告项（拖拽 ⋮⋮ 调整顺序；点击某项即可编辑；隐藏的项不在资源页显示）</label>
         <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">新增公告项</button>
         <div id="annList" class="ann-list"></div>
-        <input class="input" id="annTitleInput" placeholder="公告标题（资源页小项按键显示的文字）" style="display:none;" />
+        <input class="input" id="annTitleInput" title="公告标题（资源页小项按键显示的文字）" style="display:none;" />
         <label>公告内容（支持文字、图片、视频、超链接）</label>
         <div id="annEditorSlot"></div>
       </div>
@@ -380,7 +368,7 @@
       <h2 class="modal-title">设置客服</h2>
       <div class="form">
         <label>全局客服链接（资源没填专属链接时用这个）</label>
-        <input class="input" id="contactUrlInput" placeholder="https://work.weixin.qq.com/kfid/..." />
+        <input class="input" id="contactUrlInput"  />
       </div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="saveContactBtn">确定</button>
@@ -394,84 +382,69 @@
     <div class="modal-box modal-wide">
       <button class="modal-close-x" data-close="editMask">×</button>      <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
-        <label>标题</label><input id="fTitle" placeholder="资源标题" />
+        <label>标题</label><input id="fTitle" />
         <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
-        <label>资源封面图</label><div style="display:flex;gap:8px;align-items:stretch;"><input id="fImg" placeholder="图片地址，或点右侧按钮从电脑上传" style="flex:1;min-width:0;" /><button type="button" class="btn-blue" id="fImgUpload" style="white-space:nowrap;width:auto;padding:0 16px;" title="从电脑选图，自动上传到自有图仓并填入链接">上传本地图片</button></div>
+        <label>资源封面图 <span class="label-hint">填图片地址，或点右侧按钮上传</span></label><div style="display:flex;gap:8px;align-items:stretch;"><input id="fImg" style="flex:1;min-width:0;" /><button type="button" class="btn-blue" id="fImgUpload" style="white-space:nowrap;width:auto;height:auto;margin-bottom:0;padding:0 16px;" title="从电脑选图，自动上传到自有图仓并填入链接">上传本地图片</button></div>
         <div style="font-size:11px;color:#999;margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" />
-        <label>简介</label><input id="fDesc" placeholder="列表卡片上显示的一句话简介" />
-        <label>详细描述</label>
+        <label>简介 <span class="label-hint">列表卡片上显示的一句话</span></label><input id="fDesc" />
+        <label>详细描述 <span class="label-hint">支持文字、图片、视频混排</span></label>
         <div class="rte-toolbar rte-collapsed" id="detailRteToolbar" data-editor="fDetail"><span class="rte-group">
-          <select class="rte-select" data-cmd="fontName" title="字体">
+          <select class="rte-select" data-cmd="fontName" data-target="fDetail" title="字体">
             <option value="">字体</option>
-            <option value="Microsoft YaHei">微软雅黑</option>
-            <option value="SimSun">宋体</option>
-            <option value="SimHei">黑体</option>
-            <option value="KaiTi">楷体</option>
-            <option value="Arial">Arial</option>
-            <option value="Times New Roman">Times New Roman</option>
+            <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
+            <option value="SimSun" style="font-family:SimSun,serif">宋体</option>
+            <option value="SimHei" style="font-family:SimHei,sans-serif">黑体</option>
+            <option value="KaiTi" style="font-family:KaiTi,serif">楷体</option>
+            <option value="FangSong" style="font-family:FangSong,serif">仿宋</option>
+            <option value="LiSu" style="font-family:LiSu">隶书</option>
+            <option value="YouYuan" style="font-family:YouYuan">幼圆</option>
           </select>
-          <select class="rte-select" data-cmd="fontSize" title="字号">
+          <select class="rte-select" data-cmd="fontSize" data-target="fDetail" title="字号">
             <option value="">字号</option>
-            <option value="1">小</option>
-            <option value="3">正常</option>
-            <option value="4">大</option>
-            <option value="5">特大</option>
-            <option value="6">超大</option>
-            <option value="7">巨大</option>
+            <option value="1" style="font-size:10px">小</option>
+            <option value="2" style="font-size:13px">偏小</option>
+            <option value="3" style="font-size:16px">正常</option>
+            <option value="4" style="font-size:18px">大</option>
+            <option value="5" style="font-size:24px">特大</option>
+            <option value="6" style="font-size:32px">超大</option>
+            <option value="7" style="font-size:44px">巨大</option>
           </select>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="bold" title="加粗"><b>B</b></button>
-          <button type="button" class="rte-btn" data-cmd="italic" title="斜体"><i>I</i></button>
-          <button type="button" class="rte-btn" data-cmd="underline" title="下划线"><u>U</u></button>
-          <button type="button" class="rte-btn" data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="fDetail" title="文字颜色"><span class="rte-color-ico" style="color:#e53935">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="fDetail" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl" style="background:#fff59d">A</span></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="justifyLeft" title="左对齐">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" title="居中">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" title="右对齐">➡</button>
-          </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
-          <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="有序列表">1. 列表</button>
-          </span><span class="rte-group">
-          <div class="rte-palette" data-cmd="foreColor" data-editor="fDetail" title="文字颜色">
-            <span class="palette-a">A</span>
-            <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
-            <span class="palette-swatch" data-color="#e53935" style="background:#e53935"></span>
-            <span class="palette-swatch" data-color="#fb8c00" style="background:#fb8c00"></span>
-            <span class="palette-swatch" data-color="#43a047" style="background:#43a047"></span>
-            <span class="palette-swatch" data-color="#1e88e5" style="background:#1e88e5"></span>
-            <span class="palette-swatch" data-color="#8e24aa" style="background:#8e24aa"></span>
-            <span class="palette-swatch" data-color="#f9a825" style="background:#f9a825"></span>
-            <span class="palette-swatch" data-color="#ec407a" style="background:#ec407a"></span>
-            <span class="palette-swatch" data-color="#00acc1" style="background:#00acc1"></span>
-            <span class="palette-swatch" data-color="#8d6e63" style="background:#8d6e63"></span>
-            <span class="palette-swatch" data-color="#757575" style="background:#757575"></span>
-            <span class="palette-swatch" data-color="#000000" style="background:#000000"></span>
-            <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
-          </div>
-          <div class="rte-palette" data-cmd="hiliteColor" data-editor="fDetail" title="背景颜色">
-            <span class="palette-a" style="background:#fff8b0;padding:0 1px;">A</span>
-            <span class="palette-swatch" data-color="#fff9c4" style="background:#fff9c4"></span>
-            <span class="palette-swatch" data-color="#ffeb3b" style="background:#ffeb3b"></span>
-            <span class="palette-swatch" data-color="#e3f2fd" style="background:#e3f2fd"></span>
-            <span class="palette-swatch" data-color="#e8f5e9" style="background:#e8f5e9"></span>
-            <span class="palette-swatch" data-color="#fff3e0" style="background:#fff3e0"></span>
-            <span class="palette-swatch" data-color="#fce4ec" style="background:#fce4ec"></span>
-            <span class="palette-swatch" data-color="#f3e5f5" style="background:#f3e5f5"></span>
-            <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
-            <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
-          </div>
-          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="fDetail" title="插入表情">😀 表情</button>
           <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接">🔗 链接</button>
           <button type="button" class="rte-btn" id="detailRteImg" title="插入网络图片或从电脑上传">🖼 图片</button>
           <button type="button" class="rte-btn" id="detailRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button>
+          <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="fDetail" title="插入分割线">— 分割线</button>
+          <button type="button" class="rte-btn rte-table-btn" data-editor="fDetail" title="插入表格">▦ 表格</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="fDetail" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="fDetail" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="fDetail" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="fDetail" title="删除线"><s>S</s></button>
+          <button type="button" class="rte-btn rte-quote-btn" data-editor="fDetail" title="引用块">❝ 引用</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="fDetail" title="左对齐">⬅</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="fDetail" title="居中">⬌</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="fDetail" title="右对齐">➡</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="fDetail" title="无序列表">• 列表</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="fDetail" title="有序列表">1. 列表</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="fDetail" title="插入复选框">☑ 复选框</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="undo" data-target="fDetail" title="撤销">↩ 撤销</button>
+          <button type="button" class="rte-btn" data-cmd="redo" data-target="fDetail" title="重做">↪ 重做</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷">🖌 格式刷</button>
-          <button type="button" class="rte-btn" data-cmd="removeFormat" title="清除格式">✕ 格式</button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="fDetail" title="清除格式">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶ 放大</button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
         </div>
-        <div class="rte-editor" id="fDetail" contenteditable="true" placeholder="支持文字、图片、视频混排，像文章一样展示"></div>
+        <div class="rte-editor" id="fDetail" contenteditable="true"></div>
+        <div class="rte-count" data-for="fDetail">已输入 0 字</div>
 
         <!-- 资源类型管理（紧跟详细描述，与资源页展示顺序一致） -->
         <div class="variant-section">
@@ -482,20 +455,20 @@
           <div id="variantList"></div>
         </div>
 
-        <label>价格</label>
-        <input id="fPrice" type="number" step="0.01" min="0" placeholder="单位元，不填或 0 = 免费，免费不显示价格" />
-        <label>咨询客服链接</label>
-        <input id="fContactUrl" placeholder="可不填，没填则用全局默认，如 https://work.weixin.qq.com/..." />
-        <label>排序</label><input id="fSort" type="number" value="0" placeholder="数值越小越靠前" />
+        <label>价格 <span class="label-hint">单位元，不填或 0 = 免费</span></label>
+        <input id="fPrice" type="number" step="0.01" min="0" />
+        <label>咨询客服链接 <span class="label-hint">可不填，默认用全局客服</span></label>
+        <input id="fContactUrl" />
+        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="fSort" type="number" value="0" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 显示（勾选后资源页可见，取消则隐藏）</label>
         <div class="sch-row">
           <div class="sch-col">
-            <label>定时显示</label>
-            <input id="fScheduleOn" type="text" readonly class="dt-field" placeholder="点击选择，可不填=不定时自动显示" data-dt="datetime" />
+            <label>定时显示 <span class="label-hint">可不填＝不定时自动显示</span></label>
+            <input id="fScheduleOn" type="text" readonly class="dt-field" data-dt="datetime" />
           </div>
           <div class="sch-col">
-            <label>定时隐藏</label>
-            <input id="fScheduleOff" type="text" readonly class="dt-field" placeholder="点击选择，可不填=不定时自动隐藏" data-dt="datetime" />
+            <label>定时隐藏 <span class="label-hint">可不填＝不定时自动隐藏</span></label>
+            <input id="fScheduleOff" type="text" readonly class="dt-field" data-dt="datetime" />
           </div>
         </div>
       </div>
@@ -513,7 +486,7 @@
       <button class="modal-close-x" data-close="catMask">×</button>
       <h2 class="modal-title" id="catModalTitle">新增分类</h2>
       <div class="form">
-        <label>分类名称</label><input id="catName" class="input" placeholder="请输入分类名称" />
+        <label>分类名称</label><input id="catName" class="input"  />
         <label>分类级别</label>
         <div style="display:flex;gap:14px;margin-bottom:4px;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:10px;padding:8px 14px;">
@@ -527,7 +500,7 @@
           <label>所属一级分类</label>
           <div class="cat-picker" id="catParentPicker" style="margin-bottom:8px;"><input type="hidden" id="catParentValue" value="0" /><div class="cat-picker-display" id="catParentDisplay"><span class="cpd-text">请选择所属一级分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="catParentPanel"></div></div>
         </div>
-        <label>排序</label><input id="catSort" class="input" type="number" value="0" placeholder="数值越小越靠前" />
+        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="catSort" class="input" type="number" value="0" />
         <label class="checkbox-row"><input type="checkbox" id="catHidden" /> 隐藏（资源页不显示，仅管理页可见）</label>
       </div>
       <div class="modal-footer">
@@ -557,7 +530,7 @@
       <button class="modal-close-x" data-close="inputMask">×</button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
       <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
-      <div class="input-row" id="inputRow"><input class="input" id="inputValue" placeholder="请输入…" /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
+      <div class="input-row" id="inputRow"><input class="input" id="inputValue"  /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="inputOk">确定</button>
         <button class="modal-close" id="inputCancel">关闭</button>
@@ -596,163 +569,133 @@
       <button class="modal-close-x" data-close="variantMask">×</button>
       <h2 class="modal-title" id="variantModalTitle">新增类型</h2>
       <div class="form">
-        <label>类型名称</label><input id="vName" placeholder="如：基础版 / 高级版 / 单月卡" />
+        <label>类型名称 <span class="label-hint">如：基础版 / 高级版 / 单月卡</span></label><input id="vName" />
         <!-- R148（用户 01:50）：类型名称输入框下新增类型标题——前台资源类型信息栏第一行黑字显示此内容，留空回退类型名称 -->
-        <label>类型标题</label><input id="vTitle" placeholder="展示在前台类型信息第一行，留空显示类型名称" />
-        <label>类型描述</label>
+        <label>类型标题 <span class="label-hint">留空显示类型名称</span></label><input id="vTitle" />
+        <label>类型描述 <span class="label-hint">支持文字、图片、视频、超链接</span></label>
         <div class="rte-toolbar rte-collapsed" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
-          <select class="rte-select" data-cmd="fontName" data-target="vDescEditor">
+          <select class="rte-select" data-cmd="fontName" data-target="vDescEditor" title="字体">
             <option value="">字体</option>
-            <option value="Microsoft YaHei">微软雅黑</option>
-            <option value="SimSun">宋体</option>
-            <option value="SimHei">黑体</option>
-            <option value="KaiTi">楷体</option>
-            <option value="Arial">Arial</option>
-            <option value="Times New Roman">Times New Roman</option>
+            <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
+            <option value="SimSun" style="font-family:SimSun,serif">宋体</option>
+            <option value="SimHei" style="font-family:SimHei,sans-serif">黑体</option>
+            <option value="KaiTi" style="font-family:KaiTi,serif">楷体</option>
+            <option value="FangSong" style="font-family:FangSong,serif">仿宋</option>
+            <option value="LiSu" style="font-family:LiSu">隶书</option>
+            <option value="YouYuan" style="font-family:YouYuan">幼圆</option>
           </select>
-          <select class="rte-select" data-cmd="fontSize" data-target="vDescEditor">
+          <select class="rte-select" data-cmd="fontSize" data-target="vDescEditor" title="字号">
             <option value="">字号</option>
-            <option value="1">小</option>
-            <option value="3">正常</option>
-            <option value="4">大</option>
-            <option value="5">特大</option>
-            <option value="6">超大</option>
-            <option value="7">巨大</option>
+            <option value="1" style="font-size:10px">小</option>
+            <option value="2" style="font-size:13px">偏小</option>
+            <option value="3" style="font-size:16px">正常</option>
+            <option value="4" style="font-size:18px">大</option>
+            <option value="5" style="font-size:24px">特大</option>
+            <option value="6" style="font-size:32px">超大</option>
+            <option value="7" style="font-size:44px">巨大</option>
           </select>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="bold" data-target="vDescEditor"><b>B</b></button>
-          <button type="button" class="rte-btn" data-cmd="italic" data-target="vDescEditor"><i>I</i></button>
-          <button type="button" class="rte-btn" data-cmd="underline" data-target="vDescEditor"><u>U</u></button>
-          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vDescEditor"><s>S</s></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="vDescEditor" title="文字颜色"><span class="rte-color-ico" style="color:#e53935">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="vDescEditor" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl" style="background:#fff59d">A</span></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor">➡</button>
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="vDescEditor" title="插入表情">😀 表情</button>
+          <button type="button" class="rte-btn" id="vDescRteLink" title="插入超链接">🔗 链接</button>
+          <button type="button" class="rte-btn" id="vDescRteImg" title="插入网络图片或从电脑上传">🖼 图片</button>
+          <button type="button" class="rte-btn" id="vDescRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button>
+          <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="vDescEditor" title="插入分割线">— 分割线</button>
+          <button type="button" class="rte-btn rte-table-btn" data-editor="vDescEditor" title="插入表格">▦ 表格</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vDescEditor">• 列表</button>
-          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vDescEditor">1. 列表</button>
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="vDescEditor" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="vDescEditor" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="vDescEditor" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vDescEditor" title="删除线"><s>S</s></button>
+          <button type="button" class="rte-btn rte-quote-btn" data-editor="vDescEditor" title="引用块">❝ 引用</button>
           </span><span class="rte-group">
-          <div class="rte-palette" data-cmd="foreColor" data-editor="vDescEditor" title="文字颜色">
-            <span class="palette-a">A</span>
-            <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
-            <span class="palette-swatch" data-color="#e53935" style="background:#e53935"></span>
-            <span class="palette-swatch" data-color="#fb8c00" style="background:#fb8c00"></span>
-            <span class="palette-swatch" data-color="#43a047" style="background:#43a047"></span>
-            <span class="palette-swatch" data-color="#1e88e5" style="background:#1e88e5"></span>
-            <span class="palette-swatch" data-color="#8e24aa" style="background:#8e24aa"></span>
-            <span class="palette-swatch" data-color="#f9a825" style="background:#f9a825"></span>
-            <span class="palette-swatch" data-color="#ec407a" style="background:#ec407a"></span>
-            <span class="palette-swatch" data-color="#00acc1" style="background:#00acc1"></span>
-            <span class="palette-swatch" data-color="#8d6e63" style="background:#8d6e63"></span>
-            <span class="palette-swatch" data-color="#757575" style="background:#757575"></span>
-            <span class="palette-swatch" data-color="#000000" style="background:#000000"></span>
-            <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
-          </div>
-          <div class="rte-palette" data-cmd="hiliteColor" data-editor="vDescEditor" title="背景颜色">
-            <span class="palette-a" style="background:#fff8b0;padding:0 1px;">A</span>
-            <span class="palette-swatch" data-color="#fff9c4" style="background:#fff9c4"></span>
-            <span class="palette-swatch" data-color="#ffeb3b" style="background:#ffeb3b"></span>
-            <span class="palette-swatch" data-color="#e3f2fd" style="background:#e3f2fd"></span>
-            <span class="palette-swatch" data-color="#e8f5e9" style="background:#e8f5e9"></span>
-            <span class="palette-swatch" data-color="#fff3e0" style="background:#fff3e0"></span>
-            <span class="palette-swatch" data-color="#fce4ec" style="background:#fce4ec"></span>
-            <span class="palette-swatch" data-color="#f3e5f5" style="background:#f3e5f5"></span>
-            <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
-            <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
-          </div>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor" title="左对齐">⬅</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor" title="居中">⬌</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor" title="右对齐">➡</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vDescRteLink">🔗 链接</button>
-          <button type="button" class="rte-btn" id="vDescRteImg">🖼 图片</button>
-          <button type="button" class="rte-btn" id="vDescRteVideo">🎬 视频</button>
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vDescEditor" title="无序列表">• 列表</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vDescEditor" title="有序列表">1. 列表</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="vDescEditor" title="插入复选框">☑ 复选框</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vDescFormatBrush">🖌 格式刷</button>
-          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor">✕ 格式</button>
+          <button type="button" class="rte-btn" data-cmd="undo" data-target="vDescEditor" title="撤销">↩ 撤销</button>
+          <button type="button" class="rte-btn" data-cmd="redo" data-target="vDescEditor" title="重做">↪ 重做</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="vDescFormatBrush" title="格式刷">🖌 格式刷</button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor" title="清除格式">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
         </div>
-        <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;" placeholder="该类型的说明，支持文字、图片、视频、超链接"></div>
+        <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;"></div>
+        <div class="rte-count" data-for="vDescEditor">已输入 0 字</div>
         <label class="checkbox-row"><input type="checkbox" id="vHidden" /> 隐藏该类型（资源页不显示，仅管理页可见）</label>
 
-        <label>专属客服链接</label><input id="vContactUrl" placeholder="可不填，没填则用资源/全局客服链接" />
-        <label>类型价格</label>
-        <input id="vPrice" type="number" step="0.01" min="0" placeholder="单位元，不填或 0 则用资源价格" />
-        <label>排序</label><input id="vSort" type="number" value="0" placeholder="数值越小越靠前" />
-        <label>资源码</label>
-        <input id="vResourceCode" placeholder="可不填，访客咨询客服后获取的专属码" />
-        <label>绑定设备上限</label>
-        <input id="vBindLimit" type="number" min="1" step="1" value="1" placeholder="该类型资源码最多可绑定的设备台数（默认 1）" />
+        <label>专属客服链接 <span class="label-hint">可不填，默认用资源/全局客服</span></label><input id="vContactUrl" />
+        <label>类型价格 <span class="label-hint">不填或 0 则用资源价格</span></label>
+        <input id="vPrice" type="number" step="0.01" min="0" />
+        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="vSort" type="number" value="0" />
+        <label>资源码 <span class="label-hint">可不填，访客咨询客服后获取</span></label>
+        <input id="vResourceCode" />
+        <label>绑定设备上限 <span class="label-hint">最多可绑定台数，默认 1</span></label>
+        <input id="vBindLimit" type="number" min="1" step="1" value="1" />
         <label>资源码专属内容（支持文字/链接/图片/视频）</label>
         <div class="rte-toolbar rte-collapsed" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
-          <select class="rte-select" data-cmd="fontName" data-target="vContentEditor">
+          <select class="rte-select" data-cmd="fontName" data-target="vContentEditor" title="字体">
             <option value="">字体</option>
-            <option value="Microsoft YaHei">微软雅黑</option>
-            <option value="SimSun">宋体</option>
-            <option value="SimHei">黑体</option>
-            <option value="KaiTi">楷体</option>
-            <option value="Arial">Arial</option>
-            <option value="Times New Roman">Times New Roman</option>
+            <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
+            <option value="SimSun" style="font-family:SimSun,serif">宋体</option>
+            <option value="SimHei" style="font-family:SimHei,sans-serif">黑体</option>
+            <option value="KaiTi" style="font-family:KaiTi,serif">楷体</option>
+            <option value="FangSong" style="font-family:FangSong,serif">仿宋</option>
+            <option value="LiSu" style="font-family:LiSu">隶书</option>
+            <option value="YouYuan" style="font-family:YouYuan">幼圆</option>
           </select>
-          <select class="rte-select" data-cmd="fontSize" data-target="vContentEditor">
+          <select class="rte-select" data-cmd="fontSize" data-target="vContentEditor" title="字号">
             <option value="">字号</option>
-            <option value="1">小</option>
-            <option value="3">正常</option>
-            <option value="4">大</option>
-            <option value="5">特大</option>
-            <option value="6">超大</option>
-            <option value="7">巨大</option>
+            <option value="1" style="font-size:10px">小</option>
+            <option value="2" style="font-size:13px">偏小</option>
+            <option value="3" style="font-size:16px">正常</option>
+            <option value="4" style="font-size:18px">大</option>
+            <option value="5" style="font-size:24px">特大</option>
+            <option value="6" style="font-size:32px">超大</option>
+            <option value="7" style="font-size:44px">巨大</option>
           </select>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="bold" data-target="vContentEditor"><b>B</b></button>
-          <button type="button" class="rte-btn" data-cmd="italic" data-target="vContentEditor"><i>I</i></button>
-          <button type="button" class="rte-btn" data-cmd="underline" data-target="vContentEditor"><u>U</u></button>
-          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vContentEditor"><s>S</s></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="vContentEditor" title="文字颜色"><span class="rte-color-ico" style="color:#e53935">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="vContentEditor" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl" style="background:#fff59d">A</span></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor">➡</button>
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="vContentEditor" title="插入表情">😀 表情</button>
+          <button type="button" class="rte-btn" id="vContentRteLink" title="插入超链接">🔗 链接</button>
+          <button type="button" class="rte-btn" id="vContentRteImg" title="插入网络图片或从电脑上传">🖼 图片</button>
+          <button type="button" class="rte-btn" id="vContentRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button>
+          <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="vContentEditor" title="插入分割线">— 分割线</button>
+          <button type="button" class="rte-btn rte-table-btn" data-editor="vContentEditor" title="插入表格">▦ 表格</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vContentEditor">• 列表</button>
-          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vContentEditor">1. 列表</button>
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="vContentEditor" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="vContentEditor" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="vContentEditor" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vContentEditor" title="删除线"><s>S</s></button>
+          <button type="button" class="rte-btn rte-quote-btn" data-editor="vContentEditor" title="引用块">❝ 引用</button>
           </span><span class="rte-group">
-          <div class="rte-palette" data-cmd="foreColor" data-editor="vContentEditor" title="文字颜色">
-            <span class="palette-a">A</span>
-            <span class="palette-swatch" data-color="#333333" style="background:#333333"></span>
-            <span class="palette-swatch" data-color="#e53935" style="background:#e53935"></span>
-            <span class="palette-swatch" data-color="#fb8c00" style="background:#fb8c00"></span>
-            <span class="palette-swatch" data-color="#43a047" style="background:#43a047"></span>
-            <span class="palette-swatch" data-color="#1e88e5" style="background:#1e88e5"></span>
-            <span class="palette-swatch" data-color="#8e24aa" style="background:#8e24aa"></span>
-            <span class="palette-swatch" data-color="#f9a825" style="background:#f9a825"></span>
-            <span class="palette-swatch" data-color="#ec407a" style="background:#ec407a"></span>
-            <span class="palette-swatch" data-color="#00acc1" style="background:#00acc1"></span>
-            <span class="palette-swatch" data-color="#8d6e63" style="background:#8d6e63"></span>
-            <span class="palette-swatch" data-color="#757575" style="background:#757575"></span>
-            <span class="palette-swatch" data-color="#000000" style="background:#000000"></span>
-            <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
-          </div>
-          <div class="rte-palette" data-cmd="hiliteColor" data-editor="vContentEditor" title="背景颜色">
-            <span class="palette-a" style="background:#fff8b0;padding:0 1px;">A</span>
-            <span class="palette-swatch" data-color="#fff9c4" style="background:#fff9c4"></span>
-            <span class="palette-swatch" data-color="#ffeb3b" style="background:#ffeb3b"></span>
-            <span class="palette-swatch" data-color="#e3f2fd" style="background:#e3f2fd"></span>
-            <span class="palette-swatch" data-color="#e8f5e9" style="background:#e8f5e9"></span>
-            <span class="palette-swatch" data-color="#fff3e0" style="background:#fff3e0"></span>
-            <span class="palette-swatch" data-color="#fce4ec" style="background:#fce4ec"></span>
-            <span class="palette-swatch" data-color="#f3e5f5" style="background:#f3e5f5"></span>
-            <span class="palette-swatch" data-color="#eeeeee" style="background:#eeeeee"></span>
-            <span class="palette-swatch" data-color="#ffffff" style="background:#ffffff;border-color:#ccc"></span>
-          </div>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor" title="左对齐">⬅</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor" title="居中">⬌</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor" title="右对齐">➡</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vContentRteLink">🔗 链接</button>
-          <button type="button" class="rte-btn" id="vContentRteImg">🖼 图片</button>
-          <button type="button" class="rte-btn" id="vContentRteVideo">🎬 视频</button>
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vContentEditor" title="无序列表">• 列表</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vContentEditor" title="有序列表">1. 列表</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="vContentEditor" title="插入复选框">☑ 复选框</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vContentFormatBrush">🖌 格式刷</button>
-          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor">✕ 格式</button>
+          <button type="button" class="rte-btn" data-cmd="undo" data-target="vContentEditor" title="撤销">↩ 撤销</button>
+          <button type="button" class="rte-btn" data-cmd="redo" data-target="vContentEditor" title="重做">↪ 重做</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="vContentFormatBrush" title="格式刷">🖌 格式刷</button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor" title="清除格式">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶ 放大</button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
         </div>
-        <div class="rte-editor" id="vContentEditor" contenteditable="true" style="min-height:80px;max-height:200px;border-radius:0 0 8px 8px;" placeholder="输入正确资源码后显示的内容，支持文字、图片、视频、超链接"></div>
+        <div class="rte-editor" id="vContentEditor" contenteditable="true" style="min-height:80px;max-height:200px;border-radius:0 0 8px 8px;"></div>
+        <div class="rte-count" data-for="vContentEditor">已输入 0 字</div>
       </div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="variantOk">确定</button>
@@ -807,7 +750,7 @@
               <span id="pvResourceTitle">输入资源码获取专属内容</span>
             </div>
             <div class="resource-code-input-row" id="pvResourceInputRow">
-              <input type="text" class="resource-code-input" id="pvResourceCodeInput" placeholder="请输入资源码" />
+              <input type="text" class="resource-code-input" id="pvResourceCodeInput"  />
               <button class="resource-code-btn" id="pvResourceCodeBtn" type="button">解锁</button>
             </div>
             <div class="resource-code-error" id="pvResourceError" style="display:none">资源码错误，请检查后重试</div>

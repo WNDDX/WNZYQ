@@ -18,6 +18,7 @@
       --blue1: #1E88E5;
       --blue2: #64B5F6;
       --blue:  var(--blue1);
+      --blue-live: #1688FF; /* R192 一⑤：交流群聊蓝（门户 btn-blue 同值）——联系类蓝键专用；本页 --blue2 是边框浅蓝，勿混用 */
       --red:   #ff4444;
       --topbar-h: 64px;
       /* R50：暗色相关变量（--bg-page/--bg-light/--card-bg/--border/--text/--text-light/--hover-bg）
@@ -59,8 +60,8 @@
       position: sticky; top: 0;
       z-index: 100;
       background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
-      box-shadow: 0 2px 10px rgba(30, 136, 229, 0.35);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: var(--shadow-blue);
+      transition: transform var(--dur-mid) ease, box-shadow var(--dur-mid) ease;
     }
     .topbar.hidden {
       transform: translateY(-100%);
@@ -78,7 +79,7 @@
       width: 32px; height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      background: transparent; box-sizing: border-box; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22); transition: transform 0.12s ease, box-shadow 0.12s ease;
+      background: transparent; box-sizing: border-box; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22); transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
       flex-shrink: 0;
     }
     .shop-name {
@@ -99,7 +100,7 @@
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      transition: all 0.12s ease;
+      transition: all var(--dur-fast) ease;
       -webkit-tap-highlight-color: transparent;
     }
     .shop-logo-link:hover .shop-logo {
@@ -129,8 +130,8 @@
     .share-box {
       background: var(--card-bg); border-radius: 14px;
       position: relative; padding: 26px 20px; width: 100%; max-width: 400px;
-      text-align: center; animation: modalIn 0.18s ease;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      text-align: center; animation: modalIn var(--dur-mid) ease;
+      box-shadow: var(--shadow-modal);
     }
     .share-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 10px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
     .share-tip { font-size: 14px; color: var(--text-light); margin-bottom: 14px; }
@@ -145,18 +146,18 @@
       display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;
       background: var(--blue1);
       color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
-      transition: all 0.10s ease; letter-spacing: 1px;
+      transition: all var(--dur-fast) ease; letter-spacing: 1px;
     }
     .share-close:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
     .search-box {
       flex: 1;
       position: relative;
     }
-    .search-input {
+    .search-input { /* R182-3：38→33px 与管理页搜索框同步统一 */
       width: 100%;
-      height: 44px;
+      height: 33px;
       border: none;
-      border-radius: 19px;
+      border-radius: 17px;
       padding: 0 36px 0 38px;
       font-size: 14px;
       background: var(--card-bg);
@@ -170,29 +171,29 @@
       width: 18px; height: 18px;
       color: var(--text-light);
     }
-    .search-clear {
+    .search-clear { /* R188：× 全系统统一灰圆款（用户定稿，弹窗右上角标准）——淡蓝胶囊口径作废 */
       position: absolute;
-      right: 10px;
+      right: 6px;
       top: 50%;
       transform: translateY(-50%);
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       border: none;
       background: var(--bg-light);
-      color: #fff;
+      color: var(--text-light);
       font-size: 14px;
+      line-height: 1;
       cursor: pointer;
       display: none;
       align-items: center;
       justify-content: center;
-      transition: all 0.10s ease;
-      line-height: 1;
+      transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease;
+      -webkit-tap-highlight-color: transparent;
     }
-    .search-clear:hover { background: #ff4444; color: #fff; }
+    .search-clear:hover { background: #ff4444; color: #fff; transform: translateY(-50%) scale(0.97); }
+    .search-clear:active { transform: translateY(-50%) scale(0.94); }
     .search-clear.show { display: flex; }
-    /* 搜索清除 × 与全站 × 统一：淡灰底 #666 */
-    .search-clear { color: var(--text-light); }
 
     /* ---------- 分类标签栏 ---------- */
     .category-bar {
@@ -200,7 +201,7 @@
       top: var(--topbar-h);
       z-index: 90;
       background: var(--card-bg);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      box-shadow: var(--shadow-pop);
       overflow-x: auto;
       white-space: nowrap;
       padding: 10px 16px;
@@ -214,15 +215,13 @@
       padding: 8px 20px;
       margin-right: 8px;
       border-radius: 18px;
-      min-height: 44px;
-      line-height: 1.2;
       border: 1px solid var(--border);
       background: var(--card-bg);
       color: var(--text-light);
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all var(--dur-mid) ease;
       user-select: none;
     }
     .category-tag:hover {
@@ -236,7 +235,7 @@
       color: #fff;
       border-color: transparent;
       font-weight: 600;
-      box-shadow: 0 3px 10px rgba(30,136,229,0.3);
+      box-shadow: var(--shadow-blue);
     }
 
     /* ---------- 资源网格 ---------- */
@@ -288,9 +287,9 @@
     /* 视图切换按钮：直接引用 ui-common.css 全站公共 .view-toggle/.view-btn（与管理页同一份样式，零复制） */
     /* 视图切换动画（管理页/资源页一致） */
     @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
-    .view-switch-anim { animation: viewSwitch 0.18s ease; }
+    .view-switch-anim { animation: viewSwitch var(--dur-mid) ease; }
     /* 视图切换时不让图片/内边距做形变动画，只保留卡片悬浮效果（与管理页一致、不夸张） */
-    .product-card { transition: transform 0.10s ease, box-shadow 0.10s ease !important; }
+    .product-card { transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease !important; }
     .card-img, .card-body { transition: none !important; }
     /* 感叹号占位自适应：容器内完整显示、居中、淡白填充、不溢出 */
     img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;}
@@ -304,12 +303,12 @@
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      transition: all 0.2s ease;
+      box-shadow: var(--shadow-card);
+      transition: all var(--dur-mid) ease;
     }
     .product-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(30,136,229,0.18);
+      box-shadow: var(--shadow-blue);
     }
     .card-img {
       width: 100%;
@@ -320,11 +319,11 @@
       display: block;
       border: 1px solid var(--border);
       border-bottom: none;
-      transition: all 0.2s ease;
+      transition: all var(--dur-mid) ease;
     }
     .card-body {
       padding: 12px 14px 8px;
-      transition: all 0.2s ease;
+      transition: all var(--dur-mid) ease;
     }
     .card-body { padding: 12px 14px 14px; }
     .card-title {
@@ -351,24 +350,7 @@
       font-weight: 400;
     }
 
-    .empty-tip {
-      text-align: center;
-      color: var(--text-light);
-      padding: 60px 20px;
-      font-size: 14px;
-      display: none;
-    }
-    .empty-tip.show { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block; z-index: 50; }
-    .empty-tip .empty-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-      opacity: 0.5;
-    }
-    .empty-tip .empty-title {
-      font-size: 16px;
-      color: var(--text-light);
-      font-weight: 500;
-    }
+    /* R193：空态三件套样式已收编 ui-common.css（全站统一，前后台一模一样），此处不再重复定义 */
 
 
     /* ---------- 下拉刷新 ---------- */
@@ -402,12 +384,12 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow-pop);
       /* R170：胶囊完整平移——默认藏在 top:80px 上方（占 32~64px 区，32px 高+16px 间隙），
          下拉时 JS 跟手滑到 translateY(0)（=80px 位，与 toast 同位）；松手回弹用此 transition */
       transform: translateY(-48px);
       opacity: 0;
-      transition: transform 0.25s ease, opacity 0.2s ease;
+      transition: transform var(--dur-slow) ease, opacity var(--dur-mid) ease;
     }
     .pull-refresh-icon {
       display: inline-block;
@@ -438,11 +420,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 14px rgba(30,136,229,0.4);
+      box-shadow: var(--shadow-blue-strong);
       opacity: 0;
       visibility: hidden;
       transform: translateY(10px);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform var(--dur-mid) ease, box-shadow var(--dur-mid) ease;
     }
     .back-top.show {
       opacity: 0.72;
@@ -452,7 +434,7 @@
     .back-top:hover {
       opacity: 1;
       transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(30,136,229,0.5);
+      box-shadow: var(--shadow-blue-strong);
     }
     .back-top svg {
       display: block;
@@ -489,14 +471,14 @@
       overflow-y: auto;
       scrollbar-gutter: auto;
       min-height: 160px; /* R12 与管理页统一（详情内容多时自然撑高，此保底值几乎不生效，无观感差） */
-      animation: modalIn 0.22s ease;
+      animation: modalIn var(--dur-mid) ease;
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
-    @keyframes modalIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
+    @keyframes modalIn { /* R183 条8：入场加展开（与关闭收缩对称） */
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
     }
-    .modal-close-x {
+    .modal-close-x { /* R186：× 回退标准口径——灰圆，hover 变红（弹窗右上角标准） */
       position: absolute;
       top: 12px;
       right: 12px;
@@ -511,13 +493,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.10s ease;
+      transition: all var(--dur-fast) ease;
     }
     .modal-close-x:hover {
       transform: scale(0.97);
       opacity: 0.9;
-      background: var(--hover-bg);
-      color: var(--text);
+      background: #ff4444;
+      color: #fff;
     }
     /* R10 资源弹窗左上角分享键：与右上角×成对角，规格（32px 圆形/12px 距角/过渡动效）完全复用×，
        但底色淡蓝、图标蓝色、悬停蓝底白图标，与×（灰底/悬停深灰）明确区分 */
@@ -535,7 +517,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.10s ease;
+      transition: all var(--dur-fast) ease;
       -webkit-tap-highlight-color: transparent;
     }
     .modal-share-x svg { width: 15px; height: 15px; display: block; }
@@ -560,7 +542,7 @@
       margin: 16px auto 0;
       background: #eef4fb;
       border-radius: 10px;
-      border: 1px solid #e0e0e0;
+      border: 1px solid var(--border); /* R186 建议5：封面边框接语义变量（暗色同步） */
     }
     .modal-content { padding: 16px 20px 20px; }
     .modal-title-row {
@@ -580,7 +562,7 @@
       padding-right: 36px;
     }
     .modal-price {
-      color: var(--color-price);
+      color: #ff6b35;
       font-size: 24px;
       font-weight: 700;
       white-space: nowrap;
@@ -654,7 +636,7 @@
       color: var(--text-light);
       font-size: 13px;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all var(--dur-mid) ease;
       user-select: none;
       /* R160（用户 23:38）：类型名过长单行截断省略号，显示不全悬停 title 查看 */
       white-space: nowrap;
@@ -673,13 +655,13 @@
       color: #fff;
       border-color: transparent;
       font-weight: 600;
-      box-shadow: 0 2px 8px rgba(30,136,229,0.3);
+      box-shadow: var(--shadow-blue);
     }
     /* 公告小项 tabs（与类型切换 tabs 完全同款，保证关联性） */
     .ann-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 0 2px; }
-    .ann-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: all 0.15s ease; user-select: none; }
+    .ann-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: all var(--dur-mid) ease; user-select: none; }
     .ann-tab:hover { border-color: var(--blue1); color: var(--blue1); background: var(--hover-bg); transform: translateY(-1px); }
-    .ann-tab.active { background: var(--blue1); color: #fff; border-color: transparent; font-weight: 600; box-shadow: 0 2px 8px rgba(30,136,229,0.3); }
+    .ann-tab.active { background: var(--blue1); color: #fff; border-color: transparent; font-weight: 600; box-shadow: var(--shadow-blue); }
     .variant-detail {
       background: var(--bg-light);
       border-radius: 8px;
@@ -702,7 +684,7 @@
       min-width: 0;
     }
     .variant-price {
-      color: var(--color-price);
+      color: #ff6b35;
       font-size: 17px;
       font-weight: 700;
       white-space: nowrap; /* R158：金额永不换行（评论3——长数字类型名把 ¥13 挤成竖排换行） */
@@ -726,7 +708,7 @@
     .resource-code-section {
       margin-top: 16px;
       padding: 16px;
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--brand-tertiary) 100%);
+      background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
       border-radius: 12px;
       border: 1px solid var(--border);
     }
@@ -759,7 +741,7 @@
       color: var(--text);
       background: var(--card-bg);
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color var(--dur-mid);
       box-sizing: border-box;
     }
     .resource-code-input:focus {
@@ -775,7 +757,7 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all var(--dur-mid) ease;
       flex-shrink: 0;
     }
     .resource-code-btn:hover {
@@ -799,7 +781,7 @@
       font-size: 13px;
       color: var(--text);
       line-height: 1.8;
-      animation: fadeInUp 0.18s ease;
+      animation: fadeInUp var(--dur-mid) ease;
     }
     .resource-content img, .resource-content video {
       max-width: 100%;
@@ -839,13 +821,13 @@
       height: 46px;
       border: none;
       border-radius: 10px;
-      background: var(--blue1);
+      background: var(--blue-live, #1688FF); /* R192 一⑤：用户拍板——联系类蓝键对应「交流群聊」的蓝 #1688FF（本页 --blue2 是浅边框蓝，专用 --blue-live 承载）；客服跳转键保持咨询客服绿 #01C000 */
       color: #fff;
       font-size: 16px;
       font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: 1.2px; /* R192 一③：主按钮字距全站标准 1.2px */
       cursor: pointer;
-      transition: all 0.10s ease;
+      transition: all var(--dur-fast) ease;
     }
     .btn-close-modal {
       background-color: var(--red); display: flex; align-items: center; justify-content: center;
@@ -855,7 +837,7 @@
       border-radius: 10px;
       font-size: 16px;
       cursor: pointer;
-      transition: all 0.10s ease;
+      transition: all var(--dur-fast) ease;
     }
     .btn-contact:hover, .btn-close-modal:hover {
       transform: scale(0.97);
@@ -871,17 +853,32 @@
 
 
     /* 平台公告 */
-    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; max-height: 80dvh; /* R159 */ overflow-y: auto; padding: 26px 22px; animation: modalIn 0.18s ease; text-align: left; }
-    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color 0.15s ease; }
+    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 14px; width: 100%; max-width: 520px; max-height: 80vh; max-height: 80dvh; /* R159 */ overflow-y: auto; padding: 26px 22px; animation: modalIn var(--dur-mid) ease; text-align: left; }
+    .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; padding: 0 30px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color var(--dur-mid) ease; }
     .ann-modal .ann-title:hover { color: var(--blue1); }
     .ann-modal .ann-title.active { color: var(--blue1); }
     .ann-modal .ann-body { font-size: 14px; color: var(--text); line-height: 1.75; word-break: break-word; overflow-wrap: anywhere; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; border-radius: 8px; margin: 6px 0; }
     .ann-modal .ann-body a { color: #1e88e5; }
+    /* R194 第一批：前台表格展示样式（详情弹窗/公告/变体简介/解锁内容统一，全灰系接变量，手机整表横滑） */
+    .modal-detail table, .ann-body table, .variant-detail table, .resource-content table {
+      display: block; width: max-content; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      border-collapse: collapse; margin: 10px 0; background: transparent;
+    }
+    .modal-detail th, .modal-detail td, .ann-body th, .ann-body td,
+    .variant-detail th, .variant-detail td, .resource-content th, .resource-content td {
+      border: 1px solid #000; padding: 6px 10px; font-size: 13px; line-height: 1.6;
+      vertical-align: top; word-break: break-word; min-width: 40px; white-space: normal;
+    }
+    .modal-detail th, .ann-body th, .variant-detail th, .resource-content th { background: var(--hover-bg); font-weight: 600; }
+    .modal-detail table::-webkit-scrollbar, .ann-body table::-webkit-scrollbar,
+    .variant-detail table::-webkit-scrollbar, .resource-content table::-webkit-scrollbar { height: 6px; }
+    .modal-detail table::-webkit-scrollbar-thumb, .ann-body table::-webkit-scrollbar-thumb,
+    .variant-detail table::-webkit-scrollbar-thumb, .resource-content table::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     .ann-modal .ann-body p { margin: 6px 0; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
     /* 交互动效复用 ui-common.css 全站统一弹窗按键规则（R17 统一标准：hover 缩小变淡、按压更小更暗） */
-    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.10s ease; }
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all var(--dur-fast) ease; }
     .ann-modal .modal-close-x { top: 12px; right: 12px; width: 32px; height: 32px; }
     /* 分类栏 */
     .category-bar-wrap {
@@ -913,13 +910,13 @@
       justify-content: center;
       z-index: 95;
       padding: 0;
-      transition: color 0.2s ease;
+      transition: color var(--dur-mid) ease;
     }
     .cat-toggle:hover { color: var(--blue1); }
     .cat-toggle .toggle-arrow {
       width: 20px;
       height: 20px;
-      transition: transform 0.15s ease;
+      transition: transform var(--dur-mid) ease;
       transform: rotate(-90deg); /* 收起状态：箭头向左 */
       filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
     }
@@ -927,7 +924,7 @@
       transform: rotate(0deg); /* 展开状态：箭头向下 */
     }
     .category-bar {
-      transition: min-height 0.2s ease, padding-bottom 0.2s ease;
+      transition: min-height var(--dur-mid) ease, padding-bottom var(--dur-mid) ease;
     }
     .category-bar.expanded {
       flex-wrap: wrap;
@@ -948,7 +945,7 @@
       -ms-overflow-style: none;
       padding: 6px 24px 8px;
       gap: 6px;
-      transition: min-height 0.2s ease, padding-bottom 0.2s ease;
+      transition: min-height var(--dur-mid) ease, padding-bottom var(--dur-mid) ease;
     }
     .sub-category-bar::-webkit-scrollbar { display: none; }
     /* 二级分类展开按钮 - 更小更浅，体现层次感 */
@@ -968,13 +965,13 @@
       justify-content: center;
       z-index: 95;
       padding: 0;
-      transition: color 0.2s ease;
+      transition: color var(--dur-mid) ease;
     }
     .sub-cat-toggle:hover { color: var(--blue1); }
     .sub-cat-toggle .toggle-arrow {
       width: 15px;
       height: 15px;
-      transition: transform 0.15s ease;
+      transition: transform var(--dur-mid) ease;
       transform: rotate(-90deg); /* 收起状态：向左 */
     }
     .sub-cat-toggle.open .toggle-arrow {
@@ -997,7 +994,7 @@
       color: var(--text-light);
       font-size: 12px;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all var(--dur-mid) ease;
       user-select: none;
       white-space: nowrap;
       flex-shrink: 0;
@@ -1051,7 +1048,7 @@
       .product-grid.list-view .card-img { width: 96px; min-width: 96px; aspect-ratio: 1 / 1; }
       .product-grid.list-view .card-body { padding: 10px; }
       .product-grid.list-view .card-title { -webkit-line-clamp: 2; min-height: 38px; }
-      .back-top { right: 16px; bottom: 20px; width: 44px; height: 44px; }
+      .back-top { right: 16px; bottom: 20px; width: 40px; height: 40px; }
       .variant-tab { padding: 5px 14px; font-size: 12px; }
     }
 
@@ -1066,7 +1063,7 @@
     /* 弹窗底部按钮宽度统一：2 个等宽 */
     .modal-footer button { flex: 1; min-width: 0; }
     @keyframes cardIn { from { opacity: 0.9; } to { opacity: 1; } }
-    .product-card { animation: cardIn 0.15s ease; }
+    .product-card { animation: cardIn var(--dur-mid) ease; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
     .modal-mask #modalBox { max-height: 84vh; max-height: 84dvh; /* R159 */ }
     .modal-mask#annModal > .ann-box { height: min(72vh, 600px) !important; height: min(72dvh, 600px) !important; /* R159 */ max-height: none !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
@@ -1150,7 +1147,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   /* R123（用户定稿 15:03）：不再通栏固定宽（stretch 会把按键拉满整卡显得空框）——
      tab 胶囊的内容自适应形态=宽度贴合文字+左右 16px 内边距，卡片 flex column 居中天然水平居中 */
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all var(--dur-mid) ease;
   -webkit-tap-highlight-color: transparent;
   cursor: pointer;
 }
@@ -1172,3 +1169,25 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .resource-code-btn { padding: 0 14px; font-size: 13px; height: 38px; }
   .btn-contact, .btn-close-modal { height: 40px; font-size: 14px; }
 }
+
+
+    /* ---------- R193 二① 方案A（用户 22:32 拍板）：骨架屏 ----------
+       骨架数量=每页条数（renderSkeleton 铺 PAGE_SIZE 张）；数据到达逐条渐变成真卡。
+       骨架卡复用 .product-card 网格槽位（同尺寸同间距），图区按卡片图同款 3/2 定比（手机 16/10 由上面媒体查询接管），
+       颜色只用现有 Token（--bg-light 灰底），呼吸式微闪，系统减少动效自动关 */
+    .card-skeleton { pointer-events: none; }
+    .card-skeleton .sk-img { width: 100%; aspect-ratio: 3 / 2; border-radius: 10px; background: var(--bg-light, #f0f2f5); animation: skPulse 1.2s ease-in-out infinite; }
+    .card-skeleton .sk-line { height: 13px; border-radius: 4px; background: var(--bg-light, #f0f2f5); margin-top: 10px; animation: skPulse 1.2s ease-in-out infinite; }
+    .card-skeleton .sk-line.w70 { width: 70%; }
+    .card-skeleton .sk-line.w95 { width: 95%; }
+    @keyframes skPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+    @media (prefers-reduced-motion: reduce) { .card-skeleton .sk-img, .card-skeleton .sk-line { animation: none; } }
+    /* R194 第二批：前台引用块 / 分割线展示（详情弹窗/公告/变体简介/解锁内容统一） */
+    .modal-detail blockquote, .ann-body blockquote, .variant-detail blockquote, .resource-content blockquote {
+      margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--hover-bg); border-radius: 0 6px 6px 0; color: inherit;
+    }
+    .modal-detail hr, .ann-body hr, .variant-detail hr, .resource-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+    /* R194e（用户 01:33）：高度按最多规格统一——变体 tab / 公告 tab 38 对齐分类 tag 与顶栏 tab 的 tab 类规格 */
+    .variant-tab { height: 38px; box-sizing: border-box; display: inline-flex; align-items: center; }
+    .ann-tab { height: 38px; box-sizing: border-box; display: inline-flex; align-items: center; }

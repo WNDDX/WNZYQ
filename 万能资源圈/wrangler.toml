@@ -1,0 +1,16 @@
+# R188 建议10（用户 09-17 15:15 拍板）：定时清理 Cron Trigger
+# 每天凌晨 03:17（UTC）自动触发 functions/api/cleanup.js 的 onRequestScheduled：
+# 清理 stats / sessions / login_attempts 三表 60 天前的旧记录，数据量恒定不膨胀。
+#
+# 生效说明（三重保险）：
+# 1) 本文件被部署流程读取时，Cron 自动生效（Pages 项目根目录 wrangler.toml）；
+# 2) 若部署后控制台看不到 Cron，可手动配置：Cloudflare Dashboard → Pages 项目 →
+#    Settings → Functions → Cron Triggers（或绑 URL 指向 /api/cleanup，需先设 CLEANUP_TOKEN）；
+# 3) 即使 Cron 完全不生效：/api/track 每次埋点已顺带清理 stats 60 天前记录（R30-#10），
+#    sessions / login_attempts 两表量极小（仅管理员登录产生），数据量不会失控。
+name = "wnzyq"
+compatibility_date = "2026-09-01"
+pages_build_output_dir = "."
+
+[triggers]
+crons = ["17 3 * * *"]

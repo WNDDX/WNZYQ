@@ -17,7 +17,7 @@
 <meta name="twitter:description" content="优质虚拟资源导航站，一键获取学习资源、软件工具、设计素材">
 <meta name="twitter:image" content="/assets/images/logo.png?v=181">
   <link rel="stylesheet" href="/assets/ui-common.css">
-<link rel="icon" type="image/x-icon" href="/favicon.ico?v=174">
+<link rel="icon" type="image/x-icon" href="/favicon.ico?v=183">
 <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
 <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e2a4f" media="(prefers-color-scheme: dark)">
@@ -139,9 +139,9 @@ body{
     letter-spacing: 1.3px;
 }
 .modal-inner-btn{
-    width: 80%;
+    width: 80%; /* R192 用户拍板：门户弹窗按钮宽度保持不动 */
     margin: 0 auto 14px;
-    border-radius: 8px;
+    border-radius: 10px; /* R192 一③：主按钮圆角对齐全站 10px */
     padding: 11px 32px;
     display: flex;
     align-items: center;
@@ -185,7 +185,7 @@ body{
     text-align: center;
 }
 .modal-title{
-    font-size: 22px;
+    font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 19px 保持） */
     color: var(--text);
     margin-bottom: 16px;
     letter-spacing: 1.3px;
@@ -232,8 +232,8 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
     color: #fff;
     border: none;
     padding: 11px 32px;
-    border-radius: 8px;
-    font-size: 18px;
+    border-radius: 10px; /* R192 一③④：危险红钮对齐全站 10px/16px */
+    font-size: 16px;
     cursor: pointer;
     letter-spacing: 0.9px;
     user-select: none;
@@ -282,6 +282,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   <!-- R55：搜索引擎收录策略 -->
   <meta name="robots" content="index,follow">
   <!-- 首页：允许收录 -->
+  <link rel="preconnect" href="https://work.weixin.qq.com" crossorigin>
 </head>
 <body>
 <div class="wrap">
@@ -431,6 +432,7 @@ document.querySelectorAll('img').forEach(function (im) {
 
 /**弹窗打开 */
 function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
+    if (window.__kfPreconnect && jumpUrl) window.__kfPreconnect(jumpUrl); /* R189：打开弹窗即对跳转域提前建连（客服/群聊通用） */
     dom.modalTitle.textContent = title;
     dom.modalTip.textContent = tipText;
     dom.mask.style.display = 'flex';
@@ -526,6 +528,37 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
         else{pill.style.transform='translateY(-48px)';pill.style.opacity='0';}
         dist=0;
     },{passive:true});
+})();
+
+// R193 二⑤⑦（用户 22:32 定稿）：长按小菜单同步门户页——长按任意图片（客服/群聊/公众号二维码等）：
+// 保存图片 / 复制链接 / 预览大图（组件 __ctxMenu 与样式在 ui-common，全站同一份）
+(function () {
+  function ready(fn) { if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  ready(function () {
+    var cm = window.__ctxMenu; if (!cm) return;
+    function tip(m) { if (typeof window.showToast === 'function') window.showToast(m); else if (window.__shareToast) { try { window.__shareToast(m); } catch (e) {} } }
+    function cp(t, m) { if (window.__shareCopyText) { try { window.__shareCopyText(t); } catch (e) {} } tip(m || '已复制到剪贴板'); }
+    function saveImg(src) {
+      try {
+        fetch(src).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) {
+          if (!b) { tip('图片保存失败'); return; }
+          var u = URL.createObjectURL(b); var a = document.createElement('a');
+          a.href = u; a.download = (String(src).split('/').pop() || 'image').split('?')[0] || 'image';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(u); }, 3000);
+        }).catch(function () { tip('图片保存失败'); });
+      } catch (e) { tip('图片保存失败'); }
+    }
+    cm.bind(document.body, 'img', function (img) {
+      var src = img.currentSrc || img.src || '';
+      if (!src) return [];
+      return [
+        { label: '保存图片', fn: function () { saveImg(src); } },
+        { label: '复制链接', fn: function () { cp(src, '图片链接已复制'); } },
+        { label: '预览大图', fn: function () { if (window.openLightbox) window.openLightbox(src); } }
+      ];
+    });
+  });
 })();
 </script>
   <script src="/assets/ui-common.js"></script>

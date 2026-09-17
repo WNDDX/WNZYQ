@@ -109,3 +109,29 @@ export async function onRequestGet(context) {
     return json({ ok: false, msg: '清理失败: ' + err.message }, 500);
   }
 }
+
+
+/**
+ * R188（用户 09-17 15:15 拍板）：Cron Trigger 定时入口。
+ * wrangler.toml [triggers] crons 每天自动触发；scheduled 事件来自 Cloudflare 自身、
+ * 不经公网 HTTP，无需 CLEANUP_TOKEN。
+ * 与 GET /api/cleanup 同一套保留口径（全系统 60 天）：清 stats / sessions / login_attempts 三表。
+ * 图仓孤儿清理仍走 GET 接口（较重，低频手动即可）；stats 大表另有埋点顺带清理兜底（track.js R30-#10）。
+ */
+export async function onRequestScheduled(context) {
+  const { env } = context;
+  const results = {};
+  try {
+    const r1 = await env.DB.prepare("DELETE FROM stats WHERE created_at < datetime('now', '-60 days')").run();
+    results.stats_deleted = r1.meta.changes || 0;
+    const r2 = await env.DB.prepare("DELETE FROM sessions WHERE created_at < datetime('now', '-60 days')").run();
+    results.sessions_deleted = r2.meta.changes || 0;
+    const r3 = await env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-60 days')").run();
+    results.login_attempts_deleted = r3.meta.changes || 0;
+    console.log('[cleanup:scheduled] done', JSON.stringify(results));
+    return new Response(null, { status: 200 });
+  } catch (e) {
+    console.error('[cleanup:scheduled] failed:', e);
+    return new Response(null, { status: 500 });
+  }
+}
