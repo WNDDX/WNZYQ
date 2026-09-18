@@ -616,7 +616,7 @@
 
     // ---------- 视图切换（列表/卡片） ----------
     var currentView = localStorage.getItem('admin_product_view') || 'list';
-    function triggerViewAnim(el) { if (!el) return; el.classList.remove('view-switch-anim'); void el.offsetWidth; el.classList.add('view-switch-anim'); }
+
     function setView(view) {
       currentView = view;
       localStorage.setItem('admin_product_view', view);
@@ -732,12 +732,7 @@
 
     // R146（用户 00:34）：admin 端价格格式化（与前台 shop.js formatPrice 同口径）
     // 0/空返回 ''（免费不显示），整数 ¥99，小数 ¥99.00
-    function formatPrice(price) {
-      var p = Number(price) || 0;
-      if (p <= 0) return '';
-      if (p === Math.floor(p)) return '¥' + p;
-      return '¥' + p.toFixed(2);
-    }
+
 
     function renderProducts() {
       if (window.__skipRenderOnce) { window.__skipRenderOnce = false; return; }
@@ -5344,22 +5339,7 @@ refreshCatCnts();
         if (_lbMask.contains(e.target)) { scale = 1; var el = _lbMask.querySelector('img, video'); if (el) el.style.transform = 'scale(1)'; }
       });
     })();
-    function bindLightbox(root) {
-      if (!root) return;
-      // 动态内容每次重新绑定（img 用 dataset.lb 去重）
-      root.querySelectorAll('img').forEach(function (im) {
-        if (im.dataset.lb) return;
-        im.dataset.lb = '1';
-        im.style.cursor = 'zoom-in';
-        im.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(im.currentSrc || im.src); });
-      });
-      root.querySelectorAll('video').forEach(function (v) {
-        if (v.dataset.lb) return;
-        v.dataset.lb = '1';
-        v.style.cursor = 'zoom-in';
-        v.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(v.currentSrc || v.src); });
-      });
-    }
+
     function fmtPrice(v) {
       var n = Number(v) || 0;
       return n > 0 ? '¥' + (n === Math.floor(n) ? n : n.toFixed(2)) : '';

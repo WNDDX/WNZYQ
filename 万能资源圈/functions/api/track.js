@@ -36,9 +36,13 @@ export async function onRequestPost(context) {
   const ip = request.headers.get('CF-Connecting-IP') || '';
   // R30-#10：统计流水属"只增不能自管"的数据——每次埋点顺带删掉 60 天前的旧记录，
   // R72：滚动窗口 30→60 天，保证 30 天档「对比上期」（31~60 天前那段）有真实数据（失败不影响埋点）
+  // R207（用户 09-18 14:39）：老板拍板小表清理并入访问顺带清理，不恢复定时版；
+  // 三表（stats / sessions / login_attempts）统一按各自录入时间滚动 60 天，同一 try/catch、失败不阻塞埋点
   try {
     await env.DB.prepare("DELETE FROM stats WHERE created_at < datetime('now', '-60 days')").run();
-  } catch (e) { console.error('统计滚动清理失败(不影响埋点):', e); }
+    await env.DB.prepare("DELETE FROM sessions WHERE created_at < datetime('now', '-60 days')").run();
+    await env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-60 days')").run();
+  } catch (e) { console.error('滚动清理失败(不影响埋点):', e); }
 
   // R169：去重口径统一到全部类型——「同设备+同资源+同类型」1 小时窗口内已有记录则本次不记
   // （created_at 为 UTC，与 datetime('now','-1 hour') 同系直接比较，窗口 1 小时与时区无关）

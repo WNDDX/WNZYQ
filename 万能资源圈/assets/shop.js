@@ -186,12 +186,6 @@
     }
 
     // 价格格式化：0 或空返回 ''（免费不显示），整数显示 ¥99，小数显示 ¥99.00
-    function formatPrice(price) {
-      var p = Number(price) || 0;
-      if (p <= 0) return '';
-      if (p === Math.floor(p)) return '¥' + p;
-      return '¥' + p.toFixed(2);
-    }
 
     // HTML 安全过滤：只允许安全标签和属性，移除 script/事件/javascript: 协议
     // 用于资源描述和类型描述，支持 <a href="...">超链接</a>、图片、视频
@@ -1946,22 +1940,7 @@
     })();
 
     // 统一绑定：区域内所有图片/视频点击放大（富文本描述/类型描述/专属内容等复用）
-    function bindLightbox(root) {
-      if (!root) return;
-      // 动态内容每次重新绑定（img 用 dataset.lb 去重）
-      root.querySelectorAll('img').forEach(function (im) {
-        if (im.dataset.lb) return;
-        im.dataset.lb = '1';
-        im.style.cursor = 'zoom-in';
-        im.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(im.currentSrc || im.src); });
-      });
-      root.querySelectorAll('video').forEach(function (v) {
-        if (v.dataset.lb) return;
-        v.dataset.lb = '1';
-        v.style.cursor = 'zoom-in';
-        v.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(v.currentSrc || v.src); });
-      });
-    }
+
 
     // ---------- 初始化 ----------
     renderShopInfo();
@@ -1970,7 +1949,7 @@
 
     // 视图切换（网格/列表）
     var currentView = localStorage.getItem('shop_view') || 'list';
-    function triggerViewAnim(el) { if (!el) return; el.classList.remove('view-switch-anim'); void el.offsetWidth; el.classList.add('view-switch-anim'); }
+
     function setShopView(view) {
       currentView = view;
       localStorage.setItem('shop_view', view);

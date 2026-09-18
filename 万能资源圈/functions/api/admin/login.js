@@ -85,11 +85,13 @@ export async function onRequestPost(context) {
 
     // R30-#4：令牌只写进 HttpOnly Cookie（网页脚本读不到），不再随响应体下发
     // R30-#10：顺带滚动清理 30 天前的登录失败记录与旧会话（失败不影响登录）
+    // R207（用户 09-18 14:39）：sessions 清理统一按 created_at（录入时间）滚动 60 天，
+    // 与老板「按录入时间」口径一致；login_attempts 保留 last_attempt（该表录入时间即最近一次尝试时间）
     try {
       await env.DB.batch([
         // R73：滚动清理窗口统一 60 天（与全系统保留策略一致）
         env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-60 days')"),
-        env.DB.prepare("DELETE FROM sessions WHERE expires_at < datetime('now', '-60 days')"),
+        env.DB.prepare("DELETE FROM sessions WHERE created_at < datetime('now', '-60 days')"),
       ]);
     } catch (e) { console.error('滚动清理失败(不影响登录):', e); }
 

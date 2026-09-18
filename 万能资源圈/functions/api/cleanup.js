@@ -1,11 +1,12 @@
 ﻿/**
  * GET /api/cleanup
- * 定期清理旧数据（由 Cron Trigger 每天触发，或手动调用）
+ * 手动触发清理旧数据（由管理员手动调用）
+ * R207（用户 09-18 14:39）：老板已拍板不恢复定时版，清理走访问顺带（track.js R30-#10）。
  * 清理内容：
  *   1. stats 表：只保留最近 60 天（R72：为 30 天档环比对比保留上期数据）
- *   2. sessions 表：删除 60 天前的会话（R73 统一）
- *   3. login_attempts 表：删除 60 天前的记录（R73 统一）
- * 全系统统一保留 60 天（R73 用户定稿）：stats / sessions / login_attempts 一律 60 天
+ *   2. sessions 表：删除 60 天前的会话（R73 统一；按 created_at 录入时间滚动 60 天）
+ *   3. login_attempts 表：删除 60 天前的记录（R73 统一；按 last_attempt 录入时间滚动 60 天）
+ * 全系统统一保留 60 天（R73 用户定稿）：stats / sessions / login_attempts 一律按各自录入时间滚动 60 天
  * 需要 header: x-cleanup-token = 环境变量 CLEANUP_TOKEN
  * 安全策略：设置了 CLEANUP_TOKEN 就必须带对 token；
  * 未设置 CLEANUP_TOKEN 时仅允许本地调试（localhost/127.0.0.1）调用，
@@ -110,28 +111,3 @@ export async function onRequestGet(context) {
   }
 }
 
-
-/**
- * R188（用户 09-17 15:15 拍板）：Cron Trigger 定时入口。
- * wrangler.toml [triggers] crons 每天自动触发；scheduled 事件来自 Cloudflare 自身、
- * 不经公网 HTTP，无需 CLEANUP_TOKEN。
- * 与 GET /api/cleanup 同一套保留口径（全系统 60 天）：清 stats / sessions / login_attempts 三表。
- * 图仓孤儿清理仍走 GET 接口（较重，低频手动即可）；stats 大表另有埋点顺带清理兜底（track.js R30-#10）。
- */
-export async function onRequestScheduled(context) {
-  const { env } = context;
-  const results = {};
-  try {
-    const r1 = await env.DB.prepare("DELETE FROM stats WHERE created_at < datetime('now', '-60 days')").run();
-    results.stats_deleted = r1.meta.changes || 0;
-    const r2 = await env.DB.prepare("DELETE FROM sessions WHERE created_at < datetime('now', '-60 days')").run();
-    results.sessions_deleted = r2.meta.changes || 0;
-    const r3 = await env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-60 days')").run();
-    results.login_attempts_deleted = r3.meta.changes || 0;
-    console.log('[cleanup:scheduled] done', JSON.stringify(results));
-    return new Response(null, { status: 200 });
-  } catch (e) {
-    console.error('[cleanup:scheduled] failed:', e);
-    return new Response(null, { status: 500 });
-  }
-}

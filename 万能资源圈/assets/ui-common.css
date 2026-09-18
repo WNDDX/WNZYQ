@@ -148,7 +148,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
    的填写弹窗、时间选择等都不会被压住 */
 .modal-mask { z-index: 2000 !important; }
 #inputMask { z-index: 6002 !important; } /* R15：编辑器插入图片/视频等"弹窗里的输入弹窗"，必须高于业务弹窗与放大编辑器 */
-.share-mask, .confirm-mask { z-index: 3000 !important; }
+.share-mask { z-index: 3000 !important; }
 /* R16c：分享链接弹窗确定键——与资源页分享本站弹窗 .share-close 逐字复用（含按压动画，此前动态弹窗为纯内联样式无反馈） */
 .share-ok {
   display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;

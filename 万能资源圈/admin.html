@@ -765,6 +765,7 @@
     </div>
   </div>
 
+  <script src="/assets/ui-common.js"></script>
   <script src="/assets/admin.js"></script>
   <script>window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });</script>
   <!-- 独立兜底登录脚本：仅当主脚本解析/加载失败时接管登录（双保险，不覆盖主脚本的正常 doLogin） -->
@@ -793,7 +794,6 @@
       .then(function () { btn.disabled = false; btn.textContent = '登 录'; });
   };
   </script>
-  <script src="/assets/ui-common.js"></script>
   <script>
   (function () {
     function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }

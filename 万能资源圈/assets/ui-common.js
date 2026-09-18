@@ -1016,3 +1016,30 @@ window.__ctxMenu = (function () {
   }
   return { show: show, hide: hide, bind: bind };
 })();
+
+/* ===== R205（用户 09-18 13:13 全系统整洁专项）：合并 shop.js/admin.js 三份重复逻辑到 ui-common.js 全局函数 ===== */
+// 格式化价格（0=免费不显示，整数=¥N，小数=¥N.xx）
+window.formatPrice = function (price) {
+  var p = Number(price) || 0;
+  if (p <= 0) return '';
+  if (p === Math.floor(p)) return '¥' + p;
+  return '¥' + p.toFixed(2);
+};
+// 灯箱绑定：为 root 内所有 img/video 添加单击放大
+window.bindLightbox = function (root) {
+  if (!root) return;
+  root.querySelectorAll('img').forEach(function (im) {
+    if (im.dataset.lb) return;
+    im.dataset.lb = '1';
+    im.style.cursor = 'zoom-in';
+    im.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(im.currentSrc || im.src); });
+  });
+  root.querySelectorAll('video').forEach(function (v) {
+    if (v.dataset.lb) return;
+    v.dataset.lb = '1';
+    v.style.cursor = 'zoom-in';
+    v.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(v.currentSrc || v.src); });
+  });
+};
+// 触发视图切换动画（重排触发 transition）
+window.triggerViewAnim = function (el) { if (!el) return; el.classList.remove('view-switch-anim'); void el.offsetWidth; el.classList.add('view-switch-anim'); };

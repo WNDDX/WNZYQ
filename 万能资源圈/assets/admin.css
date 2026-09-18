@@ -701,7 +701,6 @@
     .rte-palette:hover { border-color: var(--blue1); }
     /* 只保留一个文字颜色色板（原背景色板统一隐藏，避免出现两个颜色选择） */
     .rte-palette[data-cmd="hiliteColor"] { display: none !important; }
-    .palette-a { font-size: 12px; font-weight: 700; color: var(--text-light); margin: 0 2px 0 1px; line-height: 1; }
     .palette-swatch {
       width: 16px; height: 16px; border-radius: 50%;
       border: 1px solid rgba(0,0,0,0.15); cursor: pointer; flex-shrink: 0;
