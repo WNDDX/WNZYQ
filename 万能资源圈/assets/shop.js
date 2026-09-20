@@ -166,23 +166,7 @@
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
       // R93：封面缺省/加载失败回退感叹号占位（R91 文字版已被用户否决回退）
       if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) img.classList.add('media-fail'); img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
-
-    /* 全局媒体兜底已上移至脚本顶部统一注册（见 loadImg 上方），此处旧实现不再执行
-    document.addEventListener('error', function (e) {
-      var t = e.target;
-      if (!t || !t.tagName || t.dataset.fh) return;
-      if (t.tagName === 'IMG') {
-        t.dataset.fh = '1';
-        t.src = IMG_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
-        t.style.objectFit = 'contain';
-        t.style.display = 'block';
-      } else if (t.tagName === 'VIDEO') {
-        // R81：视频失败不再换感叹号死图，统一兜底卡（可点新窗口打开原链接）
-        t.dataset.fh = '1';
-        var vf = makeVideoFallback(t.getAttribute('src') || t.currentSrc || '');
-        if (t.parentNode) t.parentNode.replaceChild(vf, t);
-      }
-    }, true); } */
+      /* R213 P2⑦（质检 R212）：R191 时代的旧媒体回退注释尸体已删（全局兜底已上移至脚本顶部统一注册） */
     }
 
     // 价格格式化：0 或空返回 ''（免费不显示），整数显示 ¥99，小数显示 ¥99.00
@@ -608,8 +592,8 @@
       var frag = document.createDocumentFragment();
       pageList.forEach(function (p, i) {
         var card = buildProductCard(p);
-        card.classList.add('stagger-in'); /* R192 二②：卡片错峰入场——每张 +30ms 落位，系统减少动效自动关 */
-        card.style.animationDelay = (i * 30) + 'ms';
+        card.classList.add('stagger-in'); /* R192 二②；R211 二批（用户 09-20）：错峰 30ms 递升改 20ms/项、180ms 封顶（长列表尾部不再越等越久） */
+        card.style.animationDelay = Math.min(i * 20, 180) + 'ms';
         if (__reuse && __skels[i]) __skels[i].parentNode.replaceChild(card, __skels[i]);
         else frag.appendChild(card);
       });
@@ -1004,7 +988,7 @@
         m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=208" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=213" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
@@ -1037,10 +1021,10 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=208', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=213', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
         };
       } else {
-        btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未设置客服链接'); };
+        btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
       }
     }
 
@@ -1054,13 +1038,7 @@
       var ri = document.getElementById('resourceCodeInput');
       if (ri && __codeDraft.code) ri.value = __codeDraft.code;
     }
-    function closeModalStash() { // R147：暂存通道已废除（点外/Esc 全走 closeModalDiscard），保留函数体仅为兼容注册结构
-      try {
-        var ri = document.getElementById('resourceCodeInput');
-        __codeDraft = currentProduct ? { pid: currentProduct.id, vid: currentVariant ? currentVariant.id : null, code: ri ? String(ri.value || '') : '' } : null;
-      } catch (e) { __codeDraft = null; }
-      closeModal();
-    }
+    /* R213 P2④（质检 R212 + 队长拍板）：closeModalStash 死函数已删（R147 暂存通道废除后无任何调用方） */
     function closeModalDiscard() { __codeDraft = null; closeModal(); }
 
     function closeModal() { try { document.querySelectorAll('#modalBox video, #modalMedia video').forEach(function (v) { v.pause(); }); } catch (e) {}
@@ -1088,6 +1066,7 @@
     var touchStartTime = 0;
     if (modalBox) {
       modalBox.addEventListener('touchstart', function (e) {
+        if (window.__flipAnimating) { touchStartX = 0; touchStartY = 0; touchStartTime = 0; return; } /* R211 二批：FLIP 飞位期间不判定滑动切类型（手势隔离，起点清零防误判） */
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
@@ -1289,7 +1268,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=208', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=213', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else showToast('暂未设置客服链接');
     });
 
@@ -1599,6 +1578,7 @@
     var pullDistance = 0;
     var PULL_THRESHOLD = 60; // 下拉超过60px触发刷新
     document.addEventListener('touchstart', function (e) {
+      if (window.__flipAnimating) return; /* R211 二批：FLIP 飞位期间不判定下拉刷新（手势隔离） */
       if (window.scrollY <= 0 && !modalMask.classList.contains('open')) {
         pullStartY = e.touches[0].clientY;
         pullStartX = e.touches[0].clientX;
@@ -1849,6 +1829,7 @@
     (function () {
       var scale = 1, startDist = 0;
       document.addEventListener('touchstart', function (e) {
+        if (window.__flipAnimating) return; /* R211 二批：FLIP 飞位期间不判定双指缩放（手势隔离） */
         if (!lightboxMask || !lightboxMask.classList.contains('open')) return;
         if (e.touches.length === 2) startDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       }, { passive: true });
@@ -1865,6 +1846,7 @@
       }, { passive: false });
       document.addEventListener('touchend', function () { startDist = 0; });
       document.addEventListener('dblclick', function (e) {
+        if (window.__flipAnimating) return; /* R211 二批：FLIP 飞位期间不判定双击复位（手势隔离） */
         if (!lightboxMask || !lightboxMask.classList.contains('open')) return;
         if (lightboxMask.contains(e.target)) { scale = 1; var el = lightboxMask.querySelector('img, video'); if (el) el.style.transform = 'scale(1)'; }
       });
@@ -1951,8 +1933,10 @@
     updateTopbarHeight();
     initData();
 
-    // 视图切换（网格/列表）
+    // 视图切换（网格/列表）；R211 二批（用户 09-20 老板点名）：FLIP 平滑飞位——按钮点击路径走 FlipAnimator，
+    // 卡片从旧位置飞到新位置；初始化恢复视图不触发动画；FLIP 不可用/系统减少动效时回退原容器切换动画
     var currentView = localStorage.getItem('shop_view') || 'list';
+    var __shopFlipper = null;
 
     function setShopView(view) {
       currentView = view;
@@ -1972,9 +1956,26 @@
         listBtn.classList.remove('active');
       }
     }
-    document.getElementById('viewGridBtn').addEventListener('click', function () { setShopView('grid'); });
-    document.getElementById('viewListBtn').addEventListener('click', function () { setShopView('list'); });
-    setShopView(currentView);
+
+    function flipSetShopView(view) {
+      var grid = document.getElementById('productGrid');
+      var gridBtn = document.getElementById('viewGridBtn');
+      var listBtn = document.getElementById('viewListBtn');
+      if (!window.FlipAnimator || !grid) { setShopView(view); return; }
+      if (!__shopFlipper || __shopFlipper.container !== grid) __shopFlipper = new window.FlipAnimator(grid);
+      var animated = __shopFlipper.flip(function () {
+        // DOM 变更：只切视图类与按钮态，不播旧容器缩放动画（本次切换的动画由 FLIP 卡片飞位接管）
+        currentView = view;
+        localStorage.setItem('shop_view', view);
+        if (view === 'list') { grid.classList.add('list-view'); gridBtn.classList.remove('active'); listBtn.classList.add('active'); }
+        else { grid.classList.remove('list-view'); gridBtn.classList.add('active'); listBtn.classList.remove('active'); }
+      }, { duration: 300, stagger: 20, maxStagger: 180 });
+      if (!animated) triggerViewAnim(grid); // 降级路径：FLIP 未接管时保留原容器切换动画
+    }
+
+    document.getElementById('viewGridBtn').addEventListener('click', function () { flipSetShopView('grid'); });
+    document.getElementById('viewListBtn').addEventListener('click', function () { flipSetShopView('list'); });
+    setShopView(currentView); // 初始化：恢复上次视图（不走 FLIP，页面加载不播飞位动画）
 
     // 强制确保页面可见（防止动画异常导致body opacity为0）
     setTimeout(function () { document.body.style.opacity = '1'; }, 500);

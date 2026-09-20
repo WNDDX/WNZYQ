@@ -108,9 +108,9 @@
 
 /* R192 二④：搜索命中高亮——全站唯一绿（咨询客服 #01C000）淡化底，不新增颜色 */
 mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; border-radius: 3px; padding: 0 1px; }
-/* R192 二②：卡片/行错峰入场——逐张 30ms 落位；系统「减少动态效果」自动关闭 */
-@keyframes staggerIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.stagger-in { animation: staggerIn var(--dur-mid) var(--ease-out) both; }
+/* R192 二②：卡片/行错峰入场；R211 二批（用户 09-20）升级：位移 10→16px、时长 0.18→0.30s（--dur-slow）、缓动换 --ease-emphasized，逐张 20ms 落位 180ms 封顶（JS 侧配合）；系统「减少动态效果」自动关闭 */
+@keyframes staggerIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.stagger-in { animation: staggerIn var(--dur-slow) var(--ease-emphasized) both; }
 @media (prefers-reduced-motion: reduce) { .stagger-in { animation: none !important; } }
 
 /* ===== 全站统一关闭 ×（R186 回退标准）：32px 圆形淡灰底，hover 变红（弹窗/客服/放大预览通用） ===== */
@@ -366,9 +366,9 @@ img.media-fail { border: 1px solid var(--border); }
 
 /* ===== R183（用户 09-17 终极清单拍板）：动效三档 Token / 图片入场 / 弹窗对称收缩 / 按钮转圈 / 复制反馈 / 焦点环 / 等宽数字 / 空态清除键 ===== */
 :root { --dur-fast: 0.10s; --dur-mid: 0.18s; --dur-slow: 0.30s; } /* 条6：三档动效时长——微反馈/状态与弹窗/内容淡出 */
-/* 条2：图片入场（同二维码 kfQrIn 口径：scale 0.9→1 + var(--dur-mid)，卡片图/详情图/后台缩略图共用） */
+/* 条2：图片入场（R183 同二维码 kfQrIn 口径）；R211 二批（用户 09-20）按 UI 设计师规格微调：scale 0.9→1 起跳改为 1.02→1 轻落位（渐入更含蓄，二维码 kfQrIn 保持原口径不动） */
 .img-in { animation: imgQrIn var(--dur-mid) var(--ease-out); }
-@keyframes imgQrIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes imgQrIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
 /* 条4：保存/登录/解锁按钮忙碌转圈（不动 disabled 防重与全屏遮罩——用户拍板） */
 .btn-spin { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: btnSpin 0.6s linear infinite; vertical-align: -1px; margin-right: 6px; flex: none; }
 @keyframes btnSpin { to { transform: rotate(360deg); } }

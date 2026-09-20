@@ -26,6 +26,15 @@ export async function onRequestGet(context) {
   let effectiveStart = maxStartStr;
   let effectiveEnd = todayBJ;
 
+  // stats表单表用的日期过滤（明确指定 stats.created_at；北京时区切日）
+  // 安全修复：日期值一律通过 SQL 绑定参数（?）传入，不再拼接进 SQL 字符串
+  let statsDateFilter, statsDateParams;
+  if (startDate && endDate) {
+    effectiveStart = String(startDate).slice(0, 10) > maxStartStr ? String(startDate).slice(0, 10) : maxStartStr;
+    effectiveEnd = String(endDate).slice(0, 10);
+  }
+  // R213 P0-1（质检 R212）：上期窗口计算移到自定义范围应用之后——
+  // 原先先用默认 30 天区间算 prevStart/prevEnd 再应用自定义范围，导致 1/7 天档环比与上期曲线仍按 30 天口径取数
   // R57：环比上期——与当前查询范围等长、紧邻之前的一段（1天档=昨天；默认30天=前30天；自定义N天=前N天）
   const rangeDays = Math.round((new Date(effectiveEnd) - new Date(effectiveStart)) / 86400000) + 1;
   const prevEndD = new Date(effectiveStart); prevEndD.setDate(prevEndD.getDate() - 1);
@@ -35,14 +44,6 @@ export async function onRequestGet(context) {
   // R168-③：环比日期过滤同样按北京时区切日
   const prevDateFilter = ` AND date(stats.created_at, '+8 hours') >= ? AND date(stats.created_at, '+8 hours') <= ?`;
   const prevDateParams = [prevStart, prevEnd];
-
-  // stats表单表用的日期过滤（明确指定 stats.created_at；北京时区切日）
-  // 安全修复：日期值一律通过 SQL 绑定参数（?）传入，不再拼接进 SQL 字符串
-  let statsDateFilter, statsDateParams;
-  if (startDate && endDate) {
-    effectiveStart = String(startDate).slice(0, 10) > maxStartStr ? String(startDate).slice(0, 10) : maxStartStr;
-    effectiveEnd = String(endDate).slice(0, 10);
-  }
   // R168-③：自定义与默认走同一套北京时区日过滤（原先默认分支用 UTC now-30days 粗过滤，与按日切分口径不一致）
   statsDateFilter = ` AND date(stats.created_at, '+8 hours') >= ? AND date(stats.created_at, '+8 hours') <= ?`;
   statsDateParams = [effectiveStart, effectiveEnd];

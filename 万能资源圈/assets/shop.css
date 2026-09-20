@@ -1128,13 +1128,28 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
        骨架数量=每页条数（renderSkeleton 铺 PAGE_SIZE 张）；数据到达逐条渐变成真卡。
        骨架卡复用 .product-card 网格槽位（同尺寸同间距），图区按卡片图同款 3/2 定比（手机 16/10 由上面媒体查询接管），
        颜色只用现有 Token（--bg-light 灰底），呼吸式微闪，系统减少动效自动关 */
-    .card-skeleton { pointer-events: none; }
-    .card-skeleton .sk-img { width: 100%; aspect-ratio: 3 / 2; border-radius: 10px; background: var(--bg-light, #f0f2f5); animation: skPulse 1.2s ease-in-out infinite; }
-    .card-skeleton .sk-line { height: 13px; border-radius: 4px; background: var(--bg-light, #f0f2f5); margin-top: 10px; animation: skPulse 1.2s ease-in-out infinite; }
+    /* R211 二批（用户 09-20）：微光扫过升级——高亮带从左到右扫过（原呼吸式 opacity 脉冲降级保留）；
+       颜色走 Token：底色 var(--bg-light)（暗色模式自动跟随 #1b1d29），高光带 --sk-hi 亮/暗两套，避免暗色模式白光刺眼 */
+    .card-skeleton { pointer-events: none; --sk-hi: #e8eaef; }
+    [data-theme="dark"] .card-skeleton { --sk-hi: #262a3a; }
+    /* R213：渐变高光带整体移入磁贴后半段（55%/75%/95%）——原先 25%/50%/75% 时，动画边界帧
+       （background-position 200%/-200%）高光峰值恰好压在骨架图右缘，形成贴边残影；
+       高光在后半段时两个关键帧容器都只显示磁贴前半的纯底色，扫过全程无贴边 */
+    .card-skeleton .sk-img { width: 100%; aspect-ratio: 3 / 2; border-radius: 10px; background: linear-gradient(90deg, var(--bg-light, #f0f2f5) 55%, var(--sk-hi, #e8eaef) 75%, var(--bg-light, #f0f2f5) 95%); background-size: 200% 100%; animation: skShimmer 1.6s linear infinite; }
+    .card-skeleton .sk-line { height: 13px; border-radius: 4px; background: linear-gradient(90deg, var(--bg-light, #f0f2f5) 55%, var(--sk-hi, #e8eaef) 75%, var(--bg-light, #f0f2f5) 95%); background-size: 200% 100%; margin-top: 10px; animation: skShimmer 1.6s linear infinite; }
     .card-skeleton .sk-line.w70 { width: 70%; }
     .card-skeleton .sk-line.w95 { width: 95%; }
+    /* R213（老板 09-21 报障）：列表视图骨架布局——原骨架结构只按网格视图设计（图上文下），
+       list-view 卡片是 flex 行（96px 方图左 + 文字右），width:100% 的 sk-img 把 card-body 挤成 ~20px，
+       卡片白底从右侧露出一条竖向白条（手机 390px 实测 x≈358-377 纯白 255 带）。
+       修复：骨架卡在列表视图下复刻真卡布局——96px 方图 + body 右侧居中，与 .list-view .card-img 同口径 */
+    .product-grid.list-view .card-skeleton { display: flex; align-items: stretch; }
+    .product-grid.list-view .card-skeleton .sk-img { width: 96px; min-width: 96px; aspect-ratio: 1 / 1; height: auto; }
+    .product-grid.list-view .card-skeleton .card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
     @keyframes skPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
-    @media (prefers-reduced-motion: reduce) { .card-skeleton .sk-img, .card-skeleton .sk-line { animation: none; } }
+    @keyframes skShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* 系统「减少动态效果」：恢复原呼吸式脉冲、禁用背景位移（微光位移感更强） */
+    @media (prefers-reduced-motion: reduce) { .card-skeleton .sk-img, .card-skeleton .sk-line { animation: skPulse 1.2s ease-in-out infinite; background: var(--bg-light, #f0f2f5); background-size: auto; } }
     /* R194 第二批：前台引用块 / 分割线展示（详情弹窗/公告/变体简介/解锁内容统一） */
     .modal-detail blockquote, .ann-body blockquote, .variant-detail blockquote, .resource-content blockquote {
       margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--hover-bg); border-radius: 0 6px 6px 0; color: inherit;

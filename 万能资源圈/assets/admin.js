@@ -547,14 +547,14 @@
     function showMain(username) {
       loginView.style.display = 'none';
       mainView.style.display = 'block';
-      function _safe(fn, name) { try { fn(); } catch (e) { console.log('[showMain] ' + name + ' 加载异常(已隔离)', e); } }
+      function _safe(fn) { try { fn(); } catch (e) { /* R213 P2⑤：调试日志已删（隔离逻辑保留） */ } }
       window.__plS = 1; window.__plC = 1; window.__plP = 1;
       // 修复：移除重复的 loadCategories 调用（原先同一接口被请求两次，浪费请求且可能返回不一致）
-      _safe(loadStats, 'loadStats');
-      _safe(loadSettings, 'loadSettings');
-      _safe(loadProducts, 'loadProducts');
-      _safe(loadCategories, 'loadCategories');
-      try { switchTab('products'); } catch (e) { console.log('[showMain] switchTab err', e); }
+      _safe(loadStats);
+      _safe(loadSettings);
+      _safe(loadProducts);
+      _safe(loadCategories);
+      try { switchTab('products'); } catch (e) { /* R213 P2⑤：调试日志已删 */ }
     }
 
     // ---------- Tab 切换 ----------
@@ -814,7 +814,7 @@
       pageList.forEach(function (p, idx) {
         var row = document.createElement('div');
         row.className = 'product-row';
-        row.classList.add('stagger-in'); row.style.animationDelay = (idx * 30) + 'ms'; /* R192 二②：行错峰入场，与前台卡片同款 */
+        row.classList.add('stagger-in'); row.style.animationDelay = Math.min(idx * 20, 180) + 'ms'; /* R192 二②；R211 二批（用户 09-20）：错峰 30ms 递升改 20ms/项、180ms 封顶（与前台卡片同款） */
         row.draggable = false;
         row.dataset.id = p.id;
         row.dataset.idx = idx;
@@ -1863,7 +1863,9 @@
               schedule_on: data.schedule_on || '', schedule_off: data.schedule_off || '', sort: data.sort,
               variants: (state.variants || []).slice() });
           }
-          editMask.classList.remove('open');
+          /* R211 二批（用户 09-20）：保存成功按钮状态链——转圈→✓（停留 400ms 让反馈可见）→收弹窗恢复；R183 条4 只有转圈无成功态 */
+          if (window.__btnSuccess) window.__btnSuccess(saveProductBtn, '已保存');
+          setTimeout(function () { editMask.classList.remove('open'); }, 400);
           if (isNewSave) { try { delete __editDrafts['new']; } catch (e) {} } // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
           clearDraft(); // 保存成功后清除草稿
           toast('资源已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
@@ -5609,7 +5611,7 @@ refreshCatCnts();
         m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=208" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=213" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
@@ -5637,7 +5639,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=208', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=213', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {

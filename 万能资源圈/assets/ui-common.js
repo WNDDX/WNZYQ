@@ -4,15 +4,8 @@
  */
 window.__uiCommonLoaded = true;
 
-// R211（用户 09-19 17:10）：容器变换弹窗——资源卡片→详情弹窗 View Transitions 连续过渡
-// startViewTransition + 元素命名；Safari/Firefox 回退现版 modalIn
-window.__startViewTransition = function(callback) {
-  if (document.startViewTransition) {
-    return document.startViewTransition(callback);
-  }
-  callback();
-  return { finished: Promise.resolve(), ready: Promise.resolve(), updateCallbackDone: Promise.resolve() };
-};
+/* R213 P2③（质检 R212 + 队长拍板）：R211 时代的 __startViewTransition 包装已删——
+   ViewTransitions 收敛后全站无任何调用（298 函数引用清点），startViewTransition 由调用方直用即可 */
 
 
 /* ===== R34 全站统一 PWA Service Worker 注册（一处定义四页生效；原导航页/资源页各自的注册已收编于此） =====
@@ -131,7 +124,7 @@ if ('serviceWorker' in navigator) {
       img.classList.remove('kf-qr-in');
       img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; if (this.classList) this.classList.add('media-fail'); };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=208';
+      img.src = qrImg || '/assets/images/kefu.png?v=213';
       if (img.complete && img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
       // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
       if (window.__bindQrLightbox) window.__bindQrLightbox(img);
@@ -1074,4 +1067,101 @@ window.__btnSuccess = function(btn, doneText) {
     delete btn.dataset.__btnOriginal;
     delete btn.dataset.__btnOriginalHtml;
   }, 600);
+};
+
+/* ---------- R211 二批（用户 09-20 老板点名「列表↔网格切换平滑飞过去」）：FLIP 动画器 ----------
+   First-Last-Invert-Play：切换布局时卡片从旧位置平滑飞到新位置，而不是整容器淡入重播。
+   规格（UI 设计师清单 7.1-7.5）：只动 transform（不动 width/height/top/left/margin）、错峰 20ms/项 180ms 封顶、
+   单屏 ≤20 个元素（超出直接瞬移）、手势隔离（window.__flipAnimating 全局标记 + 容器 pointer-events:none）、
+   动画结束清内联样式、prefers-reduced-motion / 老浏览器无 transform 直接切换无动画。
+   注：内联 transform/transition 用 setProperty !important 对抗 .product-card 的 transition !important 既有规则。 */
+window.FlipAnimator = function (container) {
+  this.container = typeof container === 'string' ? document.querySelector(container) : container;
+  this.isAnimating = false;
+  this._gen = 0; // 动画代际标记：打断旧动画后，旧 rAF 回调凭此失活
+};
+// 立即结束当前动画（跳到终位）：快速连点时先落位上一次，再接续新一次切换，保证终态跟手
+window.FlipAnimator.prototype.finish = function () {
+  this._gen++;
+  if (this._cleanupTimer) { clearTimeout(this._cleanupTimer); this._cleanupTimer = null; }
+  if (this._animEls) {
+    var els = this._animEls;
+    for (var i = 0; i < els.length; i++) {
+      var s = els[i].style;
+      s.removeProperty('transition'); s.removeProperty('transition-delay');
+      s.removeProperty('transform'); s.removeProperty('transform-origin');
+    }
+    this._animEls = null;
+  }
+  if (this.container) this.container.style.pointerEvents = '';
+  this.isAnimating = false;
+  window.__flipAnimating = false;
+};
+window.FlipAnimator.prototype.flip = function (mutateFn, options) {
+  var self = this;
+  var opts = options || {};
+  var duration = opts.duration || 300;
+  var easing = opts.easing || 'var(--ease-emphasized)';
+  var stagger = (opts.stagger !== undefined) ? opts.stagger : 20;
+  var maxStagger = (opts.maxStagger !== undefined) ? opts.maxStagger : 180;
+  if (!this.container || typeof mutateFn !== 'function') return false;
+  // 降级一：系统开了「减少动态效果」→ 直接切换，无动画
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { mutateFn(); return false; }
+  // 降级二：老浏览器（Safari 15 以下）无 transform → 直接切换
+  if (!('transform' in document.body.style)) { mutateFn(); return false; }
+  // 防重入：动画进行中快速连点 → 立即结束上一次（跳到终位）再接续新切换，终态永远跟手
+  if (this.isAnimating) this.finish();
+  this.isAnimating = true;
+  var gen = ++this._gen; // 本次动画的代际：finish() 会自增使旧 rAF 回调失活
+  window.__flipAnimating = true; // 手势隔离全局标记：下拉刷新/弹窗滑动/双击缩放判定首行检查
+  this.container.style.pointerEvents = 'none'; // 动画期间阻断列表上的点击/触摸（手势隔离主通道）
+  // 1. First：记录前 20 个子元素当前位置（超出 20 个的直接瞬移）
+  var children = Array.prototype.slice.call(this.container.children, 0, 20);
+  var firstStates = children.map(function (el) {
+    var r = el.getBoundingClientRect();
+    return { el: el, x: r.left, y: r.top, w: r.width, h: r.height };
+  });
+  // 2. Last：执行 DOM 变更（切 class 改布局）
+  mutateFn();
+  // 3. Invert：按差值反向位移/缩放，瞬时定格在旧位置
+  firstStates.forEach(function (st) {
+    var r = st.el.getBoundingClientRect();
+    var dx = st.x - r.left, dy = st.y - r.top;
+    var dw = r.width ? st.w / r.width : 1, dh = r.height ? st.h / r.height : 1;
+    if (!dx && !dy && dw === 1 && dh === 1) { st.skip = true; return; } // 位置没变的元素不参与动画
+    var s = st.el.style;
+    s.setProperty('transition', 'none', 'important');
+    s.setProperty('transform', 'translate(' + dx + 'px,' + dy + 'px) scale(' + dw + ',' + dh + ')', 'important');
+    s.setProperty('transform-origin', 'top left', 'important');
+  });
+  // 强制回流，确保 Invert 样式先落地
+  void this.container.offsetHeight;
+  // 4. Play：双 rAF 后清 transform，让元素从旧位过渡到新位（代际失守 = 动画已被打断，回调作废）
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      if (gen !== self._gen) return;
+      firstStates.forEach(function (st, i) {
+        if (st.skip) return;
+        var delay = Math.min(i * stagger, maxStagger);
+        var s = st.el.style;
+        s.setProperty('transition', 'transform ' + duration + 'ms ' + easing, 'important');
+        s.setProperty('transition-delay', delay + 'ms', 'important');
+        s.removeProperty('transform');
+      });
+    });
+  });
+  // 5. 清理：动画+最大错峰+50ms 缓冲后还原全部内联样式，解除手势隔离（登记到实例供 finish() 打断）
+  this._animEls = children;
+  this._cleanupTimer = setTimeout(function () {
+    firstStates.forEach(function (st) {
+      st.el.style.removeProperty('transition');
+      st.el.style.removeProperty('transition-delay');
+      st.el.style.removeProperty('transform');
+      st.el.style.removeProperty('transform-origin');
+    });
+    self.container.style.pointerEvents = '';
+    self.isAnimating = false;
+    window.__flipAnimating = false;
+  }, duration + maxStagger + 50);
+  return true;
 };

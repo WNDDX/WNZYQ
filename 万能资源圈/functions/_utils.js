@@ -337,18 +337,14 @@ export async function deleteBucketImages(env, sources) {
     // R32：图片统一走自家路由 /img/images/...（相对路径或任意域名的绝对 URL）；
     // R36：新增本地视频 /img/videos/...；兼容旧 R2 公开地址（base 前缀）。
     const mediaPathRe = /(?:https?:\/\/[^\s"'<>)]+)?\/img\/((?:images|videos)\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:png|jpg|jpeg|webp|gif|mp4|webm|mov))/g;
-    const baseRe = null; // R54：直连地址兼容已废弃
     for (const src of sources) {
       if (!src) continue;
       const text = String(src);
       let m;
       mediaPathRe.lastIndex = 0;
       while ((m = mediaPathRe.exec(text)) !== null) keys.add(m[1].split('?')[0]);
-      if (baseRe) {
-        baseRe.lastIndex = 0;
-        while ((m = baseRe.exec(text)) !== null) keys.add(m[1].split('?')[0].replace(/&amp;.*$/, ''));
-      }
     }
+    /* R213 P2②（质检 R212）：R54 废弃的 baseRe 恒空死分支已删 */
     if (!keys.size) return;
     // R36 引用保护：调用方在 DB 记录已删完之后调用本函数，此时库里还引用该 key 的
     // 一定是别的资源/类型（比如"2（副本）"共用同一张封面），这些不能删。
@@ -364,7 +360,7 @@ export async function deleteBucketImages(env, sources) {
       toDelete.push(key);
     }
     if (toDelete.length) await Promise.all(toDelete.map((k) => env.IMAGE_BUCKET.delete(k)));
-    console.log('R36 图仓联动清理: 待删 ' + keys.size + ' 个，实际删除 ' + toDelete.length + ' 个，被其它资源引用保留 ' + kept.length + ' 个');
+    /* R213 P2⑤（质检 R212 + 队长拍板）：R36 图仓清理 console.log 已删（质检报告曾建议保留为运维日志，按「调试残留全删」口径执行，如需留痕改 console.error 再议） */
   } catch (e) {
     console.error('R36 图仓媒体清理失败(不影响资源删除):', e);
   }
