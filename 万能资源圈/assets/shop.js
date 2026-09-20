@@ -1004,7 +1004,7 @@
         m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=181" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=208" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
@@ -1037,7 +1037,7 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=181', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=208', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { toast('暂未设置客服链接'); };
@@ -1289,7 +1289,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=181', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=208', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else showToast('暂未设置客服链接');
     });
 
@@ -1335,7 +1335,9 @@
         } else {
           try { fallbackCopy(url); } catch(e){}
         }
-        if (shareLinkText && window.__copyOk) window.__copyOk(shareLinkText); /* R183 条11：复制成功反馈 */
+        // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
+        if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch(e){} }, 1500); } catch(e){} }
+        if (window.__copyOk) window.__copyOk(shareLinkText); /* R183 条11：复制成功反馈（按钮态） */
         showToast('链接已复制到剪贴板');
         if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       } catch (e) {
@@ -1359,7 +1361,9 @@
         // R79+R138：统一走公共复制链路（异步 clipboard API），文案统一
         if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch(e){} }
         else { try { fallbackCopy(url); } catch(e){} }
-        if (window.__copyOk) window.__copyOk(shareLinkText); /* R183 条11：复制成功反馈 */
+        // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
+        if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch(e){} }, 1500); } catch(e){} }
+        if (window.__copyOk) window.__copyOk(shareLinkText); /* R183 条11：复制成功反馈（按钮态） */
         showToast('链接已复制到剪贴板');
       });
     }

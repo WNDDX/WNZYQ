@@ -4,6 +4,17 @@
  */
 window.__uiCommonLoaded = true;
 
+// R211（用户 09-19 17:10）：容器变换弹窗——资源卡片→详情弹窗 View Transitions 连续过渡
+// startViewTransition + 元素命名；Safari/Firefox 回退现版 modalIn
+window.__startViewTransition = function(callback) {
+  if (document.startViewTransition) {
+    return document.startViewTransition(callback);
+  }
+  callback();
+  return { finished: Promise.resolve(), ready: Promise.resolve(), updateCallbackDone: Promise.resolve() };
+};
+
+
 /* ===== R34 全站统一 PWA Service Worker 注册（一处定义四页生效；原导航页/资源页各自的注册已收编于此） =====
  * 注册后每次打开都主动检查更新；新版 SW 接管（controllerchange）时自动刷新一次页面——
  * 配合 sw.js 的导航网络竞速策略，部署新版后访客刷新一次即拿到全新页面，不再先闪旧版。 */
@@ -115,12 +126,13 @@ if ('serviceWorker' in navigator) {
     ensureKfModal();
     var img = document.getElementById('kfQrImg');
     if (img) {
-      // 二维码统一出场动画：每次打开都重放（先移除→重排→加载完成后播放），全站任何入口时序一致
+      // R208（用户 09-19 00:23）：客服二维码旧图闪现根治——设置 src 前先隐藏，加载完成后再显示，杜绝首帧残留
+      img.style.opacity = '0';
       img.classList.remove('kf-qr-in');
       img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; if (this.classList) this.classList.add('media-fail'); };
-      img.onload = function () { void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=181';
-      if (img.complete && img.naturalWidth) { void img.offsetWidth; img.classList.add('kf-qr-in'); }
+      img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
+      img.src = qrImg || '/assets/images/kefu.png?v=208';
+      if (img.complete && img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
       // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
       if (window.__bindQrLightbox) window.__bindQrLightbox(img);
     }
@@ -259,7 +271,7 @@ if ('serviceWorker' in navigator) {
           '<button type="button" class="modal-close-x" aria-label="关闭">×</button>' +
           '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;"></div>' +
           '<div class="alert-body" style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
-          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:all 0.10s ease;box-shadow:0 2px 6px rgba(30,136,229,0.25);-webkit-tap-highlight-color:transparent;">确定</button></div>' +
+          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);box-shadow:0 2px 6px rgba(30,136,229,0.25);-webkit-tap-highlight-color:transparent;">确定</button></div>' +
         '</div>';
       var titleEl = mask.querySelector('.modal-title');
       var bodyEl = mask.querySelector('.alert-body');
@@ -297,7 +309,7 @@ if ('serviceWorker' in navigator) {
       mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
         '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
-          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:all 0.10s ease;">×</button>' +
+          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);">×</button>' +
           '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
           '<div style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
           '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
@@ -1043,3 +1055,23 @@ window.bindLightbox = function (root) {
 };
 // 触发视图切换动画（重排触发 transition）
 window.triggerViewAnim = function (el) { if (!el) return; el.classList.remove('view-switch-anim'); void el.offsetWidth; el.classList.add('view-switch-anim'); };
+
+// R211（用户 09-19 17:10）：按钮状态链——转圈→✓→恢复
+window.__btnSuccess = function(btn, doneText) {
+  if (!btn) return;
+  var originalText = btn.dataset.__btnOriginal || '';
+  var originalHTML = btn.dataset.__btnOriginalHtml || '';
+  if (!originalText && !originalHTML) {
+    originalText = btn.textContent || '';
+    btn.dataset.__btnOriginal = originalText;
+    btn.dataset.__btnOriginalHtml = btn.innerHTML;
+  }
+  btn.innerHTML = '<span style="display:inline-block;transform:scale(0.6);animation:btnSuccessPop 120ms var(--ease-out, ease) forwards;">✓</span> ' + (doneText || '');
+  btn.disabled = true;
+  setTimeout(function() {
+    btn.innerHTML = btn.dataset.__btnOriginalHtml || btn.dataset.__btnOriginal || '';
+    btn.disabled = false;
+    delete btn.dataset.__btnOriginal;
+    delete btn.dataset.__btnOriginalHtml;
+  }, 600);
+};

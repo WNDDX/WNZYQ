@@ -11,6 +11,16 @@
       if (e.key === 'Enter') { var ae = document.activeElement; if (ae && (ae.id === 'loginUser' || ae.id === 'loginPass') && !window.__loginDirect && typeof doLogin === 'function') { try { doLogin(); } catch (err) {} } }
     });
 
+    // R180（用户 09-16）：根因→密码输入框缺可见性切换；修法→追加眼睛图标按钮（R209 用户 09-19 00:34：登录框恢复 09-16 结构时一并恢复）
+    // R209（用户 09-19 00:34）：根因→修法
+    function togglePwdVisibility() {
+      var pwd = document.getElementById('loginPass');
+      var btn = document.getElementById('pwdToggleBtn');
+      if (!pwd || !btn) return;
+      if (pwd.type === 'password') { pwd.type = 'text'; btn.textContent = '🙈'; btn.setAttribute('aria-label', '隐藏密码'); }
+      else { pwd.type = 'password'; btn.textContent = '👁'; btn.setAttribute('aria-label', '显示密码'); }
+    }
+
     // ---------- R156（用户 20:30）：时间显示统一转北京时间 ----------
     // 根因：D1 的 datetime('now') 存的是 UTC，绑定设备弹窗/统计最近动直接原样展示，
     // 比北京时间早 8 小时（用户 20:18 绑定却显示 12:18）。
@@ -1429,21 +1439,34 @@
     // 封面图实时预览
     // R15 加固：链接清空时同步清掉 src（杜绝任何残留显示路径）；换新链接时重置 fh 标记，
     // 保证新链接加载失败仍能换上感叹号占位（全局 error 委托只处理第一次失败）
+    // R209（用户 09-19 00:31）：根因→输入无效地址时 onerror 反复触发+src 高频切换导致占位框抖动；
+    // 修法→300ms 防抖 + 缓存已知坏地址，同地址不再重复触发加载-失败循环
+    var __imgPreviewTimer = null;
+    var __lastBadUrl = null;
     function updateImgPreview() {
       var preview = document.getElementById('fImgPreview');
+      if (!preview) return;
       var url = fImg.value.trim();
-      if (url) {
-        if (preview.dataset.fh) delete preview.dataset.fh;
-        if (preview.getAttribute('src') !== url) preview.src = url;
-        preview.classList.add('show');
-        preview.onerror = function () { this.onerror = null; this.dataset.fh = '1'; this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); };
-      } else {
-        // R41：没填链接也显示感叹号占位符（与加载失败显示完全一致，用户要求）
-        preview.onerror = null;
-        preview.dataset.fh = '1';
-        preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
-        preview.classList.add('show');
-      }
+      clearTimeout(__imgPreviewTimer);
+      __imgPreviewTimer = setTimeout(function () {
+        if (url) {
+          if (url === __lastBadUrl) {
+            preview.classList.add('show');
+            return;
+          }
+          delete preview.dataset.fh;
+          if (preview.getAttribute('src') !== url) preview.src = url;
+          preview.classList.add('show');
+          preview.onerror = function () {
+            this.onerror = null; this.dataset.fh = '1'; __lastBadUrl = url;
+            this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail');
+          };
+        } else {
+          preview.onerror = null; preview.dataset.fh = '1'; __lastBadUrl = null;
+          preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
+          preview.classList.add('show');
+        }
+      }, 300);
     }
     fImg.addEventListener('input', updateImgPreview);
 
@@ -1790,7 +1813,8 @@
         schedule_off: fScheduleOff.value || ''
       };
       if (!validateField(fTitle, '请填写资源标题')) return;
-      if (!data.cid) { toast('请选择资源分类', 'error'); document.getElementById('fCidDisplay').style.borderColor = '#ff4444'; document.getElementById('fCidDisplay').style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)'; return; }
+      // R209（用户 09-19 00:46）：根因→cid=0（「全部/未分类」）被 !data.cid 当成未选拦截；修法→cid=0 是合法选项，只拦 undefined/null
+      if (data.cid === undefined || data.cid === null) { toast('请选择资源分类', 'error'); document.getElementById('fCidDisplay').style.borderColor = '#ff4444'; document.getElementById('fCidDisplay').style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)'; return; }
 
       saving = true;
       var isNewSave = !state.editingId; // 记录本次是否为新增（editingId 之后会被赋值）
@@ -2538,7 +2562,7 @@ document.addEventListener('click', function (e) {
       return null;
     }
 
-    /* 插入选择器：6×6 hover 网格 */
+    /* 插入选择器：6×6 hover 网格 + 自定义行列输入（R209 用户 09-19 00:30：需求→实现） */
     document.addEventListener('click', function (e) {
       var btn = e.target.closest ? e.target.closest('.rte-table-btn') : null;
       if (!btn) return;
@@ -2576,6 +2600,41 @@ document.addEventListener('click', function (e) {
         })(r, c);
       }
       pop.appendChild(grid); pop.appendChild(tip);
+      // R209（用户 09-19 00:30）：自定义行列输入
+      var customRow = document.createElement('div');
+      customRow.className = 'tbl-custom-row';
+      var rowLabel = document.createElement('span');
+      rowLabel.textContent = '行';
+      var rowInp = document.createElement('input');
+      rowInp.type = 'number'; rowInp.min = '1'; rowInp.max = '50'; rowInp.value = '3';
+      rowInp.className = 'tbl-custom-input';
+      rowInp.setAttribute('aria-label', '行数');
+      var colLabel = document.createElement('span');
+      colLabel.textContent = '列';
+      var colInp = document.createElement('input');
+      colInp.type = 'number'; colInp.min = '1'; colInp.max = '50'; colInp.value = '3';
+      colInp.className = 'tbl-custom-input';
+      colInp.setAttribute('aria-label', '列数');
+      var okBtn = document.createElement('button');
+      okBtn.type = 'button'; okBtn.className = 'tbl-custom-btn';
+      okBtn.textContent = '确定';
+      okBtn.addEventListener('click', function () {
+        var rows = parseInt(rowInp.value, 10) || 0;
+        var cols = parseInt(colInp.value, 10) || 0;
+        if (rows < 1 || rows > 50 || cols < 1 || cols > 50) {
+          toast('行数和列数请在 1-50 之间', 'error');
+          return;
+        }
+        var html = '<table><tbody>';
+        for (var i = 0; i < rows; i++) { html += '<tr>'; for (var j = 0; j < cols; j++) html += '<td><br></td>'; html += '</tr>'; }
+        html += '</tbody></table><p><br></p>';
+        rteApplyCmd(editor, 'insertHTML', html);
+        rteClosePop();
+      });
+      customRow.appendChild(rowLabel); customRow.appendChild(rowInp);
+      customRow.appendChild(colLabel); customRow.appendChild(colInp);
+      customRow.appendChild(okBtn);
+      pop.appendChild(customRow);
       RTE_POP = pop;
       rtePlacePop(pop, btn);
     });
@@ -2965,9 +3024,16 @@ document.addEventListener('click', function (e) {
     });
 
     /* 字数统计：四处编辑器下方计数条，MutationObserver 驱动（输入/工具栏改动都刷新） */
+    // R209（用户 09-19 00:50）：根因→setAnnouncement 编辑器被隐藏但其计数器未同步隐藏，成孤儿浮在设置页；
+    // 修法→rteCountUpdate 里判断编辑器不可见则同步隐藏计数器，可见则恢复显示
     function rteCountUpdate(ed) {
       var c = document.querySelector('.rte-count[data-for="' + ed.id + '"]');
       if (!c) return;
+      if (ed.style.display === 'none' || (ed.offsetParent === null && getComputedStyle(ed).display === 'none')) {
+        c.style.display = 'none';
+        return;
+      }
+      c.style.display = '';
       c.textContent = '已输入 ' + ed.textContent.replace(/\s/g, '').length + ' 字';
     }
     document.querySelectorAll('.rte-editor').forEach(function (ed) {
@@ -5218,7 +5284,8 @@ refreshCatCnts();
       var opened = false;
       var mo = new MutationObserver(function () {
         if (picker.classList.contains('open')) { opened = true; return; }
-        if (opened) { opened = false; if (!Number(fCid.value)) showFieldErr(disp, '请选择资源分类'); }
+        // R209（用户 09-19 00:46）：根因→实时校验把 cid=0（「全部」）当未选；修法→放开 cid=0，只校验 undefined/null/空字符串
+        if (opened) { opened = false; var _cv = fCid.value; if (_cv === '' || _cv === undefined || _cv === null) showFieldErr(disp, '请选择资源分类'); }
       });
       mo.observe(picker, { attributes: true, attributeFilter: ['class'] });
     })();
@@ -5542,7 +5609,7 @@ refreshCatCnts();
         m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=181" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=208" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
@@ -5570,7 +5637,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=181', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=208', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {

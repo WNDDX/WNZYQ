@@ -27,10 +27,12 @@
         </div>
       </a>
       <h1>万能资源圈・管理</h1>
-      <label for="loginUser" style="display:block;font-size:13px;color:#666;margin:12px 0 5px;">账号</label>
-      <input id="loginUser" class="input" autocomplete="off" />
-      <label for="loginPass" style="display:block;font-size:13px;color:#666;margin:0 0 5px;">密码</label>
-      <input id="loginPass" class="input" type="password" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" />
+      <!-- R209（用户 09-19 00:34）：根因→v207 误把 label 居中+删了 placeholder 和眼睛按钮；修法→恢复 09-16 结构 -->
+      <input id="loginUser" class="input" placeholder="账号" autocomplete="off" />
+      <div style="position:relative;width:100%;">
+        <input id="loginPass" class="input" type="password" placeholder="密码" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" style="width:100%;padding-right:44px;" />
+        <button type="button" id="pwdToggleBtn" onclick="if(typeof togglePwdVisibility==='function')togglePwdVisibility();" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码">👁</button>
+      </div>
       <button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登 录</button>
     </div>
   </div>
