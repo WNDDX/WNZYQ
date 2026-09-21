@@ -158,14 +158,15 @@
       img.decoding = 'async'; /* R193c ⑩：异步解码——解码不占主线程，列表图多时滑动更跟手 */
       img.onerror = function () {
         this.onerror = null; // 防止占位图也加载失败导致死循环
-        this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.style.opacity = '1';
+        this.src = IMG_PLACEHOLDER; if (this && this.classList) { this.classList.add('media-fail'); this.classList.remove('m-loading'); } this.style.opacity = '1';
         this.style.display = 'block';
         this.style.objectFit = 'contain';
       };
-      img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; this.classList.add('img-in'); }; /* R183 条2：图片入场动画（同二维码 kfQrIn 口径） */
+      img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); this.classList.add('img-in'); }; /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
+      if (img.classList && img.classList.contains('modal-cover')) img.classList.add('m-loading'); /* R215 条9：封面加载期固定 16:9 居中槽，首帧不再靠左 */
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
       // R93：封面缺省/加载失败回退感叹号占位（R91 文字版已被用户否决回退）
-      if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) img.classList.add('media-fail'); img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
+      if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading'); } img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
       /* R213 P2⑦（质检 R212）：R191 时代的旧媒体回退注释尸体已删（全局兜底已上移至脚本顶部统一注册） */
     }
 
@@ -178,7 +179,7 @@
       var allowed = { A:1, BR:1, P:1, STRONG:1, EM:1, B:1, I:1, U:1, S:1, SPAN:1, DIV:1, FONT:1,
         UL:1, OL:1, LI:1, H1:1, H2:1, H3:1, H4:1, H5:1, H6:1, BLOCKQUOTE:1, CODE:1, PRE:1, HR:1,
         IMG:1, VIDEO:1, SOURCE:1,
-        TABLE:1, TBODY:1, THEAD:1, TR:1, TD:1, TH:1 }; /* R194：后台编辑器新增表格，前台同步放行 */
+        TABLE:1, TBODY:1, THEAD:1, TR:1, TD:1, TH:1, INPUT:1 }; /* R194：后台编辑器新增表格，前台同步放行；R215 条4：复选框（type=checkbox）放行 */
       // 允许的属性
       var allowedAttrs = {
         A: ['href','target','rel','title'],
@@ -193,7 +194,8 @@
         LI: ['style'], UL: ['style'], OL: ['style'],
         BLOCKQUOTE: ['style'], CODE: ['style'], PRE: ['style'],
         TABLE: ['style','width'], TBODY: ['style'], THEAD: ['style'], TR: ['style'],
-        TD: ['style','colspan','rowspan','width'], TH: ['style','colspan','rowspan','width'] /* R194 */
+        TD: ['style','colspan','rowspan','width'], TH: ['style','colspan','rowspan','width'], /* R194 */
+        INPUT: ['type','checked'] /* R215 条4：复选框只放行 type/checked */
       };
       try {
         var doc = new DOMParser().parseFromString(html, 'text/html');
@@ -988,13 +990,12 @@
         m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=213" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=215" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
           '</div>';
         document.body.appendChild(m);
-        m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); });
         var im = document.getElementById('kfFallbackImg');
         if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
       }
@@ -1021,7 +1022,7 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=213', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=215', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1096,9 +1097,6 @@
 
     btnCloseModal.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
     modalCloseX.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
-    modalMask.addEventListener('click', function (e) {
-      if (e.target === modalMask) closeModalDiscard(); // R147：点外=丢弃草稿（暂存语义全站废除）
-    });
 
     // ---------- R10 资源分享（弹窗左上角转发键） ----------
     // R14：点击改为弹窗形式（复用 ui-common 公共分享链接弹窗，观感与顶栏「分享本站」一致：标题+链接+确定），
@@ -1268,7 +1266,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=213', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=215', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else showToast('暂未设置客服链接');
     });
 
@@ -1316,7 +1314,6 @@
         }
         // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
         if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch(e){} }, 1500); } catch(e){} }
-        if (window.__copyOk) window.__copyOk(shareLinkText); /* R183 条11：复制成功反馈（按钮态） */
         showToast('链接已复制到剪贴板');
         if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       } catch (e) {
@@ -1342,13 +1339,9 @@
         else { try { fallbackCopy(url); } catch(e){} }
         // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
         if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch(e){} }, 1500); } catch(e){} }
-        if (window.__copyOk) window.__copyOk(shareLinkText); /* R183 条11：复制成功反馈（按钮态） */
         showToast('链接已复制到剪贴板');
       });
     }
-    shareMask.addEventListener('click', function (e) {
-      if (e.target === shareMask) closeShare();
-    });
 
     function fallbackCopy(url) {
       var ta = document.createElement('textarea');
@@ -1803,8 +1796,6 @@
       if (!lightboxMask) {
         lightboxMask = document.createElement('div');
         lightboxMask.className = 'lightbox';
-        // R111：点图片本身不算「弹窗外」，只有点空白遮罩才关（与全站口径一致）
-        lightboxMask.onclick = function (e) { if (e.target === lightboxMask) closeLightbox(); };
         document.body.appendChild(lightboxMask);
         if (window.__modalKit) window.__modalKit.register(lightboxMask, { discard: closeLightbox, stash: closeLightbox });
       }

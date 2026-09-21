@@ -9,7 +9,7 @@
  *  - /api/ 一律不缓存，始终走网络。
  *  - 任何非 200、或内容类型为 HTML 的 /assets 响应一律不缓存（防止错误页伪装成脚本/样式）。
  */
-const CACHE_NAME = 'wnzyq-v213'; // R213（用户 09-21·质检 P1-2）：历史迭代注释剥离（R211→R56 约 37KB，完整历史见迭代记忆归档），CACHE_NAME v212→v213 触发旧缓存清理
+const CACHE_NAME = 'wnzyq-v215'; // R214（老板线上实测反馈）：CACHE_NAME v213→v214 触发旧缓存清理；R214 修复 __modalKit 哨兵实账（见 ui-common.js），与缓存无关但顺带清老访客侧旧版本残留
 
 const STATIC_ASSETS = [
   './',
@@ -18,17 +18,17 @@ const STATIC_ASSETS = [
   './admin.html',
   './error.html',
   './manifest.json',
-  './favicon.ico?v=213', // R171：带版本绕开浏览器 favicon 硬缓存（刷新闪旧图标根治）
+  './favicon.ico?v=215', // R171：带版本绕开浏览器 favicon 硬缓存（刷新闪旧图标根治）
   './assets/ui-common.css',
   './assets/ui-common.js',
   './assets/admin.css',
   './assets/admin.js',
   './assets/shop.css',
   './assets/shop.js',
-  './assets/images/logo.png?v=213',
-  './assets/images/kefu.png?v=213',
-  './assets/images/qun.png?v=213',
-  './assets/images/gzh.png?v=213'
+  './assets/images/logo.png?v=215',
+  './assets/images/kefu.png?v=215',
+  './assets/images/qun.png?v=215',
+  './assets/images/gzh.png?v=215'
 ];
 
 // 安装：逐项缓存静态资源（单项失败不影响整体）
@@ -87,33 +87,19 @@ self.addEventListener('fetch', function (event) {
   var url = req.url.split('?')[0];
   var isCode = /\.(js|css)($|\?)/.test(url);   // JS/CSS：网络优先
 
-  // 页面导航：R34 网络竞速——有缓存时同时发起网络请求，网络在 400ms 内返回就直接给最新版页面
-  // （修复：部署新版后访客刷新先看到旧版页面/旧图标、要再刷一次才更新的问题）；网络慢或失败时
-  // 缓存秒回（保住手机跨页不白屏），网络完成后在后台写入缓存供下次使用。
   // 一致性保障：SW 版本升级时 activate 会清掉旧缓存，缓存里的 HTML 始终与当前 js/css 同代，不混搭。
+  // 页面导航：R215（老板 09-21 实测反馈：加载瞬间闪旧图标，历史复发）根治改版——
+  // R34 的「网络竞速 400ms」在弱网/部署冷启动时会让旧缓存 HTML 先赢一帧：整页旧版渲染
+  // （含旧 logo/旧图标），网络返回后再由后台更新缓存，下一次刷新才正常——即"旧图标闪现"的根因。
+  // 改为严格网络优先：导航永远等网络最新版；仅网络彻底失败（离线）才回缓存秒回（不白屏）。
   if (req.mode === 'navigate') {
     event.respondWith(
-      caches.match(req).then(function (cached) {
-        var network = fetch(req).then(function (res) {
-          if (res && res.status === 200) event.waitUntil(putCache(req, res));
-          return res;
-        }).catch(function () { return null; });
-        event.waitUntil(network); // 保持 worker 存活至网络请求完成，确保后台缓存更新可靠
-        if (!cached) {            // 无缓存（首次访问/刚升级清空）：走网络，失败回错误页
-          return network.then(function (res) {
-            return res || caches.match('./error.html').then(function (e) { return e || Response.error(); });
-          });
-        }
-        return new Promise(function (resolve) {   // 有缓存：与网络竞速
-          var settled = false;
-          var timer = setTimeout(function () {
-            if (!settled) { settled = true; resolve(cached); }   // 超时：缓存秒回，网络继续后台更新
-          }, 400);
-          network.then(function (res) {
-            if (settled) return;
-            settled = true; clearTimeout(timer);
-            resolve(res || cached);                // 网络够快：直接给最新版页面（不闪旧版）
-          });
+      fetch(req).then(function (res) {
+        if (res && res.status === 200) event.waitUntil(putCache(req, res));
+        return res;
+      }).catch(function () {
+        return caches.match(req).then(function (cached) {
+          return cached || caches.match('./error.html').then(function (e) { return e || Response.error(); });
         });
       })
     );

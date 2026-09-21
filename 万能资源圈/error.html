@@ -8,7 +8,7 @@
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e2a4f" media="(prefers-color-scheme: dark)">
-<link rel="icon" type="image/x-icon" href="/favicon.ico?v=213">
+<link rel="icon" type="image/x-icon" href="/favicon.ico?v=215">
 <link rel="stylesheet" href="/assets/ui-common.css">
 <style>
 :root{--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;}
@@ -101,7 +101,7 @@ document.addEventListener('error', function (e) {
 (function () {
   var logo = document.getElementById('errLogo');
   if (logo) {
-    logo.src = '/assets/images/logo.png?v=213'; // 绝对路径，加载失败自动显示感叹号占位
+    logo.src = '/assets/images/logo.png?v=215'; // 绝对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
       this.onerror = null;

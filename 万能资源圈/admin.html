@@ -6,12 +6,12 @@
   <title>万能资源圈・管理</title>
   <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
   <meta name="robots" content="index,follow">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=213">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=215">
   <link rel="stylesheet" href="/assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)">
-  <link rel="preload" href="/assets/images/logo.png?v=213" as="image">
+  <link rel="preload" href="/assets/images/logo.png?v=215" as="image">
 
   <link rel="stylesheet" href="/assets/admin.css">
 </head>
@@ -23,7 +23,7 @@
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
         <div class="login-logo">
-          <img src="/assets/images/logo.png?v=213" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          <img src="/assets/images/logo.png?v=215" alt="" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
         </div>
       </a>
       <h1>万能资源圈・管理</h1>
@@ -31,7 +31,7 @@
       <input id="loginUser" class="input" placeholder="账号" autocomplete="off" />
       <div style="position:relative;width:100%;">
         <input id="loginPass" class="input" type="password" placeholder="密码" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" style="width:100%;padding-right:44px;" />
-        <button type="button" id="pwdToggleBtn" onclick="if(typeof togglePwdVisibility==='function')togglePwdVisibility();" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码">👁</button>
+        <button type="button" id="pwdToggleBtn" onclick="if(typeof togglePwdVisibility==='function')togglePwdVisibility();" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg class="pwd-eye-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
       <button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登 录</button>
     </div>
@@ -43,7 +43,7 @@
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
-            <img class="topbar-logo" src="/assets/images/logo.png?v=213" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+            <img class="topbar-logo" src="/assets/images/logo.png?v=215" alt="" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -247,9 +247,9 @@
           </div>
           <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
           <div class="setting-row">
-            <label>平台公告（显示在资源页顶部） <span class="label-hint">如：欢迎来到万能资源圈，新资源持续更新中</span></label>
+            <label>平台公告（显示在资源页顶部）</label>
             <button type="button" class="btn-blue" id="openAnnBtn" style="width:auto;padding:0 24px;">设置公告</button>
-            <div class="rte-toolbar rte-collapsed" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;"><span class="rte-group">
+            <div class="rte-toolbar" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement" title="字体">
             <option value="">字体</option>
             <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
@@ -271,13 +271,13 @@
             <option value="7" style="font-size:44px">巨大</option>
           </select>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="setAnnouncement" title="文字颜色"><span class="rte-color-ico" style="color:#e53935">A</span></button>
-          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="setAnnouncement" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl" style="background:#fff59d">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="setAnnouncement" title="文字颜色"><span class="rte-color-ico">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="setAnnouncement" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl">A</span></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn rte-emoji-btn" data-editor="setAnnouncement" title="插入表情">😀 表情</button>
-          <button type="button" class="rte-btn" id="announcementRteLink" title="插入超链接">🔗 链接</button>
-          <button type="button" class="rte-btn" id="announcementRteImg" title="插入网络图片或从电脑上传">🖼 图片</button>
-          <button type="button" class="rte-btn" id="announcementRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button>
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="setAnnouncement" title="插入表情"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg> 表情</button>
+          <button type="button" class="rte-btn" id="announcementRteLink" title="插入超链接"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 链接</button>
+          <button type="button" class="rte-btn" id="announcementRteImg" title="插入网络图片或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> 图片</button>
+          <button type="button" class="rte-btn" id="announcementRteVideo" title="插入网络视频或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> 视频</button>
           <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="setAnnouncement" title="插入分割线">— 分割线</button>
           <button type="button" class="rte-btn rte-table-btn" data-editor="setAnnouncement" title="插入表格">▦ 表格</button>
           </span><span class="rte-group">
@@ -287,18 +287,18 @@
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="setAnnouncement" title="删除线"><s>S</s></button>
           <button type="button" class="rte-btn rte-quote-btn" data-editor="setAnnouncement" title="引用块">❝ 引用</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement" title="左对齐">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement" title="居中">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement" title="右对齐">➡</button>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement" title="左对齐">←</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement" title="居中">↔</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement" title="右对齐">→</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="setAnnouncement" title="无序列表">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="setAnnouncement" title="有序列表">1. 列表</button>
-          <button type="button" class="rte-btn rte-check-btn" data-editor="setAnnouncement" title="插入复选框">☑ 复选框</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="setAnnouncement" title="插入复选框"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 复选框</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="undo" data-target="setAnnouncement" title="撤销">↩ 撤销</button>
           <button type="button" class="rte-btn" data-cmd="redo" data-target="setAnnouncement" title="重做">↪ 重做</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="announcementFormatBrush" title="格式刷">🖌 格式刷</button>
+          <button type="button" class="rte-btn" id="announcementFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg> 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement" title="清除格式">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶ 放大</button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
@@ -391,7 +391,7 @@
         <img class="img-preview" id="fImgPreview" alt="预览" />
         <label>简介 <span class="label-hint">列表卡片上显示的一句话</span></label><input id="fDesc" />
         <label>详细描述 <span class="label-hint">支持文字、图片、视频混排</span></label>
-        <div class="rte-toolbar rte-collapsed" id="detailRteToolbar" data-editor="fDetail"><span class="rte-group">
+        <div class="rte-toolbar" id="detailRteToolbar" data-editor="fDetail"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="fDetail" title="字体">
             <option value="">字体</option>
             <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
@@ -413,13 +413,13 @@
             <option value="7" style="font-size:44px">巨大</option>
           </select>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="fDetail" title="文字颜色"><span class="rte-color-ico" style="color:#e53935">A</span></button>
-          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="fDetail" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl" style="background:#fff59d">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="fDetail" title="文字颜色"><span class="rte-color-ico">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="fDetail" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl">A</span></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn rte-emoji-btn" data-editor="fDetail" title="插入表情">😀 表情</button>
-          <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接">🔗 链接</button>
-          <button type="button" class="rte-btn" id="detailRteImg" title="插入网络图片或从电脑上传">🖼 图片</button>
-          <button type="button" class="rte-btn" id="detailRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button>
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="fDetail" title="插入表情"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg> 表情</button>
+          <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 链接</button>
+          <button type="button" class="rte-btn" id="detailRteImg" title="插入网络图片或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> 图片</button>
+          <button type="button" class="rte-btn" id="detailRteVideo" title="插入网络视频或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> 视频</button>
           <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="fDetail" title="插入分割线">— 分割线</button>
           <button type="button" class="rte-btn rte-table-btn" data-editor="fDetail" title="插入表格">▦ 表格</button>
           </span><span class="rte-group">
@@ -429,18 +429,18 @@
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="fDetail" title="删除线"><s>S</s></button>
           <button type="button" class="rte-btn rte-quote-btn" data-editor="fDetail" title="引用块">❝ 引用</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="fDetail" title="左对齐">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="fDetail" title="居中">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="fDetail" title="右对齐">➡</button>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="fDetail" title="左对齐">←</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="fDetail" title="居中">↔</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="fDetail" title="右对齐">→</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="fDetail" title="无序列表">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="fDetail" title="有序列表">1. 列表</button>
-          <button type="button" class="rte-btn rte-check-btn" data-editor="fDetail" title="插入复选框">☑ 复选框</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="fDetail" title="插入复选框"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 复选框</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="undo" data-target="fDetail" title="撤销">↩ 撤销</button>
           <button type="button" class="rte-btn" data-cmd="redo" data-target="fDetail" title="重做">↪ 重做</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷">🖌 格式刷</button>
+          <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg> 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="fDetail" title="清除格式">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶ 放大</button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
@@ -575,7 +575,7 @@
         <!-- R148（用户 01:50）：类型名称输入框下新增类型标题——前台资源类型信息栏第一行黑字显示此内容，留空回退类型名称 -->
         <label>类型标题 <span class="label-hint">留空显示类型名称</span></label><input id="vTitle" />
         <label>类型描述 <span class="label-hint">支持文字、图片、视频、超链接</span></label>
-        <div class="rte-toolbar rte-collapsed" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
+        <div class="rte-toolbar" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vDescEditor" title="字体">
             <option value="">字体</option>
             <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
@@ -597,13 +597,13 @@
             <option value="7" style="font-size:44px">巨大</option>
           </select>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="vDescEditor" title="文字颜色"><span class="rte-color-ico" style="color:#e53935">A</span></button>
-          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="vDescEditor" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl" style="background:#fff59d">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="vDescEditor" title="文字颜色"><span class="rte-color-ico">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="vDescEditor" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl">A</span></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn rte-emoji-btn" data-editor="vDescEditor" title="插入表情">😀 表情</button>
-          <button type="button" class="rte-btn" id="vDescRteLink" title="插入超链接">🔗 链接</button>
-          <button type="button" class="rte-btn" id="vDescRteImg" title="插入网络图片或从电脑上传">🖼 图片</button>
-          <button type="button" class="rte-btn" id="vDescRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button>
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="vDescEditor" title="插入表情"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg> 表情</button>
+          <button type="button" class="rte-btn" id="vDescRteLink" title="插入超链接"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 链接</button>
+          <button type="button" class="rte-btn" id="vDescRteImg" title="插入网络图片或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> 图片</button>
+          <button type="button" class="rte-btn" id="vDescRteVideo" title="插入网络视频或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> 视频</button>
           <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="vDescEditor" title="插入分割线">— 分割线</button>
           <button type="button" class="rte-btn rte-table-btn" data-editor="vDescEditor" title="插入表格">▦ 表格</button>
           </span><span class="rte-group">
@@ -613,18 +613,18 @@
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vDescEditor" title="删除线"><s>S</s></button>
           <button type="button" class="rte-btn rte-quote-btn" data-editor="vDescEditor" title="引用块">❝ 引用</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor" title="左对齐">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor" title="居中">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor" title="右对齐">➡</button>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor" title="左对齐">←</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor" title="居中">↔</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor" title="右对齐">→</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vDescEditor" title="无序列表">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vDescEditor" title="有序列表">1. 列表</button>
-          <button type="button" class="rte-btn rte-check-btn" data-editor="vDescEditor" title="插入复选框">☑ 复选框</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="vDescEditor" title="插入复选框"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 复选框</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="undo" data-target="vDescEditor" title="撤销">↩ 撤销</button>
           <button type="button" class="rte-btn" data-cmd="redo" data-target="vDescEditor" title="重做">↪ 重做</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vDescFormatBrush" title="格式刷">🖌 格式刷</button>
+          <button type="button" class="rte-btn" id="vDescFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg> 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor" title="清除格式">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶ 放大</button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
@@ -642,7 +642,7 @@
         <label>绑定设备上限 <span class="label-hint">最多可绑定台数，默认 1</span></label>
         <input id="vBindLimit" type="number" min="1" step="1" value="1" />
         <label>资源码专属内容（支持文字/链接/图片/视频）</label>
-        <div class="rte-toolbar rte-collapsed" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
+        <div class="rte-toolbar" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vContentEditor" title="字体">
             <option value="">字体</option>
             <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
@@ -664,13 +664,13 @@
             <option value="7" style="font-size:44px">巨大</option>
           </select>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="vContentEditor" title="文字颜色"><span class="rte-color-ico" style="color:#e53935">A</span></button>
-          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="vContentEditor" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl" style="background:#fff59d">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="vContentEditor" title="文字颜色"><span class="rte-color-ico">A</span></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="vContentEditor" title="背景颜色"><span class="rte-color-ico rte-color-ico-hl">A</span></button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn rte-emoji-btn" data-editor="vContentEditor" title="插入表情">😀 表情</button>
-          <button type="button" class="rte-btn" id="vContentRteLink" title="插入超链接">🔗 链接</button>
-          <button type="button" class="rte-btn" id="vContentRteImg" title="插入网络图片或从电脑上传">🖼 图片</button>
-          <button type="button" class="rte-btn" id="vContentRteVideo" title="插入网络视频或从电脑上传">🎬 视频</button>
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="vContentEditor" title="插入表情"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg> 表情</button>
+          <button type="button" class="rte-btn" id="vContentRteLink" title="插入超链接"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 链接</button>
+          <button type="button" class="rte-btn" id="vContentRteImg" title="插入网络图片或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> 图片</button>
+          <button type="button" class="rte-btn" id="vContentRteVideo" title="插入网络视频或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> 视频</button>
           <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="vContentEditor" title="插入分割线">— 分割线</button>
           <button type="button" class="rte-btn rte-table-btn" data-editor="vContentEditor" title="插入表格">▦ 表格</button>
           </span><span class="rte-group">
@@ -680,18 +680,18 @@
           <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vContentEditor" title="删除线"><s>S</s></button>
           <button type="button" class="rte-btn rte-quote-btn" data-editor="vContentEditor" title="引用块">❝ 引用</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor" title="左对齐">⬅</button>
-          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor" title="居中">⬌</button>
-          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor" title="右对齐">➡</button>
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor" title="左对齐">←</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor" title="居中">↔</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor" title="右对齐">→</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vContentEditor" title="无序列表">• 列表</button>
           <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vContentEditor" title="有序列表">1. 列表</button>
-          <button type="button" class="rte-btn rte-check-btn" data-editor="vContentEditor" title="插入复选框">☑ 复选框</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="vContentEditor" title="插入复选框"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 复选框</button>
           </span><span class="rte-group">
           <button type="button" class="rte-btn" data-cmd="undo" data-target="vContentEditor" title="撤销">↩ 撤销</button>
           <button type="button" class="rte-btn" data-cmd="redo" data-target="vContentEditor" title="重做">↪ 重做</button>
           </span><span class="rte-group">
-          <button type="button" class="rte-btn" id="vContentFormatBrush" title="格式刷">🖌 格式刷</button>
+          <button type="button" class="rte-btn" id="vContentFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg> 格式刷</button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor" title="清除格式">✕ 格式</button>
           <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶ 放大</button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>

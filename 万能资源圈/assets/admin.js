@@ -208,9 +208,6 @@
       inputMask.classList.remove('open');
       inputCallback = null;
     });
-    inputMask.addEventListener('click', function (e) {
-      if (e.target === this) { this.classList.remove('open'); inputCallback = null; }
-    });
     inputValue.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') inputOk.click();
     });
@@ -281,13 +278,6 @@
       document.getElementById('confirmMask').classList.remove('open');
       if (confirmCancelCallback) { var cb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
       else { confirmCallback = null; confirmCancelCallback = null; }
-    });
-    document.getElementById('confirmMask').addEventListener('click', function (e) {
-      if (e.target === this) {
-        this.classList.remove('open');
-        if (confirmCancelCallback) { var cb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
-        else { confirmCallback = null; confirmCancelCallback = null; }
-      }
     });
 
     // 滚动锁已取消（用户要求恢复自由滚动）：不再锁定页面滚动，弹窗/编辑器放大时页面仍可自由滚动
@@ -645,8 +635,25 @@
         triggerViewAnim(productList);
       }
     }
-    document.getElementById('viewListBtn').addEventListener('click', function () { setView('list'); });
-    document.getElementById('viewCardBtn').addEventListener('click', function () { setView('card'); });
+    /* R215 条8（老板 09-21）：管理页视图切换接入共用 FlipAnimator（ui-common.js，与资源页同款飞位）；
+       FLIP 不可用/系统减少动效时降级回旧容器切换动画 */
+    var __adminFlipper = null;
+    function flipSetAdminView(view) {
+      var productList = document.getElementById('productList');
+      var listBtn = document.getElementById('viewListBtn');
+      var cardBtn = document.getElementById('viewCardBtn');
+      if (!window.FlipAnimator || !productList) { setView(view); return; }
+      if (!__adminFlipper || __adminFlipper.container !== productList) __adminFlipper = new window.FlipAnimator(productList);
+      var animated = __adminFlipper.flip(function () {
+        currentView = view;
+        localStorage.setItem('admin_product_view', view);
+        if (view === 'card') { productList.classList.add('card-view'); listBtn.classList.remove('active'); cardBtn.classList.add('active'); }
+        else { productList.classList.remove('card-view'); listBtn.classList.add('active'); cardBtn.classList.remove('active'); }
+      }, { duration: 300, stagger: 20, maxStagger: 180 });
+      if (!animated) setView(view); // 降级：FLIP 未接管时走旧容器切换动画
+    }
+    document.getElementById('viewListBtn').addEventListener('click', function () { flipSetAdminView('list'); });
+    document.getElementById('viewCardBtn').addEventListener('click', function () { flipSetAdminView('card'); });
     // 初始化视图
     setView(currentView);
     try { initStatsFilterBar(); } catch (e) {}
@@ -1201,8 +1208,8 @@
         var select = document.getElementById('batchCatSelect');
         buildCatPicker(document.getElementById('batchCatPicker'), select,
           document.getElementById('batchCatDisplay'), document.getElementById('batchCatPanel'),
-          Number(select.value) || 0, { allowUncategorized: true, noSubAll: true, placeholder: '请选择目标分类' });
-        document.getElementById('batchCatMask').classList.add('open'); if (!document.getElementById('batchCatMask')._bm) { document.getElementById('batchCatMask')._bm = 1; document.getElementById('batchCatMask').addEventListener('click', function (e) { if (e.target === this) { this.classList.remove('open'); try { this.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} } }); }
+          Number(select.value) || 0, { allowUncategorized: true, placeholder: '请选择目标分类' }); /* R215 条5：批量移动同步恢复二级「全部」 */
+        document.getElementById('batchCatMask').classList.add('open'); if (!document.getElementById('batchCatMask')._bm) { document.getElementById('batchCatMask')._bm = 1; }
         // 确认按钮事件（只绑定一次）
         var okBtn = document.getElementById('batchCatOk');
         okBtn.onclick = function () {
@@ -1454,13 +1461,24 @@
             preview.classList.add('show');
             return;
           }
-          delete preview.dataset.fh;
-          if (preview.getAttribute('src') !== url) preview.src = url;
-          preview.classList.add('show');
-          preview.onerror = function () {
-            this.onerror = null; this.dataset.fh = '1'; __lastBadUrl = url;
-            this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail');
+          /* R215 条3（老板 09-21）：预加载成功才换图。旧逻辑直接把预览 src 切到未知链接，
+             会经历「真图被清掉→浏览器破图占位→onerror→换感叹号」中间态（占位框轻微跳动 /
+             破图图标一闪的根因）。改为后台 new Image() 试载：成功才换真图；失败原地换感叹号，
+             全程 120×120 固定槽 + contain，框内尺寸纹丝不动。 */
+          var probe = new Image();
+          probe.onload = function () {
+            preview.onerror = null; delete preview.dataset.fh;
+            preview.classList.remove('media-fail');
+            preview.src = url;
+            preview.classList.add('show');
           };
+          probe.onerror = function () {
+            __lastBadUrl = url;
+            preview.onerror = null; preview.dataset.fh = '1';
+            preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
+            preview.classList.add('show');
+          };
+          probe.src = url;
         } else {
           preview.onerror = null; preview.dataset.fh = '1'; __lastBadUrl = null;
           preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
@@ -1485,7 +1503,7 @@
         var all = document.createElement('div');
         all.className = 'cp-item cp-all' + (Number(selected) === 0 ? ' selected' : '');
         all.innerHTML = '<span class="cp-name">' + (opts.allLabel || '全部') + '</span>';
-        all.addEventListener('click', function () { pickCatValue(pickerEl, hiddenInput, displayEl, 0, opts.allLabel || '全部'); });
+        all.addEventListener('click', function () { pickCatValue(pickerEl, hiddenInput, displayEl, 0, opts.allLabel || '全部', !!opts.showAll); });
         panelEl.appendChild(all);
       }
       if (!tops.length) {
@@ -1544,11 +1562,11 @@
       else { txtEl.textContent = opts.placeholder || '请选择分类'; txtEl.classList.add('placeholder'); }
       hiddenInput.value = sel || 0;
     }
-    function pickCatValue(pickerEl, hiddenInput, displayEl, id, name) {
+    function pickCatValue(pickerEl, hiddenInput, displayEl, id, name, grey) {
       hiddenInput.value = id;
       var txtEl = displayEl.querySelector('.cpd-text');
       txtEl.textContent = name;
-      txtEl.classList.remove('placeholder');
+      txtEl.classList.toggle('placeholder', !!grey); /* R215 条2：筛选「全部」=未筛选，统一灰占位 */
       document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
       pickerEl.querySelectorAll('.cp-item.selected').forEach(function (el) { el.classList.remove('selected'); });
       if (!document.getElementById('batchCatMask').classList.contains('open') && !document.getElementById('catMask').classList.contains('open') && typeof onProductCidChange === 'function') onProductCidChange(id);
@@ -1688,7 +1706,7 @@
           }
         } else if (__sv === '0') {
           var __dt0 = fp.querySelector('.cat-picker-display .cpd-text');
-          if (__dt0) { __dt0.textContent = '全部分类'; __dt0.classList.remove('placeholder'); }
+          if (__dt0) { __dt0.textContent = '全部分类'; __dt0.classList.add('placeholder'); } /* R215 条2：未筛选=灰占位 */
         }
       } catch (e0) {}
     }
@@ -1704,13 +1722,12 @@
       buildCatPicker(
         document.getElementById('fCidPicker'), fCid,
         document.getElementById('fCidDisplay'), document.getElementById('fCidPanel'),
-        selected, { allowUncategorized: true, noSubAll: true, placeholder: '请选择分类' }
+        selected, { allowUncategorized: true, placeholder: '请选择分类' } /* R215 条5：恢复二级「全部」（=选该一级），一级「全部」保留 */
       );
     }
 
     saveProductBtn.addEventListener('click', saveProduct);
     editCancel.addEventListener('click', function () { editMask.classList.remove('open'); clearDraft(); });
-    editMask.addEventListener('click', function (e) { if (e.target === editMask) { clearDraft(); editMask.classList.remove('open'); } }); // R145：点外=取消（丢草稿，与×/取消键同口径）
 
     // ---------- 表单必填校验 ----------
     function validateField(input, msg) {
@@ -3015,14 +3032,15 @@ document.addEventListener('click', function (e) {
       editor.focus();
     });
 
-    /* 复选框：光标处插入 ☐ + 空格（纯字符，前台零过滤风险） */
+    /* R215 条4（老板 09-21）：复选框改为真 <input type=checkbox>——此前插入 '☐ ' 纯字符，
+       又小又点不了；真 input 与文字同高（CSS 1em）、可点击勾选，前台 sanitizeHTML 已放行 INPUT */
     document.addEventListener('click', function (e) {
       var btn = e.target.closest ? e.target.closest('.rte-check-btn') : null;
       if (!btn) return;
       e.preventDefault();
       var editor = document.getElementById(btn.getAttribute('data-editor'));
       if (!editor) return;
-      rteApplyCmd(editor, 'insertHTML', '☐ ');
+      rteApplyCmd(editor, 'insertHTML', '<input type="checkbox" class="rte-check">');
     });
 
     /* 字数统计：四处编辑器下方计数条，MutationObserver 驱动（输入/工具栏改动都刷新） */
@@ -3247,7 +3265,7 @@ document.addEventListener('click', function (e) {
     var annDraftPending = false;
     var stateAnn = { list: [], curId: null, loaded: false };
     // 初始隐藏设置页中的公告编辑器（由"设置公告"弹窗承载）
-    (function () { var _tb = document.getElementById('announcementRteToolbar'); if (_tb) _tb.style.display = 'none'; if (annEditor) annEditor.style.display = 'none'; })();
+    (function () { var _tb = document.getElementById('announcementRteToolbar'); if (_tb) _tb.style.display = 'none'; if (annEditor) annEditor.style.display = 'none'; var _ct0 = document.querySelector('.rte-count[data-for="setAnnouncement"]'); if (_ct0) _ct0.style.display = 'none'; })(); /* R215 条1：计数条同藏 */
     // 解析公告列表（兼容旧单条 announcement）
     function parseAnnouncements(settings) {
       var arr = [];
@@ -3360,6 +3378,9 @@ document.addEventListener('click', function (e) {
         var _tb = document.getElementById('announcementRteToolbar');
         if (_tb) { _tb.style.display = ''; slot.appendChild(_tb); }
         if (annEditor) { annEditor.style.display = ''; slot.appendChild(annEditor); }
+        /* R215 条1：字数计数条随编辑器一起搬进弹窗（此前留在设置页成「已输入 0 字」孤儿文案） */
+        var _ct = document.querySelector('.rte-count[data-for="setAnnouncement"]');
+        if (_ct) { _ct.style.display = ''; slot.appendChild(_ct); }
       }
       // 先立即打开弹窗，再后台拉取最新数据（避免网络延迟导致弹窗迟迟不出现）
       document.getElementById('annMask').classList.add('open');
@@ -3419,10 +3440,6 @@ document.addEventListener('click', function (e) {
       annDiscard(); // R145：取消=全量恢复（数据+编辑器+频率+列表），与×/点外/Esc 同口径
     });
     // 遮罩关闭：暂存当前编辑状态，下次打开可继续编辑
-    document.getElementById('annMask').addEventListener('click', function (e) {
-      // R145：点外关闭=取消（丢弃未保存修改）——旧「暂存草稿」语义被用户否决（重开仍见未保存频率/内容）
-      if (e.target === document.getElementById('annMask')) { annDiscard(); }
-    });
 
     // ---------- 全局客服链接（弹窗设置，与公告一致） ----------
     // 修复（P0）：var 声明原来被误写进上一行 // 注释里（整句被注释掉），contactDraftPending 未定义，
@@ -3455,7 +3472,6 @@ document.addEventListener('click', function (e) {
       });
     });
     document.getElementById('cancelContactBtn').addEventListener('click', function () { contactDraftPending = false; document.getElementById('contactUrlInput').value = ''; document.getElementById('contactMask').classList.remove('open'); });
-    document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) { contactDraftPending = false; var _cu = document.getElementById('contactUrlInput'); if (_cu) _cu.value = ''; document.getElementById('contactMask').classList.remove('open'); } }); // R145：点外=取消（清输入，与×/取消键同口径）
 
     // 工具栏按钮点击执行命令
     document.querySelectorAll('#announcementRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
@@ -3613,9 +3629,6 @@ document.addEventListener('click', function (e) {
           try { document.getElementById('linkDialogUrl').value = ''; document.getElementById('linkDialogText').value = ''; } catch (e) {}
           __linkStashOn = false;
           linkDialogMask.classList.remove('open');
-        });
-        linkDialogMask.addEventListener('click', function (e) {
-          if (e.target === linkDialogMask) { __linkStashOn = true; linkDialogMask.classList.remove('open'); }
         });
         if (window.__modalKit) window.__modalKit.register(linkDialogMask, {
           discard: function () { try { document.getElementById('linkDialogUrl').value = ''; document.getElementById('linkDialogText').value = ''; } catch (e) {} __linkStashOn = false; linkDialogMask.classList.remove('open'); },
@@ -3914,7 +3927,6 @@ document.addEventListener('click', function (e) {
     }
 
     variantCancel.addEventListener('click', function () { variantDraftPending = false; variantMask.classList.remove('open'); });
-    variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = false; variantDraftFor = null; variantMask.classList.remove('open'); } }); // R145：点外=取消（丢输入）
 
     function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? String(Number(p[2])) : s; } // R52：图表标签只显号数（用户要求去掉月份）
     // R62：悬浮提示的时间标签——小时数据（1天档）加「时」，日期数据显示「几月几日」
@@ -5199,7 +5211,6 @@ refreshCatCnts();
     });
 
     catCancel.addEventListener('click', function () { catDraftPending = false; catMask.classList.remove('open'); });
-    catMask.addEventListener('click', function (e) { if (e.target === catMask) { catDraftPending = false; catDraftFor = null; catMask.classList.remove('open'); } }); // R145：点外=取消（丢输入）
 
     // ---------- 平台设置：修改密码（弹窗形式） ----------
     var pwdMask = document.getElementById('pwdMask');
@@ -5212,10 +5223,6 @@ refreshCatCnts();
     document.getElementById('cancelPwdBtn').addEventListener('click', function () {
       document.getElementById('oldPwd').value = ''; document.getElementById('newPwd').value = ''; document.getElementById('confirmPwd').value = ''; // 取消=丢弃输入
       pwdMask.classList.remove('open');
-    });
-    // 点击遮罩关闭弹窗
-    pwdMask.addEventListener('click', function (e) {
-      if (e.target === pwdMask) pwdMask.classList.remove('open');
     });
     // 确定修改密码
     document.getElementById('changePwdBtn').addEventListener('click', function () {
@@ -5611,13 +5618,12 @@ refreshCatCnts();
         m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
           '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
           '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=213" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
+          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=214" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
           '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
           '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
           '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
           '</div>';
         document.body.appendChild(m);
-        m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); });
         var im = document.getElementById('kfFallbackImg');
         if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
       }
@@ -5639,14 +5645,11 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=213', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=214', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
       document.getElementById('previewMask').classList.remove('open');try{document.querySelectorAll('#previewMask video').forEach(function(v){v.pause()})}catch(e){}
-    });
-    document.getElementById('previewMask').addEventListener('click', function (e) {
-      if (e.target === this) { this.classList.remove('open'); try { this.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {} }
     });
 
     // ---------- ESC 关闭弹窗 ----------
@@ -5747,7 +5750,6 @@ refreshCatCnts();
       }
       function __cpRun(i) { var c = items[i]; if (!c) return; __cpClose(); try { c.run(); } catch (e) { try { console.error(e); } catch (e2) {} } }
 
-      mask.addEventListener('click', function (e) { if (e.target === mask) __cpClose(); });
       input.addEventListener('input', function () { active = 0; __cpRender(); });
       input.addEventListener('keydown', function (e) {
         if (e.key === 'ArrowDown') { e.preventDefault(); if (items.length) { active = (active + 1) % items.length; __cpPaint(); } }
@@ -5815,9 +5817,8 @@ refreshCatCnts();
         discard: function () { inputCallback = null; try { el('inputValue').value = ''; } catch (e) {} inputMask.classList.remove('open'); },
         stash: function () { inputCallback = null; inputMask.classList.remove('open'); }
       });
-      // 绑定设备：纯展示，任何通道=直接关；并补「点外关闭」（原先 admin 唯一点外关不掉的弹窗）
+      // 绑定设备：纯展示，任何通道=直接关（R215：老板拍板全系统取消点外关闭，原补的点外关闭一并移除）
       var __bm = el('bindingsMask');
-      if (__bm) __bm.addEventListener('click', function (e) { if (e.target === this) this.classList.remove('open'); });
       kit.register(__bm, { discard: function () { __bm.classList.remove('open'); }, stash: function () { __bm.classList.remove('open'); } });
       // 预览：直接关 + 暂停视频
       var __pm = el('previewMask');

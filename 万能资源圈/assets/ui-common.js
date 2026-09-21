@@ -88,7 +88,6 @@ if ('serviceWorker' in navigator) {
       // 不直接解锁：若还有其他弹窗（如商品弹窗）开着，必须保持背景锁定
       if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overflow = '');
     }
-    m.addEventListener('click', function (e) { if (e.target === m) close(); });
     // R111：注册进 __modalKit——Esc 走暂存通道（纯展示弹窗=直接关）
     if (window.__modalKit) window.__modalKit.register(m, { discard: close, stash: close });
     document.getElementById('kfCloseX').addEventListener('click', close);
@@ -124,7 +123,7 @@ if ('serviceWorker' in navigator) {
       img.classList.remove('kf-qr-in');
       img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; if (this.classList) this.classList.add('media-fail'); };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=213';
+      img.src = qrImg || '/assets/images/kefu.png?v=215';
       if (img.complete && img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
       // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
       if (window.__bindQrLightbox) window.__bindQrLightbox(img);
@@ -161,8 +160,6 @@ if ('serviceWorker' in navigator) {
     if (!__lbMask) {
       __lbMask = document.createElement('div');
       __lbMask.className = 'lightbox';
-      // R111：点图片本身不算「弹窗外」，只有点空白遮罩才关（与全站口径一致）
-      __lbMask.onclick = function (e) { if (e.target === __lbMask) window.closeLightbox(); };
       document.body.appendChild(__lbMask);
       // R111：注册进统一弹窗栈，Esc 逐层路由（只关最上层）
       if (window.__modalKit) window.__modalKit.register(__lbMask, { discard: window.closeLightbox, stash: window.closeLightbox });
@@ -280,7 +277,6 @@ if ('serviceWorker' in navigator) {
           if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
         }, 200);
       };
-      mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
       var ok = mask.querySelector('.alert-ok');
       if (ok) ok.addEventListener('click', close);
       var x = mask.querySelector('.modal-close-x');
@@ -326,7 +322,6 @@ if ('serviceWorker' in navigator) {
         try { document.body.removeChild(mask); } catch (e) {}
         if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
       }
-      mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
       mask.querySelector('[data-share-x]').addEventListener('click', close);
       mask.querySelector('[data-share-ok]').addEventListener('click', close);
       // R111：注册进 __modalKit——Esc 走暂存通道（纯展示弹窗=直接关）
@@ -534,16 +529,27 @@ window.__modalKit = (function () {
      用户点 ×/确定等主动关闭时，自动 back 抵消那条哨兵，历史不留垃圾。
      __navSuppress：popstate 引起的关闭（历史已消耗，不再 back）；__navBack：主动关闭的 back 在途计数。
      __navLast=-1 基线：页面加载时已开的弹窗不算导航事件。 */
-  var __navLast = -1, __navSuppress = 0, __navBack = 0, __navT = 0;
+  /* ===== R214（老板线上实测反馈）：哨兵实账修复 =====
+     根因：基线期打开的弹窗（老访客 localStorage 缓存公告在脚本同步期即弹开，早于首次 60ms tick）
+     不 push 哨兵，但关闭时旧逻辑仍按「关了几个就 back 几次」抵消——抵消一条从未 push 过的哨兵，
+     history.back() 直接把从导航页进来的访客弹回导航页（进资源页点任意按钮/遮罩关公告即触发）。
+     修复：新增 __navSent「真实 push 过的哨兵数」实账——只有确实 push 过的哨兵才 back 抵消；
+     基线期弹窗的关闭不再产生任何历史操作。v212 对照树同款复现，属 R186 设计遗留而非 R211/R213 回归。 */
+  var __navLast = -1, __navSuppress = 0, __navBack = 0, __navT = 0, __navSent = 0;
   function __navTick() {
     var cur = stack.length;
     if (__navLast < 0) { __navLast = cur; return; }
     if (cur > __navLast) {
       for (var i = 0; i < cur - __navLast; i++) { try { history.pushState({ __modalNav: 1 }, '', location.href); } catch (e) {} }
+      __navSent += cur - __navLast;
     } else if (cur < __navLast) {
       var drop = __navLast - cur;
-      if (__navSuppress > 0) { __navSuppress = Math.max(0, __navSuppress - drop); }
-      else { __navBack += drop; for (var j = 0; j < drop; j++) { try { history.back(); } catch (e) {} } }
+      if (__navSuppress > 0) { /* popstate 关闭：浏览器返回键已消耗对应哨兵，同步实账 */
+        var used = Math.min(drop, __navSuppress);
+        __navSuppress -= used; __navSent = Math.max(0, __navSent - used); drop -= used;
+      }
+      var backs = Math.min(drop, __navSent); /* R214：只为真正 push 过的哨兵 back——基线期弹窗关闭不再误弹回上一页 */
+      if (backs > 0) { __navBack += backs; __navSent -= backs; for (var j = 0; j < backs; j++) { try { history.back(); } catch (e) {} } }
     }
     __navLast = cur;
   }
