@@ -534,6 +534,13 @@
     .modal-wide { max-width: 520px; }
     /* 按内容量分配档位：大(编辑资源/公告/绑定设备清单 R94) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
     .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box, .modal-mask#bindingsMask > .modal-box { max-width: 680px; }
+    /* R223：资源码详情合并表 8 列——弹窗加宽（后写的规则生效） */
+    .modal-mask#bindingsMask > .modal-box { max-width: 880px; }
+    /* R225：窄屏（≤600px）合并表操作列「解绑」按钮完整显示——.stat-table 为 table-layout:fixed + td overflow:hidden，
+       390 下操作列均分宽 < 按钮默认 padding 宽会被裁剪；缩 padding/字号并禁换行即可放下（桌面 880px 不受媒体查询影响） */
+    @media (max-width: 600px) {
+      #bindingsTable .row-btn { padding: 4px 4px; font-size: 12px; white-space: nowrap; }
+    }
     .modal-mask#catMask > .modal-box, .modal-mask#batchCatMask > .modal-box { max-width: 520px; }
     /* 弹窗宽度由各弹窗 modal-wide/modal-lg 类控制 */
     @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
@@ -684,6 +691,7 @@
       padding: 0 10px; height: 32px; border: 1px solid var(--border); border-radius: 6px;
       background: var(--card-bg); cursor: pointer; font-size: 13px; color: var(--text);
       transition: transform, opacity, background, color, box-shadow var(--dur-fast); min-width: 32px; text-align: center; display: inline-flex; align-items: center; justify-content: center;
+      line-height: 1; /* R216：行框高度归一为字号本身——flex 只能居中"行框"，行框含上下空隙时 CJK 墨迹整体偏上、与 SVG 图标错位；归一后墨迹中线与行框中线一致，图标与文字像素级同线 */
     }
 
     .rte-btn:active { transform: scale(0.94); }    .rte-group { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }    .rte-group:last-child { margin-right: 0; }
@@ -710,7 +718,19 @@
     .rte-color-btn { padding: 3px 6px; }
     .rte-color-ico { display: inline-block; font-size: 13px; font-weight: 700; line-height: 1; padding: 1px 2px; border-radius: 3px; color: var(--text); }
     /* R215 条11（老板 09-21）：编辑器小图标统一黑白——彩色/emoji 字形全部换成 stroke=currentColor 的黑白 SVG */
-    .rte-toolbar .rte-ico { width: 14px; height: 14px; vertical-align: -2px; }
+    .rte-toolbar .rte-ico { width: 14px; height: 14px; flex-shrink: 0; } /* R216：删掉残留的 vertical-align:-2px 魔法数——.rte-btn 已是 flex 布局，该值本是死代码，且会误导后续以为图标靠它对齐；对齐统一由 flex + line-height:1 负责 */
+    /* R219（老板 09-21 13:05）：字形按钮墨迹居中补偿——【/▦ 等 CJK 字形的墨迹在字身框内天然偏移
+       （R216 双引号同类问题，当时误用「字形天然如此」解释），flex 只能居中行框、行框≠墨迹框。
+       字形包一层 .rte-glyph，用 em 级平移把墨迹视觉中心拉回按钮几何中心：补偿量随字号缩放，
+       电脑 13px / 手机 12px / 放大态 15px 三档均适用；不改按钮尺寸、不改工具栏布局 */
+    .rte-toolbar .rte-glyph { display: inline-block; }
+    .rte-toolbar .rte-quote-btn .rte-glyph { transform: translate(-0.25em, 0.1em); }
+    .rte-toolbar .rte-table-btn .rte-glyph { transform: translate(0, -0.05em); }
+    /* R219：工具栏字体/字号下拉——内容组合（文字+箭头）墨迹中心居中。
+       原 space-between + cpd-text:flex:1 左对齐，组合墨迹中心偏左 3.5px（1280 与 390 双端同）；
+       改为组合整体居中，picker 宽 80px、高度、字号均不变 */
+    .rte-toolbar .select-picker .cat-picker-display { justify-content: center; transform: translate(3.5px, -1px); }
+    .rte-toolbar .select-picker .cat-picker-display .cpd-text { flex: 0 0 auto; }
     .pwd-eye-ico { width: 18px; height: 18px; } /* 条11：密码小眼睛黑白 SVG（按钮 flex 居中） */
     .rte-color-ico-hl { color: #333; }
     /* 浮层基类：复用资源码下拉框 cat-picker-panel 同款白卡规格 */

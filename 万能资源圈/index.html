@@ -11,17 +11,17 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="万能资源圈">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="/assets/images/logo.png?v=215">
+<meta property="og:image" content="/assets/images/logo.png?v=224">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="万能资源圈・导航">
 <meta name="twitter:description" content="优质虚拟资源导航站，一键获取学习资源、软件工具、设计素材">
-<meta name="twitter:image" content="/assets/images/logo.png?v=215">
+<meta name="twitter:image" content="/assets/images/logo.png?v=224">
   <link rel="stylesheet" href="/assets/ui-common.css">
-<link rel="icon" type="image/x-icon" href="/favicon.ico?v=215">
+<link rel="icon" type="image/x-icon" href="/favicon.ico?v=224">
 <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
 <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e2a4f" media="(prefers-color-scheme: dark)">
-<link rel="preload" href="/assets/images/logo.png?v=215" as="image">
+<link rel="preload" href="/assets/images/logo.png?v=224" as="image">
 <style>
 :root{
     --blue1:#1E88E5;
@@ -128,6 +128,7 @@ body{
     gap: 16px; /* R46：回退组合居中（R35/R44 前定稿）——图标+文字并排成组、整组居中；图标仍在文字左侧 */
     border: none;
     font-size: 30px; /* R46：图标文字整体调大（原 26px），按钮观感更饱满 */
+    line-height: 1; /* R216：行框归一为字号本身——flex 居中的是"行框"，30px 字默认行框约 42px，CJK 墨迹在行框内整体偏上 2.5px，与 SVG 图标（几何居中）错位；归一后墨迹中线与行框中线一致（DOM 探针实测：修前 -2.5px → 修后 +0.5px，≤1px 达标） */
     color: #ffffff;
     font-weight: 500;
     cursor: pointer;
@@ -287,7 +288,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 <div class="wrap">
     <div class="logo-wrap">
         <div class="logo-box"><!-- R53：logo 去链接（特效 hover/active/进场动画全保留） -->
-            <img class="logo-img" id="logoImage" src="/assets/images/logo.png?v=215" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="this.style.opacity='1';var p=this.parentNode;if(p){p.style.opacity='1';if(!p.classList.contains('logo-enter'))p.classList.add('logo-enter');}this.onerror=null;this.classList&&this.classList.add('media-fail');this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';">
+            <img class="logo-img" id="logoImage" src="/assets/images/logo.png?v=224" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="this.style.opacity='1';var p=this.parentNode;if(p){p.style.opacity='1';if(!p.classList.contains('logo-enter'))p.classList.add('logo-enter');}this.onerror=null;this.classList&&this.classList.add('media-fail');this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';">
             <div class="logo-fail-icon" id="logoFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -350,10 +351,10 @@ const CONFIG = {
     resourceUrl: "shop",
     serviceWeixinUrl: "https://work.weixin.qq.com/kfid/kfc39748ad948e8b691",
     groupWeixinUrl: "https://work.weixin.qq.com/gm/8036a2badd7daab25b1764b62c3bff9a",
-    logoImg: "/assets/images/logo.png?v=215",
-    serviceQrImg: "/assets/images/kefu.png?v=215",
-    groupQrImg: "/assets/images/qun.png?v=215",
-    gzhImg: "/assets/images/gzh.png?v=215",
+    logoImg: "/assets/images/logo.png?v=224",
+    serviceQrImg: "/assets/images/kefu.png?v=224",
+    groupQrImg: "/assets/images/qun.png?v=224",
+    gzhImg: "/assets/images/gzh.png?v=224",
     tipService: "长按图片识别-添加人工客服",
     tipGroup: "长按图片识别-加入交流群聊",
     tipGzh: "长按图片识别-关注公众号讯",

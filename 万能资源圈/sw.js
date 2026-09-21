@@ -9,7 +9,7 @@
  *  - /api/ 一律不缓存，始终走网络。
  *  - 任何非 200、或内容类型为 HTML 的 /assets 响应一律不缓存（防止错误页伪装成脚本/样式）。
  */
-const CACHE_NAME = 'wnzyq-v215'; // R214（老板线上实测反馈）：CACHE_NAME v213→v214 触发旧缓存清理；R214 修复 __modalKit 哨兵实账（见 ui-common.js），与缓存无关但顺带清老访客侧旧版本残留
+const CACHE_NAME = 'wnzyq-v225'; // R225：v224→v225。资源码详情弹窗五项小改：汇总句居中+新文案（已绑定/待绑定/已过期/资源码绑定上限）、空单元格留空不显「—」、码列点击即复制该码（只复制不换码）、390 解绑按钮完整显示、「早期绑定」灰小字保留。上轮 R224：v223→v224。合并表两列合一——删「剩余有效」列，「状态」改名「有效状态」（已绑定绿/剩 N 天蓝/已过期灰，不加粗），表变 7 列。上轮 R223：v222→v223。资源码与绑定合并为一张平铺表（8 列、码信息每行填满、老绑定「早期绑定」、20 条/页分页、弹窗标题「资源码详情」、按键改「资源码」、码面板撤发码小字恢复原样）；上轮 R222=导出文件名杠统一。导出文件名日期时间之间的下划线统一为杠（20260921-1624-数据统计.xls）；上轮 R221=复制即换码+60天兑换窗口+数据导出全面升级。本轮=复制即换码+60天兑换窗口（大改动：code_issues 表、发码/验码/清理全链路）+数据导出全面升级（8 工作表、全居中、文件名「时间-数据统计」）；历史：R220=客服二维码文件名恢复老板标准名
 
 const STATIC_ASSETS = [
   './',
@@ -18,17 +18,17 @@ const STATIC_ASSETS = [
   './admin.html',
   './error.html',
   './manifest.json',
-  './favicon.ico?v=215', // R171：带版本绕开浏览器 favicon 硬缓存（刷新闪旧图标根治）
+  './favicon.ico?v=224', // R171：带版本绕开浏览器 favicon 硬缓存（刷新闪旧图标根治）
   './assets/ui-common.css',
   './assets/ui-common.js',
   './assets/admin.css',
   './assets/admin.js',
   './assets/shop.css',
   './assets/shop.js',
-  './assets/images/logo.png?v=215',
-  './assets/images/kefu.png?v=215',
-  './assets/images/qun.png?v=215',
-  './assets/images/gzh.png?v=215'
+  './assets/images/logo.png?v=224',
+  './assets/images/kefu.png?v=224',
+  './assets/images/qun.png?v=224',
+  './assets/images/gzh.png?v=224'
 ];
 
 // 安装：逐项缓存静态资源（单项失败不影响整体）

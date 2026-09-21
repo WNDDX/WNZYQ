@@ -4,7 +4,7 @@
  * POST /api/admin/variants                   → 新增类型
  * body: { productId, name, desc, img, video, contactUrl, sort, resourceCode, resourceContent, isHidden }
  */
-import { json, requireAuth, readJSON, cleanVariant, ensureVariantColumns, ensureBindingsTable } from '../../_utils.js';
+import { json, requireAuth, readJSON, cleanVariant, ensureVariantColumns, ensureBindingsTable, ensureCodeIssuesTable, recentIssues } from '../../_utils.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -33,7 +33,16 @@ export async function onRequestGet(context) {
   const bindMap = {};
   for (const r of bindRows) bindMap[r.variant_id] = r.n;
 
-  return json({ ok: true, list: results.map((v) => Object.assign(cleanVariant(v), { bindings: bindMap[v.id] || 0 })) });
+  // R221：顺带返回每类型最近发码记录（码面板展示：码 / 发放时间 / 剩余天数 / 状态）
+  await ensureCodeIssuesTable(env);
+  const list = [];
+  for (const v of results) {
+    list.push(Object.assign(cleanVariant(v), {
+      bindings: bindMap[v.id] || 0,
+      issues: await recentIssues(env, v.id, 5),
+    }));
+  }
+  return json({ ok: true, list });
 }
 
 export async function onRequestPost(context) {

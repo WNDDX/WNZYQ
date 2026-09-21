@@ -88,6 +88,7 @@ if ('serviceWorker' in navigator) {
       // 不直接解锁：若还有其他弹窗（如商品弹窗）开着，必须保持背景锁定
       if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overflow = '');
     }
+    m.addEventListener('click', function (e) { if (e.target === m) close(); }); /* R217：恢复点外关闭（R215 误删——老板原意只删下滑手势） */
     // R111：注册进 __modalKit——Esc 走暂存通道（纯展示弹窗=直接关）
     if (window.__modalKit) window.__modalKit.register(m, { discard: close, stash: close });
     document.getElementById('kfCloseX').addEventListener('click', close);
@@ -123,7 +124,7 @@ if ('serviceWorker' in navigator) {
       img.classList.remove('kf-qr-in');
       img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; if (this.classList) this.classList.add('media-fail'); };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=215';
+      img.src = qrImg || '/assets/images/kefu.png?v=224';
       if (img.complete && img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
       // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
       if (window.__bindQrLightbox) window.__bindQrLightbox(img);
@@ -160,6 +161,8 @@ if ('serviceWorker' in navigator) {
     if (!__lbMask) {
       __lbMask = document.createElement('div');
       __lbMask.className = 'lightbox';
+      // R111：点图片本身不算「弹窗外」，只有点空白遮罩才关（与全站口径一致）；R217：恢复（R215 误删）
+      __lbMask.onclick = function (e) { if (e.target === __lbMask) window.closeLightbox(); };
       document.body.appendChild(__lbMask);
       // R111：注册进统一弹窗栈，Esc 逐层路由（只关最上层）
       if (window.__modalKit) window.__modalKit.register(__lbMask, { discard: window.closeLightbox, stash: window.closeLightbox });
@@ -277,6 +280,7 @@ if ('serviceWorker' in navigator) {
           if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
         }, 200);
       };
+      mask.addEventListener('click', function (e) { if (e.target === mask) close(); }); /* R217：恢复点外关闭（R215 误删） */
       var ok = mask.querySelector('.alert-ok');
       if (ok) ok.addEventListener('click', close);
       var x = mask.querySelector('.modal-close-x');
@@ -314,14 +318,19 @@ if ('serviceWorker' in navigator) {
         uEl.title = '点击复制链接';
         uEl.addEventListener('click', function () {
           try { __shareCopy(uEl.textContent || ''); } catch (e) {}
+          if (uEl.classList) { uEl.classList.add('copy-ok-text'); setTimeout(function () { try { uEl.classList.remove('copy-ok-text'); } catch (e) {} }, 1500); } /* R217 条1：复制成功=链接文字变绿 1.5s（全站统一口径，与资源页顶栏分享一致） */
           __shareToast('链接已复制到剪贴板');
         });
+        /* R217 条1：弹窗打开那一刻的自动复制同样给绿字反馈（所有走本弹窗的分享入口统一） */
+        uEl.classList.add('copy-ok-text');
+        setTimeout(function () { try { uEl.classList.remove('copy-ok-text'); } catch (e) {} }, 1500);
       }
       document.body.appendChild(mask);
       function close() {
         try { document.body.removeChild(mask); } catch (e) {}
         if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
       }
+      mask.addEventListener('click', function (e) { if (e.target === mask) close(); }); /* R217：恢复点外关闭（R215 误删） */
       mask.querySelector('[data-share-x]').addEventListener('click', close);
       mask.querySelector('[data-share-ok]').addEventListener('click', close);
       // R111：注册进 __modalKit——Esc 走暂存通道（纯展示弹窗=直接关）
@@ -585,42 +594,8 @@ window.__modalKit = (function () {
     e.preventDefault();
     close(stack[stack.length - 1], 'discard'); // R147：Esc=丢弃（全站弹窗统一：取消/点外/Esc=丢弃未保存修改）
   });
-  /* R192 二③：弹窗下滑手势关闭（微信式，全站同步）——内容区顶部向下拖 >120px 松手关闭；
-     用户拍板：此关闭走「暂存」通道（stash）——编辑中的内容保留，重开弹窗自动回填，不属丢弃。
-     跟手期间内容盒直接位移（无 transition），松手未达阈值回弹（transition .2s）。 */
-  (function () {
-    var sy = -1, box = null, mask = null, dy = 0;
-    document.addEventListener('touchstart', function (e) {
-      if (!stack.length) return;
-      mask = stack[stack.length - 1];
-      var t = e.target;
-      if (!mask || !mask.contains(t)) return;
-      box = t.closest ? t.closest('.modal-box, .kf-box, .ann-box, .share-box, .preview-box') : null;
-      if (!box) return;
-      if (box.scrollTop > 0) { box = null; return; } /* 内容滚到中间时不误触发，先让滚动 */
-      sy = e.touches[0].clientY; dy = 0;
-    }, { passive: true });
-    document.addEventListener('touchmove', function (e) {
-      if (sy < 0 || !box) return;
-      dy = e.touches[0].clientY - sy;
-      if (dy <= 0) return;
-      if (box.scrollTop > 0) return; /* 拖动中内容可滚则让位给滚动 */
-      box.style.transition = 'none';
-      box.style.transform = 'translateY(' + Math.min(dy, 260) + 'px)';
-      if (mask && mask.style) mask.style.opacity = String(Math.max(0.25, 1 - dy / 320)); /* 背景同步变淡 */
-    }, { passive: true });
-    function __end() {
-      if (sy < 0) { box = null; return; }
-      var __m = mask, __b = box;
-      if (__b) { __b.style.transition = 'transform 0.2s ease'; __b.style.transform = ''; }
-      if (__m && __m.style) { __m.style.transition = 'opacity 0.2s ease'; __m.style.opacity = ''; }
-      if (dy > 120 && __m) close(__m, 'stash'); /* 阈值关闭=暂存：编辑内容保留（R111 草稿体系） */
-      sy = -1; box = null; dy = 0;
-      setTimeout(function () { if (__b) __b.style.transition = ''; if (__m && __m.style) __m.style.transition = ''; }, 220);
-    }
-    document.addEventListener('touchend', __end);
-    document.addEventListener('touchcancel', __end);
-  })();
+  /* R217 条8（老板 09-21）：R192 的「下滑手势关闭弹窗」整个删除——老板原意只保留点外关闭/×/Esc，
+     上下滑关弹窗的手势（含电脑端同类拖拽关闭，全系统本就只有这一处 touch 手势实现）清干净。 */
   return { register: register, close: close, stack: stack };
 })();
 

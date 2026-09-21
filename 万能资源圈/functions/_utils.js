@@ -312,6 +312,104 @@ export async function ensureBindingsTable(env) {
   } catch (e) { console.error('R106 ensureBindingsTable 失败（调用方按无绑定数据兜底）:', e && e.message); /* 建表失败时调用方按无绑定数据兜底 */ }
 }
 
+// R221（老板 15:44 拍板·复制即换码 + 60 天兑换窗口）：随机资源码——8 位大写（验证不区分大小写）；
+// R98 口径沿用：全字符集随机，不做 0/O/1/I/L 易混淆限制
+export function genResourceCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const arr = new Uint8Array(8);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, (b) => chars[b % chars.length]).join('');
+}
+
+// R221：发码记录表（幂等自愈建表，沿用 ensureBindingsTable 模式）——
+// 一行 = 某类型（variant_id）在某时刻（issued_at）发出的一个资源码：
+//   status='issued' 待用（60 天窗口内可兑换）；'bound' 已用（至少一台设备已凭此码绑定）。
+// 「已过期」不落库状态，由展示层按 issued_at 距今超 60 天动态判定；
+// 超 60 天仍未绑定的 issued 行由 track.js 访问顺带清理删除（R204 教训：纯代码滚动清理，不用 Cron）。
+let _codeIssuesEnsured = false;
+export async function ensureCodeIssuesTable(env) {
+  if (_codeIssuesEnsured) return;
+  try {
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS code_issues (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      variant_id INTEGER NOT NULL,
+      product_id INTEGER NOT NULL DEFAULT 0,
+      code       TEXT NOT NULL,
+      issued_at  TEXT NOT NULL DEFAULT (datetime('now')),
+      status     TEXT NOT NULL DEFAULT 'issued',
+      bound_at   TEXT
+    )`).run();
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_code_issues_variant_status ON code_issues(variant_id, status)').run();
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_code_issues_variant_issued ON code_issues(variant_id, issued_at)').run();
+    _codeIssuesEnsured = true;
+  } catch (e) { console.error('R221 ensureCodeIssuesTable 失败（调用方按无发码记录兜底）:', e && e.message); }
+}
+
+// R221：码字符串可用性检查——不与该类型当前 resource_code 相同、不在该类型仍存于表的发码记录里（含未清理的过期行）。
+// 过期行被 track.js 清理删除后即不占位 → 该码字符串可被再次生成（过期码回收复用，保证永远有码可发）。
+export async function codeAvailable(env, variantId, code) {
+  try {
+    const cur = await env.DB.prepare('SELECT resource_code FROM product_variants WHERE id = ?').bind(variantId).first();
+    if (cur && String(cur.resource_code || '').trim() === code) return false;
+    const hit = await env.DB.prepare('SELECT id FROM code_issues WHERE variant_id = ? AND code = ? LIMIT 1').bind(variantId, code).first();
+    return !hit;
+  } catch (e) { return true; }
+}
+
+// R221：生成防撞新码——随机生成并避开该类型所有仍占位的码字符串（当前码 + 表内全部发码记录）；
+// 连续 64 次撞车（36^8 空间下理论不可达）则放行最后一个候选，保证永远有码可发
+async function genAvailableCode(env, variantId) {
+  let cand = '';
+  for (let i = 0; i < 64; i++) {
+    cand = genResourceCode();
+    if (await codeAvailable(env, variantId, cand)) return cand;
+  }
+  return cand;
+}
+
+// R221：发码核心（复制即换码）——后台点「复制」时调用：
+//   ① 当前码记一条 issued（issued_at=now；已有未过期同码记录则不重复记，兼容迁移种子/同分钟重复点按）
+//   ② 生成防撞新码写回类型行（面板立即可见新码，下一个客户用新码）
+//   返回 { ok, msg } 或 { ok:true, issuedCode:刚发出的码, code:面板新码 }
+export async function issueCodeForVariant(env, variantId) {
+  const v = await env.DB.prepare('SELECT id, product_id, resource_code FROM product_variants WHERE id = ?').bind(variantId).first();
+  if (!v) return { ok: false, msg: '类型不存在' };
+  const oldCode = String(v.resource_code || '').trim();
+  if (!oldCode) return { ok: false, msg: '该类型未设置资源码，请先在类型编辑里设置' };
+  await ensureCodeIssuesTable(env);
+  const active = await env.DB.prepare(
+    "SELECT id FROM code_issues WHERE variant_id = ? AND code = ? AND status = 'issued' AND issued_at >= datetime('now','-60 days') LIMIT 1"
+  ).bind(variantId, oldCode).first();
+  if (!active) {
+    await env.DB.prepare('INSERT INTO code_issues (variant_id, product_id, code) VALUES (?, ?, ?)').bind(variantId, v.product_id || 0, oldCode).run();
+  }
+  const newCode = await genAvailableCode(env, variantId);
+  await env.DB.prepare('UPDATE product_variants SET resource_code = ? WHERE id = ?').bind(newCode, variantId).run();
+  return { ok: true, issuedCode: oldCode, code: newCode };
+}
+
+// R221：某类型最近发码记录（后台码面板展示：码 / 发放时间 / 剩余有效天数 / 状态）。
+// 剩余天数与「已过期」状态在此计算（60 天窗口的展示口径与 unlock.js 验证口径一致）。
+export async function recentIssues(env, variantId, limit = 5) {
+  try {
+    const r = await env.DB.prepare(
+      'SELECT code, issued_at, status, bound_at FROM code_issues WHERE variant_id = ? ORDER BY id DESC LIMIT ?'
+    ).bind(variantId, limit).all();
+    return (r.results || []).map((row) => {
+      let ageDays = 60;
+      try {
+        const t = new Date(String(row.issued_at).replace(' ', 'T') + 'Z').getTime();
+        ageDays = Math.floor((Date.now() - t) / 86400000);
+        if (ageDays < 0) ageDays = 0;
+      } catch (e) { /* 时间解析失败按满窗计 */ }
+      let statusText = '待用';
+      if (row.status === 'bound') statusText = '已用';
+      else if (ageDays >= 60) statusText = '已过期';
+      return { code: row.code, issued_at: row.issued_at, remaining_days: Math.max(0, 60 - ageDays), status: statusText };
+    });
+  } catch (e) { return []; }
+}
+
 // R92：读取平台设置（settings 键值表），失败/未设置返回默认值
 export async function getSetting(env, key, fallback) {
   try {

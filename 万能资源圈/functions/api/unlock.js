@@ -6,9 +6,14 @@
  *   码 = 入场券，只管"第一次"——验证资源码成功后把当前设备绑定到该类型；
  *   绑定 = 通行证，管"以后每一次"——已绑定的设备不再验码，直接返回专属内容。
  *   宽松模式：管理员改码只废旧码的入场资格，已绑定设备不受影响、照常解锁。
- * R96 绑满自动换码：绑定计数按"当前码"周期算（resource_bindings.code 记录绑定时的码）；
- *   当前码绑到上限后系统自动随机换新码——旧码作废、已绑定设备照常解锁，
- *   管理员从后台"绑定设备"弹窗拿最新码发给下一个访客，无需手动改码。
+ *
+ * R221（老板 15:44 拍板·复制即换码 + 60 天兑换窗口）：
+ *   验码不再只对"当前码"，改为查该类型 60 天窗口内的发码记录（code_issues）；
+ *   后台点「复制」= 发码：旧码入 issued 记录（窗口从点复制时刻起算）+ 面板立即出新码；
+ *   R96 绑满自动换码退役——换码只由后台复制触发，绑定上限（bind_limit）保留，限制单个码可绑设备数；
+ *   60 天是兑换窗口：窗口内的码可兑换、绑定后设备永久可用；超 60 天的码兑换被拒（明确文案）；
+ *   升级迁移：库里还没有发码记录的类型按旧机制比对当前码，命中即顺手补一条 issued 记录
+ *   （老客户手里已发的码照常可兑换，issued_at 取首次兑换时刻，窗口起点只晚不早于上线时刻）。
  *
  * 设备凭据：HttpOnly Cookie wnzyq_device（服务端随机 32 字节 hex，首次访问时种下，
  * JS 不可见、不被 XSS 读取，与登录会话 wnzyq_token 同一套思路）。
@@ -20,26 +25,10 @@
  *
  * 统计：resource_unlock 埋点仍由前台在内容渲染成功后统一上报（口径不变），本接口不写 stats。
  */
-import { json, readJSON, corsHeaders, randomToken, ensureBindingsTable, ensureVariantColumns, getSetting } from '../_utils.js';
+import { json, readJSON, corsHeaders, randomToken, ensureBindingsTable, ensureVariantColumns, ensureCodeIssuesTable, getSetting } from '../_utils.js';
 
 // 设备 Cookie 名与有效期（10 年，等效永久设备标识）
 const DEVICE_COOKIE = 'wnzyq_device';
-
-// R96：随机生成新资源码——8 位大写（验证不区分大小写）
-// R98（用户定稿）：不做 0/O/1/I/L 易混淆字符限制，全字符集随机
-function genCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const arr = new Uint8Array(8);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, (b) => chars[b % chars.length]).join('');
-}
-
-// R96：把类型的资源码换成随机新码（绑满自动换码 / 超额兜底共用）
-async function autoRotateCode(env, variantId) {
-  const newCode = genCode();
-  await env.DB.prepare('UPDATE product_variants SET resource_code = ? WHERE id = ?').bind(newCode, variantId).run();
-  return newCode;
-}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -121,26 +110,61 @@ export async function onRequestPost(context) {
   if (!code) {
     return json({ ok: false, need_code: true }, 200, extraHeaders);
   }
-  const correct = String(v.resource_code).trim().toLowerCase();
-  if (code.toLowerCase() !== correct) {
-    return json({ ok: false, msg: '资源码错误，请检查后重试' }, 200, extraHeaders);
+
+  // R221：验码改为查该类型 60 天窗口内的发码记录（不再只对当前码）
+  await ensureCodeIssuesTable(env);
+  const codeLower = code.toLowerCase();
+  let issue = null;
+  try {
+    issue = await env.DB.prepare(
+      'SELECT id, code, status, issued_at FROM code_issues WHERE variant_id = ? AND LOWER(code) = ? ORDER BY id DESC LIMIT 1'
+    ).bind(variantId, codeLower).first();
+  } catch (e) { console.error('R221 发码记录查询失败（按旧机制降级）:', e && e.message); }
+
+  if (!issue) {
+    // R221 迁移回退：库里还没有该码的发码记录——按旧机制比对当前 resource_code
+    // （升级前发出去的码 / 管理员手动改的码），命中即顺手补一条 issued 记录再走新链路
+    if (codeLower === String(v.resource_code).trim().toLowerCase()) {
+      try {
+        await env.DB.prepare('INSERT INTO code_issues (variant_id, product_id, code) VALUES (?, ?, ?)')
+          .bind(variantId, productId, String(v.resource_code).trim()).run();
+        issue = await env.DB.prepare(
+          'SELECT id, code, status, issued_at FROM code_issues WHERE variant_id = ? AND LOWER(code) = ? ORDER BY id DESC LIMIT 1'
+        ).bind(variantId, codeLower).first();
+      } catch (e) { console.error('R221 迁移发码记录写入失败:', e && e.message); }
+    }
+    if (!issue) {
+      return json({ ok: false, msg: '资源码错误，请检查后重试' }, 200, extraHeaders);
+    }
   }
 
-  // 6. 码正确：检查"当前码"周期的绑定上限（R96 按码计数；后台可调，默认 1 台）
+  // R221：60 天兑换窗口——发放超过 60 天的码不再允许新设备兑换（明确文案）；
+  // 已绑定设备走上方通行证路径不受影响（绑定 = 永久，跨 60 天照常解锁）
+  let inWindow = true;
+  try {
+    const win = await env.DB.prepare(
+      "SELECT 1 AS x FROM code_issues WHERE id = ? AND issued_at >= datetime('now','-60 days') LIMIT 1"
+    ).bind(issue.id).first();
+    inWindow = !!win;
+  } catch (e) { console.error('R221 兑换窗口查询失败（按窗口内放行）:', e && e.message); }
+  if (!inWindow) {
+    return json({ ok: false, msg: '该资源码已超过 60 天有效期，请联系客服获取新码' }, 200, extraHeaders);
+  }
+
+  // 6. 码正确：检查该码的绑定上限（R221 按"每个码"计数；后台可调，默认 1 台）
   // R106：绑定设备上限挪进类型编辑表单——类型自身设置优先，未设置再按全局设置（默认 1）
   const vLimit = parseInt(v.bind_limit, 10);
   const limit = vLimit >= 1 ? vLimit : Math.max(1, parseInt(await getSetting(env, 'resource_bind_limit', '1'), 10) || 1);
-  const curCode = String(v.resource_code).trim();
+  const bindCode = String(issue.code);
   // R106：计数查询防御——表异常时按 0 计，不再直接 500
   let cnt = null;
   try {
     cnt = await env.DB.prepare(
       'SELECT COUNT(*) AS n FROM resource_bindings WHERE variant_id = ? AND code = ?'
-    ).bind(variantId, curCode).first();
+    ).bind(variantId, bindCode).first();
   } catch (e) { console.error('R106 绑定计数查询失败（按0降级）:', e && e.message); }
   if (cnt && cnt.n >= limit) {
-    // 兜底场景（如后台调小上限后当前码已超额）：自动换码开新一轮，本次仍拒绝
-    try { await autoRotateCode(env, variantId); } catch (e) { /* 换码失败不影响提示 */ }
+    // R221：绑满不再自动换码（换码只由后台复制触发），本次仍拒绝
     return json({ ok: false, msg: '该码绑定设备已满（上限 ' + limit + ' 台），请联系客服。注意：换浏览器、无痕模式、清除缓存都会被识别为新设备' }, 200, extraHeaders);
   }
 
@@ -151,16 +175,19 @@ export async function onRequestPost(context) {
   try {
     await env.DB.prepare(
       'INSERT INTO resource_bindings (variant_id, product_id, device_token, ua, code) VALUES (?, ?, ?, ?, ?)'
-    ).bind(variantId, productId, device, ua, curCode).run();
+    ).bind(variantId, productId, device, ua, bindCode).run();
   } catch (e) {
     bound = false;
     console.error('R106 绑定记录写入失败（降级放行）:', e && e.message);
   }
 
-  // 8. R96 绑满自动换码：本台绑定后当前码周期达到上限 → 系统随机换新码
-  //    （旧码入场资格作废、已绑定设备照常解锁；管理员从后台拿最新码给下一个访客）
-  if (bound && (cnt ? cnt.n : 0) + 1 >= limit) {
-    try { await autoRotateCode(env, variantId); } catch (e) { /* 换码失败不影响本次解锁 */ }
+  // 8. R221：该发码记录置为已用（bound_at=首次绑定时刻；已 bound 的不重复改）
+  if (bound) {
+    try {
+      await env.DB.prepare(
+        "UPDATE code_issues SET status = 'bound', bound_at = COALESCE(bound_at, datetime('now')) WHERE id = ? AND status = 'issued'"
+      ).bind(issue.id).run();
+    } catch (e) { /* 记录状态更新失败不影响本次解锁 */ }
   }
   return json({ ok: true, content, bound }, 200, extraHeaders);
 }

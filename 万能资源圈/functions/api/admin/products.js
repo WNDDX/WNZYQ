@@ -3,7 +3,7 @@
  * POST /api/admin/products        → 新增资源（需登录）
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  */
-import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable } from '../../_utils.js';
+import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable, ensureCodeIssuesTable, recentIssues } from '../../_utils.js';
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
 async function attachVariants(env, list) {
@@ -23,11 +23,16 @@ async function attachVariants(env, list) {
     ).bind(...ids).all();
     (bindRows || []).forEach((r) => { bindMap[r.variant_id] = r.n; });
   } catch (e) { console.error('R113 绑定计数批量查询失败（按0兜底）:', e && e.message); }
+  // R221：顺带批量返回每类型最近发码记录（资源码下拉面板展示）
+  await ensureCodeIssuesTable(env);
   const map = {};
-  (vrows || []).forEach((v) => {
+  for (const v of (vrows || [])) {
     if (!map[v.product_id]) map[v.product_id] = [];
-    map[v.product_id].push(Object.assign(cleanVariant(v), { bindings: bindMap[v.id] || 0 }));
-  });
+    map[v.product_id].push(Object.assign(cleanVariant(v), {
+      bindings: bindMap[v.id] || 0,
+      issues: await recentIssues(env, v.id, 5),
+    }));
+  }
   list.forEach((p) => { p.variants = map[p.id] || []; });
   return list;
 }
