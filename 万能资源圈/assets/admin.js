@@ -4949,7 +4949,10 @@ document.addEventListener('click', function (e) {
         tglBtn.classList.toggle('open', !collapsed);
       });
     });
-    function renderStatTables() {
+    /* R235（用户 09-22 12:33 派单）：加 onlyKey 参数——翻页回调只重绘被点的那张表，
+       另外两张表元素不销毁、错峰淡入动画不重放（全屏跳动的根因）。
+       无参调用（切日期档/切 tab 的 loadStats 路径）仍是三表全量刷新——数据真变了，全量合理。 */
+    function renderStatTables(onlyKey) {
       var defs = [
         {
           key: 'product', tbodyId: 'statRows', pagerId: 'statPagerProduct', wrapId: 'statWrapProduct',
@@ -4982,6 +4985,7 @@ document.addEventListener('click', function (e) {
         }
       ];
       defs.forEach(function (d) {
+        if (onlyKey && d.key !== onlyKey) return; /* R235：单表翻页只动这一张，其余不碰 */
         var tbody = document.getElementById(d.tbodyId);
         var pager = document.getElementById(d.pagerId);
         if (!tbody || !pager) return;
@@ -5013,7 +5017,7 @@ document.addEventListener('click', function (e) {
               total: d.list.length,
               unit: '条',
               onPage: (function (key) {
-                return function (p) { statPages[key] = p; renderStatTables(); };
+                return function (p) { statPages[key] = p; renderStatTables(key); }; /* R235：只重绘本表 */
               })(d.key)
             });
           } else {
@@ -5022,7 +5026,7 @@ document.addEventListener('click', function (e) {
             prev.disabled = statPages[d.key] === 1;
             prev.onclick = (function (key, wrapId) {
               return function () {
-                if (statPages[key] > 1) { statPages[key]--; renderStatTables(); scrollStatWrap(wrapId); }
+                if (statPages[key] > 1) { statPages[key]--; renderStatTables(key); scrollStatWrap(wrapId); } /* R235 */
               };
             })(d.key, d.wrapId);
             var info = document.createElement('span');
@@ -5033,7 +5037,7 @@ document.addEventListener('click', function (e) {
             next.disabled = statPages[d.key] === totalPages;
             next.onclick = (function (key, wrapId) {
               return function () {
-                if (statPages[key] < totalPages) { statPages[key]++; renderStatTables(); scrollStatWrap(wrapId); }
+                if (statPages[key] < totalPages) { statPages[key]++; renderStatTables(key); scrollStatWrap(wrapId); } /* R235 */
               };
             })(d.key, d.wrapId);
             pager.appendChild(prev);

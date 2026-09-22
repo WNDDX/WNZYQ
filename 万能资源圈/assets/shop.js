@@ -529,7 +529,9 @@
 
     // ---------- 渲染资源网格 ----------
     var currentPage = 1;
+    var __uniPager = null; /* R234：统一分页条句柄（buildUniPager 返回的 setPage），无限滚动自动翻页后用它同步状态 */
     var __pageTurning = false; /* R231 条19：翻页淡出期间锁，防重复触发 */
+    var __autoLoadPaused = false; /* R237：手动翻页/跳页后暂停下滑自动加载——翻页瞬间页面高度骤减、浏览器 clamp 滚动位置，程序性回顶的 scroll 会被误判为「滚到底」把刚翻的页瞬间接回来；用户主动向下滚动（delta>2）才解锁恢复，两种翻页方式互不打架 */
     var PAGE_SIZE = 20;
 
     // R181（第8项）：资源卡片构造公共函数——分页渲染与无限滚动追加原本各复制一份，
@@ -585,6 +587,7 @@
       // 移除旧分页
       var oldPager = document.getElementById('pager');
       if (oldPager) oldPager.parentNode.removeChild(oldPager);
+      __uniPager = null; /* R234：旧分页已删，句柄随下方重建更新 */
 
       // 空状态（R124 用户定稿 15:06）：三分支统一只显示标题、副文案全删——
       // 搜索=「该搜索暂无资源」；分类/全部=「该分类暂无资源」
@@ -635,13 +638,14 @@
       pager.id = 'pager';
       productGrid.parentNode.insertBefore(pager, productGrid.nextSibling);
       if (window.buildUniPager) {
-        window.buildUniPager(pager, {
+        __uniPager = window.buildUniPager(pager, { /* R234：接住 setPage 句柄，自动翻页后同步分页条状态 */
           page: currentPage,
           totalPages: totalPages,
           total: list.length,
           onPage: function (p) {
             if (p === currentPage || __pageTurning) return;
             __pageTurning = true; /* R231 条19：淡出期间防重复翻页 */
+            __autoLoadPaused = true; /* R237：本次是按键翻页/跳页——暂停自动加载，防止翻页后页面收缩被误判为滚到底把结果接页拉回 */
             /* R231 条19+23（用户 09-21 23:38）：旧内容 0.1s 淡出再重建 + 平滑滚回顶部；
                R14 时代的瞬时回顶是为规避平滑滚动叠加图片加载"卡一下"——R231 条5 懒加载修复后顾虑消除 */
             productGrid.classList.add('page-fade-out');
@@ -1731,6 +1735,11 @@
       lastScrollY = currentY;
 
       // 无限滚动：滚动到距离底部 200px 时自动加载下一页
+      /* R237（用户 09-22 13:10 派单）：手动翻页/跳页后 checkScroll 处于暂停态——
+         程序性回顶/页面收缩触发的 scroll（delta 为负或接近 0）一律跳过自动加载；
+         用户主动向下滚动（delta > 2，与顶栏阈值同款）才解锁，且解锁的这一次顺带往下走加载判断，
+         「按了按键跳到那一页」与「往下滑自动接页」两种模式无缝衔接互不打架 */
+      if (__autoLoadPaused) { if (delta > 2) __autoLoadPaused = false; else return; }
       var scrollBottom = window.innerHeight + currentY;
       var pageHeight = document.documentElement.scrollHeight;
       if (pageHeight - scrollBottom < 200 && !window.__loadingNextPage) {
@@ -1748,9 +1757,10 @@
             frag.appendChild(card);
           });
           productGrid.appendChild(frag);
-          // 更新分页控件的当前页
-          var pagerInfo = document.querySelector('#pager .pg-info'); // R35：pg-main 组盒后不能再取第一个 span（会命中组盒、textContent 清空整组按钮），改精确取 .pg-info
-          if (pagerInfo) pagerInfo.textContent = currentPage + ' / ' + totalPages;
+          /* R234（用户 09-22 12:11 派单）：自动翻页后同步统一分页条状态（页码 / 跳页输入框 / 「共X条」尾巴 / 按钮可用性）。
+             旧写法是 R35 时代的 workaround——只手动改 .pg-info 文本，丢「（共X条）」尾巴、不更新输入框与按钮，
+             且组件闭包 page 停在旧值：滚到末页后点「上一页」被 go() 里 p===page 短路直接失灵。改走组件句柄。 */
+          if (__uniPager) __uniPager.setPage(currentPage);
           setTimeout(function () { window.__loadingNextPage = false; }, 300);
         }
       }

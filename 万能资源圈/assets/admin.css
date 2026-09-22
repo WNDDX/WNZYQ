@@ -731,11 +731,13 @@
     .rte-toolbar .rte-glyph { display: inline-block; }
     .rte-toolbar .rte-quote-btn .rte-glyph { transform: translate(-0.25em, 0.1em); }
     .rte-toolbar .rte-table-btn .rte-glyph { transform: translate(0, -0.05em); }
-    /* R219：工具栏字体/字号下拉——内容组合（文字+箭头）墨迹中心居中。
-       原 space-between + cpd-text:flex:1 左对齐，组合墨迹中心偏左 3.5px（1280 与 390 双端同）；
-       改为组合整体居中，picker 宽 80px、高度、字号均不变 */
-    .rte-toolbar .select-picker .cat-picker-display { justify-content: center; transform: translate(3.5px, -1px); }
-    .rte-toolbar .select-picker .cat-picker-display .cpd-text { flex: 0 0 auto; }
+    /* R219 原把字体/字号下拉的组合（文字+箭头）整体居中（center + translate 3.5px）。
+       R236（老板 09-22 派单）：下拉文字改回靠左与 .rte-btn 对齐——justify-content 改 flex-start、
+       删 translate；cpd-text 恢复 flex:1（文字贴左 padding、展开箭头贴右缘原位）；
+       padding-left 与 .rte-btn 同档（桌面 10px 承 808 段全局规则、小屏 6px 见 600px 媒体查询内
+       R236 新增）；其他按钮的 R219 墨迹居中补偿一律不动 */
+    .rte-toolbar .select-picker .cat-picker-display { justify-content: flex-start; }
+    .rte-toolbar .select-picker .cat-picker-display .cpd-text { flex: 1 1 auto; }
     .pwd-eye-ico { width: 18px; height: 18px; color: #000; } /* 条11：密码小眼睛黑白 SVG（按钮 flex 居中）；R226：固定黑色（stroke=currentColor，睁眼/闭眼两态统一） */
     .rte-color-ico-hl { color: #333; }
     /* 浮层基类：复用资源码下拉框 cat-picker-panel 同款白卡规格 */
@@ -1210,6 +1212,7 @@
       .rte-toolbar { -webkit-overflow-scrolling: touch; }
       .rte-toolbar .rte-btn, .rte-toolbar .rte-group, .rte-toolbar .select-picker, .rte-toolbar .rte-palette { flex-shrink: 0; }
       .rte-toolbar .rte-btn, .rte-toolbar .rte-select { font-size: 12px; padding: 0 6px; height: 32px; }
+      .rte-toolbar .select-picker .cat-picker-display { padding: 0 6px; } /* R236：小屏下拉左 padding 与按钮同档 6px（桌面 0 10px 全局规则已与按钮一致） */
       .tb-row2 { gap: 8px; flex-wrap: wrap; }
       /* R18：手机端两个筛选框并排等宽（升级后的状态筛选外壳 .select-picker 一并覆盖） */
       .tb-row2 .cat-picker, .tb-row2 .select-picker { flex: 1 1 calc(50% - 5px); width: auto; }

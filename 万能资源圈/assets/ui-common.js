@@ -455,7 +455,8 @@ if ('serviceWorker' in navigator) {
     container.className = 'uni-pager';
     container.innerHTML = '';
 
-    if (totalPages <= 1) { container.style.display = 'none'; return; }
+    /* R234：无翻页必要时也返回 no-op 句柄，调用方存句柄不必判 totalPages */
+    if (totalPages <= 1) { container.style.display = 'none'; return { setPage: function () {} }; }
     container.style.display = '';
 
     var prev = document.createElement('button');
@@ -505,6 +506,17 @@ if ('serviceWorker' in navigator) {
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); pendingJump = null; go(input.value); } });
     input.addEventListener('blur', function () { var v = parseInt(input.value, 10); if (isNaN(v) || v < 1 || v > totalPages) input.value = page; });
     render();
+    /* R234（用户 09-22 12:11 派单）：暴露更新句柄——无限滚动自动翻页后调用 setPage 同步组件内部状态
+       （闭包 page / 跳页输入框 value / 「共X条」尾巴 / prev-next disabled 全部经 render() 刷新）。
+       现有调用方（shop/admin）原本都不接返回值，改造不破坏兼容。 */
+    return {
+      setPage: function (p) {
+        p = parseInt(p, 10);
+        if (isNaN(p)) return;
+        page = Math.min(Math.max(p, 1), totalPages);
+        render();
+      }
+    };
   };
 })();
 
