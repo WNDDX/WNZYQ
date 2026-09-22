@@ -21,6 +21,32 @@ function issueView(row) {
   return { code: row.code, issued_at: row.issued_at, remaining_days: Math.max(0, 60 - ageDays), status: statusText };
 }
 
+// R227（老板 19:39「设置能记住」）：早期绑定补录——resource_bindings 里记了 code 但 code_issues 无对应记录的老绑定，
+// 自愈式补进发码账本：发放时间=当时绑定时间、bound_at=绑定时间、status='已用'（顺带保证 issueCodeForVariant 不会
+// 把它当新码回收复用——已用码不在发放链路）。幂等：只补缺失的 code，重复执行无新增；失败仅记日志不影响列表返回。
+// 补录后这些行在合并表里显示真实码（蓝字可点复制、状态绿「已绑定」）；code 为空的更早期绑定仍显「早期绑定」。
+// 与 track.js 60 天清理无冲突：清理只针对未绑定（bound_at 为空）的过期记录，补录记录 bound_at 有值不会被误清。
+async function backfillLegacyCodes(env, variantId) {
+  try {
+    const sql = 'SELECT DISTINCT variant_id, product_id, code, created_at FROM resource_bindings '
+      + "WHERE code IS NOT NULL AND code != ''" + (variantId ? ' AND variant_id = ?' : '');
+    const q = variantId ? env.DB.prepare(sql).bind(variantId) : env.DB.prepare(sql);
+    const r = await q.all();
+    const binds = (r && r.results) || [];
+    if (!binds.length) return;
+    const e = await env.DB.prepare('SELECT code FROM code_issues').all();
+    const have = new Set(((e && e.results) || []).map((x) => String(x.code || '').toLowerCase()));
+    for (const b of binds) {
+      const c = String(b.code || '').trim();
+      if (!c || have.has(c.toLowerCase())) continue;
+      await env.DB.prepare(
+        "INSERT INTO code_issues (variant_id, product_id, code, issued_at, status, bound_at) VALUES (?, ?, ?, ?, 'bound', ?)"
+      ).bind(b.variant_id, b.product_id || 0, c, b.created_at, b.created_at).run();
+      have.add(c.toLowerCase());
+    }
+  } catch (e2) { console.error('R227 早期绑定补录失败（不影响列表返回）:', e2 && e2.message); }
+}
+
 export async function onRequestGet(context) {
   const { env, request } = context;
   const auth = await requireAuth(env, request);
@@ -35,6 +61,7 @@ export async function onRequestGet(context) {
     await ensureBindingsTable(env);
     await ensureVariantColumns(env);
     await ensureCodeIssuesTable(env);
+    await backfillLegacyCodes(env, 0);
     const limitRaw = await getSetting(env, 'resource_bind_limit', '1');
     const globalLimit = Math.max(1, parseInt(limitRaw, 10) || 1);
     let vrows = [];
@@ -96,6 +123,8 @@ export async function onRequestGet(context) {
   await ensureVariantColumns(env);
   // R223：合并平铺表需要发码记录（码/发放时间/剩余天数/状态）
   await ensureCodeIssuesTable(env);
+  // R227：打开弹窗时自愈式补录老账本有码的早期绑定（幂等，失败不阻塞）
+  await backfillLegacyCodes(env, variantId);
 
   // R106：绑定表查询防御——表异常时按空清单返回（弹窗提示"暂无绑定"），不再 500
   let results = [];

@@ -6,7 +6,9 @@
   <title>万能资源圈・管理</title>
   <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
   <meta name="robots" content="index,follow">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=224">
+  <!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
+<!-- R228（用户 09-21 19:42）：浏览器对 favicon 有独立硬缓存、刷新先闪旧图标 → 图标内联 data URI，HTML 一解析即在，零请求零缓存依赖 -->
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAHVUlEQVR42u1XWWxV1xVde59z7xv8no3BNhBsv0BIk9pIVVTSSYmApqNoxUeLUTOpVFERQiq4YTCp2ufXqsFgiHGjCBFFJWpKq5j2A7Wo6pBClKhTqNJKMU0KgT7bTLbB4Oc33XvO2f0wduyEqS39qNQl3a+rc/c65+y19rqE6yEtjAy51M6hu8W534sLQyI9AqIsMf+RSP1G6+o/nFhP5ck1PaKW9IJeBhwy5HAD0A0JoFc3oRlj8bM9HEmukCAPaB9ECi4sAqC/EalDjvhgxKt+bRoZgJA+rNC+1IJIbp5AOs1obie0kAWAD+4Vb/Dy8FdYe3skGLMAGAIBwKR9Ii8KMQHEhm+D1Ktg9Tt43qt96yuPTT0ZtMAB04m8l0CPqInCqZ1DdwvoMTi3giALxRkZXyMCEQfWiv0YAII4A1IeOJaEK5fgipcsWL9GrF4Iy4UXzzxRf2HqtV6dwJXi8zr667UXf5K86CMcjcMV83DFSxO1LZgVR6sg5VxBQC+JyEtQ+hg7GhOyTRDXBXFJ8qIgFYEEhbPC3JUYPdt9LLMomLpJmiSysodxoMU2bB9cxZ73Azjni4R7YM0PQep+Ut42FxaNilZ6YoKCEO8VTz3Tv37G21P3sKDjYqNR5g2IrYC1IhCw9hVHknBB8ShC+9Xs1rrXkT6skVlmCBBCDxgtZFOdQ99WlTXftPmRn5ogv+F0W8NAquvyZ8UE7cT8IdJRiCn92hFa+78+qxcA6ndJTNnBKnFYQIxPC7CWiGrFhu+wEhEBjIomPXF2TMLS6r62236CtGhCWjQyZBo7h3brypr1duxCa/bxmt2p9KmoxKKveHVzFruSgy2MnCPBjuymmi4AaNxx/ruk/RYJipWAzFKJWkURD65UhpQuw1kTEOBfYQBSPsSGhryoBinYIP/QQNu8HxEANG4/u0nPmLPDXjr/YHbLnB+jR9Rdp4bjRTJtpCI+gNcDKf7q7MZ5w+PSBBorBjeSjjwkQSEOohEQThBUrxD+YsLguI7EPgBj9kFMjCMJdkHhIJKx1cgV93Mk8RkXFAJh+Tw1dg4u50ji5zZ/cXX/1vrnsVc8rKHwqvKc0jzXwu2dZ1KiYtvFBB+H2GoRcaR9FhP8nUk955xdw9q7i/w4XCk3osWZp205lxkvfnR68fRhDSwFcARXzMROI7MSDkQCEcLXjvuYeacVDC4nL7qKRACOAqwAEVC0qoki3lOUH4Mtj5U4LPYS8zM0f3du9qkNyfPv1ud/glT61BxJVi4QUA3boMKR8xhsnPZzBLnINjbwj03x7NQuJdwy/Avf6hFFEKFr+fS/jQkrB4DeI+8Qal46XqcXcqtO+//43wdNCx/NuE7jtAsymVvbOCI0bij/DYndVHFAT1jr7Z2FlFPFegHNZBMkHZxm4dApP0+QYcqNnsxm6NytkakwiNz83bnZlOo8vxrE65w1zSqSiHJFAlIOIaYMEAHOjj9+DFIaXZcdq3sWF48rfO/OYNKGD4yP82m7az+iJm08s8xMvtt71MOaxWFD5/l2OPuoFud2cbSimqUAWxx9S8r5vU7sY6T994kJHBExSI1QSL8l2EPIkAFg8PREF5EAmD4jxmeGec/Orwy6hm0DX1aRZNqVxz6nRdEqV87/jP24T86elGT0ecoVl7Dym5wJHKCKUHpdWMr/VXv+otSOwYcFthmChRCpJj9eEFPe35ev2wkAaCE7d+fpGp9inwJwj9hyEBPd8db8mgJaKExtP/clNWP2PnPp3Oa+LXMPEQDUd5x+UPkV+yEWEpYMKU+LDSZFIkDASvsUrQJHI5ByCDs2ZAG6QH5sVEzQ07d59jcAINU53CqEzSpePYejjHDw3FEqlu7PZuaXUruGN6jErC4zOtzdt6l2w/RE1HHmi+RF9xGrhC3lQgI0iCa7npQHERkiYI84/JIYJ62quzzwOBUBoOGpC80s6CId/aSYEsS5P5H227OtVb+Y19Ffr/2K3aqi+gt2dPg72U2135qI6TQ59zPLTGrb4D3w1LPsxxa7cg7OBJZAgFIEUnlt9aKTbTP7pl5rQ/elOyi060jcGtJ+3JZGQ/ZiWmy4FWJfgdIPE3lrwRy4MHy0f0vdi1jZo3CgxU3X9ZW005R+wx+rnLuenGslPz5XbBkSlgDiHIhbSdQxx5KANU1E9ABBHqBIMu5KlwHnLIgUIODYDHCsAq5UgISlF0xYeOJ0W8PAu1MVXe1fEABue3JglheJrxJnH4Ez93JshuJIFK6Yg9gQxBqAwAVFwBkLIh7XLYRYk4BOgPkgQZ7Lbqx981qRjq7qdj3Tdd3YPdqEMLwPzn4MYu8j5d1B2oeEJYgJBIADgQA48hPKmXBtXVXN9/88Ee96RF3Lyum6Vtl+RCGzzI4LYRwLuyVSDkfuZXErROxyQN7PXgwiFjAByK+AK+cOJgpzW46hF0CzuV74oJu1ziUAv9wMmXoyC7slYszIR0TsJ8S5D0MkJWKqiT2PmD+a3Vj75o2y5j8BnAfeQ7ImF6MAAAAASUVORK5CYII=">
   <link rel="stylesheet" href="/assets/ui-common.css">
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
@@ -23,7 +25,7 @@
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
         <div class="login-logo">
-          <img src="/assets/images/logo.png?v=224" alt="" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          <img src="/assets/images/logo.png?v=224" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
         </div>
       </a>
       <h1>万能资源圈・管理</h1>
@@ -46,7 +48,7 @@
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
-            <img class="topbar-logo" src="/assets/images/logo.png?v=224" alt="" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+            <img class="topbar-logo" src="/assets/images/logo.png?v=224" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -182,11 +184,13 @@
             </button>
           </div>
           <div class="stat-wrap-body" id="statBodyProduct">
-            <table class="stat-table">
-              <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>咨询客服</th><th>资源码解锁</th><th>绑定设备</th></tr></thead>
-              <tbody id="statRows"></tbody>
-            </table>
-            <div class="stat-pager" id="statPagerProduct"></div>
+            <div class="stat-body-inner">
+              <table class="stat-table">
+                <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>咨询客服</th><th>资源码解锁</th><th>绑定设备</th></tr></thead>
+                <tbody id="statRows"></tbody>
+              </table>
+              <div class="stat-pager" id="statPagerProduct"></div>
+            </div>
           </div>
         </div>
         <div class="stat-table-wrap" id="statWrapCat" style="margin-bottom:14px;">
@@ -197,11 +201,13 @@
             </button>
           </div>
           <div class="stat-wrap-body" id="statBodyCat">
-            <table class="stat-table">
-              <thead><tr><th>分类</th><th>资源数</th><th>总浏览</th></tr></thead>
-              <tbody id="statCatRows"></tbody>
-            </table>
-            <div class="stat-pager" id="statPagerCat"></div>
+            <div class="stat-body-inner">
+              <table class="stat-table">
+                <thead><tr><th>分类</th><th>资源数</th><th>总浏览</th></tr></thead>
+                <tbody id="statCatRows"></tbody>
+              </table>
+              <div class="stat-pager" id="statPagerCat"></div>
+            </div>
           </div>
         </div>
         <div class="stat-table-wrap" id="statWrapRecent">
@@ -212,11 +218,13 @@
             </button>
           </div>
           <div class="stat-wrap-body" id="statBodyRecent">
-            <table class="stat-table">
-              <thead><tr><th>时间</th><th>类型</th><th>资源</th></tr></thead>
-              <tbody id="statRecentRows"></tbody>
-            </table>
-            <div class="stat-pager" id="statPagerRecent"></div>
+            <div class="stat-body-inner">
+              <table class="stat-table">
+                <thead><tr><th>时间</th><th>类型</th><th>资源</th></tr></thead>
+                <tbody id="statRecentRows"></tbody>
+              </table>
+              <div class="stat-pager" id="statPagerRecent"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -304,7 +312,7 @@
           </span><span class="rte-group">
           <button type="button" class="rte-btn" id="announcementFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement" title="清除格式">✕</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑">⛶</button></span>
+          <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑"><svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
         </div>
         <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;"></div>
@@ -392,7 +400,7 @@
         <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
         <label>资源封面图 <span class="label-hint">填图片地址，或点右侧按钮上传</span></label><div style="display:flex;gap:8px;align-items:stretch;"><input id="fImg" style="flex:1;min-width:0;" /><button type="button" class="btn-blue" id="fImgUpload" style="white-space:nowrap;width:auto;height:auto;margin-bottom:0;padding:0 16px;" title="从电脑选图，自动上传到自有图仓并填入链接">上传本地图片</button></div>
         <div style="font-size:11px;color:#999;margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
-        <img class="img-preview" id="fImgPreview" alt="预览" />
+        <img class="img-preview" id="fImgPreview" alt="预览" decoding="async" />
         <label>简介 <span class="label-hint">列表卡片上显示的一句话</span></label><input id="fDesc" />
         <label>详细描述 <span class="label-hint">支持文字、图片、视频混排</span></label>
         <div class="rte-toolbar rte-collapsed" id="detailRteToolbar" data-editor="fDetail"><span class="rte-group">
@@ -447,7 +455,7 @@
           </span><span class="rte-group">
           <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="fDetail" title="清除格式">✕</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑">⛶</button></span>
+          <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑"><svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
         </div>
         <div class="rte-editor" id="fDetail" contenteditable="true"></div>
@@ -636,7 +644,7 @@
           </span><span class="rte-group">
           <button type="button" class="rte-btn" id="vDescFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor" title="清除格式">✕</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑">⛶</button></span>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑"><svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
         </div>
         <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;"></div>
@@ -704,7 +712,7 @@
           </span><span class="rte-group">
           <button type="button" class="rte-btn" id="vContentFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
           <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor" title="清除格式">✕</button>
-          <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑">⛶</button></span>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑"><svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button></span>
               <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
         </div>
         <div class="rte-editor" id="vContentEditor" contenteditable="true" style="min-height:80px;max-height:200px;border-radius:0 0 8px 8px;"></div>
@@ -741,7 +749,7 @@
           <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
         </svg>
       </button>
-      <img class="preview-cover" id="previewCover" alt="" />
+      <img class="preview-cover" id="previewCover" alt="" decoding="async" />
       <div class="preview-body">
         <div class="preview-title-row">
           <div class="preview-title" id="previewTitle"></div>

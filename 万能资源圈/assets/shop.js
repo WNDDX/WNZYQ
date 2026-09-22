@@ -156,6 +156,7 @@
     function loadImg(img, src) {
       if (img.getAttribute('src') === src && img.src && img.complete) { img.style.display = 'block'; img.style.opacity = '1'; return; }
       img.decoding = 'async'; /* R193c ⑩：异步解码——解码不占主线程，列表图多时滑动更跟手 */
+      img.loading = 'lazy'; /* R231 条5：视口外图片滚到附近才加载（视口内无副作用立即加载），翻页/无限滚动不再跟入场动画抢资源 */
       img.onerror = function () {
         this.onerror = null; // 防止占位图也加载失败导致死循环
         this.src = IMG_PLACEHOLDER; if (this && this.classList) { this.classList.add('media-fail'); this.classList.remove('m-loading'); } this.style.opacity = '1';
@@ -382,6 +383,27 @@
         categoryBar.appendChild(tag);
       });
 
+      // R231（用户 09-21 23:38）条20：滑动指示条——激活标签下 2px 蓝条，切换分类时平滑滑移
+      // （transform/width 0.2s 过渡见 shop.css .cat-slide-ind）。首次建条瞬时落位不播滑移动画。
+      var ind = categoryBar.querySelector('.cat-slide-ind');
+      var act = categoryBar.querySelector('.category-tag.active');
+      if (!ind) {
+        ind = document.createElement('div');
+        ind.className = 'cat-slide-ind';
+        ind.style.transition = 'none';
+        categoryBar.appendChild(ind);
+      }
+      if (act) {
+        ind.classList.remove('hidden');
+        ind.style.width = act.offsetWidth + 'px';
+        ind.style.transform = 'translateX(' + act.offsetLeft + 'px)';
+        if (ind.style.transition === 'none') {
+          requestAnimationFrame(function () { ind.style.transition = ''; });
+        }
+      } else {
+        ind.classList.add('hidden');
+      }
+
       // 渲染二级分类栏（选中一级分类且有子分类时显示）
       renderSubCategories();
 
@@ -451,6 +473,9 @@
         subBar.appendChild(tag);
       });
 
+      // R231（用户 09-21 23:38）条20：子分类切换淡入——重建内容后挂 re-in 播 0.15s（keyframes subCatIn 见 shop.css）
+      subBar.classList.remove('re-in'); void subBar.offsetWidth; subBar.classList.add('re-in');
+
       // 判断二级分类是否超出一行（只判断一次，保存状态）
       setTimeout(function () {
         subCatIsOverflow = subBar.scrollWidth > subBar.clientWidth + 5;
@@ -504,6 +529,7 @@
 
     // ---------- 渲染资源网格 ----------
     var currentPage = 1;
+    var __pageTurning = false; /* R231 条19：翻页淡出期间锁，防重复触发 */
     var PAGE_SIZE = 20;
 
     // R181（第8项）：资源卡片构造公共函数——分页渲染与无限滚动追加原本各复制一份，
@@ -613,7 +639,19 @@
           page: currentPage,
           totalPages: totalPages,
           total: list.length,
-          onPage: function (p) { currentPage = p; renderProducts(); try { window.scrollTo(0, 0); } catch (e) {} }
+          onPage: function (p) {
+            if (p === currentPage || __pageTurning) return;
+            __pageTurning = true; /* R231 条19：淡出期间防重复翻页 */
+            /* R231 条19+23（用户 09-21 23:38）：旧内容 0.1s 淡出再重建 + 平滑滚回顶部；
+               R14 时代的瞬时回顶是为规避平滑滚动叠加图片加载"卡一下"——R231 条5 懒加载修复后顾虑消除 */
+            productGrid.classList.add('page-fade-out');
+            setTimeout(function () {
+              currentPage = p; renderProducts();
+              productGrid.classList.remove('page-fade-out');
+              __pageTurning = false;
+              try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+            }, 100);
+          }
         });
       } else if (totalPages > 1) {
         // 兜底：公共组件缺失时退回原内联胶囊样式（不应发生）
@@ -788,8 +826,9 @@
       } catch (e) { return null; }
     }
     // 请求服务端解锁：code 传空 = 自动检查（已绑定设备/无码类型直接拿内容）
+    // R231 条16/17：deferMs = 绿✓三段式展示时长——期间延迟行淡出，之后再 150ms 淡出并与内容展开交叉
     var unlockBusy = false;
-    function requestResourceUnlock(code) {
+    function requestResourceUnlock(code, deferMs) {
       if (!currentProduct || !currentVariant || unlockBusy) return Promise.resolve(null);
       var pid = currentProduct.id, vid = currentVariant.id;
       unlockBusy = true;
@@ -807,11 +846,19 @@
           __saveUnlockCache(pid, vid, res.content); // R146：解锁成功写缓存（重开弹窗即时渲染）
           var resourceContent = document.getElementById('resourceContent');
           if (resourceContent && resourceContent.style.display === 'none') {
-            var inputRow = document.getElementById('resourceCodeInputRow');
-            if (inputRow) inputRow.style.display = 'none';
-            var directRow = document.getElementById('resourceDirectRow');
-            if (directRow) directRow.style.display = 'none';
-            unlockResourceContent(res.content);
+            /* R231 条17（用户 09-21 23:38）：输入行/直接查看行 150ms 淡出（原瞬消），
+               与内容 fadeInUp 展开交叉；deferMs>0 时先等绿✓（条16）展示完再收尾 */
+            var _fadeRows = function () {
+              var rows = [document.getElementById('resourceCodeInputRow'), document.getElementById('resourceDirectRow')];
+              rows.forEach(function (r) {
+                if (!r || r.style.display === 'none') return;
+                r.style.transition = 'opacity 0.15s ease';
+                r.style.opacity = '0';
+                setTimeout(function () { r.style.display = 'none'; r.style.opacity = ''; r.style.transition = ''; }, 150);
+              });
+              unlockResourceContent(res.content);
+            };
+            if (deferMs) setTimeout(_fadeRows, deferMs); else _fadeRows();
           }
         }
         // 失败时静默返回（提示由 verifyResourceCode / 直接获取键按场景处理）
@@ -946,7 +993,7 @@
       if (hasContent) {
         variantDetail.style.animation = 'none';
         variantDetail.offsetHeight;
-        variantDetail.style.animation = 'fadeInUp 0.18s ease';
+        variantDetail.style.animation = 'fadeInUp 0.20s var(--ease-out, ease)'; /* R231 条15（老板修正）：0.18s→0.20s */
       }
     }
 
@@ -1134,12 +1181,22 @@
       var btn = document.getElementById('resourceCodeBtn');
       var btnText = btn.textContent;
       btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '解锁中…'); /* R183 条4：忙碌转圈 */
-      requestResourceUnlock(input).then(function (res) {
+      requestResourceUnlock(input, 400).then(function (res) { /* R231 条16：绿✓展示 400ms 后收尾（老板口径） */
         btn.disabled = false; btn.textContent = btnText;
         if (res === null) return; // 过期响应（弹窗已切换），不提示
         if (res && res.ok && res.content) {
           if (window.__haptic) window.__haptic(); /* R183 条12：解锁成功触觉反馈（仅手机） */
-          // 内容已由 requestResourceUnlock 统一渲染并隐藏输入行
+          /* R231 条16（用户 09-21 23:38，400ms 老板口径）：三段式收场——「解锁中…」→ 绿✓「已解锁」
+             → 400ms 后输入行随内容展开淡出（条17 衔接）；按钮状态在隐藏行内恢复，无脏状态残留 */
+          try {
+            btn.textContent = '✓ 已解锁';
+            btn.style.background = 'var(--green, #2e7d32)';
+            btn.style.borderColor = 'var(--green, #2e7d32)';
+            btn.style.color = '#fff';
+            setTimeout(function () {
+              btn.textContent = btnText; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+            }, 400);
+          } catch (e0) {}
           resourceCodeError.style.display = 'none';
         } else {
           // 验证失败（资源码错误 / 绑定设备数超上限），提示语由服务端下发
@@ -1157,10 +1214,18 @@
     // R158（用户 22:42）：输满 8 位自动解锁——资源码固定 8 位（R96 生成口径），输够 8 位即提交，
     // 不用再点右侧「解锁」键；改错重输（值变化）会重新自动提交，删回 8 位以下重置。
     var __lastAutoCode = '';
+    /* R231 条18（用户 09-21 23:38）：输满 8 位自动提交加 300ms 防抖——粘贴瞬间直接发请求会被
+       中文输入法/粘贴器切成多次 input 事件，连续触发验证；稳定 300ms 后才真正提交 */
+    var __autoCodeTimer = null;
     resourceCodeInput.addEventListener('input', function () {
       var val = String(this.value || '').trim();
-      if (val.length >= 8 && val !== __lastAutoCode) { __lastAutoCode = val; verifyResourceCode(); }
-      else if (val.length < 8) { __lastAutoCode = ''; }
+      if (val.length < 8) { __lastAutoCode = ''; clearTimeout(__autoCodeTimer); return; }
+      if (val === __lastAutoCode) return;
+      clearTimeout(__autoCodeTimer);
+      __autoCodeTimer = setTimeout(function () {
+        var v = String(resourceCodeInput.value || '').trim();
+        if (v.length >= 8 && v !== __lastAutoCode) { __lastAutoCode = v; verifyResourceCode(); }
+      }, 300);
     });
     // 手机端键盘适配：输入框获得焦点时，确保不被软键盘遮挡
     resourceCodeInput.addEventListener('focus', function () {
@@ -1180,11 +1245,20 @@
         var btnText = btn.textContent;
         if (btn.disabled) return;
         btn.disabled = true; btn.textContent = '获取中…';
-        requestResourceUnlock('').then(function (res) {
+        requestResourceUnlock('', 400).then(function (res) { /* R231 条16：同三段式（400ms 后行淡出+内容展开） */
           btn.disabled = false; btn.textContent = btnText;
           if (res === null) return;
           if (res && res.ok && res.content) {
-            resourceDirectRow.style.display = 'none';
+            /* R231 条16：绿✓「已获取」三段式；行隐藏由 requestResourceUnlock 统一 150ms 淡出（条17） */
+            try {
+              btn.textContent = '✓ 已获取';
+              btn.style.background = 'var(--green, #2e7d32)';
+              btn.style.borderColor = 'var(--green, #2e7d32)';
+              btn.style.color = '#fff';
+              setTimeout(function () {
+                btn.textContent = btnText; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+              }, 400);
+            } catch (e0) {}
           } else {
             resourceCodeError.textContent = (res && res.msg) || '获取失败';
             resourceCodeError.style.display = 'block';
@@ -1242,26 +1316,9 @@
     });
 
     // ---------- Toast 轻提示 ----------
-    var __toastQ = [], __toastBusy = false;
-    function showToast(msg, type) {
-      /* R192 一⑨/二⑤：toast 队列——连续触发排队逐条展示（每条 2s+0.3s 淡出），不再同位叠加；
-         语义色：type='error' 红（与后台同值），默认/成功蓝（规格不变：白底0.92+蓝字+圆角20，与下拉刷新胶囊一致） */
-      __toastQ.push({ m: String(msg || ''), t: type || '' });
-      if (!__toastBusy) __toastNext();
-    }
-    function __toastNext() {
-      if (!__toastQ.length) { __toastBusy = false; return; }
-      __toastBusy = true;
-      var it = __toastQ.shift();
-      var t = document.createElement('div');
-      t.textContent = it.m;
-      var err = it.t === 'error';
-      t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:' + (err ? '#e53935' : 'var(--blue1,#1E88E5)') + ';background:var(--toast-bg,rgba(255,255,255,0.92));border:1px solid ' + (err ? '#e57373' : 'var(--blue2,#64B5F6)') + ';border-radius:20px;padding:6px 16px;font-size:12px;line-height:18px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;max-width:90%;text-align:center;opacity:0;transition:opacity 0.2s ease;';
-      document.body.appendChild(t);
-      requestAnimationFrame(function () { t.style.opacity = '1'; });
-      setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s ease'; }, 2000);
-      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); __toastNext(); }, 2300);
-    }
+    /* R231（用户 09-21 23:38）条11：队列抽公共到 ui-common.js window.uiToast——观感改走 .ui-toast
+       公共类（白底0.92+蓝字+圆角20 规格不变），入场带下落分量（uiToastDrop 240ms）；错误红语义不变 */
+    function showToast(msg, type) { window.uiToast(msg, type); }
 
     // ---------- 顶栏：咨询客服 ----------
     topContactBtn.addEventListener('click', function () {
@@ -1560,6 +1617,13 @@
       document.documentElement.style.setProperty('--topbar-h', h + 'px');
     }
     window.addEventListener('resize', updateTopbarHeight);
+    window.addEventListener('resize', function () {
+      // R231（用户 09-21 23:38）条20：窗口变化后指示条重新贴合激活标签（宽度/换行都可能变）
+      var bar = document.getElementById('categoryBar');
+      var ind2 = bar && bar.querySelector('.cat-slide-ind');
+      var act2 = bar && bar.querySelector('.category-tag.active');
+      if (ind2 && act2) { ind2.style.width = act2.offsetWidth + 'px'; ind2.style.transform = 'translateX(' + act2.offsetLeft + 'px)'; }
+    });
     // 页面重新可见 / 从其他页面切回时，静默拉取最新数据（管理页改动更快同步，不闪烁）
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden && typeof usingRemote !== 'undefined' && usingRemote) { fetchRemote(); }
@@ -1691,9 +1755,11 @@
         }
       }
     }
-    // scroll事件触发时立即检查，停止滚动200ms后做一次最终检查（兜底）
+    /* R231 条6：滚动改 rAF ticking（照管理页成熟模式）——原写法每次 scroll 事件同步读 scrollHeight，
+       图片加载期布局频繁变化时同步读布局会掉帧；现在一帧最多执行一次，停止滚动 200ms 后最终检查（兜底）不变 */
+    var __skTicking = false;
     window.addEventListener('scroll', function () {
-      checkScroll();
+      if (!__skTicking) { __skTicking = true; requestAnimationFrame(function () { checkScroll(); __skTicking = false; }); }
       clearTimeout(scrollTimer);
       scrollTimer = setTimeout(checkScroll, 200);
     }, { passive: true });

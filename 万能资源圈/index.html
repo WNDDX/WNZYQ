@@ -17,7 +17,9 @@
 <meta name="twitter:description" content="优质虚拟资源导航站，一键获取学习资源、软件工具、设计素材">
 <meta name="twitter:image" content="/assets/images/logo.png?v=224">
   <link rel="stylesheet" href="/assets/ui-common.css">
-<link rel="icon" type="image/x-icon" href="/favicon.ico?v=224">
+<!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
+<!-- R228（用户 09-21 19:42）：浏览器对 favicon 有独立硬缓存、刷新先闪旧图标 → 图标内联 data URI，HTML 一解析即在，零请求零缓存依赖 -->
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
 <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
 <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e2a4f" media="(prefers-color-scheme: dark)">
@@ -52,7 +54,8 @@ body{
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 24px 18px;
+    /* R229（用户 09-21 19:44）：底部留白改引全站统一变量（本页原 24px 即标准源，值不变） */
+    padding: 24px 18px var(--page-bottom-gap, 24px);
     animation: pageFadeIn 0.5s ease; /* R213 P2①（质检 R212）：R53 时代 logo 点击遗留的全页 cursor:pointer 已删，恢复默认箭头 */
 }
 @keyframes pageFadeIn{
@@ -166,6 +169,10 @@ body{
     height: 44px;
     flex-shrink: 0; /* R46：flex 布局成员（图标在文字左侧，随组合一起居中） */
 }
+/* R231 条10：显示改由 .open 控制（keyframes 公共于 ui-common.css）——原 inline display 切换
+   会让 R184 全站关场收缩动画（mask-closing）在首页永远不播 */
+.modal-mask.open { display: flex; animation: maskIn 0.2s ease; }
+.modal-box { animation: modalIn 0.2s var(--ease-out, ease); } /* R231 条10：二维码弹窗补入场 */
 .modal-mask{
     position: fixed;
     inset: 0;
@@ -251,7 +258,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 .prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:prtspin .8s linear infinite;}
 @keyframes prtspin{to{transform:rotate(360deg);}}
 /* 弹窗右上角关闭按钮（与资源页/管理页一致） */
-.modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background: var(--bg-light);color: var(--text-light);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.10s ease;line-height:1;}
+.modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background: var(--bg-light);color: var(--text-light);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.10s ease, opacity 0.10s ease, background 0.10s ease, color 0.10s ease; /* R231 条1：all 收窄为显式属性 */line-height:1;}
 .modal-close-x:hover{background:#ff4444;color:#fff;transform:scale(0.97);opacity:0.9;}
 .modal-close-x:active{transform:scale(0.94);opacity:0.8;filter:brightness(0.9);}
 /* === 弹窗横向溢出防护：禁止底部滑轮 === */
@@ -288,7 +295,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 <div class="wrap">
     <div class="logo-wrap">
         <div class="logo-box"><!-- R53：logo 去链接（特效 hover/active/进场动画全保留） -->
-            <img class="logo-img" id="logoImage" src="/assets/images/logo.png?v=224" alt="" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="this.style.opacity='1';var p=this.parentNode;if(p){p.style.opacity='1';if(!p.classList.contains('logo-enter'))p.classList.add('logo-enter');}this.onerror=null;this.classList&&this.classList.add('media-fail');this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';">
+            <img class="logo-img" id="logoImage" src="/assets/images/logo.png?v=224" alt="" decoding="async" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="this.style.opacity='1';var p=this.parentNode;if(p){p.style.opacity='1';if(!p.classList.contains('logo-enter'))p.classList.add('logo-enter');}this.onerror=null;this.classList&&this.classList.add('media-fail');this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';">
             <div class="logo-fail-icon" id="logoFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -299,6 +306,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <div class="page-title">万能资源圈・导航</div>
 
     <button class="btn-item btn-orange" onclick="openResource()">
+        <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
         <svg class="icon-svg" viewBox="0 0 24 24" fill="white">
             <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
         </svg>
@@ -306,6 +314,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     </button>
 
     <button class="btn-item btn-green" onclick="openService()">
+        <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
         <svg class="icon-svg" viewBox="0 0 24 24" fill="white">
             <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.036 2.87c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.97-.983zm4.844 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.969-.983z" />
         </svg>
@@ -313,6 +322,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     </button>
 
     <button class="btn-item btn-blue" onclick="openGroup()">
+        <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
         <svg class="icon-svg" viewBox="0 0 24 24" fill="white">
             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
         </svg>
@@ -320,6 +330,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     </button>
 
     <button class="btn-item btn-cyan" onclick="openGzh()">
+        <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
         <svg class="icon-svg" viewBox="0 0 24 24" fill="white">
             <path d="M12 2A10 10 0 1 0 22 12 10 10 0 0 0 12 2zm0 18A8 8 0 1 1 20 12 8 8 0 0 1 12 20zm4.25-11.25a1 1 0 0 1-1.41 0l-1.84-1.84-1.84 1.84a1 1 0 0 1-1.41-1.41l1.84-1.84-1.84-1.84a1 1 0 0 1 1.41-1.41l1.84 1.84 1.84-1.84a1 1 0 0 1 1.41 1.41l-1.84 1.84 1.84 1.84a1 1 0 0 1 0 1.41z"/>
         </svg>
@@ -331,7 +342,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <div class="modal-box" onclick="event.stopPropagation()">
         <button class="modal-close-x" type="button" onclick="closeModal()">×</button>        <div class="modal-title" id="modalTitle"></div>
         <div class="qrcode-wrap">
-            <img class="modal-qrcode" id="modalImg" alt="">
+            <img class="modal-qrcode" id="modalImg" alt="" decoding="async">
             <div class="qrcode-fail-icon" id="qrFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -435,7 +446,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
     if (window.__kfPreconnect && jumpUrl) window.__kfPreconnect(jumpUrl); /* R189：打开弹窗即对跳转域提前建连（客服/群聊通用） */
     dom.modalTitle.textContent = title;
     dom.modalTip.textContent = tipText;
-    dom.mask.style.display = 'flex';
+    /* R231 条10：inline display 移除，显示由 .modal-mask.open 统一接管 */
     dom.mask.classList.add('open'); // R114：同步 .open class 供 __modalKit 维护弹窗栈（Esc 逐层路由）
     if (window.lockBodyScroll) window.lockBodyScroll(true);
     dom.modalImg.style.display = 'block';
@@ -453,7 +464,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
     }
 }
 function closeModal() {
-    dom.mask.style.display = 'none';
+    /* R231 条10：同上，隐藏由 .open 摘除 + 全站关场收缩接管 */
     dom.mask.classList.remove('open'); // R114：与打开侧同步摘除
     dom.modalJumpBtn.style.display = 'none';
     if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
@@ -490,7 +501,7 @@ dom.modalImg.addEventListener('click', function () {
 // PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34）
 
 //页面按钮事件
-function openResource() {window.location.href = CONFIG.resourceUrl;}
+function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
 function openService() { if (window.openContactModal) { window.openContactModal(CONFIG.serviceWeixinUrl, CONFIG.serviceQrImg, CONFIG.tipService, "跳转-咨询在线客服"); } else { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); } }
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}

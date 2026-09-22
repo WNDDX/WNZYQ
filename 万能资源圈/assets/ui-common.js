@@ -509,13 +509,23 @@ if ('serviceWorker' in navigator) {
 })();
 
 
-// ---------- R20：跨页跳转公共函数（淡出 + 兜底恢复 + bfcache 恢复） ----------
-// 原 4 处 inline 跳转淡出（导航页→资源页 / 资源页→管理页 / 管理登录卡→资源页 / 管理顶栏→资源页）收口到这里：
-// 1) 180ms 淡出后跳转；2) 网络慢导致导航迟迟未完成时 1.2s 后恢复可见，避免页面长时间全透明像白屏；
-// 3) 手机返回键从 bfcache 恢复本页时，若 body 还停留在淡出透明态，立即恢复不透明白屏。
+// ---------- R233（用户 09-22 11:30 派单）：条13 补做——跨页跳转接入 View Transitions（全站四页） ----------
+// 跨文档转场本体由 ui-common.css 的 @view-transition { navigation: auto }（R211）接管，JS 侧不再手动淡出干扰它。
+// 三分支（渐进增强，老浏览器不坏）：
+// 1) prefers-reduced-motion 用户 → 跳过动画直接跳（CSS 侧三伪元素动画也已关，R231 条13）；
+// 2) 支持 document.startViewTransition → 用它包裹跳转（当前页截图交叠新页，平滑过渡）；
+// 3) 老浏览器无该 API → 回退 R20 的 180ms 淡出方案（1.2s 兜底恢复 + bfcache pageshow 恢复，原逻辑保留）。
 window.jumpTo = function (href) {
+  if (!href) return;
+  var reduced = false;
+  try { reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) {}
+  if (reduced) { window.location.href = href; return; }
+  if (document.startViewTransition) {
+    document.startViewTransition(function () { window.location.href = href; });
+    return;
+  }
   var b = document.body;
-  if (!b || !href) return;
+  if (!b) { window.location.href = href; return; }
   b.style.transition = 'opacity .18s ease';
   b.style.opacity = '0';
   setTimeout(function () { b.style.opacity = '1'; b.style.transition = ''; }, 1200);
@@ -838,7 +848,7 @@ window.__copyOk = function (el) {
   setTimeout(function () { try { el.classList.remove('copy-ok'); } catch (e) {} }, 1500); /* R184 条11：1.2s→1.5s（用户拍板） */
 };
 // 条8：全站弹窗「从哪开、从哪关」对称收缩——观察所有弹窗遮罩的 class 变化：
-// 任何路径移除 .open 的当帧，先补挂 .mask-closing（CSS 维持 display:flex 并播 0.18s 收缩），200ms 后真正隐藏；
+// 任何路径移除 .open 的当帧，先补挂 .mask-closing（CSS 维持 display:flex 并播 --dur-close 160ms 收缩，R231 条10），200ms 后摘类收尾（留 40ms 缓冲防截断）；
 // 收缩期间重新 add('open') 会自然触发生成新记录 → 撤掉收缩态、重放入场动画（无卡死窗口）
 (function () {
   var MASK_SEL = '.modal-mask, .share-mask, .kf-mask, .lightbox';
@@ -886,12 +896,12 @@ window.__copyOk = function (el) {
         if (active <= 0) return;
         shown = true; w = 12;
         var b = ensure();
-        b.style.width = '12%'; b.style.opacity = '1';
+        b.style.transform = 'scaleX(0.12)'; b.style.opacity = '1'; /* R231 条2：width→scaleX */
         clearInterval(growTimer);
         growTimer = setInterval(function () {
           if (active <= 0 || w >= 86) return;
           w += (88 - w) * 0.08;
-          if (bar) bar.style.width = w + '%';
+          if (bar) bar.style.transform = 'scaleX(' + (w / 100) + ')'; /* R231 条2 */
         }, 400);
       }, 150);
     }
@@ -903,11 +913,11 @@ window.__copyOk = function (el) {
       clearInterval(growTimer);
       if (shown) {
         var b = ensure();
-        b.style.width = '100%';
+        b.style.transform = 'scaleX(1)'; /* R231 条2 */
         clearTimeout(hideTimer);
         hideTimer = setTimeout(function () {
           b.style.opacity = '0';
-          setTimeout(function () { if (active === 0 && bar) bar.style.width = '0'; }, 250);
+          setTimeout(function () { if (active === 0 && bar) bar.style.transform = 'scaleX(0)'; }, 250); /* R231 条2 */
           shown = false;
         }, 180);
       }
@@ -1146,3 +1156,26 @@ window.FlipAnimator.prototype.flip = function (mutateFn, options) {
   }, duration + maxStagger + 50);
   return true;
 };
+
+/* R231（用户 09-21 23:38）条11：toast 公共队列——管理页与资源页同款（连续触发排队逐条展示，
+   每条停留 2s + 0.3s 淡出，不再同位叠加/单条顶掉）。观感走 ui-common.css .ui-toast 公共类
+   （R192 定稿：白底0.92+蓝字+圆角20），入场 uiToastDrop 240ms 带下落分量；
+   语义色 type='error' 红，success/info 走默认蓝。reduced-motion 由全局兜底归零（瞬显）。 */
+window.uiToast = (function () {
+  var q = [], busy = false;
+  function next() {
+    if (!q.length) { busy = false; return; }
+    busy = true;
+    var it = q.shift();
+    var t = document.createElement('div');
+    t.className = 'ui-toast' + (it.t === 'error' ? ' error' : '');
+    t.textContent = it.m;
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add('leaving'); }, 2000);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); next(); }, 2300);
+  }
+  return function (msg, type) {
+    q.push({ m: String(msg || ''), t: type || '' });
+    if (!busy) next();
+  };
+})();

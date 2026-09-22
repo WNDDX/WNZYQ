@@ -79,11 +79,11 @@
   width: 80%; margin: 0 auto 14px; border: none; border-radius: var(--radius); padding: 11px 32px;
   background: var(--green); color: #fff; font-size: 18px; font-weight: 500; cursor: pointer;
   letter-spacing: 0.9px; display: inline-flex; align-items: center; justify-content: center;
-  transition: transform, opacity, filter, background, color, box-shadow var(--dur-fast) ease;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
 .kf-close {
   background: var(--red); color: #fff; border: none; padding: 11px 32px; border-radius: var(--radius);
-  font-size: 18px; cursor: pointer; letter-spacing: 0.9px; transition: transform, opacity, filter, background, color, box-shadow var(--dur-fast) ease;
+  font-size: 18px; cursor: pointer; letter-spacing: 0.9px; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
 /* ===== 全站统一弹窗按键动效（R17 唯一标准，所有弹窗确定/关闭键复用这一份）=====
    标准 = 资源页资源弹窗底部「咨询客服/关闭」两键的动效：
@@ -93,12 +93,12 @@
    各页面禁止再为弹窗按键写本地 hover/active 缩放副本。 */
 .alert-ok, .ann-ok, .btn-item, .modal-inner-btn, .modal-close, .kf-jump, .kf-close {
   -webkit-tap-highlight-color: transparent;
-  transition: transform, opacity, filter, background, color, box-shadow var(--dur-fast) ease;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
 .alert-ok:active, .ann-ok:active, .btn-item:active, .modal-inner-btn:active, .modal-close:active, .kf-jump:active, .kf-close:active {
   transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
 }
-.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform, opacity, background, color var(--dur-fast) ease; line-height: 1; } /* R186：× 回退标准口径——弹窗右上角同款灰圆，hover 变红 */
+.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease ; line-height: 1; } /* R186：× 回退标准口径——弹窗右上角同款灰圆，hover 变红 */
 @media (max-width: 600px) {
   .kf-box { padding: 20px 16px; }
   .kf-title { font-size: 19px; }
@@ -123,10 +123,10 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   font-size: 19px !important; line-height: 1 !important; cursor: pointer !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
   padding: 0 !important; margin: 0 !important;
-  transition: transform, opacity, background, color var(--dur-fast) ease !important;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease !important;
 }
 .modal-close-x:hover,
-.kf-x:hover {
+.kf-x:hover { /* R231 条7：控件悬停统一微亮+浮起（缩放式退役） */
   background: var(--red) !important; color: #fff !important; transform: scale(0.97); opacity: 0.9;
 }
 .modal-close-x:active,
@@ -154,10 +154,10 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 .share-ok {
   display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;
   background: #1E88E5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
-  transition: transform, opacity, filter, background, color, box-shadow var(--dur-fast) ease; letter-spacing: 1px; -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; letter-spacing: 1px; -webkit-tap-highlight-color: transparent;
 }
 .share-ok:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
-.share-ok:hover { transform: scale(0.97); opacity: 0.9; }
+.share-ok:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7：控件悬停统一微亮+浮起 */
 #rteExitZoom { z-index: 6001 !important; }
 .kf-mask, #kfFallback { z-index: 10001 !important; }
 .lightbox { z-index: 100000 !important; }
@@ -226,10 +226,10 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   display: inline-flex; align-items: center; justify-content: center;
   box-sizing: border-box; border-radius: 18px;
   font-size: 14px; white-space: nowrap; line-height: 1.2; gap: 5px;
-  transition: transform, opacity, filter, background, color, box-shadow var(--dur-mid); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-mid), opacity var(--dur-mid), filter var(--dur-mid), background var(--dur-mid), color var(--dur-mid), box-shadow var(--dur-mid) ; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
-.tab:hover { transform: scale(0.97); opacity: 0.9; }
+.tab:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
 /* 按下瞬间变白底蓝字：与管理页 tab 激活态同一观感（资源页咨询客服/分享按下也变白，两页统一） */
 .tab:active { background: #fff; color: var(--blue1); transform: scale(0.94); }
 .tab svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
@@ -251,7 +251,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   transition: background var(--dur-mid) ease, color var(--dur-mid) ease, transform var(--dur-fast) ease;
   -webkit-tap-highlight-color: transparent;
 }
-.view-btn:hover { transform: scale(0.96); opacity: 0.9; }
+.view-btn:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
 .view-btn:active { transform: scale(0.94); opacity: 0.8; }
 .view-btn.active {
   background: #FFFFFF; color: var(--blue1); border-color: var(--blue2); font-weight: 600; /* 激活：淡白底蓝字（R141 色收敛到站点蓝） */
@@ -369,7 +369,11 @@ img.media-fail { border: 1px solid var(--border); }
 }
 
 /* ===== R183（用户 09-17 终极清单拍板）：动效三档 Token / 图片入场 / 弹窗对称收缩 / 按钮转圈 / 复制反馈 / 焦点环 / 等宽数字 / 空态清除键 ===== */
-:root { --dur-fast: 0.10s; --dur-mid: 0.18s; --dur-slow: 0.30s; } /* 条6：三档动效时长——微反馈/状态与弹窗/内容淡出 */
+:root { --dur-fast: 0.10s; --dur-mid: 0.18s; --dur-slow: 0.30s; }
+/* R229（用户 09-21 19:44「全系统全页面底部留白统一，以大的为标准」）：页面底部留白全站统一标准值。
+   实测四页原有值：导航 body 底 24px（最大，即标准源）/ 商城 0px（翻页器贴底）/ 管理 .container 底 16px（390 档 12px）/ 错误 body 底 20px。
+   统一口径 = 滚动到底时最后内容到页面底边的距离；短内容居中页（导航/错误）的剩余视口空间是布局天性不计入。 */
+:root { --page-bottom-gap: 24px; }
 /* 条2：图片入场（R183 同二维码 kfQrIn 口径）；R211 二批（用户 09-20）按 UI 设计师规格微调：scale 0.9→1 起跳改为 1.02→1 轻落位（渐入更含蓄，二维码 kfQrIn 保持原口径不动） */
 .img-in { animation: imgQrIn var(--dur-mid) var(--ease-out); }
 @keyframes imgQrIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
@@ -402,17 +406,17 @@ img.media-fail { border: 1px solid var(--border); }
    关闭动画期间重新打开会自动撤掉收缩态、重放入场） */
 .modal-mask.mask-closing, .share-mask.mask-closing, .kf-mask.mask-closing, .lightbox.mask-closing {
   display: flex;
-  animation: maskOut var(--dur-mid) var(--ease-out) forwards;
+  animation: maskOut var(--dur-close) var(--ease-out) forwards; /* R231 条10：关场统一 160ms——关比开快是高级产品通行手感 */
   pointer-events: none;
 }
 @keyframes maskOut { from { opacity: 1; } to { opacity: 0; } }
 .modal-mask.mask-closing > .modal-box, .share-mask.mask-closing > .share-box, .kf-mask.mask-closing > .kf-box, .lightbox.mask-closing > img, .lightbox.mask-closing > video {
-  animation: boxOut var(--dur-mid) var(--ease-out) forwards;
+  animation: boxOut var(--dur-close) var(--ease-out) forwards; /* R231 条10 */
 }
 @keyframes boxOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.92); } }
 
 /* ===== R184 条5：顶部网络进度条 + 条31：阴影 5 档 Token ===== */
-#fetch-bar { position: fixed; top: 0; left: 0; height: 2px; width: 0; background: linear-gradient(90deg, #fff, rgba(255,255,255,0.85)); box-shadow: 0 0 6px rgba(255,255,255,0.85); z-index: 100100; pointer-events: none; opacity: 0; transition: width .25s ease, opacity .2s ease; border-radius: 0 1px 1px 0; } /* R184 补：白色高亮——四页顶栏/页面渐变均为品牌蓝，原蓝色条叠蓝底不可见；白条+微光晕在蓝底上恒清晰（GitHub 顶栏同款） */
+#fetch-bar { position: fixed; top: 0; left: 0; height: 2px; width: 100%; transform: scaleX(0); transform-origin: 0 50%; background: linear-gradient(90deg, #fff, rgba(255,255,255,0.85)); box-shadow: 0 0 6px rgba(255,255,255,0.85); z-index: 100100; pointer-events: none; opacity: 0; transition: transform .25s ease, opacity .2s ease; border-radius: 0 1px 1px 0; } /* R231 条2：width→scaleX——宽度动画每次步进都强制整页重排（恰逢骨架屏+图片入场最忙时），缩放在合成层完成，视觉完全一样 */ /* R184 补：白色高亮——四页顶栏/页面渐变均为品牌蓝，原蓝色条叠蓝底不可见；白条+微光晕在蓝底上恒清晰（GitHub 顶栏同款） */
 :root { --shadow-card: 0 1px 4px rgba(0,0,0,0.07); --shadow-pop: 0 4px 16px rgba(0,0,0,0.14); --shadow-modal: 0 10px 40px rgba(0,0,0,0.25); --shadow-blue: 0 3px 10px rgba(30,136,229,0.3); --shadow-blue-strong: 0 6px 20px rgba(30,136,229,0.4); } /* R184 条31：全站阴影归 5 档——卡片微浮/悬浮面板/弹窗大影/品牌蓝晕/品牌强晕（focus 环、白高光环、方向性投影等语义阴影不归档） */
 /* R187：手动主题钮已撤（用户拍板纯自动跟随系统），.theme-btn 全部移除 */
 
@@ -429,7 +433,7 @@ img.media-fail { border: 1px solid var(--border); }
 .search-hist .sh-word { /* 复用 tab 家族：淡蓝底蓝字胶囊（搜索场景按键，R185 口径） */
   border: none; background: rgba(30, 136, 229, 0.12); color: var(--blue1);
   border-radius: 16px; padding: 5px 14px; font-size: 13px; cursor: pointer; line-height: 1.4;
-  transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease; -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; -webkit-tap-highlight-color: transparent;
 }
 .search-hist .sh-word:hover { background: rgba(30, 136, 229, 0.2); }
 .search-hist .sh-word:active { transform: scale(0.94); opacity: 0.85; }
@@ -437,9 +441,9 @@ img.media-fail { border: 1px solid var(--border); }
   position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; border-radius: 50%;
   border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 10px; line-height: 1;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
-.search-hist .sh-del:hover { background: var(--red); color: #fff; transform: scale(1.05); }
+.search-hist .sh-del:hover { background: var(--red); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7：放大式并入浮起式 */
 .search-hist .sh-del:active { transform: scale(0.9); opacity: 0.8; }
 
 
@@ -460,15 +464,110 @@ img.media-fail { border: 1px solid var(--border); }
   .alert-ok:hover, .ann-ok:hover, .btn-item:hover, .modal-inner-btn:hover, .modal-close:hover, .kf-jump:hover, .kf-close:hover {
     filter: brightness(1.06); box-shadow: 0 4px 12px rgba(30,136,229,0.25);
   }
-  .kf-x:hover { background: var(--red); color: #fff; transform: scale(0.97); opacity: 0.9; }
+  .kf-x:hover { background: var(--red); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
   .kf-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 }
 
-/* R211（用户 09-19 17:10）：View Transitions 跨页跳转——MPA 全适配 */
+/* R211（用户 09-19 17:10）：View Transitions 跨页跳转——MPA 全适配（四页经 ui-common.css 全覆盖） */
 @view-transition { navigation: auto; }
+/* R231（用户 09-21 23:38）条13：reduced-motion 用户跳过转场——三伪元素动画全关（直接瞬切），
+   派单口径"reduced-motion 用户跳过"；另：条13 要求管理页也上——admin.html 引本文件即已生效，
+   管理页（DOM 较大）跳转性能实测见交付评论 r231-verify 数据 */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
 
 /* R211：按钮 ✓ 成功态弹入 */
 @keyframes btnSuccessPop {
   from { transform: scale(0.6); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+    /* ===== R230（老板 09-21 21:10 拍板）：骨架屏公共基础（自 shop.css R193/R211/R213 迁入，全站一份） =====
+       商城 .card-skeleton 与管理页 .skel 行同源：灰框占座、数据到达同位置逐条渐变成真行。
+       管理页骨架件复用真实行类名并挂 .sk-piece（尺寸/圆角由各页形状规则补齐）；
+       底色走 Token var(--bg-light)（暗色模式自动跟随），高光带 --sk-hi 亮/暗两套。
+       .sk-piece 双写提升特异性（0,3,0）——管理页真实行类（.thumb 等）自带 background（0,2,0），
+       不双写会被更靠后的页内样式压掉失去微光；系统「减少动态效果」降级为呼吸脉冲。 */
+    .skel, .card-skeleton { pointer-events: none; --sk-hi: #e8eaef; }
+    [data-theme="dark"] .skel, [data-theme="dark"] .card-skeleton { --sk-hi: #262a3a; }
+    /* R213 口径（随迁）：渐变高光带整体移入磁贴后半段（55%/75%/95%）——高光在动画边界帧
+       不贴右缘，扫过全程无残影 */
+    .skel .sk-piece, .skel .sk-piece.sk-piece,
+    .skel .sk-img, .skel .sk-line,
+    .card-skeleton .sk-img, .card-skeleton .sk-line {
+      background: linear-gradient(90deg, var(--bg-light, #f0f2f5) 55%, var(--sk-hi, #e8eaef) 75%, var(--bg-light, #f0f2f5) 95%);
+      background-size: 200% 100%;
+      animation: skShimmer 1.6s linear infinite;
+    }
+    .skel .sk-line, .card-skeleton .sk-line { height: 13px; border-radius: 4px; margin-top: 10px; }
+    .skel .sk-line.w70, .card-skeleton .sk-line.w70 { width: 70%; }
+    .skel .sk-line.w95, .card-skeleton .sk-line.w95 { width: 95%; }
+    .skel .sk-piece { border-radius: 6px; }
+    @keyframes skPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+    @keyframes skShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* 系统「减少动态效果」：恢复原呼吸式脉冲、禁用背景位移（微光位移感更强） */
+    @media (prefers-reduced-motion: reduce) {
+      .skel .sk-piece, .skel .sk-piece.sk-piece, .skel .sk-img, .skel .sk-line, .card-skeleton .sk-img, .card-skeleton .sk-line {
+        animation: skPulse 1.2s ease-in-out infinite; background: var(--bg-light, #f0f2f5); background-size: auto;
+      }
+    }
+
+/* ---------- R231（用户 09-21 23:38）条1：系统级减少动画全局兜底 ----------
+   用户开省电模式/系统设置关动画时，全站动画与过渡自动归零（无障碍通行做法）。
+   先于 42 处 transition 修复落地：无论后面动画怎么加，这张安全网都在。 */
+@media (prefers-reduced-motion: reduce) {
+  /* R231 条1 补丁：选择器提特异性到 (0,3,0)——站点存在 .product-card/.product-row/.modal-close-x 等
+     带 !important 的 transition 简写（特异性 0,1,0），原 * 兜底在 !important 层被它们压过、逐个漏网；
+     :root 连写三叠后任何单类/双类简写都压不过这张网 */
+  :root:root:root,
+  :root:root:root *,
+  :root:root:root *::before,
+  :root:root:root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ===== R231（用户 09-21 23:38）批次 B 公共层 ===== */
+/* 条10：弹窗入场 keyframes 抽公共（原 admin.css / shop.css 各持一份重复定义，删本地留这一份） */
+@keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：入场加展开（与关闭收缩对称） */
+/* 条8：暗色模式阴影加深+亮边描线——深色底上浅色阴影几乎不可见，卡片层次感丢失；
+   重定义 5 档阴影变量 + inset 1px 亮线（box-shadow 内嵌，零布局影响），亮色完全不动 */
+[data-theme="dark"] {
+  --shadow-card: 0 2px 10px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-pop: 0 6px 22px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.07);
+  --shadow-modal: 0 14px 52px rgba(0,0,0,0.65), inset 0 0 0 1px rgba(255,255,255,0.08);
+  --shadow-blue: 0 4px 14px rgba(30,136,229,0.45), inset 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-blue-strong: 0 8px 26px rgba(30,136,229,0.55), inset 0 0 0 1px rgba(255,255,255,0.07);
+}
+/* 条10：关场时长变量（160ms）——与入场 var(--dur-mid) 区分，关比开快 */
+:root { --dur-close: 0.16s; }
+/* 条11：toast 公共样式（资源页 R192 定稿观感：白底0.92+蓝字+圆角20+语义色；下落入场 240ms） */
+.ui-toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  color: var(--blue1, #1E88E5); background: var(--toast-bg, rgba(255,255,255,0.92));
+  border: 1px solid var(--blue2, #64B5F6); border-radius: 20px;
+  padding: 6px 16px; font-size: 12px; line-height: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100002;
+  pointer-events: none; max-width: 90%; text-align: center;
+  animation: uiToastDrop 0.24s var(--ease-out) both; /* R231 条11：入场带下落分量（从上 8px 落下） */
+}
+.ui-toast.error { color: #e53935; border-color: #e57373; }
+.ui-toast.leaving { opacity: 0; transition: opacity 0.3s ease; }
+@keyframes uiToastDrop { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+/* 条31：暗色模式切换过渡——只过渡 body 背景色与文字色（禁全局 *，避免拖慢其它动画） */
+body { transition: background-color 0.3s ease, color 0.3s ease; }
+/* 条34：动画资源使用规矩——加速资源（will-change/合成层）只允许动画播放期间临时占用、结束释放；
+   禁止常驻声明（本站唯一一处常驻 admin.css topbar 已在 R231 删除）。
+   新增动画需要层的：JS 播放前 element.style.willChange='transform'，transitionend/animationend 后置 ''。 */
+
+/* 条15（老板修正 09-21）：切换淡入上移统一 0.20s（原 0.18s）——详情弹窗类型切换 / 管理页预览与码面板同类 */
+:root { --dur-switch: 0.20s; }
+/* 条22：视图切换/淡入上移 keyframes 抽公共（原 shop.css、admin.css 三份重复，admin 用 fadeInUp 无定义属漏网） */
+@keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

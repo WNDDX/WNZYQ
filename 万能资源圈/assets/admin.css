@@ -52,6 +52,7 @@
     }
     .login-card {
       background: var(--card-bg);
+      animation: loginCardIn 0.45s var(--ease-out) both; /* R231 条30：登录卡入场淡入上移 */
       border-radius: 14px;
       padding: 30px 26px 30px; /* R118：删底部灰字后上下对称，框内内容垂直居中 */
       width: 100%;
@@ -116,7 +117,7 @@
     /* ---------- 主视图 ---------- */
     .topbar {
       position: sticky; top: 0; z-index: 100;
-      transition: transform var(--dur-mid) ease, box-shadow var(--dur-mid) ease; will-change: transform;
+      transition: transform var(--dur-mid) ease, box-shadow var(--dur-mid) ease; /* R231 条34：删常驻 will-change——加速资源只许动画期临时占用（见 ui-common.css 规矩注释） */
     }
     .topbar.nav-hidden { transform: translateY(-100%); box-shadow: none; }
     .back-top {
@@ -126,7 +127,7 @@
       display: flex; align-items: center; justify-content: center;
       box-shadow: var(--shadow-blue-strong);
       opacity: 0; visibility: hidden; transform: translateY(10px);
-      transition: transform var(--dur-mid) ease, box-shadow var(--dur-mid) ease, opacity var(--dur-mid);
+      transition: transform var(--dur-mid) ease, box-shadow var(--dur-mid) ease, opacity var(--dur-mid) ease, visibility var(--dur-mid) ease; /* R231 条1：补 visibility 过渡 */
     }
     .back-top.show { opacity: 0.72; visibility: visible; transform: translateY(0); }
 
@@ -164,7 +165,7 @@
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      transition: transform, opacity, filter, background, color, box-shadow var(--dur-fast) ease;
+      transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
       text-decoration: none;
     }
     .topbar-logo-link:active {
@@ -191,23 +192,24 @@
       display: inline-flex; align-items: center; justify-content: center;
       box-sizing: border-box; border-radius: 18px;
       font-size: 14px; white-space: nowrap; line-height: 1.2;
-      transition: transform, opacity, background, color, box-shadow var(--dur-mid); cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: transform var(--dur-mid), opacity var(--dur-mid), background var(--dur-mid), color var(--dur-mid), box-shadow var(--dur-mid) ; cursor: pointer; -webkit-tap-highlight-color: transparent;
     }
 
     .logout-btn:active { background: #fff; color: var(--blue1); transform: scale(0.94); }
     /* R39：退出确认弹窗打开期间退出键变白——复用资源页顶栏分享键的 .active 白底蓝字观感（ui-common.css .tab.active） */
     .logout-btn.active { background: #fff; color: var(--blue1); font-weight: 600; transform: none; opacity: 1; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 16px 16px var(--page-bottom-gap, 24px); } /* R229（用户 09-21 19:44）：底部留白全站统一（原底 16→24） */
     .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tb-row2 select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--card-bg); color: var(--text); }
     /* .view-btn 按钮本体已抽入 ui-common.css 全站公共组件（与资源页同一份，零复制），
        公共样式已按"融入背景"参数化：管理页白底直接透明融入+激活蓝底白字，资源页由 .on-blue 切白系。 */
-    @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
+    /* R231 条22：viewSwitch keyframes 抽公共到 ui-common.css（本处删除防三份重复） */
     .view-switch-anim { animation: viewSwitch var(--dur-mid) ease; }
     .btn-blue, .row-btn, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; display: inline-flex; align-items: center; justify-content: center; }
     .toolbar-hint { font-size: 13px; color: var(--text-faint); }
+    .admin-search:focus-within { box-shadow: 0 0 0 3px rgba(30,136,229,0.15); transition: box-shadow 0.18s ease; } /* R231 条12：聚焦光晕（与前台同款） */
     .admin-search {
       position: relative;
       flex: 1;
@@ -246,7 +248,7 @@
       padding: 12px 14px; margin-bottom: 10px;
       display: flex; align-items: center; gap: 14px;
       box-shadow: var(--shadow-card);
-      transition: transform, opacity, filter, background, color, box-shadow var(--dur-fast) ease;
+      transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
       cursor: grab; animation: rowIn var(--dur-mid) ease;
     }
     .product-row:active { cursor: grabbing; }
@@ -323,6 +325,10 @@
     .empty { text-align: center; color: var(--text-faint); padding: 60px 0; font-size: 14px; }
 
     .prod-fade { animation: prodFade var(--dur-mid) ease; }
+    /* R231 条21：tab 面板切换 0.18s 淡入上移（fadeInUp 公共 keyframes，见 ui-common.css） */
+    .panel-in { animation: fadeInUp var(--dur-mid) var(--ease-out); }
+    /* R231 条23：翻页滚回列表顶时给 sticky topbar 留位 */
+    #productList { scroll-margin-top: 68px; }
     @keyframes prodFade { from { opacity: 0.4; } to { opacity: 1; } }
     /* 卡片视图 */
     #productList.card-view {
@@ -439,7 +445,9 @@
       filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
     }
     .stat-toggle.open .toggle-arrow { transform: rotate(0deg); /* 展开状态：箭头向下 */ }
-    .stat-wrap-body.collapsed { display: none; }
+    .stat-wrap-body { display: grid; grid-template-rows: 1fr; overflow: hidden; transition: grid-template-rows 0.2s ease, opacity 0.2s ease; } /* R231 条3：display:none→grid 轨道过渡（零重排口径） */
+    .stat-wrap-body > .stat-body-inner { min-height: 0; }
+    .stat-wrap-body.collapsed { grid-template-rows: 0fr; opacity: 0; }
     /* R14：统计翻页样式已并入全站公共 .uni-pager（ui-common.css），此处旧 .stat-pager 样式移除 */
 
     /* ---------- 分类 ---------- */
@@ -543,11 +551,8 @@
     }
     .modal-mask#catMask > .modal-box, .modal-mask#batchCatMask > .modal-box { max-width: 520px; }
     /* 弹窗宽度由各弹窗 modal-wide/modal-lg 类控制 */
-    @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes modalIn { /* R183 条8：入场加展开（与关闭收缩对称） */
-      from { opacity: 0; transform: scale(0.92); }
-      to { opacity: 1; transform: scale(1); }
-    }
+    /* R231 条10：maskIn 已抽公共到 ui-common.css */
+    /* R231 条10：modalIn 已抽公共到 ui-common.css */
     .modal-title { font-size: 20px; color: var(--text); margin-bottom: 16px; letter-spacing: 1.2px; padding: 0 34px; text-align: center; }
     /* 弹窗右上角关闭按钮 */
     .modal-close-x { /* R186：× 回退标准口径——灰圆，hover 变红（弹窗右上角标准） */
@@ -556,7 +561,7 @@
       border: none; background: var(--bg-light); color: var(--text-light);
       font-size: 19px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: transform, opacity, background, color var(--dur-fast) ease; line-height: 1;
+      transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease ; line-height: 1;
     }
 
     .modal-close-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
@@ -567,7 +572,7 @@
       width: 32px; height: 32px; border-radius: 50%;
       border: none; background: rgba(100,176,241,0.18); color: var(--blue1); /* R141：材质蓝→站点蓝 */
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease; -webkit-tap-highlight-color: transparent;
+      transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; -webkit-tap-highlight-color: transparent;
     }
     .modal-share-x svg { width: 15px; height: 15px; display: block; }
 
@@ -666,7 +671,7 @@
     .dt-pop .dt-btns { display: flex; gap: 8px; }
     .dt-pop .dt-btns button {
       flex: 1; height: 34px; border-radius: 8px; font-size: 13px; cursor: pointer;
-      border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+      border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
     }
 
     .dt-pop .dt-btns button:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
@@ -690,7 +695,7 @@
     .rte-btn {
       padding: 0 10px; height: 32px; border: 1px solid var(--border); border-radius: 6px;
       background: var(--card-bg); cursor: pointer; font-size: 13px; color: var(--text);
-      transition: transform, opacity, background, color, box-shadow var(--dur-fast); min-width: 32px; text-align: center; display: inline-flex; align-items: center; justify-content: center;
+      transition: transform var(--dur-fast), opacity var(--dur-fast), background var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast) ; min-width: 32px; text-align: center; display: inline-flex; align-items: center; justify-content: center;
       line-height: 1; /* R216：行框高度归一为字号本身——flex 只能居中"行框"，行框含上下空隙时 CJK 墨迹整体偏上、与 SVG 图标错位；归一后墨迹中线与行框中线一致，图标与文字像素级同线 */
     }
 
@@ -731,7 +736,7 @@
        改为组合整体居中，picker 宽 80px、高度、字号均不变 */
     .rte-toolbar .select-picker .cat-picker-display { justify-content: center; transform: translate(3.5px, -1px); }
     .rte-toolbar .select-picker .cat-picker-display .cpd-text { flex: 0 0 auto; }
-    .pwd-eye-ico { width: 18px; height: 18px; } /* 条11：密码小眼睛黑白 SVG（按钮 flex 居中） */
+    .pwd-eye-ico { width: 18px; height: 18px; color: #000; } /* 条11：密码小眼睛黑白 SVG（按钮 flex 居中）；R226：固定黑色（stroke=currentColor，睁眼/闭眼两态统一） */
     .rte-color-ico-hl { color: #333; }
     /* 浮层基类：复用资源码下拉框 cat-picker-panel 同款白卡规格 */
     .rte-pop {
@@ -799,7 +804,8 @@
     }
     .rte-editor.rte-large ~ * { }
     .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: var(--card-bg); border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 0 12px; height: 36px; }
-    .rte-zoom { font-weight: 600; }    .rte-toolbar .select-picker .cat-picker-display { min-height: 0; height: 32px; padding: 0 10px; align-self: center; border-radius: 6px; font-size: 13px; }    .rte-toolbar.rte-toolbar-large .select-picker .cat-picker-display { height: 36px; font-size: 15px; }
+    .rte-zoom { font-weight: 600; }
+    .rte-zoom-ico { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; } /* R231 条9：SVG 线性图标（随按钮色，放大态白底反色由 currentColor 自动跟） */    .rte-toolbar .select-picker .cat-picker-display { min-height: 0; height: 32px; padding: 0 10px; align-self: center; border-radius: 6px; font-size: 13px; }    .rte-toolbar.rte-toolbar-large .select-picker .cat-picker-display { height: 36px; font-size: 15px; }
     /* R173（用户 00:38/00:40）：编辑器内媒体出格根治——原规则无 !important，内联 style width:600px 的
        粘贴图/视频会撑出编辑器（放大态 96vw 也压不住）；作者样式表 !important 可压过内联非 important 样式，
        内联宽仍生效但渲染宽被 max-width 钳在容器内，任何态不再越界 */
@@ -830,12 +836,12 @@
     .preview-btn {
       padding: 0 18px; height: 44px; border: 1px solid var(--blue1);
       border-radius: 8px; background: var(--card-bg); color: var(--blue1);
-      font-size: 14px; font-weight: 600; cursor: pointer; transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
     }
 
     .modal-footer .preview-btn:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
     /* 视图切换动画（管理页/资源页一致） */
-    @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
+    /* R231 条22：viewSwitch keyframes 抽公共到 ui-common.css（本处删除防三份重复） */
     .view-switch-anim { animation: viewSwitch var(--dur-mid) ease; }
     /* 预览弹窗 */
     .preview-box { position: relative; animation: modalIn var(--dur-mid) var(--ease-out); } .preview-box img, .preview-box video { max-width: 100%; height: auto; border-radius: 8px; } .preview-box img { display: block; margin: 8px auto; } .preview-box video { width: 100%; display: block; }
@@ -853,7 +859,7 @@
     #previewMask .preview-detail { background: var(--bg-light); border-radius: 10px; padding: 14px 16px; font-size: 14px; color: var(--text-light); line-height: 1.9; white-space: pre-wrap; margin-bottom: 14px; border-left: 3px solid var(--blue2); word-break: break-word; overflow-wrap: break-word; }
     /* 类型切换：与资源页 .variant-tabs / .variant-tab / .variant-detail / .variant-header 同款 */
     #previewMask .variant-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    #previewMask .variant-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: transform, opacity, background, color, box-shadow var(--dur-mid) ease; user-select: none; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; } /* R160：类型名过长单行截断+title 悬停（与 shop 同款） */
+    #previewMask .variant-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ; user-select: none; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; } /* R160：类型名过长单行截断+title 悬停（与 shop 同款） */
 
     #previewMask .variant-tab.active { background: var(--blue1); color: #fff; border-color: transparent; font-weight: 600; }
     #previewMask .variant-detail { background: var(--bg-light); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
@@ -869,11 +875,11 @@
     #previewMask .resource-code-input-row { display: flex; gap: 8px; }
     #previewMask .resource-code-input { flex: 1; min-width: 0; height: 40px; padding: 0 14px; border: 1.5px solid #c8e0f5; border-radius: 8px; font-size: 14px; color: var(--text); background: var(--card-bg); outline: none; transition: border-color var(--dur-mid); box-sizing: border-box; }
     #previewMask .resource-code-input:focus { border-color: var(--blue1); }
-    #previewMask .resource-code-btn { height: 40px; padding: 0 20px; border: none; border-radius: 8px; background: var(--blue1); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform, opacity, background, color, box-shadow var(--dur-mid) ease; flex-shrink: 0; }
+    #previewMask .resource-code-btn { height: 40px; padding: 0 20px; border: none; border-radius: 8px; background: var(--blue1); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ; flex-shrink: 0; }
 
     #previewMask .resource-code-btn:active { transform: scale(0.94); }
     #previewMask .resource-code-error { margin-top: 8px; font-size: 12px; color: #ff4444; }
-    #previewMask .resource-content { margin-top: 12px; padding: 14px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); font-size: 13px; color: var(--text); line-height: 1.8; animation: fadeInUp var(--dur-mid) var(--ease-out); }
+    #previewMask .resource-content { margin-top: 12px; padding: 14px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); font-size: 13px; color: var(--text); line-height: 1.8; animation: fadeInUp var(--dur-switch) var(--ease-out); } /* R231 条15/22：0.20s+keyframes 公共化（原管理页无定义属漏网） */
     #previewMask .resource-content img, #previewMask .resource-content video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
     #previewMask .resource-content a { color: var(--blue1); text-decoration: underline; word-break: break-all; }
     /* 底部按键：与资源页 .btn-contact / .btn-close-modal 同款（46px/16px/hover/active 动画一致），
@@ -884,13 +890,13 @@
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
       flex: 1; height: 46px; border: none; border-radius: 10px;
       background: var(--blue1); color: #fff; font-size: 16px; font-weight: 600;
-      letter-spacing: 1px; cursor: pointer; transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+      letter-spacing: 1px; cursor: pointer; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
       -webkit-tap-highlight-color: transparent;
     }
     .preview-close-btn {
       display: flex; align-items: center; justify-content: center;
       background-color: var(--red); color: #fff; border: none; padding: 0 28px; height: 46px;
-      border-radius: 10px; font-size: 16px; cursor: pointer; transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+      border-radius: 10px; font-size: 16px; cursor: pointer; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -935,10 +941,9 @@
       padding: 0 24px; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 600;
     }
     .modal-inner-btn, .modal-close, .btn-blue, .row-btn, .variant-add {
-      transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+      transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
     }
-    .modal-inner-btn:hover, .modal-close:hover, .btn-blue:hover,
-
+    /* R231 条4：空 hover 死代码已删（真 hover 反馈在 R211 隔离区；触屏点完即恢复） */
     .modal-inner-btn:active, .modal-close:active, .btn-blue:active,
     .row-btn:active, .variant-add:active {
       transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
@@ -961,7 +966,7 @@
 
     /* 批量操作工具栏 */
     .batch-bar {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; opacity: 0; transition: max-height var(--dur-mid) ease, padding var(--dur-mid) ease, opacity var(--dur-mid) ease;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; opacity: 0; transition: opacity var(--dur-mid) ease; /* R231 条3：max-height/padding 布局过渡删除（逐帧重排），高度瞬切+透明度渐显 */
       background: var(--bg-light); border-radius: 8px; padding: 0 12px;
       margin-bottom: 0; font-size: 13px; color: var(--text-light);
     }
@@ -991,6 +996,14 @@
        占位态（假链接/失败换 data:SVG）被 ui-common.css .modal-box img[src^=data:] 的 margin auto 居中，
        输入过程两态左右横跳；show 态统一 margin auto，两态恒居中不再跳 */
     .img-preview.show { display: block; margin-left: auto; margin-right: auto; }
+    /* R229（用户 09-21 19:50）：编辑弹窗封面预览「刚打开靠左、随后才居中」根治——
+       根因：上方 .modal-box img 的 display:block（0-1-1）盖过 .img-preview 的 display:none（0-1-0），
+       弹窗一打开、无 show 类的预览槽就被裸显在左侧（margin 0 无居中），300ms 输入防抖+图片
+       探测完成后才加 .show 跳到居中（DOM 实测：0-300ms margin=0 靠左 → 314ms 起跳居中）。
+       修法：预览槽的隐藏/居中两态全部 CSS 预置钉死（0-2-1 / 0-3-0 压过泄漏规则），
+       不再依赖 JS 加类时机——首帧起要么不显示、要么就在居中位，物理上不会再靠左 */
+    .modal-box img.img-preview { display: none; }
+    .modal-box .img-preview.show { display: block; margin-left: auto; margin-right: auto; }
 
     /* 平台设置表单 */
     .setting-group {
@@ -1026,14 +1039,15 @@
     .trend-col { flex: 1 1 0; min-width: 0; position: relative; height: 100%; }
     .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: var(--bLift, 30px); display: flex; flex-direction: row; justify-content: flex-end; height: var(--barZone, 100px); gap: 3px; } /* R162：柱底=折线网格底线（距 trend-bars 底 30k，随视口同步） */
     /* R57：每列两组并排——左本期实色、右上期浅色半透明；组内仍是浏览/咨询客服纵向堆叠 */
-    .trend-bar-group { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 2px; }
+    .trend-bar-group { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 2px; animation: tbgIn var(--dur-mid) ease; } /* R231 条3：切档重建时组级淡入（合成层），柱高瞬切不再逐帧重排 */
+    @keyframes tbgIn { from { opacity: 0.35; } to { opacity: 1; } }
     .trend-bar.ghost { opacity: 0.32; }
     /* R58：箭头不再是列顶固定定位，而是放进本期组内（浏览柱上方）——组是 column 底对齐，箭头 DOM 在柱前面即贴柱顶、跟随柱高度 */
     .trend-arrow { text-align: center; font-size: 10px; line-height: 1; margin-bottom: 2px; }
     .trend-arrow.up { color: #1a9e4a; }
     .trend-arrow.down { color: #d43c3c; }
     .trend-arrow.flat { color: #9aa4b2; }
-    .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height var(--dur-mid); }
+    .trend-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; /* R231 条3：height 过渡删除——每次切档逐帧重排整页；改组级淡入（见 .trend-bar-group） */ }
     .trend-bar.view { background: var(--blue1); }
     .trend-bar.contact { background: #ff9900; }
     /* R78：资源码解锁柱（与折线图系列色一致 #4CAF50，ghost 由统一 opacity .32 处理） */
@@ -1076,7 +1090,7 @@
     .time-filter { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
     .time-btn {
       height: 38px; padding: 0 14px; border: none; background: var(--card-bg); color: var(--text-light); display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
-      font-size: 13px; cursor: pointer; transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+      font-size: 13px; cursor: pointer; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
       flex: 1 1 0; min-width: 64px; /* R18：同组按钮等宽对齐 */
     }
     .time-btn.active { background: var(--blue1); color: #fff; font-weight: 600; }
@@ -1085,7 +1099,7 @@
     .export-btn {
       height: 36px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--blue1); border-radius: 8px;
       background: var(--card-bg); color: var(--blue1); font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+      cursor: pointer; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
     }
 
     .export-btn:active { transform: scale(0.94); }
@@ -1137,7 +1151,7 @@
       }
       .tabs::-webkit-scrollbar { display: none; }
       .tab { flex: 1 0 auto; text-align: center; }
-      .container { padding: 12px; }
+      .container { padding: 12px 12px var(--page-bottom-gap, 24px); } /* R229：底部留白全站统一（390 档原底 12→24） */
       .toolbar { flex-wrap: wrap; gap: 8px; }
       .admin-search { max-width: 100%; flex-basis: 100%; order: 3; }
       /* R37 方案A（用户拍板）：手机列表模式=横向紧凑行——
@@ -1245,14 +1259,11 @@
     .btn-blue, .btn-cyan, .export-btn, .batch-btn,
     .variant-add, .time-btn, .cat-toggle,
     .preview-btn, .row-btn {
-      transition: transform, opacity, background, color, box-shadow var(--dur-fast) ease;
+      transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-blue:hover, .btn-cyan:hover,
-    .export-btn:hover, .batch-btn:hover, .variant-add:hover,
-    .time-btn:hover, .cat-toggle:hover,
-
+    /* R231 条4：空 hover 死代码已删 */
     .btn-blue:active, .btn-cyan:active,
     .export-btn:active, .batch-btn:active, .variant-add:active,
     .time-btn:active, .cat-toggle:active,
@@ -1417,7 +1428,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   text-align: center;
   box-sizing: border-box;
   text-decoration: none;
-  transition: transform, opacity, background, color, box-shadow var(--dur-mid) ease;
+  transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ;
   -webkit-tap-highlight-color: transparent;
   cursor: pointer;
 }
@@ -1636,16 +1647,20 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .topbar-logo-link:hover .topbar-logo {
         box-shadow: 0 0 0 3px rgba(255,255,255,0.45);
       }
-  .logout-btn:hover { transform: scale(0.97); opacity: 0.9; }
+  .logout-btn:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
   .drag-handle:hover { background: rgba(30,136,229,0.2); }
+  /* R231 条14（老板修正 09-21）：缩略图/编辑预览 hover 1.05 微放大（与资源页商品卡同口径） */
+  .product-row .thumb, .img-preview { transition: transform var(--dur-mid) ease; }
+  .product-row:hover .thumb { transform: scale(1.05); }
+  .img-preview.show:hover { transform: scale(1.05); }
   .stat-toggle:hover { color: var(--blue2); }
-  .modal-close-x:hover { background: #ff4444; color: #fff; transform: scale(0.97); opacity: 0.9; }
-  .modal-share-x:hover { background: var(--blue1); color: #fff; transform: scale(0.97); opacity: 0.9; }
+  .modal-close-x:hover { background: #ff4444; color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
+  .modal-share-x:hover { background: var(--blue1); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
   .cat-picker-display:hover { border-color: #9cc8f0; }
   .cat-picker-display:hover .cpd-arrow { color: var(--blue1); }
   .cp-item:hover { background: var(--hover-bg); }
   .cp-item .cp-chevron:hover { color: var(--blue1); }
-  .dt-pop .dt-btns button:hover { transform: scale(0.97); opacity: 0.9; }
+  .dt-pop .dt-btns button:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
   .rte-btn:hover { background: rgba(30, 136, 229, 0.12); border-color: transparent; color: var(--blue1); }
   .rte-palette:hover { border-color: var(--blue1); }
   .palette-swatch:hover { transform: scale(1.25); box-shadow: 0 0 4px rgba(0,0,0,0.3); }
@@ -1654,10 +1669,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .tbl-opbar button:hover { background: var(--hover-bg, #f0f2f5); }
   .tbl-opbar .tbl-op-danger:hover { background: #ffebee; color: #c62828; }
   .form .checkbox-row:hover { border-color: var(--blue2); background: var(--hover-bg); }
-  .modal-footer .preview-btn:hover { background: var(--blue1); color: #fff; transform: scale(0.97); opacity: 0.9; }
+  .modal-footer .preview-btn:hover { background: var(--blue1); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
   #previewMask .variant-tab:hover { border-color: var(--blue1); color: var(--blue1); background: var(--hover-bg); transform: translateY(-1px); }
-  #previewMask .resource-code-btn:hover { transform: scale(0.97); opacity: 0.9; }
-  #previewContactBtn.preview-cta:hover, .preview-close-btn:hover { transform: scale(0.97); opacity: 0.9; }
+  #previewMask .resource-code-btn:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
+  #previewContactBtn.preview-cta:hover, .preview-close-btn:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
   .row-btn:hover, .variant-add:hover {
         transform: scale(0.97); opacity: 0.9;
       }
@@ -1670,7 +1685,34 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .ann-title-input:hover, .ann-title-input:focus { border-color: #ddd; background: var(--card-bg); }
   .video-fallback .vf-del:hover { background: rgba(220,53,69,0.85); }
   .rte-img-del:hover { background: rgba(220,53,69,0.85); }
-  .video-fallback .vf-link:hover { transform: scale(0.97); opacity: 0.9; }
-  .admin-search .search-clear:hover { background: #ff4444; color: #fff; transform: translateY(-50%) scale(0.97); }
+  .video-fallback .vf-link:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
+  .admin-search .search-clear:hover { background: #ff4444; color: #fff; transform: translateY(calc(-50% - 1px)); filter: brightness(1.06); } /* R231 条7 */
   .emoji-cell:hover { background: var(--hover-bg, #f0f2f5); }
+}
+
+    /* ---------- R230（老板 09-21 21:10 拍板）：管理页骨架屏——行形状规则 ----------
+       骨架行复用真实行类名（.product-row/.cat-row 及子件类）——槽位/尺寸/间距与真行严格一致，
+       card-view 网格与手机端两行网格布局由既有规则自动接管；灰条微光/暗色/减少动效在
+       ui-common.css（.skel/.sk-piece，全站一份）。此处只补空骨架件的高度/占位/圆角。 */
+    .product-row.skel { cursor: default; }
+    .product-row.skel .row-check { display: inline-block; width: 20px; height: 20px; flex-shrink: 0; border-radius: 4px; }
+    .product-row.skel .p-title { width: 72%; height: 15px; border-radius: 4px; }
+    .product-row.skel .p-sub { width: 88%; height: 12px; margin-top: 6px; border-radius: 4px; }
+    .product-row.skel .row-btn { min-width: 46px; min-height: 29px; border-color: transparent; }
+    .product-row.skel .sk-code { min-width: 84px; } /* 「资源码」下拉按键槽位（四字+箭头，比两字键宽） */
+    .cat-row.skel { cursor: default; }
+    .cat-row.skel .row-check { display: inline-block; width: 20px; height: 20px; flex-shrink: 0; border-radius: 4px; }
+    .cat-row.skel .c-name { height: 16px; max-width: 240px; border-radius: 4px; }
+    .cat-row.skel .c-sort, .cat-row.skel .c-count { height: 12px; border-radius: 4px; }
+    .cat-row.skel .row-btn { min-width: 46px; min-height: 29px; border-color: transparent; }
+    /* 统计三表 tr 骨架：每列一条居中灰线（.sk-line 公共灰条，按表格行形状） */
+    .stat-table tr.skel .sk-line { display: block; margin: 0 auto; }
+
+/* R231 条30：登录卡入场 keyframes（reduced-motion 由全局兜底归零直显终值） */
+@keyframes loginCardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+/* R231 条25：保存后新改行蓝光高亮 1s 渐隐（reduced-motion 由全局兜底归零直显终值） */
+.row-flash { animation: rowFlash 1s var(--ease-out) both; }
+@keyframes rowFlash {
+  0% { box-shadow: 0 0 0 2px var(--blue1), 0 0 14px rgba(30,136,229,0.35); background: rgba(30,136,229,0.06); }
+  100% { box-shadow: none; background: transparent; }
 }
