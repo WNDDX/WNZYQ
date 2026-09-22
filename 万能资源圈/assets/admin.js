@@ -4843,22 +4843,9 @@ document.addEventListener('click', function (e) {
         }
       }).catch(function () {});
     }
-    function loadStats(startDate, endDate, force) {
-      // R176：无参调用一律按当前选中档推导范围（旧 R33 仅 1 天档特例，且旧短路
-      // 「无参+已有全量趋势 → applyStatsDays 只重绘两图直接 return」正是 7/30 天档六卡片
-      // 永不刷新的根因——切档按钮现在显式带范围+force，无参调用也按档推导，六卡随档同步）
-      if (!startDate && !endDate) {
-        var _r0 = __statsRangeDays(state.statsDays || 1);
-        startDate = _r0.start; endDate = _r0.end;
-      }
-      __ensureTrendAll(); // R176：全量趋势并行预取（幂等），7/30 天档点击即可本地即时切片
-      var url = 'admin/stats';
-      var params = [];
-      if (startDate) params.push('start_date=' + encodeURIComponent(startDate));
-      if (endDate) params.push('end_date=' + encodeURIComponent(endDate));
-      if (params.length) url += '?' + params.join('&');
-      // R176（用户 10:16）：统计表标题随所选范围即时同步（旧静态"（30天内）"文案与切档后
-      // 六卡/图表数据口径不符，切 1/7 天仍写 30 天）；请求发出前就更新，点击即见
+    /* R238（用户 09-22 17:37 派单）：统计表标题随所选范围同步（自 loadStats 前段抽出，
+       供 time-btn 缓存命中路径复用——点击瞬间标题先切，与请求路径完全一致） */
+    function __updateStatTitles(startDate, endDate) {
       var _s0 = String(startDate || '').slice(0, 10), _e0 = String(endDate || '').slice(0, 10), _lbl;
       if (_s0 && _s0 === _e0) _lbl = '今天';
       else if (_s0 && _e0) {
@@ -4869,14 +4856,53 @@ document.addEventListener('click', function (e) {
         var _h3p = document.getElementById('statH3Product'); if (_h3p) _h3p.textContent = '资源明细（' + _lbl + '）';
         var _h3r = document.getElementById('statH3Recent'); if (_h3r) _h3r.textContent = '浏览记录（' + _lbl + '）';
       }
+    }
+    /* R238（用户 09-22 17:37 老板原话：「数据统计里面1、7、30天按键的数据应该都要加载好，
+       不然我第一次点击1、7、30天按键都加载一次，这种看着观感和体验都不好」）：
+       三档数据进统计页即并行预载（幂等，按天缓存），time-btn 点击命中缓存直接全套渲染秒切；
+       预载失败静默降级回现行每点即拉，不报错不弹提示 */
+    var __statsCache = {}; /* { days: { end: 'YYYY-MM-DD', res: {...} } } */
+    function __prefetchStatsRanges() {
+      [1, 7, 30].forEach(function (d) {
+        var _end = __bjToday();
+        var _c = __statsCache[d];
+        if (_c && _c.end === _end) return; /* 本日该档已预载，幂等 */
+        var _r = d === 1 ? { start: _end, end: _end } : __statsRangeDays(d);
+        var _u = 'admin/stats?start_date=' + encodeURIComponent(_r.start) + '&end_date=' + encodeURIComponent(_r.end);
+        api(_u).then(function (res) {
+          if (res && res.ok) __statsCache[d] = { end: _end, res: res };
+        }).catch(function () {}); /* 预载失败静默降级：time-btn 走原现场请求路径 */
+      });
+    }
+    function loadStats(startDate, endDate, force, silent) { /* R238：silent=后台静默刷新（time-btn 命中缓存后的保新鲜刷新），三表比对局部更新 */
+      // R176：无参调用一律按当前选中档推导范围（旧 R33 仅 1 天档特例，且旧短路
+      // 「无参+已有全量趋势 → applyStatsDays 只重绘两图直接 return」正是 7/30 天档六卡片
+      // 永不刷新的根因——切档按钮现在显式带范围+force，无参调用也按档推导，六卡随档同步）
+      if (!startDate && !endDate) {
+        var _r0 = __statsRangeDays(state.statsDays || 1);
+        startDate = _r0.start; endDate = _r0.end;
+      }
+      __ensureTrendAll(); // R176：全量趋势并行预取（幂等），7/30 天档点击即可本地即时切片
+      __prefetchStatsRanges(); /* R238：三档预载（幂等）——进统计页即把 1/7/30 天数据后台拿好，点哪个秒切哪个 */
+      var url = 'admin/stats';
+      var params = [];
+      if (startDate) params.push('start_date=' + encodeURIComponent(startDate));
+      if (endDate) params.push('end_date=' + encodeURIComponent(endDate));
+      if (params.length) url += '?' + params.join('&');
+      // R176（用户 10:16）：统计表标题随所选范围即时同步——R238 抽成 __updateStatTitles 供缓存命中路径复用
+      __updateStatTitles(startDate, endDate);
       // R173（用户 00:28）：回退 R171 的"请求一发就转圈"——改回 R170 条件口径（统计卡未渲染过才显示转圈）；
       // 无条件转圈让每次切日期/切 tab 都闪转圈+淡入，用户实测"全页面都闪一次，更难看"
       var _sl0 = document.getElementById('statsLoading'); if (_sl0 && !(document.getElementById('statCards') || { children: [] }).children.length) _sl0.style.display = 'flex';
       /* R230（老板 09-21 21:10）：统计三表首载铺 tr 骨架（每列一条灰线、数量=一页 20 条；数据到达同位置替换） */
       var _stb0 = document.getElementById('statRows');
       if (_stb0 && !_stb0.children.length) renderStatSkeleton();
-      api(url).then(function (res) {
-        // 数据统计表格顺序：资源明细 → 分类统计 → 浏览记录（幂等，仅首次生效）
+      api(url).then(function (res) { if (silent) __silentApplyStats(res); else __applyStatsRes(res); });
+    }
+    /* R238：loadStats 响应渲染整体抽出——time-btn 命中预载缓存时走完全相同的渲染路径，
+       与请求回来逐字节一致（六卡+两图+三表全套），保证「秒切」画面与等待加载后的画面无差别 */
+    function __applyStatsRes(res) {
+      // 数据统计表格顺序：资源明细 → 分类统计 → 浏览记录（幂等，仅首次生效）
         var _sec = document.getElementById('panel-stats');
         if (_sec) {
           var _ws = _sec.querySelectorAll('.stat-table-wrap');
@@ -4931,11 +4957,42 @@ document.addEventListener('click', function (e) {
         // 修复：加载完成后才隐藏转圈动画并触发淡入——原先这行写在函数外、页面解析时就执行了一次，
         // 导致首次进统计页时"加载中…"转圈永远不消失
         var _slH = document.getElementById('statsLoading'); if (_slH) _slH.style.display = 'none';
-        // R173（用户 00:28）：删掉加载完成后的 stats-fade-in 全页重放（remove+强制回流+add）——
-        // 切日期档/切 tab 都会走 loadStats（R29 起每次切档重新拉数），这里的重放正是
-        // 「切换日期全页面都闪一次」的直接根因；数据直接替换渲染，不再全页淡入
-      });
     }
+    /* R238（用户 09-22 17:37 派单）：后台静默刷新专用渲染——六卡+两图照常重渲染（无全页动画），
+       三表逐张与当前数据比对：没变的不碰（不销毁、错峰淡入不重放，R235 onlyKey 口径），
+       变了的那张才局部重建。用于 time-btn 命中缓存后的保新鲜刷新，用户全程无感 */
+    function __silentApplyStats(res) {
+      if (!res || !res.ok) return;
+      var _ts = function (x) { try { return JSON.stringify(x || []); } catch (e) { return ''; } };
+      if (_ts(res.byProduct) !== _ts(state.statByProduct)) { state.statByProduct = res.byProduct || []; renderStatTables('product'); }
+      if (_ts(res.byCategory) !== _ts(state.statByCategory)) { state.statByCategory = res.byCategory || []; renderStatTables('cat'); }
+      if (_ts(res.recent) !== _ts(state.statRecent)) { state.statRecent = res.recent || []; renderStatTables('recent'); }
+      var ov = res.overview || {};
+      state.statsOverview = ov; state.statsOverviewPrev = res.overview_prev || null;
+      renderStatCards(ov, res.overview_prev || null);
+      var allTrend = res.trend || [];
+      var allTrendPrev = res.trend_prev || [];
+      var days = state.statsDays || 7;
+      var trendData, trendPrev;
+      if (res.hourly && res.hourly.length) {
+        trendData = res.hourly.map(function (h) {
+          return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
+        });
+        trendPrev = (res.hourly_prev && res.hourly_prev.length === res.hourly.length) ? res.hourly_prev.map(function (h) {
+          return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
+        }) : null;
+      } else {
+        trendData = allTrend.slice(-days);
+        trendPrev = allTrendPrev.length ? allTrendPrev.slice(-days) : null;
+      }
+      state.statsTrend = trendData;
+      state.statsTrendPrev = trendPrev || null;
+      state.statsByProduct = res.byProduct || [];
+      renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
+      renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
+      var _slH = document.getElementById('statsLoading'); if (_slH) _slH.style.display = 'none';
+    }
+
 
     // ---------- 统计三面板：三角展开按键 + 翻页（一页 20 条，全系统统一，复用资源页翻页样式） ----------
     var STAT_PAGE_SIZE = 20;
@@ -5724,6 +5781,19 @@ refreshCatCnts();
         state.statsDays = Number(this.dataset.days) || 7;
         document.getElementById('statStartDate').value = '';
         document.getElementById('statEndDate').value = '';
+        /* R238（用户 09-22 17:37）：三档预载缓存命中——六卡+两图+三表走与请求回来完全相同的
+           渲染路径立即切换（零网络等待、零转圈/骨架/整页淡入）；随后后台静默刷新该档保新鲜
+          （__silentApplyStats：三表没变的不碰，变了才局部重建）。缓存未命中（预载失败/跨天）
+           静默降级回下方原每点即拉路径 */
+        var _d = state.statsDays;
+        var _r = _d === 1 ? (function () { var _td = __bjToday(); return { start: _td, end: _td }; })() : __statsRangeDays(_d);
+        var _c = __statsCache[_d];
+        if (_c && _c.end === __bjToday() && _c.res && _c.res.ok) {
+          __updateStatTitles(_r.start, _r.end);
+          __applyStatsRes(_c.res);
+          loadStats(_r.start, _r.end, 1, 1); /* 第 4 参 silent：后台静默刷新 */
+          return;
+        }
         if (state.statsDays === 1) {
           // R29（优化项8）：1天档请求当天单日数据（按小时展示）；R176：日期改北京时间口径
           var _td = __bjToday();
