@@ -521,6 +521,124 @@ if ('serviceWorker' in navigator) {
 })();
 
 
+/* ---------- R239（用户 09-22 派单）：全站公共「到底续滑翻页」机制（enableEdgeTurn）+ 页码提示浮层 ----------
+   语义（老板拍板）：滑到列表最底部（滚不动）后再继续往上滑≈60px → 翻到下一页（单页替换不是追加）；
+   翻页后回本页开头 + 屏幕中下方浮「第 N 页 / 共 M 页」胶囊提示 1.5s 消失；最后一页再滑不动浮「已经是最后一页了」；
+   分页条按键（上一页/下一页/跳页）全部保留，两套并存。
+   判定三通道统一进同一累计器（桌面滚轮与触屏同判定）：
+   1) scroll：滚动位置真实变化（滚得动时的主通道）；
+   2) wheel：贴底后页面滚不动、scroll 不再触发，滚轮事件照发（桌面主通道；deltaMode 行/页换算成像素）；
+   3) touchstart/touchmove：贴底后触屏（含橡皮筋回弹）以手指位移为准（触屏主通道；手势期间 scroll 通道静默防重复累计）。
+   判定规则：距底 ≤8px 才开始累计；朝底部方向累计、反向（回弹/上滑）清零；累计 >60px 触发；触发后 800ms 冷却锁防滚轮惯性连翻。 */
+window.enableEdgeTurn = function (opts) {
+  opts = opts || {};
+  var scroller = opts.scroller || null; /* 传元素=容器内部滚动（如资源码弹窗）；不传=window 整页滚动 */
+  var getPage = typeof opts.getPage === 'function' ? opts.getPage : function () { return 1; };
+  var getTotalPages = typeof opts.getTotalPages === 'function' ? opts.getTotalPages : function () { return 1; };
+  var onTurn = typeof opts.onTurn === 'function' ? opts.onTurn : function () {};
+  var active = typeof opts.active === 'function' ? opts.active : function () { return true; }; /* 可选：非当前列表场景不判定 */
+  var EDGE = 8, TRIGGER = 60, COOLDOWN = 800, TIP_MS = 1500;
+  var locked = false, lockTimer = null;
+  var acc = 0, touchActive = false, lastTouchY = null, lastY = null;
+
+  function top() { return scroller ? scroller.scrollTop : (window.scrollY || document.documentElement.scrollTop || 0); }
+  /* R243 条31：滚动中布局读取每帧至多一次——bottomGap 原先每次 scroll/wheel/touchmove 事件都读
+     scrollHeight/clientHeight/scrollTop（强制同步布局），高频事件一帧内可读多次；
+     改为帧内缓存：本帧首次调用真实读取并缓存，同帧后续事件直接用缓存；
+     requestAnimationFrame 末尾失效，下一帧重新读；翻页后 DOM 高度变化，立即失效 */
+  var gapCache = null, gapRaf = 0;
+  function invalidateGap() { gapCache = null; }
+  function bottomGap() {
+    if (gapCache === null) {
+      if (scroller) gapCache = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      else { var de = document.documentElement; gapCache = de.scrollHeight - (window.innerHeight || de.clientHeight) - (window.scrollY || 0); }
+      if (!gapRaf) gapRaf = requestAnimationFrame(function () { gapRaf = 0; invalidateGap(); });
+    }
+    return gapCache;
+  }
+  /* 页码提示浮层：屏幕中下方胶囊（样式在 ui-common.css .edge-turn-tip），1.5s 自动消失（连续触发重置计时） */
+  var tipEl = null, tipTimer = null;
+  function showTip(text) {
+    if (!document.body) return;
+    if (!tipEl || tipEl.parentNode !== document.body) {
+      tipEl = document.createElement('div');
+      tipEl.className = 'edge-turn-tip';
+      document.body.appendChild(tipEl);
+    }
+    tipEl.textContent = text;
+    tipEl.classList.add('show');
+    clearTimeout(tipTimer);
+    tipTimer = setTimeout(function () { if (tipEl) tipEl.classList.remove('show'); }, TIP_MS);
+  }
+  function reset() { acc = 0; }
+  /* d>0=朝列表底部继续（滚轮向下/手指上滑/滚动条向下）；贴底前一律清零不累计；反向（回弹/上滑）清零 */
+  var idleTimer = null;
+  function accumulate(d) {
+    if (locked || !active()) { reset(); return; }
+    if (bottomGap() > EDGE) { reset(); return; }
+    if (d > 0) acc += d; else if (d < 0) reset();
+    /* 「继续滑」应为较连续的动作：输入间隔 >600ms 清零，跨手势残留不累计
+       （避免贴底滑了 50px 没到 60、隔一会儿再滑一小下被误判为连续续滑） */
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(reset, 600);
+    if (acc > TRIGGER) fire();
+  }
+  function fire() {
+    var p = getPage(), tp = getTotalPages();
+    reset();
+    invalidateGap(); /* R243 条31：翻页 DOM 高度变化，帧缓存立即失效 */
+    if (p >= tp) { showTip('已经是最后一页了'); return; } /* 最后一页再滑不动：只提示不翻页 */
+    locked = true; /* 冷却锁：翻页回顶 + 滚轮/惯性余量期间不再判定，防一次手势连翻两页 */
+    clearTimeout(lockTimer);
+    lockTimer = setTimeout(function () { locked = false; }, COOLDOWN);
+    showTip('第 ' + (p + 1) + ' 页 / 共 ' + tp + ' 页');
+    onTurn(p + 1);
+  }
+
+  var el = scroller || window;
+  var onScroll = function () {
+    var y = top();
+    if (lastY === null) { lastY = y; return; }
+    var d = y - lastY; lastY = y;
+    if (touchActive) return; /* 触屏手势期间以 touchmove 为准，同一次滑动不双通道重复累计 */
+    accumulate(d);
+  };
+  var onWheel = function (e) {
+    var k = e.deltaMode === 1 ? 16 : (e.deltaMode === 2 ? Math.max(240, window.innerHeight || 640) : 1);
+    accumulate(e.deltaY * k);
+  };
+  var onTouchStart = function (e) { touchActive = true; lastTouchY = (e.touches && e.touches[0]) ? e.touches[0].clientY : null; };
+  var onTouchMove = function (e) {
+    if (!touchActive || lastTouchY === null) return;
+    var y = (e.touches && e.touches[0]) ? e.touches[0].clientY : null;
+    if (y === null) return;
+    var d = lastTouchY - y; /* 手指上滑（朝底部）为正 */
+    lastTouchY = y;
+    accumulate(d);
+  };
+  var onTouchEnd = function () { touchActive = false; lastTouchY = null; };
+
+  el.addEventListener('scroll', onScroll, { passive: true });
+  el.addEventListener('wheel', onWheel, { passive: true });
+  el.addEventListener('touchstart', onTouchStart, { passive: true });
+  el.addEventListener('touchmove', onTouchMove, { passive: true });
+  el.addEventListener('touchend', onTouchEnd, { passive: true });
+  el.addEventListener('touchcancel', onTouchEnd, { passive: true });
+  return {
+    destroy: function () {
+      el.removeEventListener('scroll', onScroll);
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('touchcancel', onTouchEnd);
+      clearTimeout(lockTimer); clearTimeout(tipTimer); clearTimeout(idleTimer);
+      if (gapRaf) cancelAnimationFrame(gapRaf); /* R243 条31：销毁时清掉帧失效回调 */
+      if (tipEl && tipEl.parentNode) tipEl.parentNode.removeChild(tipEl);
+    }
+  };
+};
+
 // ---------- R233（用户 09-22 11:30 派单）：条13 补做——跨页跳转接入 View Transitions（全站四页） ----------
 // 跨文档转场本体由 ui-common.css 的 @view-transition { navigation: auto }（R211）接管，JS 侧不再手动淡出干扰它。
 // 三分支（渐进增强，老浏览器不坏）：
@@ -1191,3 +1309,188 @@ window.uiToast = (function () {
     if (!busy) next();
   };
 })();
+
+
+/* R241（用户 09-22 19:19）：弹窗滚动位置按「弹窗 × 对象」独立记忆。
+   症状：对象 A 的弹窗滚到中间后关闭，打开对象 B 的同类弹窗时停在上一个对象滚到的位置。
+   根因：同类型弹窗共用同一套 DOM（mask + .form 等滚动容器），关闭只 remove('open')，
+   滚动容器 scrollTop 原样残留，下一个对象打开时直接继承。
+   修法：在带对象弹窗的打开点统一接管——
+   - 切换到不同对象：先把残留位置记到上一对象名下，再恢复本对象的记忆（无记忆回顶）；
+   - 同一对象重开：残留即最新位置，保持不动（既有认可行为不变）；
+   - 无对象弹窗（不传 objKey）：不接管，维持原行为（重开停在原位=单例弹窗的原位置恢复）。
+   滚动容器白名单：mask 自身 + .modal-box（弹窗盒，preview/shop 详情实际滚动通道）+ .form（admin 表单）
+   + .rte-editor（富文本）+ .preview-body + #bindingsScroll——多容器都记都恢复，各滚各的互不影响。
+   保存动作放在「下一次打开」而非「关闭」时：DOM 只此一套，关闭态无人滚动它，
+   行为与「关闭即保存」完全等价，且不必逐一触碰全站 20+ 个关闭出口（点外/Esc/×/提交）。
+   对象 key 与 R111 草稿同口径（编辑弹窗丢弃草稿时调 forget 同步清位置，重开从头开始）。 */
+window.__modalScroll = (function () {
+  var lastKey = {}; /* maskId -> 上次打开的对象 key（null/未记录 = 不接管或首开） */
+  var posMap = {}; /* 'maskId|objKey|容器序号' -> scrollTop，每个对象每套容器各记各的 */
+  function scrollers(mask) {
+    var list = [mask];
+    try {
+      var inl = mask.querySelectorAll('.modal-box, .form, .rte-editor, .preview-body, [id="bindingsScroll"]');
+      Array.prototype.forEach.call(inl, function (el) { if (list.indexOf(el) === -1) list.push(el); });
+    } catch (e) {}
+    return list;
+  }
+  function open(mask, objKey) {
+    if (!mask) return;
+    var mk = mask.id || '';
+    if (!mk) return;
+    if (objKey == null) { lastKey[mk] = null; return; } /* 无对象弹窗：不接管 */
+    var key = String(objKey);
+    var prev = lastKey[mk];
+    var scs = scrollers(mask);
+    if (prev != null && prev !== key) {
+      /* 对象切换：当前残留位置属于上一对象，先记到它名下 */
+      scs.forEach(function (el, i) { posMap[mk + '|' + prev + '|' + i] = el.scrollTop || 0; });
+    }
+    scs.forEach(function (el, i) {
+      var saved = (prev === key) ? (el.scrollTop || 0) : posMap[mk + '|' + key + '|' + i];
+      el.scrollTop = (saved != null) ? saved : 0; /* 同对象沿用残留；切换对象查记忆，无记忆回顶 */
+    });
+    lastKey[mk] = key;
+  }
+  function forget(mask, objKey) { /* 丢弃草稿（R111 ×/取消/保存成功）时同步清该对象的位置记忆 */
+    if (!mask) return;
+    var mk = mask.id || '';
+    if (!mk) return;
+    var key = (objKey == null) ? lastKey[mk] : String(objKey);
+    if (key == null) return;
+    scrollers(mask).forEach(function (el, i) { try { delete posMap[mk + '|' + key + '|' + i]; } catch (e) {} });
+    if (lastKey[mk] === key) lastKey[mk] = null;
+  }
+  return { open: open, forget: forget };
+})();
+
+/* R243 条28：长内容回顶按钮（内容超两屏后浮出，全系统统一） */
+(function () {
+  var btn = document.createElement('button');
+  btn.className = 'back-to-top';
+  btn.innerHTML = '&#8593;'; // ↑
+  btn.title = '回到顶部';
+  btn.setAttribute('aria-label', '回到顶部');
+  document.body.appendChild(btn);
+
+  function getActiveScroller() {
+    // 优先看当前打开的弹窗里的可滚容器
+    var openMask = document.querySelector('.modal-mask.open, .share-mask.open, .kf-mask.open, .lightbox.open');
+    if (openMask) {
+      var box = openMask.querySelector('.modal-box, .share-box, .kf-box, .lightbox-img');
+      if (box && (box.scrollHeight > box.clientHeight * 2)) return box;
+    }
+    // 再看 window（shop/admin 主页面）
+    var de = document.documentElement;
+    if ((de.scrollHeight || document.body.scrollHeight) > (window.innerHeight || de.clientHeight) * 2) {
+      return window;
+    }
+    return null;
+  }
+
+  function sync() {
+    // R243 条28（用户 09-22 23:18）：无操作 class 写也会触发 MutationObserver（Chrome 对未变化的 remove/toggle 同样产生变更记录），观察全 body 的观察器回调再调 sync 会死循环卡死页面 → 写前判等，状态没变就不写。
+    var sc = getActiveScroller();
+    var has = btn.classList.contains('show');
+    if (!sc) { if (has) btn.classList.remove('show'); return; }
+    var st = (sc === window) ? (window.scrollY || document.documentElement.scrollTop || 0) : sc.scrollTop;
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    var want = st > vh * 2;
+    if (has !== want) btn.classList.toggle('show', want);
+  }
+
+  btn.addEventListener('click', function () {
+    var sc = getActiveScroller();
+    if (!sc) return;
+    if (sc === window) { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    else { sc.scrollTo({ top: 0, behavior: 'smooth' }); }
+  });
+
+  window.addEventListener('scroll', sync, true); // capture  phase  to catch modal scrolls
+  // 弹窗开/关时重新判定
+  var mo = new MutationObserver(sync);
+  mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  setInterval(sync, 800); // 兜底轮询
+})();
+
+
+/* ===== R243 条19②：命令面板（Ctrl+K）全站组件 =====
+   从 admin.js R192 后台命令面板 IIFE 抽提参数化——admin 页传页面/操作命令，
+   前台页（index/shop/error）传资源直达命令（搜到资源直接打开详情）。
+   入口仅键盘 Ctrl+K（桌面端），↑↓ 选择、Enter 执行、Esc 关闭（Esc 已注册进
+   __modalKit，与全站弹窗栈路由一致）；面板本身是 DOM 弹层，页面不新增任何图标/按键。
+   调用：window.__cpPanel({ placeholder, busy, cmds })
+   - cmds: function () { return [{ lab, tag, kw, run }, ...] }（每次呼出实时求值）
+   - busy: 编辑类弹窗开着时不抢键的选择器（默认全站弹窗家族）
+   样式：ui-common.css .cp-mask 作用域块（与 admin.css 命令面板同值）。 */
+window.__cpPanel = function (opts) {
+  if (!window.__uiCommonLoaded) return;
+  if (window.__cpPanelInst) { window.__cpPanelInst.setCmds(opts && opts.cmds); return; } /* 单实例：重复调用只换命令源 */
+  opts = opts || {};
+  var getCmds = opts.cmds || function () { return []; };
+  var busySel = opts.busy || '.modal-mask.open, .kf-mask.open, .share-mask.open, .ann-mask.open';
+
+  var mask = document.createElement('div');
+  mask.className = 'cp-mask'; mask.id = 'cpMask';
+  mask.innerHTML =
+    '<div class="cp-box" role="dialog" aria-label="命令面板">' +
+      '<input class="cp-input" id="cpInput" placeholder="' + (opts.placeholder || '搜索：页面 / 操作 / 资源名…') + '" autocomplete="off" />' +
+      '<div class="cp-list" id="cpList"></div>' +
+    '</div>';
+  document.body.appendChild(mask);
+  var input = mask.querySelector('#cpInput'), listEl = mask.querySelector('#cpList');
+  var items = [], active = 0;
+
+  function cpClose() { mask.classList.remove('open'); input.value = ''; input.blur(); }
+  function cpRender() {
+    var kw = input.value.trim().toLowerCase();
+    var all = [];
+    try { all = getCmds() || []; } catch (e) {}
+    items = !kw ? all : all.filter(function (c) { return (c.lab + ' ' + c.kw).toLowerCase().indexOf(kw) !== -1; });
+    items = items.slice(0, 10); active = Math.min(active, Math.max(0, items.length - 1));
+    if (!items.length) { listEl.innerHTML = '<div class="cp-empty">没有匹配的命令</div>'; return; }
+    listEl.innerHTML = '';
+    items.forEach(function (c, i) {
+      var it = document.createElement('div');
+      it.className = 'cp-item' + (i === active ? ' active' : '');
+      var lab = document.createElement('span'); lab.className = 'cp-lab'; lab.textContent = c.lab;
+      var tag = document.createElement('span'); tag.className = 'cp-tag'; tag.textContent = c.tag;
+      it.appendChild(lab); it.appendChild(tag);
+      it.addEventListener('mouseenter', function () { active = i; cpPaint(); });
+      it.addEventListener('click', function () { cpRun(i); });
+      listEl.appendChild(it);
+    });
+  }
+  function cpPaint() {
+    Array.prototype.forEach.call(listEl.querySelectorAll('.cp-item'), function (el, i) { el.classList.toggle('active', i === active); });
+    var cur = listEl.querySelectorAll('.cp-item')[active]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
+  }
+  function cpRun(i) { var c = items[i]; if (!c) return; cpClose(); try { c.run(); } catch (e) { try { console.error(e); } catch (e2) {} } }
+
+  input.addEventListener('input', function () { active = 0; cpRender(); });
+  mask.addEventListener('click', function (e) { if (e.target === mask) cpClose(); }); /* R217：点外关闭 */
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (items.length) { active = (active + 1) % items.length; cpPaint(); } }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (items.length) { active = (active - 1 + items.length) % items.length; cpPaint(); } }
+    else if (e.key === 'Enter') { e.preventDefault(); cpRun(active); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cpClose(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      if (mask.classList.contains('open')) { cpClose(); return; }
+      if (busySel && document.querySelector(busySel)) return; /* 任一编辑类弹窗开着时不抢键 */
+      active = 0; cpRender(); mask.classList.add('open'); setTimeout(function () { input.focus(); }, 0);
+    }
+  });
+  var tryReg = function () {
+    if (window.__modalKit) { window.__modalKit.register(mask, { discard: cpClose, stash: cpClose }); return true; }
+    return false;
+  };
+  if (!tryReg()) {
+    var n = 0;
+    var t = setInterval(function () { if (tryReg() || ++n > 40) clearInterval(t); }, 50); /* 最多重试 2 秒 */
+  }
+  window.__cpPanelInst = { setCmds: function (fn) { if (fn) getCmds = fn; } };
+};

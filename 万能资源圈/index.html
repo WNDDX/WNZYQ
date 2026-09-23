@@ -17,6 +17,8 @@
 <meta name="twitter:description" content="优质虚拟资源导航站，一键获取学习资源、软件工具、设计素材">
 <meta name="twitter:image" content="/assets/images/logo.png?v=224">
   <link rel="stylesheet" href="/assets/ui-common.css">
+  <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
+  <link rel="preload" href="/assets/ui-common.js" as="script">
 <!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
 <!-- R228（用户 09-21 19:42）：浏览器对 favicon 有独立硬缓存、刷新先闪旧图标 → 图标内联 data URI，HTML 一解析即在，零请求零缓存依赖 -->
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
@@ -285,6 +287,9 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   .btn-item { font-size: 23px; }
 }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+/* R243 条19①：首页安放位——组件本体（.search-box/.search-input/.search-clear/.search-icon）
+   与资源页/管理页同款，样式在 ui-common.css 公共块；此处仅页面安放尺寸 */
+.idx-search { flex: none; width: 100%; margin: 0 0 18px; }
 </style>
   <!-- R55：搜索引擎收录策略 -->
   <meta name="robots" content="index,follow">
@@ -304,6 +309,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         </div>
     </div>
     <div class="page-title">万能资源圈・导航</div>
+
+    <!-- R243 条19①：管理页顶栏搜索框同款组件引用到首页（同组件同样式同交互：输入即搜/一键清空/搜索历史；前台搜资源列表） -->
+    <div class="search-box idx-search">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input class="search-input" id="idxSearchInput" placeholder="搜索资源…" autocomplete="off" aria-label="搜索资源" />
+      <button type="button" class="search-clear" id="idxSearchClear" title="清空" aria-label="清除搜索">×</button>
+    </div>
 
     <button class="btn-item btn-orange" onclick="openResource()">
         <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
@@ -583,6 +598,99 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
         if (!ok) warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
       }, 800);
     });
+  })();
+  </script>
+  <script>
+  // R243 条19①/②：首页搜索框（管理页/资源页同款组件，样式在 ui-common.css 公共块）+
+  // Ctrl+K 命令面板（入口仅键盘，页面零新增图标/按键）。
+  // 交互与资源页同口径：输入即搜（300ms 防抖）、一键清空、搜索历史（bindSearchHist）；
+  // 前台搜资源列表：结果词条点按直达该资源详情（shop 现有 ?pid= 通道，不新造路由）。
+  (function () {
+    var wrap = document.querySelector('.idx-search');
+    var input = document.getElementById('idxSearchInput');
+    var clearBtn = document.getElementById('idxSearchClear');
+    if (!wrap || !input || !clearBtn) return;
+    var products = null; /* 懒加载一次资源列表（/api/products 只读接口，明文字段已由服务端剥离） */
+    function loadProducts(cb) {
+      if (Array.isArray(products)) { cb(products); return; }
+      if (products === false) { cb([]); return; } /* 已在途/失败：按空处理，不打断输入 */
+      products = false;
+      try {
+        fetch('/api/products').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+          products = (d && Array.isArray(d.products)) ? d.products.filter(function (p) {
+            return (p.is_online === true || p.is_online === 1) && p.is_hidden !== true && p.is_hidden !== 1;
+          }) : [];
+          cb(products);
+        }).catch(function () { products = []; });
+      } catch (e) { products = []; }
+    }
+    input.addEventListener('focus', function () { loadProducts(function () {}); }); /* 首次聚焦预取，面板/结果秒出 */
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+    var resBox = document.createElement('div');
+    resBox.className = 'search-hist'; resBox.id = 'idxResBox'; /* 复用最近搜索下拉同款容器观感（不新造视觉） */
+    resBox.style.display = 'none';
+    wrap.appendChild(resBox);
+    function hideRes() { resBox.style.display = 'none'; }
+    function hideHist() { var hb = wrap.querySelector('.search-hist:not(#idxResBox)'); if (hb) hb.style.display = 'none'; }
+    function renderRes(kw) {
+      var k = (kw || '').trim().toLowerCase();
+      hideHist(); /* 输入即搜时收起历史下拉，两面板不同屏 */
+      if (!k) { hideRes(); return; }
+      loadProducts(function (list) {
+        var hits = list.filter(function (p) { return String(p.title || '').toLowerCase().indexOf(k) !== -1; }).slice(0, 8);
+        if (!hits.length) {
+          resBox.innerHTML = '<div class="sh-head"><span class="sh-title">该搜索暂无资源</span></div>';
+          resBox.style.display = 'block'; return;
+        }
+        var html = '<div class="sh-head"><span class="sh-title">资源</span></div><div class="sh-list">';
+        hits.forEach(function (p) {
+          html += '<span class="sh-item"><button type="button" class="sh-word" data-pid="' + Number(p.id) + '">' + esc(p.title || '(无标题)') + '</button></span>';
+        });
+        resBox.innerHTML = html + '</div>';
+        resBox.style.display = 'block';
+      });
+    }
+    resBox.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    resBox.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t.classList && t.classList.contains('sh-word')) {
+        var pid = Number(t.getAttribute('data-pid'));
+        hideRes(); input.blur();
+        if (window.jumpTo) window.jumpTo('shop?pid=' + pid); /* 直达打开该资源详情 */
+      }
+    });
+    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) hideRes(); });
+    var timer = null;
+    input.addEventListener('input', function () {
+      clearBtn.classList.toggle('show', this.value.length > 0);
+      clearTimeout(timer);
+      var self = this;
+      timer = setTimeout(function () {
+        renderRes(self.value);
+        if (self.value.trim()) window.pushSearchHist('indexSearchHist', self.value); /* 搜索稳定 300ms 后记录（与资源页同交互） */
+      }, 300);
+    });
+    clearBtn.addEventListener('click', function () {
+      input.value = '';
+      this.classList.remove('show');
+      hideRes();
+      input.focus();
+    });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideRes(); });
+    if (window.bindSearchHist) window.bindSearchHist(wrap, input, 'indexSearchHist'); /* focus 空值时显示最近搜索 */
+    // ②Ctrl+K 命令面板：命令 = 资源直达（搜到回车打开详情）；面板本体由 ui-common.js __cpPanel 提供
+    if (window.__cpPanel) {
+      window.__cpPanel({
+        placeholder: '搜索资源名，回车直达详情…',
+        cmds: function () {
+          loadProducts(function () {});
+          var list = Array.isArray(products) ? products : [];
+          return list.map(function (p) {
+            return { lab: String(p.title || '(无标题)'), tag: '资源', kw: String(p.title || ''), run: function () { if (window.jumpTo) window.jumpTo('shop?pid=' + Number(p.id)); } };
+          });
+        }
+      });
+    }
   })();
   </script>
 </body>

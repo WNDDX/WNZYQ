@@ -23,15 +23,27 @@ export async function onRequestGet(context) {
 
   // 2. 定时显示/隐藏检查：到了显示时间自动显示，到了隐藏时间自动隐藏
   // 注意：用户输入的是本地时间（UTC+8），用 datetime('now','+8 hours') 获取中国时间比较
+  // R243 条2：先查有没有要写的、没有就不写——原先每次缓存未命中 GET 都无条件跑两条 UPDATE
+  // （前台每次刷新都偷偷写库，哪怕一行都不命中）；改为单条只读预检（EXISTS 各查一次合并成一条 SELECT），
+  // 预检命中才发对应 UPDATE；正常刷新（无到点资源）写库次数 2 → 0
   try {
-    await env.DB.prepare(
-      `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now')
-       WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')`
-    ).run();
-    await env.DB.prepare(
-      `UPDATE products SET is_online = 0, updated_at = datetime('now')
-       WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')`
-    ).run();
+    const pre = await env.DB.prepare(
+      `SELECT
+         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')) AS need_show,
+         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')) AS need_hide`
+    ).first();
+    if (pre && pre.need_show) {
+      await env.DB.prepare(
+        `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now')
+         WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')`
+      ).run();
+    }
+    if (pre && pre.need_hide) {
+      await env.DB.prepare(
+        `UPDATE products SET is_online = 0, updated_at = datetime('now')
+         WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')`
+      ).run();
+    }
   } catch (e) { /* 忽略定时显示/隐藏错误 */ }
 
   await ensureVariantColumns(env);

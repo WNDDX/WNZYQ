@@ -195,27 +195,74 @@
       inp.addEventListener('change', function () {
         var f = inp.files && inp.files[0];
         if (!f) return;
-        var done = function (url, note) {
-          inputValue.value = url;
-          if (note) toast(note, 'info');
-          inputOk.click(); // 上传完成自动确定（等于手填链接后点确定）
+        var _origText = inputUploadBtn.textContent;
+        inputUploadBtn.disabled = true;
+        var cancelBtn = null;
+        /* R243 条8：视频上传加取消键 */
+        if (kind === 'video') {
+          cancelBtn = document.createElement('button');
+          cancelBtn.type = 'button';
+          cancelBtn.className = 'row-btn';
+          cancelBtn.textContent = '取消';
+          cancelBtn.style.marginLeft = '8px';
+          cancelBtn.onclick = function () {
+            if (window.__uploadXHR) { window.__uploadXHR.abort(); window.__uploadXHR = null; }
+            inputUploadBtn.disabled = false;
+            inputUploadBtn.textContent = _origText;
+            if (cancelBtn && cancelBtn.parentNode) cancelBtn.parentNode.removeChild(cancelBtn);
+          };
+          inputUploadBtn.parentNode.appendChild(cancelBtn);
+        }
+        var onProgress = function (pct) {
+          inputUploadBtn.textContent = '上传中 ' + pct + '%';
         };
-        if (kind === 'video') uploadVideoToBucket(f, done);
-        else uploadToBucket(f, done);
+        var done = function (url, note) {
+          inputUploadBtn.disabled = false;
+          if (cancelBtn && cancelBtn.parentNode) cancelBtn.parentNode.removeChild(cancelBtn);
+          if (note === 'size_limit') return; // R243 条34：超限已弹错，不自动确定
+          if (url) {
+            inputUploadBtn.textContent = '✓ 完成';
+            inputUploadBtn.style.background = '#2e7d32';
+            setTimeout(function () { inputUploadBtn.textContent = _origText; inputUploadBtn.style.background = ''; }, 1200);
+            inputValue.value = url;
+            if (note) toast(note, 'info');
+            inputOk.click(); // 上传完成自动确定（等于手填链接后点确定）
+          } else {
+            inputUploadBtn.textContent = _origText;
+          }
+        };
+        if (kind === 'video') uploadVideoToBucket(f, done, { onProgress: onProgress });
+        else uploadToBucket(f, done, onProgress);
       });
       inp.click();
     });
 
-    inputOk.addEventListener('click', function () {
-      var val = inputValue.value;
+    var __inputBusy = false;
+    function _resetInputBtn() {
+      inputOk.disabled = false; inputOk.textContent = '确定';
+      __inputBusy = false;
+    }
+    window.closeInput = function () {
+      _resetInputBtn();
       inputMask.classList.remove('open');
-      if (inputCallback) { var cb = inputCallback; inputCallback = null; cb(val); }
+    };
+    inputOk.addEventListener('click', function () {
+      if (__inputBusy) return;
+      var val = inputValue.value;
+      inputOk.disabled = true;
+      if (window.__btnBusy) window.__btnBusy(inputOk, '处理中…');
+      __inputBusy = true;
+      var _timer = setTimeout(function () { _resetInputBtn(); inputMask.classList.remove('open'); }, 10000);
+      var _done = function () { clearTimeout(_timer); window.closeInput(); };
+      if (inputCallback) { var cb = inputCallback; inputCallback = null; cb(val, _done); }
     });
     inputCancel.addEventListener('click', function () {
+      if (__inputBusy) return;
       inputMask.classList.remove('open');
       inputCallback = null;
     });
     inputMask.addEventListener('click', function (e) {
+      if (__inputBusy) return;
       if (e.target === this) { this.classList.remove('open'); inputCallback = null; } // R217：恢复点外关闭（R215 误删）
     });
     inputValue.addEventListener('keydown', function (e) {
@@ -268,18 +315,35 @@
       confirmCancelCallback = cancelCallback || null;
       document.getElementById('confirmMask').classList.add('open');
     }
-    document.getElementById('confirmOk').addEventListener('click', function () {
-      // 修复：原先在确认按钮点下、接口还没调用时就提示"操作成功"——删除等操作失败时会误报成功。
-      // 现在只关闭确认框并执行回调，成功/失败提示由各操作自己的接口结果给出。
+    var __confirmBusy = false;
+    function _resetConfirmBtn() {
+      var okBtn = document.getElementById('confirmOk');
+      okBtn.disabled = false; okBtn.textContent = '确定';
+      __confirmBusy = false;
+    }
+    window.closeConfirm = function () {
+      _resetConfirmBtn();
       document.getElementById('confirmMask').classList.remove('open');
-      if (confirmCallback) { var cb = confirmCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
+    };
+    document.getElementById('confirmOk').addEventListener('click', function () {
+      if (__confirmBusy) return;
+      var okBtn = document.getElementById('confirmOk');
+      var _origText = okBtn.textContent;
+      okBtn.disabled = true;
+      if (window.__btnBusy) window.__btnBusy(okBtn, '处理中…');
+      __confirmBusy = true;
+      var _timer = setTimeout(function () { _resetConfirmBtn(); document.getElementById('confirmMask').classList.remove('open'); }, 10000);
+      var _done = function () { clearTimeout(_timer); window.closeConfirm(); };
+      if (confirmCallback) { var cb = confirmCallback; confirmCallback = null; confirmCancelCallback = null; cb(_done); }
     });
     document.getElementById('confirmCancel').addEventListener('click', function () {
+      if (__confirmBusy) return;
       document.getElementById('confirmMask').classList.remove('open');
       if (confirmCancelCallback) { var cb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
       else { confirmCallback = null; confirmCancelCallback = null; }
     });
     document.getElementById('confirmMask').addEventListener('click', function (e) {
+      if (__confirmBusy) return;
       if (e.target === this) { // R217：恢复点外关闭（R215 误删）——点外=取消，与取消键同口径
         this.classList.remove('open');
         if (confirmCancelCallback) { var cb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; cb(); }
@@ -314,9 +378,9 @@
         if (mask) {
           mask.classList.remove('open');
           // R111：输入弹窗×=丢弃——清输入+清回调
-          if (closeBtn.dataset.close === 'inputMask') { inputCallback = null; try { var _iv = document.getElementById('inputValue'); if (_iv) _iv.value = ''; } catch (e) {} }
+          if (closeBtn.dataset.close === 'inputMask') { if (__inputBusy) return; inputCallback = null; try { var _iv = document.getElementById('inputValue'); if (_iv) _iv.value = ''; } catch (e) {} }
           // R111：确认弹窗×=取消语义——执行取消回调（与点外/Esc 同口径）
-          if (closeBtn.dataset.close === 'confirmMask') { if (confirmCancelCallback) { var _ccb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; _ccb(); } else { confirmCallback = null; confirmCancelCallback = null; } }
+          if (closeBtn.dataset.close === 'confirmMask') { if (__confirmBusy) return; if (confirmCancelCallback) { var _ccb = confirmCancelCallback; confirmCallback = null; confirmCancelCallback = null; _ccb(); } else { confirmCallback = null; confirmCancelCallback = null; } }
         }
       }
     });
@@ -581,7 +645,14 @@
       }
     }
 
-    function showLogin() { loginView.style.display = 'flex'; mainView.style.display = 'none'; }
+    function showLogin() {
+      loginView.style.display = 'flex'; mainView.style.display = 'none';
+      // R243 条39：自动回填上次成功登录的用户名
+      try {
+        var lastUser = localStorage.getItem('wnzyq_last_user');
+        if (lastUser && loginUser && !loginUser.value) { loginUser.value = lastUser; if (loginPass) loginPass.focus(); }
+      } catch (e) {}
+    }
 
     function showMain(username) {
       loginView.style.display = 'none';
@@ -728,6 +799,8 @@
       api('admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) })
         .then(function (res) {
           if (res && res.ok) {
+            // R243 条39：登录成功记住用户名，下次自动回填
+            try { localStorage.setItem('wnzyq_last_user', u); } catch (e) {}
             // R30-#4：令牌改由后端写入 HttpOnly Cookie（脚本读不到），前端不再保存 token
             // 修复：showMain 内部已统一调用 loadSettings（连同 stats/products/categories），
             // 这里不再单独调一次，避免同一接口登录后被请求两次
@@ -801,6 +874,36 @@
     var adminPage = 1;
     var __adminTurning = false; /* R231 条19：翻页淡出期间锁，防重复触发 */
     var ADMIN_PAGE_SIZE = 20; // 全系统统一：一页 20 条（与资源页/统计面板一致），配合翻页控件使用
+
+    /* R239（用户 09-22 派单）：管理页资源列表接入全站「到底续滑翻页」——整页滚动贴底后继续滑≈60px 翻下一页。
+       翻页动作收口 __adminTurnPage 单点：分页条按键（onPage）与到底续滑触发走完全同一条路径
+       （R231 条19+23 原行为：旧内容 0.1s 淡出 → 重建单页 → 平滑滚回列表顶）；
+       只在资源管理 tab 处于激活且没有弹窗打开时判定（active 守卫）。 */
+    var __adminTotalPages = 1; /* renderProducts 每次渲染回写，供续滑翻页 getTotalPages 用 */
+    function __adminTurnPage(p) {
+      if (p === adminPage || __adminTurning) return;
+      __adminTurning = true; /* R231 条19：淡出期间防重复翻页 */
+      var _pl = document.getElementById('productList');
+      if (_pl) { _pl.style.transition = 'opacity 0.1s ease'; _pl.style.opacity = '0'; }
+      setTimeout(function () {
+        adminPage = p; renderProducts();
+        if (_pl) _pl.style.opacity = '';
+        __adminTurning = false;
+        try {
+          var _pl2 = document.getElementById('productList');
+          if (_pl2) _pl2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {}
+      }, 100);
+    }
+    if (window.enableEdgeTurn) {
+      window.enableEdgeTurn({
+        scroller: null, /* 管理页资源列表是整页滚动 */
+        getPage: function () { return adminPage; },
+        getTotalPages: function () { return __adminTotalPages; },
+        active: function () { return !!document.querySelector('.tab[data-tab="products"].active') && !document.querySelector('.modal-mask.open'); },
+        onTurn: __adminTurnPage
+      });
+    }
 
     // R146（用户 00:34）：admin 端价格格式化（与前台 shop.js formatPrice 同口径）
     // 0/空返回 ''（免费不显示），整数 ¥99，小数 ¥99.00
@@ -930,6 +1033,7 @@
 
       // 分页
       var totalPages = Math.ceil(list.length / ADMIN_PAGE_SIZE);
+      __adminTotalPages = totalPages; /* R239：回写总页数，供到底续滑翻页判定用 */
       if (adminPage > totalPages) adminPage = totalPages;
       var start = (adminPage - 1) * ADMIN_PAGE_SIZE;
       var pageList = list.slice(start, start + ADMIN_PAGE_SIZE);
@@ -1202,22 +1306,8 @@
           totalPages: totalPages,
           total: list.length,
           unit: '件',
-          onPage: function (p) {
-            if (p === adminPage || __adminTurning) return;
-            __adminTurning = true; /* R231 条19：淡出期间防重复翻页 */
-            /* R231 条19+23（用户 09-21 23:38）：旧内容 0.1s 淡出再重建 + 平滑滚回列表顶 */
-            var _pl = document.getElementById('productList');
-            if (_pl) { _pl.style.transition = 'opacity 0.1s ease'; _pl.style.opacity = '0'; }
-            setTimeout(function () {
-              adminPage = p; renderProducts();
-              if (_pl) _pl.style.opacity = '';
-              __adminTurning = false;
-              try {
-                var _pl2 = document.getElementById('productList');
-                if (_pl2) _pl2.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              } catch (e) {}
-            }, 100);
-          }
+          /* R239：翻页动作收口 __adminTurnPage 单点——分页条按键（onPage）与 enableEdgeTurn 到底续滑触发走完全同一条路径 */
+          onPage: __adminTurnPage
         });
       } else if (totalPages > 1) {
         // 兜底：公共组件缺失时退回原方块样式（不应发生）
@@ -1246,7 +1336,7 @@
 
     // ---------- 复制资源 ----------
     function copyProduct(p) {
-      showConfirm('复制资源', '确定复制资源「' + (p.title || '未命名') + '」？将创建一个内容完全相同的新资源（仅状态为隐藏，其余字段含排序全部照复制）。', function () {
+      showConfirm('复制资源', '确定复制资源「' + (p.title || '未命名') + '」？将创建一个内容完全相同的新资源（仅状态为隐藏，其余字段含排序全部照复制）。', function (closeConfirm) {
         var newProduct = {
           cid: p.cid,
           // R155（用户 19:36）：复制=全量复制——title 原样（去掉「（副本）」后缀）、sort 保持原值（不再排到末尾）、
@@ -1268,6 +1358,7 @@
         sort: p.sort || 0
       };
       api('admin/products', { method: 'POST', body: JSON.stringify(newProduct) }).then(function (res) {
+        closeConfirm();
         if (res && res.ok) {
           var _vs = newProduct.variants || [], _chain = Promise.resolve(), _newId = res.id, _fail = 0;
           _vs.forEach(function (v) {
@@ -1297,7 +1388,7 @@
         } else {
           toast(res.msg || '复制失败', 'error');
         }
-      });
+      }).catch(function () { closeConfirm(); toast('复制失败，请重试', 'error'); });
       });
     }
 
@@ -1366,15 +1457,16 @@
           if (isNaN(newCid)) { toast('请选择分类', 'error'); return; }
           document.getElementById('batchCatMask').classList.remove('open');
           var _catText = document.querySelector('#batchCatDisplay .cpd-text').textContent;
-          showConfirm('批量改分类', '确定将选中的 ' + ids.length + ' 个资源分类改为「' + _catText + '」？', function () {
+          showConfirm('批量改分类', '确定将选中的 ' + ids.length + ' 个资源分类改为「' + _catText + '」？', function (closeConfirm) {
             api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
+              closeConfirm();
               if (res && res.ok) {
                 toast('批量改分类完成：成功 ' + res.count + ' 项', 'success');
                 // 性能：本地即时改 cid 并重渲染（毫秒级反馈），后台静默同步一次保证数据一致
                 applyBatchLocal('changeCat', ids, { cid: newCid }); renderProducts(); silentSyncProducts();
               }
               else toast(res.msg || '操作失败', 'error');
-            });
+            }).catch(function () { closeConfirm(); toast('操作失败，请重试', 'error'); });
           });
         };
         return;
@@ -1386,21 +1478,23 @@
           if (priceInput === null || priceInput === '') return;
           var newPrice = Number(priceInput);
           if (isNaN(newPrice) || newPrice < 0) { toast('请输入有效的价格', 'error'); return; }
-          showConfirm('批量改价格', '确定将选中的 ' + ids.length + ' 个资源价格改为 ' + newPrice + '？', function () {
+          showConfirm('批量改价格', '确定将选中的 ' + ids.length + ' 个资源价格改为 ' + newPrice + '？', function (closeConfirm) {
             api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changePrice', price: newPrice }) }).then(function (res) {
+              closeConfirm();
               if (res && res.ok) {
                 toast('批量改价格完成：成功 ' + res.count + ' 项', 'success');
                 applyBatchLocal('changePrice', ids, { price: newPrice }); renderProducts(); silentSyncProducts();
               }
               else toast(res.msg || '操作失败', 'error');
-            });
+            }).catch(function () { closeConfirm(); toast('操作失败，请重试', 'error'); });
           });
         });
         return;
       }
 
-      showConfirm(actionNames[action], msgs[action], function () {
+      showConfirm(actionNames[action], msgs[action], function (closeConfirm) {
         api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: action }) }).then(function (res) {
+          closeConfirm();
           if (res && res.ok) {
             toast(actionNames[action] + '完成：成功 ' + res.count + ' 项', 'success');
             clearCache();
@@ -1411,7 +1505,7 @@
           } else {
             toast(res.msg || '操作失败', 'error');
           }
-        });
+        }).catch(function () { closeConfirm(); toast('操作失败，请重试', 'error'); });
       });
     }
 
@@ -1459,26 +1553,32 @@
     function delProduct(id) {
       /* R184 条19：撤销删除回退（用户 09-17 12:12 拍板）——恢复「确认后立即真删」，
          R183 的延迟真删+撤销 toast/keepalive 兜底整段移除；保留本地塌缩动画与静默同步范式 */
-      showConfirm('删除资源', '确定删除该资源？其类型和统计数据也会一并删除。', function () {
+      var _delRow = document.querySelector('#productList [data-id="' + id + '"]');
+      showConfirm('删除资源', '确定删除该资源？其类型和统计数据也会一并删除。', function (closeConfirm) {
+        /* R243 条5：删除行立刻淡出（乐观删） */
+        if (_delRow) { _delRow.style.transition = 'opacity 0.2s ease'; _delRow.style.opacity = '0'; }
         api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
+          closeConfirm();
           if (res && res.ok) {
             state.products = (state.products || []).filter(function (p) { return p.id !== id; });
             refreshCatCnts();
-            var _r2 = document.querySelector('#productList [data-id="' + id + '"]');
-            if (_r2) {
-              /* R231 条24：删除行淡出 120ms→0.2s（收起感更稳；_minH 防跳已在 R183 就位） */
-              _r2.style.transition = 'opacity 0.2s ease';
-              _r2.style.opacity = '0';
+            if (_delRow) {
               setTimeout(function () {
-                if (_r2.parentNode) _r2.parentNode.removeChild(_r2);
+                if (_delRow.parentNode) _delRow.parentNode.removeChild(_delRow);
                 if (!document.querySelector('#productList .product-row')) renderProducts();
               }, 200);
             } else renderProducts();
             toast('资源已删除', 'success');
             clearCache(); silentSyncProducts();
           } else {
+            /* R243 条5：失败弹回原位+红提示 */
+            if (_delRow) { _delRow.style.opacity = '1'; }
             toast((res && res.msg) || '删除失败', 'error');
           }
+        }).catch(function () {
+          closeConfirm();
+          if (_delRow) { _delRow.style.opacity = '1'; }
+          toast('删除失败，请重试', 'error');
         });
       });
     }
@@ -1534,6 +1634,8 @@
       } catch (e) {}
       updateImgPreview();
       editMask.classList.add('open');
+      /* R241：滚动位置按「弹窗 × 对象」独立——切换资源不继承上一资源滚到的位置，同资源回来恢复原位 */
+      if (window.__modalScroll) __modalScroll.open(editMask, p ? p.id : 'new');
       // R113：类型列表复用产品列表随接口已带回的 variants（进后台时已加载好，点开即显；
       // 原先点开弹窗才现场发请求等返回，是「点进去才加载、卡卡的」根因）。
       // 保存/删除/解绑等操作后仍走 loadVariants 刷新并回写缓存，保证下次打开也是最新。
@@ -1588,6 +1690,8 @@
     }
     function clearDraft() {
       try { delete __editDrafts[state.editingId || 'new']; } catch (e) {}
+      /* R241：草稿丢弃=放弃编辑，同步清该对象的弹窗滚动位置记忆（重开从顶开始） */
+      try { if (window.__modalScroll) __modalScroll.forget(document.getElementById('editMask'), state.editingId || 'new'); } catch (e) {}
       stopAutoSaveDraft();
     }
 
@@ -2130,8 +2234,8 @@
           codeBtn.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);';
           codeBtn.textContent = v.resourceCode;
           codeBtn.title = v.resourceCode + '（点击复制并发新码）'; /* R179：固定宽截断后悬停 title 看全码；R221：复制即换码 */
-          (function (cvObj) {
-            codeBtn.addEventListener('click', function (ev) {
+          (function (cvObj, cBtn) {
+            cBtn.addEventListener('click', function (ev) {
               ev.preventDefault(); ev.stopPropagation();
               /* R221：复制即换码——旧码记 issued（60 天窗口起算）+ 立即出新码；无 id 的未保存类型退回普通复制 */
               if (!cvObj || !cvObj.id) {
@@ -2139,10 +2243,13 @@
                 toast(ok0 ? '已复制' : '复制失败', ok0 ? 'success' : 'error');
                 return;
               }
-              codeBtn.textContent = '发码中…';
+              /* R243 条7：发码键防连点统一（复用码面板 R231 写法） */
+              if (cBtn.disabled || window.__issueInFlight) return;
+              cBtn.disabled = true;
+              cBtn.textContent = '发码中…';
               __issueCode(cvObj, function () { renderVariants(); });
             });
-          })(v);
+          })(v, codeBtn);
           codeSpan.appendChild(codeBtn);
         } else {
           var noCodeBtn = document.createElement('button');
@@ -2231,12 +2338,24 @@
 
     // ===== 富文本统一：记忆最后编辑的编辑器与选区，弹窗(链接/图片/视频)关闭后仍能插回原位置 =====
     var __rte = { editor: null, range: null };
+    // R243（用户 09-22 23:18）：条24 撤销/重做空栈禁用态更新
+    function __updateUndoRedo() {
+      try {
+        var canUndo = document.queryCommandEnabled('undo');
+        var canRedo = document.queryCommandEnabled('redo');
+        document.querySelectorAll('.rte-btn[data-cmd="undo"]').forEach(function (btn) { btn.classList.toggle('disabled', !canUndo); });
+        document.querySelectorAll('.rte-btn[data-cmd="redo"]').forEach(function (btn) { btn.classList.toggle('disabled', !canRedo); });
+      } catch (e) {}
+    }
+    var __origExecCommand = document.execCommand;
+    document.execCommand = function () { var ret = __origExecCommand.apply(this, arguments); __updateUndoRedo(); return ret; }; /* R243（用户 09-22 23:18）：条24 execCommand 后同步禁用态 */
     document.addEventListener('selectionchange', function () {
       var sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
       var el = sel.anchorNode;
       while (el && !(el.classList && el.classList.contains('rte-editor'))) el = el.parentNode;
       if (el) { __rte.editor = el; try { __rte.range = sel.getRangeAt(0).cloneRange(); } catch (e) {} }
+      __updateUndoRedo(); /* R243（用户 09-22 23:18）：条24 选区变化同步禁用态 */
     });
     document.addEventListener('mousedown', function (e) {
       var bar = e.target.closest ? e.target.closest('.rte-toolbar') : null;
@@ -2277,10 +2396,40 @@
       if (st.italic) document.execCommand('italic', false, null);
       if (st.underline) document.execCommand('underline', false, null);
     }
+    function rteFocusStay(editor) { /* R240（老板 09-22 19:11）：编辑器按键执行命令后焦点要回到编辑器，但绝不带动滚动——原先 focus() 无 preventScroll，浏览器会把「编辑器顶部」滚进视口，长内容里光标在下半段时屏幕就离开输入光标的位置（老板反馈"点按键或点按键里面的内容屏幕会离开光标"）。全 RTE 的命令路径统一走这里 */
+      if (!editor) return;
+      try { editor.focus({ preventScroll: true }); } catch (e) { editor.focus(); }
+    }
+    /* R240（老板 09-22 19:15）：下划线按键对链接要可加可删——Chrome 对 <a> 内执行 execCommand('underline')
+       会把链接默认样式误判为「已下划线」而不肯包 <u>，所以选区完整落在同一链接内时改为手动切换 <u>；
+       返回 true 表示已处理（调用方不再走 execCommand），false 交回 execCommand 照旧 */
+    function rteUnderlineLink(editor) {
+      if (!editor) return false;
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount || sel.isCollapsed) return false;
+      var up = function (n) { return n ? (n.nodeType === 1 ? n : n.parentNode) : null; };
+      var ae = up(sel.anchorNode), fe = up(sel.focusNode);
+      if (!ae || !fe || typeof ae.closest !== 'function') return false;
+      var a = ae.closest('a');
+      if (!a || a !== fe.closest('a') || !editor.contains(a)) return false;
+      var u = a.querySelector('u');
+      if (u) {
+        while (u.firstChild) a.insertBefore(u.firstChild, u);
+        a.removeChild(u);
+      } else {
+        var r = sel.getRangeAt(0);
+        var frag = r.extractContents();
+        var nu = document.createElement('u');
+        nu.appendChild(frag);
+        r.insertNode(nu);
+        try { sel.removeAllRanges(); var nr = document.createRange(); nr.selectNodeContents(nu); sel.addRange(nr); } catch (e0) {}
+      }
+      return true;
+    }
     function rteInsert(editor, html) {
       if (!editor) return;
       var __hadSel = __rte.editor === editor && __rte.range; /* R217 条7：用户曾在该编辑器内（有选区）才 focus */
-      if (__hadSel) editor.focus(); /* R217 条7：从未进入该编辑器 → 不抢焦点（光标不跳进输入框），内容经 Range 兜底静默落到末尾 */
+      if (__hadSel) rteFocusStay(editor); /* R217 条7：从未进入该编辑器 → 不抢焦点（光标不跳进输入框），内容经 Range 兜底静默落到末尾；R240：preventScroll 屏幕不离光标 */
       var sel = window.getSelection(), okRange = false;
       if (__hadSel) {
         try { sel.removeAllRanges(); sel.addRange(__rte.range); okRange = true; } catch (e) { okRange = false; }
@@ -2594,8 +2743,8 @@ document.addEventListener('click', function (e) {
       btn.addEventListener('click', function () {
         var cmd = this.dataset.cmd;
         if (__rte.editor !== rteEditor || !__rte.range) return; /* R217 条7：从未进入编辑器 → 不 focus、不执行（光标不跳输入框） */
-        document.execCommand(cmd, false, null);
-        rteEditor.focus();
+        if (!(cmd === 'underline' && rteUnderlineLink(rteEditor))) document.execCommand(cmd, false, null); /* R240：选区在链接内时下划线手动切换 <u>（Chrome 对 <a> 误判已下划线加不回），其余命令照旧 */
+        rteFocusStay(rteEditor); /* R240：preventScroll——点按键屏幕不离开光标 */
         updateRteActive();
       });
     });
@@ -2607,7 +2756,7 @@ document.addEventListener('click', function (e) {
         var val = this.value;
         if (val && __rte.editor === rteEditor && __rte.range) { /* R217 条7：有选区才执行，否则只重置下拉不抢焦点 */
           document.execCommand(cmd, false, val);
-          rteEditor.focus();
+          rteFocusStay(rteEditor); /* R240：preventScroll——选字体/字号屏幕不离开光标 */
         }
         this.selectedIndex = 0; // 重置选择
         syncSelectDisplay(this); // R166：同步自制下拉显示框回到默认项
@@ -2623,11 +2772,11 @@ document.addEventListener('click', function (e) {
       var editor = document.getElementById(pal.getAttribute('data-editor'));
       if (!editor) return;
       if (__rte.editor !== editor || !__rte.range) return; /* R217 条7：从未进入该编辑器 → 不 focus、不执行（光标不跳输入框） */
-      editor.focus();
+      rteFocusStay(editor);
       if (__rte.editor === editor && __rte.range) { try { var _ps = window.getSelection(); _ps.removeAllRanges(); _ps.addRange(__rte.range); } catch (e) {} }
       document.execCommand(pal.getAttribute('data-cmd'), false, sw.getAttribute('data-color'));
       try { __rte.editor = editor; __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (e) {}
-      editor.focus();
+      rteFocusStay(editor);
     });
 
     /* ---------- R194 第一批（用户 00:02 拍板开工）：60 色面板 + 表格全套（四编辑器共用，全局一处实现） ---------- */
@@ -2654,6 +2803,7 @@ document.addEventListener('click', function (e) {
     var RTE_POP = null; // 当前打开的浮层（颜色面板 / 表格选择器），全局唯一
     function rteClosePop() { if (RTE_POP) { RTE_POP.remove(); RTE_POP = null; } }
     function rtePlacePop(pop, anchor) {
+      pop.__anchor = anchor; /* R240：记下触发键——滚动/缩放时浮层实时贴回按键旁（见下方 R240 锚定跟随机制） */
       document.body.appendChild(pop);
       var r = anchor.getBoundingClientRect();
       var pw = pop.offsetWidth, ph = pop.offsetHeight;
@@ -2663,13 +2813,55 @@ document.addEventListener('click', function (e) {
       if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
       pop.style.left = left + 'px'; pop.style.top = top + 'px';
     }
+    /* R240（老板 09-22 19:15）：浮层锚定跟随——原先 RTE 浮层（60色板/表情/表格）与字体字号下拉面板
+       都只在上翻开的一瞬间定位一次；之后用户滑动弹窗，触发键跟着内容滚走，浮层却滞留原地，
+       老板反馈"我滑动弹窗，这选择框怎么会跟随我的滑动呢，它应该固定在表情按键旁才对，检查其他按键
+       是否也有这种情况，都要统一修复"。修法：打开期间监听全系统滚动（弹窗内滚/编辑器内滚/窗口滚，
+       capture 捕获非冒泡的 scroll）与 resize，rAF 节流后统一把所有打开中的浮层/面板按触发键
+       当前位置重新贴位（固定在按键旁）；触发键滚出可视区域（含被滚动容器裁剪）即自动收起。 */
+    (function () {
+      function __rteAnchorVisible(el) {
+        var r = el.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight || r.right < 0 || r.left > window.innerWidth) return false;
+        var p = el.parentNode;
+        while (p && p !== document.body) { /* 沿祖先找可滚/裁剪容器，矩形不相交即已被裁出视野 */
+          if (p.nodeType === 1) {
+            var ov = ''; try { ov = getComputedStyle(p).overflowY; } catch (e0) {}
+            if ((ov === 'auto' || ov === 'scroll' || ov === 'hidden') && p.scrollHeight > p.clientHeight + 1) {
+              var pr = p.getBoundingClientRect();
+              if (r.top >= pr.bottom || r.bottom <= pr.top || r.right <= pr.left || r.left >= pr.right) return false;
+            }
+          }
+          p = p.parentNode;
+        }
+        return true;
+      }
+      var __raf = 0;
+      function __repos() {
+        __raf = 0;
+        try {
+          if (RTE_POP && RTE_POP.__anchor) {
+            if (__rteAnchorVisible(RTE_POP.__anchor)) rtePlacePop(RTE_POP, RTE_POP.__anchor);
+            else rteClosePop();
+          }
+          document.querySelectorAll('.select-picker.open, .cat-picker.open').forEach(function (pk) {
+            var disp = pk.querySelector('.cat-picker-display');
+            if (!disp) return;
+            if (__rteAnchorVisible(disp)) positionCatPanel(pk);
+            else pk.classList.remove('open');
+          });
+        } catch (e) {}
+      }
+      window.addEventListener('scroll', function () { if (!__raf) __raf = requestAnimationFrame(__repos); }, true);
+      window.addEventListener('resize', function () { if (!__raf) __raf = requestAnimationFrame(__repos); });
+    })();
     function rteApplyCmd(editor, cmd, val) {
       /* R217 条7（老板 09-21）：点工具栏按钮不应把光标跳进输入框。根因→旧实现开头无条件
          editor.focus()，用户从未点进编辑器时点按钮也会把光标强制跳进编辑区开头。
          修法→只有「用户曾在该编辑器内建立过选区」（__rte.editor 对得上且有 range，由
          selectionchange 在点进编辑器时记录）才恢复选区执行；否则直接不执行、不 focus。 */
       if (__rte.editor !== editor || !__rte.range) return;
-      editor.focus();
+      rteFocusStay(editor); /* R240：preventScroll——点浮层里的内容（表情/颜色/表格/引用）屏幕不离开光标 */
       try { var ps = window.getSelection(); ps.removeAllRanges(); ps.addRange(__rte.range); } catch (e) {}
       document.execCommand(cmd, false, val);
       try { __rte.editor = editor; __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (e) {}
@@ -2717,6 +2909,9 @@ document.addEventListener('click', function (e) {
       pop.appendChild(grid);
       RTE_POP = pop;
       rtePlacePop(pop, btn);
+      pop.offsetHeight; /* R243（用户 09-22 23:18）：条11 强制回流触发过渡 */
+      pop.style.opacity = ''; /* R243（用户 09-22 23:18）：条11 淡入 */
+      pop.style.transform = ''; /* R243（用户 09-22 23:18）：条11 归位 */
     });
 
     /* ---------- 表格全套：插入选择器 / 操作条 7 键 / 合并拆分 / 行列增删 / 列宽拖拽 ---------- */
@@ -3068,7 +3263,8 @@ document.addEventListener('click', function (e) {
     function rteTblDelTable(editor) {
       var at = rteTblAt(editor); if (!at) return;
       /* R231 条27（老板修正）：原生 confirm 换全站统一确认弹窗；正文只写「确定删除整个表格？」，不写撤销提示 */
-      showConfirm('删除表格', '确定删除整个表格？', function () {
+      showConfirm('删除表格', '确定删除整个表格？', function (closeConfirm) {
+        closeConfirm();
         at.table.parentNode && at.table.parentNode.removeChild(at.table);
         rteCloseOpbar();
       });
@@ -3148,6 +3344,8 @@ document.addEventListener('click', function (e) {
       var pop = document.createElement('div');
       pop.className = 'rte-pop emoji-pop';
       pop.setAttribute('data-for', forKey);
+      pop.style.opacity = '0'; /* R243（用户 09-22 23:18）：条11 初始透明 */
+      pop.style.transform = 'translateY(4px)'; /* R243（用户 09-22 23:18）：条11 初始下移 4px */
       var tabs = document.createElement('div');
       tabs.className = 'emoji-tabs';
       var grid = document.createElement('div');
@@ -3182,6 +3380,9 @@ document.addEventListener('click', function (e) {
       pop.appendChild(grid);
       RTE_POP = pop;
       rtePlacePop(pop, btn);
+      pop.offsetHeight; /* R243（用户 09-22 23:18）：条11 强制回流触发过渡 */
+      pop.style.opacity = ''; /* R243（用户 09-22 23:18）：条11 淡入 */
+      pop.style.transform = ''; /* R243（用户 09-22 23:18）：条11 归位 */
     });
 
     /* 引用块：formatBlock 切换 blockquote/p（再点一次取消引用） */
@@ -3192,7 +3393,7 @@ document.addEventListener('click', function (e) {
       var editor = document.getElementById(btn.getAttribute('data-editor'));
       if (!editor) return;
       if (__rte.editor !== editor || !__rte.range) return; /* R217 条7：从未进入该编辑器 → 不 focus、不执行（光标不跳输入框） */
-      editor.focus();
+      rteFocusStay(editor); /* R240：preventScroll */
       if (__rte.editor === editor && __rte.range) { try { var ps = window.getSelection(); ps.removeAllRanges(); ps.addRange(__rte.range); } catch (err) {} }
       var sel = window.getSelection();
       var bq = null;
@@ -3204,7 +3405,7 @@ document.addEventListener('click', function (e) {
       }
       document.execCommand('formatBlock', false, bq ? 'p' : 'blockquote');
       try { __rte.editor = editor; __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (err) {}
-      editor.focus();
+      rteFocusStay(editor); /* R240：preventScroll */
     });
 
     /* R215 条4（老板 09-21）：复选框改为真 <input type=checkbox>——此前插入 '☐ ' 纯字符，
@@ -3264,7 +3465,7 @@ document.addEventListener('click', function (e) {
     // 插入超链接（一个弹窗两个输入框）
     document.getElementById('detailRteLink').addEventListener('click', function () {
       showLinkDialog('', '', function (url, text) {
-        var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
+        var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener noreferrer"><u>' + text + '</u></a>'; /* R240（老板 09-22）：链接默认带下划线改为<u>标记驱动（前台 sanitizeHTML 放行 U 标签）——原先下划线由 CSS 画死，下划线按键加/删<u>看不出变化；改标记后默认带下划线、按键可加可删 */
         rteInsert(__rte.editor, html);
         toast('超链接已插入', 'success');
       });
@@ -3288,7 +3489,7 @@ document.addEventListener('click', function (e) {
         var sel2 = window.getSelection();
         if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
           rteApplyBrushStyle(detailBrushStyle);
-          rteEditor.focus();
+          rteFocusStay(rteEditor); /* R240：preventScroll */
           toast('格式已应用', 'success');
         } else {
           toast('请先选中要应用格式的内容', 'error');
@@ -3300,7 +3501,7 @@ document.addEventListener('click', function (e) {
 
     // ---------- R31（优化项7）：自有图仓上传 ----------
     // 选图 → 必要时压缩（png 保无损防二维码糊；jpg/webp 超 1.5MB 或图超 2000px 转 jpeg 0.85）→ 上传 → 回调返回链接
-    function uploadToBucket(file, cb) {
+    function uploadToBucket(file, cb, onProgress) {
       if (!file) return;
       var isPng = file.type === 'image/png';
       var sizeMB = file.size / 1048576;
@@ -3309,22 +3510,32 @@ document.addEventListener('click', function (e) {
         var fd = new FormData();
         var name = file.name || ('upload.' + (String(file.type).split('/')[1] || 'png'));
         fd.append('file', blob, name);
-        toast('正在上传图片…', 'info');
-        // 注意：不能用 api()（它强制 JSON 头会破坏文件上传），直接 fetch 走 multipart
-        fetch('/api/admin/upload-image', { method: 'POST', body: fd })
-          .then(function (r) { return r.json(); })
-          .then(function (res) {
+        var xhr = new XMLHttpRequest();
+        if (onProgress) {
+          xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+          });
+        }
+        xhr.onload = function () {
+          try {
+            var res = JSON.parse(xhr.responseText);
             if (res && res.ok && res.url) cb(res.url);
             else toast((res && (res.msg || res.error)) || '上传失败', 'error');
-          })
-          .catch(function () { toast('上传失败，请稍后重试', 'error'); });
+          } catch (e) { toast('上传失败，请稍后重试', 'error'); }
+        };
+        xhr.onerror = function () { toast('上传失败，请稍后重试', 'error'); };
+        xhr.open('POST', '/api/admin/upload-image');
+        xhr.send(fd);
       };
       if (!needCompress) { go(file); return; }
+      /* R243 条33：PNG 走严格无损——canvas 重编码保持 PNG 格式、不缩尺寸（scale=1 原尺寸 1:1 重绘）、
+         不降质量（无 quality 参数），逐像素与原图一致；与 JPG 压缩并存（非 PNG 仍走缩到 2000px + jpeg 0.85）；
+         超 8MB 触发口径照旧（needCompress 判定未动）；重编码反而更大时回传原文件（原逻辑保留） */
       var img = new Image();
       var objUrl = URL.createObjectURL(file);
       img.onload = function () {
         try {
-          var scale = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+          var scale = isPng ? 1 : Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
           var w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale);
           var c = document.createElement('canvas');
           c.width = w; c.height = h;
@@ -3332,7 +3543,7 @@ document.addEventListener('click', function (e) {
           URL.revokeObjectURL(objUrl);
           c.toBlob(function (blob) {
             if (blob && blob.size < file.size) go(blob); else go(file);
-          }, 'image/jpeg', 0.85);
+          }, isPng ? 'image/png' : 'image/jpeg', isPng ? undefined : 0.85);
         } catch (e) { URL.revokeObjectURL(objUrl); go(file); }
       };
       img.onerror = function () { URL.revokeObjectURL(objUrl); go(file); };
@@ -3340,18 +3551,37 @@ document.addEventListener('click', function (e) {
     }
 
     // R36：本地视频上传（与图片同一套自有存储；KV 单文件 25MB / R2 100MB，上限由后端校验）
-    function uploadVideoToBucket(file, cb) {
+    // R243 条34：选文件即秒读大小，超限秒报（避免弱网传完才报）
+    var VIDEO_SIZE_LIMIT_MB = 30; // 与后端校验口径一致
+    function uploadVideoToBucket(file, cb, opts) {
       if (!file) return;
+      var limitMB = (opts && opts.limitMB) || VIDEO_SIZE_LIMIT_MB;
+      if (file.size > limitMB * 1048576) {
+        toast('视频大小超过 ' + limitMB + 'MB 限制（当前 ' + (file.size / 1048576).toFixed(1) + 'MB），请压缩后重试', 'error');
+        if (cb) cb(null, 'size_limit');
+        return;
+      }
       var fd = new FormData();
       fd.append('file', file, file.name || 'video.mp4');
-      toast('正在上传视频，大文件可能要等一会儿…', 'info');
-      fetch('/api/admin/upload-video', { method: 'POST', body: fd })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
+      var xhr = new XMLHttpRequest();
+      window.__uploadXHR = xhr;
+      if (opts && opts.onProgress) {
+        xhr.upload.addEventListener('progress', function (e) {
+          if (e.lengthComputable) opts.onProgress(Math.round(e.loaded / e.total * 100));
+        });
+      }
+      xhr.onload = function () {
+        window.__uploadXHR = null;
+        try {
+          var res = JSON.parse(xhr.responseText);
           if (res && res.ok && res.url) cb(res.url, res.note);
           else toast((res && (res.msg || res.error)) || '上传失败', 'error');
-        })
-        .catch(function () { toast('上传失败，请稍后重试', 'error'); });
+        } catch (e) { toast('上传失败，请稍后重试', 'error'); }
+      };
+      xhr.onerror = function () { window.__uploadXHR = null; toast('上传失败，请稍后重试', 'error'); };
+      xhr.onabort = function () { window.__uploadXHR = null; };
+      xhr.open('POST', '/api/admin/upload-video');
+      xhr.send(fd);
     }
 
     // 封面图「上传本地图片」按钮
@@ -3365,11 +3595,21 @@ document.addEventListener('click', function (e) {
       document.body.appendChild(inp);
       btn.addEventListener('click', function () { inp.value = ''; inp.click(); });
       inp.addEventListener('change', function () {
+        var _origText = btn.textContent;
+        btn.disabled = true;
         uploadToBucket(inp.files && inp.files[0], function (url) {
-          fImg.value = url;
-          if (typeof fImg.dispatchEvent === 'function') fImg.dispatchEvent(new Event('input'));
-          toast('封面图已上传，链接已自动填入', 'success');
-        });
+          btn.disabled = false;
+          if (url) {
+            btn.textContent = '✓ 完成';
+            btn.style.background = '#2e7d32';
+            setTimeout(function () { btn.textContent = _origText; btn.style.background = ''; }, 1200);
+            fImg.value = url;
+            if (typeof fImg.dispatchEvent === 'function') fImg.dispatchEvent(new Event('input'));
+            toast('封面图已上传，链接已自动填入', 'success');
+          } else {
+            btn.textContent = _origText;
+          }
+        }, function (pct) { btn.textContent = '上传中 ' + pct + '%'; });
       });
     })();
 
@@ -3484,7 +3724,8 @@ document.addEventListener('click', function (e) {
         var delBtn = document.createElement('button'); delBtn.className = 'row-btn danger'; delBtn.textContent = '删除';
         delBtn.addEventListener('click', function (e) {
           e.stopPropagation();
-          showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？', function () {
+          showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？', function (closeConfirm) {
+            closeConfirm();
             stateAnn.list = stateAnn.list.filter(function (x) { return x.id !== a.id; });
             if (stateAnn.curId === a.id) stateAnn.curId = null;
             if (!stateAnn.curId && stateAnn.list.length) { renderAnnList(); selectAnnItem(stateAnn.list[0].id); }
@@ -3673,8 +3914,8 @@ document.addEventListener('click', function (e) {
       btn.addEventListener('click', function () {
         var cmd = this.dataset.cmd;
         if (__rte.editor !== annEditor || !__rte.range) return; /* R217 条7：从未进入编辑器 → 不 focus、不执行（光标不跳输入框） */
-        document.execCommand(cmd, false, null);
-        annEditor.focus();
+        if (!(cmd === 'underline' && rteUnderlineLink(annEditor))) document.execCommand(cmd, false, null); /* R240：选区在链接内时下划线手动切换 <u> */
+        rteFocusStay(annEditor); /* R240：preventScroll——点按键屏幕不离开光标 */
       });
     });
 
@@ -3685,7 +3926,7 @@ document.addEventListener('click', function (e) {
         var val = this.value;
         if (val && __rte.editor === annEditor && __rte.range) { /* R217 条7：有选区才执行，否则只重置下拉不抢焦点 */
           document.execCommand(cmd, false, val);
-          annEditor.focus();
+          rteFocusStay(annEditor); /* R240：preventScroll */
         }
         this.selectedIndex = 0;
         syncSelectDisplay(this); // R166：同步自制下拉显示框回到默认项
@@ -3695,7 +3936,7 @@ document.addEventListener('click', function (e) {
     // 插入超链接（一个弹窗两个输入框）
     document.getElementById('announcementRteLink').addEventListener('click', function () {
       showLinkDialog('', '', function (url, text) {
-        var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
+        var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener noreferrer"><u>' + text + '</u></a>'; /* R240：链接默认带下划线改<u>标记驱动，按键可加可删 */
         rteInsert(__rte.editor, html);
         toast('超链接已插入', 'success');
       });
@@ -3741,7 +3982,7 @@ document.addEventListener('click', function (e) {
         var sel2 = window.getSelection();
         if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
           rteApplyBrushStyle(annBrushStyle);
-          annEditor.focus();
+          rteFocusStay(annEditor); /* R240：preventScroll */
           toast('格式已应用', 'success');
         } else {
           toast('请先选中要应用格式的内容', 'error');
@@ -3792,6 +4033,8 @@ document.addEventListener('click', function (e) {
       _vbl.value = v && v.bindLimit ? v.bindLimit : 1;
       document.getElementById('vContentEditor').innerHTML = v ? (v.resourceContent || '') : '';
       variantMask.classList.add('open');
+      /* R241：滚动位置按「弹窗 × 类型」独立 */
+      if (window.__modalScroll) __modalScroll.open(variantMask, v ? v.id : 'new');
     }
 
     // 通用超链接弹窗（一个弹窗两个输入框）
@@ -3862,8 +4105,8 @@ document.addEventListener('click', function (e) {
         btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
         btn.addEventListener('click', function () {
           if (__rte.editor !== editor || !__rte.range) return; /* R217 条7：从未进入编辑器 → 不 focus、不执行（光标不跳输入框） */
-          document.execCommand(this.dataset.cmd, false, null);
-          editor.focus();
+          if (!(this.dataset.cmd === 'underline' && rteUnderlineLink(editor))) document.execCommand(this.dataset.cmd, false, null); /* R240：选区在链接内时下划线手动切换 <u> */
+          rteFocusStay(editor); /* R240：preventScroll——点按键屏幕不离开光标 */
         });
       });
       // 下拉选择
@@ -3871,7 +4114,7 @@ document.addEventListener('click', function (e) {
         sel.addEventListener('change', function () {
           if (this.value && __rte.editor === editor && __rte.range) { /* R217 条7：有选区才执行，否则只重置下拉不抢焦点 */
             document.execCommand(this.dataset.cmd, false, this.value);
-            editor.focus();
+            rteFocusStay(editor); /* R240：preventScroll */
           }
           this.selectedIndex = 0;
           syncSelectDisplay(this); // R166：同步自制下拉显示框回到默认项
@@ -3897,7 +4140,7 @@ document.addEventListener('click', function (e) {
             var sel2 = window.getSelection();
             if (sel2.rangeCount > 0 && !sel2.isCollapsed) {
               rteApplyBrushStyle(formatBrushStyle);
-              editor.focus();
+              rteFocusStay(editor); /* R240：preventScroll */
               toast('格式已应用', 'success');
             } else {
               toast('请先选中要应用格式的内容', 'error');
@@ -3911,7 +4154,7 @@ document.addEventListener('click', function (e) {
       if (linkBtnId) {
         document.getElementById(linkBtnId).addEventListener('click', function () {
           showLinkDialog('', '', function (url, text) {
-            var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + text + '</a>';
+            var html = '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener noreferrer"><u>' + text + '</u></a>'; /* R240（老板 09-22）：链接默认带下划线改为<u>标记驱动（前台 sanitizeHTML 放行 U 标签）——原先下划线由 CSS 画死，下划线按键加/删<u>看不出变化；改标记后默认带下划线、按键可加可删 */
             rteInsert(__rte.editor, html);
             toast('超链接已插入', 'success');
           });
@@ -4029,6 +4272,8 @@ document.addEventListener('click', function (e) {
       _bindingsPage = 1; /* R223：每次打开回到第 1 页 */
       document.getElementById('bindingsTitle').textContent = '资源码详情（' + (v.name || '(未命名)') + '）';
       document.getElementById('bindingsMask').classList.add('open');
+      /* R241：滚动位置按「弹窗 × 类型」独立（页码仍走 R223 每次回第 1 页，互不影响） */
+      if (window.__modalScroll) __modalScroll.open(document.getElementById('bindingsMask'), v.id);
       var _hit = __bindingsCache[v.id];
       if (_hit) renderBindings(_hit); // 命中预载缓存：内容立即上屏，零等待
       else {
@@ -4101,12 +4346,10 @@ document.addEventListener('click', function (e) {
             toast(ok0 ? '已复制' : '复制失败', ok0 ? 'success' : 'error');
             return;
           }
-          if (codeCopy) {
-            codeCopy.textContent = '发码中…';
-            setTimeout(function () { /* 兜底：刷新链路异常时恢复按键文案，避免卡在「发码中…」 */
-              if (codeCopy.textContent === '发码中…') codeCopy.textContent = '复制并发新码';
-            }, 3000);
-          }
+          /* R243 条7：发码键防连点统一（复用码面板 R231 写法） */
+          if ((codeCopy && codeCopy.disabled) || (codeVal && codeVal.disabled) || window.__issueInFlight) return;
+          if (codeCopy) { codeCopy.disabled = true; codeCopy.textContent = '发码中…'; }
+          if (codeVal) { codeVal.disabled = true; codeVal.textContent = '发码中…'; }
           __issueCode(_bindingsVariant, function () {
             refreshBindings(_bindingsVariant.id);   // 换码后弹窗码值/绑定计数/发码记录同步刷新
             loadVariants(state.editingId);          // 编辑弹窗与资源列表里的码同步
@@ -4131,6 +4374,26 @@ document.addEventListener('click', function (e) {
       var tbody = document.getElementById('bindingsRows');
       tbody.innerHTML = '';
       var pager = document.getElementById('bindingsPager');
+
+      /* R239（用户 09-22 派单）：资源码弹窗接入全站「到底续滑翻页」——监听的是弹窗内部滚动容器
+         #bindingsScroll（admin.html 里 max-height:46vh;overflow:auto 那层）而不是 window；
+         翻页后滚回表格顶部；弹窗关着时判定不生效（active 守卫）；容器是静态 DOM，一次惰性挂接 */
+      if (!window.__bindingsEdgeInit && window.enableEdgeTurn) {
+        window.__bindingsEdgeInit = true;
+        var __bs = document.getElementById('bindingsScroll');
+        if (__bs) {
+          window.enableEdgeTurn({
+            scroller: __bs,
+            getPage: function () { return _bindingsPage; },
+            getTotalPages: function () { return Math.max(1, Math.ceil(_bindingsMerged.length / 20)); },
+            active: function () { var m = document.getElementById('bindingsMask'); return !!m && m.classList.contains('open'); },
+            onTurn: function (p) {
+              _bindingsPage = p; renderBindingsPage();
+              try { __bs.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { __bs.scrollTop = 0; }
+            }
+          });
+        }
+      }
       if (!total) {
         tbody.innerHTML = '<tr><td colspan="7" style="color:#999;">暂无资源码与绑定设备，访客输入正确资源码后将自动绑定其设备</td></tr>';
         if (pager) pager.innerHTML = '';
@@ -4184,11 +4447,12 @@ document.addEventListener('click', function (e) {
           unBtn.textContent = '解绑';
           (function (bid) {
             unBtn.addEventListener('click', function () {
-              showConfirm('解绑设备', '确定解绑该设备？解绑后此设备需重新输入资源码才能解锁（其它设备不受影响）。', function () {
+              showConfirm('解绑设备', '确定解绑该设备？解绑后此设备需重新输入资源码才能解锁（其它设备不受影响）。', function (closeConfirm) {
                 api('admin/bindings/' + bid, { method: 'DELETE' }).then(function (res2) {
+                  closeConfirm();
                   if (res2 && res2.ok) { toast('已解绑', 'success'); refreshBindings(_bindingsVariant && _bindingsVariant.id); loadVariants(state.editingId); }
                   else toast((res2 && res2.msg) || '解绑失败', 'error');
-                });
+                }).catch(function () { closeConfirm(); toast('解绑失败，请重试', 'error'); });
               });
             });
           })(m.binding.id);
@@ -4223,9 +4487,10 @@ document.addEventListener('click', function (e) {
     }
 
     function delVariant(id) {
-      showConfirm('删除类型', '确定删除该类型？', function () {
-        if (!state.editingId) { var di = state.variants.indexOf(state._delVariantRef); if (di >= 0) state.variants.splice(di, 1); renderVariants(); toast('已删除', 'success'); return; }
+      showConfirm('删除类型', '确定删除该类型？', function (closeConfirm) {
+        if (!state.editingId) { closeConfirm(); var di = state.variants.indexOf(state._delVariantRef); if (di >= 0) state.variants.splice(di, 1); renderVariants(); toast('已删除', 'success'); return; }
         api('admin/variants/' + id, { method: 'DELETE' }).then(function (res) {
+          closeConfirm();
           if (res && res.ok) {
             toast('已删除', 'success');
             // R178：本地即时移除（不等重拉网络往返），loadVariants 后台静默同步
@@ -4242,7 +4507,7 @@ document.addEventListener('click', function (e) {
             else __post7();
           }
           else toast(res.msg || '删除失败', 'error');
-        });
+        }).catch(function () { closeConfirm(); toast('删除失败，请重试', 'error'); });
       });
     }
 
@@ -5382,8 +5647,9 @@ refreshCatCnts();
           delBtn.className = 'row-btn danger';
           delBtn.textContent = '删除';
           delBtn.addEventListener('click', function () {
-            showConfirm('删除分类', '删除该分类？其下资源将归入"全部"，子分类也会一并删除。', function () {
+            showConfirm('删除分类', '删除该分类？其下资源将归入"全部"，子分类也会一并删除。', function (closeConfirm) {
               api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
+                closeConfirm();
                 if (res && res.ok) {
                   toast('已删除', 'success'); clearCache();
                   // R178：本地即时删除（子分类一并清、其下资源归入"全部"），后台静默同步；
@@ -5402,7 +5668,7 @@ refreshCatCnts();
                   }, __n7 ? 120 : 0);
                 }
                 else toast(res.msg || '删除失败', 'error');
-              });
+              }).catch(function () { closeConfirm(); toast('删除失败，请重试', 'error'); });
             });
           });
           meta.appendChild(editBtn);
@@ -5439,24 +5705,24 @@ refreshCatCnts();
     document.getElementById('catBatchHide').addEventListener('click', function () {
       var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
       if (ids.length === 0) return;
-      showConfirm('批量隐藏', '确定隐藏选中的 ' + ids.length + ' 个分类？隐藏后资源页不显示。', function () {
-        batchCatAction(ids, 'hide');
+      showConfirm('批量隐藏', '确定隐藏选中的 ' + ids.length + ' 个分类？隐藏后资源页不显示。', function (closeConfirm) {
+        batchCatAction(ids, 'hide', closeConfirm);
       });
     });
     // 批量显示
     document.getElementById('catBatchShow').addEventListener('click', function () {
       var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
       if (ids.length === 0) return;
-      showConfirm('批量显示', '确定显示选中的 ' + ids.length + ' 个分类？', function () {
-        batchCatAction(ids, 'show');
+      showConfirm('批量显示', '确定显示选中的 ' + ids.length + ' 个分类？', function (closeConfirm) {
+        batchCatAction(ids, 'show', closeConfirm);
       });
     });
     // 批量删除
     document.getElementById('catBatchDel').addEventListener('click', function () {
       var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
       if (ids.length === 0) return;
-      showConfirm('批量删除', '确定删除选中的 ' + ids.length + ' 个分类？其下资源将归入"全部"，子分类也会一并删除，不可恢复。', function () {
-        batchCatAction(ids, 'delete');
+      showConfirm('批量删除', '确定删除选中的 ' + ids.length + ' 个分类？其下资源将归入"全部"，子分类也会一并删除，不可恢复。', function (closeConfirm) {
+        batchCatAction(ids, 'delete', closeConfirm);
       });
     });
     // 取消选择
@@ -5465,8 +5731,8 @@ refreshCatCnts();
       updateCatBatchBar();
     });
     // 执行批量操作
-    function batchCatAction(ids, action) {
-      if (ids.indexOf(0) !== -1) { toast('“全部”为保底根分类，不可隐藏/显示/删除', 'error'); return; }
+    function batchCatAction(ids, action, closeConfirm) {
+      if (ids.indexOf(0) !== -1) { if (closeConfirm) closeConfirm(); toast('“全部”为保底根分类，不可隐藏/显示/删除', 'error'); return; }
       var targetIds = ids.slice();
       if (action === 'hide' || action === 'show') {
         ids.forEach(function (pid) {
@@ -5489,6 +5755,7 @@ refreshCatCnts();
         req.then(function (res) {
           if (res.ok) done++; else fail++;
           if (done + fail === ids.length) {
+            if (closeConfirm) closeConfirm();
             var actionName = action === 'hide' ? '隐藏' : (action === 'show' ? '显示' : '删除');
             toast('批量' + actionName + '完成：成功 ' + done + ' 项，失败 ' + fail + ' 项', fail > 0 ? 'error' : 'success');
             clearCache();
@@ -5516,12 +5783,12 @@ refreshCatCnts();
             }
       ;
           }
-        });
+        }).catch(function () { fail++; if (done + fail === ids.length && closeConfirm) closeConfirm(); });
       });
     }
 
     function openCatEdit(c) {
-      if (catDraftPending && catDraftFor === (c ? c.id : null)) { catDraftPending = false; catModalTitle.textContent = c ? '编辑分类' : '新增分类'; catMask.classList.add('open'); return; } // 遮罩关闭暂存：仅同一分类保留输入继续编辑
+      if (catDraftPending && catDraftFor === (c ? c.id : null)) { catDraftPending = false; catModalTitle.textContent = c ? '编辑分类' : '新增分类'; catMask.classList.add('open'); if (window.__modalScroll) __modalScroll.open(catMask, c ? c.id : 'new'); return; } // 遮罩关闭暂存：仅同一分类保留输入继续编辑
       state.catEditingId = c ? c.id : null;
       catModalTitle.textContent = c ? '编辑分类' : '新增分类';
       catName.value = c ? (c.name || '') : '';
@@ -5536,6 +5803,8 @@ refreshCatCnts();
       document.querySelector('input[name="catLevel"][value="1"]').checked = isChild;
       catParentWrap.style.display = isChild ? 'block' : 'none';
       catMask.classList.add('open');
+      /* R241：滚动位置按「弹窗 × 分类」独立 */
+      if (window.__modalScroll) __modalScroll.open(catMask, c ? c.id : 'new');
     }
 
     // 级别切换：选二级时显示父级选择
@@ -5697,7 +5966,8 @@ refreshCatCnts();
     // ---------- 退出 ----------
     logoutBtn.addEventListener('click', function () {
       logoutBtn.classList.add('active'); // R39：确认弹窗打开期间变白（复用资源页顶栏分享键 .active 白底蓝字）
-      showConfirm('退出登录', '确定要退出管理页吗？', function () {
+      showConfirm('退出登录', '确定要退出管理页吗？', function (closeConfirm) {
+        closeConfirm();
         api('admin/logout', { method: 'POST' });
         localStorage.removeItem(TOKEN_KEY);
         showLogin();
@@ -6051,6 +6321,8 @@ refreshCatCnts();
       bindLightbox(document.getElementById('previewDetail'));
       bindLightbox(document.getElementById('previewVariantDetail'));
       document.getElementById('previewMask').classList.add('open');
+      /* R241：滚动位置按「弹窗 × 预览对象」独立（对象=正在编辑的资源，与 editMask 同口径） */
+      if (window.__modalScroll) __modalScroll.open(document.getElementById('previewMask'), state.editingId || 'new');
     });
     document.getElementById('previewCloseX').addEventListener('click', function () {
       document.getElementById('previewMask').classList.remove('open');try{document.querySelectorAll('#previewMask video').forEach(function(v){v.pause()})}catch(e){}
@@ -6160,83 +6432,33 @@ refreshCatCnts();
       }
     });
 
-    // ---------- R192 二⑧：后台命令面板（Ctrl+K）----------
-    // 桌面端任意界面 Ctrl+K 呼出：页面导航 / 常用操作 / 资源直达（输资源名回车直接开编辑弹窗）。
-    // ↑↓ 选择、Enter 执行、Esc 关闭（已注册进 __modalKit，Esc 路由与全站弹窗一致）；
-    // 任一编辑类弹窗开着时不抢键（防半开状态下乱切页面）。
+    // ---------- R243 条19②：命令面板抽提到 ui-common.js（window.__cpPanel 全站组件）----------
+    // 面板 DOM/键控/样式/弹窗栈注册全部由公共组件提供，本页只传后台命令清单；
+    // 行为与 R192 版完全一致：Ctrl+K 呼出、↑↓ 选择、Enter 执行、Esc 关闭、
+    // 编辑类弹窗开着时不抢键、点外关闭。
     (function () {
-      var mask = document.createElement('div');
-      mask.className = 'cp-mask'; mask.id = 'cpMask';
-      mask.innerHTML =
-        '<div class="cp-box" role="dialog" aria-label="命令面板">' +
-          '<input class="cp-input" id="cpInput" placeholder="搜索：页面 / 操作 / 资源名…" autocomplete="off" />' +
-          '<div class="cp-list" id="cpList"></div>' +
-        '</div>';
-      document.body.appendChild(mask);
-      var input = mask.querySelector('#cpInput'), listEl = mask.querySelector('#cpList');
-      var items = [], active = 0;
-
-      function __cpClose() { mask.classList.remove('open'); input.value = ''; input.blur(); }
-      function __cpCmds() {
-        var c = [
-          { lab: '资源管理', tag: '页面', kw: '资源管理 资源 列表 products', run: function () { switchTab('products'); } },
-          { lab: '分类管理', tag: '页面', kw: '分类管理 分类 categories', run: function () { switchTab('categories'); } },
-          { lab: '数据统计', tag: '页面', kw: '数据统计 统计 数据 stats', run: function () { switchTab('stats'); } },
-          { lab: '平台设置', tag: '页面', kw: '平台设置 设置 settings', run: function () { switchTab('settings'); } },
-          { lab: '新增资源', tag: '操作', kw: '新增资源 新建 添加资源 add', run: function () { switchTab('products'); document.getElementById('addProductBtn').click(); } },
-          { lab: '新增分类', tag: '操作', kw: '新增分类 新建分类 add', run: function () { switchTab('categories'); document.getElementById('addCatBtn').click(); } },
-          { lab: '设置客服', tag: '操作', kw: '设置客服 客服 联系 contact', run: function () { switchTab('settings'); document.getElementById('openContactBtn').click(); } },
-          { lab: '设置公告', tag: '操作', kw: '设置公告 公告 ann', run: function () { switchTab('settings'); document.getElementById('openAnnBtn').click(); } },
-          { lab: '新增公告项', tag: '操作', kw: '新增公告项 公告 add', run: function () { switchTab('settings'); document.getElementById('addAnnBtn').click(); } },
-          { lab: '修改密码', tag: '操作', kw: '修改密码 密码 pwd', run: function () { switchTab('settings'); document.getElementById('showPwdFormBtn').click(); } }
-        ];
-        (state.products || []).forEach(function (p) {
-          c.push({ lab: '编辑：' + (p.title || '(无标题)'), tag: '资源', kw: '编辑 ' + (p.title || ''), run: function () { switchTab('products'); openEdit(p); } });
-        });
-        return c;
-      }
-      function __cpRender() {
-        var kw = input.value.trim().toLowerCase();
-        var all = __cpCmds();
-        items = !kw ? all : all.filter(function (c) { return (c.lab + ' ' + c.kw).toLowerCase().indexOf(kw) !== -1; });
-        items = items.slice(0, 10); active = Math.min(active, Math.max(0, items.length - 1));
-        if (!items.length) { listEl.innerHTML = '<div class="cp-empty">没有匹配的命令</div>'; return; }
-        listEl.innerHTML = '';
-        items.forEach(function (c, i) {
-          var it = document.createElement('div');
-          it.className = 'cp-item' + (i === active ? ' active' : '');
-          var lab = document.createElement('span'); lab.className = 'cp-lab'; lab.textContent = c.lab;
-          var tag = document.createElement('span'); tag.className = 'cp-tag'; tag.textContent = c.tag;
-          it.appendChild(lab); it.appendChild(tag);
-          it.addEventListener('mouseenter', function () { active = i; __cpPaint(); });
-          it.addEventListener('click', function () { __cpRun(i); });
-          listEl.appendChild(it);
-        });
-      }
-      function __cpPaint() {
-        Array.prototype.forEach.call(listEl.querySelectorAll('.cp-item'), function (el, i) { el.classList.toggle('active', i === active); });
-        var cur = listEl.querySelectorAll('.cp-item')[active]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
-      }
-      function __cpRun(i) { var c = items[i]; if (!c) return; __cpClose(); try { c.run(); } catch (e) { try { console.error(e); } catch (e2) {} } }
-
-      input.addEventListener('input', function () { active = 0; __cpRender(); });
-      mask.addEventListener('click', function (e) { if (e.target === mask) __cpClose(); }); /* R217：恢复点外关闭（R215 误删） */
-      input.addEventListener('keydown', function (e) {
-        if (e.key === 'ArrowDown') { e.preventDefault(); if (items.length) { active = (active + 1) % items.length; __cpPaint(); } }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); if (items.length) { active = (active - 1 + items.length) % items.length; __cpPaint(); } }
-        else if (e.key === 'Enter') { e.preventDefault(); __cpRun(active); }
-        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); __cpClose(); }
-      });
-      document.addEventListener('keydown', function (e) {
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
-          e.preventDefault();
-          if (mask.classList.contains('open')) { __cpClose(); return; }
-          if (document.querySelector('.modal-mask.open, .kf-mask.open, .share-mask.open, .ann-mask.open')) return;
-          active = 0; __cpRender(); mask.classList.add('open'); setTimeout(function () { input.focus(); }, 0);
+      if (!window.__cpPanel) return;
+      window.__cpPanel({
+        placeholder: '搜索：页面 / 操作 / 资源名…',
+        busy: '.modal-mask.open, .kf-mask.open, .share-mask.open, .ann-mask.open',
+        cmds: function () {
+          var c = [
+            { lab: '资源管理', tag: '页面', kw: '资源管理 资源 列表 products', run: function () { switchTab('products'); } },
+            { lab: '分类管理', tag: '页面', kw: '分类管理 分类 categories', run: function () { switchTab('categories'); } },
+            { lab: '数据统计', tag: '页面', kw: '数据统计 统计 数据 stats', run: function () { switchTab('stats'); } },
+            { lab: '平台设置', tag: '页面', kw: '平台设置 设置 settings', run: function () { switchTab('settings'); } },
+            { lab: '新增资源', tag: '操作', kw: '新增资源 新建 添加资源 add', run: function () { switchTab('products'); document.getElementById('addProductBtn').click(); } },
+            { lab: '新增分类', tag: '操作', kw: '新增分类 新建分类 add', run: function () { switchTab('categories'); document.getElementById('addCatBtn').click(); } },
+            { lab: '设置客服', tag: '操作', kw: '设置客服 客服 联系 contact', run: function () { switchTab('settings'); document.getElementById('openContactBtn').click(); } },
+            { lab: '设置公告', tag: '操作', kw: '设置公告 公告 ann', run: function () { switchTab('settings'); document.getElementById('openAnnBtn').click(); } },
+            { lab: '新增公告项', tag: '操作', kw: '新增公告项 公告 add', run: function () { switchTab('settings'); document.getElementById('addAnnBtn').click(); } },
+            { lab: '修改密码', tag: '操作', kw: '修改密码 密码 pwd', run: function () { switchTab('settings'); document.getElementById('showPwdFormBtn').click(); } }
+          ];
+          (state.products || []).forEach(function (p) {
+            c.push({ lab: '编辑：' + (p.title || '(无标题)'), tag: '资源', kw: '编辑 ' + (p.title || ''), run: function () { switchTab('products'); openEdit(p); } });
+          });
+          return c;
         }
-      });
-      window.addEventListener('DOMContentLoaded', function () {
-        if (window.__modalKit) window.__modalKit.register(mask, { discard: __cpClose, stash: __cpClose });
       });
     })();
 
@@ -6304,6 +6526,21 @@ refreshCatCnts();
     // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
 
   
+    // R243（用户 09-22 23:18）：条43 工具栏收起键首次呼吸引导（一次性，storage 记忆）
+    (function () {
+      try {
+        if (!localStorage.getItem('wnzyq_rte_expand_guide')) {
+          document.querySelectorAll('.rte-expand').forEach(function (btn) { btn.classList.add('breathe-once'); });
+          localStorage.setItem('wnzyq_rte_expand_guide', '1');
+          setTimeout(function () {
+            document.querySelectorAll('.rte-expand').forEach(function (btn) { btn.classList.remove('breathe-once'); });
+          }, 2500);
+        }
+      } catch (e) {}
+    })();
+    // R243（用户 09-22 23:18）：条24 初始禁用态同步
+    __updateUndoRedo();
+
     // ---------- 初始化 ----------
     boot();
 

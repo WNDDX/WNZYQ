@@ -701,6 +701,7 @@
 
     .rte-btn:active { transform: scale(0.94); }    .rte-group { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }    .rte-group:last-child { margin-right: 0; }
     .rte-btn.active { background: var(--blue1); color: #fff; border-color: var(--blue1); }
+    .rte-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; } /* R243（用户 09-22 23:18）：条24 撤销/重做空栈禁用态 */
     /* 预设色板（文字颜色 / 背景颜色）：点色块即应用，无需输入代码 */
     .rte-palette {
       display: inline-flex; align-items: center; gap: 3px;
@@ -745,6 +746,7 @@
       position: fixed; z-index: 10050; padding: 6px;
       background: var(--card-bg, #fff); border: 1px solid var(--border, #e8e8e8); border-radius: 10px;
       box-shadow: 0 10px 28px rgba(20, 60, 110, 0.16);
+      transition: opacity 0.1s ease, transform 0.1s ease; /* R243（用户 09-22 23:18）：条11 弹层淡入过渡 */
     }
     .rte-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 2px; }
     .rte-pop-title { font-size: 12px; color: var(--text-light, #888); letter-spacing: 1.2px; }
@@ -805,7 +807,7 @@
       overflow-y: auto;
     }
     .rte-editor.rte-large ~ * { }
-    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); width: 96vw; max-width: 1200px; z-index: 6001; background: var(--card-bg); border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 0 12px; height: 36px; }
+    .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 0; right: 0; margin: 0 auto; top: 12px; width: 96vw; max-width: 1200px; z-index: 6001; background: var(--card-bg); border: 2px solid var(--blue1); border-bottom: none; border-radius: 12px 12px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } /* R240（老板 09-22 19:15）：放大态原用 left:50%+transform:translateX(-50%) 居中——transform 会让工具栏成为其内部 position:fixed 后代（字体/字号下拉面板）的包含块，面板的视口坐标被按工具栏盒子原点重新解释，出现"放大后字体和字号选择框偏移这么多"（实测横向偏 122px）。改 left:0/right:0+margin:0 auto 居中（绝对定位下 auto 边距均分剩余空间），不再产生包含块，面板回到视口坐标系，落点就在对应按键正下方 */ .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 0 12px; height: 36px; }
     .rte-zoom { font-weight: 600; }
     .rte-zoom-ico { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; } /* R231 条9：SVG 线性图标（随按钮色，放大态白底反色由 currentColor 自动跟） */    .rte-toolbar .select-picker .cat-picker-display { min-height: 0; height: 32px; padding: 0 10px; align-self: center; border-radius: 6px; font-size: 13px; }    .rte-toolbar.rte-toolbar-large .select-picker .cat-picker-display { height: 36px; font-size: 15px; }
     /* R173（用户 00:38/00:40）：编辑器内媒体出格根治——原规则无 !important，内联 style width:600px 的
@@ -813,7 +815,7 @@
        内联宽仍生效但渲染宽被 max-width 钳在容器内，任何态不再越界 */
     .rte-editor img, .rte-editor video { max-width: 100% !important; border-radius: 8px; margin: 8px 0; } .rte-editor video { width: 100% !important; height: auto !important; display: block; }
     .rte-editor img.rte-media-sel, .rte-editor video.rte-media-sel { outline: 2px solid var(--blue1); outline-offset: 2px; } /* R165：自绘选中框——部分内核原生 selection 蓝层越出弹窗，outline 跟随元素自身绘制、受 contain:paint 裁剪不越界 */
-    .rte-editor a { color: var(--blue1); text-decoration: underline; }
+    .rte-editor a { color: var(--blue1); } /* R240（老板 09-22）：编辑器内链接下划线不再由 CSS 画死——改为标记驱动（插入时带<u>、下划线按键加/删<u>）。原先 CSS 强制 underline 时，按键删掉<u>屏幕上仍有下划线，看起来"按了没反应" */
     .rte-editor ul, .rte-editor ol { padding-left: 24px; margin: 6px 0; }
     .rte-editor li { margin: 3px 0; }
     .rte-editor p { margin: 4px 0; }
@@ -883,7 +885,7 @@
     #previewMask .resource-code-error { margin-top: 8px; font-size: 12px; color: #ff4444; }
     #previewMask .resource-content { margin-top: 12px; padding: 14px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); font-size: 13px; color: var(--text); line-height: 1.8; animation: fadeInUp var(--dur-switch) var(--ease-out); } /* R231 条15/22：0.20s+keyframes 公共化（原管理页无定义属漏网） */
     #previewMask .resource-content img, #previewMask .resource-content video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
-    #previewMask .resource-content a { color: var(--blue1); text-decoration: underline; word-break: break-all; }
+    #previewMask .resource-content a { color: var(--blue1); word-break: break-all; } /* R240：预览与前台一致改为标记驱动下划线（<u> 有则显示），CSS 不再强制 */
     /* 底部按键：与资源页 .btn-contact / .btn-close-modal 同款（46px/16px/hover/active 动画一致），
        且两键等宽（资源页 .modal-footer button { flex:1 } 同款） */
     #previewMask .modal-footer.preview-footer { padding: 0 20px 20px; gap: 10px; }
@@ -1248,6 +1250,8 @@
     }
     .rte-expand .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid) ease; transform: rotate(180deg); }
     .rte-expand:active { transform: scale(0.94); }
+    @keyframes breathe { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(30,136,229,0.25);} 50%{transform:scale(1.1);box-shadow:0 0 0 5px rgba(30,136,229,0);} } /* R243（用户 09-22 23:18）：条43 收起键呼吸动画 */
+    .rte-expand.breathe-once { animation: breathe 0.9s ease-in-out 2; } /* R243（用户 09-22 23:18）：条43 一次性引导 */
     /* 收起态：单行横滚，左右滑动查看全部。R193b（用户 23:06 修正）：回退 R193 的「彻底收纳」——
        此功能本身已有（一行显示+横滑+蓝色三角展开键切多行全显），不加新东西；
        只修电脑端排布奇怪的根因：①工具栏子项全端 flex-shrink:0 不压缩（见基础段，原只在手机档）

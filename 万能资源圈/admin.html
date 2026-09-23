@@ -14,6 +14,9 @@
   <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)">
   <link rel="preload" href="/assets/images/logo.png?v=224" as="image">
+  <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
+  <link rel="preload" href="/assets/ui-common.js" as="script">
+  <link rel="preload" href="/assets/admin.js" as="script">
 
   <link rel="stylesheet" href="/assets/admin.css">
 </head>
@@ -568,7 +571,7 @@
       </div>
       <!-- R223：资源码与绑定合并平铺表（老板定稿 8 列；一行=一台绑定设备，码信息每行填满，
            未绑定的码独占一行设备列显「—」；老绑定无码记录显示「早期绑定」） -->
-      <div style="max-height:46vh;overflow:auto;">
+      <div id="bindingsScroll" style="max-height:46vh;overflow:auto;">
         <table class="stat-table" id="bindingsTable">
           <thead><tr><th>资源码</th><th>有效状态</th><th>发放时间</th><th>设备</th><th>绑定时间</th><th>最近访问</th><th>操作</th></tr></thead>
           <tbody id="bindingsRows"></tbody>

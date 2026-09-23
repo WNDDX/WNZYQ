@@ -92,17 +92,18 @@ export async function onRequestPost(context) {
 
   // 4. 有码：先查通行证——已绑定设备直接放行（宽松模式，不验码、换码不影响）
   // R106：绑定表查询防御——表异常时按"未绑定"继续验码，不再直接 500
-  let boundRow = null;
+  // R243 条3：通行证查询 + last_access 更新合并为一次往返——原先 SELECT 查通行证、命中后再发一条
+  // UPDATE 刷 last_access（两次串行往返）；改为直接 UPDATE（unique index 保证 changes ∈ {0,1}），
+  // meta.changes==1 即通行证存在且顺手刷了 last_access（供后台绑定清单展示），0 = 未绑定照常验码。
+  // 已绑定路径串行往返 3 → 2（variant 查询 + 本条 UPDATE）。
+  let boundHit = false;
   try {
-    boundRow = await env.DB.prepare(
-      'SELECT id FROM resource_bindings WHERE variant_id = ? AND device_token = ?'
-    ).bind(variantId, device).first();
+    const upd = await env.DB.prepare(
+      "UPDATE resource_bindings SET last_access = datetime('now') WHERE variant_id = ? AND device_token = ?"
+    ).bind(variantId, device).run();
+    boundHit = !!(upd && upd.meta && upd.meta.changes);
   } catch (e) { console.error('R106 通行证查询失败（按未绑定降级）:', e && e.message); }
-  if (boundRow) {
-    // 顺手更新最近访问时间（供后台绑定清单展示）
-    try {
-      await env.DB.prepare('UPDATE resource_bindings SET last_access = datetime(\'now\') WHERE id = ?').bind(boundRow.id).run();
-    } catch (e) { /* 更新失败不影响解锁 */ }
+  if (boundHit) {
     return json({ ok: true, content, bound: true }, 200, extraHeaders);
   }
 
@@ -115,9 +116,17 @@ export async function onRequestPost(context) {
   await ensureCodeIssuesTable(env);
   const codeLower = code.toLowerCase();
   let issue = null;
+  /* R243 条3：发码记录查询 + 60 天兑换窗口 + 绑定计数合并为一次往返——原先三条串行
+     SELECT（issue 记录、窗口判定、COUNT 绑定数）；改为单条多子查询 SELECT 一次带回
+     （in_window / bind_cnt 由子查询算出），未绑定验码路径串行往返 7 → 5 */
   try {
     issue = await env.DB.prepare(
-      'SELECT id, code, status, issued_at FROM code_issues WHERE variant_id = ? AND LOWER(code) = ? ORDER BY id DESC LIMIT 1'
+      `SELECT ci.id, ci.code, ci.status, ci.issued_at,
+              (ci.issued_at >= datetime('now','-60 days')) AS in_window,
+              (SELECT COUNT(*) FROM resource_bindings rb WHERE rb.variant_id = ci.variant_id AND rb.code = ci.code) AS bind_cnt
+       FROM code_issues ci
+       WHERE ci.variant_id = ? AND LOWER(ci.code) = ?
+       ORDER BY ci.id DESC LIMIT 1`
     ).bind(variantId, codeLower).first();
   } catch (e) { console.error('R221 发码记录查询失败（按旧机制降级）:', e && e.message); }
 
@@ -129,7 +138,12 @@ export async function onRequestPost(context) {
         await env.DB.prepare('INSERT INTO code_issues (variant_id, product_id, code) VALUES (?, ?, ?)')
           .bind(variantId, productId, String(v.resource_code).trim()).run();
         issue = await env.DB.prepare(
-          'SELECT id, code, status, issued_at FROM code_issues WHERE variant_id = ? AND LOWER(code) = ? ORDER BY id DESC LIMIT 1'
+          `SELECT ci.id, ci.code, ci.status, ci.issued_at,
+                  (ci.issued_at >= datetime('now','-60 days')) AS in_window,
+                  (SELECT COUNT(*) FROM resource_bindings rb WHERE rb.variant_id = ci.variant_id AND rb.code = ci.code) AS bind_cnt
+           FROM code_issues ci
+           WHERE ci.variant_id = ? AND LOWER(ci.code) = ?
+           ORDER BY ci.id DESC LIMIT 1`
         ).bind(variantId, codeLower).first();
       } catch (e) { console.error('R221 迁移发码记录写入失败:', e && e.message); }
     }
@@ -140,14 +154,8 @@ export async function onRequestPost(context) {
 
   // R221：60 天兑换窗口——发放超过 60 天的码不再允许新设备兑换（明确文案）；
   // 已绑定设备走上方通行证路径不受影响（绑定 = 永久，跨 60 天照常解锁）
-  let inWindow = true;
-  try {
-    const win = await env.DB.prepare(
-      "SELECT 1 AS x FROM code_issues WHERE id = ? AND issued_at >= datetime('now','-60 days') LIMIT 1"
-    ).bind(issue.id).first();
-    inWindow = !!win;
-  } catch (e) { console.error('R221 兑换窗口查询失败（按窗口内放行）:', e && e.message); }
-  if (!inWindow) {
+  // R243 条3：窗口判定改读合并 SELECT 带回的 in_window（不再单独发窗口查询）
+  if (!issue.in_window) {
     return json({ ok: false, msg: '该资源码已超过 60 天有效期，请联系客服获取新码' }, 200, extraHeaders);
   }
 
@@ -156,14 +164,10 @@ export async function onRequestPost(context) {
   const vLimit = parseInt(v.bind_limit, 10);
   const limit = vLimit >= 1 ? vLimit : Math.max(1, parseInt(await getSetting(env, 'resource_bind_limit', '1'), 10) || 1);
   const bindCode = String(issue.code);
-  // R106：计数查询防御——表异常时按 0 计，不再直接 500
-  let cnt = null;
-  try {
-    cnt = await env.DB.prepare(
-      'SELECT COUNT(*) AS n FROM resource_bindings WHERE variant_id = ? AND code = ?'
-    ).bind(variantId, bindCode).first();
-  } catch (e) { console.error('R106 绑定计数查询失败（按0降级）:', e && e.message); }
-  if (cnt && cnt.n >= limit) {
+  /* R243 条3：绑定计数改读合并 SELECT 带回的 bind_cnt 子查询（不再单独发 COUNT 往返），
+     未绑定验码路径串行往返 7 → 5 的最后一处合并 */
+  const cnt = issue.bind_cnt;
+  if (cnt && cnt >= limit) {
     // R221：绑满不再自动换码（换码只由后台复制触发），本次仍拒绝
     return json({ ok: false, msg: '该码绑定设备已满（上限 ' + limit + ' 台），请联系客服。注意：换浏览器、无痕模式、清除缓存都会被识别为新设备' }, 200, extraHeaders);
   }

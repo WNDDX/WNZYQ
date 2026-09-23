@@ -24,6 +24,9 @@
   <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)">
   <link rel="preload" href="/assets/images/logo.png?v=224" as="image">
+  <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
+  <link rel="preload" href="/assets/ui-common.js" as="script">
+  <link rel="preload" href="/assets/shop.js" as="script">
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <link rel="stylesheet" href="/assets/shop.css">
   <!-- R55：搜索引擎收录策略 -->
@@ -151,8 +154,9 @@
               <span id="resourceCodeTitle">输入资源码获取专属内容</span>
             </div>
             <!-- 有资源码时：输入框+解锁按钮 -->
+            <!-- R243 条21：资源码固定 8 位（R96 生成口径），输入框限 8 位——maxlength 属性 + shop.js input 截断双保险（粘贴超长串只留前 8 位） -->
             <div class="resource-code-input-row" id="resourceCodeInputRow">
-              <input type="text" class="resource-code-input" id="resourceCodeInput"  />
+              <input type="text" class="resource-code-input" id="resourceCodeInput" maxlength="8" />
               <button class="resource-code-btn" id="resourceCodeBtn">解锁</button>
             </div>
             <!-- 无资源码时：直接查看按钮 -->
@@ -160,6 +164,8 @@
               <button class="resource-code-btn" id="resourceDirectBtn" style="width:100%">立即获取专属内容</button>
             </div>
             <div class="resource-code-error" id="resourceCodeError" style="display:none">资源码错误，请检查后重试</div>
+            <!-- R243 条17：解锁失败提示下方的浅色小字（纯文字、零新增按钮；文案由 shop.js 按服务端 msg 分类下发） -->
+            <div class="resource-code-help" id="resourceCodeHelp" style="display:none"></div>
             <div class="resource-content" id="resourceContent" style="display:none"></div>
           </div>
         </div>
