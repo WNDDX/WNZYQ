@@ -162,35 +162,6 @@ document.addEventListener('error', function (e) {
   });
 })();
 </script>
-<script>
-// R243 条19②：Ctrl+K 命令面板扩展到错误页（全部页面可呼出；入口仅键盘，零新增图标/按键）。
-// 命令 = 资源直达：懒取 /api/products，搜到资源回车跳 shop?pid= 打开详情（接口不可达时面板空列表，不影响页面）。
-(function () {
-  if (!window.__cpPanel) return;
-  var products = null;
-  function load() {
-    if (products !== null) return;
-    products = [];
-    try {
-      fetch('/api/products').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-        if (d && Array.isArray(d.products)) {
-          products = d.products.filter(function (p) {
-            return (p.is_online === true || p.is_online === 1) && p.is_hidden !== true && p.is_hidden !== 1;
-          });
-        }
-      }).catch(function () {});
-    } catch (e) {}
-  }
-  window.__cpPanel({
-    placeholder: '搜索资源名，回车直达详情…',
-    cmds: function () {
-      load();
-      return products.map(function (p) {
-        return { lab: String(p.title || '(无标题)'), tag: '资源', kw: String(p.title || ''), run: function () { if (window.jumpTo) window.jumpTo('shop?pid=' + Number(p.id)); } };
-      });
-    }
-  });
-})();
-</script>
+
 </body>
 </html>

@@ -611,6 +611,7 @@
     }
     .cat-picker.open .cat-picker-panel { display: block; }
     .select-picker.open .cat-picker-panel { display: block; }
+    .cat-picker-panel.open { display: block; } /* R247：select-picker 面板在 body 中时凭自身 .open 显示，脱离 toolbar overflow-x 裁剪 */
     .select-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
     .select-picker.open .cpd-arrow { transform: rotate(0deg); }
     .cp-item {

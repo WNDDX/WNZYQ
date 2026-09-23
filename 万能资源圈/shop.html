@@ -164,8 +164,7 @@
               <button class="resource-code-btn" id="resourceDirectBtn" style="width:100%">立即获取专属内容</button>
             </div>
             <div class="resource-code-error" id="resourceCodeError" style="display:none">资源码错误，请检查后重试</div>
-            <!-- R243 条17：解锁失败提示下方的浅色小字（纯文字、零新增按钮；文案由 shop.js 按服务端 msg 分类下发） -->
-            <div class="resource-code-help" id="resourceCodeHelp" style="display:none"></div>
+            <!-- R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行 -->
             <div class="resource-content" id="resourceContent" style="display:none"></div>
           </div>
         </div>
@@ -198,6 +197,7 @@
   <script>(function () { var s = document.createElement('script'); s.src = '/config.js'; s.onerror = function () {}; document.head.appendChild(s); })();</script>
   <!-- R193：ui-common.js 必须先于 shop.js 加载（长按菜单组件 __ctxMenu 在 shop.js 解析时就要用） -->
   <script src="/assets/ui-common.js"></script>
+  <script src="/assets/qrcode.min.js"></script>
   <script src="/assets/shop.js"></script>
   <!-- 图片/视频放大查看器 -->
   <!-- lightbox removed: use dynamic openLightbox/bindLightbox -->

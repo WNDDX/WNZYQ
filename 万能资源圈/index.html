@@ -287,9 +287,6 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   .btn-item { font-size: 23px; }
 }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-/* R243 条19①：首页安放位——组件本体（.search-box/.search-input/.search-clear/.search-icon）
-   与资源页/管理页同款，样式在 ui-common.css 公共块；此处仅页面安放尺寸 */
-.idx-search { flex: none; width: 100%; margin: 0 0 18px; }
 </style>
   <!-- R55：搜索引擎收录策略 -->
   <meta name="robots" content="index,follow">
@@ -309,16 +306,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         </div>
     </div>
     <div class="page-title">万能资源圈・导航</div>
-
-    <!-- R243 条19①：管理页顶栏搜索框同款组件引用到首页（同组件同样式同交互：输入即搜/一键清空/搜索历史；前台搜资源列表） -->
-    <div class="search-box idx-search">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input class="search-input" id="idxSearchInput" placeholder="搜索资源…" autocomplete="off" aria-label="搜索资源" />
-      <button type="button" class="search-clear" id="idxSearchClear" title="清空" aria-label="清除搜索">×</button>
-    </div>
 
     <button class="btn-item btn-orange" onclick="openResource()">
         <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
@@ -600,98 +587,6 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
     });
   })();
   </script>
-  <script>
-  // R243 条19①/②：首页搜索框（管理页/资源页同款组件，样式在 ui-common.css 公共块）+
-  // Ctrl+K 命令面板（入口仅键盘，页面零新增图标/按键）。
-  // 交互与资源页同口径：输入即搜（300ms 防抖）、一键清空、搜索历史（bindSearchHist）；
-  // 前台搜资源列表：结果词条点按直达该资源详情（shop 现有 ?pid= 通道，不新造路由）。
-  (function () {
-    var wrap = document.querySelector('.idx-search');
-    var input = document.getElementById('idxSearchInput');
-    var clearBtn = document.getElementById('idxSearchClear');
-    if (!wrap || !input || !clearBtn) return;
-    var products = null; /* 懒加载一次资源列表（/api/products 只读接口，明文字段已由服务端剥离） */
-    function loadProducts(cb) {
-      if (Array.isArray(products)) { cb(products); return; }
-      if (products === false) { cb([]); return; } /* 已在途/失败：按空处理，不打断输入 */
-      products = false;
-      try {
-        fetch('/api/products').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-          products = (d && Array.isArray(d.products)) ? d.products.filter(function (p) {
-            return (p.is_online === true || p.is_online === 1) && p.is_hidden !== true && p.is_hidden !== 1;
-          }) : [];
-          cb(products);
-        }).catch(function () { products = []; });
-      } catch (e) { products = []; }
-    }
-    input.addEventListener('focus', function () { loadProducts(function () {}); }); /* 首次聚焦预取，面板/结果秒出 */
-    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
-    var resBox = document.createElement('div');
-    resBox.className = 'search-hist'; resBox.id = 'idxResBox'; /* 复用最近搜索下拉同款容器观感（不新造视觉） */
-    resBox.style.display = 'none';
-    wrap.appendChild(resBox);
-    function hideRes() { resBox.style.display = 'none'; }
-    function hideHist() { var hb = wrap.querySelector('.search-hist:not(#idxResBox)'); if (hb) hb.style.display = 'none'; }
-    function renderRes(kw) {
-      var k = (kw || '').trim().toLowerCase();
-      hideHist(); /* 输入即搜时收起历史下拉，两面板不同屏 */
-      if (!k) { hideRes(); return; }
-      loadProducts(function (list) {
-        var hits = list.filter(function (p) { return String(p.title || '').toLowerCase().indexOf(k) !== -1; }).slice(0, 8);
-        if (!hits.length) {
-          resBox.innerHTML = '<div class="sh-head"><span class="sh-title">该搜索暂无资源</span></div>';
-          resBox.style.display = 'block'; return;
-        }
-        var html = '<div class="sh-head"><span class="sh-title">资源</span></div><div class="sh-list">';
-        hits.forEach(function (p) {
-          html += '<span class="sh-item"><button type="button" class="sh-word" data-pid="' + Number(p.id) + '">' + esc(p.title || '(无标题)') + '</button></span>';
-        });
-        resBox.innerHTML = html + '</div>';
-        resBox.style.display = 'block';
-      });
-    }
-    resBox.addEventListener('mousedown', function (e) { e.preventDefault(); });
-    resBox.addEventListener('click', function (e) {
-      var t = e.target;
-      if (t.classList && t.classList.contains('sh-word')) {
-        var pid = Number(t.getAttribute('data-pid'));
-        hideRes(); input.blur();
-        if (window.jumpTo) window.jumpTo('shop?pid=' + pid); /* 直达打开该资源详情 */
-      }
-    });
-    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) hideRes(); });
-    var timer = null;
-    input.addEventListener('input', function () {
-      clearBtn.classList.toggle('show', this.value.length > 0);
-      clearTimeout(timer);
-      var self = this;
-      timer = setTimeout(function () {
-        renderRes(self.value);
-        if (self.value.trim()) window.pushSearchHist('indexSearchHist', self.value); /* 搜索稳定 300ms 后记录（与资源页同交互） */
-      }, 300);
-    });
-    clearBtn.addEventListener('click', function () {
-      input.value = '';
-      this.classList.remove('show');
-      hideRes();
-      input.focus();
-    });
-    input.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideRes(); });
-    if (window.bindSearchHist) window.bindSearchHist(wrap, input, 'indexSearchHist'); /* focus 空值时显示最近搜索 */
-    // ②Ctrl+K 命令面板：命令 = 资源直达（搜到回车打开详情）；面板本体由 ui-common.js __cpPanel 提供
-    if (window.__cpPanel) {
-      window.__cpPanel({
-        placeholder: '搜索资源名，回车直达详情…',
-        cmds: function () {
-          loadProducts(function () {});
-          var list = Array.isArray(products) ? products : [];
-          return list.map(function (p) {
-            return { lab: String(p.title || '(无标题)'), tag: '资源', kw: String(p.title || ''), run: function () { if (window.jumpTo) window.jumpTo('shop?pid=' + Number(p.id)); } };
-          });
-        }
-      });
-    }
-  })();
-  </script>
+
 </body>
 </html>

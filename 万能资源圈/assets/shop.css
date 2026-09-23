@@ -748,13 +748,7 @@
       font-size: 12px;
       color: #ff4444;
     }
-    /* R243 条17：解锁失败提示下方的浅色小字（码错→如需帮助请联系客服；超上限/超窗口→联系卖家解绑或换新码）。
-       纯文字零按钮；浅色小字口径与错误行同字号、灰色弱化一档（--text-light） */
-    .resource-code-help {
-      margin-top: 4px;
-      font-size: 12px;
-      color: var(--text-light);
-    }
+    /* R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行 */
     .resource-content {
       padding: 14px;
       background: var(--card-bg);
@@ -1238,7 +1232,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     /* 激活分类底部滑动指示条：JS 按激活标签实测位置设 width/transform，切换时平滑滑过去（一次一帧，非逐帧） */
     /* 注意：这里不要给 .category-bar 补 position:relative——主规则已是 sticky（定位元素，absolute 照样以它为基准）；
        relative 会覆盖 sticky，且残留的 top:var(--topbar-h) 会把整条栏往下位移 64px 压住产品网格（R231 收尾实测回归） */
-    .cat-slide-ind { position: absolute; left: 0; bottom: 2px; height: 2px; background: var(--blue1); border-radius: 1px; z-index: 1; transition: transform 0.2s var(--ease-out); transform-origin: left center; width: 1px; }
+    .cat-slide-ind { position: absolute; left: 0; top: 0; height: 2px; background: var(--blue1); border-radius: 1px; z-index: 1; transition: transform 0.2s var(--ease-out); width: 0; } /* R246（用户 09-23 12:33）：改 top:0 为基准，JS 用 transform: translateX/translateY 精确定位到激活标签底缘下方 2px，width 直设分数值（弃 scaleX） */
     .cat-slide-ind.hidden { display: none; } /* 无激活标签（异常兜底）时藏 */
     /* 子分类切换淡入：容器重建内容后挂 re-in 触发一次 0.15s 淡入 */
     @keyframes subCatIn { from { opacity: 0.35; } to { opacity: 1; } }

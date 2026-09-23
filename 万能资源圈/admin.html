@@ -790,8 +790,9 @@
   </div>
 
   <script src="/assets/ui-common.js"></script>
+  <script src="/assets/qrcode.min.js"></script>
   <script src="/assets/admin.js"></script>
-  <script>window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });</script>
+  <script>window.addEventListener('pageshow', function (e) { if (e.persisted) { try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} window.location.reload(); } });</script>
   <!-- 独立兜底登录脚本：仅当主脚本解析/加载失败时接管登录（双保险，不覆盖主脚本的正常 doLogin） -->
   <script>
   // 兜底事件绑定：主脚本若整块解析失败（语法错误等），登录按钮/回车仍可用

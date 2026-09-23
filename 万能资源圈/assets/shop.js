@@ -41,6 +41,18 @@
     var catExpanded = false;      // 一级分类是否展开（保存状态，重新渲染后恢复）
     var subCatExpanded = false;   // 二级分类是否展开（保存状态，重新渲染后恢复）
 
+    // R246（用户 09-23 12:33）：分类指示条精确定位——用 getBoundingClientRect 取分数值，
+    // width 直设 + transform: translateX/translateY 定位，动画仍走 transform 过渡（合成层不回流）。
+    function updateCatIndicator(bar) {
+      var ind = bar.querySelector('.cat-slide-ind');
+      var act = bar.querySelector('.category-tag.active');
+      if (!ind || !act) return;
+      var barRect = bar.getBoundingClientRect();
+      var actRect = act.getBoundingClientRect();
+      ind.style.width = actRect.width + 'px';
+      ind.style.transform = 'translateX(' + (actRect.left - barRect.left) + 'px) translateY(' + (actRect.bottom - barRect.top + 2) + 'px)';
+    }
+
     // 弹窗滚动锁（计数器管理，多弹窗叠加时全部关闭才恢复，避免滚轮/滚动失效）
     var __bodyLockCount = 0;
     function setBodyLock(lock) {
@@ -393,9 +405,8 @@
         categoryBar.appendChild(tag);
       });
 
-      // R243 条30（用户 09-22 23:55）：滑动指示条——激活标签下 2px 蓝条，切换分类时平滑滑移
-      // 纯 transform（translateX + scaleX）0.2s 过渡，消除 width 逐帧回流；transform-origin: left center 保证从左侧缩放。
-      // 首次建条瞬时落位不播滑移动画。
+      // R246（用户 09-23 12:33）：滑动指示条精确定位——紧贴激活按键底缘正下方 2px，
+      // 宽度严格一致；用 getBoundingClientRect 取分数值，transform 过渡定位（合成层不回流）。
       var ind = categoryBar.querySelector('.cat-slide-ind');
       var act = categoryBar.querySelector('.category-tag.active');
       if (!ind) {
@@ -406,7 +417,7 @@
       }
       if (act) {
         ind.classList.remove('hidden');
-        ind.style.transform = 'translateX(' + act.offsetLeft + 'px) scaleX(' + act.offsetWidth + ')';
+        updateCatIndicator(categoryBar);
         if (ind.style.transition === 'none') {
           requestAnimationFrame(function () { ind.style.transition = ''; });
         }
@@ -419,7 +430,7 @@
 
       // 判断分类是否超出一行（只判断一次，保存状态，避免展开后判断错误导致收不回来）
       setTimeout(function () {
-        catIsOverflow = categoryBar.scrollWidth > categoryBar.clientWidth + 5; if (!catIsOverflow) { catExpanded = false; categoryBar.classList.remove('expanded'); catToggle.classList.remove('open'); var ar = catToggle.querySelector('.toggle-arrow'); if (ar) ar.style.transform = 'rotate(-90deg)'; return; }
+        catIsOverflow = categoryBar.scrollWidth > categoryBar.clientWidth + 5; if (!catIsOverflow) { catExpanded = false; categoryBar.classList.remove('expanded'); catToggle.classList.remove('open'); var ar = catToggle.querySelector('.toggle-arrow'); if (ar) ar.style.transform = 'rotate(-90deg)'; updateCatIndicator(categoryBar); return; }
         // 恢复之前的展开状态
         if (catExpanded) {
           categoryBar.classList.add('expanded');
@@ -432,6 +443,8 @@
           var arrow2 = catToggle.querySelector('.toggle-arrow');
           if (arrow2) arrow2.style.transform = 'rotate(-90deg)';
         }
+        // R246（用户 09-23 12:33）：展开/收起状态恢复后指示条重新精确定位（可能换行）
+        updateCatIndicator(categoryBar);
       }, 50);
     }
 
@@ -1217,9 +1230,7 @@
       if (!input) {
         resourceCodeError.textContent = '请输入资源码';
         resourceCodeError.style.display = 'block';
-        var __emptyHelp = document.getElementById('resourceCodeHelp'); /* R243 条17：空输入不算解锁失败，收起小字 */
-        if (__emptyHelp) __emptyHelp.style.display = 'none';
-        return;
+        return; // R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行
       }
       // R92：验证移到服务端（大小写不敏感由服务端比对），前台不再持有明文码；
       // 码正确且未超绑定上限 → 绑定本设备并返回专属内容；已绑定设备直接放行
@@ -1242,27 +1253,14 @@
               btn.textContent = btnText; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
             }, 400);
           } catch (e0) {}
-          resourceCodeError.style.display = 'none';
-          /* R243 条17：解锁成功清掉客服提示小字（无残留） */
-          var __okHelp = document.getElementById('resourceCodeHelp');
-          if (__okHelp) { __okHelp.style.display = 'none'; __okHelp.textContent = ''; }
+          resourceCodeError.style.display = 'none'; // R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行
         } else {
           // 验证失败（资源码错误 / 绑定设备数超上限），提示语由服务端下发
           resourceCodeError.textContent = (res && res.msg) || '资源码错误，请检查后重试';
           resourceCodeError.style.display = 'block';
           resourceCodeInput.style.borderColor = '#ff4444';
           setTimeout(function () { resourceCodeInput.style.borderColor = ''; }, 1500);
-          /* R243 条17：错误提示下方附浅色小字（纯文字、零新增按钮）——按服务端 msg 关键词分类：
-             码错类（资源码错误）→「如需帮助请联系客服」；
-             超上限类（绑定设备已满）/超窗口类（已超 60 天有效期，旧码失效需换新码）→「联系卖家解绑或换新码」；
-             其余失败兜底 →「如需帮助请联系客服」 */
-          var __helpEl = document.getElementById('resourceCodeHelp');
-          if (__helpEl) {
-            var __m = String((res && res.msg) || '');
-            var __limitHit = __m.indexOf('绑定设备已满') !== -1 || __m.indexOf('已超过 60 天') !== -1;
-            __helpEl.textContent = __limitHit ? '联系卖家解绑或换新码' : '如需帮助请联系客服';
-            __helpEl.style.display = 'block';
-          }
+          // R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行
         }
       });
     }
@@ -1716,11 +1714,9 @@
     }
     window.addEventListener('resize', updateTopbarHeight);
     window.addEventListener('resize', function () {
-      // R243 条30（用户 09-22 23:55）：窗口变化后指示条重新贴合激活标签（scaleX 代替 width，纯合成层）
+      // R246（用户 09-23 12:33）：窗口变化后指示条重新精确定位（getBoundingClientRect + transform 过渡）
       var bar = document.getElementById('categoryBar');
-      var ind2 = bar && bar.querySelector('.cat-slide-ind');
-      var act2 = bar && bar.querySelector('.category-tag.active');
-      if (ind2 && act2) { ind2.style.transform = 'translateX(' + act2.offsetLeft + 'px) scaleX(' + act2.offsetWidth + ')'; }
+      if (bar) updateCatIndicator(bar);
     });
     // R243 条32：页面重新可见 / 从其他页面切回时，60 秒内直接用缓存，超期才静默拉取
     document.addEventListener('visibilitychange', function () {
@@ -1881,6 +1877,8 @@
       if (arrow) {
         arrow.style.transform = (!_overflow && !catExpanded) ? 'rotate(0deg)' : (catExpanded ? 'rotate(0deg)' : 'rotate(-90deg)');
       }
+      // R246（用户 09-23 12:33）：展开/收起后指示条重新精确定位（布局变化后可能换行）
+      setTimeout(function () { updateCatIndicator(categoryBar); }, 50);
     });
 
     // 二级分类展开/收起
@@ -1924,7 +1922,7 @@
       setTimeout(function () { try { var grid = document.getElementById('productGrid'); if (grid && !grid.children.length && typeof initData === 'function') initData(); } catch (err) {} }, 60);
     }
     // 内联兜底：公共脚本未加载时 bfcache 恢复也会强制刷新（返回/前进页面状态混乱导致白屏的唯一根治）
-    window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
+    window.addEventListener('pageshow', function (e) { if (e.persisted) { try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} window.location.reload(); } });
     window.addEventListener('pageshow', function (e) { if (e.persisted) return; __shopBackGuard(); });
     window.addEventListener('popstate', __shopBackGuard);
     var savedScroll = parseInt(localStorage.getItem(SCROLL_KEY) || '0', 10);
@@ -2014,39 +2012,160 @@
         if (lightboxMask.contains(e.target)) { scale = 1; var el = lightboxMask.querySelector('img, video'); if (el) el.style.transform = 'scale(1)'; }
       });
     })();
-    // ---------- R193 二⑤⑦（用户 22:32 定稿）：长按小菜单（三类绑定，菜单样式与组件在 ui-common） ----------
-    // 长按资源卡片：复制标题 / 复制简介 / 分享资源；长按图片：保存图片 / 复制链接 / 预览大图；
-    // 长按文字（简介/详情）：复制选中 / 全文复制
+    // ---------- R193 二⑤⑦ + R249（老板 09-23 13:05 定稿）：长按小菜单全站标准化（四类四项制） ----------
+    // 长按资源卡片：复制标题 / 复制简介 / 分享资源 / 存二维码
+    // 长按图片：保存图片 / 预览大图 / 分享资源 / 存二维码
+    // 长按文字（简介/详情）：复制选中 / 复制全文 / 分享资源 / 存二维码
     (function () {
+      /* ===== 二维码生成（R249） ===== */
+      function __makeQrUrl(pid) {
+        return window.location.origin + window.location.pathname + '?pid=' + pid;
+      }
+      function __genQrPng(url, size, cb) {
+        try {
+          var QRCode = window.qrcode || window.QRCode;
+          if (!QRCode) { cb && cb(null); return; }
+          size = size || 300;
+          var qr = QRCode(0, 'M');
+          qr.addData(url);
+          qr.make();
+          var n = qr.getModuleCount();
+          var cell = Math.floor(size / n);
+          var realSize = cell * n;
+          var canvas = document.createElement('canvas');
+          canvas.width = realSize; canvas.height = realSize;
+          var ctx = canvas.getContext('2d');
+          // 白底
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, realSize, realSize);
+          // 黑码
+          ctx.fillStyle = '#000000';
+          for (var r = 0; r < n; r++) {
+            for (var c = 0; c < n; c++) {
+              if (qr.isDark(r, c)) ctx.fillRect(c * cell, r * cell, cell, cell);
+            }
+          }
+          // 嵌入图标（32x32，居中）
+          var iconSize = 32;
+          var iconSrc = '/favicon.ico?v=224';
+          var iconImg = new Image();
+          iconImg.crossOrigin = 'anonymous';
+          iconImg.onload = function () {
+            var ix = (realSize - iconSize) / 2;
+            var iy = (realSize - iconSize) / 2;
+            // 白底圆形遮罩（保护码点可读性）
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(realSize / 2, realSize / 2, iconSize / 2 + 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.drawImage(iconImg, ix, iy, iconSize, iconSize);
+            cb && cb(canvas.toDataURL('image/png'));
+          };
+          iconImg.onerror = function () {
+            // 无图标也返回纯二维码
+            cb && cb(canvas.toDataURL('image/png'));
+          };
+          iconImg.src = iconSrc;
+        } catch (e) { cb && cb(null); }
+      }
+      window.__genQrPng = __genQrPng;
+      function __saveQrPng(pid, onDone) {
+        var url = __makeQrUrl(pid);
+        __genQrPng(url, 300, function (dataUrl) {
+          if (!dataUrl) { showToast('二维码生成失败'); onDone && onDone(null); return; }
+          var a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = '资源' + pid + '-二维码.png';
+          document.body.appendChild(a); a.click(); a.remove();
+          showToast('二维码已保存');
+          onDone && onDone(dataUrl);
+        });
+      }
+      window.__saveQrPng = __saveQrPng;
+      /* 二维码预览弹窗（参考 showShareLinkModal 同款效果） */
+      function __showQrPreview(dataUrl, pid) {
+        try {
+          var mask = document.createElement('div');
+          mask.className = 'share-mask qr-preview-mask';
+          mask.setAttribute('role', 'dialog');
+          mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+          mask.innerHTML =
+            '<div class="share-box qr-preview-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
+              '<button class="modal-close-x" data-qr-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);">×</button>' +
+              '<div style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;">二维码预览</div>' +
+              '<div style="font-size:13px;color:#888;margin-bottom:14px;">资源' + pid + ' · 扫码即可访问</div>' +
+              '<div style="display:flex;justify-content:center;margin-bottom:18px;"><img id="qrPreviewImg" style="width:200px;height:200px;border:1px solid #eee;border-radius:8px;object-fit:contain;background:#fff;" alt="二维码"/></div>' +
+              '<button data-qr-save type="button" class="share-ok" style="margin-bottom:10px;">再次保存</button>' +
+            '</div>';
+          var img = mask.querySelector('#qrPreviewImg');
+          if (img) img.src = dataUrl;
+          document.body.appendChild(mask);
+          function close() {
+            try { document.body.removeChild(mask); } catch (e) {}
+            if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
+          }
+          mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
+          mask.querySelector('[data-qr-x]').addEventListener('click', close);
+          mask.querySelector('[data-qr-save]').addEventListener('click', function () {
+            var a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = '资源' + pid + '-二维码.png';
+            document.body.appendChild(a); a.click(); a.remove();
+            showToast('二维码已保存');
+          });
+          if (window.__modalKit) window.__modalKit.register(mask, { discard: close, stash: close });
+          window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
+        } catch (e) {}
+      }
+      window.__showQrPreview = __showQrPreview;
+
       function setup() {
       var cm = window.__ctxMenu; if (!cm) return;
       function __cp(text, msg) {
-        if (window.__shareCopyText) { try { window.__shareCopyText(text); } catch (e) {} }
-        showToast(msg || '已复制到剪贴板');
+        if (window.__shareCopyText && window.__shareCopyText(text)) { showToast(msg); }
+        else { showToast('复制失败'); }
       }
       function __saveImage(src) {
         try {
-          fetch(src).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) {
-            if (!b) { showToast('图片保存失败'); return; }
-            var u = URL.createObjectURL(b);
+          fetch(src).then(function (r) { return r.blob(); }).then(function (blob) {
+            var u = URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.href = u;
             a.download = (String(src).split('/').pop() || 'image').split('?')[0] || 'image';
             document.body.appendChild(a); a.click(); a.remove();
             setTimeout(function () { URL.revokeObjectURL(u); }, 3000);
+            showToast('图片已保存');
           }).catch(function () { showToast('图片保存失败'); });
         } catch (e) { showToast('图片保存失败'); }
       }
-      function imgItems(img) {
+      function __shareProdFn(p) {
+        return function () {
+          var url = window.location.origin + window.location.pathname + '?pid=' + p.id;
+          if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
+          else __cp(url, '链接已复制到剪贴板');
+        };
+      }
+      function __saveQrFn(p) {
+        return function () {
+          __saveQrPng(p.id, function (dataUrl) {
+            if (dataUrl) __showQrPreview(dataUrl, p.id);
+          });
+        };
+      }
+      function imgItems(img, p) {
         var src = img.currentSrc || img.src || '';
         if (!src) return [];
-        return [
+        var items = [
           { label: '保存图片', fn: function () { __saveImage(src); } },
-          { label: '复制链接', fn: function () { __cp(src, '图片链接已复制'); } },
           { label: '预览大图', fn: function () { openLightbox(src); } }
         ];
+        if (p) {
+          items.push({ label: '分享资源', fn: __shareProdFn(p) });
+          items.push({ label: '存二维码', fn: __saveQrFn(p) });
+        }
+        return items;
       }
-      function textItems(el) {
+      function textItems(el, p) {
         var full = String(el.innerText || '').trim();
         var items = [{ label: '复制选中', fn: function () {
           var sel = '';
@@ -2054,10 +2173,14 @@
           if (sel) __cp(sel, '选中内容已复制');
           else showToast('先选中文字，再长按即可复制');
         } }];
-        if (full) items.push({ label: '全文复制', fn: function () { __cp(full, '内容已复制'); } });
+        if (full) items.push({ label: '复制全文', fn: function () { __cp(full, '内容已复制'); } });
+        if (p) {
+          items.push({ label: '分享资源', fn: __shareProdFn(p) });
+          items.push({ label: '存二维码', fn: __saveQrFn(p) });
+        }
         return items;
       }
-      // 1. 资源卡片（复制标题 / 复制简介 / 分享资源）
+      // 1. 资源卡片（复制标题 / 复制简介 / 分享资源 / 存二维码）
       cm.bind(productGrid, '.product-card:not(.card-skeleton)', function (card) {
         var pid = Number(card.getAttribute('data-pid') || 0);
         var p = (DATA.products || []).find(function (x) { return Number(x.id) === pid; });
@@ -2065,27 +2188,23 @@
         return [
           { label: '复制标题', fn: function () { __cp(p.title || '', '标题已复制'); } },
           { label: '复制简介', fn: function () { __cp(p.desc || '', '简介已复制'); } },
-          { label: '分享资源', fn: function () {
-            var url = window.location.origin + window.location.pathname + '?pid=' + p.id;
-            if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
-            else __cp(url, '链接已复制到剪贴板');
-          } }
+          { label: '分享资源', fn: __shareProdFn(p) },
+          { label: '存二维码', fn: __saveQrFn(p) }
         ];
       });
       // 2. 图片：卡片图 + 详情弹窗内所有图（封面/变体图/富文本插图）
-      cm.bind(productGrid, 'img.card-img', imgItems);
-      cm.bind(modalMask, 'img', imgItems);
-      // 3. 文字（简介/详情弹窗正文）：复制选中 / 全文复制
+      cm.bind(productGrid, 'img.card-img', function (img) { return imgItems(img, currentProduct); });
+      cm.bind(modalMask, 'img', function (img) { return imgItems(img, currentProduct); });
+      // 3. 文字（简介/详情弹窗正文）：复制选中 / 复制全文 / 分享资源 / 存二维码
       //    卡片上的标题/简介不再单独绑文字菜单——卡片菜单已含「复制标题/复制简介」，避免同一按点两个菜单打架；
       //    「长按文字」指详情弹窗内的简介/详情正文（排除按钮输入等控件）
       cm.bind(modalMask, '.modal-wrap', function (el, e) {
         if (e && e.target && e.target.closest && e.target.closest('button, input, textarea, a, select, img, video')) return [];
-        return textItems(el);
+        return textItems(el, currentProduct);
       });
       }
       /* 双保险：若组件尚未就绪（脚本顺序异常），DOMContentLoaded 再试一次 */
-      if (window.__ctxMenu) { try { setup(); } catch (e) {} }
-      else document.addEventListener('DOMContentLoaded', function () { try { setup(); } catch (e) {} });
+      if (window.__ctxMenu) setup(); else window.addEventListener('DOMContentLoaded', setup);
     })();
 
     // 统一绑定：区域内所有图片/视频点击放大（富文本描述/类型描述/专属内容等复用）

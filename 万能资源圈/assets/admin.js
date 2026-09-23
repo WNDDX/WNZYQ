@@ -364,6 +364,82 @@
     new MutationObserver(function(){ if (!m.classList.contains('open')) _r(); }).observe(m, { attributes: true, attributeFilter: ['class'] });
   });
 })();
+    // ========== R248：全系统「编辑中」检测 + localStorage 草稿保护（防自动刷新丢内容） ==========
+    (function () {
+      var DRAFT_KEY = 'wnzyq_editing_draft';
+      // 检测当前是否有编辑中状态（弹窗打开且内容有改动）
+      window.__isEditing = function () {
+        if (document.getElementById('editMask') && document.getElementById('editMask').classList.contains('open')) return true;
+        if (document.getElementById('variantMask') && document.getElementById('variantMask').classList.contains('open')) return true;
+        if (document.getElementById('annMask') && document.getElementById('annMask').classList.contains('open')) return true;
+        if (document.getElementById('contactMask') && document.getElementById('contactMask').classList.contains('open')) return true;
+        return false;
+      };
+      // 保存所有编辑中内容到 localStorage（供刷新前调用）
+      window.__saveEditingDraft = function () {
+        try {
+          var drafts = [];
+          // 公告弹窗草稿
+          if (document.getElementById('annMask') && document.getElementById('annMask').classList.contains('open')) {
+            try { if (typeof flushAnnEdit === 'function') flushAnnEdit(); } catch (e) {}
+            var _ac = stateAnn && stateAnn.curId ? stateAnn.list.find(function (x) { return x.id === stateAnn.curId; }) : null;
+            drafts.push({ type: 'ann', curId: stateAnn ? stateAnn.curId : null, list: stateAnn ? JSON.parse(JSON.stringify(stateAnn.list)) : null, mode: document.getElementById('annMode') ? document.getElementById('annMode').value : null });
+          }
+          // 资源编辑弹窗草稿
+          if (document.getElementById('editMask') && document.getElementById('editMask').classList.contains('open')) {
+            try { if (typeof saveDraft === 'function') saveDraft(); } catch (e) {}
+            drafts.push({ type: 'edit', data: __editDrafts ? JSON.parse(JSON.stringify(__editDrafts)) : null });
+          }
+          // 类型编辑弹窗草稿（若未来需要可扩展）
+          if (document.getElementById('variantMask') && document.getElementById('variantMask').classList.contains('open')) {
+            var _ve = document.getElementById('vDesc');
+            drafts.push({ type: 'variant', id: (typeof state !== 'undefined' && state.editingVariantId) || null, name: document.getElementById('vName') ? document.getElementById('vName').value : '', title: document.getElementById('vTitle') ? document.getElementById('vTitle').value : '', desc: _ve ? _ve.innerHTML : '' });
+          }
+          // 客服弹窗草稿
+          if (document.getElementById('contactMask') && document.getElementById('contactMask').classList.contains('open')) {
+            drafts.push({ type: 'contact', url: document.getElementById('contactUrlInput') ? document.getElementById('contactUrlInput').value : '' });
+          }
+          if (drafts.length) localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), drafts: drafts }));
+        } catch (e) {}
+      };
+      // 恢复草稿（页面加载后调用），返回是否恢复了内容
+      window.__restoreEditingDraft = function () {
+        try {
+          var raw = localStorage.getItem(DRAFT_KEY); if (!raw) return false;
+          var pkg = JSON.parse(raw); if (!pkg || !pkg.drafts || !pkg.drafts.length) return false;
+          localStorage.removeItem(DRAFT_KEY);
+          var restored = false;
+          pkg.drafts.forEach(function (d) {
+            if (d.type === 'ann' && typeof stateAnn !== 'undefined' && stateAnn && d.list) {
+              stateAnn.list = d.list; stateAnn.loaded = true; stateAnn.curId = d.curId || null;
+              stateAnn._draftRestored = true; // R248：标记列表来自草稿恢复，供 openAnnBtn 选中恢复项而非默认公告
+              stateAnn._skipNextFlush = true; // R248：跳过恢复后首次 flush，防止 reload 后编辑器里的旧默认内容污染恢复数据
+              if (d.mode && document.getElementById('annMode')) { document.getElementById('annMode').value = d.mode; try { syncSelectDisplay(document.getElementById('annMode')); } catch (e) {} }
+              restored = true;
+            }
+            if (d.type === 'edit' && __editDrafts && d.data) {
+              Object.keys(d.data).forEach(function (k) { __editDrafts[k] = d.data[k]; });
+              restored = true;
+            }
+            if (d.type === 'variant' && d.id !== undefined) {
+              // variant 草稿在弹窗打开时由 openVariantEdit 自行消费
+              try { localStorage.setItem('wnzyq_variant_draft', JSON.stringify(d)); } catch (e) {}
+              restored = true;
+            }
+            if (d.type === 'contact' && document.getElementById('contactUrlInput')) {
+              document.getElementById('contactUrlInput').value = d.url || '';
+              restored = true;
+            }
+          });
+          if (restored) setTimeout(function () { try { toast('已恢复您编辑中的内容', 'info', 3000); } catch (e) {} }, 600);
+          return restored;
+        } catch (e) { try { localStorage.removeItem(DRAFT_KEY); } catch (e2) {} return false; }
+      };
+      // 清理草稿键（保存成功后调用）
+      window.__clearEditingDraft = function () {
+        try { localStorage.removeItem(DRAFT_KEY); localStorage.removeItem('wnzyq_variant_draft'); } catch (e) {}
+      };
+    })();
     // 弹窗右上角×按钮统一关闭（事件委托）
     document.addEventListener('click', function (e) {
       var closeBtn = e.target.closest('.modal-close-x, .modal-close[data-close]');
@@ -657,6 +733,8 @@
     function showMain(username) {
       loginView.style.display = 'none';
       mainView.style.display = 'block';
+      // R248：页面加载后尝试恢复编辑草稿（自动刷新保护）
+      try { setTimeout(function () { if (window.__restoreEditingDraft) window.__restoreEditingDraft(); }, 200); } catch (e) {}
       function _safe(fn) { try { fn(); } catch (e) { /* R213 P2⑤：调试日志已删（隔离逻辑保留） */ } }
       window.__plS = 1; window.__plC = 1; window.__plP = 1;
       // 修复：移除重复的 loadCategories 调用（原先同一接口被请求两次，浪费请求且可能返回不一致）
@@ -702,9 +780,23 @@
         var s = res.settings || {};
         window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || ''; if (document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = s.contact_url || '';
         // 客服状态文字已按需求移除
-        document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
-        if (typeof stateAnn !== 'undefined' && stateAnn) { stateAnn.list = parseAnnouncements(s); stateAnn.loaded = true; if (document.getElementById('annMask').classList.contains('open')) { try { if (typeof renderAnnList === 'function') renderAnnList(); var _dlx = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dlx && typeof selectAnnItem === 'function') selectAnnItem(_dlx.id); else if (typeof clearAnnEdit === 'function') clearAnnEdit(); } catch (e) {} } }
-        
+        if (typeof stateAnn !== 'undefined' && stateAnn) {
+          var _annMaskOpen = document.getElementById('annMask').classList.contains('open');
+          if (!_annMaskOpen) document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
+          // R248：公告弹窗打开时，保留当前编辑中的内容和选中项——禁止从服务器强制覆盖
+          if (_annMaskOpen && typeof flushAnnEdit === 'function') flushAnnEdit();
+          stateAnn.list = parseAnnouncements(s);
+          if (_annMaskOpen && stateAnn.curId) {
+            // 若当前选中项仍存在于新列表，保持选中；否则回退到默认公告
+            var _still = stateAnn.list.find(function (x) { return x.id === stateAnn.curId; });
+            if (!_still) { var _dlx = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dlx) stateAnn.curId = _dlx.id; else stateAnn.curId = null; }
+          }
+          stateAnn.loaded = true;
+          if (_annMaskOpen) { try { if (typeof renderAnnList === 'function') renderAnnList(); if (stateAnn.curId && typeof selectAnnItem === 'function') selectAnnItem(stateAnn.curId); else if (typeof clearAnnEdit === 'function') clearAnnEdit(); } catch (e) {} }
+        } else {
+          document.getElementById('setAnnouncement').innerHTML = s.announcement || '';
+        }
+
         document.getElementById('annMode').value = s.announcement_mode || 'always';
         syncSelectDisplay(document.getElementById('annMode')); // R166：同步自制下拉显示框
         // R135：记录已保存的显示频率——取消/×/关闭（丢弃）时据此恢复，不再保留未保存的选中值
@@ -1830,17 +1922,37 @@
       if (disp) {
         var picker = disp.closest('.cat-picker, .select-picker');
         var wasOpen = picker.classList.contains('open');
-        document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
-        if (!wasOpen) { picker.classList.add('open'); positionCatPanel(picker); }
+        document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) {
+          p.classList.remove('open');
+          var pp = p.querySelector('.cat-picker-panel');
+          if (!pp && p.dataset.pickerId) pp = document.querySelector('.cat-picker-panel[data-picker-id="' + p.dataset.pickerId + '"]');
+          if (pp) { if (pp.parentNode !== p) p.appendChild(pp); pp.classList.remove('open'); }
+        });
+        if (!wasOpen) {
+          picker.classList.add('open');
+          if (picker.classList.contains('select-picker')) {
+            var pp = picker.querySelector('.cat-picker-panel');
+            if (pp) { document.body.appendChild(pp); pp.classList.add('open'); }
+          }
+          positionCatPanel(picker);
+        }
         return;
       }
       if (!(e.target.closest && (e.target.closest('.cat-picker') || e.target.closest('.select-picker')))) {
-        document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
+        document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) {
+          p.classList.remove('open');
+          var pp = p.querySelector('.cat-picker-panel');
+          if (!pp && p.dataset.pickerId) pp = document.querySelector('.cat-picker-panel[data-picker-id="' + p.dataset.pickerId + '"]');
+          if (pp) { if (pp.parentNode !== p) p.appendChild(pp); pp.classList.remove('open'); }
+        });
       }
     });
     // 面板定位：fixed 跟随触发按钮，避免被弹窗/容器裁剪（分类与通用选择器共用）
     function positionCatPanel(picker) {
       var panel = picker.querySelector('.cat-picker-panel');
+      if (!panel && picker.dataset.pickerId) {
+        panel = document.querySelector('.cat-picker-panel[data-picker-id="' + picker.dataset.pickerId + '"]');
+      }
       var disp = picker.querySelector('.cat-picker-display');
       if (!panel || !disp) return;
       var r = disp.getBoundingClientRect();
@@ -1877,6 +1989,8 @@
       sel.dataset.sp = '1';
       var holder = document.createElement('div');
       holder.className = 'select-picker';
+      var __spid = 'sp-' + Math.random().toString(36).slice(2,9);
+      holder.dataset.pickerId = __spid;
       var disp = document.createElement('div');
       disp.className = 'cat-picker-display';
       var txt = document.createElement('span');
@@ -1887,6 +2001,7 @@
       disp.appendChild(txt); disp.appendChild(arrow);
       var panel = document.createElement('div');
       panel.className = 'cat-picker-panel';
+      panel.dataset.pickerId = __spid;
       function render() {
         panel.innerHTML = '';
         txt.textContent = sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '请选择';
@@ -1901,6 +2016,8 @@
             txt.textContent = o.textContent;
             txt.classList.remove('placeholder');
             holder.classList.remove('open');
+            if (panel.parentNode !== holder) { holder.appendChild(panel); }
+            panel.classList.remove('open');
             panel.querySelectorAll('.cp-item.selected').forEach(function (e) { e.classList.remove('selected'); });
             it.classList.add('selected');
             sel.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1912,7 +2029,7 @@
       sel.parentNode.insertBefore(holder, sel);
       sel.style.display = 'none';
       render();
-      var ref = { el: holder, refresh: render, sel: sel };
+      var ref = { el: holder, refresh: render, sel: sel, panel: panel };
       spRefs.set(sel, ref);
       return ref;
     }
@@ -2140,6 +2257,7 @@
           setTimeout(function () { editMask.classList.remove('open'); }, 400);
           if (isNewSave) { try { delete __editDrafts['new']; } catch (e) {} } // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
           clearDraft(); // 保存成功后清除草稿
+          try { window.__clearEditingDraft(); } catch (e) {} // R248：同时清 localStorage 草稿
           toast('资源已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
           clearCache();
           renderProducts();
@@ -2360,8 +2478,8 @@
     document.addEventListener('mousedown', function (e) {
       var bar = e.target.closest ? e.target.closest('.rte-toolbar') : null;
       if (!bar) return;
-      // 按下按钮/色板时阻止默认失焦，保住编辑器选区（下拉框不阻止，保证能展开）
-      if (e.target.closest('.rte-btn, .rte-palette') && !e.target.closest('select')) e.preventDefault();
+      // 按下按钮/色板/下拉显示框时阻止默认失焦，保住编辑器选区（原生 select 不阻止，保证能展开）
+      if (e.target.closest('.rte-btn, .rte-palette, .cat-picker-display') && !e.target.closest('select')) e.preventDefault();
       var edId = bar.getAttribute('data-editor'), sel = window.getSelection();
       var ed0 = edId ? document.getElementById(edId) : null, inside0 = false;
       if (ed0 && sel && sel.rangeCount) {
@@ -2369,8 +2487,8 @@
         while (p0 && p0 !== ed0) p0 = p0.parentNode;
         if (p0 === ed0) { inside0 = true; try { __rte.range = sel.getRangeAt(0).cloneRange(); } catch (e) {} }
       }
-      // 关键：点哪个编辑器的工具栏，就锁定哪个编辑器；若光标不在其中，选区置空→插入时落到末尾，避免插到别的编辑器
-      if (ed0) { __rte.editor = ed0; if (!inside0) __rte.range = null; }
+      // 关键：点哪个编辑器的工具栏，就锁定哪个编辑器；若光标不在其中，选区置空→插入时落到末尾，避免插到别的编辑器；下拉框不置空，保选区供后续 execCommand 应用
+      if (ed0) { __rte.editor = ed0; if (!inside0 && !e.target.closest('.cat-picker-display, select')) __rte.range = null; }
     });
     function rteFocusEnd(editor) {
       var r = document.createRange(); r.selectNodeContents(editor); r.collapse(false);
@@ -2848,7 +2966,12 @@ document.addEventListener('click', function (e) {
             var disp = pk.querySelector('.cat-picker-display');
             if (!disp) return;
             if (__rteAnchorVisible(disp)) positionCatPanel(pk);
-            else pk.classList.remove('open');
+            else {
+              pk.classList.remove('open');
+              var pp = pk.querySelector('.cat-picker-panel');
+              if (!pp && pk.dataset.pickerId) pp = document.querySelector('.cat-picker-panel[data-picker-id="' + pk.dataset.pickerId + '"]');
+              if (pp) { if (pp.parentNode !== pk) pk.appendChild(pp); pp.classList.remove('open'); }
+            }
           });
         } catch (e) {}
       }
@@ -3359,6 +3482,7 @@ document.addEventListener('click', function (e) {
           cell.title = em;
           cell.addEventListener('click', function () {
             rteApplyCmd(editor, 'insertHTML', em);
+            rteClosePop();
           });
           grid.appendChild(cell);
         });
@@ -3692,6 +3816,7 @@ document.addEventListener('click', function (e) {
     }
     // 把当前编辑中的标题/内容写回列表
     function flushAnnEdit() {
+      if (stateAnn._skipNextFlush) { stateAnn._skipNextFlush = false; return; } // R248：草稿恢复后的首次 flush 跳过——reload 后编辑器仍是旧默认内容，不跳过会把恢复的数据污染掉
       if (stateAnn.curId) {
         var cur = stateAnn.list.find(function (x) { return x.id === stateAnn.curId; });
         if (cur) { if (annEditor) cur.content = window.__rteClean(annEditor); } // R158：统一剥离×浮层再入内容
@@ -3778,6 +3903,7 @@ document.addEventListener('click', function (e) {
       try { if (stateAnn._backup) { stateAnn.list = JSON.parse(JSON.stringify(stateAnn._backup)); stateAnn._backup = null; } } catch (e) {}
       annDraftPending = false; stateAnn.loaded = false;
       stateAnn.curId = null; // 置空选中，杜绝后续 flushAnnEdit 把编辑器草稿写回已恢复列表
+      stateAnn._draftRestored = false; // R248：取消即回到已保存状态，清除草稿恢复标记
       try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; syncSelectDisplay(document.getElementById('annMode')); } catch (e) {}
       var _dl = null;
       try { _dl = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; } catch (e) {}
@@ -3785,6 +3911,7 @@ document.addEventListener('click', function (e) {
       if (annEditLabel) annEditLabel.textContent = _dl ? ('编辑公告：' + (_dl.title || '(未命名)')) : '编辑公告';
       try { renderAnnList(); } catch (e) {}
       try { document.getElementById('annMask').classList.remove('open'); } catch (e) {}
+      try { window.__clearEditingDraft(); } catch (e) {} // R248：取消/×关闭时清除草稿
     }
     window.__annDiscard = annDiscard;
     // 打开公告设置弹窗：把公告编辑器移入弹窗，并从服务器拉取最新公告
@@ -3800,7 +3927,17 @@ document.addEventListener('click', function (e) {
       }
       // 先立即打开弹窗，再后台拉取最新数据（避免网络延迟导致弹窗迟迟不出现）
       document.getElementById('annMask').classList.add('open');
-      if (stateAnn.loaded && stateAnn.list.length) { try { renderAnnList(); var _dl0 = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; selectAnnItem(_dl0.id); } catch (e) {} } if (!stateAnn.loaded) {
+      // R248：先尝试从 localStorage 草稿恢复（自动刷新保护）
+      var _draftRestored = false;
+      try { _draftRestored = window.__restoreEditingDraft(); } catch (e) {}
+      if (_draftRestored && stateAnn.list && stateAnn.list.length) {
+        try { renderAnnList(); if (stateAnn.curId) selectAnnItem(stateAnn.curId); else { var _dl0 = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dl0) selectAnnItem(_dl0.id); } } catch (e) {}
+      } else if (stateAnn.loaded && stateAnn.list.length) {
+        // R248：若公告列表来自草稿恢复（load 后 200ms 定时器已消费草稿，此处 _draftRestored 为 false），
+        // 优先选中恢复前的编辑项 curId，而非固定选默认公告
+        try { renderAnnList(); var _sel0 = (stateAnn._draftRestored && stateAnn.curId) ? stateAnn.curId : ((stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]).id); stateAnn._draftRestored = false; selectAnnItem(_sel0); } catch (e) {}
+      }
+      if (!stateAnn.loaded) {
         api('admin/settings').then(function (res) {
           if (res && res.ok) {
             stateAnn.list = parseAnnouncements(res.settings || {}); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 }); stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
@@ -3849,6 +3986,7 @@ document.addEventListener('click', function (e) {
           // R154: 保存成功后立即重建备份（原=null）——保存后再编辑、取消/×时 annDiscard 才有备份可恢复（重开瞬间及拉取失败时不再显示脏草稿）
           try { stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list)); } catch (e0) { stateAnn._backup = null; }
           stateAnn._modeSaved = document.getElementById('annMode').value; // R135：保存成功后同步已保存频率
+          try { window.__clearEditingDraft(); } catch (e) {} // R248：保存成功后清除草稿
           document.getElementById('annMask').classList.remove('open');
         } else toast(res.msg || '保存失败', 'error');
       }).catch(function () {
@@ -3896,7 +4034,9 @@ document.addEventListener('click', function (e) {
             cBtn.style.background = 'var(--green, #2e7d32)'; cBtn.style.borderColor = 'var(--green, #2e7d32)'; cBtn.style.color = '#fff';
             setTimeout(function () { cBtn.textContent = _cBtnText; cBtn.style.background = ''; cBtn.style.borderColor = ''; cBtn.style.color = ''; }, 400);
           } catch (e0) {}
-          toast('客服链接已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */ document.getElementById('contactMask').classList.remove('open');
+          toast('客服链接已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
+          try { window.__clearEditingDraft(); } catch (e) {} // R248：清除 localStorage 草稿
+          document.getElementById('contactMask').classList.remove('open');
         }
         else toast(res.msg || '保存失败', 'error');
       }).catch(function () {
@@ -4019,9 +4159,16 @@ document.addEventListener('click', function (e) {
       state.editingVariantId = v ? v.id : null;
       state._editVariantIdx = v ? state.variants.indexOf(v) : -1;
       variantModalTitle.textContent = v ? '编辑类型' : '新增类型';
-      vName.value = v ? (v.name || '') : '';
-      vTitle.value = v ? (v.title || '') : ''; // R148：类型标题回填
-      document.getElementById('vDescEditor').innerHTML = v ? (v.desc || '') : '';
+      // R248：优先从 localStorage 恢复草稿（自动刷新保护）
+      var _vd = null;
+      try { _vd = JSON.parse(localStorage.getItem('wnzyq_variant_draft') || 'null'); if (_vd && _vd.type === 'variant') localStorage.removeItem('wnzyq_variant_draft'); } catch (e) {}
+      if (_vd && _vd.type === 'variant' && _vd.id === (v ? v.id : null)) {
+        vName.value = _vd.name || ''; vTitle.value = _vd.title || ''; document.getElementById('vDescEditor').innerHTML = _vd.desc || '';
+      } else {
+        vName.value = v ? (v.name || '') : '';
+        vTitle.value = v ? (v.title || '') : ''; // R148：类型标题回填
+        document.getElementById('vDescEditor').innerHTML = v ? (v.desc || '') : '';
+      }
       vHidden.checked = v ? !!v.isHidden : false;
       // 类型图片/视频已并入类型描述编辑器
       vContactUrl.value = v ? (v.contactUrl || '') : '';
@@ -4217,6 +4364,7 @@ document.addEventListener('click', function (e) {
         if (_li >= 0 && state.variants[_li]) { Object.assign(state.variants[_li], data); } else { state.variants.push(data); }
         state.variants.forEach(function (vv, i) { vv.sort = i + 1; });
         variantDraftPending = false; variantMask.classList.remove('open');
+        try { window.__clearEditingDraft(); } catch (e) {} // R248：清除 localStorage 草稿
         toast('类型已新增（保存资源后生效）', 'success');
         renderVariants();
         return;
@@ -4233,6 +4381,7 @@ document.addEventListener('click', function (e) {
         variantOk.textContent = _variantOkText;
         if (res && res.ok) {
           variantDraftPending = false; variantMask.classList.remove('open');
+          try { window.__clearEditingDraft(); } catch (e) {} // R248：清除 localStorage 草稿
           toast('类型已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
           // R178：本地即时更新类型列表（不等 loadVariants 重拉的网络往返），loadVariants 降级为后台静默同步
           if (state.editingVariantId) {
@@ -6526,6 +6675,103 @@ refreshCatCnts();
     // ---------- PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34） ----------
 
   
+    // ---------- R249：管理页长按菜单（四类四项制） ----------
+    (function () {
+      var cm = window.__ctxMenu; if (!cm) return;
+      function __cp(text, msg) {
+        if (window.__shareCopyText && window.__shareCopyText(text)) { if (typeof toast === 'function') toast(msg); }
+        else { if (typeof toast === 'function') toast('复制失败'); }
+      }
+      function __saveImage(src) {
+        try {
+          fetch(src).then(function (r) { return r.blob(); }).then(function (blob) {
+            var u = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = u;
+            a.download = (String(src).split('/').pop() || 'image').split('?')[0] || 'image';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(function () { URL.revokeObjectURL(u); }, 3000);
+          }).catch(function () { if (typeof toast === 'function') toast('图片保存失败', 'error'); });
+        } catch (e) { if (typeof toast === 'function') toast('图片保存失败', 'error'); }
+      }
+      function __makeAdminShareUrl(pid) {
+        return window.location.origin + '/shop?pid=' + pid;
+      }
+      function __shareAdminFn(pid) {
+        return function () {
+          var url = __makeAdminShareUrl(pid);
+          if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
+          else __cp(url, '链接已复制到剪贴板');
+        };
+      }
+      function __saveQrAdminFn(pid) {
+        return function () {
+          if (window.__saveQrPng) {
+            window.__saveQrPng(pid, function (dataUrl) {
+              if (dataUrl && window.__showQrPreview) window.__showQrPreview(dataUrl, pid);
+            });
+          }
+        };
+      }
+      function imgItemsAdmin(img) {
+        var src = img.currentSrc || img.src || '';
+        if (!src) return [];
+        var pid = state && state.editingId ? state.editingId : null;
+        var items = [
+          { label: '保存图片', fn: function () { __saveImage(src); } },
+          { label: '预览大图', fn: function () { if (window.openLightbox) window.openLightbox(src); } }
+        ];
+        if (pid) {
+          items.push({ label: '分享资源', fn: __shareAdminFn(pid) });
+          items.push({ label: '存二维码', fn: __saveQrAdminFn(pid) });
+        }
+        return items;
+      }
+      function textItemsAdmin(el) {
+        var full = String(el.innerText || '').trim();
+        var pid = state && state.editingId ? state.editingId : null;
+        var items = [{ label: '复制选中', fn: function () {
+          var sel = '';
+          try { sel = String(window.getSelection ? window.getSelection() : ''); } catch (e) {}
+          if (sel) __cp(sel, '选中内容已复制');
+          else if (typeof toast === 'function') toast('先选中文字，再长按即可复制', 'info');
+        } }];
+        if (full) items.push({ label: '复制全文', fn: function () { __cp(full, '内容已复制'); } });
+        if (pid) {
+          items.push({ label: '分享资源', fn: __shareAdminFn(pid) });
+          items.push({ label: '存二维码', fn: __saveQrAdminFn(pid) });
+        }
+        return items;
+      }
+      var productList = document.getElementById('productList');
+      var editMask = document.getElementById('editMask');
+      var previewMask = document.getElementById('previewMask');
+      // 1. 管理页资源列表长按（复制标题 / 复制简介 / 分享资源 / 存二维码）
+      if (productList) {
+        cm.bind(productList, '.product-row', function (row) {
+          var pid = Number(row.getAttribute('data-id') || 0);
+          var p = (state.products || []).find(function (x) { return Number(x.id) === pid; });
+          if (!p) return [];
+          return [
+            { label: '复制标题', fn: function () { __cp(p.title || '', '标题已复制'); } },
+            { label: '复制简介', fn: function () { __cp(p.desc || '', '简介已复制'); } },
+            { label: '分享资源', fn: __shareAdminFn(pid) },
+            { label: '存二维码', fn: __saveQrAdminFn(pid) }
+          ];
+        });
+      }
+      // 2. 弹窗内图片长按（保存图片 / 预览大图 / 分享资源 / 存二维码）
+      if (editMask) { cm.bind(editMask, 'img', imgItemsAdmin); }
+      if (previewMask) { cm.bind(previewMask, 'img', imgItemsAdmin); }
+      // 3. 弹窗内文字长按（复制选中 / 复制全文 / 分享资源 / 存二维码）
+      if (editMask) {
+        cm.bind(editMask, '.modal-box', function (el, e) {
+          if (e && e.target && e.target.closest && e.target.closest('button, input, textarea, a, select, img, video')) return [];
+          return textItemsAdmin(el);
+        });
+      }
+    })();
+
     // R243（用户 09-22 23:18）：条43 工具栏收起键首次呼吸引导（一次性，storage 记忆）
     (function () {
       try {

@@ -19,6 +19,7 @@ if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', function () {
         if (_swReloaded) return;
         _swReloaded = true;
+        try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} // R248：编辑中时先落草稿再刷新
         window.location.reload();
       });
     }).catch(function () {});
@@ -433,7 +434,7 @@ if ('serviceWorker' in navigator) {
     __lockObserver.observe(document.documentElement, { subtree: true, childList: true, attributeFilter: ['class'] });
   } catch (e) {}
   // 浏览器返回 / bfcache 恢复时强制刷新，防止从管理页返回商品页白屏
-  window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
+  window.addEventListener('pageshow', function (e) { if (e.persisted) { try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} window.location.reload(); } });
 
   // ===== R14 全站统一翻页组件（buildUniPager）：复用数据统计翻页的胶囊样式（.uni-pager，样式在 ui-common.css）=====
   // window.buildUniPager(container, { page, totalPages, total, unit, onPage })：
@@ -522,7 +523,7 @@ if ('serviceWorker' in navigator) {
 
 
 /* ---------- R239（用户 09-22 派单）：全站公共「到底续滑翻页」机制（enableEdgeTurn）+ 页码提示浮层 ----------
-   语义（老板拍板）：滑到列表最底部（滚不动）后再继续往上滑≈60px → 翻到下一页（单页替换不是追加）；
+   语义（老板拍板）：滑到列表最底部（滚不动）后再继续往上滑≈120px → 翻到下一页（单页替换不是追加）；
    翻页后回本页开头 + 屏幕中下方浮「第 N 页 / 共 M 页」胶囊提示 1.5s 消失；最后一页再滑不动浮「已经是最后一页了」；
    分页条按键（上一页/下一页/跳页）全部保留，两套并存。
    判定三通道统一进同一累计器（桌面滚轮与触屏同判定）：
@@ -537,7 +538,7 @@ window.enableEdgeTurn = function (opts) {
   var getTotalPages = typeof opts.getTotalPages === 'function' ? opts.getTotalPages : function () { return 1; };
   var onTurn = typeof opts.onTurn === 'function' ? opts.onTurn : function () {};
   var active = typeof opts.active === 'function' ? opts.active : function () { return true; }; /* 可选：非当前列表场景不判定 */
-  var EDGE = 8, TRIGGER = 60, COOLDOWN = 800, TIP_MS = 1500;
+  var EDGE = 8, TRIGGER = 120, COOLDOWN = 800, TIP_MS = 1500;
   var locked = false, lockTimer = null;
   var acc = 0, touchActive = false, lastTouchY = null, lastY = null;
 
