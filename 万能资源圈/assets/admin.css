@@ -240,6 +240,8 @@
       border-color: var(--blue1);
       box-shadow: 0 0 0 3px rgba(30,136,229,0.1);
     }
+    /* R255（老板 17:55）：管理页搜索框聚焦态显式去 outline（同 shop .search-input，只动搜索框，其他元素无障碍焦点保留） */
+    .admin-search input:focus, .admin-search input:focus-visible { outline: none; outline-width: 0; }
 
     /* ---------- 资源列表 ---------- */
     @keyframes rowIn { from { opacity: 0.9; } to { opacity: 1; } }

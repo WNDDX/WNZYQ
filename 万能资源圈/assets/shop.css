@@ -161,6 +161,12 @@
       background: var(--card-bg);
       outline: none;
     }
+    /* R255（老板 17:55「搜索框点击后有灰色方框」）：搜索框聚焦态显式去 outline——
+       部分内核（微信 webview 等）文本输入框点击即匹配 :focus-visible，会命中
+       ui-common.css 全站 :focus-visible 兜底 outline 而显示描边；元素级 outline:none
+       特异度相同、顺序靠后一般已覆盖，但个别内核按伪类态重算——:focus-visible 态
+       (0-2-0) 显式压过全站兜底 (0-1-0)。只动搜索框，其他可交互元素的无障碍焦点保留。 */
+    .search-input:focus, .search-input:focus-visible { outline: none; outline-width: 0; }
     .search-icon {
       position: absolute;
       left: 12px;

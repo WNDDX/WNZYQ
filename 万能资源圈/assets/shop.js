@@ -1212,7 +1212,7 @@
       e.stopPropagation();
       if (!currentProduct || !currentProduct.id) { showToast('该资源暂不能分享'); return; }
       var url = window.location.origin + window.location.pathname + '?pid=' + currentProduct.id;
-      if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
+      if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (currentProduct.title || '') + ' · 资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
       else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) {} } showToast('链接已复制到剪贴板'); }
     });
 
@@ -2045,37 +2045,25 @@
               if (qr.isDark(r, c)) ctx.fillRect(c * cell, r * cell, cell, cell);
             }
           }
-          // 嵌入图标（32x32，居中）
-          var iconSize = 32;
-          var iconSrc = '/favicon.ico?v=224';
-          var iconImg = new Image();
-          iconImg.crossOrigin = 'anonymous';
-          iconImg.onload = function () {
-            var ix = (realSize - iconSize) / 2;
-            var iy = (realSize - iconSize) / 2;
-            // 白底圆形遮罩（保护码点可读性）
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(realSize / 2, realSize / 2, iconSize / 2 + 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.drawImage(iconImg, ix, iy, iconSize, iconSize);
-            cb && cb(canvas.toDataURL('image/png'));
-          };
-          iconImg.onerror = function () {
-            // 无图标也返回纯二维码
-            cb && cb(canvas.toDataURL('image/png'));
-          };
-          iconImg.src = iconSrc;
+          /* R251（老板 09-23 15:20）：二维码不再嵌 favicon 图标，纯白底黑码（原 R249 在中心嵌 32x32
+             圆形遮罩+图标，遮了码点；去图标后整码可扫，无需遮罩保护） */
+          cb && cb(canvas.toDataURL('image/png'));
         } catch (e) { cb && cb(null); }
       }
       window.__genQrPng = __genQrPng;
-      function __saveQrPng(pid, onDone) {
+      // R251：文件名用资源真实名称（原名「资源N-二维码.png」），名称非法文件字符替换为 '-'，无名兜底回旧格式
+      function __qrFileName(pid, name) {
+        var base = (name || '').replace(/[\\\/:*?"<>|]/g, '-').trim();
+        if (!base) base = '资源' + pid;
+        return base + '-二维码.png';
+      }
+      function __saveQrPng(pid, onDone, name) {
         var url = __makeQrUrl(pid);
         __genQrPng(url, 300, function (dataUrl) {
           if (!dataUrl) { showToast('二维码生成失败'); onDone && onDone(null); return; }
           var a = document.createElement('a');
           a.href = dataUrl;
-          a.download = '资源' + pid + '-二维码.png';
+          a.download = __qrFileName(pid, name);
           document.body.appendChild(a); a.click(); a.remove();
           showToast('二维码已保存');
           onDone && onDone(dataUrl);
@@ -2083,8 +2071,9 @@
       }
       window.__saveQrPng = __saveQrPng;
       /* 二维码预览弹窗（参考 showShareLinkModal 同款效果） */
-      function __showQrPreview(dataUrl, pid) {
+      function __showQrPreview(dataUrl, pid, name) {
         try {
+          var _pName = (name || '').trim() || ('资源' + pid); // R251：灰字/文件名带资源真实名称
           var mask = document.createElement('div');
           mask.className = 'share-mask qr-preview-mask';
           mask.setAttribute('role', 'dialog');
@@ -2092,8 +2081,8 @@
           mask.innerHTML =
             '<div class="share-box qr-preview-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
               '<button class="modal-close-x" data-qr-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);">×</button>' +
-              '<div style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;">二维码预览</div>' +
-              '<div style="font-size:13px;color:#888;margin-bottom:14px;">资源' + pid + ' · 扫码即可访问</div>' +
+              '<div style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;">分享资源二维码</div>' + // R251：标题改「分享资源二维码」
+              '<div style="font-size:13px;color:#888;margin-bottom:14px;"><span style="color:#1565c0;">' + _pName + '</span><span style="color:#000;"> · </span>资源二维码已保存到设备</div>' + // R251：灰字带资源名；R254：分色——资源名站内链接蓝/圆点黑/其余保持灰
               '<div style="display:flex;justify-content:center;margin-bottom:18px;"><img id="qrPreviewImg" style="width:200px;height:200px;border:1px solid #eee;border-radius:8px;object-fit:contain;background:#fff;" alt="二维码"/></div>' +
               '<button data-qr-save type="button" class="share-ok" style="margin-bottom:10px;">再次保存</button>' +
             '</div>';
@@ -2109,7 +2098,7 @@
           mask.querySelector('[data-qr-save]').addEventListener('click', function () {
             var a = document.createElement('a');
             a.href = dataUrl;
-            a.download = '资源' + pid + '-二维码.png';
+            a.download = __qrFileName(pid, name); // R251：与首次保存同名（资源真实名称-二维码.png）
             document.body.appendChild(a); a.click(); a.remove();
             showToast('二维码已保存');
           });
@@ -2141,15 +2130,15 @@
       function __shareProdFn(p) {
         return function () {
           var url = window.location.origin + window.location.pathname + '?pid=' + p.id;
-          if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
+          if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (p.title || '') + ' · 资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
           else __cp(url, '链接已复制到剪贴板');
         };
       }
       function __saveQrFn(p) {
         return function () {
           __saveQrPng(p.id, function (dataUrl) {
-            if (dataUrl) __showQrPreview(dataUrl, p.id);
-          });
+            if (dataUrl) __showQrPreview(dataUrl, p.id, p.title);
+          }, p.title);
         };
       }
       function imgItems(img, p) {
@@ -2193,7 +2182,15 @@
         ];
       });
       // 2. 图片：卡片图 + 详情弹窗内所有图（封面/变体图/富文本插图）
-      cm.bind(productGrid, 'img.card-img', function (img) { return imgItems(img, currentProduct); });
+      // R252（老板 09-23 15:22）：列表页卡片封面图长按补齐「分享资源/存二维码」——从所在卡片 data-pid 查资源，
+      // 与卡片菜单同款逻辑（旧实现传 currentProduct——那是详情弹窗变量，列表页为空 → 封面图长按只有 2 项；
+      // 详情弹窗内照旧走 currentProduct）
+      cm.bind(productGrid, 'img.card-img', function (img) {
+        var _card = img.closest ? img.closest('.product-card') : null;
+        var _pid = Number((_card && _card.getAttribute('data-pid')) || 0);
+        var p = (DATA.products || []).find(function (x) { return Number(x.id) === _pid; }) || currentProduct;
+        return imgItems(img, p);
+      });
       cm.bind(modalMask, 'img', function (img) { return imgItems(img, currentProduct); });
       // 3. 文字（简介/详情弹窗正文）：复制选中 / 复制全文 / 分享资源 / 存二维码
       //    卡片上的标题/简介不再单独绑文字菜单——卡片菜单已含「复制标题/复制简介」，避免同一按点两个菜单打架；

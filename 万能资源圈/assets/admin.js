@@ -1267,6 +1267,14 @@
         var codePicker = document.createElement('div');
         // R131（用户 16:14 定稿）：code-picker 钩子类用于容器布局对齐 .p-ops .row-btn（CSS 处理）
         codePicker.className = 'select-picker code-picker';
+        // R255（老板 17:53「资源码选择框看不见」根因修复）：code-picker 与通用 makeSelectPicker 不同，
+        // 此前从未挂 data-picker-id——R247 起 select-picker 面板打开时先被移到 document.body（脱离容器裁剪），
+        // 再由 positionCatPanel 定位；但 positionCatPanel 内 picker.querySelector('.cat-picker-panel') 找不到
+        // 已移走的面板，只能靠 data-picker-id fallback 找——code-picker 没挂 id 就两条路都断，面板
+        // position:fixed 无 top/left 落在 body 末尾 hypothetical 位置（实测 390 端 top=982 整体在屏幕外），
+        // 表现为「点了资源码下拉看不见」。挂上 id 后与 makeSelectPicker 同机制，定位/关闭/重复打开全链路接通。
+        var __cpid = 'cp-' + Math.random().toString(36).slice(2, 9);
+        codePicker.dataset.pickerId = __cpid;
         var cpDisp = document.createElement('div');
         // R131：display 挂 row-btn 类——视觉/按压反馈/各断点布局全部继承旁边按键，仅保留下拉开合
         cpDisp.className = 'cat-picker-display row-btn';
@@ -1279,6 +1287,7 @@
         cpDisp.appendChild(cpTxt); cpDisp.appendChild(cpArrow);
         var cpPanel = document.createElement('div');
         cpPanel.className = 'cat-picker-panel';
+        cpPanel.dataset.pickerId = __cpid; /* R255：挂同一 id——positionCatPanel/文档点击关闭链按 data-picker-id 找到已移入 body 的本面板 */
         codePicker.appendChild(cpDisp); codePicker.appendChild(cpPanel);
         function renderCodePanel(variants) {
           cpPanel.innerHTML = '';
@@ -4897,10 +4906,11 @@ document.addEventListener('click', function (e) {
     }
 
     // R221（老板点名）：文件名「时间-数据统计」（到分钟）；同一分钟内重复导出加序号防覆盖
+    // R251（老板 09-23 15:20）：日期与时间分隔符改中文冒号「：」——「20260923：1520-数据统计.xls」（日期 8 位+时分 4 位），序号逻辑保留
     var __exportStampState = { min: '', seq: 0 };
     function __exportStamp() {
       var d = new Date(); function pd(n) { return String(n).padStart(2, '0'); }
-      var min = d.getFullYear() + pd(d.getMonth() + 1) + pd(d.getDate()) + '-' + pd(d.getHours()) + pd(d.getMinutes());
+      var min = d.getFullYear() + pd(d.getMonth() + 1) + pd(d.getDate()) + '：' + pd(d.getHours()) + pd(d.getMinutes());
       if (__exportStampState.min === min) { __exportStampState.seq++; } else { __exportStampState.min = min; __exportStampState.seq = 0; }
       return min + (__exportStampState.seq > 0 ? '(' + (__exportStampState.seq + 1) + ')' : '');
     }
@@ -6484,7 +6494,8 @@ refreshCatCnts();
       if (isLocal) { toast('本地预览模式，部署线上后可分享', 'error'); return; }
       if (!state.editingId) { toast('新增资源请先保存后再分享', 'error'); return; }
       var url = window.location.origin + '/shop?pid=' + state.editingId;
-      if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
+      var _pn = ''; try { var _pp = (state.products || []).find(function (x) { return Number(x.id) === Number(state.editingId); }); _pn = (_pp && _pp.title) || ''; } catch (e) {}
+      if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
       else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) {} } toast('链接已复制到剪贴板', 'success'); }
     });
     // 咨询客服兜底弹窗：ui-common.js 加载失败时使用（样式对齐导航页，杜绝直达链接）
@@ -6697,10 +6708,14 @@ refreshCatCnts();
       function __makeAdminShareUrl(pid) {
         return window.location.origin + '/shop?pid=' + pid;
       }
+      function __adminProdTitle(pid) { // R251：长按分享/二维码带资源真实名称
+        try { var _p = (state.products || []).find(function (x) { return Number(x.id) === Number(pid); }); return (_p && _p.title) || ''; } catch (e) { return ''; }
+      }
       function __shareAdminFn(pid) {
         return function () {
           var url = __makeAdminShareUrl(pid);
-          if (window.showShareLinkModal) window.showShareLinkModal('分享资源', url);
+          var _pn = __adminProdTitle(pid);
+          if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
           else __cp(url, '链接已复制到剪贴板');
         };
       }
@@ -6708,8 +6723,8 @@ refreshCatCnts();
         return function () {
           if (window.__saveQrPng) {
             window.__saveQrPng(pid, function (dataUrl) {
-              if (dataUrl && window.__showQrPreview) window.__showQrPreview(dataUrl, pid);
-            });
+              if (dataUrl && window.__showQrPreview) window.__showQrPreview(dataUrl, pid, __adminProdTitle(pid));
+            }, __adminProdTitle(pid));
           }
         };
       }
@@ -6764,8 +6779,17 @@ refreshCatCnts();
       if (editMask) { cm.bind(editMask, 'img', imgItemsAdmin); }
       if (previewMask) { cm.bind(previewMask, 'img', imgItemsAdmin); }
       // 3. 弹窗内文字长按（复制选中 / 复制全文 / 分享资源 / 存二维码）
+      //    R252（老板 09-23 15:22）：预览弹窗文字长按补绑定——与编辑弹窗同款四项（旧版只绑了 editMask，
+      //    预览弹窗内长按文字无菜单；pid 依赖 state.editingId——预览必从编辑弹窗打开，已保存资源有值四项，
+      //    新增未保存无 pid 按两项处理）
       if (editMask) {
         cm.bind(editMask, '.modal-box', function (el, e) {
+          if (e && e.target && e.target.closest && e.target.closest('button, input, textarea, a, select, img, video')) return [];
+          return textItemsAdmin(el);
+        });
+      }
+      if (previewMask) {
+        cm.bind(previewMask, '.modal-box', function (el, e) {
           if (e && e.target && e.target.closest && e.target.closest('button, input, textarea, a, select, img, video')) return [];
           return textItemsAdmin(el);
         });

@@ -291,8 +291,25 @@ if ('serviceWorker' in navigator) {
   };
 
   // ===== R14 全站统一「分享链接」弹窗（复刻资源页分享本站弹窗观感：400px 白卡/标题/tip/链接/确定）=====
-  // window.showShareLinkModal(title, url)：标题、链接自动复制到剪贴板并展示
-  window.showShareLinkModal = function (title, url) {
+  // R254（老板 09-23 17:50）：tip 分色渲染——「资源名 · 后文」中资源名用站内链接蓝 #1565c0（与弹窗内链接、share-link 同色；
+  // 站内 CSS 无该色变量定义，沿用同一硬编码值）、分隔「·」用黑色、其余文字保持灰 #888；tip 不含「 · 」时整体灰
+  // （如无资源名的兜底纯灰字）。lastIndexOf 分割保证资源名内部即使含「 · 」也整段标蓝。
+  function __renderShareTip(pEl, tip) {
+    var s = tip || '资源链接已复制到剪贴板';
+    pEl.textContent = '';
+    var i = s.lastIndexOf(' · ');
+    if (i < 0) { pEl.appendChild(document.createTextNode(s)); return; }
+    var nEl = document.createElement('span');
+    nEl.style.color = '#1565c0';
+    nEl.textContent = s.slice(0, i);
+    var dEl = document.createElement('span');
+    dEl.style.color = '#000';
+    dEl.textContent = ' · ';
+    pEl.appendChild(nEl); pEl.appendChild(dEl);
+    pEl.appendChild(document.createTextNode(s.slice(i + 3)));
+  }
+  // window.showShareLinkModal(title, url, tip)：标题、链接自动复制到剪贴板并展示；tip=灰色小字（R251：可带资源名；R254：分色）
+  window.showShareLinkModal = function (title, url, tip) {
     // R79+R138：分享按键点击那一刻统一复制链接（异步 clipboard.writeText，零主线程阻塞）+ 即时 toast
     // 与资源页顶栏分享、资源卡片分享、预览分享、弹窗链接点击全部同链路同提示
     try { __shareCopy(url || ''); __shareToast('链接已复制到剪贴板'); } catch (e0) {}
@@ -305,13 +322,15 @@ if ('serviceWorker' in navigator) {
         '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
           '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);">×</button>' +
           '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
-          '<div style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
+          '<div data-share-tip style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
           '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
           '<button data-share-ok type="button" class="share-ok">确定</button>' +
         '</div>';
       var tEl = mask.querySelector('[data-share-title]');
       var uEl = mask.querySelector('[data-share-url]');
+      var pEl = mask.querySelector('[data-share-tip]');
       if (tEl) tEl.textContent = title || '分享';
+      if (pEl) __renderShareTip(pEl, tip); // R251：灰色小字支持带资源名；R254：分色——资源名蓝/圆点黑/其余灰
       if (uEl) uEl.textContent = url || '';
       // R22：蓝色链接本身可点击=再次复制并提示（复用页面级 toast，无 toast 时兜底一个轻提示条）
       if (uEl) {
