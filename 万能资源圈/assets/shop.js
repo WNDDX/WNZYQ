@@ -178,6 +178,30 @@
       img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); this.classList.add('img-in'); }; /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
       if (img.classList && img.classList.contains('modal-cover')) img.classList.add('m-loading'); /* R215 条9：封面加载期固定 16:9 居中槽，首帧不再靠左 */
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
+      /* R258（老板 09-23 19:11「图加载完才跳回正常位置」）：封面加载槽按真实图比例定型——详情封面与列表卡片
+         同图，列表先渲染、点开详情时卡片图已加载（缓存命中，naturalWidth 同步可读），据此把加载槽从固定 16:9
+         定型为与最终显示完全相同的宽高（inline !important 压住 m-loading 槽宽与基础规则自动计算），
+         图片加载完成摘 m-loading 后布局零收敛、下方内容零位移；卡片图未就绪（弱网首开、列表未渲染完）读不到
+         比例时退回 R215 固定 16:9 槽兜底（仅该场景残留一次收敛，优于内容塌陷/靠左）。 */
+      if (img.classList && img.classList.contains('modal-cover') && src) {
+        try {
+          var __cimgs = document.querySelectorAll('.product-card img');
+          for (var ci = 0; ci < __cimgs.length; ci++) {
+            var __cimg = __cimgs[ci];
+            if (__cimg.src === img.src && __cimg.naturalWidth > 0 && __cimg.naturalHeight > 0) {
+              var __mobile = window.innerWidth <= 600; /* 与 CSS 断点一致：移动端 max-height 220 / 边距 24 */
+              var __pw = img.parentElement ? img.parentElement.clientWidth : 0;
+              var __mw = (__pw > 60 ? __pw - (__mobile ? 24 : 32) : 320); if (__mw > 320) __mw = 320;
+              var __mh = __mobile ? 220 : 320;
+              var __sc = Math.min(1, __mw / __cimg.naturalWidth, __mh / __cimg.naturalHeight);
+              img.style.setProperty('width', Math.max(1, Math.round(__cimg.naturalWidth * __sc)) + 'px', 'important');
+              img.style.setProperty('height', Math.max(1, Math.round(__cimg.naturalHeight * __sc)) + 'px', 'important');
+              img.style.setProperty('aspect-ratio', 'auto', 'important');
+              break;
+            }
+          }
+        } catch (e) {}
+      }
       // R93：封面缺省/加载失败回退感叹号占位（R91 文字版已被用户否决回退）
       if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading'); } img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
       /* R213 P2⑦（质检 R212）：R191 时代的旧媒体回退注释尸体已删（全局兜底已上移至脚本顶部统一注册） */
@@ -1143,7 +1167,17 @@
       var ri = document.getElementById('resourceCodeInput');
       if (ri && __codeDraft.code) ri.value = __codeDraft.code;
     }
-    /* R213 P2④（质检 R212 + 队长拍板）：closeModalStash 死函数已删（R147 暂存通道废除后无任何调用方） */
+    /* R213 P2④（质检 R212 + 队长拍板）：R112 版 closeModalStash 曾被 R147 连保存逻辑一并删除（__codeDraft 从此无人写入、
+       R112 的重开回填 __tryRefillCode 成死代码）。R257（老板 09-23 19:08「关了重开编辑状态应保留，全系统排查」）恢复暂存通道：
+       点外/Esc=暂存（存 资源id+类型id+已输入码，重开同资源同类型自动回填，779 行 openModal 的 __tryRefillCode 链路复活）；×/关闭键=丢弃 */
+    function closeModalStash() {
+      try {
+        var ri = document.getElementById('resourceCodeInput');
+        if (ri && ri.value && currentProduct) __codeDraft = { pid: currentProduct.id, vid: currentVariant ? currentVariant.id : null, code: ri.value };
+        else __codeDraft = null; // 没输入内容不暂存，避免空草稿覆盖
+      } catch (e) {}
+      closeModal();
+    }
     function closeModalDiscard() { __codeDraft = null; closeModal(); }
 
     function closeModal() { try { document.querySelectorAll('#modalBox video, #modalMedia video').forEach(function (v) { v.pause(); }); } catch (e) {}
@@ -1202,7 +1236,7 @@
     btnCloseModal.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
     modalCloseX.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
     modalMask.addEventListener('click', function (e) {
-      if (e.target === modalMask) closeModalDiscard(); // R147：点外=丢弃草稿；R217：恢复（R215 误删）
+      if (e.target === modalMask) closeModalStash(); // R257（老板 09-23 19:08）：点外=暂存资源码草稿（重开同资源同类型回填）；×/关闭=丢弃；R217 恢复的历史保留
     });
 
     // ---------- R10 资源分享（弹窗左上角转发键） ----------
@@ -1905,7 +1939,7 @@
     window.addEventListener('DOMContentLoaded', function () {
       var kit = window.__modalKit; if (!kit) return;
       // R112：资源详情弹窗——×=丢弃资源码草稿；点外/Esc=暂存（重开自动回填）；公告/分享纯展示直接关（客服 kfMask 在 ui-common 创建处注册）
-      kit.register(modalMask, { discard: closeModalDiscard, stash: closeModalDiscard }); // R147：Esc=丢弃（暂存废除）
+      kit.register(modalMask, { discard: closeModalDiscard, stash: closeModalStash }); // R257（老板 09-23 19:08）：Esc=暂存资源码草稿（R147 丢弃口径废除）
       var __am = document.getElementById('annModal'); if (__am) kit.register(__am, { discard: closeAnnModal, stash: closeAnnModal });
       kit.register(shareMask, { discard: closeShare, stash: closeShare });
     });
@@ -2084,7 +2118,7 @@
               '<div style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;">分享资源二维码</div>' + // R251：标题改「分享资源二维码」
               '<div style="font-size:13px;color:#888;margin-bottom:14px;"><span style="color:#1565c0;">' + _pName + '</span><span style="color:#000;"> · </span>资源二维码已保存到设备</div>' + // R251：灰字带资源名；R254：分色——资源名站内链接蓝/圆点黑/其余保持灰
               '<div style="display:flex;justify-content:center;margin-bottom:18px;"><img id="qrPreviewImg" style="width:200px;height:200px;border:1px solid #eee;border-radius:8px;object-fit:contain;background:#fff;" alt="二维码"/></div>' +
-              '<button data-qr-save type="button" class="share-ok" style="margin-bottom:10px;">再次保存</button>' +
+              '<button data-qr-ok type="button" class="share-ok">确定</button>' + /* R256（老板 09-23 19:04）：底部按键「再次保存」→「确定」，与分享链接弹窗确定键同款（同 class="share-ok"、无内联样式，去掉原 margin-bottom 内联）；首次保存已在 __saveQrPng 弹窗打开前完成，此处不再重复保存 */
             '</div>';
           var img = mask.querySelector('#qrPreviewImg');
           if (img) img.src = dataUrl;
@@ -2095,13 +2129,7 @@
           }
           mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
           mask.querySelector('[data-qr-x]').addEventListener('click', close);
-          mask.querySelector('[data-qr-save]').addEventListener('click', function () {
-            var a = document.createElement('a');
-            a.href = dataUrl;
-            a.download = __qrFileName(pid, name); // R251：与首次保存同名（资源真实名称-二维码.png）
-            document.body.appendChild(a); a.click(); a.remove();
-            showToast('二维码已保存');
-          });
+          mask.querySelector('[data-qr-ok]').addEventListener('click', close); // R256：点击「确定」关闭弹窗（保存已在打开前完成，不再重复保存）
           if (window.__modalKit) window.__modalKit.register(mask, { discard: close, stash: close });
           window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
         } catch (e) {}

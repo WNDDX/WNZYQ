@@ -724,7 +724,7 @@ window.__modalKit = (function () {
   }
   window.addEventListener('popstate', function () {
     if (__navBack > 0) { __navBack--; return; } /* 主动关闭弹窗的抵消 back，非返回键 */
-    if (stack.length) { __navSuppress++; close(stack[stack.length - 1], 'discard'); } /* 返回键 = Esc 同款：关最上层 */
+    if (stack.length) { __navSuppress++; close(stack[stack.length - 1], 'stash'); } /* 返回键 = Esc 同款：关最上层（R257：与点外同为暂存口径） */
   });
   function entry(m) { for (var i = 0; i < reg.length; i++) if (reg[i].mask === m) return reg[i]; return null; }
   function sync(m) {
@@ -752,7 +752,7 @@ window.__modalKit = (function () {
     if (e.key !== 'Escape' || e.__escPre) return;
     if (!stack.length) return;
     e.preventDefault();
-    close(stack[stack.length - 1], 'discard'); // R147：Esc=丢弃（全站弹窗统一：取消/点外/Esc=丢弃未保存修改）
+    close(stack[stack.length - 1], 'stash'); // R257（老板 09-23 19:08）：Esc/返回键=暂存（与点外关闭同口径，×/取消键=明确丢弃）——R147 全站 Esc 丢弃口径按老板「关了重开编辑状态应保留」反馈废除
   });
   /* R217 条8（老板 09-21）：R192 的「下滑手势关闭弹窗」整个删除——老板原意只保留点外关闭/×/Esc，
      上下滑关弹窗的手势（含电脑端同类拖拽关闭，全系统本就只有这一处 touch 手势实现）清干净。 */

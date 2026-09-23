@@ -1810,9 +1810,19 @@
       if (!preview) return;
       var url = fImg.value.trim();
       clearTimeout(__imgPreviewTimer);
+      /* R258（老板 09-23 19:11）：封面预览槽先占座再加载——旧逻辑打开弹窗后预览框 display:none 不占位，
+         300ms 防抖+图片探测完成才 add .show，120px 高度此刻才插入流中，下方表单字段（简介等）先顶上来
+         再被挤下去（老板看到的「加载完才撑开位置挤下去」）。改为：有链接即同步显示 120×120 灰底槽
+         （清掉旧 src 防闪上一资源的图），布局从首帧起恒定，真图/占位加载完成只在槽内原位切换，零位移。 */
+      if (url) {
+        if (preview.getAttribute('src') !== url) { preview.removeAttribute('src'); preview.classList.remove('media-fail'); }
+        preview.classList.add('show'); // 槽先占座（灰底 120×120，图探测完成原位填充）
+      }
       __imgPreviewTimer = setTimeout(function () {
         if (url) {
           if (url === __lastBadUrl) {
+            preview.onerror = null; preview.dataset.fh = '1';
+            preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail'); // R258：已知坏地址直接显示失败占位（防同步占座清 src 后槽空灰）
             preview.classList.add('show');
             return;
           }
@@ -2108,7 +2118,7 @@
 
     saveProductBtn.addEventListener('click', saveProduct);
     editCancel.addEventListener('click', function () { editMask.classList.remove('open'); clearDraft(); });
-    editMask.addEventListener('click', function (e) { if (e.target === editMask) { clearDraft(); editMask.classList.remove('open'); } }); // R145：点外=取消（丢草稿，与×/取消键同口径）；R217：恢复（R215 误删）
+    editMask.addEventListener('click', function (e) { if (e.target === editMask) { saveDraft(); editMask.classList.remove('open'); } }); // R257（老板 09-23 19:08）：点外=暂存草稿（重开 openEdit 自动回填离开时内容）；×/取消=丢弃（clearDraft）。R111 原暂存语义恢复，R145 丢弃口径按老板最新反馈废除
 
     // ---------- 表单必填校验 ----------
     function validateField(input, msg) {
@@ -3913,6 +3923,7 @@ document.addEventListener('click', function (e) {
       annDraftPending = false; stateAnn.loaded = false;
       stateAnn.curId = null; // 置空选中，杜绝后续 flushAnnEdit 把编辑器草稿写回已恢复列表
       stateAnn._draftRestored = false; // R248：取消即回到已保存状态，清除草稿恢复标记
+      stateAnn._stashed = false; // R257：取消/×=丢弃，无「恢复」一说，清暂存标记
       try { document.getElementById('annMode').value = stateAnn._modeSaved || 'always'; syncSelectDisplay(document.getElementById('annMode')); } catch (e) {}
       var _dl = null;
       try { _dl = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; } catch (e) {}
@@ -3923,6 +3934,15 @@ document.addEventListener('click', function (e) {
       try { window.__clearEditingDraft(); } catch (e) {} // R248：取消/×关闭时清除草稿
     }
     window.__annDiscard = annDiscard;
+    // R257（老板 09-23 19:08）：点弹窗外关闭=暂存当前编辑（选中项+内容+频率留在内存态），
+    // 重新打开自动恢复到离开时的样子；×/取消仍=丢弃（annDiscard 全量恢复已保存状态）。
+    // 与 R248 的 localStorage 刷新保护并存：那是防自动刷新，这是主动关窗暂存，两套互不干扰。
+    function annStash() {
+      try { flushAnnEdit(); } catch (e) {} // 内容写回 stateAnn.list[curId]，选中项 curId / 频率 annMode 的 DOM 值原样保留
+      stateAnn._stashed = true; // 供下次打开时提示「已恢复未保存的编辑」
+      try { document.getElementById('annMask').classList.remove('open'); } catch (e) {}
+    }
+    window.__annStash = annStash;
     // 打开公告设置弹窗：把公告编辑器移入弹窗，并从服务器拉取最新公告
     document.getElementById('openAnnBtn').addEventListener('click', function () {
       var slot = document.getElementById('annEditorSlot');
@@ -3944,7 +3964,10 @@ document.addEventListener('click', function (e) {
       } else if (stateAnn.loaded && stateAnn.list.length) {
         // R248：若公告列表来自草稿恢复（load 后 200ms 定时器已消费草稿，此处 _draftRestored 为 false），
         // 优先选中恢复前的编辑项 curId，而非固定选默认公告
-        try { renderAnnList(); var _sel0 = (stateAnn._draftRestored && stateAnn.curId) ? stateAnn.curId : ((stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]).id); stateAnn._draftRestored = false; selectAnnItem(_sel0); } catch (e) {}
+        // R257：点外暂存后重开——选中项恢复到离开时编辑的那条（stateAnn.curId 保留在内存），
+        // 内容已由 annStash flush 进 list，selectAnnItem 载入即回到离开时的样子
+        try { renderAnnList(); var _sel0 = (stateAnn.curId && stateAnn.list.some(function (x) { return x.id === stateAnn.curId; })) ? stateAnn.curId : ((stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]).id); stateAnn._draftRestored = false; selectAnnItem(_sel0); } catch (e) {}
+        if (stateAnn._stashed) { stateAnn._stashed = false; try { toast('已恢复未保存的编辑', 'info', 2500); } catch (e) {} } // R257：轻提示一次
       }
       if (!stateAnn.loaded) {
         api('admin/settings').then(function (res) {
@@ -3995,6 +4018,7 @@ document.addEventListener('click', function (e) {
           // R154: 保存成功后立即重建备份（原=null）——保存后再编辑、取消/×时 annDiscard 才有备份可恢复（重开瞬间及拉取失败时不再显示脏草稿）
           try { stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list)); } catch (e0) { stateAnn._backup = null; }
           stateAnn._modeSaved = document.getElementById('annMode').value; // R135：保存成功后同步已保存频率
+          stateAnn._stashed = false; // R257：已保存=干净状态，重开不再提示「已恢复」
           try { window.__clearEditingDraft(); } catch (e) {} // R248：保存成功后清除草稿
           document.getElementById('annMask').classList.remove('open');
         } else toast(res.msg || '保存失败', 'error');
@@ -4006,12 +4030,13 @@ document.addEventListener('click', function (e) {
     });
     // 取消公告（不保存，下次打开重新加载已保存状态）
     document.getElementById('cancelAnnBtn').addEventListener('click', function () {
-      annDiscard(); // R145：取消=全量恢复（数据+编辑器+频率+列表），与×/点外/Esc 同口径
+      annDiscard(); // R145：取消=全量恢复（数据+编辑器+频率+列表）；R257：×/取消=丢弃（点外/Esc=暂存）
     });
     // 遮罩关闭：暂存当前编辑状态，下次打开可继续编辑
     document.getElementById('annMask').addEventListener('click', function (e) {
-      // R145：点外关闭=取消（丢弃未保存修改）——旧「暂存草稿」语义被用户否决（重开仍见未保存频率/内容）；R217：恢复（R215 误删）
-      if (e.target === document.getElementById('annMask')) { annDiscard(); }
+      // R257（老板 09-23 19:08）：点外关闭=暂存当前编辑（选中项+内容+频率保留），重开自动恢复到离开时的样子；
+      // ×/取消=丢弃（annDiscard 全量恢复）——老板原场景即「点弹窗外关闭暂存才对」
+      if (e.target === document.getElementById('annMask')) { window.__annStash(); }
     });
 
     // ---------- 全局客服链接（弹窗设置，与公告一致） ----------
@@ -4055,7 +4080,7 @@ document.addEventListener('click', function (e) {
       });
     });
     document.getElementById('cancelContactBtn').addEventListener('click', function () { contactDraftPending = false; document.getElementById('contactUrlInput').value = ''; document.getElementById('contactMask').classList.remove('open'); });
-    document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) { contactDraftPending = false; var _cu = document.getElementById('contactUrlInput'); if (_cu) _cu.value = ''; document.getElementById('contactMask').classList.remove('open'); } }); // R145：点外=取消（清输入，与×/取消键同口径）；R217：恢复（R215 误删）
+    document.getElementById('contactMask').addEventListener('click', function (e) { if (e.target === document.getElementById('contactMask')) { contactDraftPending = true; document.getElementById('contactMask').classList.remove('open'); } }); // R257（老板 09-23 19:08）：点外=暂存输入（不清输入框，重开自动保留）；×/取消=丢弃清输入
 
     // 工具栏按钮点击执行命令
     document.querySelectorAll('#announcementRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
@@ -4164,8 +4189,9 @@ document.addEventListener('click', function (e) {
     });
 
     function openVariantEdit(v) {
-      if (variantDraftPending && variantDraftFor === (v ? v.id : null)) { variantDraftPending = false; variantModalTitle.textContent = v ? '编辑类型' : '新增类型'; return; } // 遮罩关闭暂存：仅同一类型保留输入继续编辑
+      if (variantDraftPending && variantDraftFor === (v ? v.id : null)) { variantDraftPending = false; variantModalTitle.textContent = v ? '编辑类型' : '新增类型'; variantMask.classList.add('open'); if (window.__modalScroll) __modalScroll.open(variantMask, v ? v.id : 'new'); return; } // 遮罩关闭暂存：仅同一类型保留输入继续编辑（R257 补 add('open')——原分支只改标题不重开，暂存后点「新增类型」无反应）
       state.editingVariantId = v ? v.id : null;
+      variantDraftFor = v ? v.id : null; // R257：记录当前暂存归属（此前从未赋值，已有类型暂存后开「新增」会误恢复）
       state._editVariantIdx = v ? state.variants.indexOf(v) : -1;
       variantModalTitle.textContent = v ? '编辑类型' : '新增类型';
       // R248：优先从 localStorage 恢复草稿（自动刷新保护）
@@ -4670,7 +4696,7 @@ document.addEventListener('click', function (e) {
     }
 
     variantCancel.addEventListener('click', function () { variantDraftPending = false; variantMask.classList.remove('open'); });
-    variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = false; variantDraftFor = null; variantMask.classList.remove('open'); } }); // R145：点外=取消（丢输入）；R217：恢复（R215 误删）
+    variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = true; variantMask.classList.remove('open'); } }); // R257（老板 09-23 19:08）：点外=暂存输入（variantDraftFor 保留，重开同类型自动恢复）；×/取消=丢弃
 
     function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? String(Number(p[2])) : s; } // R52：图表标签只显号数（用户要求去掉月份）
     // R62：悬浮提示的时间标签——小时数据（1天档）加「时」，日期数据显示「几月几日」
@@ -5949,6 +5975,7 @@ refreshCatCnts();
     function openCatEdit(c) {
       if (catDraftPending && catDraftFor === (c ? c.id : null)) { catDraftPending = false; catModalTitle.textContent = c ? '编辑分类' : '新增分类'; catMask.classList.add('open'); if (window.__modalScroll) __modalScroll.open(catMask, c ? c.id : 'new'); return; } // 遮罩关闭暂存：仅同一分类保留输入继续编辑
       state.catEditingId = c ? c.id : null;
+      catDraftFor = c ? c.id : null; // R257：记录当前暂存归属（此前从未赋值，已有分类暂存后开「新增」会误恢复）
       catModalTitle.textContent = c ? '编辑分类' : '新增分类';
       catName.value = c ? (c.name || '') : '';
       catSort.value = c ? (c.sort || 0) : 0;
@@ -6078,7 +6105,7 @@ refreshCatCnts();
     });
 
     catCancel.addEventListener('click', function () { catDraftPending = false; catMask.classList.remove('open'); });
-    catMask.addEventListener('click', function (e) { if (e.target === catMask) { catDraftPending = false; catDraftFor = null; catMask.classList.remove('open'); } }); // R145：点外=取消（丢输入）；R217：恢复（R215 误删）
+    catMask.addEventListener('click', function (e) { if (e.target === catMask) { catDraftPending = true; catMask.classList.remove('open'); } }); // R257（老板 09-23 19:08）：点外=暂存输入（catDraftFor 保留，重开同分类自动恢复）；×/取消=丢弃
 
     // ---------- 平台设置：修改密码（弹窗形式） ----------
     var pwdMask = document.getElementById('pwdMask');
@@ -6631,31 +6658,31 @@ refreshCatCnts();
       // 资源编辑：丢弃=清草稿；暂存=存草稿（重开自动回填；草稿为内存态，刷新即清）
       kit.register(el('editMask'), {
         discard: function () { try { clearDraft(); } catch (e) {} editMask.classList.remove('open'); },
-        stash: function () { try { clearDraft(); } catch (e) {} editMask.classList.remove('open'); } // R145：Esc=丢弃
+        stash: function () { try { saveDraft(); } catch (e) {} editMask.classList.remove('open'); } // R257（老板 09-23 19:08）：Esc=暂存草稿（R145 丢弃口径废除）
       });
       // 类型编辑 / 分类编辑：丢弃=丢输入；暂存=保留同一条目输入
       kit.register(el('variantMask'), {
         discard: function () { variantDraftPending = false; variantDraftFor = null; variantMask.classList.remove('open'); },
-        stash: function () { variantDraftPending = false; variantDraftFor = null; variantMask.classList.remove('open'); } // R145：Esc=丢弃
+        stash: function () { variantDraftPending = true; variantMask.classList.remove('open'); } // R257：Esc=暂存输入（重开同类型恢复）
       });
       kit.register(el('catMask'), {
         discard: function () { catDraftPending = false; catDraftFor = null; catMask.classList.remove('open'); },
-        stash: function () { catDraftPending = false; catDraftFor = null; catMask.classList.remove('open'); } // R145：Esc=丢弃
+        stash: function () { catDraftPending = true; catMask.classList.remove('open'); } // R257：Esc=暂存输入（重开同分类恢复）
       });
       // 公告设置：丢弃=恢复备份重载；暂存=保留当前编辑
       kit.register(el('annMask'), {
         discard: function () { try { window.__annDiscard(); } catch (e) {} },
-        stash: function () { try { window.__annDiscard(); } catch (e) {} } // R145：Esc=丢弃（原暂存语义废除）
+        stash: function () { try { window.__annStash(); } catch (e) {} } // R257（老板 09-23 19:08）：Esc=暂存（选中项+内容+频率保留，重开恢复）——R145 丢弃口径废除
       });
       // 设置客服：丢弃=清输入；暂存=保留
       kit.register(el('contactMask'), {
         discard: function () { contactDraftPending = false; var _cu = el('contactUrlInput'); if (_cu) _cu.value = ''; el('contactMask').classList.remove('open'); },
-        stash: function () { contactDraftPending = false; var _cu2 = el('contactUrlInput'); if (_cu2) _cu2.value = ''; el('contactMask').classList.remove('open'); } // R145：Esc=丢弃
+        stash: function () { contactDraftPending = true; el('contactMask').classList.remove('open'); } // R257：Esc=暂存输入（不清，重开保留）
       });
       // 修改密码：统一三模式——丢弃=清三框；暂存=保留（刷新即清）
       kit.register(el('pwdMask'), {
         discard: function () { var _o = el('oldPwd'), _n = el('newPwd'), _c = el('confirmPwd'); if (_o) _o.value = ''; if (_n) _n.value = ''; if (_c) _c.value = ''; pwdMask.classList.remove('open'); },
-        stash: function () { var _o = el('oldPwd'), _n = el('newPwd'), _c = el('confirmPwd'); if (_o) _o.value = ''; if (_n) _n.value = ''; if (_c) _c.value = ''; pwdMask.classList.remove('open'); } // R145：Esc=丢弃（清三框，与×同口径）
+        stash: function () { pwdMask.classList.remove('open'); } // R257（老板 09-23 19:08）：Esc=暂存（三框保留，重开接着填；R145 清三框口径废除）
       });
       // 确认框：四通道统一=取消语义（执行取消回调并清回调）
       var __confirmCancel = function () {
