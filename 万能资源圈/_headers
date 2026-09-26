@@ -1,0 +1,52 @@
+/*
+  # R49：补齐 CSP（此前缺）：允许自身+内联脚本/样式（各页内联代码所需）、data/blob 图片（占位符/上传预览）、任意 https 图片（外链封面）；禁 object/base 注入与被嵌框架
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+# API 接口不缓存
+/api/*
+  Cache-Control: no-store, no-cache, must-revalidate
+  X-Content-Type-Options: nosniff
+
+# Service Worker 与清单必须每次校验，保证新版本立即被发现并激活
+/sw.js
+  Cache-Control: no-cache, must-revalidate
+/manifest.json
+  Cache-Control: no-cache, must-revalidate
+
+# JS/CSS 不缓存（业务代码频繁更新，避免浏览器永久用旧版）
+/assets/*.js
+  Cache-Control: no-cache, must-revalidate
+/assets/*.css
+  Cache-Control: no-cache, must-revalidate
+
+# R181（用户 09-17 拍板第9项）：图片恢复 30 天长缓存——全站图片一律带 ?v= 版本号（R176 起），
+# 换图必换 URL、长缓存永远拿新图，旧顾虑（R172 图片残留）根源已不存在；
+# 收益是省去每次访问 5 张图的条件请求往返（304 也是一次网络行程，弱网手机有感）。
+# JS/CSS/HTML/SW 仍维持 no-cache（R172 口径，更新即时生效）。
+/assets/*.png
+  Cache-Control: public, max-age=2592000, immutable
+/*.png
+  Cache-Control: public, max-age=2592000, immutable
+
+/*.ico
+  Cache-Control: public, max-age=2592000, immutable
+
+# HTML 不缓存（确保更新即时生效）
+/*.html
+  Cache-Control: no-cache, must-revalidate
+
+# 无后缀 clean URL 页面同样不缓存（/shop /admin /index 等）
+/
+  Cache-Control: no-cache, must-revalidate
+/shop
+  Cache-Control: no-cache, must-revalidate
+/admin
+  Cache-Control: no-cache, must-revalidate
+/index
+  Cache-Control: no-cache, must-revalidate
+/error
+  Cache-Control: no-cache, must-revalidate

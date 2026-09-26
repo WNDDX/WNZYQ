@@ -1,0 +1,71 @@
+/**
+ * PUT    /api/admin/products/:id   → 更新资源（含显示/隐藏 is_online）
+ * DELETE /api/admin/products/:id   → 删除资源（同时删其类型和统计）
+ * 均需登录
+ */
+import { json, requireAuth, readJSON, deleteBucketImages } from '../../../_utils.js';
+
+export async function onRequestPut(context) {
+  const { env, request, params } = context;
+  const auth = await requireAuth(env, request);
+  if (auth instanceof Response) return auth;
+
+  const id = Number(params.id);
+  if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
+
+  const b = await readJSON(request);
+  const coverImages = JSON.stringify(Array.isArray(b.cover_images) ? b.cover_images : []);
+  const detailImages = JSON.stringify(Array.isArray(b.detailImages) ? b.detailImages : []);
+  const detailVideos = JSON.stringify(Array.isArray(b.detailVideos) ? b.detailVideos : []);
+
+  await env.DB.prepare(
+    `UPDATE products SET cid=?, title=?, "desc"=?, detail=?, img=?,
+       cover_images=?, detail_images=?, detail_videos=?, contact_url=?, price=?, is_online=?, is_hidden=?,
+       schedule_on=?, schedule_off=?, sort=?,
+       updated_at=datetime('now') WHERE id=?`
+  )
+    .bind(
+      Number(b.cid) || 0,
+      String(b.title || '').trim(),
+      String(b.desc || ''),
+      String(b.detail || ''),
+      String(b.img || ''),
+      coverImages,
+      detailImages,
+      detailVideos,
+      String(b.contactUrl || ''),
+      Number(b.price) || 0,
+      b.is_online ? 1 : 0,
+      b.is_hidden ? 1 : 0,
+      b.schedule_on ? String(b.schedule_on) : null,
+      b.schedule_off ? String(b.schedule_off) : null,
+      Number(b.sort) || 0,
+      id
+    )
+    .run();
+
+  return json({ ok: true });
+}
+
+export async function onRequestDelete(context) {
+  const { env, request, params } = context;
+  const auth = await requireAuth(env, request);
+  if (auth instanceof Response) return auth;
+
+  const id = Number(params.id);
+  if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
+
+  // R31-#7：删除资源前先取出图片字段，删除后联动清理图仓里的自有图片（外链图不归我们管，跳过）
+  // R36：清理范围扩到详情视频 + 类型（desc/img/video/resource_code 之外的富文本字段）
+  const row = await env.DB.prepare('SELECT img, detail, detail_images, detail_videos FROM products WHERE id = ?').bind(id).first();
+  const vrows = await env.DB.prepare('SELECT "desc", img, video, resource_content FROM product_variants WHERE product_id = ?').bind(id).all();
+  await env.DB.prepare('DELETE FROM products WHERE id = ?').bind(id).run();
+  await env.DB.prepare('DELETE FROM product_variants WHERE product_id = ?').bind(id).run();
+  await env.DB.prepare('DELETE FROM stats WHERE product_id = ?').bind(id).run();
+  const sources = [];
+  if (row) sources.push(row.img, row.detail, row.detail_images, row.detail_videos);
+  (vrows.results || []).forEach(function (v) { sources.push(v.desc, v.img, v.video, v.resource_content); });
+  if (sources.length) await deleteBucketImages(env, sources);
+
+  return json({ ok: true });
+}

@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>万能资源圈・管理</title>
+  <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
+  <meta name="robots" content="index,follow">
+  <!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
+<!-- R228（用户 09-21 19:42）：浏览器对 favicon 有独立硬缓存、刷新先闪旧图标 → 图标内联 data URI，HTML 一解析即在，零请求零缓存依赖 -->
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAHVUlEQVR42u1XWWxV1xVde59z7xv8no3BNhBsv0BIk9pIVVTSSYmApqNoxUeLUTOpVFERQiq4YTCp2ufXqsFgiHGjCBFFJWpKq5j2A7Wo6pBClKhTqNJKMU0KgT7bTLbB4Oc33XvO2f0wduyEqS39qNQl3a+rc/c65+y19rqE6yEtjAy51M6hu8W534sLQyI9AqIsMf+RSP1G6+o/nFhP5ck1PaKW9IJeBhwy5HAD0A0JoFc3oRlj8bM9HEmukCAPaB9ECi4sAqC/EalDjvhgxKt+bRoZgJA+rNC+1IJIbp5AOs1obie0kAWAD+4Vb/Dy8FdYe3skGLMAGAIBwKR9Ii8KMQHEhm+D1Ktg9Tt43qt96yuPTT0ZtMAB04m8l0CPqInCqZ1DdwvoMTi3giALxRkZXyMCEQfWiv0YAII4A1IeOJaEK5fgipcsWL9GrF4Iy4UXzzxRf2HqtV6dwJXi8zr667UXf5K86CMcjcMV83DFSxO1LZgVR6sg5VxBQC+JyEtQ+hg7GhOyTRDXBXFJ8qIgFYEEhbPC3JUYPdt9LLMomLpJmiSysodxoMU2bB9cxZ73Azjni4R7YM0PQep+Ut42FxaNilZ6YoKCEO8VTz3Tv37G21P3sKDjYqNR5g2IrYC1IhCw9hVHknBB8ShC+9Xs1rrXkT6skVlmCBBCDxgtZFOdQ99WlTXftPmRn5ogv+F0W8NAquvyZ8UE7cT8IdJRiCn92hFa+78+qxcA6ndJTNnBKnFYQIxPC7CWiGrFhu+wEhEBjIomPXF2TMLS6r62236CtGhCWjQyZBo7h3brypr1duxCa/bxmt2p9KmoxKKveHVzFruSgy2MnCPBjuymmi4AaNxx/ruk/RYJipWAzFKJWkURD65UhpQuw1kTEOBfYQBSPsSGhryoBinYIP/QQNu8HxEANG4/u0nPmLPDXjr/YHbLnB+jR9Rdp4bjRTJtpCI+gNcDKf7q7MZ5w+PSBBorBjeSjjwkQSEOohEQThBUrxD+YsLguI7EPgBj9kFMjCMJdkHhIJKx1cgV93Mk8RkXFAJh+Tw1dg4u50ji5zZ/cXX/1vrnsVc8rKHwqvKc0jzXwu2dZ1KiYtvFBB+H2GoRcaR9FhP8nUk955xdw9q7i/w4XCk3osWZp205lxkvfnR68fRhDSwFcARXzMROI7MSDkQCEcLXjvuYeacVDC4nL7qKRACOAqwAEVC0qoki3lOUH4Mtj5U4LPYS8zM0f3du9qkNyfPv1ud/glT61BxJVi4QUA3boMKR8xhsnPZzBLnINjbwj03x7NQuJdwy/Avf6hFFEKFr+fS/jQkrB4DeI+8Qal46XqcXcqtO+//43wdNCx/NuE7jtAsymVvbOCI0bij/DYndVHFAT1jr7Z2FlFPFegHNZBMkHZxm4dApP0+QYcqNnsxm6NytkakwiNz83bnZlOo8vxrE65w1zSqSiHJFAlIOIaYMEAHOjj9+DFIaXZcdq3sWF48rfO/OYNKGD4yP82m7az+iJm08s8xMvtt71MOaxWFD5/l2OPuoFud2cbSimqUAWxx9S8r5vU7sY6T994kJHBExSI1QSL8l2EPIkAFg8PREF5EAmD4jxmeGec/Orwy6hm0DX1aRZNqVxz6nRdEqV87/jP24T86elGT0ecoVl7Dym5wJHKCKUHpdWMr/VXv+otSOwYcFthmChRCpJj9eEFPe35ev2wkAaCE7d+fpGp9inwJwj9hyEBPd8db8mgJaKExtP/clNWP2PnPp3Oa+LXMPEQDUd5x+UPkV+yEWEpYMKU+LDSZFIkDASvsUrQJHI5ByCDs2ZAG6QH5sVEzQ07d59jcAINU53CqEzSpePYejjHDw3FEqlu7PZuaXUruGN6jErC4zOtzdt6l2w/RE1HHmi+RF9xGrhC3lQgI0iCa7npQHERkiYI84/JIYJ62quzzwOBUBoOGpC80s6CId/aSYEsS5P5H227OtVb+Y19Ffr/2K3aqi+gt2dPg72U2135qI6TQ59zPLTGrb4D3w1LPsxxa7cg7OBJZAgFIEUnlt9aKTbTP7pl5rQ/elOyi060jcGtJ+3JZGQ/ZiWmy4FWJfgdIPE3lrwRy4MHy0f0vdi1jZo3CgxU3X9ZW005R+wx+rnLuenGslPz5XbBkSlgDiHIhbSdQxx5KANU1E9ABBHqBIMu5KlwHnLIgUIODYDHCsAq5UgISlF0xYeOJ0W8PAu1MVXe1fEABue3JglheJrxJnH4Ez93JshuJIFK6Yg9gQxBqAwAVFwBkLIh7XLYRYk4BOgPkgQZ7Lbqx981qRjq7qdj3Tdd3YPdqEMLwPzn4MYu8j5d1B2oeEJYgJBIADgQA48hPKmXBtXVXN9/88Ee96RF3Lyum6Vtl+RCGzzI4LYRwLuyVSDkfuZXErROxyQN7PXgwiFjAByK+AK+cOJgpzW46hF0CzuV74oJu1ziUAv9wMmXoyC7slYszIR0TsJ8S5D0MkJWKqiT2PmD+a3Vj75o2y5j8BnAfeQ7ImF6MAAAAASUVORK5CYII=">
+  <link rel="stylesheet" href="/assets/ui-common.css">
+  <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
+  <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)">
+  <link rel="preload" href="/assets/images/logo.png?v=224" as="image">
+  <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
+  <link rel="preload" href="/assets/ui-common.js" as="script">
+  <link rel="preload" href="/assets/admin.js" as="script">
+
+  <link rel="stylesheet" href="/assets/admin.css">
+</head>
+
+<body>
+
+  <!-- ============ 登录视图 ============ -->
+  <div id="loginView" class="login-view">
+    <div class="login-card">
+      <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
+        <div class="login-logo">
+          <img src="/assets/images/logo.png?v=224" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+        </div>
+      </a>
+      <h1>万能资源圈・管理</h1>
+      <!-- R209（用户 09-19 00:34）：根因→v207 误把 label 居中+删了 placeholder 和眼睛按钮；修法→恢复 09-16 结构 -->
+      <input id="loginUser" class="input" autocomplete="off" />
+      <!-- R216（老板 09-21 10:24）：小眼睛垂直居中修复——原结构 input 带 margin-bottom:12px，眼睛按钮挂在 wrapper 的 top:50% 上，
+           wrapper 高度=42+12=54px，导致眼睛中心比输入框中心低 6px（实测）。修法：间距从 input 挪到 wrapper，
+           wrapper 高度=输入框本身，top:50% 即输入框几何中心，零魔法数。 -->
+      <div style="position:relative;width:100%;margin-bottom:12px;">
+        <input id="loginPass" class="input" type="password" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" style="width:100%;padding-right:44px;margin-bottom:0;" />
+        <button type="button" id="pwdToggleBtn" onclick="if(typeof togglePwdVisibility==='function')togglePwdVisibility();" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg class="pwd-eye-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+      <button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登 录</button>
+    </div>
+  </div>
+
+  <!-- ============ 主视图 ============ -->
+  <div id="mainView" class="main-view" style="display:none">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-brand">
+          <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
+            <img class="topbar-logo" src="/assets/images/logo.png?v=224" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          </a>
+          <span>万能资源圈・管理</span>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="products">资源管理</button>
+          <button class="tab" data-tab="categories">分类管理</button>
+          <button class="tab" data-tab="stats">数据统计</button>
+          <button class="tab" data-tab="settings">平台设置</button>
+        </div>
+        <div class="topbar-right">
+          <button class="logout-btn" id="logoutBtn">退出</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+
+      <!-- 资源管理 -->
+      <section id="panel-products">
+        <div class="toolbar">
+          <div class="tb-row tb-row1">
+            <button class="btn-blue" id="addProductBtn">新增资源</button>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#333;cursor:pointer;white-space:nowrap;">
+              <input type="checkbox" id="selectAll" /> 全选
+            </label>
+            <span style="flex:1"></span>
+            <div class="view-toggle" id="viewToggle">
+              <button class="view-btn active" id="viewListBtn" title="列表视图">☰ <span>列表</span></button>
+              <button class="view-btn" id="viewCardBtn" title="网格视图">▦ <span>网格</span></button>
+            </div>
+          </div>
+          <div class="tb-row tb-row2">
+          <div class="cat-picker" id="filterCatPicker" style="position:relative;flex-shrink:0;">
+            <div class="cat-picker-display"><span class="cpd-text placeholder">全部分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="filterCatPanel"></div><input type="hidden" id="filterCat" value="" /></div>
+          <select id="filterStatus">
+            <option value="">全部状态</option>
+            <option value="online">显示</option>
+            <option value="hidden">隐藏</option>
+          </select>
+          <div class="admin-search" style="margin-left:auto;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="adminSearch"  />
+            <button type="button" class="search-clear" id="adminSearchClear" title="清空" aria-label="清除搜索">×</button>
+          </div>
+
+          </div>
+        </div>
+        <div class="batch-bar" id="batchBar">
+          已选 <span class="batch-count" id="batchCount">0</span> 项
+          <button class="batch-btn" data-action="online">批量显示</button>
+          <button class="batch-btn" data-action="offline">批量隐藏</button>
+          <button class="batch-btn" data-action="changeCat">改分类</button>
+          <button class="batch-btn" data-action="changePrice">改价格</button>
+          <button class="batch-btn danger" data-action="delete">批量删除</button>          <button class="batch-btn" data-action="clearSel">取消选中</button>
+        </div>
+        <div id="productList">
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    </div>
+        <div class="empty-tip" id="productEmpty">
+          <div class="empty-icon">📦</div>
+          <div class="empty-title" id="productEmptyTitle">暂无资源</div>
+        </div>
+      </section>
+
+      <!-- 数据统计 -->
+      <section id="panel-stats" style="display:none">
+        <div class="stats-loading" id="statsLoading"><div class="sl-spin"></div><div>加载中…</div></div>
+        <div class="stat-cards" id="statCards">
+    <div class="stat-card skel" aria-hidden="true"><div class="stat-card-label sk-piece"></div><div class="stat-card-num sk-piece"></div></div>
+    <div class="stat-card skel" aria-hidden="true"><div class="stat-card-label sk-piece"></div><div class="stat-card-num sk-piece"></div></div>
+    <div class="stat-card skel" aria-hidden="true"><div class="stat-card-label sk-piece"></div><div class="stat-card-num sk-piece"></div></div>
+    <div class="stat-card skel" aria-hidden="true"><div class="stat-card-label sk-piece"></div><div class="stat-card-num sk-piece"></div></div>
+    <div class="stat-card skel" aria-hidden="true"><div class="stat-card-label sk-piece"></div><div class="stat-card-num sk-piece"></div></div>
+    <div class="stat-card skel" aria-hidden="true"><div class="stat-card-label sk-piece"></div><div class="stat-card-num sk-piece"></div></div>
+    </div>
+        <div class="trend-chart">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <h3 style="margin:0;">访问趋势</h3>
+            <div style="display:flex;align-items:center;justify-content:flex-end;flex:1;gap:8px;flex-wrap:wrap;">
+              <div class="time-filter">
+                <button class="time-btn active" data-days="1">1天</button>
+                <button class="time-btn" data-days="7">7天</button>
+                <button class="time-btn" data-days="30">30天</button>
+              </div>
+              <!-- R68：对比上期键独立于时间档组（1/7/30天三键一组不动），紧跟其后；复用应用键样式；文字随状态切换：关闭=对比上期 / 开启=显示本期 -->
+              <button class="btn-blue cmp-btn" id="cmpPrevBtn" style="width:auto;padding:0 18px;height:36px;margin:0;flex-shrink:0;white-space:nowrap;" title="开启后卡片小字、折线虚线、柱状浅色对比柱及悬浮数值显示与上期的对比；再点一次恢复只看本期">对比上期</button>
+              <div style="display:flex;align-items:center;gap:4px;font-size:13px;color:#666;">
+                <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime"  />
+                <span>至</span>
+                <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime"  />
+                <button class="btn-blue" id="statCustomBtn" style="width:auto;padding:0 18px;height:36px;margin:0;flex-shrink:0;white-space:nowrap;">应用</button>
+              </div>
+              <button class="export-btn" id="exportBtn">导出数据统计</button>
+
+            </div>
+          </div>
+          <!-- 折线图 -->
+          <div class="line-chart" id="lineChart">
+            <svg id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;aspect-ratio:4/1;height:auto;"></svg>
+            <div class="line-legend">
+              <!-- R65：本期项在左（不带「本期」字样，默认即本期），上期项在右（竖线分隔）；
+                   「对比上期」关闭时上期项隐藏（.show-prev 由 JS 切换）
+                   R109：图例按组换行——本期一组/上期一组各自整组一行，组内不拆行（编辑器组模式同思路） -->
+              <span class="lg-group">
+                <span class="lg-view-cur"><i></i>浏览</span>
+                <span class="lg-contact-cur"><i></i>咨询客服</span>
+                <span class="lg-resource-cur"><i></i>资源码解锁</span>
+              </span>
+              <span class="lg-group lg-group-prev">
+                <span class="lg-view-prev"><i></i>浏览·上期</span>
+                <span class="lg-contact-prev"><i></i>咨询客服·上期</span>
+                <span class="lg-resource-prev"><i></i>资源码解锁·上期</span>
+              </span>
+            </div>
+          </div>
+          <!-- 柱状图 -->
+          <h3 style="margin:16px 0 10px;">每日数据</h3>
+          <!-- R70：灰盒容器与折线图 line-chart 同构——图表与图形说明(图例)都收进灰底里 -->
+          <div class="chart-box">
+            <div class="trend-bars" id="trendBars">
+    <div class="trend-bar-skel" aria-hidden="true"><div class="tb-skel-col sk-piece"></div></div>
+    <div class="trend-bar-skel" aria-hidden="true"><div class="tb-skel-col sk-piece"></div></div>
+    <div class="trend-bar-skel" aria-hidden="true"><div class="tb-skel-col sk-piece"></div></div>
+    <div class="trend-bar-skel" aria-hidden="true"><div class="tb-skel-col sk-piece"></div></div>
+    <div class="trend-bar-skel" aria-hidden="true"><div class="tb-skel-col sk-piece"></div></div>
+    <div class="trend-bar-skel" aria-hidden="true"><div class="tb-skel-col sk-piece"></div></div>
+    <div class="trend-bar-skel" aria-hidden="true"><div class="tb-skel-col sk-piece"></div></div>
+    </div>
+            <div class="trend-legend">
+              <!-- R65：本期项在左（不带「本期」字样），上期项在右（竖线分隔）；对比上期关闭时上期项隐藏
+                   R109：图例按组换行——本期一组/上期一组各自整组一行，组内不拆行 -->
+              <span class="lg-group">
+                <span class="lg-view-cur">浏览</span>
+                <span class="lg-contact-cur">咨询客服</span>
+                <span class="lg-resource-cur">资源码解锁</span>
+              </span>
+              <span class="lg-group lg-group-prev">
+                <span class="lg-view-prev">浏览·上期</span>
+                <span class="lg-contact-prev">咨询客服·上期</span>
+                <span class="lg-resource-prev">资源码解锁·上期</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="stat-table-wrap" id="statWrapProduct" style="margin-bottom:14px;">
+          <div class="stat-wrap-head">
+            <h3 id="statH3Product">资源明细（30天内）</h3>
+            <button class="stat-toggle open" id="statTglProduct" type="button" title="展开/收起">
+              <svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+          </div>
+          <div class="stat-wrap-body" id="statBodyProduct">
+            <div class="stat-body-inner">
+              <table class="stat-table">
+                <thead><tr><th>资源</th><th>状态</th><th>浏览</th><th>咨询客服</th><th>资源码解锁</th><th>绑定设备</th></tr></thead>
+                <tbody id="statRows">
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              </tbody>
+              </table>
+              <div class="stat-pager" id="statPagerProduct"></div>
+            </div>
+          </div>
+        </div>
+        <div class="stat-table-wrap" id="statWrapCat" style="margin-bottom:14px;">
+          <div class="stat-wrap-head">
+            <h3>分类统计</h3>
+            <button class="stat-toggle open" id="statTglCat" type="button" title="展开/收起">
+              <svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+          </div>
+          <div class="stat-wrap-body" id="statBodyCat">
+            <div class="stat-body-inner">
+              <table class="stat-table">
+                <thead><tr><th>分类</th><th>资源数</th><th>总浏览</th></tr></thead>
+                <tbody id="statCatRows">
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              </tbody>
+              </table>
+              <div class="stat-pager" id="statPagerCat"></div>
+            </div>
+          </div>
+        </div>
+        <div class="stat-table-wrap" id="statWrapRecent">
+          <div class="stat-wrap-head">
+            <h3 id="statH3Recent">浏览记录（30天内）</h3>
+            <button class="stat-toggle open" id="statTglRecent" type="button" title="展开/收起">
+              <svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+          </div>
+          <div class="stat-wrap-body" id="statBodyRecent">
+            <div class="stat-body-inner">
+              <table class="stat-table">
+                <thead><tr><th>时间</th><th>类型</th><th>资源</th></tr></thead>
+                <tbody id="statRecentRows">
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              <tr class="skel admin-skel" aria-hidden="true"><td><span class="sk-line w70"></span></td><td><span class="sk-line w95"></span></td><td><span class="sk-line w95"></span></td></tr>
+              </tbody>
+              </table>
+              <div class="stat-pager" id="statPagerRecent"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 分类管理 -->
+      <section id="panel-categories" style="display:none">
+        <div class="toolbar">
+          <div class="tb-row"><button class="btn-blue" id="addCatBtn">新增分类</button><label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#333;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="catSelectAll" /> 全选</label></div>
+          <span class="toolbar-hint">"全部"为固定分类，不可修改删除；排序值越小越靠前</span>
+        </div>
+        <!-- 分类批量操作栏 -->
+        <div class="batch-bar" id="catBatchBar">
+          <span style="font-size:13px;color:#666;">已选 <b id="catBatchCount" style="color:var(--blue1);">0</b> 项</span>
+          <button class="batch-btn" id="catBatchShow">批量显示</button>
+          <button class="batch-btn" id="catBatchHide">批量隐藏</button>
+          <button class="batch-btn danger" id="catBatchDel">批量删除</button>
+          <button class="batch-btn" id="catBatchCancel">取消选中</button>
+        </div>
+        <div id="catList">
+    <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
+    </div>
+      </section>
+
+      <!-- 平台设置 -->
+      <section id="panel-settings" style="display:none">
+        <!-- R54：图片存储（图仓直连地址）整组已删——图片实际走 /img/ 自家路由，该配置仅兼容早期 R2 直链，确认无旧直链后删除；图仓本体（IMAGE_BUCKET 绑定）不受影响 -->
+        <div class="setting-group">
+          <h3>基本设置</h3>
+          <div class="setting-row">
+            <label>全局客服链接（资源没填专属链接时用这个）</label>
+            <input class="input" id="setContactUrl" style="display:none" />
+            <button type="button" class="btn-blue" id="openContactBtn" style="width:auto;padding:0 24px;">设置客服</button>
+          </div>
+          <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
+          <div class="setting-row">
+            <label>平台公告（显示在资源页顶部）</label>
+            <button type="button" class="btn-blue" id="openAnnBtn" style="width:auto;padding:0 24px;">设置公告</button>
+            <div class="rte-toolbar rte-collapsed" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;"><span class="rte-group">
+          <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement" title="字体">
+            <option value="">字体</option>
+            <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
+            <option value="SimSun" style="font-family:SimSun,serif">宋体</option>
+            <option value="SimHei" style="font-family:SimHei,sans-serif">黑体</option>
+            <option value="KaiTi" style="font-family:KaiTi,serif">楷体</option>
+            <option value="FangSong" style="font-family:FangSong,serif">仿宋</option>
+            <option value="LiSu" style="font-family:LiSu">隶书</option>
+            <option value="YouYuan" style="font-family:YouYuan">幼圆</option>
+          </select>
+          <select class="rte-select" data-cmd="fontSize" data-target="setAnnouncement" title="字号">
+            <option value="">字号</option>
+            <option value="1" style="font-size:10px">小</option>
+            <option value="2" style="font-size:13px">偏小</option>
+            <option value="3" style="font-size:16px">正常</option>
+            <option value="4" style="font-size:18px">大</option>
+            <option value="5" style="font-size:24px">特大</option>
+            <option value="6" style="font-size:32px">超大</option>
+            <option value="7" style="font-size:44px">巨大</option>
+          </select>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="setAnnouncement" title="文字颜色"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 14.5l4.5-10 4.5 10"/><line x1="6.5" y1="10.8" x2="11.5" y2="10.8"/><line x1="3" y1="18.5" x2="21" y2="18.5" stroke-width="2.6"/></svg></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="setAnnouncement" title="背景颜色"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11L11 3 3.5 10.5a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L19 11z"/><line x1="11.5" y1="2.5" x2="8.5" y2="5.5"/><path d="M21 16s-2 2.2-2 3.5a2 2 0 0 0 4 0c0-1.3-2-3.5-2-3.5z"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="setAnnouncement" title="插入表情"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg></button>
+          <button type="button" class="rte-btn rte-quote-btn" data-editor="setAnnouncement" title="引用块"><span class="rte-glyph">【</span></button>
+          <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="setAnnouncement" title="插入分割线">—</button>
+          <button type="button" class="rte-btn rte-table-btn" data-editor="setAnnouncement" title="插入表格"><span class="rte-glyph">▦</span></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="announcementRteLink" title="插入超链接"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+          <button type="button" class="rte-btn" id="announcementRteImg" title="插入网络图片或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
+          <button type="button" class="rte-btn" id="announcementRteVideo" title="插入网络视频或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="setAnnouncement" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="setAnnouncement" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="setAnnouncement" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="setAnnouncement" title="删除线"><s>S</s></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="setAnnouncement" title="左对齐">←</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="setAnnouncement" title="居中">↔</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="setAnnouncement" title="右对齐">→</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="setAnnouncement" title="无序列表">•</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="setAnnouncement" title="有序列表">1</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="setAnnouncement" title="插入复选框"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="undo" data-target="setAnnouncement" title="撤销"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+          <button type="button" class="rte-btn" data-cmd="redo" data-target="setAnnouncement" title="重做"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="announcementFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="setAnnouncement" title="清除格式">✕</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="setAnnouncement" title="放大编辑"><svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button></span>
+              <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+        </div>
+        <div class="rte-editor" id="setAnnouncement" contenteditable="true" style="min-height:60px;max-height:150px;border-radius:0 0 8px 8px;"></div>
+        <div class="rte-count" data-for="setAnnouncement">已输入 0 字</div>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">修改密码</label>
+          <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 24px;">修改密码</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ 修改密码弹窗 ============ -->
+  <div class="modal-mask" id="pwdMask">
+    <div class="modal-box">
+      <button class="modal-close-x" data-close="pwdMask">×</button>
+      <h2 class="modal-title">修改密码</h2>
+      <div class="form">
+        <label>原密码</label>
+        <input class="input" id="oldPwd" type="password"  />
+        <label>新密码</label>
+        <input class="input" id="newPwd" type="password"  />
+        <label>确认新密码</label>
+        <input class="input" id="confirmPwd" type="password"  />
+      </div>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="changePwdBtn">确定</button>
+        <button class="modal-close" id="cancelPwdBtn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 公告设置弹窗 ============ -->
+  <div class="modal-mask" id="annMask">
+    <div class="modal-box modal-wide">
+      <button class="modal-close-x" data-close="annMask">×</button>
+      <h2 class="modal-title">设置公告</h2>
+      <div class="form">
+        <label>公告显示频率（作用于整个公告弹窗）</label>
+        <select class="input" id="annMode">
+          <option value="always">每次进入资源页都弹出</option>
+          <option value="daily">每天只弹出一次（当天不重复）</option>
+          <option value="session">每次打开资源页只弹一次（刷新不重复）</option>
+          <option value="off">不弹出公告</option>
+        </select>
+        <label>公告项（拖拽 ⋮⋮ 调整顺序；点击某项即可编辑；隐藏的项不在资源页显示）</label>
+        <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">新增公告项</button>
+        <div id="annList" class="ann-list">
+    <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>
+    <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>
+    <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>
+    <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>
+    <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>
+    </div>
+        <input class="input" id="annTitleInput" title="公告标题（资源页小项按键显示的文字）" style="display:none;" />
+        <label>公告内容（支持文字、图片、视频、超链接）</label>
+        <div id="annEditorSlot"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="saveAnnBtn">确定</button>
+        <button class="modal-close" id="cancelAnnBtn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 客服链接设置弹窗 ============ -->
+  <div class="modal-mask" id="contactMask">
+    <div class="modal-box">
+      <button class="modal-close-x" data-close="contactMask">×</button>
+      <h2 class="modal-title">设置客服</h2>
+      <div class="form">
+        <label>全局客服链接（资源没填专属链接时用这个）</label>
+        <input class="input" id="contactUrlInput"  />
+      </div>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="saveContactBtn">确定</button>
+        <button class="modal-close" id="cancelContactBtn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 资源编辑弹窗 ============ -->
+  <div class="modal-mask" id="editMask">
+    <div class="modal-box modal-wide">
+      <button class="modal-close-x" data-close="editMask">×</button>      <h2 class="modal-title" id="editTitle">编辑资源</h2>
+      <div class="form">
+        <label>标题</label><input id="fTitle" />
+        <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
+        <!-- R256：封面多图轮播——横排小图列表 -->
+        <label>资源封面图 <span class="label-hint">第一张为主图，用于列表卡片显示；可添加多张轮播</span></label>
+        <div class="cover-gallery" id="coverGallery"></div>
+        <div style="display:flex;gap:8px;align-items:stretch;margin-top:8px;">
+          <input id="fImg" style="flex:1;min-width:0;" />
+          <button type="button" class="btn-blue" id="fImgUpload" style="white-space:nowrap;width:auto;height:auto;margin-bottom:0;padding:0 16px;" title="从电脑选图，自动上传到自有图仓并填入链接">上传本地图片</button>
+        </div>
+        <div style="font-size:11px;color:#999;margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
+        <img class="img-preview" id="fImgPreview" alt="预览" decoding="async" style="display:none;" />
+        <label>简介 <span class="label-hint">列表卡片上显示的一句话</span></label><input id="fDesc" />
+        <label>详细描述 <span class="label-hint">支持文字、图片、视频混排</span></label>
+        <div class="rte-toolbar rte-collapsed" id="detailRteToolbar" data-editor="fDetail"><span class="rte-group">
+          <select class="rte-select" data-cmd="fontName" data-target="fDetail" title="字体">
+            <option value="">字体</option>
+            <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
+            <option value="SimSun" style="font-family:SimSun,serif">宋体</option>
+            <option value="SimHei" style="font-family:SimHei,sans-serif">黑体</option>
+            <option value="KaiTi" style="font-family:KaiTi,serif">楷体</option>
+            <option value="FangSong" style="font-family:FangSong,serif">仿宋</option>
+            <option value="LiSu" style="font-family:LiSu">隶书</option>
+            <option value="YouYuan" style="font-family:YouYuan">幼圆</option>
+          </select>
+          <select class="rte-select" data-cmd="fontSize" data-target="fDetail" title="字号">
+            <option value="">字号</option>
+            <option value="1" style="font-size:10px">小</option>
+            <option value="2" style="font-size:13px">偏小</option>
+            <option value="3" style="font-size:16px">正常</option>
+            <option value="4" style="font-size:18px">大</option>
+            <option value="5" style="font-size:24px">特大</option>
+            <option value="6" style="font-size:32px">超大</option>
+            <option value="7" style="font-size:44px">巨大</option>
+          </select>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="fDetail" title="文字颜色"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 14.5l4.5-10 4.5 10"/><line x1="6.5" y1="10.8" x2="11.5" y2="10.8"/><line x1="3" y1="18.5" x2="21" y2="18.5" stroke-width="2.6"/></svg></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="fDetail" title="背景颜色"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11L11 3 3.5 10.5a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L19 11z"/><line x1="11.5" y1="2.5" x2="8.5" y2="5.5"/><path d="M21 16s-2 2.2-2 3.5a2 2 0 0 0 4 0c0-1.3-2-3.5-2-3.5z"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="fDetail" title="插入表情"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg></button>
+          <button type="button" class="rte-btn rte-quote-btn" data-editor="fDetail" title="引用块"><span class="rte-glyph">【</span></button>
+          <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="fDetail" title="插入分割线">—</button>
+          <button type="button" class="rte-btn rte-table-btn" data-editor="fDetail" title="插入表格"><span class="rte-glyph">▦</span></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="detailRteLink" title="插入超链接"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+          <button type="button" class="rte-btn" id="detailRteImg" title="插入网络图片或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
+          <button type="button" class="rte-btn" id="detailRteVideo" title="插入网络视频或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="fDetail" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="fDetail" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="fDetail" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="fDetail" title="删除线"><s>S</s></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="fDetail" title="左对齐">←</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="fDetail" title="居中">↔</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="fDetail" title="右对齐">→</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="fDetail" title="无序列表">•</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="fDetail" title="有序列表">1</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="fDetail" title="插入复选框"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="undo" data-target="fDetail" title="撤销"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+          <button type="button" class="rte-btn" data-cmd="redo" data-target="fDetail" title="重做"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="detailFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="fDetail" title="清除格式">✕</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="fDetail" title="放大编辑"><svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button></span>
+              <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+        </div>
+        <div class="rte-editor" id="fDetail" contenteditable="true"></div>
+        <div class="rte-count" data-for="fDetail">已输入 0 字</div>
+
+        <!-- 资源类型管理（紧跟详细描述，与资源页展示顺序一致） -->
+        <div class="variant-section">
+          <h4>
+            <span>资源类型 / 套餐（点击切换查看，可不设置）</span>
+            <button class="variant-add" id="addVariantBtn">新增类型</button>
+          </h4>
+          <div id="variantList"></div>
+        </div>
+
+        <label>价格 <span class="label-hint">单位元，不填或 0 = 免费</span></label>
+        <input id="fPrice" type="number" step="0.01" min="0" />
+        <label>咨询客服链接 <span class="label-hint">可不填，默认用全局客服</span></label>
+        <input id="fContactUrl" />
+        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="fSort" type="number" value="0" />
+        <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 显示（勾选后资源页可见，取消则隐藏）</label>
+        <div class="sch-row">
+          <div class="sch-col">
+            <label>定时显示 <span class="label-hint">可不填＝不定时自动显示</span></label>
+            <input id="fScheduleOn" type="text" readonly class="dt-field" data-dt="datetime" />
+          </div>
+          <div class="sch-col">
+            <label>定时隐藏 <span class="label-hint">可不填＝不定时自动隐藏</span></label>
+            <input id="fScheduleOff" type="text" readonly class="dt-field" data-dt="datetime" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="preview-btn" id="previewProductBtn">预览效果</button>
+        <button class="modal-inner-btn" id="saveProductBtn">确定</button>
+        <button class="modal-close" id="editCancel">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 分类编辑弹窗（名称 + 排序 + 级别 + 隐藏） ============ -->
+  <div class="modal-mask" id="catMask">
+    <div class="modal-box">
+      <button class="modal-close-x" data-close="catMask">×</button>
+      <h2 class="modal-title" id="catModalTitle">新增分类</h2>
+      <div class="form">
+        <label>分类名称</label><input id="catName" class="input"  />
+        <label>分类级别</label>
+        <div style="display:flex;gap:14px;margin-bottom:4px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:10px;padding:8px 14px;">
+            <input type="radio" name="catLevel" value="0" checked /> 一级分类
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:10px;padding:8px 14px;">
+            <input type="radio" name="catLevel" value="1" /> 二级分类
+          </label>
+        </div>
+        <div id="catParentWrap" style="display:none;">
+          <label>所属一级分类</label>
+          <div class="cat-picker" id="catParentPicker" style="margin-bottom:8px;"><input type="hidden" id="catParentValue" value="0" /><div class="cat-picker-display" id="catParentDisplay"><span class="cpd-text">请选择所属一级分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="catParentPanel"></div></div>
+        </div>
+        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="catSort" class="input" type="number" value="0" />
+        <label class="checkbox-row"><input type="checkbox" id="catHidden" /> 隐藏（资源页不显示，仅管理页可见）</label>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="catOk">确定</button>
+        <button class="modal-close" id="catCancel">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 批量改分类弹窗（下拉选择） ============ -->
+  <div class="modal-mask" id="batchCatMask">
+    <div class="modal-box">
+      <button class="modal-close-x" data-close="batchCatMask">×</button>
+      <h2 class="modal-title">批量改分类</h2>
+      <div style="font-size:13px;color:#666;margin-bottom:12px;">选择目标分类，将选中的资源移动到该分类下</div>
+      <div class="cat-picker" id="batchCatPicker" style="margin-bottom:16px;"><input type="hidden" id="batchCatSelect" value="0" /><div class="cat-picker-display" id="batchCatDisplay"><span class="cpd-text">请选择目标分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="batchCatPanel"></div></div>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="batchCatOk">确定</button>
+        <button class="modal-close" data-close="batchCatMask">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 通用输入弹窗 ============ -->
+  <div class="modal-mask" id="inputMask" style="z-index:6002;">
+    <div class="modal-box">
+      <button class="modal-close-x" data-close="inputMask">×</button>
+      <h2 class="modal-title" id="inputTitle">请输入</h2>
+      <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
+      <div class="input-row" id="inputRow"><input class="input" id="inputValue"  /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="inputOk">确定</button>
+        <button class="modal-close" id="inputCancel">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ R92 绑定设备管理弹窗（类型行「绑定 N」徽章进入） ============ -->
+  <div class="modal-mask" id="bindingsMask">
+    <div class="modal-box">
+      <button class="modal-close-x" data-close="bindingsMask">×</button>
+      <h2 class="modal-title" id="bindingsTitle">绑定设备</h2>
+      <div style="font-size:13px;color:var(--text-faint);margin:6px 0 12px;text-align:center;" id="bindingsSummary"></div>
+      <!-- R96 当前资源码展示行：绑满自动换码后从这里拿最新码发给访客
+           R100（用户回退 R98）：复制按键恢复——点按键复制 + 点码文本也能复制，两个都行 -->
+      <div id="bindingsCode" style="display:none;font-size:13px;margin:0 0 12px;align-items:center;gap:8px;">
+        <span style="color:var(--text-faint);">当前资源码</span>
+        <button type="button" class="row-btn" id="bindingsCodeVal" style="font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);" title="点击复制并发新码"></button>
+        <button type="button" class="row-btn" id="bindingsCodeCopy" style="margin-left:auto;">复制并发新码</button>
+      </div>
+      <!-- R223：资源码与绑定合并平铺表（老板定稿 8 列；一行=一台绑定设备，码信息每行填满，
+           未绑定的码独占一行设备列显「—」；老绑定无码记录显示「早期绑定」） -->
+      <div id="bindingsScroll" style="max-height:46vh;overflow:auto;">
+        <table class="stat-table" id="bindingsTable">
+          <thead><tr><th>资源码</th><th>有效状态</th><th>发放时间</th><th>设备</th><th>绑定时间</th><th>最近访问</th><th>操作</th></tr></thead>
+          <tbody id="bindingsRows"></tbody>
+        </table>
+      </div>
+      <!-- R223：分页（复用全站 buildUniPager，每页 20 条） -->
+      <div id="bindingsPager" style="margin-top:8px;"></div>
+      <div class="modal-footer">
+        <button class="modal-close" data-close="bindingsMask">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 资源类型编辑弹窗 ============ -->
+  <div class="modal-mask" id="variantMask">
+    <div class="modal-box modal-wide">
+      <button class="modal-close-x" data-close="variantMask">×</button>
+      <h2 class="modal-title" id="variantModalTitle">新增类型</h2>
+      <div class="form">
+        <label>类型名称 <span class="label-hint">如：基础版 / 高级版 / 单月卡</span></label><input id="vName" />
+        <!-- R148（用户 01:50）：类型名称输入框下新增类型标题——前台资源类型信息栏第一行黑字显示此内容，留空回退类型名称 -->
+        <label>类型标题 <span class="label-hint">留空显示类型名称</span></label><input id="vTitle" />
+        <label>类型描述 <span class="label-hint">支持文字、图片、视频、超链接</span></label>
+        <div class="rte-toolbar rte-collapsed" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
+          <select class="rte-select" data-cmd="fontName" data-target="vDescEditor" title="字体">
+            <option value="">字体</option>
+            <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
+            <option value="SimSun" style="font-family:SimSun,serif">宋体</option>
+            <option value="SimHei" style="font-family:SimHei,sans-serif">黑体</option>
+            <option value="KaiTi" style="font-family:KaiTi,serif">楷体</option>
+            <option value="FangSong" style="font-family:FangSong,serif">仿宋</option>
+            <option value="LiSu" style="font-family:LiSu">隶书</option>
+            <option value="YouYuan" style="font-family:YouYuan">幼圆</option>
+          </select>
+          <select class="rte-select" data-cmd="fontSize" data-target="vDescEditor" title="字号">
+            <option value="">字号</option>
+            <option value="1" style="font-size:10px">小</option>
+            <option value="2" style="font-size:13px">偏小</option>
+            <option value="3" style="font-size:16px">正常</option>
+            <option value="4" style="font-size:18px">大</option>
+            <option value="5" style="font-size:24px">特大</option>
+            <option value="6" style="font-size:32px">超大</option>
+            <option value="7" style="font-size:44px">巨大</option>
+          </select>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="vDescEditor" title="文字颜色"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 14.5l4.5-10 4.5 10"/><line x1="6.5" y1="10.8" x2="11.5" y2="10.8"/><line x1="3" y1="18.5" x2="21" y2="18.5" stroke-width="2.6"/></svg></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="vDescEditor" title="背景颜色"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11L11 3 3.5 10.5a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L19 11z"/><line x1="11.5" y1="2.5" x2="8.5" y2="5.5"/><path d="M21 16s-2 2.2-2 3.5a2 2 0 0 0 4 0c0-1.3-2-3.5-2-3.5z"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="vDescEditor" title="插入表情"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg></button>
+          <button type="button" class="rte-btn rte-quote-btn" data-editor="vDescEditor" title="引用块"><span class="rte-glyph">【</span></button>
+          <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="vDescEditor" title="插入分割线">—</button>
+          <button type="button" class="rte-btn rte-table-btn" data-editor="vDescEditor" title="插入表格"><span class="rte-glyph">▦</span></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="vDescRteLink" title="插入超链接"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+          <button type="button" class="rte-btn" id="vDescRteImg" title="插入网络图片或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
+          <button type="button" class="rte-btn" id="vDescRteVideo" title="插入网络视频或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="vDescEditor" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="vDescEditor" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="vDescEditor" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vDescEditor" title="删除线"><s>S</s></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vDescEditor" title="左对齐">←</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vDescEditor" title="居中">↔</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vDescEditor" title="右对齐">→</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vDescEditor" title="无序列表">•</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vDescEditor" title="有序列表">1</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="vDescEditor" title="插入复选框"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="undo" data-target="vDescEditor" title="撤销"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+          <button type="button" class="rte-btn" data-cmd="redo" data-target="vDescEditor" title="重做"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="vDescFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vDescEditor" title="清除格式">✕</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vDescEditor" title="放大编辑"><svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button></span>
+              <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+        </div>
+        <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;"></div>
+        <div class="rte-count" data-for="vDescEditor">已输入 0 字</div>
+        <label class="checkbox-row"><input type="checkbox" id="vHidden" /> 隐藏该类型（资源页不显示，仅管理页可见）</label>
+
+        <label>专属客服链接 <span class="label-hint">可不填，默认用资源/全局客服</span></label><input id="vContactUrl" />
+        <label>类型价格 <span class="label-hint">不填或 0 则用资源价格</span></label>
+        <input id="vPrice" type="number" step="0.01" min="0" />
+        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="vSort" type="number" value="0" />
+        <label>资源码 <span class="label-hint">可不填，访客咨询客服后获取</span></label>
+        <input id="vResourceCode" />
+        <label>绑定设备上限 <span class="label-hint">最多可绑定台数，默认 1</span></label>
+        <input id="vBindLimit" type="number" min="1" step="1" value="1" />
+        <label>资源码专属内容（支持文字/链接/图片/视频）</label>
+        <div class="rte-toolbar rte-collapsed" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
+          <select class="rte-select" data-cmd="fontName" data-target="vContentEditor" title="字体">
+            <option value="">字体</option>
+            <option value="Microsoft YaHei" style="font-family:'Microsoft YaHei',sans-serif">微软雅黑</option>
+            <option value="SimSun" style="font-family:SimSun,serif">宋体</option>
+            <option value="SimHei" style="font-family:SimHei,sans-serif">黑体</option>
+            <option value="KaiTi" style="font-family:KaiTi,serif">楷体</option>
+            <option value="FangSong" style="font-family:FangSong,serif">仿宋</option>
+            <option value="LiSu" style="font-family:LiSu">隶书</option>
+            <option value="YouYuan" style="font-family:YouYuan">幼圆</option>
+          </select>
+          <select class="rte-select" data-cmd="fontSize" data-target="vContentEditor" title="字号">
+            <option value="">字号</option>
+            <option value="1" style="font-size:10px">小</option>
+            <option value="2" style="font-size:13px">偏小</option>
+            <option value="3" style="font-size:16px">正常</option>
+            <option value="4" style="font-size:18px">大</option>
+            <option value="5" style="font-size:24px">特大</option>
+            <option value="6" style="font-size:32px">超大</option>
+            <option value="7" style="font-size:44px">巨大</option>
+          </select>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="foreColor" data-editor="vContentEditor" title="文字颜色"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 14.5l4.5-10 4.5 10"/><line x1="6.5" y1="10.8" x2="11.5" y2="10.8"/><line x1="3" y1="18.5" x2="21" y2="18.5" stroke-width="2.6"/></svg></button>
+          <button type="button" class="rte-btn rte-color-btn" data-color-cmd="hiliteColor" data-editor="vContentEditor" title="背景颜色"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11L11 3 3.5 10.5a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L19 11z"/><line x1="11.5" y1="2.5" x2="8.5" y2="5.5"/><path d="M21 16s-2 2.2-2 3.5a2 2 0 0 0 4 0c0-1.3-2-3.5-2-3.5z"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn rte-emoji-btn" data-editor="vContentEditor" title="插入表情"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg></button>
+          <button type="button" class="rte-btn rte-quote-btn" data-editor="vContentEditor" title="引用块"><span class="rte-glyph">【</span></button>
+          <button type="button" class="rte-btn" data-cmd="insertHorizontalRule" data-target="vContentEditor" title="插入分割线">—</button>
+          <button type="button" class="rte-btn rte-table-btn" data-editor="vContentEditor" title="插入表格"><span class="rte-glyph">▦</span></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="vContentRteLink" title="插入超链接"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+          <button type="button" class="rte-btn" id="vContentRteImg" title="插入网络图片或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
+          <button type="button" class="rte-btn" id="vContentRteVideo" title="插入网络视频或从电脑上传"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="bold" data-target="vContentEditor" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" data-target="vContentEditor" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" data-target="vContentEditor" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" data-target="vContentEditor" title="删除线"><s>S</s></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="justifyLeft" data-target="vContentEditor" title="左对齐">←</button>
+          <button type="button" class="rte-btn" data-cmd="justifyCenter" data-target="vContentEditor" title="居中">↔</button>
+          <button type="button" class="rte-btn" data-cmd="justifyRight" data-target="vContentEditor" title="右对齐">→</button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="insertUnorderedList" data-target="vContentEditor" title="无序列表">•</button>
+          <button type="button" class="rte-btn" data-cmd="insertOrderedList" data-target="vContentEditor" title="有序列表">1</button>
+          <button type="button" class="rte-btn rte-check-btn" data-editor="vContentEditor" title="插入复选框"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" data-cmd="undo" data-target="vContentEditor" title="撤销"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+          <button type="button" class="rte-btn" data-cmd="redo" data-target="vContentEditor" title="重做"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+          </span><span class="rte-group">
+          <button type="button" class="rte-btn" id="vContentFormatBrush" title="格式刷"><svg class="rte-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-1.2 1.72-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
+          <button type="button" class="rte-btn" data-cmd="removeFormat" data-target="vContentEditor" title="清除格式">✕</button>
+          <button type="button" class="rte-btn rte-zoom" data-editor="vContentEditor" title="放大编辑"><svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button></span>
+              <button type="button" class="rte-expand" title="展开工具栏"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+        </div>
+        <div class="rte-editor" id="vContentEditor" contenteditable="true" style="min-height:80px;max-height:200px;border-radius:0 0 8px 8px;"></div>
+        <div class="rte-count" data-for="vContentEditor">已输入 0 字</div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="variantOk">确定</button>
+        <button class="modal-close" id="variantCancel">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 通用确认弹窗 ============ -->
+  <div class="modal-mask" id="confirmMask">
+    <div class="modal-box">
+      <button class="modal-close-x" data-close="confirmMask">×</button>
+      <h2 class="modal-title" id="confirmTitle">确认操作</h2>
+      <div id="confirmMsg" style="font-size:14px;color:#666;line-height:1.7;margin-bottom:20px;text-align:left;"></div>
+      <div class="modal-footer">
+        <button class="modal-inner-btn" id="confirmOk">确定</button>
+        <button class="modal-close" id="confirmCancel">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 资源预览弹窗（资源页效果） ============ -->
+  <div class="modal-mask" id="previewMask">
+    <div class="modal-box preview-box" style="padding:0;">
+      <button class="modal-close-x" id="previewCloseX">×</button>
+      <!-- R10 预览弹窗分享键（左上角，与×成对角）：与资源页弹窗同款转发图标，一套逻辑两处生效 -->
+      <button class="modal-share-x" id="previewShareX" type="button" title="分享资源" aria-label="分享资源">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 17 20 12 15 7"></polyline>
+          <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
+        </svg>
+      </button>
+      <!-- R256：封面轮播 -->
+      <div class="cover-carousel" id="previewCarousel" style="display:none;">
+        <div class="cc-track" id="previewCcTrack"></div>
+        <div class="cc-dots" id="previewCcDots"></div>
+      </div>
+      <img class="preview-cover" id="previewCover" alt="" decoding="async" />
+      <div class="preview-body">
+      <div class="preview-skeleton" id="previewSkeleton" aria-hidden="true">
+        <div class="pv-skel-title sk-piece"></div>
+        <div class="pv-skel-price sk-piece"></div>
+        <div class="pv-skel-desc sk-piece"></div>
+        <div class="pv-skel-desc sk-piece w80"></div>
+      </div>
+        <div class="preview-title-row">
+          <div class="preview-title" id="previewTitle"></div>
+          <div class="preview-price" id="previewPrice"></div>
+        </div>
+        <div class="preview-desc" id="previewDesc"></div>
+        <div class="preview-detail" id="previewDetail"></div>
+        <!-- 类型切换（R15：与资源页 variant-tabs / variant-detail 同款结构样式） -->
+        <div id="previewVariantWrap" style="display:none;">
+          <div id="previewVariantTabs" class="variant-tabs"></div>
+          <div id="previewVariantDetail" class="variant-detail"></div>
+          <!-- R158（用户 22:42）：预览同步资源页「资源码解锁区」——所见即所得；解锁为本地比对（不调接口/不写绑定/不换码） -->
+          <div class="resource-code-section" id="pvResourceSection" style="display:none">
+            <div class="resource-code-header">
+              <svg class="resource-code-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span id="pvResourceTitle">输入资源码获取专属内容</span>
+            </div>
+            <div class="resource-code-input-row" id="pvResourceInputRow">
+              <input type="text" class="resource-code-input" id="pvResourceCodeInput"  />
+              <button class="resource-code-btn" id="pvResourceCodeBtn" type="button">解锁</button>
+            </div>
+            <div class="resource-code-error" id="pvResourceError" style="display:none">资源码错误，请重试</div>
+            <div class="resource-content" id="pvResourceContent" style="display:none"></div>
+          </div>
+        </div>
+        <div class="modal-footer preview-footer">
+          <button type="button" id="previewContactBtn" class="preview-cta">咨询客服</button>
+          <button type="button" class="preview-close-btn">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/ui-common.js"></script>
+  <script src="/assets/qrcode.min.js"></script>
+  <script src="/assets/admin.js"></script>
+  <script>window.addEventListener('pageshow', function (e) { if (e.persisted) { try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} window.location.reload(); } });</script>
+  <!-- 独立兜底登录脚本：仅当主脚本解析/加载失败时接管登录（双保险，不覆盖主脚本的正常 doLogin） -->
+  <script>
+  // 兜底事件绑定：主脚本若整块解析失败（语法错误等），登录按钮/回车仍可用
+  document.addEventListener('click', function (e) { var b = e.target && e.target.closest ? e.target.closest('#loginBtn') : null; if (b && !window.__loginDirect && typeof window.doLogin === 'function') { try { window.doLogin(); } catch (err) {} } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var ae = document.activeElement; if (ae && (ae.id === 'loginUser' || ae.id === 'loginPass') && !window.__loginDirect && typeof window.doLogin === 'function') { try { window.doLogin(); } catch (err) {} } } });
+  window.doLogin = window.doLogin || function () {
+    var u = document.getElementById('loginUser');
+    var p = document.getElementById('loginPass');
+    var btn = document.getElementById('loginBtn');
+    if (!u || !p || !btn) return;
+    var uv = (u.value || '').trim();
+    var pv = p.value || '';
+    if (!uv || !pv) { if (window.showAlert) window.showAlert('请输入账号和密码'); else alert('请输入账号和密码'); return; }
+    btn.disabled = true; btn.textContent = '登录中…';
+    fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: uv, password: pv }) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.ok) {
+          try { localStorage.setItem('wnzyq_token', res.token); } catch (e) {}
+          window.location.reload();
+        } else { if (window.showAlert) window.showAlert((res && res.msg) || '登录失败'); else alert((res && res.msg) || '登录失败'); }
+      })
+      .catch(function () { var _l = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; var _m = _l ? '本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev' : '无法连接后端，请确认已部署到 Cloudflare'; if (window.showAlert) window.showAlert(_m); else alert(_m); })
+      .then(function () { btn.disabled = false; btn.textContent = '登 录'; });
+  };
+  </script>
+  <script>
+  (function () {
+    function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML');
+        var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
+        if (!ok) warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
+      }, 800);
+    });
+  })();
+  </script>
+</body>
+</html>
