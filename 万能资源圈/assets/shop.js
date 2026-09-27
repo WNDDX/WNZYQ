@@ -2304,6 +2304,9 @@
     // 视图切换（网格/列表）；R211 二批（用户 09-20 老板点名）：FLIP 平滑飞位——按钮点击路径走 FlipAnimator，
     // 卡片从旧位置飞到新位置；初始化恢复视图不触发动画；FLIP 不可用/系统减少动效时回退原容器切换动画
     var currentView = localStorage.getItem('shop_view') || 'list';
+    // R277：首帧即给骨架屏容器加正确模式类，避免静态骨架形状与当前模式不符（R255 静态骨架存在时 renderSkeleton 不执行）
+    var _grid = document.getElementById('productGrid');
+    if (_grid) _grid.classList.toggle('list-view', currentView === 'list');
     var __shopFlipper = null;
 
     function setShopView(view) {

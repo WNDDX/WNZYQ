@@ -187,7 +187,7 @@ if ('serviceWorker' in navigator) {
     }
     im.src = src;
     if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
-    im.style.cssText = 'max-width:92%;max-height:92%;object-fit:contain;border-radius:8px;transition:transform .05s linear;' + (isVideo ? 'width:92%;aspect-ratio:16/9;background:#000;' : '');
+    im.style.cssText = 'width:min(90vw,1200px);height:min(90vh,800px);object-fit:contain;border-radius:8px;transition:transform .05s linear;' + (isVideo ? 'width:min(90vw,1200px);aspect-ratio:16/9;background:#000;' : '');
     __lbMask.appendChild(im);
     __lbScale = 1;
     window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
@@ -1031,7 +1031,7 @@ window.__copyOk = function (el) {
     }
   }
   var _fetch = window.fetch.bind(window);
-  var __MUTE_URLS = /\/api\/track\b|\/api\/health\b|\/api\/cleanup\b/;
+  var __MUTE_URLS = /\/api\/track\b|\/api\/health\b|\/api\/cleanup\b|\/api\/unlock\b/;
   window.fetch = function () {
     var p;
     try { p = _fetch.apply(window, arguments); } catch (e) { throw e; }

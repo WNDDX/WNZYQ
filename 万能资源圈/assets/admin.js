@@ -3917,13 +3917,9 @@ document.addEventListener('click', function (e) {
       img.alt = '';
       img.decoding = 'async';
       img.style.opacity = '0';
-      img.style.cursor = 'zoom-in';
       img.onload = function () { img.style.opacity = '1'; };
       img.onerror = function () { img.style.opacity = '1'; item.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; };
-      // R273：编辑弹窗缩略图点击放大
-      img.addEventListener('click', function (e) {
-        window.openLightbox(url);
-      });
+      // R277：去掉编辑弹窗缩略图点击放大（老板要求保留右键预览大图即可，点击只保留选中行为）
       item.appendChild(img);
       if (url) { img.src = escapeHtml(url); } else { img.style.opacity = '1'; item.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; }
       if (idx === 0) {
