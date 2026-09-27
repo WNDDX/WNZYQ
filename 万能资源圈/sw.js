@@ -10,7 +10,7 @@
  *  - 任何非 200、或内容类型为 HTML 的 /assets 响应一律不缓存（防止错误页伪装成脚本/样式）。
  */
 // R270（用户 09-27 17:30）：sw 缓存版本升级到 v267（封面图保存链路修复 + 预览弹窗轮播同步）。
-const CACHE_NAME = 'wnzyq-v269'; // R272
+const CACHE_NAME = 'wnzyq-v273'; // R276
 
 const STATIC_ASSETS = [
   './',

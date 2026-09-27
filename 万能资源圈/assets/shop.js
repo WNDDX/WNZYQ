@@ -800,8 +800,14 @@
         img.alt = '';
         img.decoding = 'async';
         img.style.opacity = '0';
+        img.style.cursor = 'zoom-in';
         img.onload = function () { img.style.opacity = '1'; };
         img.onerror = function () { img.style.opacity = '1'; img.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; };
+        // R273：轮播图点击放大（拖动时抑制 click）
+        img.addEventListener('click', function (e) {
+          if (trackEl.__ccDragged) { trackEl.__ccDragged = false; return; }
+          window.openLightbox(url);
+        });
         slide.appendChild(img);
         img.src = escapeHtml(url);
         trackEl.appendChild(slide);
@@ -834,8 +840,8 @@
       carouselEl.addEventListener('touchstart', pause, { passive: true });
       carouselEl.addEventListener('touchend', resume);
       var startX = 0, isDragging = false;
-      trackEl.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; isDragging = true; trackEl.classList.add('dragging'); }, { passive: true });
-      trackEl.addEventListener('touchmove', function (e) { if (!isDragging) return; var dx = e.touches[0].clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; }, { passive: true });
+      trackEl.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; isDragging = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); }, { passive: true });
+      trackEl.addEventListener('touchmove', function (e) { if (!isDragging) return; trackEl.__ccDragged = true; var dx = e.touches[0].clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; }, { passive: true });
       trackEl.addEventListener('touchend', function (e) {
         isDragging = false; trackEl.classList.remove('dragging');
         var dx = (e.changedTouches[0] || e.touches[0]).clientX - startX;
@@ -843,8 +849,8 @@
         else if (dx > 40) goToSlide(Math.max(currentIdx - 1, 0));
         else goToSlide(currentIdx);
       });
-      trackEl.addEventListener('mousedown', function (e) { startX = e.clientX; isDragging = true; trackEl.classList.add('dragging'); e.preventDefault(); });
-      trackEl.addEventListener('mousemove', function (e) { if (!isDragging) return; var dx = e.clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; });
+      trackEl.addEventListener('mousedown', function (e) { startX = e.clientX; isDragging = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); e.preventDefault(); });
+      trackEl.addEventListener('mousemove', function (e) { if (!isDragging) return; trackEl.__ccDragged = true; var dx = e.clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; });
       trackEl.addEventListener('mouseup', function (e) {
         isDragging = false; trackEl.classList.remove('dragging');
         var dx = e.clientX - startX;
@@ -866,11 +872,13 @@
       // R256：详情弹窗封面轮播
       var _covArr = Array.isArray(p.coverImages) ? p.coverImages : (p.img ? [p.img] : []);
       renderCarousel(document.getElementById('modalCarousel'), document.getElementById('modalCcTrack'), document.getElementById('modalCcDots'), modalCover, _covArr);
-      // 单图回退：保持原有 lightbox 行为
+      // R273：单图回退条件化——多图时 modalCover 由 renderCarousel 隐藏，不再被 loadImg 翻回来
       var _mainImg = _covArr[0] || p.img || '';
-      loadImg(modalCover, _mainImg);
-      modalCover.style.cursor = 'zoom-in';
-      modalCover.onclick = function () { if (_mainImg) window.openLightbox(_mainImg); };
+      if (_covArr.length <= 1) {
+        loadImg(modalCover, _mainImg);
+        modalCover.style.cursor = 'zoom-in';
+        modalCover.onclick = function () { if (_mainImg) window.openLightbox(_mainImg); };
+      }
       modalTitle.textContent = p.title || '';
       modalDesc.textContent = p.desc || '';
 
@@ -1705,6 +1713,8 @@
     function renderSkeleton() {
       productGrid.innerHTML = '';
       emptyTip.classList.remove('show');
+      // R273：骨架屏跟随当前显示模式（网格/列表）
+      productGrid.classList.toggle('list-view', currentView === 'list');
       var frag = document.createDocumentFragment();
       for (var i = 0; i < PAGE_SIZE; i++) {
         var sk = document.createElement('div');
@@ -1787,17 +1797,25 @@
           new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, ms); }),
         ]);
       }
+      // R276：快照旧数据，后台拉齐后 diff——没变不渲染，有变才悄悄换新
+      var _oldProducts = JSON.stringify(DATA.products || []);
+      var _oldCategories = JSON.stringify(DATA.categories || []);
+      var _oldAnn = DATA.announcement;
+      var _oldAnnMode = DATA.announcementMode;
+      var _oldShopName = DATA.shopName;
       Promise.all([
         withTimeout(__dedupFetch('/api/products' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
         withTimeout(__dedupFetch('/api/categories' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
         withTimeout(__dedupFetch('/api/settings' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000)
       ]).then(function (res) {
+        var _changed = false;
         if (res[0] && res[0].ok && res[1] && res[1].ok) {
           DATA.products = res[0].list || [];
           DATA.categories = res[1].list || [];
           usingRemote = true;
           // 存 localStorage 缓存（R243 条35：比对后写）
           __setShopCache('wnzyq_shop_data', { products: DATA.products, categories: DATA.categories });
+          if (JSON.stringify(DATA.products) !== _oldProducts || JSON.stringify(DATA.categories) !== _oldCategories) _changed = true;
         }
         if (res[2] && res[2].ok) {
           DATA.announcement = (res[2].settings || {}).announcement || '';
@@ -1817,10 +1835,12 @@
             if (DATA.shopName) cacheData.shop_name = DATA.shopName;
             __setShopCache('wnzyq_shop_data', cacheData);
           } catch (e) {}
+          if (DATA.announcement !== _oldAnn || DATA.announcementMode !== _oldAnnMode || DATA.shopName !== _oldShopName) _changed = true;
         }
-        // 无论成功失败，都渲染一次（显示资源或空状态）
+        // 骨架期或数据有变才渲染；无变纹丝不动（R276 第三步）
+        var _wasSkel = !!window.__skelPhase;
         if (window.__skelPhase) { window.__skelPhase = false; if (!DATA.products.length) loadFallback(); } /* R193 方案A：骨架期结束——远端没数据时 config 兜底 */
-        renderAll();
+        if (_changed || _wasSkel) renderAll();
         // R243 条32：记录成功拉取时间
         window.__lastFetchTime = Date.now();
         // R10 分享链接：远端数据已到，处理 ?pid= 自动打开资源弹窗（此数据源可信，查不到则提示失效）
@@ -2303,6 +2323,9 @@
         gridBtn.classList.add('active');
         listBtn.classList.remove('active');
       }
+      // R273：切换视图时若骨架在显示中，同步重绘为新模式骨架
+      var hasSkel = grid.querySelectorAll('.card-skeleton').length > 0;
+      if (hasSkel) renderSkeleton();
     }
 
     // R257：flipSetShopView 已合并到 ui-common.js flipViewSwitch，薄封装调用
@@ -2314,7 +2337,12 @@
         storageKey: 'shop_view',
         fallbackFn: setShopView,
         triggerAnim: triggerViewAnim,
-        onChange: function (v) { currentView = v; }
+        onChange: function (v) {
+          currentView = v;
+          // R273：FLIP 切换后若骨架仍在，同步重绘
+          var hasSkel = productGrid.querySelectorAll('.card-skeleton').length > 0;
+          if (hasSkel) renderSkeleton();
+        }
       });
     }
 

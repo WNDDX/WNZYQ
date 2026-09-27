@@ -299,6 +299,30 @@
       catExpanded: {}, prodSelected: {}, catSelected: {},       // 分类展开/收起状态 + 资源/分类勾选（切换标签后保留）
     };
 
+    // R276：admin 页 sessionStorage 缓存（刷新秒显 + 后台 diff 更新）
+    function __getAdminCache() {
+      try { var c = JSON.parse(sessionStorage.getItem('wnzyq_admin_data') || '{}'); return c || {}; } catch (e) { return {}; }
+    }
+    function __setAdminCache(obj) {
+      try { sessionStorage.setItem('wnzyq_admin_data', JSON.stringify(obj)); } catch (e) {}
+    }
+    function __saveAdminState() {
+      __setAdminCache({
+        products: state.products,
+        categories: state.categories,
+        settings: state.settings || {},
+        statsOverview: state.statsOverview,
+        statsOverviewPrev: state.statsOverviewPrev,
+        statsTrend: state.statsTrend,
+        statsTrendPrev: state.statsTrendPrev,
+        statsDays: state.statsDays,
+        statByProduct: state.statByProduct,
+        statByCategory: state.statByCategory,
+        statRecent: state.statRecent,
+        timestamp: Date.now()
+      });
+    }
+
     // ---------- toast 轻提示 ----------
     /* R231（用户 09-21 23:38）条11：跟资源页同款队列——抽公共到 ui-common.js window.uiToast
        （排队逐条展示，每条 2s + 0.3s 淡出），观感 .ui-toast 公共类带下落入场；
@@ -743,8 +767,35 @@
       try { setTimeout(function () { if (window.__restoreEditingDraft) window.__restoreEditingDraft(); }, 200); } catch (e) {}
       function _safe(fn) { try { fn(); } catch (e) { /* R213 P2⑤：调试日志已删（隔离逻辑保留） */ } }
       window.__plS = 1; window.__plC = 1; window.__plP = 1;
+      // R276：先读 sessionStorage 缓存，刷新时秒显上一次内容
+      var _cache = __getAdminCache();
+      var _hasCache = _cache.products && _cache.products.length && _cache.timestamp && (Date.now() - _cache.timestamp < 600000);
+      if (_hasCache) {
+        state.products = _cache.products || [];
+        state.categories = _cache.categories || [];
+        state.settings = _cache.settings || {};
+        state.statsOverview = _cache.statsOverview;
+        state.statsOverviewPrev = _cache.statsOverviewPrev;
+        state.statsTrend = _cache.statsTrend;
+        state.statsTrendPrev = _cache.statsTrendPrev;
+        state.statsDays = _cache.statsDays || 1;
+        state.statByProduct = _cache.statByProduct;
+        state.statByCategory = _cache.statByCategory;
+        state.statRecent = _cache.statRecent;
+        // 恢复 __statsCache，切日期时秒开
+        var _sd = state.statsDays || 1;
+        __statsCache[_sd] = { end: __bjToday(), res: { ok: true, overview: state.statsOverview, overview_prev: state.statsOverviewPrev, trend: state.statsTrend, trend_prev: state.statsTrendPrev, byProduct: state.statByProduct, byCategory: state.statByCategory, recent: state.statRecent } };
+        // R276：恢复 bindingsCache，点开码与绑定弹窗秒开
+        __loadBindingsCache();
+        // 有缓存：秒显上一次内容
+        _safe(function () { renderProducts(); });
+        _safe(function () { renderCategories(state.categories); });
+        _safe(function () { if (state.statsOverview) { __updateStatTitles(); renderStatCards(state.statsOverview, state.statsOverviewPrev); renderLineChart(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null); renderTrendBars(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null); renderStatTables(); } });
+        _safe(function () { if (state.settings) { document.getElementById('setContactUrl').value = state.settings.contact_url || ''; document.getElementById('annMode').value = state.settings.announcement_mode || 'always'; syncSelectDisplay(document.getElementById('annMode')); } });
+      }
       // 修复：移除重复的 loadCategories 调用（原先同一接口被请求两次，浪费请求且可能返回不一致）
-      _safe(loadStats);
+      // R276：登录后一次性拉齐，后台刷新（有缓存时 silent/无缓存时正常）
+      _safe(function () { loadStats(null, null, 1, _hasCache ? 1 : 0); });
       _safe(loadSettings);
       _safe(loadProducts);
       _safe(loadCategories);
@@ -808,6 +859,8 @@
         // R135：记录已保存的显示频率——取消/×/关闭（丢弃）时据此恢复，不再保留未保存的选中值
         if (typeof stateAnn !== 'undefined' && stateAnn) stateAnn._modeSaved = s.announcement_mode || 'always';
         // R106：资源码绑定设备上限已挪到类型编辑表单（类型级），设置面板不再回填/保存该值
+        state.settings = s;
+        __saveAdminState();
       });
     }
 
@@ -950,6 +1003,15 @@
         state.products = res.list || [];
         renderProducts();
         prefetchBindings(); // R114：随产品列表一起静默预载全部类型绑定数据，点「绑定 N」即开即显
+        // R276：一次性拉齐——后台并行预载所有资源的类型（variants），点开编辑弹窗秒开
+        var _vp = (state.products || []).map(function (p) {
+          if (!p.id || Array.isArray(p.variants)) return Promise.resolve();
+          return api('admin/variants?product_id=' + p.id).then(function (vr) {
+            if (vr && vr.ok) p.variants = vr.list || [];
+          }).catch(function () {});
+        });
+        Promise.all(_vp).then(function () { __saveAdminState(); });
+        __saveAdminState();
       });
     }
 
@@ -3855,8 +3917,13 @@ document.addEventListener('click', function (e) {
       img.alt = '';
       img.decoding = 'async';
       img.style.opacity = '0';
+      img.style.cursor = 'zoom-in';
       img.onload = function () { img.style.opacity = '1'; };
       img.onerror = function () { img.style.opacity = '1'; item.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; };
+      // R273：编辑弹窗缩略图点击放大
+      img.addEventListener('click', function (e) {
+        window.openLightbox(url);
+      });
       item.appendChild(img);
       if (url) { img.src = escapeHtml(url); } else { img.style.opacity = '1'; item.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; }
       if (idx === 0) {
@@ -4247,7 +4314,7 @@ document.addEventListener('click', function (e) {
     // 与 R248 的 localStorage 刷新保护并存：那是防自动刷新，这是主动关窗暂存，两套互不干扰。
     function annStash() {
       try { flushAnnEdit(); } catch (e) {} // 内容写回 stateAnn.list[curId]，选中项 curId / 频率 annMode 的 DOM 值原样保留
-      stateAnn._stashed = true; // 供下次打开时提示「已恢复未保存的编辑」
+      stateAnn._stashed = true; // 供下次打开时恢复草稿（R274 去掉提示，恢复逻辑保留）
       try { document.getElementById('annMask').classList.remove('open'); } catch (e) {}
     }
     window.__annStash = annStash;
@@ -4275,7 +4342,7 @@ document.addEventListener('click', function (e) {
         // R257：点外暂存后重开——选中项恢复到离开时编辑的那条（stateAnn.curId 保留在内存），
         // 内容已由 annStash flush 进 list，selectAnnItem 载入即回到离开时的样子
         try { renderAnnList(); var _sel0 = (stateAnn.curId && stateAnn.list.some(function (x) { return x.id === stateAnn.curId; })) ? stateAnn.curId : ((stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]).id); stateAnn._draftRestored = false; selectAnnItem(_sel0); } catch (e) {}
-        if (stateAnn._stashed) { stateAnn._stashed = false; try { toast('已恢复未保存的编辑', 'info', 2500); } catch (e) {} } // R257：轻提示一次
+        if (stateAnn._stashed) { stateAnn._stashed = false; } // R274（用户 09-27 18:49）：去掉恢复提示，状态复位保留
       }
       if (!stateAnn.loaded) {
         api('admin/settings').then(function (res) {
@@ -4753,9 +4820,11 @@ document.addEventListener('click', function (e) {
     // R114（无感预载）：登录后随产品列表一起静默预载全部类型绑定数据，点「绑定 N」徽章
     // 弹窗即开即显；打开后仍后台刷新一次保最新（refreshBindings 成功会回写缓存）。
     var __bindingsCache = {};
+    function __saveBindingsCache() { try { sessionStorage.setItem('wnzyq_admin_bindings', JSON.stringify(__bindingsCache)); } catch (e) {} }
+    function __loadBindingsCache() { try { var b = JSON.parse(sessionStorage.getItem('wnzyq_admin_bindings') || '{}'); if (b && Object.keys(b).length) __bindingsCache = b; } catch (e) {} }
     function prefetchBindings() {
       api('admin/bindings?prefetch=1').then(function (res) {
-        if (res && res.ok && res.map) __bindingsCache = res.map;
+        if (res && res.ok && res.map) { __bindingsCache = res.map; __saveBindingsCache(); }
       });
     }
     var _bindingsPage = 1; /* R223：合并平铺表当前页（弹窗内翻页不关弹窗） */
@@ -4954,6 +5023,7 @@ document.addEventListener('click', function (e) {
           return;
         }
         __bindingsCache[variantId] = res;
+        __saveBindingsCache();
         var _open = document.getElementById('bindingsMask').classList.contains('open');
         if (_open && _bindingsVariant && _bindingsVariant.id === variantId) renderBindings(res);
       });
@@ -5700,6 +5770,7 @@ document.addEventListener('click', function (e) {
 
         // 三个统计表（含最近浏览）已在上方统一交给 renderStatTables 渲染：全量数据 + 一页 20 条翻页
         // R272：加载圈已删除，无需再隐藏。
+        __saveAdminState();
     }
     /* R238（用户 09-22 17:37 派单）：后台静默刷新专用渲染——六卡+两图照常重渲染（无全页动画），
        三表逐张与当前数据比对：没变的不碰（不销毁、错峰淡入不重放，R235 onlyKey 口径），
@@ -5733,6 +5804,7 @@ document.addEventListener('click', function (e) {
       state.statsByProduct = res.byProduct || [];
       renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
       renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
+      __saveAdminState();
       // R272：加载圈已删除，无需再隐藏。
     }
 
@@ -5915,7 +5987,9 @@ document.addEventListener('click', function (e) {
         state.categories = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }));
 refreshCatCnts();
         window.__catSkelP = false;
-        renderCategories(state.categories); return res;
+        renderCategories(state.categories);
+        __saveAdminState();
+        return res;
       });
       // 修复（P0）：此前漏了 return，首次调用返回 undefined，loadProducts 的 (window.__catLoading || loadCategories()).then(...)
       // 直接抛 "Cannot read properties of undefined (reading 'then')"，导致资源列表/全选/分类筛选全部失效
@@ -6717,6 +6791,12 @@ refreshCatCnts();
       // 修法→删掉旧分叉，预览弹窗封面完全走 renderCarousel（与资源页弹窗同源函数，老板要求「以资源页为标准、绑定同步」）
       var _pCovArr = window.__coverImages ? window.__coverImages() : (fImg.value.trim() ? [fImg.value.trim()] : []);
       renderCarousel(document.getElementById('previewCarousel'), document.getElementById('previewCcTrack'), document.getElementById('previewCcDots'), document.getElementById('previewCover'), _pCovArr);
+      // R273：预览弹窗单图回退条件化——多图时 previewCover 由 renderCarousel 隐藏
+      var pc = document.getElementById('previewCover');
+      if (_pCovArr.length <= 1) {
+        pc.style.cursor = 'zoom-in';
+        pc.onclick = function () { if (pc.src) window.openLightbox(pc.src); };
+      }
       // 渲染类型切换
       var wrap = document.getElementById('previewVariantWrap');
       var tabs = document.getElementById('previewVariantTabs');
@@ -6744,9 +6824,6 @@ refreshCatCnts();
         wrap.style.display = 'none';
       }
       renderPreviewVariant();
-      var pc = document.getElementById('previewCover');
-      pc.style.cursor = 'zoom-in';
-      pc.onclick = function () { if (pc.src) window.openLightbox(pc.src); };
       bindLightbox(document.getElementById('previewDetail'));
       bindLightbox(document.getElementById('previewVariantDetail'));
       document.getElementById('previewMask').classList.add('open');
@@ -6844,8 +6921,14 @@ refreshCatCnts();
         img.alt = '';
         img.decoding = 'async';
         img.style.opacity = '0';
+        img.style.cursor = 'zoom-in';
         img.onload = function () { img.style.opacity = '1'; };
         img.onerror = function () { img.style.opacity = '1'; img.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; };
+        // R273：轮播图点击放大（拖动时抑制 click）
+        img.addEventListener('click', function (e) {
+          if (trackEl.__ccDragged) { trackEl.__ccDragged = false; return; }
+          window.openLightbox(url);
+        });
         slide.appendChild(img);
         img.src = escapeHtml(url);
         trackEl.appendChild(slide);
@@ -6878,8 +6961,8 @@ refreshCatCnts();
       carouselEl.addEventListener('touchstart', pause, { passive: true });
       carouselEl.addEventListener('touchend', resume);
       var startX = 0, isDragging = false;
-      trackEl.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; isDragging = true; trackEl.classList.add('dragging'); }, { passive: true });
-      trackEl.addEventListener('touchmove', function (e) { if (!isDragging) return; var dx = e.touches[0].clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; }, { passive: true });
+      trackEl.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; isDragging = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); }, { passive: true });
+      trackEl.addEventListener('touchmove', function (e) { if (!isDragging) return; trackEl.__ccDragged = true; var dx = e.touches[0].clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; }, { passive: true });
       trackEl.addEventListener('touchend', function (e) {
         isDragging = false; trackEl.classList.remove('dragging');
         var dx = (e.changedTouches[0] || e.touches[0]).clientX - startX;
@@ -6887,8 +6970,8 @@ refreshCatCnts();
         else if (dx > 40) goToSlide(Math.max(currentIdx - 1, 0));
         else goToSlide(currentIdx);
       });
-      trackEl.addEventListener('mousedown', function (e) { startX = e.clientX; isDragging = true; trackEl.classList.add('dragging'); e.preventDefault(); });
-      trackEl.addEventListener('mousemove', function (e) { if (!isDragging) return; var dx = e.clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; });
+      trackEl.addEventListener('mousedown', function (e) { startX = e.clientX; isDragging = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); e.preventDefault(); });
+      trackEl.addEventListener('mousemove', function (e) { if (!isDragging) return; trackEl.__ccDragged = true; var dx = e.clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; });
       trackEl.addEventListener('mouseup', function (e) {
         isDragging = false; trackEl.classList.remove('dragging');
         var dx = e.clientX - startX;

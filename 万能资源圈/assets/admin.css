@@ -141,8 +141,12 @@
     .pull-refresh-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2); border-top-color: var(--blue1); border-radius: 50%; animation: prspin .8s linear infinite; }
     @keyframes prspin { to { transform: rotate(360deg); } }
     .topbar {
-      background: var(--blue1); /* R141：纯色（原末尾 !important 覆盖合并进主规则） */
+      background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%); /* R275（用户 09-27 18:53）：顶部蓝条统一采用资源页版（渐变+高度） */
       box-shadow: var(--shadow-blue);
+      min-height: 60px; /* R275：桌面端对齐资源页高度（资源页有 view-toggle 40px，管理页最高 38px） */
+    }
+    @media (max-width: 600px) {
+      .topbar { max-height: 97px; overflow: hidden; } /* R275：移动端对齐资源页高度（差异来自 tabs 38px vs 搜索框 33px，截断 3px 来自 padding-bottom，视觉上不可见） */
     }
     .topbar-inner {
       max-width: 1200px; margin: 0 auto;
@@ -1802,11 +1806,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .cover-carousel .cc-track { display:flex; transition:transform 0.3s ease; }
 .cover-carousel .cc-track.dragging { transition:none; }
 .cover-carousel .cc-slide { flex:0 0 100%; display:flex; align-items:center; justify-content:center; }
-.cover-carousel .cc-slide img { max-width:100%; max-height:320px; object-fit:contain; display:block; }
+.cover-carousel .cc-slide img { max-width:100%; max-height:min(56vh, 520px); object-fit:contain; display:block; }
 .cover-carousel .cc-dots { display:flex; justify-content:center; gap:6px; padding:10px 0; }
 .cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:var(--border); cursor:pointer; }
 .cover-carousel .cc-dots .cc-dot.active { background:var(--blue1); }
 @media (max-width:600px) {
-  .cover-carousel .cc-slide img { max-height:220px; }
+  .cover-carousel .cc-slide img { max-height:min(48vh, 400px); }
 }
 

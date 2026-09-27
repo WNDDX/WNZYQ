@@ -1031,12 +1031,16 @@ window.__copyOk = function (el) {
     }
   }
   var _fetch = window.fetch.bind(window);
+  var __MUTE_URLS = /\/api\/track\b|\/api\/health\b|\/api\/cleanup\b/;
   window.fetch = function () {
     var p;
     try { p = _fetch.apply(window, arguments); } catch (e) { throw e; }
     if (!p || typeof p.then !== 'function') return p;
-    start();
-    return p.then(function (r) { finish(); return r; }, function (e) { finish(); throw e; });
+    var url = '';
+    try { url = (typeof arguments[0] === 'string') ? arguments[0] : (arguments[0] && arguments[0].url) || ''; } catch (e) {}
+    var muted = __MUTE_URLS.test(url);
+    if (!muted) start();
+    return p.then(function (r) { if (!muted) finish(); return r; }, function (e) { if (!muted) finish(); throw e; });
   };
 })();
 
