@@ -2223,7 +2223,7 @@
         title: fTitle.value.trim(),
         desc: fDesc.value.trim(),
         detail: serializeDetail(), /* R147：兜底卡还原成 video */
-        img: fImg.value.trim(),
+        img: (window.__coverMainImage ? window.__coverMainImage() : (fImg.value ? fImg.value.trim() : '')),
         cover_images: JSON.stringify(window.__coverImages ? window.__coverImages() : (fImg.value ? [fImg.value] : [])),
         detailImages: [],
         detailVideos: [],
@@ -3843,12 +3843,14 @@ document.addEventListener('click', function (e) {
 
   // R266（用户 09-27 15:08）：缩略图先隐藏占座（opacity:0），load 成功才显示，
   // error 直接换占位符，杜绝 innerHTML 直接塞 src 导致的裸闪破损图标。
+  // R271（用户 09-27 17:30）：封面图拖拽排序 + 第一张永远是主图。
   function renderCoverGallery() {
     if (!coverGallery) return;
     coverGallery.innerHTML = '';
     coverImages.forEach(function (url, idx) {
       var item = document.createElement('div');
       item.className = 'cg-item' + (idx === selectedCoverIdx ? ' active' : '');
+      item.dataset.idx = idx;
       var img = document.createElement('img');
       img.alt = '';
       img.decoding = 'async';
@@ -3870,14 +3872,51 @@ document.addEventListener('click', function (e) {
       delBtn.dataset.idx = idx;
       delBtn.textContent = '×';
       item.appendChild(delBtn);
+      // 拖拽把手（桌面 HTML5 drag + 移动 touch 长按拖拽）
+      var dragBtn = document.createElement('span');
+      dragBtn.className = 'cg-drag';
+      dragBtn.title = '拖动排序';
+      dragBtn.textContent = '⋮⋮';
+      dragBtn.draggable = true;
+      item.appendChild(dragBtn);
+      // 点击选图 / 删除
       item.addEventListener('click', function (e) {
         if (e.target.classList.contains('cg-del')) {
           e.stopPropagation();
           deleteCoverImage(parseInt(e.target.dataset.idx));
           return;
         }
+        if (e.target.classList.contains('cg-drag')) return;
         selectCoverImage(idx);
       });
+      // HTML5 桌面拖拽
+      dragBtn.addEventListener('dragstart', function (e) {
+        e.dataTransfer.setData('text/plain', String(idx));
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      dragBtn.addEventListener('dragend', function () {
+        item.classList.remove('dragging');
+        document.querySelectorAll('.cg-item').forEach(function (el) { el.classList.remove('drag-over'); });
+      });
+      item.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        item.classList.add('drag-over');
+      });
+      item.addEventListener('dragleave', function () {
+        item.classList.remove('drag-over');
+      });
+      item.addEventListener('drop', function (e) {
+        e.preventDefault();
+        item.classList.remove('drag-over');
+        var fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        var toIdx = idx;
+        if (isNaN(fromIdx) || fromIdx === toIdx) return;
+        reorderCoverImages(fromIdx, toIdx);
+      });
+      // 移动 touch 长按拖拽
+      bindCoverTouchDrag(item, dragBtn, idx);
       coverGallery.appendChild(item);
     });
     // + 添加占位框
@@ -3894,6 +3933,100 @@ document.addEventListener('click', function (e) {
       fImgInput.focus();
     });
     coverGallery.appendChild(addBtn);
+  }
+
+  // R271：封面图数组重排，selectedCoverIdx 跟随同一张图
+  function reorderCoverImages(fromIdx, toIdx) {
+    if (fromIdx < 0 || fromIdx >= coverImages.length || toIdx < 0 || toIdx >= coverImages.length) return;
+    var oldSel = selectedCoverIdx;
+    var moved = coverImages.splice(fromIdx, 1)[0];
+    coverImages.splice(toIdx > fromIdx ? toIdx : toIdx, 0, moved);
+    // 选中态跟随移动：先算旧选中图的新位置
+    if (oldSel === fromIdx) {
+      selectedCoverIdx = toIdx > fromIdx ? toIdx : toIdx;
+    } else if (fromIdx < toIdx) {
+      if (oldSel > fromIdx && oldSel <= toIdx) selectedCoverIdx = oldSel - 1;
+    } else {
+      if (oldSel >= toIdx && oldSel < fromIdx) selectedCoverIdx = oldSel + 1;
+    }
+    renderCoverGallery();
+    updateFImgInput();
+    updateImgPreview();
+  }
+
+  // R271：移动 touch 长按拖拽封装
+  function bindCoverTouchDrag(item, handle, idx) {
+    var longTimer = null;
+    var ghost = null;
+    var startX = 0, startY = 0;
+    var dragging = false;
+    var moved = false;
+    var startEl = null;
+    var MOVE_THRESHOLD = 8;
+    var LONG_PRESS_MS = 400;
+    function clearTimer() { if (longTimer) { clearTimeout(longTimer); longTimer = null; } }
+    function removeGhost() { if (ghost && ghost.parentNode) { ghost.parentNode.removeChild(ghost); } ghost = null; }
+    function onTouchStart(e) {
+      if (e.touches.length !== 1) return;
+      var t = e.touches[0];
+      startX = t.clientX; startY = t.clientY; moved = false; dragging = false; startEl = item;
+      clearTimer();
+      longTimer = setTimeout(function () {
+        if (moved) return;
+        dragging = true;
+        item.classList.add('dragging');
+        var rect = item.getBoundingClientRect();
+        ghost = item.cloneNode(true);
+        ghost.style.position = 'fixed';
+        ghost.style.left = rect.left + 'px';
+        ghost.style.top = rect.top + 'px';
+        ghost.style.width = rect.width + 'px';
+        ghost.style.height = rect.height + 'px';
+        ghost.style.opacity = '0.85';
+        ghost.style.zIndex = '99999';
+        ghost.style.pointerEvents = 'none';
+        ghost.classList.remove('dragging');
+        document.body.appendChild(ghost);
+      }, LONG_PRESS_MS);
+    }
+    function onTouchMove(e) {
+      if (e.touches.length !== 1) { clearTimer(); return; }
+      var t = e.touches[0];
+      var dx = Math.abs(t.clientX - startX);
+      var dy = Math.abs(t.clientY - startY);
+      if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) moved = true;
+      if (!dragging) return;
+      e.preventDefault();
+      if (ghost) {
+        var rect = item.getBoundingClientRect();
+        ghost.style.left = (t.clientX - rect.width / 2) + 'px';
+        ghost.style.top = (t.clientY - rect.height / 2) + 'px';
+      }
+      // 高亮下方元素
+      var el = document.elementFromPoint(t.clientX, t.clientY);
+      var target = el ? el.closest('.cg-item') : null;
+      document.querySelectorAll('.cg-item').forEach(function (c) { c.classList.remove('drag-over'); });
+      if (target && target !== item) target.classList.add('drag-over');
+    }
+    function onTouchEnd(e) {
+      clearTimer();
+      if (!dragging) { removeGhost(); item.classList.remove('dragging'); return; }
+      dragging = false;
+      item.classList.remove('dragging');
+      var changed = e.changedTouches[0];
+      var el = document.elementFromPoint(changed.clientX, changed.clientY);
+      var target = el ? el.closest('.cg-item') : null;
+      document.querySelectorAll('.cg-item').forEach(function (c) { c.classList.remove('drag-over'); });
+      removeGhost();
+      if (target && target !== item) {
+        var toIdx = parseInt(target.dataset.idx, 10);
+        if (!isNaN(toIdx)) reorderCoverImages(idx, toIdx);
+      }
+    }
+    handle.addEventListener('touchstart', onTouchStart, { passive: true });
+    handle.addEventListener('touchmove', onTouchMove, { passive: false });
+    handle.addEventListener('touchend', onTouchEnd, { passive: true });
+    handle.addEventListener('touchcancel', function () { clearTimer(); removeGhost(); item.classList.remove('dragging'); dragging = false; }, { passive: true });
   }
 
   function selectCoverImage(idx) {
@@ -5501,12 +5634,8 @@ document.addEventListener('click', function (e) {
       if (params.length) url += '?' + params.join('&');
       // R176（用户 10:16）：统计表标题随所选范围即时同步——R238 抽成 __updateStatTitles 供缓存命中路径复用
       __updateStatTitles(startDate, endDate);
-      // R173（用户 00:28）：回退 R171 的"请求一发就转圈"——改回 R170 条件口径（统计卡未渲染过才显示转圈）；
-      // 无条件转圈让每次切日期/切 tab 都闪转圈+淡入，用户实测"全页面都闪一次，更难看"
-      var _sl0 = document.getElementById('statsLoading');
-      var _scBox = document.getElementById('statCards');
-      var _scHasSkel = _scBox && _scBox.querySelectorAll('.skel').length > 0;
-      if (!_scHasSkel && _sl0) _sl0.style.display = 'flex';
+      // R272：去掉加载圈——老板明确"马上去掉"，以本次原话为准，无条件不显示。
+      // 骨架屏已承接加载态（统计卡骨架/三表骨架已有），加载观感不受影响。
       // R256：统计表骨架已内嵌在 admin.html，有则不复建
       var _stHasSkel = document.getElementById('statRows') && document.getElementById('statRows').querySelectorAll('.admin-skel').length > 0;
       if (!_stHasSkel) renderStatSkeleton();
@@ -5570,9 +5699,7 @@ document.addEventListener('click', function (e) {
         renderStatTables();
 
         // 三个统计表（含最近浏览）已在上方统一交给 renderStatTables 渲染：全量数据 + 一页 20 条翻页
-        // 修复：加载完成后才隐藏转圈动画并触发淡入——原先这行写在函数外、页面解析时就执行了一次，
-        // 导致首次进统计页时"加载中…"转圈永远不消失
-        var _slH = document.getElementById('statsLoading'); if (_slH) _slH.style.display = 'none';
+        // R272：加载圈已删除，无需再隐藏。
     }
     /* R238（用户 09-22 17:37 派单）：后台静默刷新专用渲染——六卡+两图照常重渲染（无全页动画），
        三表逐张与当前数据比对：没变的不碰（不销毁、错峰淡入不重放，R235 onlyKey 口径），
@@ -5606,7 +5733,7 @@ document.addEventListener('click', function (e) {
       state.statsByProduct = res.byProduct || [];
       renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
       renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
-      var _slH = document.getElementById('statsLoading'); if (_slH) _slH.style.display = 'none';
+      // R272：加载圈已删除，无需再隐藏。
     }
 
 
@@ -6585,22 +6712,11 @@ refreshCatCnts();
       if (__pdEmpty) { __pdEl.innerHTML = ''; __pdEl.style.display = 'none'; } // R158：资源页口径——无详情整块隐藏（旧版显示「暂无详细描述」占位与资源页不同步）
       else { __pdEl.innerHTML = __pdHtml; __pdEl.style.display = ''; }
       // R256：预览弹窗封面轮播
+      // R270（用户 09-27 17:30）：根因→预览弹窗旧单图分叉（cover.src 强制赋值 + display=block）
+      // 与 renderCarousel 多图轮播冲突（轮播隐藏 fallback、旧代码又强制显示单图）
+      // 修法→删掉旧分叉，预览弹窗封面完全走 renderCarousel（与资源页弹窗同源函数，老板要求「以资源页为标准、绑定同步」）
       var _pCovArr = window.__coverImages ? window.__coverImages() : (fImg.value.trim() ? [fImg.value.trim()] : []);
       renderCarousel(document.getElementById('previewCarousel'), document.getElementById('previewCcTrack'), document.getElementById('previewCcDots'), document.getElementById('previewCover'), _pCovArr);
-      var cover = document.getElementById('previewCover');
-      if (fImg.value.trim()) {
-        var _covUrl = fImg.value.trim();
-        // R266（用户 09-27 15:08）：预览弹窗封面先隐藏占座（opacity:0），load 成功才显示，
-        // error 直接换占位符，杜绝 src 直接赋值导致的裸闪破损图标。
-        cover.style.opacity = '0';
-        cover.onload = function () { cover.style.opacity = '1'; };
-        cover.onerror = function () { this.onerror = null; this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); cover.style.opacity = '1'; };
-        cover.src = _covUrl;
-        if (window.mediaStable) window.mediaStable(cover, false, true);
-        cover.style.display = 'block';
-      } else {
-        cover.style.display = 'none';
-      }
       // 渲染类型切换
       var wrap = document.getElementById('previewVariantWrap');
       var tabs = document.getElementById('previewVariantTabs');

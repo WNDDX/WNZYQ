@@ -2042,7 +2042,12 @@
       var kit = window.__modalKit; if (!kit) return;
       // R112：资源详情弹窗——×=丢弃资源码草稿；点外/Esc=暂存（重开自动回填）；公告/分享纯展示直接关（客服 kfMask 在 ui-common 创建处注册）
       kit.register(modalMask, { discard: closeModalDiscard, stash: closeModalStash }); // R257（老板 09-23 19:08）：Esc=暂存资源码草稿（R147 丢弃口径废除）
-      var __am = document.getElementById('annModal'); if (__am) kit.register(__am, { discard: closeAnnModal, stash: closeAnnModal });
+      var __am = document.getElementById('annModal');
+      if (__am) {
+        kit.register(__am, { discard: closeAnnModal, stash: closeAnnModal });
+        // R271（用户 09-27 17:30）：补公告弹窗点外关闭（遗漏）
+        __am.addEventListener('click', function (e) { if (e.target === __am) closeAnnModal(); });
+      }
       kit.register(shareMask, { discard: closeShare, stash: closeShare });
     });
 

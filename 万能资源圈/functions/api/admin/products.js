@@ -86,7 +86,14 @@ export async function onRequestPost(context) {
   const b = await readJSON(request);
   if (!String(b.title || '').trim()) return json({ ok: false, msg: '请填写资源标题' }, 400);
 
-  const coverImages = JSON.stringify(Array.isArray(b.cover_images) ? b.cover_images : []);
+  // R270（用户 09-27 17:30）：根因→前端发 JSON 字符串，服务端只认数组 → cover_images 永远存 "[]"
+  // 修法→兼容字符串/数组两种格式，先 parse 再过滤空串/非字符串项
+  var ci = b.cover_images;
+  if (typeof ci === 'string') { try { ci = JSON.parse(ci); } catch (e) { ci = []; } }
+  if (!Array.isArray(ci)) ci = [];
+  ci = ci.filter(function (u) { return typeof u === 'string' && u.trim(); });
+  const coverImages = JSON.stringify(ci);
+
   const detailImages = JSON.stringify(Array.isArray(b.detailImages) ? b.detailImages : []);
   const detailVideos = JSON.stringify(Array.isArray(b.detailVideos) ? b.detailVideos : []);
 

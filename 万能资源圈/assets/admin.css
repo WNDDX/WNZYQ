@@ -1027,9 +1027,7 @@
       margin-bottom: 14px; box-shadow: var(--shadow-card);
     }
     .trend-chart h3 { font-size: 15px; margin-bottom: 12px; }
-    .stats-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 0; color: var(--text-faint); font-size:14px; gap:12px; }
-    .stats-loading .sl-spin { width:30px; height:30px; border:3px solid var(--border); border-top-color:var(--blue1); border-radius:50%; animation:slspin .8s linear infinite; }
-    @keyframes slspin { to { transform: rotate(360deg); } }
+    /* R272：stats-loading / sl-spin 已删除，相关 CSS 清理完毕 */
     .stats-fade-in { animation: statFade var(--dur-mid) ease; }
     @keyframes statFade { from { opacity:.2; } to { opacity:1; } }
     /* R70：灰底/圆角上收到 chart-box 外层容器（与 line-chart 同构：灰盒装图表+图例）；柱区高度由 JS 按折线图实际高同步写入 --barZone */
@@ -1792,6 +1790,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .cover-gallery .cg-item .cg-main { position:absolute; top:0; left:0; background:var(--blue1,#1565c0); color:#fff; font-size:10px; padding:1px 5px; border-radius:0 0 4px 0; }
 .cover-gallery .cg-item .cg-del { position:absolute; top:2px; right:2px; width:18px; height:18px; background:rgba(0,0,0,0.5); color:#fff; border:none; border-radius:50%; font-size:12px; line-height:18px; text-align:center; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .cover-gallery .cg-item .cg-del:hover { background:rgba(211,47,47,0.85); }
+.cover-gallery .cg-item .cg-drag { position:absolute; bottom:2px; left:2px; width:18px; height:18px; background:rgba(30,136,229,0.85); color:#fff; border:none; border-radius:4px; font-size:10px; line-height:18px; text-align:center; cursor:grab; display:flex; align-items:center; justify-content:center; user-select:none; touch-action:none; z-index:2; }
+.cover-gallery .cg-item .cg-drag:active { cursor:grabbing; }
+.cover-gallery .cg-item.dragging { opacity:0.4; }
+.cover-gallery .cg-item.drag-over { border-color:var(--blue1); box-shadow:0 0 0 3px rgba(30,136,229,0.25); }
 .cover-gallery .cg-add { width:72px; height:72px; border-radius:8px; border:2px dashed var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-light); font-size:24px; background:var(--bg-light); }
 .cover-gallery .cg-add:hover { border-color:var(--blue1); color:var(--blue1); }
 
