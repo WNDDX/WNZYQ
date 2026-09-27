@@ -1735,6 +1735,8 @@
         var dd = __editDrafts[p ? p.id : 'new'];
         if (dd) {
           fTitle.value = dd.title || ''; fDesc.value = dd.desc || ''; fDetail.innerHTML = dd.detail || ''; fImg.value = dd.img || ''; fContactUrl.value = dd.contactUrl || ''; fPrice.value = dd.price || ''; fSort.value = dd.sort || 0; fOnline.checked = !!dd.online && !dd.hidden; fillCidSelect(dd.cid || 0);
+          // R267（用户 09-27 15:13）：根因→草稿恢复不调 __setCoverImages，退出再进图库丢失未保存上传的图；修法→完整恢复图库/选中态/链接输入框。
+          try { if (window.__setCoverImages) window.__setCoverImages(JSON.parse(dd.cover_images || '[]')); } catch(e) { if (window.__setCoverImages) window.__setCoverImages([]); }
         }
       } catch (e) {}
       updateImgPreview();
@@ -1811,33 +1813,31 @@
     // 保证新链接加载失败仍能换上感叹号占位（全局 error 委托只处理第一次失败）
     // R209（用户 09-19 00:31）：根因→输入无效地址时 onerror 反复触发+src 高频切换导致占位框抖动；
     // 修法→300ms 防抖 + 缓存已知坏地址，同地址不再重复触发加载-失败循环
+    // R266（用户 09-27 15:08）：根因→admin.js 存在两个 updateImgPreview 行为分叉，
+    // 旧路径（单图编辑）有 new Image() 试载保护，R256 新路径（轮播图库）直接 preview.src=url
+    // 裸闪破损图标+alt「预览」。修法→提取共享安全加载函数 _safeSetPreview，两处复用消除分叉。
     var __imgPreviewTimer = null;
     var __lastBadUrl = null;
-    function updateImgPreview() {
-      var preview = document.getElementById('fImgPreview');
+    function _safeSetPreview(preview, url, opts) {
+      opts = opts || {};
       if (!preview) return;
-      var url = fImg.value.trim();
       clearTimeout(__imgPreviewTimer);
-      /* R258（老板 09-23 19:11）：封面预览槽先占座再加载——旧逻辑打开弹窗后预览框 display:none 不占位，
-         300ms 防抖+图片探测完成才 add .show，120px 高度此刻才插入流中，下方表单字段（简介等）先顶上来
-         再被挤下去（老板看到的「加载完才撑开位置挤下去」）。改为：有链接即同步显示 120×120 灰底槽
-         （清掉旧 src 防闪上一资源的图），布局从首帧起恒定，真图/占位加载完成只在槽内原位切换，零位移。 */
       if (url) {
         if (preview.getAttribute('src') !== url) { preview.removeAttribute('src'); preview.classList.remove('media-fail'); }
         preview.classList.add('show'); // 槽先占座（灰底 120×120，图探测完成原位填充）
+      } else if (opts.hideEmpty) {
+        preview.style.display = 'none';
+        preview.classList.remove('show');
+        return;
       }
-      __imgPreviewTimer = setTimeout(function () {
+      var doLoad = function () {
         if (url) {
           if (url === __lastBadUrl) {
             preview.onerror = null; preview.dataset.fh = '1';
-            preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail'); // R258：已知坏地址直接显示失败占位（防同步占座清 src 后槽空灰）
+            preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
             preview.classList.add('show');
             return;
           }
-          /* R215 条3（老板 09-21）：预加载成功才换图。旧逻辑直接把预览 src 切到未知链接，
-             会经历「真图被清掉→浏览器破图占位→onerror→换感叹号」中间态（占位框轻微跳动 /
-             破图图标一闪的根因）。改为后台 new Image() 试载：成功才换真图；失败原地换感叹号，
-             全程 120×120 固定槽 + contain，框内尺寸纹丝不动。 */
           var probe = new Image();
           probe.onload = function () {
             preview.onerror = null; delete preview.dataset.fh;
@@ -1857,7 +1857,13 @@
           preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
           preview.classList.add('show');
         }
-      }, 300);
+      };
+      if (opts.noDebounce) { doLoad(); } else { __imgPreviewTimer = setTimeout(doLoad, 300); }
+    }
+    function updateImgPreview() {
+      // R267（用户 09-27 15:13）：根因→外层旧版读 fImg.value 与图库状态脱节；修法→统一走图库语义，读当前选中槽位。
+      var url = (window.__coverMainImage ? window.__coverMainImage() : fImg.value).trim();
+      _safeSetPreview(document.getElementById('fImgPreview'), url, { hideEmpty: true, noDebounce: true });
     }
     fImg.addEventListener('input', updateImgPreview);
 
@@ -2218,6 +2224,7 @@
         desc: fDesc.value.trim(),
         detail: serializeDetail(), /* R147：兜底卡还原成 video */
         img: fImg.value.trim(),
+        cover_images: JSON.stringify(window.__coverImages ? window.__coverImages() : (fImg.value ? [fImg.value] : [])),
         detailImages: [],
         detailVideos: [],
         contactUrl: fContactUrl.value.trim(),
@@ -2272,11 +2279,14 @@
             _sp.is_online = data.is_online ? 1 : 0; _sp.is_hidden = data.is_hidden ? 1 : 0;
             _sp.schedule_on = data.schedule_on || ''; _sp.schedule_off = data.schedule_off || ''; _sp.sort = data.sort;
             _sp.variants = (state.variants || []).slice(); // 类型本地已是最新（新增类型已串行提交）
+            // R267（用户 09-27 15:13）：根因→保存后本地副本漏 coverImages，退出再进图库不显示刚上传的图；修法→补回。
+            try { _sp.coverImages = JSON.parse(data.cover_images || '[]'); } catch(e) { _sp.coverImages = []; }
           } else if (res.id) {
             state.products.push({ id: res.id, cid: data.cid, title: data.title, desc: data.desc, detail: data.detail,
               img: data.img, detailImages: [], detailVideos: [], contactUrl: data.contactUrl, price: data.price,
               is_online: data.is_online ? 1 : 0, is_hidden: data.is_hidden ? 1 : 0,
               schedule_on: data.schedule_on || '', schedule_off: data.schedule_off || '', sort: data.sort,
+              coverImages: (function(){ try { return JSON.parse(data.cover_images || '[]'); } catch(e){ return []; } })(),
               variants: (state.variants || []).slice() });
           }
           /* R211 二批（用户 09-20）：保存成功按钮状态链——转圈→✓（停留 400ms 让反馈可见）→收弹窗恢复；R183 条4 只有转圈无成功态 */
@@ -3831,15 +3841,35 @@ document.addEventListener('click', function (e) {
   var coverImages = []; // 当前编辑的封面图列表
   var selectedCoverIdx = 0; // 当前选中的小图索引
 
+  // R266（用户 09-27 15:08）：缩略图先隐藏占座（opacity:0），load 成功才显示，
+  // error 直接换占位符，杜绝 innerHTML 直接塞 src 导致的裸闪破损图标。
   function renderCoverGallery() {
     if (!coverGallery) return;
     coverGallery.innerHTML = '';
     coverImages.forEach(function (url, idx) {
       var item = document.createElement('div');
       item.className = 'cg-item' + (idx === selectedCoverIdx ? ' active' : '');
-      item.innerHTML = '<img src="' + escapeHtml(url) + '" alt="" decoding="async" onerror="this.parentNode.classList.add(&quot;media-fail&quot;)" />' +
-        (idx === 0 ? '<span class="cg-main">主图</span>' : '') +
-        '<button type="button" class="cg-del" title="删除" data-idx="' + idx + '">×</button>';
+      var img = document.createElement('img');
+      img.alt = '';
+      img.decoding = 'async';
+      img.style.opacity = '0';
+      img.onload = function () { img.style.opacity = '1'; };
+      img.onerror = function () { img.style.opacity = '1'; item.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; };
+      item.appendChild(img);
+      if (url) { img.src = escapeHtml(url); } else { img.style.opacity = '1'; item.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; }
+      if (idx === 0) {
+        var mainBadge = document.createElement('span');
+        mainBadge.className = 'cg-main';
+        mainBadge.textContent = '主图';
+        item.appendChild(mainBadge);
+      }
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'cg-del';
+      delBtn.title = '删除';
+      delBtn.dataset.idx = idx;
+      delBtn.textContent = '×';
+      item.appendChild(delBtn);
       item.addEventListener('click', function (e) {
         if (e.target.classList.contains('cg-del')) {
           e.stopPropagation();
@@ -3889,18 +3919,10 @@ document.addEventListener('click', function (e) {
     fImgInput.placeholder = selectedCoverIdx === 0 ? '主图链接' : '图' + (selectedCoverIdx + 1) + '链接';
   }
 
+  // R266（用户 09-27 15:08）：轮播图库的 updateImgPreview 复用共享 _safeSetPreview，
+  // 消除与单图编辑路径的行为分叉，根治裸闪破损图标+alt「预览」。
   function updateImgPreview() {
-    var preview = document.getElementById('fImgPreview');
-    if (!preview) return;
-    var url = (coverImages[selectedCoverIdx] || '').trim();
-    if (url) {
-      preview.src = url;
-      preview.style.display = '';
-      preview.classList.add('show');
-    } else {
-      preview.style.display = 'none';
-      preview.classList.remove('show');
-    }
+    _safeSetPreview(document.getElementById('fImgPreview'), (coverImages[selectedCoverIdx] || '').trim(), { hideEmpty: true, noDebounce: true });
   }
 
   // 输入框实时同步到当前选中的图
@@ -6567,10 +6589,13 @@ refreshCatCnts();
       renderCarousel(document.getElementById('previewCarousel'), document.getElementById('previewCcTrack'), document.getElementById('previewCcDots'), document.getElementById('previewCover'), _pCovArr);
       var cover = document.getElementById('previewCover');
       if (fImg.value.trim()) {
-        cover.src = fImg.value.trim();
-        // R173（用户 00:27）：预览封面假链接兜底——旧版加载失败显示 2px 破图（mediaStable 只清加载态不换图），
-        // 与编辑表单/资源页口径统一：失败换感叹号占位符（居中显示，不再跳位置）
-        cover.onerror = function () { this.onerror = null; this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); };
+        var _covUrl = fImg.value.trim();
+        // R266（用户 09-27 15:08）：预览弹窗封面先隐藏占座（opacity:0），load 成功才显示，
+        // error 直接换占位符，杜绝 src 直接赋值导致的裸闪破损图标。
+        cover.style.opacity = '0';
+        cover.onload = function () { cover.style.opacity = '1'; };
+        cover.onerror = function () { this.onerror = null; this.src = EXC_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); cover.style.opacity = '1'; };
+        cover.src = _covUrl;
         if (window.mediaStable) window.mediaStable(cover, false, true);
         cover.style.display = 'block';
       } else {
@@ -6697,7 +6722,16 @@ refreshCatCnts();
       images.forEach(function (url) {
         var slide = document.createElement('div');
         slide.className = 'cc-slide';
-        slide.innerHTML = '<img src="' + escapeHtml(url) + '" alt="" decoding="async" onerror="this.classList.add(&quot;media-fail&quot;)" />';
+        // R266（用户 09-27 15:08）：轮播图先隐藏占座（opacity:0），load 成功才显示，
+        // error 直接换占位符，杜绝 innerHTML 直接塞 src 导致的裸闪破损图标。
+        var img = document.createElement('img');
+        img.alt = '';
+        img.decoding = 'async';
+        img.style.opacity = '0';
+        img.onload = function () { img.style.opacity = '1'; };
+        img.onerror = function () { img.style.opacity = '1'; img.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; };
+        slide.appendChild(img);
+        img.src = escapeHtml(url);
         trackEl.appendChild(slide);
       });
       if (dotsEl) {

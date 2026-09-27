@@ -14,7 +14,15 @@
     img, video, svg { max-width: 100%; }
     table { max-width: 100%; }
 
-    
+    :root {
+      --blue1: #1E88E5;
+      --blue2: #64B5F6;
+      --blue:  var(--blue1);
+      --blue-live: #1688FF; /* R192 一⑤：交流群聊蓝（门户 btn-blue 同值）——联系类蓝键专用；本页 --blue2 是边框浅蓝，勿混用 */
+      --red:   #ff4444;
+      --topbar-h: 64px;
+      /* R50：暗色相关变量统一移至 ui-common.css 定义（含 [data-theme=dark] 暗色值），此处不再重复定义 */
+    } /* R265（用户 09-27 15:04）：根因→R259 误删 shop.css 本地 :root 变量块，恢复 v256 原文；暗色变量不恢复（R50 已移至公共块，值一致） */
     /* R49：暗色变量块为死代码（0 处引用），已删，勿再空挂 */
     @keyframes pageFadeIn {
       from { opacity: 0; transform: translateY(8px); }

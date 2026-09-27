@@ -13,7 +13,7 @@
       --blue1: #1E88E5;
       --blue2: #64B5F6;
       --blue:  #1688FF;
-      --red:   var(--red, #ff4444);
+      --red:   #ff4444; /* R265（用户 09-27 15:04）：根因→R259 同作用域自引用 var(--red, #ff4444) 导致 CSS 变量无效，恢复 v256 原文 */
       --green: #01C000;
       /* R50：暗色相关变量统一移至 ui-common.css（含 [data-theme=dark] 暗色值），此处不再重复定义 */
     }

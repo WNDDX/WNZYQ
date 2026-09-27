@@ -181,6 +181,10 @@ if ('serviceWorker' in navigator) {
     __lbMask.appendChild(x);
     var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src);
     var im = document.createElement(isVideo ? 'video' : 'img');
+    // R266（用户 09-27 15:08）：灯箱图片加 onerror 兜底，杜绝坏链接裸闪破损图标。
+    if (!isVideo) {
+      im.onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; if (this.classList) this.classList.add('media-fail'); };
+    }
     im.src = src;
     if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
     im.style.cssText = 'max-width:92%;max-height:92%;object-fit:contain;border-radius:8px;transition:transform .05s linear;' + (isVideo ? 'width:92%;aspect-ratio:16/9;background:#000;' : '');

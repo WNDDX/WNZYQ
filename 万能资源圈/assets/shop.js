@@ -774,6 +774,87 @@
       }
     }
 
+    // R269（用户 09-27 15:14）：根因→R268 修复在 v265 打包时回退丢失，补 renderCarousel + coverImages 字段修正重做
+    // ---------- 封面轮播组件 ----------
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    function renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images) {
+      if (!carouselEl || !trackEl) return;
+      if (carouselEl.__ccTimer) { clearInterval(carouselEl.__ccTimer); carouselEl.__ccTimer = null; }
+      if (!images || images.length <= 1) {
+        carouselEl.style.display = 'none';
+        if (fallbackImgEl) {
+          fallbackImgEl.style.display = '';
+          fallbackImgEl.src = images && images[0] ? images[0] : '';
+        }
+        return;
+      }
+      carouselEl.style.display = '';
+      if (fallbackImgEl) fallbackImgEl.style.display = 'none';
+      trackEl.innerHTML = '';
+      images.forEach(function (url) {
+        var slide = document.createElement('div');
+        slide.className = 'cc-slide';
+        // R266（用户 09-27 15:08）：轮播图先隐藏占座（opacity:0），load 成功才显示，
+        // error 直接换占位符，杜绝 innerHTML 直接塞 src 导致的裸闪破损图标。
+        var img = document.createElement('img');
+        img.alt = '';
+        img.decoding = 'async';
+        img.style.opacity = '0';
+        img.onload = function () { img.style.opacity = '1'; };
+        img.onerror = function () { img.style.opacity = '1'; img.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; };
+        slide.appendChild(img);
+        img.src = escapeHtml(url);
+        trackEl.appendChild(slide);
+      });
+      if (dotsEl) {
+        dotsEl.innerHTML = '';
+        images.forEach(function (_, i) {
+          var dot = document.createElement('span');
+          dot.className = 'cc-dot' + (i === 0 ? ' active' : '');
+          dot.addEventListener('click', function () { goToSlide(i); });
+          dotsEl.appendChild(dot);
+        });
+      }
+      var currentIdx = 0;
+      function goToSlide(idx) {
+        currentIdx = idx;
+        trackEl.style.transform = 'translateX(-' + (idx * 100) + '%)';
+        if (dotsEl) {
+          dotsEl.querySelectorAll('.cc-dot').forEach(function (d, i) { d.classList.toggle('active', i === idx); });
+        }
+      }
+      carouselEl.__ccTimer = setInterval(function () {
+        goToSlide((currentIdx + 1) % images.length);
+      }, 3000);
+      var pauseTimer = null;
+      function pause() { if (carouselEl.__ccTimer) { clearInterval(carouselEl.__ccTimer); carouselEl.__ccTimer = null; } }
+      function resume() { pause(); carouselEl.__ccTimer = setInterval(function () { goToSlide((currentIdx + 1) % images.length); }, 3000); }
+      carouselEl.addEventListener('mouseenter', pause);
+      carouselEl.addEventListener('mouseleave', resume);
+      carouselEl.addEventListener('touchstart', pause, { passive: true });
+      carouselEl.addEventListener('touchend', resume);
+      var startX = 0, isDragging = false;
+      trackEl.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; isDragging = true; trackEl.classList.add('dragging'); }, { passive: true });
+      trackEl.addEventListener('touchmove', function (e) { if (!isDragging) return; var dx = e.touches[0].clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; }, { passive: true });
+      trackEl.addEventListener('touchend', function (e) {
+        isDragging = false; trackEl.classList.remove('dragging');
+        var dx = (e.changedTouches[0] || e.touches[0]).clientX - startX;
+        if (dx < -40) goToSlide(Math.min(currentIdx + 1, images.length - 1));
+        else if (dx > 40) goToSlide(Math.max(currentIdx - 1, 0));
+        else goToSlide(currentIdx);
+      });
+      trackEl.addEventListener('mousedown', function (e) { startX = e.clientX; isDragging = true; trackEl.classList.add('dragging'); e.preventDefault(); });
+      trackEl.addEventListener('mousemove', function (e) { if (!isDragging) return; var dx = e.clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; });
+      trackEl.addEventListener('mouseup', function (e) {
+        isDragging = false; trackEl.classList.remove('dragging');
+        var dx = e.clientX - startX;
+        if (dx < -40) goToSlide(Math.min(currentIdx + 1, images.length - 1));
+        else if (dx > 40) goToSlide(Math.max(currentIdx - 1, 0));
+        else goToSlide(currentIdx);
+      });
+      trackEl.addEventListener('mouseleave', function () { if (isDragging) { isDragging = false; trackEl.classList.remove('dragging'); goToSlide(currentIdx); } });
+    }
+
     // ---------- 详情弹窗 ----------
     function openModal(p) {
       currentProduct = p;
@@ -783,7 +864,7 @@
       // R256：清除详情弹窗骨架
       var _mdSkel = document.getElementById('modalSkeleton'); if (_mdSkel) _mdSkel.style.display = 'none';
       // R256：详情弹窗封面轮播
-      var _covArr = p.cover_images ? (function () { try { return JSON.parse(p.cover_images); } catch (e) { return []; } })() : (p.img ? [p.img] : []);
+      var _covArr = Array.isArray(p.coverImages) ? p.coverImages : (p.img ? [p.img] : []);
       renderCarousel(document.getElementById('modalCarousel'), document.getElementById('modalCcTrack'), document.getElementById('modalCcDots'), modalCover, _covArr);
       // 单图回退：保持原有 lightbox 行为
       var _mainImg = _covArr[0] || p.img || '';
@@ -810,9 +891,12 @@
         if (!url) return;
         var im = document.createElement('img');
         im.decoding = 'async'; /* R193c ⑩ */
-        im.src = url;
         im.alt = '';
         im.style.cursor = 'zoom-in';
+        im.style.opacity = '0';
+        im.onload = function () { im.style.opacity = '1'; };
+        im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.style.opacity = '1'; this.style.objectFit = 'contain'; this.style.display = 'block'; };
+        im.src = url;
         im.addEventListener('click', function () { window.openLightbox(url); });
         if (window.mediaStable) window.mediaStable(im);
         modalMedia.appendChild(im);
@@ -1087,11 +1171,12 @@
       if (currentVariant.img) {
         var im = document.createElement('img');
         im.decoding = 'async'; /* R193c ⑩ */
-        im.src = currentVariant.img;
+        // R266（用户 09-27 15:08）：onerror 必须在 src 赋值前注册，杜绝注册前即失败导致的裸闪破损图标。
         im.onerror = function () {
           this.onerror = null;
           this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.style.objectFit = 'contain'; this.style.display = 'block';
         };
+        im.src = currentVariant.img;
         im.alt = '';
         im.style.cursor = 'zoom-in';
         im.addEventListener('click', function () { window.openLightbox(currentVariant.img); });
