@@ -379,7 +379,7 @@
                   __annTransitioning = false;
                 }, 100);
               } else { __annTransitioning = false; }
-            } catch (e) { console.error('公告切换错误:', e); __annTransitioning = false; }
+            } catch (e) { __annTransitioning = false; }
             });
             tabs.appendChild(t);
           });
@@ -434,7 +434,7 @@
       window.__annShown = true;
       renderAnnContent();
       mask.classList.add('open');
-      setBodyLock(true); } catch (e) { console.error('公告渲染错误:', e); }
+      setBodyLock(true); } catch (e) {}
     }
     function renderCategories() {
       var cats = DATA.categories.slice();
@@ -1432,7 +1432,7 @@
       var __bindCP = function () {
         if (!window.__cpPanel) return;
         window.__cpPanel({
-         ,
+          placeholder: '搜索资源名，回车直达详情…',
           cmds: function () {
             var c = [];
             (DATA.products || []).forEach(function (p) {
@@ -1532,7 +1532,7 @@
         showToast('链接已复制到剪贴板', 'success');
         if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       } catch (e) {
-        console.error('分享失败:', e);
+
         if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       }
     }
@@ -1682,9 +1682,9 @@
         }
       }
       renderAll();
-      // 本地环境（file:// 或 localhost）不发起 API 请求，避免 404 报错
-      var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      if (!isLocal) {
+      // file:// 协议直接打开 HTML 时不发起 API 请求（无后端）；localhost/wrangler dev 正常走 API
+      var isFile = window.location.protocol === 'file:';
+      if (!isFile) {
         fetchRemote();
       }
     }
@@ -1793,8 +1793,7 @@
       }
     });
     window.addEventListener('pageshow', function () {
-      var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      if (isLocal) return;
+      if (window.location.protocol === 'file:') return;
       var last = window.__lastFetchTime || 0;
       if (Date.now() - last > 60000) fetchRemote();
     });
@@ -1848,7 +1847,7 @@
         // 清除缓存，重新加载数据
         try { localStorage.removeItem('wnzyq_shop_data'); } catch (e) {}
         setTimeout(function () {
-          if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          if (window.location.protocol === 'file:') {
             loadFallback();
           } else {
             // R243 条32：手动下拉刷新 = 绕过缓存强制重拉

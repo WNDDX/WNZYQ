@@ -21,6 +21,7 @@ export async function onRequestPost(context) {
   const action = String(b.action || '');
 
   if (ids.length === 0) return json({ ok: false, msg: '请选择资源' }, 400);
+  if (ids.length > 500) return json({ ok: false, msg: '单次批量操作最多 500 条' }, 400);
   if (!['online', 'offline', 'hide', 'show', 'delete', 'changeCat', 'changePrice'].includes(action)) {
     return json({ ok: false, msg: '未知操作' }, 400);
   }

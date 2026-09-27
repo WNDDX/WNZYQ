@@ -1,9 +1,9 @@
-﻿/**
+/**
  * 资源类型的更新/删除（需登录）
  * PUT    /api/admin/variants/:id   → 更新类型
  * DELETE /api/admin/variants/:id   → 删除类型
  */
-import { json, requireAuth, readJSON, ensureVariantColumns } from '../../../_utils.js';
+import { json, requireAuth, readJSON, ensureVariantColumns, clearPublicCache } from '../../../_utils.js';
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
@@ -41,6 +41,7 @@ export async function onRequestPut(context) {
     )
     .run();
 
+  await clearPublicCache(request);
   return json({ ok: true });
 }
 
@@ -53,5 +54,6 @@ export async function onRequestDelete(context) {
   if (!id) return json({ ok: false, msg: '缺少类型 id' }, 400);
 
   await env.DB.prepare('DELETE FROM product_variants WHERE id = ?').bind(id).run();
+  await clearPublicCache(request);
   return json({ ok: true });
 }

@@ -7,7 +7,7 @@
  * 分类/搜索过滤由前台完成
  * 带 20 秒边缘缓存（Cache API），管理员修改后自动失效
  */
-import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns } from '../_utils.js';
+import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns, ensureProductColumns } from '../_utils.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -46,6 +46,7 @@ export async function onRequestGet(context) {
     }
   } catch (e) { /* 忽略定时显示/隐藏错误 */ }
 
+  await ensureProductColumns(env);
   await ensureVariantColumns(env);
 
   // 3. 查数据库

@@ -284,7 +284,7 @@
     var variantCancel = document.getElementById('variantCancel');
 
     // 改密码弹窗
-    var TOKEN_KEY = 'wnzyq_token';
+
     // 占位图统一使用 EXC_PLACEHOLDER（见上方定义），IMG_PLACEHOLDER 保留兼容旧引用
     var IMG_PLACEHOLDER = EXC_PLACEHOLDER; // 兼容旧引用，统一感叹号占位
     var state = {
@@ -478,16 +478,12 @@
       if (__apiInFlight.has(reqKey)) { return __apiInFlight.get(reqKey); }
       opts.headers = opts.headers || {};
       opts.headers['Content-Type'] = 'application/json';
-      var token = localStorage.getItem(TOKEN_KEY);
-      if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-      // 修复：移除调试 console.log——原先会把每个接口的响应内容（含统计、公告等业务数据）
-      // 打进任何访客的浏览器控制台，既是信息泄露也是性能噪音
+      // R30：鉴权统一走 HttpOnly Cookie，不再从 localStorage 读 token
       var p = fetch('/api/' + path, opts).then(function (r) {
         __apiInFlight.delete(reqKey);
         return r.json().then(function (d) {
           d._status = r.status;
           if (r.status === 401) {
-            localStorage.removeItem(TOKEN_KEY);
             if (mainView.style.display !== 'none') {
               toast('登录已过期，请重新登录', 'error');
               setTimeout(function () { location.reload(); }, 1200);
@@ -720,12 +716,11 @@
           }
         }).catch(function () {});
       }
-      // R30-#4：登录态改由 HttpOnly Cookie 携带（无 token 也要查会话）；旧 localStorage token 仅作 24h 过渡兼容
-      var token = localStorage.getItem(TOKEN_KEY);
+      // R30-#4：登录态改由 HttpOnly Cookie 携带
       if (!isLocal) {
         api('admin/session').then(function (s) {
           if (s.ok) showMain(s.username);
-          else { localStorage.removeItem(TOKEN_KEY); showLogin(); }
+          else { showLogin(); }
         });
       } else {
         showLogin();
@@ -1763,7 +1758,7 @@
       fDesc.value = p ? (p.desc || '') : '';
       fDetail.innerHTML = p ? (p.detail || '') : '';
       // R256：封面多图初始化
-      var _covArr = p ? (p.cover_images ? JSON.parse(p.cover_images) : (p.img ? [p.img] : [])) : [];
+      var _covArr = p ? (p.coverImages || (p.img ? [p.img] : [])) : [];
       if (window.__setCoverImages) window.__setCoverImages(_covArr);
       else { fImg.value = p ? (p.img || '') : ''; }
       fContactUrl.value = p ? (p.contactUrl || '') : '';
@@ -6304,7 +6299,6 @@ refreshCatCnts();
       showConfirm('退出登录', '确定要退出管理页吗？', function (closeConfirm) {
         closeConfirm();
         api('admin/logout', { method: 'POST' });
-        localStorage.removeItem(TOKEN_KEY);
         showLogin();
       });
     });
@@ -6804,7 +6798,7 @@ refreshCatCnts();
     (function () {
       if (!window.__cpPanel) return;
       window.__cpPanel({
-       ,
+        placeholder: '搜索：页面 / 操作 / 资源名…',
         busy: '.modal-mask.open, .kf-mask.open, .share-mask.open, .ann-mask.open',
         cmds: function () {
           var c = [

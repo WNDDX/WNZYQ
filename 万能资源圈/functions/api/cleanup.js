@@ -95,12 +95,13 @@ export async function onRequestGet(context) {
 
     // 5. 统计当前各表行数（用于监控）
     const counts = {};
-    for (const table of ['products', 'categories', 'stats', 'sessions', 'login_attempts']) {
+    const TABLES = { products: 'products', categories: 'categories', stats: 'stats', sessions: 'sessions', login_attempts: 'login_attempts' };
+    for (const key of Object.keys(TABLES)) {
       try {
-        const r = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${table}`).first();
-        counts[table] = r ? r.n : 0;
+        const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM ' + TABLES[key]).first();
+        counts[key] = r ? r.n : 0;
       } catch (e) {
-        counts[table] = -1;
+        counts[key] = -1;
       }
     }
     results.current_counts = counts;

@@ -697,7 +697,7 @@ window.__modalKit = (function () {
     var h = entry(mask);
     if (!h) return;
     var fn = mode === 'discard' ? (h.discard || h.stash) : (h.stash || h.discard);
-    try { if (fn) fn.call(mask, mask); } catch (err) { try { console.error(err); } catch (e2) {} }
+    try { if (fn) fn.call(mask, mask); } catch (err) {}
     try { mask.classList.remove('open'); } catch (e) {}
     try { mask.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) {}
   }
@@ -1391,7 +1391,7 @@ window.__cpPanel = function (opts) {
     Array.prototype.forEach.call(listEl.querySelectorAll('.cp-item'), function (el, i) { el.classList.toggle('active', i === active); });
     var cur = listEl.querySelectorAll('.cp-item')[active]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
   }
-  function cpRun(i) { var c = items[i]; if (!c) return; cpClose(); try { c.run(); } catch (e) { try { console.error(e); } catch (e2) {} } }
+  function cpRun(i) { var c = items[i]; if (!c) return; cpClose(); try { c.run(); } catch (e) {} }
 
   input.addEventListener('input', function () { active = 0; cpRender(); });
   mask.addEventListener('click', function (e) { if (e.target === mask) cpClose(); }); /* R217：点外关闭 */

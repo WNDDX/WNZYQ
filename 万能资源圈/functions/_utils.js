@@ -414,6 +414,16 @@ export async function recentIssues(env, variantId, limit = 5) {
   } catch (e) { return []; }
 }
 
+// 清除公开接口缓存（管理员修改数据后调用，不阻塞主流程）
+export async function clearPublicCache(request) {
+  try {
+    const cache = caches.default;
+    const origin = new URL(request.url).origin;
+    await cache.delete(new Request(new URL('/api/products', origin).toString()));
+    await cache.delete(new Request(new URL('/api/categories', origin).toString()));
+  } catch (e) { /* 缓存清除失败不影响写操作 */ }
+}
+
 // R92：读取平台设置（settings 键值表），失败/未设置返回默认值
 export async function getSetting(env, key, fallback) {
   try {

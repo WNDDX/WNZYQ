@@ -1,9 +1,30 @@
 /**
+ * GET    /api/admin/products/:id   → 单条资源详情（含类型，编辑回显用）
  * PUT    /api/admin/products/:id   → 更新资源（含显示/隐藏 is_online）
  * DELETE /api/admin/products/:id   → 删除资源（同时删其类型和统计）
  * 均需登录
  */
-import { json, requireAuth, readJSON, deleteBucketImages } from '../../../_utils.js';
+import { json, requireAuth, readJSON, deleteBucketImages, cleanProduct, cleanVariant, clearPublicCache } from '../../../_utils.js';
+
+export async function onRequestGet(context) {
+  const { env, request, params } = context;
+  const auth = await requireAuth(env, request);
+  if (auth instanceof Response) return auth;
+
+  const id = Number(params.id);
+  if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
+
+  const row = await env.DB.prepare('SELECT * FROM products WHERE id = ?').bind(id).first();
+  if (!row) return json({ ok: false, msg: '资源不存在' }, 404);
+
+  const { results: vrows } = await env.DB.prepare(
+    'SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort ASC, id ASC'
+  ).bind(id).all();
+
+  const product = cleanProduct(row);
+  product.variants = (vrows || []).map(cleanVariant);
+  return json({ ok: true, product });
+}
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
@@ -44,6 +65,7 @@ export async function onRequestPut(context) {
     )
     .run();
 
+  await clearPublicCache(request);
   return json({ ok: true });
 }
 
@@ -67,5 +89,6 @@ export async function onRequestDelete(context) {
   (vrows.results || []).forEach(function (v) { sources.push(v.desc, v.img, v.video, v.resource_content); });
   if (sources.length) await deleteBucketImages(env, sources);
 
+  await clearPublicCache(request);
   return json({ ok: true });
 }
