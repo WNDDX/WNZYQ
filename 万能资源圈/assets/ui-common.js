@@ -152,9 +152,12 @@ if ('serviceWorker' in navigator) {
 
   // ===== R45：全站统一图片/视频放大灯箱 =====
   // 服务无页面级灯箱实现的场景（导航页二维码弹窗、全站客服二维码弹窗等）。
-  // shop/admin 页面内有各自同款局部 openLightbox（函数声明遮蔽本全局属性，互不干扰；
-  // 双指缩放/ESC 监听各自检查自己的遮罩，不重复生效）。样式走 ui-common.css 的 .lightbox（z-index 100000，
-  // 高于客服 10001）。灯箱内是真实 <img>（非 CSS 背景）——微信/手机浏览器内长按识别二维码可用。
+  // R278（老板 09-27 23:5x「全系统点击放大图片或视频统一成同一套全屏大图」）：shop/admin 页面原有的
+  // 同款局部 openLightbox 已退役删除，全站只剩这一套全局实现（window.openLightbox/bindLightbox），
+  // 任何页面点任何图/视频弹出效果完全一致：width:min(90vw,1200px)/height:min(90vh,800px) 屏幕自适应
+  // （R277 口径）、双指缩放、dblclick 复位、Esc 经 __modalKit 逐层路由关闭。
+  // 样式走 ui-common.css 的 .lightbox（z-index 100000，高于客服 10001）。灯箱内是真实 <img>（非 CSS 背景）——
+  // 微信/手机浏览器内长按识别二维码可用。
   var __lbMask = null, __lbScale = 1, __lbStartDist = 0;
   window.closeLightbox = function () {
     if (!__lbMask) return;
@@ -1141,13 +1144,13 @@ window.bindLightbox = function (root) {
     if (im.dataset.lb) return;
     im.dataset.lb = '1';
     im.style.cursor = 'zoom-in';
-    im.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(im.currentSrc || im.src); });
+    im.addEventListener('click', function (ev) { ev.stopPropagation(); window.openLightbox(im.currentSrc || im.src); });
   });
   root.querySelectorAll('video').forEach(function (v) {
     if (v.dataset.lb) return;
     v.dataset.lb = '1';
     v.style.cursor = 'zoom-in';
-    v.addEventListener('click', function (ev) { ev.stopPropagation(); openLightbox(v.currentSrc || v.src); });
+    v.addEventListener('click', function (ev) { ev.stopPropagation(); window.openLightbox(v.currentSrc || v.src); });
   });
 };
 // 触发视图切换动画（重排触发 transition）

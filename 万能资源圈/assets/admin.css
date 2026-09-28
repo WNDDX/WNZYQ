@@ -143,7 +143,7 @@
     .topbar {
       background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%); /* R275（用户 09-27 18:53）：顶部蓝条统一采用资源页版（渐变+高度） */
       box-shadow: var(--shadow-blue);
-      min-height: 60px; /* R275：桌面端对齐资源页高度（资源页有 view-toggle 40px，管理页最高 38px） */
+      min-height: 60px; /* R275：桌面端对齐资源页高度（R279 起 view-toggle 38px 与 .tab 同高，管理页 logo 38px 同为最高元素，两页内容行高一致） */
     }
     @media (max-width: 600px) {
       .topbar { max-height: 97px; overflow: hidden; } /* R275：移动端对齐资源页高度（差异来自 tabs 38px vs 搜索框 33px，截断 3px 来自 padding-bottom，视觉上不可见） */
@@ -912,17 +912,18 @@
     }
 
     #previewContactBtn.preview-cta:active, .preview-close-btn:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
-    /* 封面：与资源页 .modal-cover 同款（320px 上限、16px 边距） */
-    /* R43：与资源页 .modal-cover 同步——内在比例自适应，圆角裁真实图片内容 */
+    /* 封面：与资源页 .modal-cover 同款固定展示框（R280 ① 统一口径） */
+    /* R280（老板 09-28 00:35 ①）：预览封面与资源页弹窗封面同款「固定展示框」——框高定值 min(48vh,400px)、
+       图 contain 不裁不变形，宽或高一维贴框、另一维按比例居中；旧 R43「按图内在比例收框」口径退役 */
     #previewMask .preview-cover {
-      width: auto; height: auto; max-width: calc(100% - 32px); margin: 16px auto 0;
-      max-height: 320px; display: block; aspect-ratio: auto; object-fit: contain; /* R43：压掉 805 行裸 .preview-cover 的 16/9+cover（特异性低于本规则，但 aspect-ratio 此前未在本规则声明） */
+      width: calc(100% - 32px); height: min(48vh, 400px); margin: 16px auto 0;
+      display: block; aspect-ratio: auto; object-fit: contain; box-sizing: border-box;
       background: var(--bg-light); border-radius: 10px; border: 1px solid var(--border);
     }
     /* 移动端：与资源页 @media(max-width:600px) 弹窗适配逐项一致 */
     @media (max-width: 600px) {
       #previewMask > .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: 12px; }
-      #previewMask .preview-cover { width: auto; max-width: calc(100% - 24px); margin: 12px auto 0; max-height: 220px; aspect-ratio: auto; }
+      #previewMask .preview-cover { width: calc(100% - 24px); margin: 12px auto 0; } /* R280 ①：移动端只调边距，框高沿用 min(48vh,400px) 定值 */
       #previewMask .preview-body { padding: 12px 16px 16px; }
       #previewMask .preview-title { font-size: 18px; }
       #previewMask .preview-price { font-size: 20px; }
@@ -937,9 +938,14 @@
     img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background: var(--bg-light)!important;}
     /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
     .modal-box img[src^="data:image/svg+xml"]:not(.preview-cover), .preview-box img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; }
+    /* R280 ①：预览封面占位/加载失败态与固定展示框同尺寸——#previewMask img.preview-cover[…]（1,2,1）
+       压过上行 16:9 通配（0,2,1）的 height:auto!important；框恒定不跳 */
+    #previewMask img.preview-cover[src^="data:image/svg+xml"] { aspect-ratio: auto !important; height: min(48vh, 400px) !important; width: calc(100% - 32px) !important; min-height: 0 !important; margin: 16px auto 0 !important; object-fit: contain !important; }
+    /* R280 ①：旧 .preview-cover（max-height:280px+16:9+cover）与固定展示框冲突——把单图封面截到 280px 高，
+       实测预览单图 648×280≠400。本规则与 #previewMask .preview-cover 同口径收编：固定框高 + contain 居中 */
     .preview-cover {
-      width: calc(100% - 32px); margin: 16px 16px 0;
-      max-height: 280px; aspect-ratio: 16 / 9; object-fit: cover; display: block;
+      width: calc(100% - 32px); margin: 16px auto 0;
+      height: min(48vh, 400px); aspect-ratio: auto; object-fit: contain; display: block;
       background: var(--bg-light); border-radius: 10px; border: 1px solid var(--border);
     }
     .modal-inner-btn {
@@ -1791,6 +1797,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .cover-gallery .cg-item { position:relative; width:72px; height:72px; border-radius:8px; overflow:hidden; border:2px solid transparent; cursor:pointer; background:var(--bg-light); }
 .cover-gallery .cg-item.active { border-color:var(--blue1); }
 .cover-gallery .cg-item img { width:100%; height:100%; object-fit:cover; display:block; }
+/* R279（老板 09-28 00:11）：封面占位图在 72px 小图槽内完整居中——
+   939 行弹窗占位图规则（height:auto!important + aspect-ratio:16/9 + min-height:120px）
+   同样命中本区 data:svg 占位图，把 68×72 的图撑成 68×120 被 overflow:hidden 裁掉下半截（感叹号不完整、偏上）。
+   本规则特异性更高 + 同级 !important，只在 72px 槽内铺满居中（contain 正方形 SVG 无裁切）。 */
+.modal-box .cover-gallery .cg-item img[src^="data:image/svg+xml"] { height:100% !important; width:100%; aspect-ratio:auto !important; min-height:0 !important; margin:0 !important; object-fit:contain !important; }
 .cover-gallery .cg-item .cg-main { position:absolute; top:0; left:0; background:var(--blue1,#1565c0); color:#fff; font-size:10px; padding:1px 5px; border-radius:0 0 4px 0; }
 .cover-gallery .cg-item .cg-del { position:absolute; top:2px; right:2px; width:18px; height:18px; background:rgba(0,0,0,0.5); color:#fff; border:none; border-radius:50%; font-size:12px; line-height:18px; text-align:center; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .cover-gallery .cg-item .cg-del:hover { background:rgba(211,47,47,0.85); }
@@ -1802,15 +1813,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .cover-gallery .cg-add:hover { border-color:var(--blue1); color:var(--blue1); }
 
 /* B5：前台轮播 */
-.cover-carousel { position:relative; width:100%; overflow:hidden; }
-.cover-carousel .cc-track { display:flex; transition:transform 0.3s ease; }
+/* R280（老板 09-28 00:35 ①②）：预览弹窗封面轮播与资源页同口径改「固定展示框 + 圆点镶入框内」
+   （同款组件统一，非扩大范围） */
+.cover-carousel { position:relative; width:calc(100% - 32px); margin:16px auto 0; height:min(48vh, 400px); overflow:hidden; box-sizing:border-box; background:#eef4fb; border:1px solid var(--border); border-radius:10px; }
+.cover-carousel .cc-track { display:flex; height:100%; transition:transform 0.3s ease; }
 .cover-carousel .cc-track.dragging { transition:none; }
-.cover-carousel .cc-slide { flex:0 0 100%; display:flex; align-items:center; justify-content:center; }
-.cover-carousel .cc-slide img { max-width:100%; max-height:min(56vh, 520px); object-fit:contain; display:block; }
-.cover-carousel .cc-dots { display:flex; justify-content:center; gap:6px; padding:10px 0; }
-.cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:var(--border); cursor:pointer; }
-.cover-carousel .cc-dots .cc-dot.active { background:var(--blue1); }
-@media (max-width:600px) {
-  .cover-carousel .cc-slide img { max-height:min(48vh, 400px); }
-}
+.cover-carousel .cc-slide { flex:0 0 100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.cover-carousel .cc-slide img { width:100%; height:100%; object-fit:contain; display:block; }
+/* R280 ①：轮播内占位图也按固定框 contain（特异性 0,3,1 顶掉 940 行 16:9 通配的 height:auto!important） */
+.modal-box .cover-carousel .cc-slide img[src^="data:image/svg+xml"] { height:100% !important; width:100%; aspect-ratio:auto !important; min-height:0 !important; margin:0 !important; object-fit:contain !important; }
+.cover-carousel .cc-dots { position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:flex; justify-content:center; gap:6px; padding:5px 10px; margin:0; background:rgba(0,0,0,.35); border-radius:999px; z-index:2; }
+.cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.55); cursor:pointer; }
+.cover-carousel .cc-dots .cc-dot.active { background:#fff; }
 

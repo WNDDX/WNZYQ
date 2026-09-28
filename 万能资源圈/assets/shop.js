@@ -190,30 +190,8 @@
       img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); this.classList.add('img-in'); }; /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
       if (img.classList && img.classList.contains('modal-cover')) img.classList.add('m-loading'); /* R215 条9：封面加载期固定 16:9 居中槽，首帧不再靠左 */
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
-      /* R258（老板 09-23 19:11「图加载完才跳回正常位置」）：封面加载槽按真实图比例定型——详情封面与列表卡片
-         同图，列表先渲染、点开详情时卡片图已加载（缓存命中，naturalWidth 同步可读），据此把加载槽从固定 16:9
-         定型为与最终显示完全相同的宽高（inline !important 压住 m-loading 槽宽与基础规则自动计算），
-         图片加载完成摘 m-loading 后布局零收敛、下方内容零位移；卡片图未就绪（弱网首开、列表未渲染完）读不到
-         比例时退回 R215 固定 16:9 槽兜底（仅该场景残留一次收敛，优于内容塌陷/靠左）。 */
-      if (img.classList && img.classList.contains('modal-cover') && src) {
-        try {
-          var __cimgs = document.querySelectorAll('.product-card img');
-          for (var ci = 0; ci < __cimgs.length; ci++) {
-            var __cimg = __cimgs[ci];
-            if (__cimg.src === img.src && __cimg.naturalWidth > 0 && __cimg.naturalHeight > 0) {
-              var __mobile = window.innerWidth <= 600; /* 与 CSS 断点一致：移动端 max-height 220 / 边距 24 */
-              var __pw = img.parentElement ? img.parentElement.clientWidth : 0;
-              var __mw = (__pw > 60 ? __pw - (__mobile ? 24 : 32) : 320); if (__mw > 320) __mw = 320;
-              var __mh = __mobile ? 220 : 320;
-              var __sc = Math.min(1, __mw / __cimg.naturalWidth, __mh / __cimg.naturalHeight);
-              img.style.setProperty('width', Math.max(1, Math.round(__cimg.naturalWidth * __sc)) + 'px', 'important');
-              img.style.setProperty('height', Math.max(1, Math.round(__cimg.naturalHeight * __sc)) + 'px', 'important');
-              img.style.setProperty('aspect-ratio', 'auto', 'important');
-              break;
-            }
-          }
-        } catch (e) {}
-      }
+      /* R280（老板 09-28 00:35 ①）：封面改固定展示框（CSS 定宽高 + contain）——框尺寸恒定，
+         加载前后布局天然零收敛，R258 按 16:9 加载槽比例内联定型的补丁（与固定框冲突）整体退役。 */
       // R93：封面缺省/加载失败回退感叹号占位（R91 文字版已被用户否决回退）
       if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading'); } img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
       /* R213 P2⑦（质检 R212）：R191 时代的旧媒体回退注释尸体已删（全局兜底已上移至脚本顶部统一注册） */
@@ -790,6 +768,9 @@
       }
       carouselEl.style.display = '';
       if (fallbackImgEl) fallbackImgEl.style.display = 'none';
+      // R280 ③：轮播状态挂元素（st）+ 事件监听只绑一次（__ccBound）——反复开关弹窗不再累积监听器/闭包
+      var st = carouselEl.__ccState || (carouselEl.__ccState = { idx: 0, len: images.length });
+      st.idx = 0; st.len = images.length;
       trackEl.innerHTML = '';
       images.forEach(function (url) {
         var slide = document.createElement('div');
@@ -821,44 +802,44 @@
           dotsEl.appendChild(dot);
         });
       }
-      var currentIdx = 0;
       function goToSlide(idx) {
-        currentIdx = idx;
-        trackEl.style.transform = 'translateX(-' + (idx * 100) + '%)';
+        st.idx = (idx + st.len) % st.len; // R280 ③：取模循环——自动/手动切到最后一张都回到第一张
+        trackEl.style.transform = 'translateX(-' + (st.idx * 100) + '%)';
         if (dotsEl) {
-          dotsEl.querySelectorAll('.cc-dot').forEach(function (d, i) { d.classList.toggle('active', i === idx); });
+          dotsEl.querySelectorAll('.cc-dot').forEach(function (d, i) { d.classList.toggle('active', i === st.idx); });
         }
+        restartTimer(); // R280 ③：手动/自动任一切换后都从头计 3 秒
       }
-      carouselEl.__ccTimer = setInterval(function () {
-        goToSlide((currentIdx + 1) % images.length);
-      }, 3000);
-      var pauseTimer = null;
       function pause() { if (carouselEl.__ccTimer) { clearInterval(carouselEl.__ccTimer); carouselEl.__ccTimer = null; } }
-      function resume() { pause(); carouselEl.__ccTimer = setInterval(function () { goToSlide((currentIdx + 1) % images.length); }, 3000); }
-      carouselEl.addEventListener('mouseenter', pause);
-      carouselEl.addEventListener('mouseleave', resume);
-      carouselEl.addEventListener('touchstart', pause, { passive: true });
-      carouselEl.addEventListener('touchend', resume);
-      var startX = 0, isDragging = false;
-      trackEl.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; isDragging = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); }, { passive: true });
-      trackEl.addEventListener('touchmove', function (e) { if (!isDragging) return; trackEl.__ccDragged = true; var dx = e.touches[0].clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; }, { passive: true });
-      trackEl.addEventListener('touchend', function (e) {
-        isDragging = false; trackEl.classList.remove('dragging');
-        var dx = (e.changedTouches[0] || e.touches[0]).clientX - startX;
-        if (dx < -40) goToSlide(Math.min(currentIdx + 1, images.length - 1));
-        else if (dx > 40) goToSlide(Math.max(currentIdx - 1, 0));
-        else goToSlide(currentIdx);
-      });
-      trackEl.addEventListener('mousedown', function (e) { startX = e.clientX; isDragging = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); e.preventDefault(); });
-      trackEl.addEventListener('mousemove', function (e) { if (!isDragging) return; trackEl.__ccDragged = true; var dx = e.clientX - startX; trackEl.style.transform = 'translateX(calc(-' + (currentIdx * 100) + '% + ' + dx + 'px))'; });
-      trackEl.addEventListener('mouseup', function (e) {
-        isDragging = false; trackEl.classList.remove('dragging');
-        var dx = e.clientX - startX;
-        if (dx < -40) goToSlide(Math.min(currentIdx + 1, images.length - 1));
-        else if (dx > 40) goToSlide(Math.max(currentIdx - 1, 0));
-        else goToSlide(currentIdx);
-      });
-      trackEl.addEventListener('mouseleave', function () { if (isDragging) { isDragging = false; trackEl.classList.remove('dragging'); goToSlide(currentIdx); } });
+      function restartTimer() { pause(); carouselEl.__ccTimer = setInterval(function () { goToSlide(st.idx + 1); }, 3000); }
+      carouselEl.__ccPause = pause; // R280 ③：弹窗关闭钩子用它停表（closeModal 必调），防后台鬼影换图
+      if (!carouselEl.__ccBound) {
+        carouselEl.__ccBound = true;
+        carouselEl.addEventListener('mouseenter', function () { pause(); });
+        carouselEl.addEventListener('mouseleave', function () { restartTimer(); });
+        carouselEl.addEventListener('touchstart', function () { pause(); }, { passive: true });
+        carouselEl.addEventListener('touchend', function () { restartTimer(); });
+        trackEl.addEventListener('touchstart', function (e) { trackEl.__ccStartX = e.touches[0].clientX; trackEl.__ccDrag = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); }, { passive: true });
+        trackEl.addEventListener('touchmove', function (e) { if (!trackEl.__ccDrag) return; trackEl.__ccDragged = true; var dx = e.touches[0].clientX - trackEl.__ccStartX; trackEl.style.transform = 'translateX(calc(-' + (st.idx * 100) + '% + ' + dx + 'px))'; }, { passive: true });
+        trackEl.addEventListener('touchend', function (e) {
+          trackEl.__ccDrag = false; trackEl.classList.remove('dragging');
+          var dx = (e.changedTouches[0] || e.touches[0]).clientX - trackEl.__ccStartX;
+          if (dx < -40) goToSlide(st.idx + 1); // R280 ③：拖动也循环（老板「手动切换到最后可以循环回到第一个」）
+          else if (dx > 40) goToSlide(st.idx - 1);
+          else goToSlide(st.idx);
+        });
+        trackEl.addEventListener('mousedown', function (e) { trackEl.__ccStartX = e.clientX; trackEl.__ccDrag = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); e.preventDefault(); });
+        trackEl.addEventListener('mousemove', function (e) { if (!trackEl.__ccDrag) return; trackEl.__ccDragged = true; var dx = e.clientX - trackEl.__ccStartX; trackEl.style.transform = 'translateX(calc(-' + (st.idx * 100) + '% + ' + dx + 'px))'; });
+        trackEl.addEventListener('mouseup', function (e) {
+          trackEl.__ccDrag = false; trackEl.classList.remove('dragging');
+          var dx = e.clientX - trackEl.__ccStartX;
+          if (dx < -40) goToSlide(st.idx + 1);
+          else if (dx > 40) goToSlide(st.idx - 1);
+          else goToSlide(st.idx);
+        });
+        trackEl.addEventListener('mouseleave', function () { if (trackEl.__ccDrag) { trackEl.__ccDrag = false; trackEl.classList.remove('dragging'); goToSlide(st.idx); } });
+      }
+      restartTimer(); // R280 ③：弹窗打开即启动 3 秒自动轮播
     }
 
     // ---------- 详情弹窗 ----------
@@ -915,6 +896,11 @@
         v.src = url;
         v.controls = true;
         v.playsInline = true;
+        /* R278（老板 09-27）：详情视频补点击放大 → 全屏大图（与同区图片的显式 handler 同款；
+         * 原实现只有 controls、无任何放大绑定——「全系统点击放大视频」缺口。不为 modalMedia 整体
+         * bindLightbox，避免与上方图片的显式 handler 双绑定。 */
+        v.style.cursor = 'zoom-in';
+        v.addEventListener('click', function () { window.openLightbox(url); });
         if (window.mediaStable) window.mediaStable(v, true);
         modalMedia.appendChild(v);
       });
@@ -1312,6 +1298,9 @@
     function closeModalDiscard() { __codeDraft = null; closeModal(); }
 
     function closeModal() { try { document.querySelectorAll('#modalBox video, #modalMedia video').forEach(function (v) { v.pause(); }); } catch (e) {}
+      // R280 ③：关弹窗必停轮播定时器——防「关了弹窗后台还在换图」的鬼影残留
+      var _ccCar = document.getElementById('modalCarousel');
+      if (_ccCar && _ccCar.__ccPause) _ccCar.__ccPause();
       modalMask.classList.remove('open');
       setBodyLock(false);
       currentProduct = null;

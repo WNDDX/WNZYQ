@@ -310,8 +310,10 @@
     img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;}
     /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
     .modal-box img[src^="data:image/svg+xml"], .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain; }
-    .modal-cover[src^="data:image/svg+xml"] { aspect-ratio: 16 / 9 !important; height: auto !important; max-height: 320px !important; object-fit: contain !important; width: min(320px, calc(100% - 32px)) !important; margin: 16px auto 0 !important; }
-    .modal-cover.m-loading { aspect-ratio: 16 / 9 !important; width: min(320px, calc(100% - 32px)) !important; margin: 16px auto 0 !important; max-height: 320px !important; background: var(--bg-light); border-radius: 10px; }
+    /* R280 ①：单图封面的占位/加载失败/加载中三态与固定展示框同尺寸（框恒定，加载前后零收敛）。
+       特异性升到 .modal-box img.modal-cover[…]（0,3,1）——必须压过 309 行 .modal-box img[src^]（0,2,1）的 height:auto!important */
+    .modal-box img.modal-cover[src^="data:image/svg+xml"] { aspect-ratio: auto !important; height: min(48vh, 400px) !important; width: calc(100% - 32px) !important; min-height: 0 !important; object-fit: contain !important; margin: 16px auto 0 !important; }
+    .modal-box img.modal-cover.m-loading { aspect-ratio: auto !important; width: calc(100% - 32px) !important; height: min(48vh, 400px) !important; margin: 16px auto 0 !important; background: var(--bg-light); border-radius: 10px; }
 
     .product-card {
       background: var(--card-bg);
@@ -529,9 +531,11 @@
        圆角直接裁在真实图片内容上（旧版固定 16:9 框 + contain 时竖图四周留白，
        圆角只裁到背景色，视觉上"没有圆角"）。占位符/加载失败态由专门的 !important 规则兜底保持 16:9 */
     img.modal-cover { /* R43：选择器升级为 img.modal-cover——505 行 .modal-box img{max-width:100%} 同特异性但位置靠前，被它压掉导致 max-width 计算值失效（图片满宽贴边）；升级后同特异性、位置靠后者胜 */
-      width: auto; height: auto;
-      max-width: calc(100% - 32px);
-      max-height: 320px;
+      /* R280（老板 09-28 00:35 ①）：单图封面与轮播同口径改「固定展示框」——框宽随弹窗内容宽（留 16px 边距）、
+         框高定值 min(48vh,400px)，object-fit:contain：不裁剪不变形，宽或高一维先顶到框、另一维按比例居中。
+         旧 R43/R258 的「按图内在比例自适应收框」口径整体退役（老板本轮明确要固定框）。 */
+      width: calc(100% - 32px); height: min(48vh, 400px); box-sizing: border-box;
+      object-fit: contain;
       display: block;
       margin: 16px auto 0;
       background: #eef4fb;
@@ -1003,7 +1007,7 @@
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
       .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: 12px; }
-      img.modal-cover { width: auto; max-width: calc(100% - 24px); margin: 12px auto 0; max-height: 220px; }
+      img.modal-cover { width: calc(100% - 24px); margin: 12px auto 0; } /* R280 ①：移动端只调边距，框高沿用 min(48vh,400px) 定值 */
       .modal-content { padding: 12px 16px 16px; }
       /* R141：手机档 18px 删除，与管理端全档 20px 统一 */
       .modal-price { font-size: 20px; }
@@ -1267,17 +1271,18 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   }
 }
 
-/* ---------- R256：前台轮播样式 ---------- */
-.cover-carousel { position:relative; width:100%; overflow:hidden; }
-.cover-carousel .cc-track { display:flex; transition:transform 0.3s ease; }
+/* R280（老板 09-28 00:35 ①②）：封面轮播改「固定展示框」——与单图封面同口径：
+   框宽随弹窗内容宽（留 16px 边距）、框高定值 min(48vh,400px)，图 contain 不裁不变形，
+   宽或高一维贴框、另一维按比例居中；切换小白点 absolute 镶进框内底部（半透明胶囊底衬，任何图上都看得清），
+   不再单独占布局空间 */
+.cover-carousel { position:relative; width:calc(100% - 32px); margin:16px auto 0; height:min(48vh, 400px); overflow:hidden; box-sizing:border-box; background:#eef4fb; border:1px solid var(--border); border-radius:10px; }
+.cover-carousel .cc-track { display:flex; height:100%; transition:transform 0.3s ease; }
 .cover-carousel .cc-track.dragging { transition:none; }
-.cover-carousel .cc-slide { flex:0 0 100%; display:flex; align-items:center; justify-content:center; height:min(56vh, 520px); }
-.cover-carousel .cc-slide img { width:100%; height:100%; object-fit:cover; display:block; }
-.cover-carousel .cc-dots { display:flex; justify-content:center; gap:6px; padding:10px 0; }
-.cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:var(--border); cursor:pointer; }
-.cover-carousel .cc-dots .cc-dot.active { background:var(--blue1); }
-@media (max-width:600px) {
-  .cover-carousel .cc-slide { height:min(48vh, 400px); }
-  .cover-carousel .cc-slide img { width:100%; height:100%; object-fit:cover; }
-}
+.cover-carousel .cc-slide { flex:0 0 100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.cover-carousel .cc-slide img { width:100%; height:100%; object-fit:contain; display:block; }
+/* R280 ①：轮播内占位图也按固定框 contain（特异性 0,3,1 顶掉弹窗占位符 16:9 通配规则的 height:auto!important） */
+.modal-box .cover-carousel .cc-slide img[src^="data:image/svg+xml"] { height:100% !important; width:100%; aspect-ratio:auto !important; min-height:0 !important; margin:0 !important; object-fit:contain !important; }
+.cover-carousel .cc-dots { position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:flex; justify-content:center; gap:6px; padding:5px 10px; margin:0; background:rgba(0,0,0,.35); border-radius:999px; z-index:2; }
+.cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.55); cursor:pointer; }
+.cover-carousel .cc-dots .cc-dot.active { background:#fff; }
 
