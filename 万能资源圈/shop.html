@@ -75,7 +75,7 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
         <input class="search-input" id="searchInput"  />
-        <button type="button" class="search-clear" id="searchClear" title="清空" aria-label="清除搜索">×</button>
+        <button type="button" class="search-clear" id="searchClear" title="清空" aria-label="清除搜索"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <!-- 视图切换按钮（公共 .view-btn，R8 统一配色：激活淡白底、未激活淡蓝底，与管理页完全同色） -->
       <div class="view-toggle on-blue">
@@ -106,7 +106,7 @@
   <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
   <div class="modal-mask ann-modal" id="annModal">
     <div class="ann-box" onclick="event.stopPropagation()">
-      <button class="modal-close-x" id="annCloseX" type="button" onclick="closeAnnModal()">×</button>
+      <button class="modal-close-x" id="annCloseX" type="button" onclick="closeAnnModal()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="showAnnDefault()">公告</button>
       <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
@@ -147,17 +147,17 @@
     <div class="product-card card-skeleton" aria-hidden="true"><div class="sk-img"></div><div class="card-body"><div class="sk-line w70"></div><div class="sk-line w95"></div></div></div>
   </main>
   <div class="empty-tip" id="emptyTip">
-    <div class="empty-icon">📦</div>
+    <div class="empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div> <!-- R285 条18：文字表情换固定 SVG -->
     <div class="empty-title" id="emptyTitle">该分类暂无资源</div>
   </div>
 
   <!-- ============ 详情弹窗 ============ -->
   <div class="modal-mask" id="modalMask">
     <div class="modal-wrap">
-      <button class="modal-close-x" id="modalCloseX">×</button>
+      <button class="modal-close-x" id="modalCloseX"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <!-- R10 资源分享键（左上角，与×成对角）：转发样式图标，淡蓝底蓝图标，悬停蓝底白图标 -->
       <button class="modal-share-x" id="modalShareX" type="button" title="分享资源" aria-label="分享资源">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="15 17 20 12 15 7"></polyline>
           <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
         </svg>
@@ -220,7 +220,7 @@
   <!-- ============ 分享提示弹窗 ============ -->
   <div class="share-mask" id="shareMask">
     <div class="share-box">
-      <button class="modal-close-x" id="shareCloseX" type="button" onclick="closeShare()">×</button>      <div class="share-title">分享本站</div>
+      <button class="modal-close-x" id="shareCloseX" type="button" onclick="closeShare()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>      <div class="share-title">分享本站</div>
       <div class="share-tip">本站链接已复制到剪贴板</div>
       <div class="share-link" id="shareLinkText"></div>
       <button class="share-close" id="shareClose">确定</button>
@@ -229,9 +229,9 @@
 
   <!-- ============ 回到顶部按钮 ============ -->
   <button class="back-top" id="backTop" title="回到顶部">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="18 15 12 9 6 15"></polyline>
-    </svg>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+      <path d="M7 14l5-5 5 5z"></path>
+    </svg> <!-- R285 条15：上箭头实心化（对齐下箭头实心画风） -->
   </button>
 
   <script>var SHOP_CONFIG = window.SHOP_CONFIG || { shopName: '万能资源圈', shopLogo: '/assets/images/logo.png?v=224', defaultContactUrl: '', categories: [{ id: 0, name: '全部', parent_id: 0 }], productList: [] };</script>
@@ -244,7 +244,7 @@
   <!-- lightbox removed: use dynamic openLightbox/bindLightbox -->
   <script>
   (function () {
-    function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
+    function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:100200;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14))'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
     window.addEventListener('load', function () {
       setTimeout(function () {
         if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML');

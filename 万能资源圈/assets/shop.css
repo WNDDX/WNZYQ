@@ -18,7 +18,7 @@
       --blue1: #1E88E5;
       --blue2: #64B5F6;
       --blue:  var(--blue1);
-      --blue-live: #1688FF; /* R192 一⑤：交流群聊蓝（门户 btn-blue 同值）——联系类蓝键专用；本页 --blue2 是边框浅蓝，勿混用 */
+      --blue-live: var(--blue1); /* R285：联系按钮统一用系统通用蓝 */
       --red:   #ff4444;
       --topbar-h: 64px;
       /* R50：暗色相关变量统一移至 ui-common.css 定义（含 [data-theme=dark] 暗色值），此处不再重复定义 */
@@ -119,43 +119,46 @@
     /* ---------- 分享提示弹窗 ---------- */
     .share-mask {
       position: fixed; inset: 0; z-index: 998;
-      background: rgba(0, 0, 0, 0.6);
+      background: var(--overlay-modal);
       display: none; align-items: center; justify-content: center;
       padding: 16px;
     }
     .share-mask.open { display: flex; }
     .share-box {
       background: var(--card-bg); border-radius: 14px;
-      position: relative; padding: 26px 20px; width: 100%; max-width: 400px;
+      position: relative; padding: 26px 22px; /* R285 条26：弹窗留白电脑档统一 26px 22px（对齐 .kf-box/.modal-box） */ width: 100%; max-width: 400px;
       text-align: center; animation: modalIn var(--dur-mid) var(--ease-out);
       box-shadow: var(--shadow-modal);
     }
-    .share-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 10px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
+    .share-title { font-size: 20px; /* R285 条2：弹窗标题统一 20px（对齐 .kf-title/.modal-title） */ font-weight: 600; color: var(--text); margin-bottom: 10px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
     .share-tip { font-size: 14px; color: var(--text-light); margin-bottom: 14px; }
     .share-link {
       /* R15：与分享资源弹窗（showShareLinkModal）链接样式统一——蓝字居中 */
       background: var(--bg-light); border-radius: 8px;
-      padding: 10px 12px; font-size: 14px; color: #1565c0;
+      padding: 10px 12px; font-size: 14px; color: var(--blue1);
       word-break: break-all; margin-bottom: 16px; text-align: center;
       user-select: all; line-height: 1.5; max-height: 100px; overflow-y: auto;
     }
     .share-close {
-      display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;
+      display: block; width: 100%; margin-top: 16px; height: 46px; /* R285 条1：弹窗底部按钮统一 46px 模子 */
+      padding: 0 8px; border: none; border-radius: 10px;
       background: var(--blue1);
-      color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+      color: #fff; font-size: 16px; font-weight: 600; letter-spacing: var(--ls-btn); /* R285 条1：统一 16px/1.2px */ cursor: pointer;
       transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; letter-spacing: 1px;
     }
     .share-close:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+    /* R285 条26：弹窗留白手机档统一 20px 16px（对齐 .kf-box 手机档 / index .modal-box 手机档） */
+    @media (max-width: 600px) { .share-box { padding: 20px 16px; } }
     .search-box {
       flex: 1;
       position: relative;
     }
-    .search-box:focus-within { box-shadow: 0 0 0 3px rgba(30,136,229,0.15); transition: box-shadow 0.18s ease; } /* R231 条12：聚焦品牌蓝柔和光晕（与输入框圆角同心） */
+    .search-box:focus-within { box-shadow: 0 0 0 3px rgba(30,136,229,0.15); transition: box-shadow var(--dur-mid) var(--ease-out); } /* R231 条12：聚焦品牌蓝柔和光晕（与输入框圆角同心） */
     .search-input { /* R182-3：38→33px 与管理页搜索框同步统一 */
       width: 100%;
       height: 33px;
       border: none;
-      border-radius: 17px;
+      border-radius: 999px;
       padding: 0 36px 0 38px;
       font-size: 14px;
       background: var(--card-bg);
@@ -218,7 +221,7 @@
       display: inline-block;
       padding: 8px 20px;
       margin-right: 8px;
-      border-radius: 18px;
+      border-radius: 999px;
       border: 1px solid var(--border);
       background: var(--card-bg);
       color: var(--text-light);
@@ -288,14 +291,14 @@
     /* R231 条22：viewSwitch keyframes 抽公共到 ui-common.css（本处删除防三份重复） */
     .view-switch-anim { animation: viewSwitch var(--dur-mid) ease; }
     /* R231 条19：翻页旧内容 0.1s 淡出（容器级——子卡的 stagger-in 动画不干扰容器透明度） */
-    .page-fade-out { opacity: 0; transition: opacity 0.1s ease; }
+    .page-fade-out { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); /* R285 条32：0.1s 手写走标准档 */ }
     /* R243（用户 09-22 23:18）：条6 详情弹窗类型切换淡出 */
-    .variant-fade-out { opacity: 0; transition: opacity 0.1s ease; }
+    .variant-fade-out { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); /* R285 条32：0.1s 手写走标准档 */ }
     /* R243（用户 09-22 23:18）：条6 价格数字闪一下强调变化 */
     .modal-price { transition: opacity 0.15s ease; }
     .modal-price.price-flash { opacity: 0.3; }
     /* R243（用户 09-22 23:18）：条37 公告内容切换淡出 */
-    .ann-body-fade-out { opacity: 0; transition: opacity 0.1s ease; }
+    .ann-body-fade-out { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); /* R285 条32：0.1s 手写走标准档 */ }
     /* 视图切换时不让图片/内边距做形变动画，只保留卡片悬浮效果（与管理页一致、不夸张） */
     .product-card { transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease !important; }
     .card-img, .card-body { transition: none !important; }
@@ -317,7 +320,7 @@
 
     .product-card {
       background: var(--card-bg);
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
       cursor: pointer;
       box-shadow: var(--shadow-card);
@@ -351,7 +354,7 @@
       overflow: hidden;
       line-height: 1.4;
       /* R159：取消 42px 双行预留——桌面与手机一样标题自然高度、紧贴蓝色简介（用户：手机上才刚好） */
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
     .card-desc {
       font-size: 12px;
@@ -391,7 +394,7 @@
       color: var(--blue1);
       background: rgba(255,255,255,0.92);
       border: 1px solid var(--blue2);
-      border-radius: 20px;
+      border-radius: 999px;
       padding: 6px 16px;
       line-height: 18px; /* R116：行盒显式化，与 toast 同源 */
       display: flex;
@@ -411,11 +414,9 @@
       border: 2px solid var(--blue2);
       border-top-color: var(--blue1);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: btnSpin 0.6s linear infinite;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    /* R285 条48：spin keyframes 已删——统一走 ui-common.css btnSpin */
 
     /* ---------- 回到顶部按钮 ---------- */
     .back-top {
@@ -458,7 +459,7 @@
       position: fixed;
       inset: 0;
       z-index: 200;
-      background: rgba(0, 0, 0, 0.76);
+      background: var(--overlay-modal);
       display: none;
       align-items: flex-start; /* R159：改用子元素 margin:auto 居中——弹窗超出可视高度时可滚动到顶部/底部，不再裁死 */
       justify-content: center;
@@ -556,7 +557,7 @@
       color: var(--text);
       flex: 1;
       line-height: 1.4;
-      letter-spacing: 0.5px;
+      letter-spacing: 1.2px;
       padding-right: 36px;
     }
     .modal-price {
@@ -616,7 +617,7 @@
     .lightbox {
       position: fixed; inset: 0; z-index: 100000; display: none;
       align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, 0.92); touch-action: none;
+      background: var(--overlay-lightbox); touch-action: none;
     }
     .lightbox.open { display: flex; }
     /* 类型切换 */
@@ -628,7 +629,7 @@
     }
     .variant-tab {
       padding: 6px 16px;
-      border-radius: 16px;
+      border-radius: 999px;
       border: 1px solid var(--border);
       background: var(--card-bg);
       color: var(--text-light);
@@ -648,7 +649,7 @@
     }
     /* 公告小项 tabs（与类型切换 tabs 完全同款，保证关联性） */
     .ann-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 0 2px; }
-    .ann-tab { padding: 6px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ; user-select: none; }
+    .ann-tab { padding: 6px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ; user-select: none; }
 
     .ann-tab.active { background: var(--blue1); color: #fff; border-color: transparent; font-weight: 600; box-shadow: var(--shadow-blue); }
     .variant-detail {
@@ -698,7 +699,7 @@
       margin-top: 16px;
       padding: 16px;
       background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
-      border-radius: 12px;
+      border-radius: 10px;
       border: 1px solid var(--border);
     }
     .resource-code-header {
@@ -730,7 +731,7 @@
       color: var(--text);
       background: var(--card-bg);
       outline: none;
-      transition: border-color var(--dur-mid);
+      transition: border-color var(--dur-mid) var(--ease-out);
       box-sizing: border-box;
     }
     .resource-code-input:focus {
@@ -793,14 +794,14 @@
     }
     .resource-content img, .resource-content video {
       max-width: 100%;
-      border-radius: 6px;
+      border-radius: 8px;
       margin: 8px 0;
     }
 
     /* 底部按钮 */
     .modal-footer {
       display: flex;
-      gap: 10px;
+      gap: var(--gap);
       padding: 0 20px 20px;
     }
     .btn-contact {
@@ -1006,7 +1007,7 @@
       .search-box { order: 2; flex: 1 1 100%; margin-top: 0; }
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
-      .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: 12px; }
+      .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: 10px; }
       img.modal-cover { width: calc(100% - 24px); margin: 12px auto 0; } /* R280 ①：移动端只调边距，框高沿用 min(48vh,400px) 定值 */
       .modal-content { padding: 12px 16px 16px; }
       /* R141：手机档 18px 删除，与管理端全档 20px 统一 */
@@ -1075,7 +1076,7 @@
     /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
       /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
     /* R159：全系统弹窗统一防裁剪——①高度改 dvh（可视视口）；②align-items 改 flex-start，配合子元素已有的 margin:auto：弹窗矮于遮罩时依旧垂直居中（观感不变），高于遮罩时贴顶且遮罩可滚到底，底部内容（最后输入框/按钮排）永远可达；③遮罩 overflow-y:auto */
-    .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; height: 100dvh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: flex-start !important; justify-content: center !important; flex-direction: row !important; overflow-y: auto !important; }
+    /* R285 条52：手机全屏兜底已抽公共（ui-common.css），本页副本删除 */
     .modal-mask > *, .share-mask > *, .lightbox > * { margin: auto !important; float: none !important; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
@@ -1083,8 +1084,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* R97 定稿（用户）：卡内灰字全部删除，只留按键「点击新窗口播放视频」——flex 纵横居中=按键天然上下左右居中，无需补偿 */
 .video-fallback {
   border: 1px solid var(--border); /* R119：占位卡灰色线边框，失败边界可见（复用全局 --border 灰） */
-  /* R123（用户定稿 15:03）：背景与图片感叹号占位符统一——图片占位 SVG 底色即 #f5f5f5（写死、不随暗色变），视频卡同色对齐 */
-  background: #f5f5f5;
+  /* R285 条46：占位底灰接标准灰 var(--bg-light)（写死 #f5f5f5 作废——66 条清单第 46 条口径优先；SVG 素材本体色不变） */
+  background: var(--bg-light);
   border-radius: 10px;
   padding: 14px 14px;
   text-align: center;
@@ -1117,7 +1118,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   color: #fff;
   padding: 0 16px;
   height: 38px;
-  border-radius: 18px;
+  border-radius: 999px;
   font-size: 14px;
   white-space: nowrap;
   text-align: center;
@@ -1170,7 +1171,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .product-grid.list-view .card-skeleton .card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
     /* R194 第二批：前台引用块 / 分割线展示（详情弹窗/公告/变体简介/解锁内容统一） */
     .modal-detail blockquote, .ann-body blockquote, .variant-detail blockquote, .resource-content blockquote {
-      margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--hover-bg); border-radius: 0 6px 6px 0; color: inherit;
+      margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--hover-bg); border-radius: 0 8px 8px 0; color: inherit;
     }
     .modal-detail hr, .ann-body hr, .variant-detail hr, .resource-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 
@@ -1199,18 +1200,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         transform: translateY(-3px);
         box-shadow: var(--shadow-blue-strong);
       }
-  .modal-close-x:hover {
-        transform: scale(0.97);
-        opacity: 0.9;
-        background: var(--red, #ff4444);
-        color: #fff;
-      }
-  .modal-share-x:hover {
-        transform: scale(0.97);
-        opacity: 0.9;
-        background: var(--blue1);
-        color: #fff;
-      }
+  .modal-close-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--red, #ff4444); color: #fff; } /* R285 item 12 */
+  .modal-share-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--blue1); color: #fff; } /* R285 item 12 */
   .variant-tab:hover {
         border-color: var(--blue1);
         color: var(--blue1);
@@ -1218,14 +1209,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         transform: translateY(-1px);
       }
   .ann-tab:hover { border-color: var(--blue1); color: var(--blue1); background: var(--hover-bg); transform: translateY(-1px); }
-  .resource-code-btn:hover {
-        transform: scale(0.97);
-        opacity: 0.9;
-      }
-  .btn-contact:hover, .btn-close-modal:hover {
-        transform: scale(0.97);
-        opacity: 0.9;
-      }
+  .resource-code-btn:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R285 item 12：统一浮起+微亮 */
+  .btn-contact:hover, .btn-close-modal:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R285 item 12 */
   .ann-modal .ann-title:hover { color: var(--blue1); }
   .cat-toggle:hover { color: var(--blue1); }
   .sub-cat-toggle:hover { color: var(--blue1); }
@@ -1242,7 +1227,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     /* 激活分类底部滑动指示条：JS 按激活标签实测位置设 width/transform，切换时平滑滑过去（一次一帧，非逐帧） */
     /* 注意：这里不要给 .category-bar 补 position:relative——主规则已是 sticky（定位元素，absolute 照样以它为基准）；
        relative 会覆盖 sticky，且残留的 top:var(--topbar-h) 会把整条栏往下位移 64px 压住产品网格（R231 收尾实测回归） */
-    .cat-slide-ind { position: absolute; left: 0; top: 0; height: 2px; background: var(--blue1); border-radius: 1px; z-index: 1; transition: transform 0.2s var(--ease-out); width: 0; } /* R246（用户 09-23 12:33）：改 top:0 为基准，JS 用 transform: translateX/translateY 精确定位到激活标签底缘下方 2px，width 直设分数值（弃 scaleX） */
+    .cat-slide-ind { position: absolute; left: 0; top: 0; height: 2px; background: var(--blue1); border-radius: 3px; z-index: 1; transition: transform 0.2s var(--ease-out); width: 0; } /* R246（用户 09-23 12:33）：改 top:0 为基准，JS 用 transform: translateX/translateY 精确定位到激活标签底缘下方 2px，width 直设分数值（弃 scaleX） */
     .cat-slide-ind.hidden { display: none; } /* 无激活标签（异常兜底）时藏 */
     /* 子分类切换淡入：容器重建内容后挂 re-in 触发一次 0.15s 淡入 */
     @keyframes subCatIn { from { opacity: 0.35; } to { opacity: 1; } }
@@ -1252,9 +1237,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* A2-③：详情弹窗骨架 */
 .modal-skeleton { padding:12px 0; pointer-events:none; }
-.modal-skeleton .md-skel-title { height:22px; width:70%; border-radius:4px; margin-bottom:8px; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.modal-skeleton .md-skel-price { height:16px; width:30%; border-radius:4px; margin-bottom:10px; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.modal-skeleton .md-skel-desc { height:12px; width:95%; border-radius:4px; margin-bottom:6px; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+.modal-skeleton .md-skel-title { height:20px; /* R285 条10：弹窗骨架标题条统一 20px（对齐 admin .pv-skel-title） */ width:70%; border-radius: 3px; margin-bottom:8px; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+.modal-skeleton .md-skel-price { height:16px; width:30%; border-radius: 3px; margin-bottom:10px; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+.modal-skeleton .md-skel-desc { height:12px; width:95%; border-radius: 3px; margin-bottom:6px; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
 .modal-skeleton .md-skel-desc.w80 { width:80%; }
 
 /* 暗色模式 */
@@ -1286,3 +1271,21 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.55); cursor:pointer; }
 .cover-carousel .cc-dots .cc-dot.active { background:#fff; }
 
+
+/* R285：手机端 390px 资源码选择框修复 */
+@media (max-width: 390px) {
+  .resource-code-input {
+    min-width: 80px;
+    height: 38px;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+  .resource-code-btn {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+}
+
+/* ===== R285 条17：搜索清除钮固定 SVG 尺寸口径 ===== */
+.search-clear > svg { width: 12px; height: 12px; display: block; }

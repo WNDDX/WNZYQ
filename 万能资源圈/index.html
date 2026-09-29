@@ -118,13 +118,13 @@ body{
     text-align: center;
     margin-bottom: 32px; /* R33：与标题上方间距对称（原44/20不均） */
     opacity: 0.95;
-    letter-spacing: 2.4px;
+    letter-spacing: 1.2px;
     /* R20：抵消字距尾随空隙使视觉居中（与错误页大字同款修法） */
     display: flex; align-items: center; justify-content: center; padding-left: 2.4px; box-sizing: border-box;
 }
 .btn-item{
     width: 100%;
-    border-radius: 12px;
+    border-radius: 10px;
     padding: 24px 26px; /* R46：随字号增大同步微调 */
     margin-bottom: 18px;
     display: flex;
@@ -141,26 +141,28 @@ body{
     -webkit-user-select: none;
     background: none;
     text-align: center;
-    letter-spacing: 1.3px;
+    letter-spacing: 1px;
 }
 .modal-inner-btn{
     width: 80%; /* R192 用户拍板：门户弹窗按钮宽度保持不动 */
     margin: 0 auto 14px;
     border-radius: 10px; /* R192 一③：主按钮圆角对齐全站 10px */
-    padding: 11px 32px;
+    height: 46px; /* R285 条1：弹窗底部按钮统一 46px 模子（宽度 80% 是 R192 用户拍板保持不动） */
+    padding: 0 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     border: none;
-    font-size: 18px;
+    font-size: 16px; /* R285 条1：统一 16px */
     color: #ffffff;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: var(--ls-btn);
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     background-color: #1E88E5; /* R145：四色规范，绿→主蓝 */
-    letter-spacing: 0.9px;
+    letter-spacing: 1px;
 }
 .btn-orange{background-color: #FF9900;}
 .btn-green{background-color: #01C000;}
@@ -173,23 +175,24 @@ body{
 }
 /* R231 条10：显示改由 .open 控制（keyframes 公共于 ui-common.css）——原 inline display 切换
    会让 R184 全站关场收缩动画（mask-closing）在首页永远不播 */
-.modal-mask.open { display: flex; animation: maskIn 0.2s ease; }
-.modal-box { animation: modalIn 0.2s var(--ease-out, ease); } /* R231 条10：二维码弹窗补入场 */
+.modal-mask.open { display: flex; animation: maskIn var(--dur-mid) var(--ease-out); }
+.modal-box { animation: modalIn var(--dur-mid) var(--ease-out); } /* R231 条10：二维码弹窗补入场 */
 .modal-mask{
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.76);
+    background: var(--overlay-modal);
     z-index: 999;
     display: none;
-    align-items: center;
+    align-items: flex-start; /* R285 条3：对齐 R159 口径——子元素 margin:auto 居中，内容超高时遮罩可滚，底部按钮永远可达 */
     justify-content: center;
     padding: 16px;
+    overflow-y: auto; /* R285 条3：遮罩可滚（手机地址栏遮挡根治） */
 }
 .modal-box{
     background: var(--card-bg);
     border-radius: 14px;
     padding: 26px 22px;
-    position: relative; max-width: 480px; max-height: 84vh; overflow-y: auto;
+    position: relative; max-width: 480px; max-height: 84vh; max-height: 84dvh; /* R285 条3：dvh 可视视口口径（对齐 R159 ①） */ overflow-y: auto;
     width: 100%;
     text-align: center;
 }
@@ -197,7 +200,7 @@ body{
     font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 19px 保持） */
     color: var(--text);
     margin-bottom: 16px;
-    letter-spacing: 1.3px;
+    letter-spacing: 1px;
     padding: 0 34px;
     text-align: center;
 }
@@ -209,7 +212,7 @@ body{
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: center; border-radius: 12px; overflow: hidden; /* R42：二维码容器圆角（全站图框统一；原 6px 升级统一 12px） */
+    justify-content: center; border-radius: 10px; overflow: hidden; /* R42：二维码容器圆角（全站图框统一；原 6px 升级统一 12px） */
     background: var(--bg-light);
 }
 .modal-qrcode{
@@ -234,17 +237,19 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
     font-size: 16px;
     color: var(--text-light);
     margin-bottom: 16px;
-    letter-spacing: 0.9px;
+    letter-spacing: 1px;
 }
 .modal-close{
     background-color: #ff4444;
     color: #fff;
     border: none;
-    padding: 11px 32px;
+    height: 46px; /* R285 条1：弹窗底部按钮统一 46px 模子 */
+    padding: 0 32px;
     border-radius: 10px; /* R192 一③④：危险红钮对齐全站 10px/16px */
     font-size: 16px;
     cursor: pointer;
-    letter-spacing: 0.9px;
+    font-weight: 600;
+    letter-spacing: var(--ls-btn);
     user-select: none;
     -webkit-user-select: none;
 }
@@ -256,9 +261,9 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
 /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */
 .pull-refresh{position:fixed;/*R170(用户 22:52):位置回到 top:80px——与 toast/之前下拉弹窗同位（用户拍板"高度要跟之前弹窗高度一致"；R166 的 top:0 作废）*/top:80px;left:0;right:0;height:0;/*R170:不裁切+胶囊平移——根治"滑回去中间消失"（原钉顶+overflow:hidden 高度裁切，划回时胶囊从下往上被裁掉）*/overflow:visible;display:flex;/*防拉伸:容器高 0,stretch 会把子项拉成 0 高*/align-items:flex-start;justify-content:center;z-index:998;pointer-events:none;background:transparent;}
-.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);/*R170:胶囊默认藏在 top:80px 上方（占 32~64px 区），跟手滑到 translateY(0)=80px 位*/transform:translateY(-48px);opacity:0;transition:transform .25s ease,opacity .2s ease;}
-.prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:prtspin .8s linear infinite;}
-@keyframes prtspin{to{transform:rotate(360deg);}}
+.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius: 999px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);/*R170:胶囊默认藏在 top:80px 上方（占 32~64px 区），跟手滑到 translateY(0)=80px 位*/transform:translateY(-48px);opacity:0;transition:transform .25s ease,opacity .2s ease;}
+.prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:btnSpin 0.6s linear infinite;}
+/* R285 条48：prtspin 已删——统一走 ui-common.css btnSpin */
 /* 弹窗右上角关闭按钮（与资源页/管理页一致） */
 .modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background: var(--bg-light);color: var(--text-light);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.10s ease, opacity 0.10s ease, background 0.10s ease, color 0.10s ease; /* R231 条1：all 收窄为显式属性 */line-height:1;}
 .modal-close-x:hover{background:#ff4444;color:#fff;transform:scale(0.97);opacity:0.9;}
@@ -268,12 +273,12 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 .modal-tip, .modal-title { word-break: break-word; overflow-wrap: anywhere; }
 /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
 /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
-.modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
+.modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: flex-start !important; /* R285 条3：flex-start+子 margin:auto——矮时居中、超高可滚 */ justify-content: center !important; flex-direction: row !important; overflow-y: auto !important; }
 .modal-mask > *, .share-mask > *, .lightbox > * { margin: auto !important; float: none !important; }
 @media (max-width: 600px) {
   .logo-box { width: 100px; height: 100px; }
   .logo-wrap { margin-bottom: 28px; } /* R33：移动端同步上下间距对称 */
-  .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.6px; padding-left: 1.6px; }
+  .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.2px; padding-left: 1.6px; }
   .btn-item { padding: 16px 18px; font-size: 22px; margin-bottom: 12px; border-radius: 10px; gap: 12px; }
   .icon-svg { width: 34px; height: 34px; }
   .qrcode-wrap { width: 200px; height: 200px; }
@@ -342,7 +347,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 <div class="modal-mask" id="mask" onclick="closeModal()">
     <div class="modal-box" onclick="event.stopPropagation()">
-        <button class="modal-close-x" type="button" onclick="closeModal()">×</button>        <div class="modal-title" id="modalTitle"></div>
+        <button class="modal-close-x" type="button" onclick="closeModal()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>        <div class="modal-title" id="modalTitle"></div>
         <div class="qrcode-wrap">
             <img class="modal-qrcode" id="modalImg" alt="" decoding="async">
             <div class="qrcode-fail-icon" id="qrFail">
@@ -577,7 +582,7 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
   <script src="/assets/ui-common.js"></script>
   <script>
   (function () {
-    function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
+    function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:100200;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14))'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
     window.addEventListener('load', function () {
       setTimeout(function () {
         if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML');

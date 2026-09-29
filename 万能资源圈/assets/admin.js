@@ -18,8 +18,8 @@
     // R231（用户 09-21 23:38）条9：rte 放大/还原按钮 ⛶/🗕 emoji 换全站统一 stroke 2px 线性 SVG（样式 .rte-zoom-ico 见 admin.css）
     var RTE_SVG_MAX = '<svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>';
     var RTE_SVG_MIN = '<svg class="rte-zoom-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M3 21l7-7"/></svg>';
-    var PWD_EYE_OPEN_SVG = '<svg class="pwd-eye-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-    var PWD_EYE_OFF_SVG = '<svg class="pwd-eye-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="4" y1="4" x2="20" y2="20"/></svg>';
+    var PWD_EYE_OPEN_SVG = '<svg class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>'; /* R285 条15：小眼睛统一实心画风（与下箭头实心三角一套体系） */
+    var PWD_EYE_OFF_SVG = '<svg class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/><path d="M4.47 3.06 20.94 19.53l-1.41 1.41L3.06 4.47z"/></svg>';
     function togglePwdVisibility() {
       var pwd = document.getElementById('loginPass');
       var btn = document.getElementById('pwdToggleBtn');
@@ -74,7 +74,7 @@
             var vd = document.createElement('button');
             vd.type = 'button'; vd.className = 'vf-del'; vd.title = '删除这个视频';
             vd.setAttribute('contenteditable', 'false');
-            vd.textContent = '×';
+            vd.innerHTML = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; /* R285 条17：× 文字符号换固定 SVG */
             vd.addEventListener('click', function (ev) {
               ev.preventDefault(); ev.stopPropagation();
               var card = vd.closest('.video-fallback');
@@ -169,7 +169,7 @@
     function showInput(title, tip, placeholder, callback, defaultValue, uploadKind) {
       inputTitle.textContent = title || '请输入';
       inputTip.innerHTML = tip || '';
-      inputValue.placeholder = placeholder || '请输入…';
+      inputValue.placeholder = placeholder || '请输入内容'; /* R285 条38：兜底口径「动作+对象」 */
       inputValue.value = defaultValue || '';
       inputCallback = callback;
       // R36：媒体插入统一弹窗——uploadKind('image'/'video') 时显示输入框右侧的本地上传按钮，
@@ -503,7 +503,11 @@
       opts.headers = opts.headers || {};
       opts.headers['Content-Type'] = 'application/json';
       // R30：鉴权统一走 HttpOnly Cookie，不再从 localStorage 读 token
-      var p = fetch('/api/' + path, opts).then(function (r) {
+      // R286-57：管理页所有请求加8秒超时保护，网络一卡不再无限转圈
+      var p = Promise.race([
+        fetch('/api/' + path, opts),
+        new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, 8000); })
+      ]).then(function (r) {
         __apiInFlight.delete(reqKey);
         return r.json().then(function (d) {
           d._status = r.status;
@@ -519,7 +523,7 @@
         });
       }).catch(function (e) {
         __apiInFlight.delete(reqKey);
-        return { ok: false, msg: '无法连接后端（请确认已部署到 Cloudflare）' };
+        return { ok: false, msg: '当前网络不可用，请检查网络连接' };
       });
       __apiInFlight.set(reqKey, p);
       return p;
@@ -667,7 +671,7 @@
       backBtn.type = 'button';
       backBtn.className = 'back-top';
       backBtn.setAttribute('aria-label', '回到顶部');
-      backBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg>';
+      backBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 14l5-5 5 5z"/></svg>'; /* R285 条15：上箭头实心化（对齐下箭头实心画风） */
       backBtn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
       document.body.appendChild(backBtn);
     })();
@@ -729,7 +733,26 @@
     })();
 
     // ---------- 启动 ----------
-    function boot() {
+    
+// R286-59：管理页输入框长度限制双保险（HTML maxlength + JS截断，与前台解锁码同款口径）
+(function() {
+  var limits = {
+    'fTitle': 100, 'fDesc': 200, 'fImg': 500, 'fContactUrl': 500,
+    'catName': 50, 'setContactUrl': 500, 'contactUrlInput': 500,
+    'loginUser': 50, 'loginPass': 50, 'adminSearch': 50,
+    'oldPwd': 50, 'newPwd': 50, 'confirmPwd': 50
+  };
+  function bindLimit(id, max) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function() {
+      if (this.value.length > max) this.value = this.value.slice(0, max);
+    });
+  }
+  for (var k in limits) bindLimit(k, limits[k]);
+})();
+
+function boot() {
       // 本地环境（file:// 或 localhost）不发起 API 请求，避免 404 报错
       var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (!isLocal) {
@@ -763,6 +786,20 @@
     function showMain(username) {
       loginView.style.display = 'none';
       mainView.style.display = 'block';
+      // R281（老板 09-28 21:27 拍板）：切回窗口 >60s 静默拉最新数据——与 shop（R243 条32 + R276 diff）同一套规则全站统一。
+      // 监听只挂一次（退出再登录不重复绑）；未登录（mainView 未显示）不触发；
+      // 静默重拉复用现有 load 函数（silent=1）：不弹 toast、不铺骨架，快照比对没变不重画、有变化才换新。
+      if (!window.__adminBackBound) {
+        window.__adminBackBound = 1;
+        var __adminBackRefresh = function () {
+          if (mainView.style.display !== 'block') return; /* 未登录不触发 */
+          if (Date.now() - (window.__lastFetchTime || 0) > 60000) {
+            loadProducts(1); loadCategories(1); loadStats(null, null, 1, 1); /* 三路静默：列表/分类/统计 */
+          }
+        };
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) __adminBackRefresh(); });
+        window.addEventListener('pageshow', function (e) { if (!e.persisted) __adminBackRefresh(); }); /* persisted(bfcache) 由 ui-common.js 全站强制 reload 兜底 */
+      }
       // R248：页面加载后尝试恢复编辑草稿（自动刷新保护）
       try { setTimeout(function () { if (window.__restoreEditingDraft) window.__restoreEditingDraft(); }, 200); } catch (e) {}
       function _safe(fn) { try { fn(); } catch (e) { /* R213 P2⑤：调试日志已删（隔离逻辑保留） */ } }
@@ -971,36 +1008,55 @@
     }
 
     // ---------- 资源管理 ----------
-    function loadProducts() {
+    /* R281（老板 09-28 21:27 拍板）：上次拉取时间戳——切回窗口 >60s 才静默重拉（与 shop R243 条32 / R276 同规则全站统一） */
+    window.__lastFetchTime = 0;
+    /* R281：数据签名——静默重拉的 diff 基准。剔除运行时字段 variants（首载 variants 预载写回 p 上、
+       属本地缓存不属于服务端数据），其余字段全量比对：名称/价格/排序/上下架状态等老板会感知的字段全覆盖 */
+    function __adminDataSig(list) {
+      return JSON.stringify((list || []).map(function (p) { var c = {}; for (var k in p) { if (k !== 'variants') c[k] = p[k]; } return c; }));
+    } /* R281：diff 剔除运行时缓存字段 variants（首载预载写回），其余全字段比对（名称/价格/排序/上下架状态都在内） */
+    function __adminCatSig(list) {
+      return JSON.stringify((list || []).map(function (c) { var o = {}; for (var k in c) { if (k !== 'cnt' && k !== 'totalCnt') o[k] = c[k]; } return o; }));
+    } /* R281：分类 diff 剔除运行时衍生字段 cnt/totalCnt（refreshCatCnts 现场计算写回），服务端字段（id/name/sort/parent_id/is_hidden）没变即视为没变 */
+    function loadProducts(silent) { /* R281：silent=切回窗口静默重拉——不铺骨架、不弹 toast；快照比对没变不重画 */
       /* R230：首次加载（列表空且无数据）先铺骨架——数量=一页 20 条、槽位尺寸与真行一致；
          CRUD 后的刷新已有数据在先，不铺（与资源页「骨架只铺数据在路上」同口径） */
       // R256：骨架已内嵌在 admin.html，有则不复建，避免闪两下/残影
       var _plBox = document.getElementById('productList');
       var _hasSkel = _plBox && _plBox.querySelectorAll('.admin-skel').length > 0;
-      if (!state.products.length && !_hasSkel) {
-        window.__adminSkelP = true; renderProductSkeleton();
-      } else if (_hasSkel) {
-        window.__adminSkelP = true;
+      if (!silent) {
+        if (!state.products.length && !_hasSkel) {
+          window.__adminSkelP = true; renderProductSkeleton();
+        } else if (_hasSkel) {
+          window.__adminSkelP = true;
+        }
       }
+      var _snapP = silent ? __adminDataSig(state.products) : null;
       var ensureCat = state.categories.length
         ? Promise.resolve()
         : (window.__catLoading || loadCategories()).then(function (res) {
             if (res && res.ok) {
-              state.categories = (res.list || []).map(function (c) { return { id: c.id, name: c.name, parent_id: c.parent_id || 0, sort: c.sort || 0, is_hidden: c.is_hidden || 0, cnt: c.cnt || 0 }; });
+              state.categories = (res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }); /* R281：加工口径与 loadCategories 完全一致（is_hidden 不再 || 0——undefined 口径统一，否则静默 diff 永不相等导致每次重画） */
             }
           });
       ensureCat.then(function () {
-        // 分类筛选已改为级联选择器（与新增/编辑资源一致）
-        initFilterCatPicker();
+        // 分类筛选已改为级联选择器（与新增/编辑资源一致）；R281：silent 时不预重建（下拉 DOM 每次重建非幂等，数据有变才在成功回调里补建）
+        if (!silent) initFilterCatPicker();
         return api('admin/products');
       }).then(function (res) {
-        if (!res.ok) { /* R230：接口异常收骨架走空态，不卡灰（对齐资源页 fetchRemote 兜底） */
+        if (!res.ok) {
+          if (silent) return; /* R281：静默失败不动画面不弹 toast、不更新时间戳（下次切回再试） */
+          /* R230：接口异常收骨架走空态，不卡灰（对齐资源页 fetchRemote 兜底） */
           window.__adminSkelP = false; __clearAdminSkel(document.getElementById('productList'));
           var _em = document.getElementById('productEmpty');
           if (_em) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = '暂无资源'; }
           toast(res.msg || '加载失败', 'error'); return; }
+        window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳 */
+        var _newP = res.list || [];
+        if (silent && __adminDataSig(_newP) === _snapP) return; /* R281：数据没变——纹丝不动（不重画不预载不重存） */
+        if (silent) initFilterCatPicker(); /* R281：有变才补建筛选器（分类选项同步） */
         window.__adminSkelP = false;
-        state.products = res.list || [];
+        state.products = _newP;
         renderProducts();
         prefetchBindings(); // R114：随产品列表一起静默预载全部类型绑定数据，点「绑定 N」即开即显
         // R276：一次性拉齐——后台并行预载所有资源的类型（variants），点开编辑弹窗秒开
@@ -1160,7 +1216,7 @@
       /* R230：骨架期空态不抢跑（对齐资源页 renderProducts 口径）——数据在路上时保持灰行 */
       if (window.__adminSkelP && !list.length) { empty.classList.remove('show'); return; }
       if (!__reuse) box.innerHTML = '';
-      /* R193（用户 22:32 拍板）：后台空态统一前台三件套（📦48px+标题+清除按钮），样式在 ui-common.css 全站同一份 */
+      /* R193（用户 22:32 拍板）：后台空态统一前台三件套（48px 固定SVG图标+标题+清除按钮；R285 条18 📦 已换 SVG），样式在 ui-common.css 全站同一份 */
       empty.classList.toggle('show', !list.length);
 
       // 移除旧分页
@@ -1207,7 +1263,7 @@
         row.draggable = false;
         row.dataset.id = p.id;
         row.dataset.idx = idx;
-        var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '⋮⋮'; row.appendChild(handle);
+        var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19：拖拽抓手换六点网格图标 */ row.appendChild(handle);
 
         // 拖拽事件
         row.addEventListener('dragstart', function (e) {
@@ -2410,7 +2466,7 @@
         // 拖拽手柄
         var handle = document.createElement('span');
         handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序';
-        handle.textContent = '⋮⋮';
+        handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>';
 
         var name = document.createElement('span');
         name.className = 'v-name';
@@ -2849,7 +2905,7 @@
         __imgDelBtn.className = 'rte-img-del';
         __imgDelBtn.title = '删除这个媒体';
         __imgDelBtn.setAttribute('contenteditable', 'false');
-        __imgDelBtn.textContent = '×';
+        __imgDelBtn.innerHTML = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; /* R285 条17：× 文字符号换固定 SVG */
         __imgDelBtn.addEventListener('click', function (ev) {
           ev.preventDefault(); ev.stopPropagation();
           var im = __imgDelTarget;
@@ -3120,7 +3176,7 @@ document.addEventListener('click', function (e) {
         cell.className = 'color-pop-cell';
         cell.style.background = color;
         cell.setAttribute('data-color', color);
-        if (color === '#ffffff') cell.style.borderColor = '#ccc';
+        if (color === '#ffffff') cell.style.borderColor = 'var(--border)'; /* R285 条45：格子边框接颜色本子 */
         cell.title = color;
         cell.addEventListener('click', function () {
           rteApplyCmd(editor, cmd, color);
@@ -3933,13 +3989,13 @@ document.addEventListener('click', function (e) {
       delBtn.className = 'cg-del';
       delBtn.title = '删除';
       delBtn.dataset.idx = idx;
-      delBtn.textContent = '×';
+      delBtn.innerHTML = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; /* R285 条17：× 文字符号换固定 SVG */
       item.appendChild(delBtn);
       // 拖拽把手（桌面 HTML5 drag + 移动 touch 长按拖拽）
       var dragBtn = document.createElement('span');
       dragBtn.className = 'cg-drag';
       dragBtn.title = '拖动排序';
-      dragBtn.textContent = '⋮⋮';
+      dragBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>';
       dragBtn.draggable = true;
       item.appendChild(dragBtn);
       // 点击选图 / 删除
@@ -4120,7 +4176,7 @@ document.addEventListener('click', function (e) {
     if (!fImgInput) return;
     var url = coverImages[selectedCoverIdx] || '';
     fImgInput.value = url;
-    fImgInput.placeholder = selectedCoverIdx === 0 ? '主图链接' : '图' + (selectedCoverIdx + 1) + '链接';
+    fImgInput.placeholder = selectedCoverIdx === 0 ? '请输入主图链接' : '请输入图' + (selectedCoverIdx + 1) + '链接'; /* R285 条38：口径统一「动作+对象」 */
   }
 
   // R266（用户 09-27 15:08）：轮播图库的 updateImgPreview 复用共享 _safeSetPreview，
@@ -4229,7 +4285,7 @@ document.addEventListener('click', function (e) {
         item.draggable = false; item.dataset.idx = idx; item.style.cursor = 'default';
         var handle = document.createElement('span');
         handle.className = 'drag-handle'; handle.draggable = a.level === 1 ? false : true; handle.style.opacity = a.level === 1 ? '0.35' : '1'; handle.title = a.level === 1 ? '默认公告不可拖动' : '拖动排序';
-        handle.textContent = '⋮⋮';
+        handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>';
         var txt = document.createElement('input'); txt.type = 'text'; txt.className = 'ann-title-input'; txt.readOnly = a.level === 1;
         txt.value = a.title || ''; txt.title = '点击修改公告项名字';
         txt.addEventListener('click', function (e) { e.stopPropagation(); });
@@ -4607,7 +4663,7 @@ document.addEventListener('click', function (e) {
         linkDialogMask.className = 'modal-mask';
         linkDialogMask.id = 'linkDialogMask';
         linkDialogMask.innerHTML = '<div class="modal-box">' +
-          '<button class="modal-close-x" data-link-close>×</button>' +
+          '<button class="modal-close-x" data-link-close><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
           '<h2 class="modal-title">插入超链接</h2>' +
           '<div class="form">' +
           '<label>链接地址</label><input id="linkDialogUrl" />' +
@@ -5711,11 +5767,15 @@ document.addEventListener('click', function (e) {
       // R272：去掉加载圈——老板明确"马上去掉"，以本次原话为准，无条件不显示。
       // 骨架屏已承接加载态（统计卡骨架/三表骨架已有），加载观感不受影响。
       // R256：统计表骨架已内嵌在 admin.html，有则不复建
-      var _stHasSkel = document.getElementById('statRows') && document.getElementById('statRows').querySelectorAll('.admin-skel').length > 0;
-      if (!_stHasSkel) renderStatSkeleton();
-      /* R230（老板 09-21 21:10）：统计三表首载铺 tr 骨架（每列一条灰线、数量=一页 20 条；数据到达同位置替换） */
-      var _stb0 = document.getElementById('statRows');
-      if (_stb0 && !_stb0.children.length) renderStatSkeleton();
+      /* R281：silent（切回窗口静默重拉 / R238 保新鲜刷新）不铺骨架——此时三表已渲染真行，
+         清真行铺骨架会闪且 diff 没变的表会停留在骨架态；骨架只服务首载等待 */
+      if (!silent) {
+        var _stHasSkel = document.getElementById('statRows') && document.getElementById('statRows').querySelectorAll('.admin-skel').length > 0;
+        if (!_stHasSkel) renderStatSkeleton();
+        /* R230（老板 09-21 21:10）：统计三表首载铺 tr 骨架（每列一条灰线、数量=一页 20 条；数据到达同位置替换） */
+        var _stb0 = document.getElementById('statRows');
+        if (_stb0 && !_stb0.children.length) renderStatSkeleton();
+      }
       api(url).then(function (res) { if (silent) __silentApplyStats(res); else __applyStatsRes(res); });
     }
     /* R238：loadStats 响应渲染整体抽出——time-btn 命中预载缓存时走完全相同的渲染路径，
@@ -5732,6 +5792,7 @@ document.addEventListener('click', function (e) {
         if (!res.ok) { /* R230：接口异常收三表骨架，不卡灰 */
           __clearAdminSkel(document.getElementById('statRows')); __clearAdminSkel(document.getElementById('statCatRows')); __clearAdminSkel(document.getElementById('statRecentRows'));
           toast(res.msg || '加载失败', 'error'); return; }
+        window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳（切回窗口 60s 判定） */
         var ov = res.overview || {};
         // R57：环比——前三个是库存快照（不适用环比），只给后三个流量卡配涨跌小字；
         // R65：「对比上期」开关关闭时小字不显示（数据仍保存，开关重渲染）
@@ -5781,6 +5842,7 @@ document.addEventListener('click', function (e) {
        变了的那张才局部重建。用于 time-btn 命中缓存后的保新鲜刷新，用户全程无感 */
     function __silentApplyStats(res) {
       if (!res || !res.ok) return;
+      window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳（切回窗口 60s 判定） */
       var _ts = function (x) { try { return JSON.stringify(x || []); } catch (e) { return ''; } };
       if (_ts(res.byProduct) !== _ts(state.statByProduct)) { state.statByProduct = res.byProduct || []; renderStatTables('product'); }
       if (_ts(res.byCategory) !== _ts(state.statByCategory)) { state.statByCategory = res.byCategory || []; renderStatTables('cat'); }
@@ -5980,15 +6042,21 @@ document.addEventListener('click', function (e) {
       }
     }
 
-    function loadCategories() { if (window.__catLoading) { window.__catLoading.then(function () { renderCategories(state.categories); }); return window.__catLoading; }
+    function loadCategories(silent) { if (window.__catLoading) { if (!silent) window.__catLoading.then(function () { renderCategories(state.categories); }); return window.__catLoading; } /* R281：silent=切回窗口静默重拉——不发重复请求、不弹 toast；diff 没变不重画 */
       /* R230（老板 09-21 21:10）：分类列表首载先铺骨架（分类无分页——按常显 8 行铺，真行不足收尾） */
       var _cbox0 = document.getElementById('catList');
-      if (_cbox0 && !_cbox0.children.length) { window.__catSkelP = true; renderCatSkeleton(); }
+      if (!silent && _cbox0 && !_cbox0.children.length) { window.__catSkelP = true; renderCatSkeleton(); }
+      var _snapC = silent ? __adminCatSig(state.categories) : null;
       window.__catLoading = api('admin/categories').then(function (res) { window.__catLoading = null;
       // (分类请求已合并到上一行 window.__catLoading 的 then 回调，避免重复请求)
         // 修复：失败分支也要返回 res，让 loadProducts 等调用方能正确感知失败状态
-        if (!res.ok) { window.__catSkelP = false; __clearAdminSkel(_cbox0); toast(res.msg || '加载失败', 'error'); return res; }
-        state.categories = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }));
+        if (!res.ok) {
+          if (!silent) { window.__catSkelP = false; __clearAdminSkel(_cbox0); toast(res.msg || '加载失败', 'error'); } /* R281：静默失败不动画面不弹 toast */
+          return res; }
+        window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳 */
+        var _ordered = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }));
+        if (silent && __adminCatSig(_ordered) === _snapC) return res; /* R281：数据没变——纹丝不动（不重画不重存） */
+        state.categories = _ordered;
 refreshCatCnts();
         window.__catSkelP = false;
         renderCategories(state.categories);
@@ -6043,7 +6111,7 @@ refreshCatCnts();
 
       ordered.forEach(function (c, ci) {
         if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row cat-sub'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; // “全部”项不渲染选中框（固定项）
-          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.textContent='⋮⋮';_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vmeta.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vmeta.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
+          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19 */_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vmeta.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vmeta.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
           _vrow.classList.add('stagger-in'); _vrow.style.animationDelay = Math.min(ci * 20, 180) + 'ms'; /* R230：错峰淡入（资源页同款） */
           if (__reuse && __skels[ci]) __skels[ci].parentNode.replaceChild(_vrow, __skels[ci]); else box.appendChild(_vrow);
           return; }
@@ -6051,9 +6119,9 @@ refreshCatCnts();
         row.className = 'cat-row';
         row.draggable = false;
         row.dataset.id = c.id; row.dataset.parentId = c.parent_id;
-        if (Number(c.id) !== 0) { var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '⋮⋮'; row.appendChild(handle); }
+        if (Number(c.id) !== 0) { var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19：拖拽抓手换六点网格图标 */ row.appendChild(handle); }
         else { // 根"全部"(id=0) 固定项：用禁用手柄+固定槽位占位，保证名称列与一级分类严格对齐
-          var _h0 = document.createElement('span'); _h0.className = 'drag-handle'; _h0.draggable = false; _h0.style.opacity = '0.35'; _h0.style.cursor = 'default'; _h0.title = '固定项不可拖动'; _h0.textContent = '⋮⋮'; row.appendChild(_h0);
+          var _h0 = document.createElement('span'); _h0.className = 'drag-handle'; _h0.draggable = false; _h0.style.opacity = '0.35'; _h0.style.cursor = 'default'; _h0.title = '固定项不可拖动'; _h0.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; row.appendChild(_h0);
           var _sp0 = document.createElement('span'); _sp0.style.cssText = 'width:56px;flex-shrink:0;'; _sp0.setAttribute('aria-hidden', 'true'); row.appendChild(_sp0);
         }
         var isTop = c.parent_id === 0;
@@ -6850,43 +6918,7 @@ refreshCatCnts();
       if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
       else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) {} } toast('链接已复制到剪贴板', 'success'); }
     });
-    // 咨询客服兜底弹窗：ui-common.js 加载失败时使用（样式对齐导航页，杜绝直达链接）
-    // 关闭兜底客服：恢复背景视频显示并隐藏弹窗（与公共客服弹窗行为一致）
-    window.__kfFbClose = function () {
-      var m = document.getElementById('kfFallback');
-      if (m) m.style.display = 'none';
-      try { document.querySelectorAll('video').forEach(function (v) { if (v.dataset.__kfFbHid) { v.dataset.__kfFbHid = ''; v.style.visibility = ''; } }); } catch (e) {}
-      if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
-    };
-    function openContactFallback(url) {
-      var m = document.getElementById('kfFallback');
-      if (!m) {
-        m = document.createElement('div');
-        m.id = 'kfFallback';
-        m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;';
-        m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
-          '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
-          '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=224" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
-          '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
-          '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
-          '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
-          '</div>';
-        document.body.appendChild(m);
-        m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); }); /* R217：恢复点外关闭（R215 误删） */
-        var im = document.getElementById('kfFallbackImg');
-        if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
-      }
-      var jb = m.querySelector('button[data-u]');
-      if (jb) jb.setAttribute('data-u', url || '');
-      // 打开客服：隐藏并暂停背景视频（原生视频层级高于一切，仅暂停仍会盖住弹窗）
-      // R14：同 ui-common 修复，排除所有弹窗容器内视频（预览弹窗里的视频不再被隐藏导致弹窗塌陷）
-      try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
-      m.style.display = 'flex';
-      if (window.lockBodyScroll) window.lockBodyScroll(true);
-    }
-
-    // 预览里的“咨询客服”可直接点击，验证跳转是否正确（优先当前类型客服链接，其次资源，再全局）
+    // R285 item 7：兜底弹窗已统一到 ui-common.js（window.openContactFallback / window.__kfFbClose）
     document.getElementById('previewContactBtn').addEventListener('click', function () {
       var url = '';
       var variants = state.variants || [];
@@ -6895,7 +6927,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=224', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=224', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
@@ -7045,7 +7077,7 @@ refreshCatCnts();
     (function () {
       if (!window.__cpPanel) return;
       window.__cpPanel({
-        placeholder: '搜索：页面 / 操作 / 资源名…',
+        placeholder: '请输入页面 / 操作 / 资源名', /* R285 条38：口径统一「动作+对象」 */
         busy: '.modal-mask.open, .kf-mask.open, .share-mask.open, .ann-mask.open',
         cmds: function () {
           var c = [

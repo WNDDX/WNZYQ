@@ -22,10 +22,10 @@
 *,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
 body{background:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px 20px var(--page-bottom-gap,24px);/*R229(用户 09-21 19:44):底部留白全站统一,原20→24*/}
 .box{text-align:center;color:#fff;max-width:400px;}
-.code{font-size:38px;font-weight:600;letter-spacing:2.4px;opacity:0.95;margin:0 0 24px; /* R33：与logo间距对称（原上方20+8、下方24不均） */line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中（字距尾隙会使视觉中心偏左） */}
+.code{font-size:38px;font-weight:600;letter-spacing: 1.2px;opacity:0.95;margin:0 0 24px; /* R33：与logo间距对称（原上方20+8、下方24不均） */line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中（字距尾隙会使视觉中心偏左） */}
 .title{font-size:24px;font-weight:600;margin-bottom:12px;}
 .desc{font-size:15px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius:25px;text-decoration:none;font-size:16px;font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius: 999px;text-decoration:none;font-size:16px;font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 4px 15px rgba(0,0,0,0.2);} /* R231 条7：放大式并入微亮+浮起 */
 .btn:active{transform:scale(0.96);} /* R231 条7：按下缩下去（全站统一） */
 .logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 24px;opacity:0;overflow:hidden; /* R33：logo下方24px与大标题下方24px对称 */background:transparent;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22); /* R53：logo 无链接但特效全保留（与导航页 logo 同款 hover/active） */text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease,opacity 0.8s ease;}
@@ -37,9 +37,9 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
 /* R148（用户 01:29）：下拉刷新与全站同步（与 index/shop/admin 同款帘式展开 + 32px 胶囊，逐字对齐 index.html 口径） */
 .pull-refresh{position:fixed;/*R170(用户22:52):位置回到 top:80px——与之前弹窗/toast 同位；胶囊改完整平移（translateY）根治"滑回去中间消失"（旧高度裁切会把胶囊从下往上裁残）*/top:80px;left:0;right:0;height:0;overflow:visible;display:flex;align-items:flex-start;justify-content:center;z-index:998;pointer-events:none;background:transparent;}
-.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);/*R170:默认藏在 80px 线上方，跟手平移到位*/transform:translateY(-48px);opacity:0;transition:transform .25s ease,opacity .2s ease;}
-.prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:prtspin .8s linear infinite;}
-@keyframes prtspin{to{transform:rotate(360deg);}}
+.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius: 999px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);/*R170:默认藏在 80px 线上方，跟手平移到位*/transform:translateY(-48px);opacity:0;transition:transform .25s ease,opacity .2s ease;}
+.prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:btnSpin 0.6s linear infinite;}
+/* R285 条48：prtspin 已删——统一走 ui-common.css btnSpin */
 /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
 @media (max-width: 600px) {
   .code { font-size: 26px; padding-left: 2.4px; }
@@ -152,7 +152,7 @@ document.addEventListener('error', function (e) {
 <script src="/assets/ui-common.js"></script>
 <script>
 (function () {
-  function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
+  function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:100200;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14))'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
   window.addEventListener('load', function () {
     setTimeout(function () {
       if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功：请把整个“万能资源圈”文件夹完整重新上传（含 assets、functions、sw.js、config.js）');

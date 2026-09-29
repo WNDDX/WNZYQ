@@ -79,7 +79,7 @@ if ('serviceWorker' in navigator) {
     m.setAttribute('role', 'dialog');
     m.innerHTML =
       '<div class="kf-box">' +
-        '<button class="kf-x" id="kfCloseX" type="button" aria-label="关闭">×</button>' +
+        '<button class="kf-x" id="kfCloseX" type="button" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
         '<div class="kf-title">咨询客服</div>' +
         '<div class="kf-qr"><img id="kfQrImg" alt="客服二维码" /></div>' +
         '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
@@ -150,6 +150,47 @@ if ('serviceWorker' in navigator) {
     }
   };
 
+  // ===== R285：全站统一客服兜底弹窗（item 7）=====
+  // ui-common.js 主弹窗加载失败时的兜底，一处定义全站生效
+  window.__kfFbClose = function () {
+    var m = document.getElementById('kfFallback');
+    if (m) m.style.display = 'none';
+    try { document.querySelectorAll('video').forEach(function (v) { if (v.dataset.__kfFbHid) { v.dataset.__kfFbHid = ''; v.style.visibility = ''; } }); } catch (e) {}
+    if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
+  };
+  window.openContactFallback = function (url) {
+    window.__kfPreconnect(url);
+    var m = document.getElementById('kfFallback');
+    if (!m) {
+      m = document.createElement('div');
+      m.id = 'kfFallback';
+      m.className = 'kf-mask';
+      m.setAttribute('role', 'dialog');
+      m.innerHTML =
+        '<div class="kf-box">' +
+          '<button class="kf-x" type="button" aria-label="关闭" onclick="window.__kfFbClose()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
+          '<div class="kf-title">咨询客服</div>' +
+          '<div class="kf-qr"><img id="kfFallbackImg" alt="客服二维码" /></div>' +
+          '<div class="kf-tip">长按图片识别-添加人工客服</div>' +
+          '<div class="kf-actions">' +
+            '<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
+            '<button class="kf-close" type="button" onclick="window.__kfFbClose()">关闭</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(m);
+      m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); });
+      var im = document.getElementById('kfFallbackImg');
+      if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = KF_QR_FAIL; };
+    }
+    var jb = m.querySelector('button[data-u]');
+    if (jb) jb.setAttribute('data-u', url || '');
+    var im = document.getElementById('kfFallbackImg');
+    if (im) { im.src = '/assets/images/kefu.png?v=224'; }
+    try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
+    m.style.display = 'flex';
+    if (window.lockBodyScroll) window.lockBodyScroll(true);
+  };
+
   // ===== R45：全站统一图片/视频放大灯箱 =====
   // 服务无页面级灯箱实现的场景（导航页二维码弹窗、全站客服二维码弹窗等）。
   // R278（老板 09-27 23:5x「全系统点击放大图片或视频统一成同一套全屏大图」）：shop/admin 页面原有的
@@ -179,7 +220,7 @@ if ('serviceWorker' in navigator) {
     }
     __lbMask.textContent = '';
     var x = document.createElement('button');
-    x.type = 'button'; x.className = 'modal-close-x'; x.textContent = '×';
+    x.type = 'button'; x.className = 'modal-close-x'; x.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; /* R285 条17：× 文字符号换固定 SVG */
     x.onclick = function (e) { e.stopPropagation(); window.closeLightbox(); };
     __lbMask.appendChild(x);
     var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src);
@@ -337,13 +378,13 @@ if ('serviceWorker' in navigator) {
     try {
       var mask = document.createElement('div');
       mask.className = 'modal-mask alert-mask open';
-      mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:10060;display:flex;align-items:center;justify-content:center;padding:16px;';
+      mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:10060;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
         '<div class="modal-box" style="background:#fff;border-radius:14px;width:100%;max-width:400px;padding:26px 22px;position:relative;text-align:center;max-height:84vh;overflow-y:auto;min-height:auto;">' +
-          '<button type="button" class="modal-close-x" aria-label="关闭">×</button>' +
+          '<button type="button" class="modal-close-x" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
           '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;"></div>' +
           '<div class="alert-body" style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
-          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);box-shadow:0 2px 6px rgba(30,136,229,0.25);-webkit-tap-highlight-color:transparent;">确定</button></div>' +
+          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);box-shadow:0 2px 6px rgba(30,136,229,0.25);-webkit-tap-highlight-color:transparent;">确定</button></div>' +
         '</div>';
       var titleEl = mask.querySelector('.modal-title');
       var bodyEl = mask.querySelector('.alert-body');
@@ -395,10 +436,10 @@ if ('serviceWorker' in navigator) {
       var mask = document.createElement('div');
       mask.className = 'share-mask';
       mask.setAttribute('role', 'dialog');
-      mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+      mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
         '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
-          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);">×</button>' +
+          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
           '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
           '<div data-share-tip style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
           '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
@@ -483,7 +524,7 @@ if ('serviceWorker' in navigator) {
     // R83：兜底 toast 位置与全站统一 top:80px 居中（白底蓝字蓝边圆角20）
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:var(--toast-bg,rgba(255,255,255,0.92));border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;line-height:18px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;'; /* R116：line-height 显式 18，单行总高恒 32px，与下拉刷新条逐像素一致 */
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:var(--toast-bg,rgba(255,255,255,0.92));border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;line-height:18px;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14));z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;'; /* R116：line-height 显式 18，单行总高恒 32px，与下拉刷新条逐像素一致 */
     document.body.appendChild(t);
     requestAnimationFrame(function () { t.style.opacity = '1'; });
     setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { try { document.body.removeChild(t); } catch (e) {} }, 300); }, 2000);
@@ -750,7 +791,7 @@ window.bindSearchHist = function (wrap, input, key) {
     var html = '<div class="sh-head"><span class="sh-title">最近搜索</span><button type="button" class="sh-clear">清空</button></div><div class="sh-list">';
     for (var i = 0; i < arr.length; i++) {
       var w = String(arr[i]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-      html += '<span class="sh-item"><button type="button" class="sh-word" data-w="' + w + '">' + w + '</button><button type="button" class="sh-del" data-i="' + i + '" title="删除这条">×</button></span>';
+      html += '<span class="sh-item"><button type="button" class="sh-word" data-w="' + w + '">' + w + '</button><button type="button" class="sh-del" data-i="' + i + '" title="删除这条"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>';
     }
     html += '</div>';
     box.innerHTML = html;

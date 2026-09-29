@@ -987,7 +987,7 @@
     }
     // R146（用户 00:25）：已解锁内容本地缓存（7 天）——重开弹窗立即渲染专属内容，
     // 不再等 /api/unlock 返回（已绑定设备每次都要"加载一下"观感差）；后台仍静默刷新覆盖缓存
-    var UNLOCK_CACHE_TTL = 7 * 86400000;
+    var UNLOCK_CACHE_TTL = Infinity; // R286-61：已解锁设备免输码永久有效（不再设7天限制）
     function __unlockCacheKey(pid, vid) { return 'wnzyq_unlock_' + pid + '_' + vid; }
     function __saveUnlockCache(pid, vid, content) {
       if (!pid || !vid || !content) return;
@@ -1014,7 +1014,8 @@
         var raw = localStorage.getItem(__unlockCacheKey(pid, vid));
         if (!raw) return null;
         var d = JSON.parse(raw);
-        if (!d || !d.c || (Date.now() - (d.t || 0)) > UNLOCK_CACHE_TTL) {
+        // R286-61：已解锁设备免输码永久有效（不再检查7天过期）
+        if (!d || !d.c) {
           try { localStorage.removeItem(__unlockCacheKey(pid, vid)); } catch (e) {}
           return null;
         }
@@ -1216,43 +1217,7 @@
       }
     }
 
-    // 咨询客服兜底弹窗：ui-common.js 加载失败时使用（样式对齐导航页，杜绝直达链接）
-    // 关闭兜底客服：恢复背景视频显示并隐藏弹窗（与公共客服弹窗行为一致）
-    window.__kfFbClose = function () {
-      var m = document.getElementById('kfFallback');
-      if (m) m.style.display = 'none';
-      try { document.querySelectorAll('video').forEach(function (v) { if (v.dataset.__kfFbHid) { v.dataset.__kfFbHid = ''; v.style.visibility = ''; } }); } catch (e) {}
-      if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
-    };
-    function openContactFallback(url) {
-      if (window.__kfPreconnect) window.__kfPreconnect(url); /* R189：兜底弹窗同款提前建连 */
-      var m = document.getElementById('kfFallback');
-      if (!m) {
-        m = document.createElement('div');
-        m.id = 'kfFallback';
-        m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;';
-        m.innerHTML = '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:26px 22px;max-width:480px;width:100%;text-align:center;position:relative;">' +
-          '<button type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;" onclick="window.__kfFbClose()">×</button>' +
-          '<div style="font-size:22px;color:#222;margin-bottom:16px;letter-spacing:1.3px;padding:0 34px;">咨询客服</div>' +
-          '<div style="width:250px;height:250px;max-width:100%;border:1px solid #eee;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:6px;"><img id="kfFallbackImg" src="/assets/images/kefu.png?v=224" alt="客服二维码" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>' +
-          '<div style="font-size:16px;color:#666;margin-bottom:16px;letter-spacing:0.9px;">长按图片识别-添加人工客服</div>' +
-          '<button type="button" data-u="" style="width:80%;border:none;border-radius:8px;padding:11px 32px;background:#01C000;color:#fff;font-size:18px;cursor:pointer;letter-spacing:0.9px;margin-bottom:14px;" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
-          '<button type="button" style="background:#ff4444;color:#fff;border:none;padding:11px 32px;border-radius:8px;font-size:18px;cursor:pointer;letter-spacing:0.9px;" onclick="window.__kfFbClose()">关闭</button>' +
-          '</div>';
-        document.body.appendChild(m);
-        m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); }); /* R217：恢复点外关闭（R215 误删） */
-        var im = document.getElementById('kfFallbackImg');
-        if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; };
-      }
-      var jb = m.querySelector('button[data-u]');
-      if (jb) jb.setAttribute('data-u', url || '');
-      // 打开客服：隐藏并暂停背景视频（原生视频层级高于一切，仅暂停仍会盖住弹窗）
-      // R14：排除范围与 ui-common.js 主实现同步扩大——弹窗容器内（资源详情/预览/公告/分享/灯箱）的视频不隐藏，
-      // 否则点客服会把资源弹窗里的视频藏掉、弹窗高度塌陷
-      try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
-      m.style.display = 'flex';
-      if (window.lockBodyScroll) window.lockBodyScroll(true);
-    }
+    // R285 item 7：兜底弹窗已统一到 ui-common.js（window.openContactFallback / window.__kfFbClose）
 
     // 咨询客服按钮：优先类型链接 → 资源链接 → 全局默认
     function updateContactBtn() {
@@ -1267,7 +1232,7 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=224', null, '跳转-咨询在线客服'); } else { openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=224', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1514,7 +1479,7 @@
       var __bindCP = function () {
         if (!window.__cpPanel) return;
         window.__cpPanel({
-          placeholder: '搜索资源名，回车直达详情…',
+          placeholder: '请输入资源名', /* R285 条38：口径统一「动作+对象」（回车直达详情属功能说明，并入 help/title） */
           cmds: function () {
             var c = [];
             (DATA.products || []).forEach(function (p) {
@@ -1563,7 +1528,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=224', null, '跳转-咨询在线客服'); } else { openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=224', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else showToast('暂未设置客服链接', 'info');
     });
 
@@ -1793,9 +1758,9 @@
       var _oldAnnMode = DATA.announcementMode;
       var _oldShopName = DATA.shopName;
       Promise.all([
-        withTimeout(__dedupFetch('/api/products' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
-        withTimeout(__dedupFetch('/api/categories' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000),
-        withTimeout(__dedupFetch('/api/settings' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 4000)
+        withTimeout(__dedupFetch('/api/products' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000),
+        withTimeout(__dedupFetch('/api/categories' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000),
+        withTimeout(__dedupFetch('/api/settings' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000)
       ]).then(function (res) {
         var _changed = false;
         if (res[0] && res[0].ok && res[1] && res[1].ok) {
@@ -2173,10 +2138,10 @@
           var mask = document.createElement('div');
           mask.className = 'share-mask qr-preview-mask';
           mask.setAttribute('role', 'dialog');
-          mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+          mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
           mask.innerHTML =
             '<div class="share-box qr-preview-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
-              '<button class="modal-close-x" data-qr-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);">×</button>' +
+              '<button class="modal-close-x" data-qr-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
               '<div style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;">分享资源二维码</div>' + // R251：标题改「分享资源二维码」
               '<div style="font-size:13px;color:#888;margin-bottom:14px;"><span style="color:#1565c0;">' + _pName + '</span><span style="color:#000;"> · </span>资源二维码已保存到设备</div>' + // R251：灰字带资源名；R254：分色——资源名站内链接蓝/圆点黑/其余保持灰
               '<div style="display:flex;justify-content:center;margin-bottom:18px;"><img id="qrPreviewImg" style="width:200px;height:200px;border:1px solid #eee;border-radius:8px;object-fit:contain;background:#fff;" alt="二维码"/></div>' +
