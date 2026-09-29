@@ -900,7 +900,7 @@
          * 原实现只有 controls、无任何放大绑定——「全系统点击放大视频」缺口。不为 modalMedia 整体
          * bindLightbox，避免与上方图片的显式 handler 双绑定。 */
         v.style.cursor = 'zoom-in';
-        v.addEventListener('click', function () { window.openLightbox(url); });
+        v.addEventListener('click', function () { v.pause(); window.openLightbox(url); });
         if (window.mediaStable) window.mediaStable(v, true);
         modalMedia.appendChild(v);
       });
@@ -1680,6 +1680,8 @@
       productGrid.appendChild(frag);
     }
 
+    /* R289：进页预载标志——true 表示正在执行页面首次加载（进度条可见），false 表示页内操作期 */
+    window.__shopEntryDone = false;
     function initData() {
       // R10 分享链接：检查 ?pid=参数——带 pid 进入时跳过公告自动弹出（用户意图是直达该资源），
       // 数据加载完成后自动打开对应资源弹窗；资源不存在/已隐藏时公共弹窗提示
@@ -1734,7 +1736,55 @@
       // file:// 协议直接打开 HTML 时不发起 API 请求（无后端）；localhost/wrangler dev 正常走 API
       var isFile = window.location.protocol === 'file:';
       if (!isFile) {
-        fetchRemote();
+        // R289：进入页面预载模式——进度条可见
+        if (window.__enterPageEntryMode) window.__enterPageEntryMode();
+        fetchRemote().then(function () {
+          window.__shopEntryDone = true;
+          if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+          // R289：启动实时同步轮询（规则4）——60秒静默检查数据变化
+          startShopSyncPoll();
+        }).catch(function () {
+          window.__shopEntryDone = true;
+          if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+          startShopSyncPoll();
+        });
+      } else {
+        window.__shopEntryDone = true;
+      }
+    }
+
+    /* R289 规则4：实时同步轮询——后台静默检查数据变化，有变才更新 DOM */
+    function startShopSyncPoll() {
+      if (window.__syncPoll) {
+        // R291（用户 09-29）：根因→修法。首分钟盲区：初始基线用页面当前显示值，而非空字符串。
+        var _shopSig = JSON.stringify([DATA.announcement, DATA.announcementMode, DATA.shopName, DATA.contactUrlRaw || '']);
+        window.__syncPoll.start('shop', {
+          interval: 60000,
+          checkFn: function () {
+            return fetch('/api/settings?_t=' + Date.now(), { cache: 'no-store' })
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (data) {
+                if (!data || !data.ok) return false;
+                var s = data.settings || {};
+                var sig = JSON.stringify([s.announcement, s.announcement_mode, s.shop_name, s.contact_url]);
+                if (_shopSig && _shopSig !== sig) { _shopSig = sig; return true; }
+                _shopSig = sig;
+                // 再比对 products+categories 是否变化（轻量：只比对总数）
+                return fetch('/api/products?_t=' + Date.now(), { cache: 'no-store' })
+                  .then(function (r) { return r.ok ? r.json() : null; })
+                  .then(function (pd) {
+                    if (!pd || !pd.ok) return false;
+                    var pLen = (pd.list || []).length;
+                    var cLen = (DATA.products || []).length;
+                    return pLen !== cLen;
+                  }).catch(function () { return false; });
+              }).catch(function () { return false; });
+          },
+          onChange: function () {
+            // R289：静默拉取最新数据并更新 DOM（不打断弹窗/输入）
+            fetchRemote();
+          }
+        });
       }
     }
 
@@ -1757,7 +1807,7 @@
       var _oldAnn = DATA.announcement;
       var _oldAnnMode = DATA.announcementMode;
       var _oldShopName = DATA.shopName;
-      Promise.all([
+      return Promise.all([
         withTimeout(__dedupFetch('/api/products' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000),
         withTimeout(__dedupFetch('/api/categories' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000),
         withTimeout(__dedupFetch('/api/settings' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000)
@@ -1777,6 +1827,7 @@
           DATA.announcements = window.parseAnnouncements(res[2].settings || {}, { filterHidden: true });
           // 店铺名与全局客服链接：统一在这一次 settings 请求里更新（不再另发请求）
           if ((res[2].settings || {}).shop_name) { DATA.shopName = res[2].settings.shop_name; }
+          DATA.contactUrlRaw = (res[2].settings || {}).contact_url || '';
           window._globalContact = (res[2].settings || {}).contact_url || getDefaultContact();
           // R188/R189 建议8：客服域 preconnect——页面加载期提前与客服域名建好连接（DNS+TLS 握手提前完成），
           // 用户点「咨询客服」时直接复用已建好的连接，省掉约 1 秒的现场连接等待（点开即达）
@@ -1843,19 +1894,7 @@
       var bar = document.getElementById('categoryBar');
       if (bar) updateCatIndicator(bar);
     });
-    // R243 条32：页面重新可见 / 从其他页面切回时，60 秒内直接用缓存，超期才静默拉取
-    document.addEventListener('visibilitychange', function () {
-      if (document.hidden) return;
-      if (typeof usingRemote !== 'undefined' && usingRemote) {
-        var last = window.__lastFetchTime || 0;
-        if (Date.now() - last > 60000) fetchRemote();
-      }
-    });
-    window.addEventListener('pageshow', function () {
-      if (window.location.protocol === 'file:') return;
-      var last = window.__lastFetchTime || 0;
-      if (Date.now() - last > 60000) fetchRemote();
-    });
+    // R292（用户 09-29）：一分钟是唯一同步节点，切回不触发检查
 
     // ---------- 下拉刷新（手机端页面顶部下拉刷新数据） ----------
     var pullRefreshEl = document.getElementById('pullRefresh');

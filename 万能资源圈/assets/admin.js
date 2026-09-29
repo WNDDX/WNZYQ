@@ -718,10 +718,18 @@
           }
           try { if (typeof clearCache === 'function') clearCache(); } catch (e) {}
           var t = activeTab();
-          if (t === 'products' && typeof loadProducts === 'function') loadProducts();
-          else if (t === 'stats' && typeof loadStats === 'function') loadStats(undefined, undefined, 1);
-          else if (t === 'categories' && typeof loadCategories === 'function') loadCategories();
-          else if (t === 'settings' && typeof loadSettings === 'function') loadSettings();
+          // R289：用户主动下拉刷新——进入页面刷新模式，进度条可见
+          if (window.__enterPageEntryMode) window.__enterPageEntryMode();
+          var _refreshPromises = [];
+          if (t === 'products' && typeof loadProducts === 'function') _refreshPromises.push(loadProducts().catch(function () {}));
+          else if (t === 'stats' && typeof loadStats === 'function') _refreshPromises.push(loadStats(undefined, undefined, 1).catch(function () {}));
+          else if (t === 'categories' && typeof loadCategories === 'function') _refreshPromises.push(loadCategories().catch(function () {}));
+          else if (t === 'settings' && typeof loadSettings === 'function') _refreshPromises.push(loadSettings().catch(function () {}));
+          Promise.all(_refreshPromises).then(function () {
+            if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+          }).catch(function () {
+            if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+          });
           setTimeout(function () { pill.style.transform = 'translateY(-48px)'; pill.style.opacity = '0'; tip.querySelector('.prt').textContent = '下拉刷新'; }, 400); // R170：完整滑回上方淡出 + 文案复位（避免下次下拉闪现「正在刷新…」）
         } else {
           // 未达阈值：整体滑回上方淡出——R170：完整收回，不再裁切残缺
@@ -786,20 +794,8 @@ function boot() {
     function showMain(username) {
       loginView.style.display = 'none';
       mainView.style.display = 'block';
-      // R281（老板 09-28 21:27 拍板）：切回窗口 >60s 静默拉最新数据——与 shop（R243 条32 + R276 diff）同一套规则全站统一。
-      // 监听只挂一次（退出再登录不重复绑）；未登录（mainView 未显示）不触发；
-      // 静默重拉复用现有 load 函数（silent=1）：不弹 toast、不铺骨架，快照比对没变不重画、有变化才换新。
-      if (!window.__adminBackBound) {
-        window.__adminBackBound = 1;
-        var __adminBackRefresh = function () {
-          if (mainView.style.display !== 'block') return; /* 未登录不触发 */
-          if (Date.now() - (window.__lastFetchTime || 0) > 60000) {
-            loadProducts(1); loadCategories(1); loadStats(null, null, 1, 1); /* 三路静默：列表/分类/统计 */
-          }
-        };
-        document.addEventListener('visibilitychange', function () { if (!document.hidden) __adminBackRefresh(); });
-        window.addEventListener('pageshow', function (e) { if (!e.persisted) __adminBackRefresh(); }); /* persisted(bfcache) 由 ui-common.js 全站强制 reload 兜底 */
-      }
+      // R292（用户 09-29）：一分钟是唯一同步节点，切回不触发检查
+      window.__adminBackBound = 1; // 标记已初始化（避免重复绑定）
       // R248：页面加载后尝试恢复编辑草稿（自动刷新保护）
       try { setTimeout(function () { if (window.__restoreEditingDraft) window.__restoreEditingDraft(); }, 200); } catch (e) {}
       function _safe(fn) { try { fn(); } catch (e) { /* R213 P2⑤：调试日志已删（隔离逻辑保留） */ } }
@@ -832,10 +828,23 @@ function boot() {
       }
       // 修复：移除重复的 loadCategories 调用（原先同一接口被请求两次，浪费请求且可能返回不一致）
       // R276：登录后一次性拉齐，后台刷新（有缓存时 silent/无缓存时正常）
-      _safe(function () { loadStats(null, null, 1, _hasCache ? 1 : 0); });
-      _safe(loadSettings);
-      _safe(loadProducts);
-      _safe(loadCategories);
+      // R289：进页预载——一次性加载全部数据，进度条可见
+      window.__adminEntryDone = false;
+      if (window.__enterPageEntryMode) window.__enterPageEntryMode();
+      var _entryPromises = [];
+      try { _entryPromises.push(loadStats(null, null, 1, _hasCache ? 1 : 0).catch(function () {})); } catch (e) {}
+      try { _entryPromises.push(loadSettings().catch(function () {})); } catch (e) {}
+      try { _entryPromises.push(loadProducts().catch(function () {})); } catch (e) {}
+      try { _entryPromises.push(loadCategories().catch(function () {})); } catch (e) {}
+      Promise.all(_entryPromises).then(function () {
+        window.__adminEntryDone = true;
+        if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+        startAdminSyncPoll();
+      }).catch(function () {
+        window.__adminEntryDone = true;
+        if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+        startAdminSyncPoll();
+      });
       try { switchTab('products'); } catch (e) { /* R213 P2⑤：调试日志已删 */ }
     }
 
@@ -869,7 +878,7 @@ function boot() {
 
     // ---------- 平台设置 ----------
     function loadSettings() {
-      api('admin/settings').then(function (res) {
+      return api('admin/settings').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
         var s = res.settings || {};
         window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || ''; if (document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = s.contact_url || '';
@@ -1018,6 +1027,50 @@ function boot() {
     function __adminCatSig(list) {
       return JSON.stringify((list || []).map(function (c) { var o = {}; for (var k in c) { if (k !== 'cnt' && k !== 'totalCnt') o[k] = c[k]; } return o; }));
     } /* R281：分类 diff 剔除运行时衍生字段 cnt/totalCnt（refreshCatCnts 现场计算写回），服务端字段（id/name/sort/parent_id/is_hidden）没变即视为没变 */
+
+    /* R289 规则4：管理页实时同步轮询——后台静默检查数据变化，有变才更新 DOM */
+    function startAdminSyncPoll() {
+      if (window.__syncPoll) {
+        // R291（用户 09-29）：根因→修法。首分钟盲区：初始基线用页面当前显示值，而非空字符串。
+        var _adminSig = JSON.stringify([
+          (state.settings.announcement || ''),
+          (state.settings.announcement_mode || ''),
+          (state.settings.shop_name || ''),
+          (state.settings.contact_url || '')
+        ]);
+        window.__syncPoll.start('admin', {
+          interval: 60000,
+          checkFn: function () {
+            return api('admin/settings?_t=' + Date.now()).then(function (res) {
+              if (!res || !res.ok) return false;
+              var s = res.settings || {};
+              var sig = JSON.stringify([s.announcement, s.announcement_mode, s.shop_name, s.contact_url]);
+              if (_adminSig && _adminSig !== sig) { _adminSig = sig; return true; }
+              _adminSig = sig;
+              // 再比对 products 是否变化（轻量：只比对总数）
+              return api('admin/products?_t=' + Date.now()).then(function (pd) {
+                if (!pd || !pd.ok) return false;
+                var pLen = (pd.list || []).length;
+                var cLen = (state.products || []).length;
+                return pLen !== cLen;
+              }).catch(function () { return false; });
+            }).catch(function () { return false; });
+          },
+          onChange: function () {
+            // R292（用户 09-29）：编辑期间用旧数据——弹窗开着时跳过轮询更新，保存成功后由保存逻辑自己同步
+            if (document.getElementById('editMask') && document.getElementById('editMask').classList.contains('open')) return;
+            if (document.getElementById('variantMask') && document.getElementById('variantMask').classList.contains('open')) return;
+            if (document.getElementById('annMask') && document.getElementById('annMask').classList.contains('open')) return;
+            if (document.getElementById('contactMask') && document.getElementById('contactMask').classList.contains('open')) return;
+            if (document.getElementById('catMask') && document.getElementById('catMask').classList.contains('open')) return;
+            loadProducts(1);
+            loadCategories(1);
+            loadStats(null, null, 1, 1);
+          }
+        });
+      }
+    }
+
     function loadProducts(silent) { /* R281：silent=切回窗口静默重拉——不铺骨架、不弹 toast；快照比对没变不重画 */
       /* R230：首次加载（列表空且无数据）先铺骨架——数量=一页 20 条、槽位尺寸与真行一致；
          CRUD 后的刷新已有数据在先，不铺（与资源页「骨架只铺数据在路上」同口径） */
@@ -1039,7 +1092,7 @@ function boot() {
               state.categories = (res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }); /* R281：加工口径与 loadCategories 完全一致（is_hidden 不再 || 0——undefined 口径统一，否则静默 diff 永不相等导致每次重画） */
             }
           });
-      ensureCat.then(function () {
+      return ensureCat.then(function () {
         // 分类筛选已改为级联选择器（与新增/编辑资源一致）；R281：silent 时不预重建（下拉 DOM 每次重建非幂等，数据有变才在成功回调里补建）
         if (!silent) initFilterCatPicker();
         return api('admin/products');
@@ -2359,10 +2412,7 @@ function boot() {
 
       saving = true;
       var isNewSave = !state.editingId; // 记录本次是否为新增（editingId 之后会被赋值）
-      saveProductBtn.disabled = true;
-      saveProductBtn.style.opacity = '0.6';
-      var _saveBtnText = saveProductBtn.textContent;
-      if (window.__btnBusy) window.__btnBusy(saveProductBtn, '确定中…'); /* R183 条4：忙碌转圈 */
+      // R292（用户 09-29）：老板撤"确定中…"忙碌态——保存期间按钮文字不变、不禁用
 
       // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗——网络一旦失败，用户以为已保存，数据实际没写入。
       // 现在提示与关窗只在请求成功后发生（见下方 then 分支）。
@@ -2372,9 +2422,6 @@ function boot() {
 
       req.then(function (res) {
         saving = false;
-        saveProductBtn.disabled = false;
-        saveProductBtn.style.opacity = '';
-        saveProductBtn.textContent = _saveBtnText;
         if (res && res.ok) {
           // 如果是新增，拿到新 id 后刷新类型列表（类型可能已在编辑时添加）
           if (!state.editingId && res.id) {
@@ -2429,9 +2476,6 @@ function boot() {
         }
       }).catch(function () {
         saving = false;
-        saveProductBtn.disabled = false;
-        saveProductBtn.style.opacity = '';
-        saveProductBtn.textContent = _saveBtnText;
         toast('保存失败，请重试', 'error');
       });
     }
@@ -4430,8 +4474,7 @@ document.addEventListener('click', function (e) {
     document.getElementById('saveAnnBtn').addEventListener('click', function () {
       var annBtn = this;
       var _annBtnText = annBtn.textContent;
-      annBtn.disabled = true;
-      if (window.__btnBusy) window.__btnBusy(annBtn, '确定中…'); /* R183 条4：忙碌转圈 */
+      // R292（用户 09-29）：老板撤"确定中…"忙碌态——保存期间按钮文字不变、不禁用
       flushAnnEdit();
       var data = {
         announcement: '',
@@ -4439,8 +4482,6 @@ document.addEventListener('click', function (e) {
         announcements: JSON.stringify(stateAnn.list)
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
-        annBtn.disabled = false;
-        annBtn.textContent = _annBtnText;
         if (res && res.ok) {
           /* R231 条26：保存成功三段式——绿✓「已保存」400ms 后恢复（设置面板真实保存键） */
           try {
@@ -4458,8 +4499,6 @@ document.addEventListener('click', function (e) {
           document.getElementById('annMask').classList.remove('open');
         } else toast(res.msg || '保存失败', 'error');
       }).catch(function () {
-        annBtn.disabled = false;
-        annBtn.textContent = _annBtnText;
         toast('保存失败，请重试', 'error');
       });
     });
@@ -4488,14 +4527,11 @@ document.addEventListener('click', function (e) {
       // 修复：原先请求发出前就提示"已保存"并关闭弹窗，失败时造成"假成功"；提示与关窗移到请求成功后
       var cBtn = this;
       var _cBtnText = cBtn.textContent;
-      cBtn.disabled = true;
-      if (window.__btnBusy) window.__btnBusy(cBtn, '确定中…'); /* R183 条4：忙碌转圈 */
+      // R292（用户 09-29）：老板撤"确定中…"忙碌态——保存期间按钮文字不变、不禁用
       var v = document.getElementById('contactUrlInput').value.trim();
       document.getElementById('setContactUrl').value = v;
       var st = document.getElementById('contactStatus'); if (st) st.textContent = '';
       api('admin/settings', { method: 'PUT', body: JSON.stringify({ contact_url: v }) }).then(function (res) {
-        cBtn.disabled = false;
-        cBtn.textContent = _cBtnText;
         if (res && res.ok) {
           /* R231 条26：保存成功三段式——绿✓「已保存」400ms 后恢复（设置面板真实保存键） */
           try {
@@ -4509,8 +4545,6 @@ document.addEventListener('click', function (e) {
         }
         else toast(res.msg || '保存失败', 'error');
       }).catch(function () {
-        cBtn.disabled = false;
-        cBtn.textContent = _cBtnText;
         toast('保存失败，请重试', 'error');
       });
     });
@@ -4841,14 +4875,11 @@ document.addEventListener('click', function (e) {
       }
       // 修复：原先请求发出前就提示"保存成功"并关闭弹窗，失败时造成"假成功"；提示与关窗移到成功分支
       var _variantOkText = variantOk.textContent;
-      variantOk.disabled = true;
-      if (window.__btnBusy) window.__btnBusy(variantOk, '确定中…'); /* R183 条4：忙碌转圈 */
+      // R292（用户 09-29）：老板撤"确定中…"忙碌态——保存期间按钮文字不变、不禁用
       var req = state.editingVariantId
         ? api('admin/variants/' + state.editingVariantId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/variants', { method: 'POST', body: JSON.stringify(data) });
       req.then(function (res) {
-        variantOk.disabled = false;
-        variantOk.textContent = _variantOkText;
         if (res && res.ok) {
           variantDraftPending = false; variantMask.classList.remove('open');
           try { window.__clearEditingDraft(); } catch (e) {} // R248：清除 localStorage 草稿
@@ -4868,8 +4899,6 @@ document.addEventListener('click', function (e) {
           toast(res.msg || '保存失败', 'error');
         }
       }).catch(function () {
-        variantOk.disabled = false;
-        variantOk.textContent = _variantOkText;
         toast('保存失败，请重试', 'error');
       });
     });
@@ -4912,8 +4941,9 @@ document.addEventListener('click', function (e) {
           _bFrag.appendChild(_bTr);
         }
         _bTb.appendChild(_bFrag);
+        // R289：缓存未命中时才后台刷新；命中预载缓存时零请求
+        refreshBindings(v.id);
       }
-      refreshBindings(v.id); // 后台刷新（预载缓存兜底 + 解绑等操作后保最新）
     }
     /* R223（老板定稿·资源码与绑定合并平铺表）：一行 = 一台绑定设备，码三列（资源码/有效状态/发放时间）
        R224（老板 17:48）：状态+剩余有效两列合一——删「剩余有效」列，「状态」改名「有效状态」，
@@ -5776,7 +5806,7 @@ document.addEventListener('click', function (e) {
         var _stb0 = document.getElementById('statRows');
         if (_stb0 && !_stb0.children.length) renderStatSkeleton();
       }
-      api(url).then(function (res) { if (silent) __silentApplyStats(res); else __applyStatsRes(res); });
+      return api(url).then(function (res) { if (silent) __silentApplyStats(res); else __applyStatsRes(res); });
     }
     /* R238：loadStats 响应渲染整体抽出——time-btn 命中预载缓存时走完全相同的渲染路径，
        与请求回来逐字节一致（六卡+两图+三表全套），保证「秒切」画面与等待加载后的画面无差别 */
@@ -6496,16 +6526,13 @@ refreshCatCnts();
       var data = { name: name, sort: sort, parent_id: parentId, is_hidden: isHidden };
       // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗，失败时造成"假成功"；提示与关窗移到成功分支
       var _catOkText = catOk.textContent;
-      if (window.__btnBusy) window.__btnBusy(catOk, '确定中…'); /* R183 条4：忙碌转圈 */
+      // R292（用户 09-29）：老板撤"确定中…"忙碌态——保存期间按钮文字不变、不禁用
       var req = state.catEditingId
         ? api('admin/categories/' + state.catEditingId, { method: 'PUT', body: JSON.stringify(data) })
         : api('admin/categories', { method: 'POST', body: JSON.stringify(data) });
 
       req.then(function (res) {
         catSaving = false;
-        catOk.disabled = false;
-        catOk.style.opacity = '';
-        catOk.textContent = _catOkText;
         if (res && res.ok) {
           catDraftPending = false; catMask.classList.remove('open');
           toast('分类已保存', 'success'); if (window.__haptic) window.__haptic(); /* R183 条12 */
@@ -6536,9 +6563,6 @@ refreshCatCnts();
         }
       }).catch(function () {
         catSaving = false;
-        catOk.disabled = false;
-        catOk.style.opacity = '';
-        catOk.textContent = _catOkText;
         toast('保存失败，请重试', 'error');
       });
     });

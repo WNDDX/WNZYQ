@@ -209,6 +209,8 @@ if ('serviceWorker' in navigator) {
   };
   window.openLightbox = function (src) {
     if (!src) return;
+    /* v281：全系统单一播放规则——打开灯箱前暂停页面全部已有 video（不含灯箱内新建的） */
+    try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('.lightbox')) v.pause(); }); } catch (e) {}
     if (!__lbMask) {
       __lbMask = document.createElement('div');
       __lbMask.className = 'lightbox';
@@ -1028,12 +1030,18 @@ window.__copyOk = function (el) {
   mo.observe(document.documentElement, { subtree: true, attributeFilter: ['class'], attributeOldValue: true });
 })();
 
-/* ===== R184 条5：顶部网络进度条（全局 fetch 包装，四页统一）=====
-   快请求（150ms 内完成）不显示——防闪烁噪音；慢请求显示顶部 2px 蓝条渐进推进（渐近 88% 封顶），
-   完成后推满 100% 并 200ms 淡出。覆盖全站所有 fetch（含 shop/admin 各自的 api() 封装）。 */
+/* ===== R289：数据加载架构重构——进度条仅页面进入/刷新时可见，其余全部静默 =====
+   规则1【进页预载】：进入页面或刷新时，一次性提前加载全部数据，此时显示顶部进度条
+   规则2【页内零加载】：页内任何点击操作都不显示进度条，直接用已缓存数据
+   规则3【提交有反馈】：保存/删除等提交操作由按钮自身转圈提示，不走顶部进度条
+   __pageEntryMode：true=页面进入/刷新期（进度条可见），false=页内操作期（进度条静默）
+   __MUTE_URLS：永久静音接口（统计上报、健康检查、清理、解锁、缓存清除、静默同步） */
 (function () {
   if (window.__fetchBarInstalled) return;
   window.__fetchBarInstalled = true;
+  window.__pageEntryMode = false; /* R289：页面进入模式开关——由各页在初始化时控制 */
+  window.__enterPageEntryMode = function () { window.__pageEntryMode = true; };
+  window.__exitPageEntryMode  = function () { window.__pageEntryMode = false; };
   var bar = null, active = 0, shown = false, showTimer = null, hideTimer = null, growTimer = null, w = 0;
   function ensure() {
     if (!bar) { bar = document.createElement('div'); bar.id = 'fetch-bar'; document.body.appendChild(bar); }
@@ -1075,7 +1083,8 @@ window.__copyOk = function (el) {
     }
   }
   var _fetch = window.fetch.bind(window);
-  var __MUTE_URLS = /\/api\/track\b|\/api\/health\b|\/api\/cleanup\b|\/api\/unlock\b/;
+  /* R289：扩展静音名单——清除缓存和静默同步接口永远静音（伴随请求不弹进度条） */
+  var __MUTE_URLS = /\/api\/track\b|\/api\/health\b|\/api\/cleanup\b|\/api\/unlock\b|\/api\/admin\/clear-cache\b|\/api\/admin\/products\?.*prefetch\b|\/api\/admin\/variants\?.*prefetch\b/;
   window.fetch = function () {
     var p;
     try { p = _fetch.apply(window, arguments); } catch (e) { throw e; }
@@ -1083,9 +1092,46 @@ window.__copyOk = function (el) {
     var url = '';
     try { url = (typeof arguments[0] === 'string') ? arguments[0] : (arguments[0] && arguments[0].url) || ''; } catch (e) {}
     var muted = __MUTE_URLS.test(url);
-    if (!muted) start();
+    /* R289：只有在页面进入/刷新模式下才显示进度条；页内所有操作（含提交）全部静默 */
+    if (!muted && window.__pageEntryMode) start();
     return p.then(function (r) { if (!muted) finish(); return r; }, function (e) { if (!muted) finish(); throw e; });
   };
+})();
+
+/* ===== R289：全站实时同步轮询器（规则4·实时同步）=====
+   后台定时静默比对数据，发现变化才无缝更新 DOM——无进度条、无闪烁、不打断用户输入/弹窗。
+   用法：window.__syncPoll.start({ checkFn, onChange, intervalMs })
+   - checkFn(): Promise<boolean> —— 返回 true 表示数据有变化
+   - onChange(): void —— 数据有变化时执行（内部应直接更新 DOM，不弹窗不刷新）
+   - intervalMs: 轮询间隔，默认 60000（60 秒）
+   保存成功后本地立即同步（不等轮询），由调用方自行调用 onChange 或更新 DOM */
+window.__syncPoll = (function () {
+  var timers = {};
+  function start(key, opts) {
+    opts = opts || {};
+    var interval = opts.interval || 60000;
+    var checkFn = opts.checkFn;
+    var onChange = opts.onChange;
+    if (!checkFn) return { stop: function () {} };
+    if (timers[key]) { clearInterval(timers[key].interval); clearTimeout(timers[key].visT); }
+    function tick() {
+      if (document.hidden) return; /* 页面不可见时不轮询，省流量 */
+      Promise.resolve().then(function () { return checkFn(); }).then(function (changed) {
+        if (changed && typeof onChange === 'function') onChange();
+      }).catch(function () {});
+    }
+    var iv = setInterval(tick, interval);
+    // R292（用户 09-29）：一分钟是唯一同步节点，切回不触发检查
+    timers[key] = { interval: iv };
+    return {
+      stop: function () {
+        var t = timers[key]; if (!t) return;
+        clearInterval(t.interval);
+        delete timers[key];
+      }
+    };
+  }
+  return { start: start };
 })();
 
 
@@ -1191,7 +1237,7 @@ window.bindLightbox = function (root) {
     if (v.dataset.lb) return;
     v.dataset.lb = '1';
     v.style.cursor = 'zoom-in';
-    v.addEventListener('click', function (ev) { ev.stopPropagation(); window.openLightbox(v.currentSrc || v.src); });
+    v.addEventListener('click', function (ev) { ev.stopPropagation(); v.pause(); window.openLightbox(v.currentSrc || v.src); });
   });
 };
 // 触发视图切换动画（重排触发 transition）
