@@ -129,12 +129,21 @@ if ('serviceWorker' in navigator) {
     var img = document.getElementById('kfQrImg');
     if (img) {
       // R208（用户 09-19 00:23）：客服二维码旧图闪现根治——设置 src 前先隐藏，加载完成后再显示，杜绝首帧残留
+      // v301（用户 10-05 00:00）：修复 onload 不触发或 onerror 时二维码永远隐藏的 bug——无论成败都要恢复可见
       img.style.opacity = '0';
       img.classList.remove('kf-qr-in');
-      img.onerror = function () { this.onerror = null; this.src = KF_QR_FAIL; if (this.classList) this.classList.add('media-fail'); };
+      img.onerror = function () {
+        this.onerror = null;
+        this.src = KF_QR_FAIL;
+        if (this.classList) this.classList.add('media-fail');
+        img.style.opacity = '';
+      };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=224';
-      if (img.complete && img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
+      img.src = qrImg || '/assets/images/kefu.png?v=301';
+      if (img.complete) {
+        if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
+        else { img.onerror(); }
+      }
       // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
       if (window.__bindQrLightbox) window.__bindQrLightbox(img);
     }
@@ -187,7 +196,7 @@ if ('serviceWorker' in navigator) {
     var jb = m.querySelector('button[data-u]');
     if (jb) jb.setAttribute('data-u', url || '');
     var im = document.getElementById('kfFallbackImg');
-    if (im) { im.src = '/assets/images/kefu.png?v=224'; }
+    if (im) { im.src = '/assets/images/kefu.png?v=301'; }
     try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
     m.style.display = 'flex';
     if (window.lockBodyScroll) window.lockBodyScroll(true);
@@ -723,7 +732,9 @@ window.__modalKit = (function () {
         __navSuppress -= used; __navSent = Math.max(0, __navSent - used); drop -= used;
       }
       var backs = Math.min(drop, __navSent); /* R214：只为真正 push 过的哨兵 back——基线期弹窗关闭不再误弹回上一页 */
-      if (backs > 0) { __navBack += backs; __navSent -= backs; for (var j = 0; j < backs; j++) { try { history.back(); } catch (e) {} } }
+      // v302（用户 10-05 00:09）：嵌套弹窗关闭时只减实账不走 history.back()，避免 popstate 连坐外层；只有关到最后一层才抵消哨兵
+      if (backs > 0 && cur === 0) { __navBack += backs; __navSent -= backs; for (var j = 0; j < backs; j++) { try { history.back(); } catch (e) {} } }
+      else if (backs > 0) { __navSent -= backs; }
     }
     __navLast = cur;
   }

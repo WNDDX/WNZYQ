@@ -232,7 +232,7 @@ export async function ensureProductColumns(env) {
     const cols = await env.DB.prepare("PRAGMA table_info(products)").all();
     const names = cols.results.map((c) => c.name);
     const add = async (col, ddl) => {
-      if (!names.includes(col)) await env.DB.exec("ALTER TABLE products ADD COLUMN " + ddl);
+      if (!names.includes(col)) await env.DB.prepare("ALTER TABLE products ADD COLUMN " + ddl).run();
     };
     await add('cover_images', "cover_images TEXT NOT NULL DEFAULT '[]'");
     await add('detail_images', "detail_images TEXT NOT NULL DEFAULT '[]'");

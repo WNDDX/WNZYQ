@@ -1740,14 +1740,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .ann-skel-line.w60 { width:60%; }
 .ann-skel-line.w30 { width:30%; }
 
-/* A2-②：统计卡片骨架 */
-.stat-card.skel { pointer-events:none; }
-.stat-card.skel .stat-card-label { height:14px; width:60%; border-radius: 3px; margin:0 auto 8px; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.stat-card.skel .stat-card-num { height:28px; width:40%; border-radius: 3px; margin:0 auto; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-
-/* A2-②：柱状图骨架 */
-.trend-bar-skel { display:flex; align-items:flex-end; justify-content:center; height:120px; padding:0 4px; pointer-events:none; }
-.trend-bar-skel .tb-skel-col { width:24px; height:60%; border-radius:3px 3px 0 0; background:linear-gradient(90deg, var(--bg-light,#f0f2f5) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f0f2f5) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+/* v302（用户 10-05 00:09）：统计卡片骨架与柱状图骨架已删除，样式一并清理 */
 
 /* A2-③：预览弹窗骨架 */
 .preview-skeleton { padding:16px 20px; pointer-events:none; }
@@ -1766,9 +1759,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* 暗色模式 */
 [data-theme="dark"] .ann-skel-line,
-[data-theme="dark"] .stat-card.skel .stat-card-label,
-[data-theme="dark"] .stat-card.skel .stat-card-num,
-[data-theme="dark"] .trend-bar-skel .tb-skel-col,
 [data-theme="dark"] .preview-skeleton .pv-skel-title,
 [data-theme="dark"] .preview-skeleton .pv-skel-price,
 [data-theme="dark"] .preview-skeleton .pv-skel-desc,
@@ -1779,8 +1769,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* 减少动态效果 */
 @media (prefers-reduced-motion: reduce) {
-  .ann-skel-line, .stat-card.skel .stat-card-label, .stat-card.skel .stat-card-num,
-  .trend-bar-skel .tb-skel-col, .preview-skeleton .pv-skel-title, .preview-skeleton .pv-skel-price,
+  .ann-skel-line, .preview-skeleton .pv-skel-title, .preview-skeleton .pv-skel-price,
   .preview-skeleton .pv-skel-desc, .ann-skeleton .ann-skel-tab, .ann-skeleton .ann-skel-line {
     animation:skPulse 1.2s ease-in-out infinite; background:var(--bg-light,#f0f2f5); background-size:auto;
   }

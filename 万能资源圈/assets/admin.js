@@ -709,6 +709,11 @@
           new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, 8000); })
         ]).then(function (r) {
           __apiInFlight.delete(reqKey);
+          var ct = r.headers.get('content-type') || '';
+          // v301（用户 10-05 00:00）：服务器返回 404/500 等非 JSON 错误时，报真实原因，不再赖网络
+          if (r.status >= 400 && ct.indexOf('application/json') === -1) {
+            return { ok: false, msg: '服务开小差了，请稍后再试', _status: r.status };
+          }
           return r.json().then(function (d) {
             d._status = r.status;
             if (r.status === 401) {
@@ -719,12 +724,16 @@
             }
             return d;
           }).catch(function () {
-            return { ok: false, msg: '服务器错误(' + r.status + ')', _status: r.status };
+            return { ok: false, msg: '服务开小差了，请稍后再试', _status: r.status };
           });
         }).catch(function (e) {
           __apiInFlight.delete(reqKey);
           if (isGet && !isRetry) {
             return doFetch(true);
+          }
+          // v301（用户 10-05 00:00）：区分超时与网络断开，真断网才报网络问题
+          if (e && e.message === 'timeout') {
+            return { ok: false, msg: '网络不佳，请稍后再试' };
           }
           return { ok: false, msg: '当前网络不可用，请检查网络连接' };
         });
@@ -1408,7 +1417,7 @@ function boot() {
       if (box.querySelectorAll('.admin-skel').length > 0) return;
       box.style.minHeight = ''; box.innerHTML = '';
       var frag = document.createDocumentFragment();
-      for (var i = 0; i < (n || 8); i++) {
+      for (var i = 0; i < (n || 20); i++) {  // v302（用户 10-05 00:09）：骨架统一20条
         var row = document.createElement('div');
         row.className = 'cat-row skel admin-skel';
         row.setAttribute('aria-hidden', 'true');
@@ -5279,7 +5288,7 @@ document.addEventListener('click', function (e) {
         var _bTb = document.getElementById('bindingsRows');
         _bTb.innerHTML = '';
         var _bFrag = document.createDocumentFragment();
-        for (var _bi = 0; _bi < 8; _bi++) {
+        for (var _bi = 0; _bi < 20; _bi++) {  // v302（用户 10-05 00:09）：骨架统一20条
           var _bTr = document.createElement('tr');
           _bTr.className = 'skel admin-skel';
           _bTr.setAttribute('aria-hidden', 'true');
@@ -5818,8 +5827,7 @@ document.addEventListener('click', function (e) {
     // R57：柱状图公共渲染——每列左右两组：本期实色柱 + 上期浅色半透明柱；列顶涨跌箭头（以浏览为主指标），
     // 悬浮显示本期/上期具体数字。loadStats 与 applyStatsDays 共用，避免两处分叉
     function renderTrendBars(trendData, prevData) {
-      // R256：清除柱状图骨架
-      var _tbBox = document.getElementById('trendBars'); if (_tbBox) { var _tbs = _tbBox.querySelectorAll('.trend-bar-skel'); for (var i=0;i<_tbs.length;i++) _tbs[i].parentNode.removeChild(_tbs[i]); }
+      // v302（用户 10-05 00:09）：趋势图去骨架，无需清理
       var trendBox = document.getElementById('trendBars');
       trendBox.innerHTML = '';
       // R70：柱状图高度与折线图统一（以折线为准）——读折线 svg 实际渲染高同步容器与柱区（--barZone）
@@ -6029,8 +6037,7 @@ document.addEventListener('click', function (e) {
 
     // R65：统计卡片渲染（拆成函数，供 loadStats 与「对比上期」开关切换重渲染共用）
     function renderStatCards(ov, ovp) {
-      // R256：清除统计卡片骨架
-      var _scBox = document.getElementById('statCards'); if (_scBox) { var _scs = _scBox.querySelectorAll('.skel'); for (var i=0;i<_scs.length;i++) _scs[i].parentNode.removeChild(_scs[i]); }
+      // v302（用户 10-05 00:09）：每日数据去骨架，无需清理
       var cards = [
         { label: '资源总数', num: ov.products || 0 },
         { label: '显示资源', num: ov.online || 0 },
@@ -7405,7 +7412,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=224', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=301', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {

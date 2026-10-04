@@ -1048,7 +1048,10 @@
     .modal-mask#annModal > .ann-box { height: min(72vh, 600px) !important; height: min(72dvh, 600px) !important; /* R159 */ max-height: none !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
     .modal-mask#annModal > .ann-box > * { box-sizing: border-box; max-width: 100%; }
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
-    .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 13px; padding: 24px 0; box-sizing: border-box; text-align: center; }
+    .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-light, #999); padding: 24px 0; box-sizing: border-box; text-align: center; }
+.modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.modal-mask#annModal .ann-empty .ann-empty-icon > svg { display: block; margin: 0 auto; }
+.modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: var(--text-light, #999); font-weight: 500; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; box-sizing: border-box; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
