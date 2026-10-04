@@ -1,0 +1,253 @@
+/**
+ * GET /api/admin/stats
+ * 数据统计（需登录）
+ */
+import { json, requireAuth, ensureBindingsTable } from '../../_utils.js';
+
+export async function onRequestGet(context) {
+  const { env, request } = context;
+  const auth = await requireAuth(env, request);
+  if (auth instanceof Response) return auth;
+
+  // R168-③：时区统一北京时间口径（全系统统一，一天为北京时间 0:00-24:00）——
+  // 存储仍为 UTC，所有按日/按小时聚合一律 date(x, '+8 hours') 切日；"今天/30天前"的默认范围也按北京日期取
+  const bjOffsetMs = 8 * 3600 * 1000;
+  const todayBJ = new Date(Date.now() + bjOffsetMs).toISOString().slice(0, 10);
+
+  // 日期范围参数
+  const url = new URL(request.url);
+  const startDate = url.searchParams.get('start_date') || '';
+  const endDate = url.searchParams.get('end_date') || '';
+
+  // 计算30天前的日期（最大可查范围，北京口径）
+  const maxStartStr = new Date(Date.now() + bjOffsetMs - 29 * 86400000).toISOString().slice(0, 10);
+
+  // 日期范围：自定义则用自定义，但开始日期不能早于30天前；否则默认近30天（均按北京日期）
+  let effectiveStart = maxStartStr;
+  let effectiveEnd = todayBJ;
+
+  // stats表单表用的日期过滤（明确指定 stats.created_at；北京时区切日）
+  // 安全修复：日期值一律通过 SQL 绑定参数（?）传入，不再拼接进 SQL 字符串
+  let statsDateFilter, statsDateParams;
+  if (startDate && endDate) {
+    effectiveStart = String(startDate).slice(0, 10) > maxStartStr ? String(startDate).slice(0, 10) : maxStartStr;
+    effectiveEnd = String(endDate).slice(0, 10);
+  }
+  // R213 P0-1（质检 R212）：上期窗口计算移到自定义范围应用之后——
+  // 原先先用默认 30 天区间算 prevStart/prevEnd 再应用自定义范围，导致 1/7 天档环比与上期曲线仍按 30 天口径取数
+  // R57：环比上期——与当前查询范围等长、紧邻之前的一段（1天档=昨天；默认30天=前30天；自定义N天=前N天）
+  const rangeDays = Math.round((new Date(effectiveEnd) - new Date(effectiveStart)) / 86400000) + 1;
+  const prevEndD = new Date(effectiveStart); prevEndD.setDate(prevEndD.getDate() - 1);
+  const prevStartD = new Date(effectiveStart); prevStartD.setDate(prevStartD.getDate() - rangeDays);
+  const prevStart = prevStartD.toISOString().slice(0, 10);
+  const prevEnd = prevEndD.toISOString().slice(0, 10);
+  // R168-③：环比日期过滤同样按北京时区切日
+  const prevDateFilter = ` AND date(stats.created_at, '+8 hours') >= ? AND date(stats.created_at, '+8 hours') <= ?`;
+  const prevDateParams = [prevStart, prevEnd];
+  // R168-③：自定义与默认走同一套北京时区日过滤（原先默认分支用 UTC now-30days 粗过滤，与按日切分口径不一致）
+  statsDateFilter = ` AND date(stats.created_at, '+8 hours') >= ? AND date(stats.created_at, '+8 hours') <= ?`;
+  statsDateParams = [effectiveStart, effectiveEnd];
+
+  // 1. 总览 + 2. 按资源统计 + 3. 趋势 + 4. 按分类统计 + 5. 浏览记录
+  // 性能修复：原先 10+ 个 D1 查询逐个 await 串行执行（每次往返 50-200ms，累计 1-2.5 秒），
+  // 现改为 Promise.all 全并行，总耗时 ≈ 最慢单查询，统计接口从 2.35s 级降到亚秒级
+  // R92：绑定统计（存量口径，不按 30 天窗口过滤）——ensure 幂等建表，旧库未重跑 install 也能查
+  await ensureBindingsTable(env);
+
+  const byProductDateFilter = statsDateFilter.replace(/stats\.created_at/g, 's.created_at');
+  const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, oBindings, byProductRes, trendRowsRes, byCategoryRes, recentRes, hourlyRowsRes, prevTotalRes, prevTrendRes, prevHourlyRes] = await Promise.all([
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
+    // 两态口径：显示 = is_online=1 且未隐藏；隐藏 = 其余全部（历史遗留数据统一归入隐藏）
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0'),
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 0 OR is_hidden = 1'),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'view'${statsDateFilter}`, statsDateParams),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'contact'${statsDateFilter}`, statsDateParams),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'resource_unlock'${statsDateFilter}`, statsDateParams),
+    // R92：绑定设备总数（存量，与 30 天窗口无关——绑定数是"当前多少设备持有通行证"的概念）
+    count(env.DB, 'SELECT COUNT(*) AS n FROM resource_bindings'),
+    env.DB.prepare(
+      `SELECT p.id, p.title, p.is_online, p.is_hidden,
+              COALESCE(SUM(CASE WHEN s.type='view' THEN 1 ELSE 0 END),0) AS views,
+              COALESCE(SUM(CASE WHEN s.type='contact' THEN 1 ELSE 0 END),0) AS contacts,
+              COALESCE(SUM(CASE WHEN s.type='resource_unlock' THEN 1 ELSE 0 END),0) AS resource_unlocks,
+              COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.product_id = p.id),0) AS bindings
+       FROM products p
+       LEFT JOIN stats s ON s.product_id = p.id${byProductDateFilter}
+       GROUP BY p.id
+       ORDER BY views DESC, p.id DESC`
+    ).bind(...statsDateParams).all(),
+    env.DB.prepare(
+      `SELECT date(stats.created_at, '+8 hours') AS day, stats.type, COUNT(*) AS cnt
+       FROM stats
+       WHERE 1=1${statsDateFilter}
+       GROUP BY day, stats.type ORDER BY day ASC`
+    ).bind(...statsDateParams).all(),
+    env.DB.prepare(
+      `SELECT c.id, c.name,
+              COUNT(p.id) AS product_count,
+              COALESCE(SUM(s2.views),0) AS total_views
+       FROM categories c
+       LEFT JOIN products p ON p.cid = c.id
+       LEFT JOIN (
+         SELECT product_id, COUNT(*) AS views FROM stats WHERE stats.type='view'${statsDateFilter} GROUP BY product_id
+       ) s2 ON s2.product_id = p.id
+       GROUP BY c.id
+       ORDER BY c.sort ASC, c.id ASC`
+    ).bind(...statsDateParams).all(),
+    // 浏览记录：不再 LIMIT 20（前端翻页每页 20 条）；R73：查询窗口 30→60 天，与全系统 60 天保留统一（保留的都查得到）
+    env.DB.prepare(
+      `SELECT s.id, s.type, s.created_at, p.title, p.img
+       FROM stats s
+       LEFT JOIN products p ON p.id = s.product_id
+       WHERE s.created_at >= datetime('now', '-60 days')
+       ORDER BY s.id DESC`
+    ).all(),
+    // R29（优化项8）：单日范围时按小时聚合（1天档/自定义同日选择走这里，与趋势同口径）；R168-③：+8 小时=北京时间小时
+    effectiveStart === effectiveEnd
+      ? env.DB.prepare(
+          `SELECT strftime('%H', stats.created_at, '+8 hours') AS hour, stats.type, COUNT(*) AS cnt
+           FROM stats
+           WHERE date(stats.created_at, '+8 hours') = ?
+           GROUP BY hour, stats.type ORDER BY hour ASC`
+        ).bind(effectiveStart).all()
+      : Promise.resolve(null),
+    // R57：上期总量（三项流量指标一次聚合）
+    env.DB.prepare(
+      `SELECT stats.type, COUNT(*) AS cnt
+       FROM stats
+       WHERE stats.type IN ('view','contact','resource_unlock')${prevDateFilter}
+       GROUP BY stats.type`
+    ).bind(...prevDateParams).all(),
+    // R57：上期按日趋势（与当前 trend 同形状，按索引对齐）
+    env.DB.prepare(
+      `SELECT date(stats.created_at, '+8 hours') AS day, stats.type, COUNT(*) AS cnt
+       FROM stats
+       WHERE 1=1${prevDateFilter}
+       GROUP BY day, stats.type ORDER BY day ASC`
+    ).bind(...prevDateParams).all(),
+    // R57：单日范围时上期（昨日）按小时聚合（与 hourly 同形状）；R168-③：+8 小时=北京时间小时
+    effectiveStart === effectiveEnd
+      ? env.DB.prepare(
+          `SELECT strftime('%H', stats.created_at, '+8 hours') AS hour, stats.type, COUNT(*) AS cnt
+           FROM stats
+           WHERE date(stats.created_at, '+8 hours') = ?
+           GROUP BY hour, stats.type ORDER BY hour ASC`
+        ).bind(prevEnd).all()
+      : Promise.resolve(null),
+  ]);
+
+  const overview = {
+    products: oProducts,
+    online: oOnline,
+    hidden: oHidden,
+    views: oViews,
+    contacts: oContacts,
+    resource_unlocks: oUnlocks,
+    bindings: oBindings, // R92：已绑定设备总数（存量口径，不参与环比——环比体系仅流量三卡）
+  };
+  // R57：上期总量（供概览卡「较上期 ±x%」小字）
+  const prevTotals = (prevTotalRes && prevTotalRes.results) || [];
+  const overview_prev = {
+    views: prevTotals.find((r) => r.type === 'view')?.cnt || 0,
+    contacts: prevTotals.find((r) => r.type === 'contact')?.cnt || 0,
+    resource_unlocks: prevTotals.find((r) => r.type === 'resource_unlock')?.cnt || 0,
+  };
+  const byProduct = byProductRes.results || [];
+  const trendRows = trendRowsRes.results || [];
+  const byCategory = byCategoryRes.results || [];
+  const recent = recentRes.results || [];
+  // 补全日期范围
+  const trend = [];
+  const startD = new Date(effectiveStart);
+  const endD = new Date(effectiveEnd);
+  for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+    const day = d.toISOString().slice(0, 10);
+    const dayRows = trendRows.filter((r) => r.day === day);
+    trend.push({
+      day,
+      views: dayRows.find((r) => r.type === 'view')?.cnt || 0,
+      contacts: dayRows.find((r) => r.type === 'contact')?.cnt || 0,
+      resource_unlocks: dayRows.find((r) => r.type === 'resource_unlock')?.cnt || 0,
+    });
+  }
+
+  // R57：上期日趋势——按当前范围逐日偏移到上期同位置（与 trend 一一对应，供柱状图浅色对比柱）
+  const prevTrendRows = (prevTrendRes && prevTrendRes.results) || [];
+  const trend_prev = [];
+  for (let i = 0; i < trend.length; i++) {
+    const d = new Date(prevStartD); d.setDate(d.getDate() + i);
+    const day = d.toISOString().slice(0, 10);
+    const dayRows = prevTrendRows.filter((r) => r.day === day);
+    trend_prev.push({
+      day,
+      views: dayRows.find((r) => r.type === 'view')?.cnt || 0,
+      contacts: dayRows.find((r) => r.type === 'contact')?.cnt || 0,
+      resource_unlocks: dayRows.find((r) => r.type === 'resource_unlock')?.cnt || 0,
+    });
+  }
+
+  // 注：第 4 段（按分类统计）与第 5 段（浏览记录）已在上方 Promise.all 中并行执行；
+  // 历史串行版本代码（重复声明 byCategory/recent 且 recent 带 LIMIT 20）已删除——
+  // 重复 const 声明会直接抛 SyntaxError 导致接口 500，串行 await 也会把耗时拖回 2 秒级
+
+  // R29（优化项8）：单日范围时组装 24 小时粒度序列（无数据的小时补 0），与 trend 同形状
+  let hourly = null;
+  if (hourlyRowsRes) {
+    const hourRows = hourlyRowsRes.results || [];
+    hourly = [];
+    for (let h = 0; h < 24; h++) {
+      const hh = String(h).padStart(2, '0');
+      const rows = hourRows.filter((r) => r.hour === hh);
+      hourly.push({
+        hour: hh,
+        views: rows.find((r) => r.type === 'view')?.cnt || 0,
+        contacts: rows.find((r) => r.type === 'contact')?.cnt || 0,
+        resource_unlocks: rows.find((r) => r.type === 'resource_unlock')?.cnt || 0,
+      });
+    }
+  }
+
+  // R57：单日范围时组装上期（昨日）24 小时序列（与 hourly 同形状，供柱状图对比）
+  let hourly_prev = null;
+  if (prevHourlyRes) {
+    const prevHourRows = prevHourlyRes.results || [];
+    hourly_prev = [];
+    for (let h = 0; h < 24; h++) {
+      const hh = String(h).padStart(2, '0');
+      const rows = prevHourRows.filter((r) => r.hour === hh);
+      hourly_prev.push({
+        hour: hh,
+        views: rows.find((r) => r.type === 'view')?.cnt || 0,
+        contacts: rows.find((r) => r.type === 'contact')?.cnt || 0,
+        resource_unlocks: rows.find((r) => r.type === 'resource_unlock')?.cnt || 0,
+      });
+    }
+  }
+
+  return new Response(JSON.stringify({
+    ok: true,
+    hourly,
+    hourly_prev,
+    overview_prev,
+    trend_prev,
+    overview,
+    byProduct: byProduct.map((r) => ({
+      id: r.id, title: r.title, is_online: r.is_online, is_hidden: r.is_hidden,
+      views: r.views, contacts: r.contacts, resource_unlocks: r.resource_unlocks,
+      bindings: r.bindings, // R92：该资源已绑定设备数（存量）
+    })),
+    trend,
+    byCategory,
+    recent: recent.map((r) => ({
+      id: r.id, type: r.type, created_at: r.created_at,
+      title: r.title || '(已删除)', img: r.img || '',
+    })),
+  }), {
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, max-age=300' },
+  });
+}
+
+async function count(db, sql, params) {
+  const r = await db.prepare(sql).bind(...(params || [])).first();
+  return r ? r.n : 0;
+}
