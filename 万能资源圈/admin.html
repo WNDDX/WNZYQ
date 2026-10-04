@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>万能资源圈・管理</title>
   <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
+  <!-- v295（用户 10-04 02:52）：分享 meta 补齐——与资源页统一描述+logo -->
+  <meta property="og:title" content="万能资源圈・管理">
+  <meta property="og:description" content="优质资源聚合平台">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="万能资源圈">
+  <meta property="og:locale" content="zh_CN">
+  <meta property="og:image" content="/assets/images/logo.png?v=298">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="万能资源圈・管理">
+  <meta name="twitter:description" content="优质资源聚合平台">
+  <meta name="twitter:image" content="/assets/images/logo.png?v=298">
   <meta name="robots" content="index,follow">
   <!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
 <!-- R228（用户 09-21 19:42）：浏览器对 favicon 有独立硬缓存、刷新先闪旧图标 → 图标内联 data URI，HTML 一解析即在，零请求零缓存依赖 -->
@@ -13,7 +24,7 @@
   <script>if(window.location.protocol!=='file:'){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.json';document.head.appendChild(l);}</script>
   <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)">
-  <link rel="preload" href="/assets/images/logo.png?v=224" as="image">
+  <link rel="preload" href="/assets/images/logo.png?v=298" as="image">
   <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
   <link rel="preload" href="/assets/ui-common.js" as="script">
   <link rel="preload" href="/assets/admin.js" as="script">
@@ -28,7 +39,7 @@
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
         <div class="login-logo">
-          <img src="/assets/images/logo.png?v=224" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          <img src="/assets/images/logo.png?v=298" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
         </div>
       </a>
       <h1>万能资源圈・管理</h1>
@@ -41,7 +52,7 @@
         <input id="loginPass" class="input" type="password" maxlength="50" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" style="width:100%;padding-right:44px;margin-bottom:0;" />
         <button type="button" id="pwdToggleBtn" onclick="if(typeof togglePwdVisibility==='function')togglePwdVisibility();" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button>
       </div>
-      <button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登 录</button>
+      <button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登录</button>
     </div>
   </div>
 
@@ -51,7 +62,7 @@
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
-            <img class="topbar-logo" src="/assets/images/logo.png?v=224" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+            <img class="topbar-logo" src="/assets/images/logo.png?v=298" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -62,6 +73,7 @@
           <button class="tab" data-tab="settings">平台设置</button>
         </div>
         <div class="topbar-right">
+          <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
           <button class="logout-btn" id="logoutBtn">退出</button>
         </div>
       </div>
@@ -403,11 +415,11 @@
       <h2 class="modal-title">修改密码</h2>
       <div class="form">
         <label>原密码</label>
-        <input class="input" id="oldPwd" type="password" maxlength="50" />
+        <div style="position:relative;"><input class="input" id="oldPwd" type="password" maxlength="50" style="width:100%;padding-right:44px;" /><button type="button" class="pwd-eye" onclick="var i=document.getElementById('oldPwd');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;">👁</button></div>
         <label>新密码</label>
-        <input class="input" id="newPwd" type="password" maxlength="50" />
+        <div style="position:relative;"><input class="input" id="newPwd" type="password" maxlength="50" style="width:100%;padding-right:44px;" /><button type="button" class="pwd-eye" onclick="var i=document.getElementById('newPwd');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;">👁</button></div>
         <label>确认新密码</label>
-        <input class="input" id="confirmPwd" type="password" maxlength="50" />
+        <div style="position:relative;"><input class="input" id="confirmPwd" type="password" maxlength="50" style="width:100%;padding-right:44px;" /><button type="button" class="pwd-eye" onclick="var i=document.getElementById('confirmPwd');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;">👁</button></div>
       </div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="changePwdBtn">确定</button>
@@ -456,7 +468,7 @@
       <h2 class="modal-title">设置客服</h2>
       <div class="form">
         <label>全局客服链接（资源没填专属链接时用这个）</label>
-        <input class="input" id="contactUrlInput" maxlength="500" />
+        <input class="input" id="contactUrlInput" maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('contactSaveBtn').click();}" />
       </div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="saveContactBtn">确定</button>
@@ -473,7 +485,7 @@
         <label>标题</label><input id="fTitle" maxlength="100" />
         <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
         <!-- R256：封面多图轮播——横排小图列表 -->
-        <label>资源封面图 <span class="label-hint">第一张为主图，用于列表卡片显示；可添加多张轮播</span></label>
+        <label>资源封面图 <span class="label-hint">第一张为封面图，用于列表卡片显示；可添加多张轮播</span></label>
         <div class="cover-gallery" id="coverGallery"></div>
         <div style="display:flex;gap:8px;align-items:stretch;margin-top:8px;">
           <input id="fImg" style="flex:1;min-width:0;" maxlength="500" />
@@ -554,7 +566,7 @@
         <input id="fPrice" type="number" step="0.01" min="0" />
         <label>咨询客服链接 <span class="label-hint">可不填，默认用全局客服</span></label>
         <input id="fContactUrl" maxlength="500" />
-        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="fSort" type="number" value="0" />
+        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="fSort" type="number" step="any" value="0" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 显示（勾选后资源页可见，取消则隐藏）</label>
         <div class="sch-row">
           <div class="sch-col">
@@ -581,7 +593,7 @@
       <button class="modal-close-x" data-close="catMask"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <h2 class="modal-title" id="catModalTitle">新增分类</h2>
       <div class="form">
-        <label>分类名称</label><input id="catName" class="input" maxlength="50" />
+        <label>分类名称</label><input id="catName" class="input" maxlength="50" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('catSaveBtn').click();}" />
         <label>分类级别</label>
         <div style="display:flex;gap:14px;margin-bottom:4px;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:10px;padding:8px 14px;">
@@ -595,7 +607,7 @@
           <label>所属一级分类</label>
           <div class="cat-picker" id="catParentPicker" style="margin-bottom:8px;"><input type="hidden" id="catParentValue" value="0" /><div class="cat-picker-display" id="catParentDisplay"><span class="cpd-text">请选择所属一级分类</span><span class="cpd-arrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="catParentPanel"></div></div>
         </div>
-        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="catSort" class="input" type="number" value="0" />
+        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="catSort" class="input" type="number" step="any" value="0" />
         <label class="checkbox-row"><input type="checkbox" id="catHidden" /> 隐藏（资源页不显示，仅管理页可见）</label>
       </div>
       <div class="modal-footer">
@@ -736,10 +748,10 @@
         <input id="vPrice" type="number" step="0.01" min="0" />
         <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="vSort" type="number" value="0" />
         <label>资源码 <span class="label-hint">可不填，访客咨询客服后获取</span></label>
-        <input id="vResourceCode" />
+        <input id="vResourceCode" maxlength="8" />
         <label>绑定设备上限 <span class="label-hint">最多可绑定台数，默认 1</span></label>
         <input id="vBindLimit" type="number" min="1" step="1" value="1" />
-        <label>资源码专属内容（支持文字/链接/图片/视频）</label>
+        <label>专属内容（支持文字/链接/图片/视频）</label>
         <div class="rte-toolbar rte-collapsed" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vContentEditor" title="字体">
             <option value="">字体</option>
@@ -862,7 +874,7 @@
               <span id="pvResourceTitle">输入资源码获取专属内容</span>
             </div>
             <div class="resource-code-input-row" id="pvResourceInputRow">
-              <input type="text" class="resource-code-input" id="pvResourceCodeInput"  />
+              <input type="text" class="resource-code-input" id="pvResourceCodeInput" maxlength="8"  />
               <button class="resource-code-btn" id="pvResourceCodeBtn" type="button">解锁</button>
             </div>
             <div class="resource-code-error" id="pvResourceError" style="display:none">资源码错误，请重试</div>
@@ -904,20 +916,20 @@
         } else { if (window.showAlert) window.showAlert((res && res.msg) || '登录失败'); else alert((res && res.msg) || '登录失败'); }
       })
       .catch(function () { var _l = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; var _m = _l ? '本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev' : '无法连接后端，请确认已部署到 Cloudflare'; if (window.showAlert) window.showAlert(_m); else alert(_m); })
-      .then(function () { btn.disabled = false; btn.textContent = '登 录'; });
+      .then(function () { btn.disabled = false; btn.textContent = '登录'; });
   };
   </script>
   <script>
-  (function () {
-    function warn(t) { if (document.getElementById('__deployWarn')) return; var b = document.createElement('div'); b.id = '__deployWarn'; b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:100200;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14))'; b.textContent = t; if (document.body) document.body.appendChild(b); document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); }); }
-    window.addEventListener('load', function () {
-      setTimeout(function () {
-        if (!window.__uiCommonLoaded) warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML');
-        var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
-        if (!ok) warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
-      }, 800);
-    });
-  })();
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      if (!window.__uiCommonLoaded) window.warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个"万能资源圈"文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML');
+      var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
+      if (!ok) window.warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
+    }, 800);
+  });
   </script>
+  <!-- v296（用户 10-04）：四页 warn 函数统一从 ui-common.js 加载，admin.html 不再内联定义 -->
+
+  <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 </body>
 </html>

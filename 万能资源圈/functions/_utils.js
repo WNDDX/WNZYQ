@@ -203,6 +203,7 @@ export function cleanProduct(p) {
     schedule_on: p.schedule_on || '',    // 定时显示时间（空=不定时）
     schedule_off: p.schedule_off || '',  // 定时隐藏时间（空=不定时）
     sort: p.sort,
+    updated_at: p.updated_at || '',       // v294：211 并发编辑乐观锁用
   };
 }
 
@@ -392,27 +393,7 @@ export async function issueCodeForVariant(env, variantId) {
   return { ok: true, issuedCode: oldCode, code: newCode };
 }
 
-// R221：某类型最近发码记录（后台码面板展示：码 / 发放时间 / 剩余有效天数 / 状态）。
-// 剩余天数与「已过期」状态在此计算（60 天窗口的展示口径与 unlock.js 验证口径一致）。
-export async function recentIssues(env, variantId, limit = 5) {
-  try {
-    const r = await env.DB.prepare(
-      'SELECT code, issued_at, status, bound_at FROM code_issues WHERE variant_id = ? ORDER BY id DESC LIMIT ?'
-    ).bind(variantId, limit).all();
-    return (r.results || []).map((row) => {
-      let ageDays = 60;
-      try {
-        const t = new Date(String(row.issued_at).replace(' ', 'T') + 'Z').getTime();
-        ageDays = Math.floor((Date.now() - t) / 86400000);
-        if (ageDays < 0) ageDays = 0;
-      } catch (e) { /* 时间解析失败按满窗计 */ }
-      let statusText = '待用';
-      if (row.status === 'bound') statusText = '已用';
-      else if (ageDays >= 60) statusText = '已过期';
-      return { code: row.code, issued_at: row.issued_at, remaining_days: Math.max(0, 60 - ageDays), status: statusText };
-    });
-  } catch (e) { return []; }
-}
+// R307（用户 09-30）：recentIssues 定义已删——发码接口不再返回 5 条遗留记录（弹窗表走 bindings 全量查询）
 
 // 清除公开接口缓存（管理员修改数据后调用，不阻塞主流程）
 export async function clearPublicCache(request) {

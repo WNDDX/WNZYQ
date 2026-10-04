@@ -1,8 +1,7 @@
 /**
  * POST /api/admin/upload-video → 上传本地视频到自有存储（R36 新增）
  * 与 upload-image 同一套 IMAGE_BUCKET 绑定（KV 或 R2，自动识别）：
- *   ① KV 命名空间：单值上限 25MB → 视频限 25MB
- *   ② R2 存储桶：支持大文件 → 视频限 100MB
+ *   R307 起大小限制已按老板拍板全部取消；仅平台侧限制仍在——KV 单值 25MB（平台硬上限），R2 无限制。
  * 需登录。视频通过本站路由 /img/<key> 访问（URL 为相对路径）。
  * 浏览器 <video> 原生支持 mp4 / webm；mov（iPhone 录像）在部分浏览器可能无法播放，会返回提示。
  */
@@ -33,9 +32,10 @@ export async function onRequestPost(context) {
   const ext = ALLOWED_TYPES[type];
   if (!ext) return json({ ok: false, msg: '只支持 mp4 / webm / mov 视频格式' }, 400);
 
-  const limitMB = isKVBucket(bucket) ? 25 : 100;
-  if (file.size > limitMB * 1024 * 1024) {
-    return json({ ok: false, msg: '视频超过 ' + limitMB + 'MB 上限' + (isKVBucket(bucket) ? '（当前是 KV 图仓，单文件最多 25MB；更大的视频建议换绑 R2 桶或先用视频外链）' : '，请先压缩') }, 400);
+  // R308：老板拍板视频硬限 25MB（KV 平台硬上限，前端已秒拒，后端双保险防绕过）
+  const MAX_VIDEO_SIZE = 25 * 1024 * 1024;
+  if (file.size > MAX_VIDEO_SIZE) {
+    return json({ ok: false, msg: '该视频超过 25MB，暂不支持上传，请压缩或剪辑后再试' }, 413);
   }
 
   const now = new Date();

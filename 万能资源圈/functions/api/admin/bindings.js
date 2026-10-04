@@ -2,11 +2,12 @@
  * GET /api/admin/bindings?variant_id=xxx   绑定设备清单（需登录）
  * 响应: { ok, limit, count, list: [{ id, device, ua, created_at, last_access }] }
  *   device 显示为 token 前 12 位 + …（完整 token 不下发，避免被拿到后伪造设备）
+ * R303（09-30）：支持分页按页拉取（page + page_size）
  */
 import { json, requireAuth, ensureBindingsTable, ensureVariantColumns, ensureCodeIssuesTable, getSetting } from '../../_utils.js';
 
 
-// R223：发码记录展示口径（与 _utils.recentIssues 一致）——
+// R223：发码记录展示口径（原与 _utils.recentIssues 一致，R307 已删该函数）——
 // status='issued' 待用 / 'bound' 已用；「已过期」按 issued_at 距今超 60 天动态判定。
 function issueView(row) {
   let ageDays = 60;
@@ -21,11 +22,7 @@ function issueView(row) {
   return { code: row.code, issued_at: row.issued_at, remaining_days: Math.max(0, 60 - ageDays), status: statusText };
 }
 
-// R227（老板 19:39「设置能记住」）：早期绑定补录——resource_bindings 里记了 code 但 code_issues 无对应记录的老绑定，
-// 自愈式补进发码账本：发放时间=当时绑定时间、bound_at=绑定时间、status='已用'（顺带保证 issueCodeForVariant 不会
-// 把它当新码回收复用——已用码不在发放链路）。幂等：只补缺失的 code，重复执行无新增；失败仅记日志不影响列表返回。
-// 补录后这些行在合并表里显示真实码（蓝字可点复制、状态绿「已绑定」）；code 为空的更早期绑定仍显「早期绑定」。
-// 与 track.js 60 天清理无冲突：清理只针对未绑定（bound_at 为空）的过期记录，补录记录 bound_at 有值不会被误清。
+// R227（老板 19:39「设置能记住」）：早期绑定补录
 async function backfillLegacyCodes(env, variantId) {
   try {
     const sql = 'SELECT DISTINCT variant_id, product_id, code, created_at FROM resource_bindings '
@@ -55,8 +52,7 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const variantId = Number(url.searchParams.get('variant_id') || 0);
 
-  // R114（无感预载）：prefetch=1 不带 variant_id——一次性批量返回全部类型的绑定数据，
-  // 后台登录后静默拉取缓存，点「绑定 N」徽章时弹窗即开即显（打开后再后台刷新保最新）
+  // R114（无感预载）：prefetch=1 不带 variant_id——一次性批量返回全部类型的绑定数据
   if (url.searchParams.get('prefetch') === '1') {
     await ensureBindingsTable(env);
     await ensureVariantColumns(env);
@@ -88,7 +84,6 @@ export async function onRequestGet(context) {
         last_access: r.last_access,
       });
     });
-    // R223：全部发码记录（按发放时间倒序）——合并平铺表的码侧数据源
     let irows = [];
     try {
       const r = await env.DB.prepare(
@@ -109,7 +104,6 @@ export async function onRequestGet(context) {
       const list = byV[v.id] || [];
       let curCount = 0;
       if (code) {
-        // R96：上限按当前码周期计数（code 记录在绑定行里）
         for (const r of brows) if (r.variant_id === v.id && r.code === code) curCount++;
       }
       map[v.id] = { limit, code, cur_count: curCount, count: list.length, list, issues: issuesByV[v.id] || [] };
@@ -119,26 +113,41 @@ export async function onRequestGet(context) {
 
   if (!variantId) return json({ ok: false, msg: '缺少 variant_id' }, 400);
   await ensureBindingsTable(env);
-  // R106：确保 product_variants 有 bind_limit 列（老库自动补列）
   await ensureVariantColumns(env);
-  // R223：合并平铺表需要发码记录（码/发放时间/剩余天数/状态）
   await ensureCodeIssuesTable(env);
-  // R227：打开弹窗时自愈式补录老账本有码的早期绑定（幂等，失败不阻塞）
   await backfillLegacyCodes(env, variantId);
 
-  // R106：绑定表查询防御——表异常时按空清单返回（弹窗提示"暂无绑定"），不再 500
+  // R303：分页参数
+  const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+  const pageSize = Math.min(100, Math.max(0, Number(url.searchParams.get('page_size') || 0)));
+
+  // R106：绑定表查询防御——表异常时按空清单返回
   let results = [];
+  let total = 0;
   try {
-    const r = await env.DB.prepare(
-      'SELECT id, device_token, ua, code, created_at, last_access FROM resource_bindings WHERE variant_id = ? ORDER BY id ASC'
-    ).bind(variantId).all();
-    results = r.results || [];
+    if (pageSize > 0) {
+      const countRes = await env.DB.prepare(
+        'SELECT COUNT(*) AS n FROM resource_bindings WHERE variant_id = ?'
+      ).bind(variantId).first();
+      total = countRes ? countRes.n : 0;
+      const offset = (page - 1) * pageSize;
+      const r = await env.DB.prepare(
+        'SELECT id, device_token, ua, code, created_at, last_access FROM resource_bindings WHERE variant_id = ? ORDER BY id ASC LIMIT ? OFFSET ?'
+      ).bind(variantId, pageSize, offset).all();
+      results = r.results || [];
+    } else {
+      // 兼容旧口径：不分页返回全部
+      const r = await env.DB.prepare(
+        'SELECT id, device_token, ua, code, created_at, last_access FROM resource_bindings WHERE variant_id = ? ORDER BY id ASC'
+      ).bind(variantId).all();
+      results = r.results || [];
+      total = results.length;
+    }
   } catch (e) { console.error('R106 绑定清单查询失败（按空降级）:', e && e.message); }
 
   const limitRaw = await getSetting(env, 'resource_bind_limit', '1');
 
-  // R96：返回当前资源码 + 当前码周期的已绑数（绑满自动换码后管理员从这里拿最新码）
-  // R106 防御：列补齐失败时降级去掉 bind_limit 重查（上限按全局设置兜底）
+  // R96：返回当前资源码 + 当前码周期的已绑数
   let vRow = null;
   try {
     vRow = await env.DB.prepare('SELECT resource_code, bind_limit FROM product_variants WHERE id = ?').bind(variantId).first();
@@ -147,7 +156,6 @@ export async function onRequestGet(context) {
     vRow = await env.DB.prepare('SELECT resource_code FROM product_variants WHERE id = ?').bind(variantId).first();
   }
   const curCode = vRow ? String(vRow.resource_code || '').trim() : '';
-  // R106：绑定设备上限挪进类型编辑表单——类型自身设置优先，未设置再按全局设置（默认 1）
   const vLimit = vRow ? parseInt(vRow.bind_limit, 10) : NaN;
   const limit = vLimit >= 1 ? vLimit : Math.max(1, parseInt(limitRaw, 10) || 1);
   let curCount = 0;
@@ -169,12 +177,12 @@ export async function onRequestGet(context) {
     issues = (r.results || []).map(issueView);
   } catch (e) { console.error('R223 发码记录查询失败（按空降级）:', e && e.message); }
 
-  return json({
+  const resp = {
     ok: true,
     limit,
     code: curCode,
     cur_count: curCount,
-    count: results.length,
+    count: total,
     list: results.map((r) => ({
       id: r.id,
       device: String(r.device_token || '').slice(0, 12) + '…',
@@ -184,5 +192,11 @@ export async function onRequestGet(context) {
       last_access: r.last_access,
     })),
     issues,
-  });
+  };
+  if (pageSize > 0) {
+    resp.page = page;
+    resp.page_size = pageSize;
+    resp.total_pages = Math.ceil(total / pageSize);
+  }
+  return json(resp);
 }

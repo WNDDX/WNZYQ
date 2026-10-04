@@ -174,6 +174,8 @@ export async function onRequestPost(context) {
 
   // 7. 绑定本设备（记录当时的码）并返回内容
   //    R106 防御：绑定表异常导致写不进去时降级放行（码已验对，只是这台记不上账），不再 500
+  // v294（用户 10-04 02:14）：212 并发解锁幂等——同一设备并发请求时，第二个可能撞唯一约束，
+  // 此时设备已被第一个请求绑定，应视为绑定成功而非失败
   const ua = (request.headers.get('User-Agent') || '').slice(0, 200);
   let bound = true;
   try {
@@ -181,8 +183,13 @@ export async function onRequestPost(context) {
       'INSERT INTO resource_bindings (variant_id, product_id, device_token, ua, code) VALUES (?, ?, ?, ?, ?)'
     ).bind(variantId, productId, device, ua, bindCode).run();
   } catch (e) {
-    bound = false;
-    console.error('R106 绑定记录写入失败（降级放行）:', e && e.message);
+    const msg = String(e && e.message || '');
+    if (msg.includes('UNIQUE constraint failed')) {
+      bound = true; // 已绑定，幂等返回成功
+    } else {
+      bound = false;
+      console.error('R106 绑定记录写入失败（降级放行）:', msg);
+    }
   }
 
   // 8. R221：该发码记录置为已用（bound_at=首次绑定时刻；已 bound 的不重复改）

@@ -34,18 +34,34 @@ export async function onRequestPost(context) {
   }
 
   const ip = request.headers.get('CF-Connecting-IP') || '';
-  // R30-#10：统计流水属"只增不能自管"的数据——每次埋点顺带删掉 60 天前的旧记录，
-  // R72：滚动窗口 30→60 天，保证 30 天档「对比上期」（31~60 天前那段）有真实数据（失败不影响埋点）
-  // R207（用户 09-18 14:39）：老板拍板小表清理并入访问顺带清理，不恢复定时版；
-  // 三表（stats / sessions / login_attempts）统一按各自录入时间滚动 60 天，同一 try/catch、失败不阻塞埋点
-  // R221（老板 15:44）：发码记录表同口径并入——issued 超 60 天仍未绑定的行删除
-  // （按各条自己的 issued_at 滚动；删除即释放码字符串，可被再次生成=过期码回收复用；bound 行是绑定历史，保留）
+  // R298（用户 09-30）：60 天清理统一每天一次——纯代码实现，不碰后台定时配置。
+  // 记录上次清理日期在 settings 表（key='last_cleanup_date'），跨天首访触发一次；先检查真有旧数据才删。
   try {
-    await env.DB.prepare("DELETE FROM stats WHERE created_at < datetime('now', '-60 days')").run();
-    await env.DB.prepare("DELETE FROM sessions WHERE created_at < datetime('now', '-60 days')").run();
-    await env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-60 days')").run();
-    await env.DB.prepare("DELETE FROM code_issues WHERE status = 'issued' AND issued_at < datetime('now', '-60 days')").run();
-  } catch (e) { console.error('滚动清理失败(不影响埋点):', e); }
+    // R307 U8（用户 09-30 拍板「全系统统一用固定按北京时间加 8 小时算」）：
+    // 原 toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }) 改为与 stats.js / export.js
+    // 完全一致的固定 +8 偏移写法，全系统时间口径单一。
+    const today = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+    const last = await env.DB.prepare("SELECT value FROM settings WHERE key = 'last_cleanup_date'").first();
+    if (!last || last.value !== today) {
+      const tables = [
+        { name: 'stats', dateCol: 'created_at' },
+        { name: 'sessions', dateCol: 'created_at' },
+        { name: 'login_attempts', dateCol: 'last_attempt' },
+        { name: 'code_issues', dateCol: 'issued_at', extra: "AND status = 'issued'" }
+      ];
+      for (const t of tables) {
+        const countRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS n FROM ${t.name} WHERE ${t.dateCol} < datetime('now', '-60 days') ${t.extra || ''}`
+        ).first();
+        if (countRow && countRow.n > 0) {
+          await env.DB.prepare(
+            `DELETE FROM ${t.name} WHERE ${t.dateCol} < datetime('now', '-60 days') ${t.extra || ''}`
+          ).run();
+        }
+      }
+      await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('last_cleanup_date', ?)").bind(today).run();
+    }
+  } catch (e) { console.error('每日清理失败(不影响埋点):', e); }
 
   // R169：去重口径统一到全部类型——「同设备+同资源+同类型」1 小时窗口内已有记录则本次不记
   // （created_at 为 UTC，与 datetime('now','-1 hour') 同系直接比较，窗口 1 小时与时区无关）

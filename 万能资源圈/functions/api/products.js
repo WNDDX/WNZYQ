@@ -1,10 +1,11 @@
-﻿/**
+/**
  * GET /api/products
- * 返回所有【显示中】的资源（公开接口，前台用）
+ * 返回【显示中】的资源（公开接口，前台用）
  * 每个资源同时带上其类型列表（variants），前台详情弹窗直接用
  * R92：类型不再下发 resourceCode/resourceContent 明文，改发 hasCode/hasContent 标志；
  * 明文内容只在 /api/unlock 验证（或已绑定设备）后单发
  * 分类/搜索过滤由前台完成
+ * R303（09-30）：支持分页按页拉取（page + page_size），兼容旧口径（不传参=返回全部）
  * 带 20 秒边缘缓存（Cache API），管理员修改后自动失效
  */
 import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns, ensureProductColumns } from '../_utils.js';
@@ -22,10 +23,6 @@ export async function onRequestGet(context) {
   }
 
   // 2. 定时显示/隐藏检查：到了显示时间自动显示，到了隐藏时间自动隐藏
-  // 注意：用户输入的是本地时间（UTC+8），用 datetime('now','+8 hours') 获取中国时间比较
-  // R243 条2：先查有没有要写的、没有就不写——原先每次缓存未命中 GET 都无条件跑两条 UPDATE
-  // （前台每次刷新都偷偷写库，哪怕一行都不命中）；改为单条只读预检（EXISTS 各查一次合并成一条 SELECT），
-  // 预检命中才发对应 UPDATE；正常刷新（无到点资源）写库次数 2 → 0
   try {
     const pre = await env.DB.prepare(
       `SELECT
@@ -49,10 +46,53 @@ export async function onRequestGet(context) {
   await ensureProductColumns(env);
   await ensureVariantColumns(env);
 
+  // R303：分页参数
+  const url = new URL(request.url);
+  const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+  const pageSize = Math.min(100, Math.max(0, Number(url.searchParams.get('page_size')) || 0));
+  const cid = Number(url.searchParams.get('cid') || 0);
+  const subCid = Number(url.searchParams.get('sub_cid') || 0);
+  const kw = String(url.searchParams.get('kw') || '').trim().toLowerCase();
+
+  // 构建 WHERE 条件
+  let where = 'WHERE is_online = 1 AND is_hidden = 0';
+  const params = [];
+
+  if (subCid > 0) {
+    where += ' AND cid = ?';
+    params.push(subCid);
+  } else if (cid > 0) {
+    // 一级分类：包含该分类及其所有子分类
+    const subRes = await env.DB.prepare('SELECT id FROM categories WHERE parent_id = ?').bind(cid).all();
+    const subIds = (subRes.results || []).map((r) => r.id);
+    if (subIds.length > 0) {
+      where += ' AND (cid = ? OR cid IN (' + subIds.map(() => '?').join(',') + '))';
+      params.push(cid, ...subIds);
+    } else {
+      where += ' AND cid = ?';
+      params.push(cid);
+    }
+  }
+
+  if (kw) {
+    where += ' AND (LOWER(title) LIKE ? OR LOWER("desc") LIKE ?)';
+    params.push('%' + kw + '%', '%' + kw + '%');
+  }
+
   // 3. 查数据库
-  const { results } = await env.DB.prepare(
-    'SELECT * FROM products WHERE is_online = 1 AND is_hidden = 0 ORDER BY sort ASC, id DESC'
-  ).all();
+  let results, total;
+  if (pageSize === 0) {
+    // 不分页：兼容旧口径
+    const r = await env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC').bind(...params).all();
+    results = r.results || [];
+    total = results.length;
+  } else {
+    const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products ' + where).bind(...params).first();
+    total = countRes ? countRes.n : 0;
+    const offset = (page - 1) * pageSize;
+    const r = await env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?').bind(...params, pageSize, offset).all();
+    results = r.results || [];
+  }
 
   // 3. 批量查类型
   const ids = results.map((p) => p.id);
@@ -64,8 +104,7 @@ export async function onRequestGet(context) {
     ).bind(...ids).all();
     for (const v of vrows) {
       if (!variantsByProduct[v.product_id]) variantsByProduct[v.product_id] = [];
-      if (v.is_hidden) continue; // 隐藏的类型不在资源页显示
-      // R92：公开接口剥离资源码/专属内容明文（防 F12 直接偷码偷内容），只留 hasCode/hasContent 标志
+      if (v.is_hidden) continue;
       variantsByProduct[v.product_id].push(cleanVariantPublic(v));
     }
   }
@@ -78,7 +117,14 @@ export async function onRequestGet(context) {
   });
 
   // 5. 写入缓存（20 秒，兼顾性能与后台改动快速生效）
-  const response = new Response(JSON.stringify({ ok: true, list }), {
+  const respBody = { ok: true, list };
+  if (pageSize > 0) {
+    respBody.total = total;
+    respBody.page = page;
+    respBody.page_size = pageSize;
+    respBody.total_pages = Math.ceil(total / pageSize);
+  }
+  const response = new Response(JSON.stringify(respBody), {
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'public, max-age=20',

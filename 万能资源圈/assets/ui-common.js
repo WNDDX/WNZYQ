@@ -92,6 +92,8 @@ if ('serviceWorker' in navigator) {
     function close() {
       m.classList.remove('open');
       __hideBgVideos(false);
+      // v294（用户 10-04 02:14）：222 关闭弹窗时暂停所有视频
+      try { document.querySelectorAll('video').forEach(function(v){ v.pause(); }); } catch(e) {}
       // 不直接解锁：若还有其他弹窗（如商品弹窗）开着，必须保持背景锁定
       if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overflow = '');
     }
@@ -386,7 +388,7 @@ if ('serviceWorker' in navigator) {
           '<button type="button" class="modal-close-x" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
           '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;"></div>' +
           '<div class="alert-body" style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
-          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:8px;padding:11px 0;background:#1E88E5;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);box-shadow:0 2px 6px rgba(30,136,229,0.25);-webkit-tap-highlight-color:transparent;">确定</button></div>' +
+          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:10px;padding:11px 0;background:#1E88E5 /* v293（用户 10-04 02:14）：069alert-ok圆角8→10px→跟全站按钮统一 */;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);box-shadow:var(--shadow-blue); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 2px 6px rgba(30,136,229,0.25)改var(--shadow-blue) */ -webkit-tap-highlight-color:transparent;">确定</button></div>' +
         '</div>';
       var titleEl = mask.querySelector('.modal-title');
       var bodyEl = mask.querySelector('.alert-body');
@@ -440,7 +442,7 @@ if ('serviceWorker' in navigator) {
       mask.setAttribute('role', 'dialog');
       mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
-        '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
+        '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-modal); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 10px 40px rgba(0,0,0,0.3)改var(--shadow-modal) */ animation:modalIn 0.18s ease;">' +
           '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
           '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
           '<div data-share-tip style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
@@ -526,7 +528,7 @@ if ('serviceWorker' in navigator) {
     // R83：兜底 toast 位置与全站统一 top:80px 居中（白底蓝字蓝边圆角20）
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:var(--toast-bg,rgba(255,255,255,0.92));border:1px solid var(--blue2,#64B5F6);border-radius:20px;padding:6px 16px;font-size:12px;line-height:18px;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14));z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;'; /* R116：line-height 显式 18，单行总高恒 32px，与下拉刷新条逐像素一致 */
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:var(--toast-bg,rgba(255,255,255,0.92));border:1px solid var(--blue2,#64B5F6);border-radius:999px; /* v293（用户 10-04 02:14）：071toast圆角20→999px→跟胶囊形统一 */padding:6px 16px;font-size:12px;line-height:18px;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14));z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;'; /* R116：line-height 显式 18，单行总高恒 32px，与下拉刷新条逐像素一致 */
     document.body.appendChild(t);
     requestAnimationFrame(function () { t.style.opacity = '1'; });
     setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { try { document.body.removeChild(t); } catch (e) {} }, 300); }, 2000);
@@ -991,7 +993,7 @@ window.__btnBusy = function (btn, text) {
   btn.textContent = text;
   var s = document.createElement('span');
   s.className = 'btn-spin';
-  btn.insertBefore(s, btn.firstChild);
+  btn.appendChild(s);
 };
 // 条11：复制成功反馈（键短暂变绿 1.2s + 手机轻震）
 window.__copyOk = function (el) {
@@ -1097,43 +1099,6 @@ window.__copyOk = function (el) {
     return p.then(function (r) { if (!muted) finish(); return r; }, function (e) { if (!muted) finish(); throw e; });
   };
 })();
-
-/* ===== R289：全站实时同步轮询器（规则4·实时同步）=====
-   后台定时静默比对数据，发现变化才无缝更新 DOM——无进度条、无闪烁、不打断用户输入/弹窗。
-   用法：window.__syncPoll.start({ checkFn, onChange, intervalMs })
-   - checkFn(): Promise<boolean> —— 返回 true 表示数据有变化
-   - onChange(): void —— 数据有变化时执行（内部应直接更新 DOM，不弹窗不刷新）
-   - intervalMs: 轮询间隔，默认 60000（60 秒）
-   保存成功后本地立即同步（不等轮询），由调用方自行调用 onChange 或更新 DOM */
-window.__syncPoll = (function () {
-  var timers = {};
-  function start(key, opts) {
-    opts = opts || {};
-    var interval = opts.interval || 60000;
-    var checkFn = opts.checkFn;
-    var onChange = opts.onChange;
-    if (!checkFn) return { stop: function () {} };
-    if (timers[key]) { clearInterval(timers[key].interval); clearTimeout(timers[key].visT); }
-    function tick() {
-      if (document.hidden) return; /* 页面不可见时不轮询，省流量 */
-      Promise.resolve().then(function () { return checkFn(); }).then(function (changed) {
-        if (changed && typeof onChange === 'function') onChange();
-      }).catch(function () {});
-    }
-    var iv = setInterval(tick, interval);
-    // R292（用户 09-29）：一分钟是唯一同步节点，切回不触发检查
-    timers[key] = { interval: iv };
-    return {
-      stop: function () {
-        var t = timers[key]; if (!t) return;
-        clearInterval(t.interval);
-        delete timers[key];
-      }
-    };
-  }
-  return { start: start };
-})();
-
 
 /* ===== R193 二⑤⑦（用户 22:32 定稿）：长按小菜单（全站统一组件）=====
  * 触屏长按 500ms / 桌面右键呼出；条目白卡圆角、hover 灰底，颜色只用现有 Token，深色自动跟随。
@@ -1436,6 +1401,17 @@ window.__modalScroll = (function () {
     if (lastKey[mk] === key) lastKey[mk] = null;
   }
   return { open: open, forget: forget };
+
+  // v296（用户 10-04 02:14）：304 四页 warn 函数统一提取——部署检测用红色顶部警告条
+  window.warn = function (t) {
+    if (document.getElementById('__deployWarn')) return;
+    var b = document.createElement('div');
+    b.id = '__deployWarn';
+    b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:100200;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14))';
+    b.textContent = t;
+    if (document.body) document.body.appendChild(b);
+    document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); });
+  };
 })();
 
 /* ===== R243 条19②：命令面板（Ctrl+K）全站组件 =====
@@ -1517,3 +1493,9 @@ window.__cpPanel = function (opts) {
   }
   window.__cpPanelInst = { setCmds: function (fn) { if (fn) getCmds = fn; } };
 };
+
+/* v293（用户 10-04 02:14）：063Logo错误处理统一→提取公共函数，四页共用 */
+window.__logoFail = function (im) { try { im.onerror = null; im.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"%3E%3Crect fill="%23e2e5e9" width="80" height="80" rx="8"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="central" text-anchor="middle" fill="%23999" font-size="28"%3E%3C/t%3E%3C/svg%3E'; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) {} };
+
+/* v297（用户 10-04 02:14）：C-242 翻页按钮置灰逻辑提取到公共函数，前后台共用 */
+window.__setPagerDisabled = function (btn, disabled) { btn.disabled = disabled; btn.style.opacity = disabled ? '0.4' : ''; };

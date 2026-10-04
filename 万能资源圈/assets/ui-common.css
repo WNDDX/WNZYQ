@@ -3,6 +3,10 @@
    - 滚动条全部隐藏（用户要求取消滚动轮，滚动功能保留）
    - CSS 变量统一：颜色/圆角/间距一处定义全站生效
    ============================================ */
+
+/* v293（用户 10-04 02:14）：057文字选中颜色统一→亮色淡蓝底深字，深色深蓝底浅字 */
+::selection { background: rgba(30,136,229,0.25); color: inherit; }
+[data-theme="dark"] ::selection { background: rgba(30,136,229,0.45); color: inherit; }
 /* ===== CSS 变量（全站统一，页面样式也复用同一套语义变量） ===== */
 :root {
   --blue1: #1E88E5;
@@ -94,7 +98,7 @@
 .kf-tip { font-size: 16px; color: var(--text-light); margin-bottom: 16px; /* R186 建议5：gray-text 暗色下过暗，统一语义次级文字 */ letter-spacing: 1px; word-break: break-word; }
 .kf-jump {
   width: 80%; margin: 0 auto 14px; border: none; border-radius: var(--radius); padding: 11px 32px;
-  background: var(--green); color: #fff; font-size: 18px; font-weight: 500; cursor: pointer;
+  background: var(--green); color: #fff; font-size: 18px; font-weight: 600; /* v293（用户 10-04 02:14）：006按钮字重统一→500改600跟全站按钮统一 */ cursor: pointer;
   letter-spacing: 1px; display: inline-flex; align-items: center; justify-content: center;
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
@@ -175,6 +179,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 }
 .share-ok:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 .share-ok:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7：控件悬停统一微亮+浮起 */
+/* v297（用户 10-04 17:48）：撤回 v295 超范围改动→三页分享弹窗已删，以下样式死代码已清理；.share-mask z-index 保留（资源页+动态弹窗仍用） */
 #rteExitZoom { z-index: 6001 !important; }
 .kf-mask, #kfFallback { z-index: 10001 !important; }
 .lightbox { z-index: 100000 !important; }
@@ -406,13 +411,13 @@ img.media-fail { border: 1px solid var(--border); }
 .img-in { animation: imgQrIn var(--dur-mid) var(--ease-out); }
 @keyframes imgQrIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
 /* 条4：保存/登录/解锁按钮忙碌转圈（不动 disabled 防重与全屏遮罩——用户拍板） */
-.btn-spin { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: btnSpin 0.6s linear infinite; vertical-align: -1px; margin-right: 6px; flex: none; }
+.btn-spin { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: btnSpin 0.6s linear infinite; margin-left: 6px; margin-top: 1.5px; flex: none; }
 @keyframes btnSpin { to { transform: rotate(360deg); } }
 /* 条11：复制成功键短暂变绿（1.2s） */
-.copy-ok { background: var(--green, #16a34a) !important; border-color: var(--green, #16a34a) !important; color: #fff !important; }
+.copy-ok { background: var(--green, #01C000) !important; /* v293（用户 10-04 02:14）：003复制成功绿→跟全站统一绿#01C000 */ border-color: var(--green, #01C000) !important; /* v293（用户 10-04 02:14）：003同步 */ color: #fff !important; }
     /* R209（用户 09-19 00:41）：根因→分享弹窗链接文字套 .copy-ok 变成整块绿底白字；
        修法→新增 .copy-ok-text 只变字体绿色、不动背景，供链接文字专用 */
-    .copy-ok-text { color: var(--green, #16a34a) !important; }
+    .copy-ok-text { color: var(--green, #01C000) !important; /* v293（用户 10-04 02:14）：003复制成功文字绿→跟全站统一绿#01C000 */ }
 /* 条29：键盘焦点环统一（鼠标/触摸点击不显示） */
 :focus-visible { outline: 2px solid var(--blue1, #1E88E5); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }
@@ -471,7 +476,7 @@ img.media-fail { border: 1px solid var(--border); }
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
-.search-hist .sh-del:hover { background: var(--red); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7：放大式并入浮起式 */
+.search-hist .sh-del:hover { background: var(--red); color: #fff; transform: scale(0.97); opacity: 0.9; } /* v293（用户 10-04 02:14）：075搜索历史×hover→跟弹窗×统一scale+opacity，不要浮起式 */ /* R231 条7：放大式并入浮起式 */
 .search-hist .sh-del:active { transform: scale(0.9); opacity: 0.8; }
 
 
@@ -518,7 +523,7 @@ img.media-fail { border: 1px solid var(--border); }
        .sk-piece 双写提升特异性（0,3,0）——管理页真实行类（.thumb 等）自带 background（0,2,0），
        不双写会被更靠后的页内样式压掉失去微光；系统「减少动态效果」降级为呼吸脉冲。 */
     .skel, .card-skeleton { pointer-events: none; --sk-hi: #e8eaef; }
-    [data-theme="dark"] .skel, [data-theme="dark"] .card-skeleton { --sk-hi: #262a3a; }
+    [data-theme="dark"] .skel, [data-theme="dark"] .card-skeleton { --sk-hi: rgba(255,255,255,0.06); /* v293（用户 10-04 02:14）：068骨架屏深色流光→半透明白替代纯色，避免纯白在深色底上闪 */ }
     /* R213 口径（随迁）：渐变高光带整体移入磁贴后半段（55%/75%/95%）——高光在动画边界帧
        不贴右缘，扫过全程无残影 */
     .skel .sk-piece, .skel .sk-piece.sk-piece,
@@ -531,7 +536,7 @@ img.media-fail { border: 1px solid var(--border); }
     .skel .sk-line, .card-skeleton .sk-line { height: 13px; border-radius: 3px; margin-top: 10px; }
     .skel .sk-line.w70, .card-skeleton .sk-line.w70 { width: 70%; }
     .skel .sk-line.w95, .card-skeleton .sk-line.w95 { width: 95%; }
-    .skel .sk-piece { border-radius: 8px; }
+    .skel .sk-piece { border-radius: 10px; } /* v293（用户 10-04 02:14）：078骨架屏圆角→跟真实卡片统一10px */
     @keyframes skPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
     @keyframes skShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     /* 系统「减少动态效果」：恢复原呼吸式脉冲、禁用背景位移（微光位移感更强） */
@@ -611,12 +616,15 @@ body { transition: background-color 0.3s ease, color 0.3s ease; }
 @keyframes cpIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
 .cp-mask .cp-input { width: 100%; height: 50px; border: none; outline: none; background: transparent; color: var(--text, #222); font-size: 16px; padding: 0 18px; letter-spacing: 1.2px; }
 /* R255（老板 17:55）：Ctrl+K 命令面板输入框聚焦态显式去 outline（同 shop/admin 搜索框口径） */
-.cp-mask .cp-input:focus, .cp-mask .cp-input:focus-visible { outline: none; outline-width: 0; }
+.cp-mask .cp-input:focus, .cp-mask .cp-input:focus-visible { outline: none; outline-width: 0; box-shadow: 0 0 0 3px rgba(30,136,229,0.15); /* v293（用户 10-04 02:14）：058命令面板输入框获焦点→补淡蓝光晕，跟搜索框统一 */ }
 .cp-mask .cp-list { max-height: 46vh; overflow-y: auto; padding: 6px; border-top: 1px solid var(--border); }
 .cp-mask .cp-item { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text, #222); }
 .cp-mask .cp-item .cp-lab { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cp-mask .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }
 .cp-mask .cp-item.active { background: var(--blue1); color: #fff; } /* R285 条34：命令面板选中统一深蓝底白字 */
+
+.cp-mask .cp-item:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--hover-bg); } /* v293（用户 10-04 02:14）：073命令面板条目hover→接入全站微飘起+微亮标准 */
+.cp-mask .cp-item:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 .cp-mask .cp-empty { padding: 18px; text-align: center; color: var(--text-light); font-size: 14px; } /* R285 条40：提示灰统一一档 */
 @media (prefers-reduced-motion: reduce) { .cp-mask .cp-box { animation: none; } }
 

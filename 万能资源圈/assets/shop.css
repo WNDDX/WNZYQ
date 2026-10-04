@@ -153,7 +153,7 @@
       flex: 1;
       position: relative;
     }
-    .search-box:focus-within { box-shadow: 0 0 0 3px rgba(30,136,229,0.15); transition: box-shadow var(--dur-mid) var(--ease-out); } /* R231 条12：聚焦品牌蓝柔和光晕（与输入框圆角同心） */
+    /* v293（用户 10-04 02:14）：046搜索框聚焦光晕→已收归ui-common.css，删除本地重复 */
     .search-input { /* R182-3：38→33px 与管理页搜索框同步统一 */
       width: 100%;
       height: 33px;
@@ -226,7 +226,7 @@
       background: var(--card-bg);
       color: var(--text-light);
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600; /* v293（用户 10-04 02:14）：006按钮字重统一→500改600跟全站按钮统一 */
       cursor: pointer;
       transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ;
       user-select: none;
@@ -295,7 +295,7 @@
     /* R243（用户 09-22 23:18）：条6 详情弹窗类型切换淡出 */
     .variant-fade-out { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); /* R285 条32：0.1s 手写走标准档 */ }
     /* R243（用户 09-22 23:18）：条6 价格数字闪一下强调变化 */
-    .modal-price { transition: opacity 0.15s ease; }
+    .modal-price { transition: opacity var(--dur-fast) ease; } /* v297（用户 10-04 02:14）：C-043 动画时长统一→0.15s收归fast档 */
     .modal-price.price-flash { opacity: 0.3; }
     /* R243（用户 09-22 23:18）：条37 公告内容切换淡出 */
     .ann-body-fade-out { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); /* R285 条32：0.1s 手写走标准档 */ }
@@ -385,7 +385,7 @@
       /* 防拉伸：容器高 0，flex 默认 stretch 会把子项拉成 0 高 */
       align-items: flex-start;
       justify-content: center;
-      z-index: 101;
+      z-index: 998; /* v293（用户 10-04 02:14）：047下拉刷新z-index→跟导航页/错误页统一998 */
       pointer-events: none;
       background: transparent;
     }
@@ -540,7 +540,7 @@
       display: block;
       margin: 16px auto 0;
       background: #eef4fb;
-      border-radius: 10px;
+      border-radius: 8px; /* v293（用户 10-04 02:14）：076图片圆角→跟全站其他图片统一8px */
       border: 1px solid var(--border); /* R186 建议5：封面边框接语义变量（暗色同步） */
     }
     .modal-content { padding: 16px 20px 20px; }
@@ -725,7 +725,7 @@
       min-width: 0; /* 确保flex子元素可以正确收缩，避免溢出 */
       height: 40px;
       padding: 0 14px;
-      border: 1.5px solid var(--border-light, #c8e0f5);
+      border: 1px solid var(--border-light, #c8e0f5); /* v293（用户 10-04 02:14）：072分隔线粗细统一→1.5px改1px归入1px/2px/3px三档 */
       border-radius: 8px;
       font-size: 14px;
       color: var(--text);
@@ -810,7 +810,7 @@
       height: 46px;
       border: none;
       border-radius: 10px;
-      background: var(--blue-live, #1688FF); /* R192 一⑤：用户拍板——联系类蓝键对应「交流群聊」的蓝 #1688FF（本页 --blue2 是浅边框蓝，专用 --blue-live 承载）；客服跳转键保持咨询客服绿 #01C000 */
+      background: var(--blue-live, #1E88E5); /* v293（用户 10-04 02:14）：001fallback#1688FF→#1E88E5→跟全站标准蓝统一 | R192 一⑤：用户拍板——联系类蓝键对应「交流群聊」的蓝 #1688FF（本页 --blue2 是浅边框蓝，专用 --blue-live 承载）；客服跳转键保持咨询客服绿 #01C000 */
       color: #fff;
       font-size: 16px;
       font-weight: 600;
@@ -863,7 +863,7 @@
     .ann-modal .ann-body p { margin: 6px 0; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
     /* 交互动效复用 ui-common.css 全站统一弹窗按键规则（R17 统一标准：hover 缩小变淡、按压更小更暗） */
-    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
     .ann-modal .modal-close-x { top: 12px; right: 12px; width: 32px; height: 32px; }
     /* 分类栏 */
     .category-bar-wrap {
@@ -1173,6 +1173,35 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .modal-detail blockquote, .ann-body blockquote, .variant-detail blockquote, .resource-content blockquote {
       margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--hover-bg); border-radius: 0 8px 8px 0; color: inherit;
     }
+    /* v296（用户 10-04 03:01）：引用块置顶复制按键 */
+    .resource-content blockquote, .modal-detail blockquote, .variant-detail blockquote, .ann-body blockquote {
+      position: relative;
+      padding-top: 36px;
+    }
+    .quote-copy-btn {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card-bg);
+      color: var(--text-light);
+      font-size: 12px;
+      cursor: pointer;
+      line-height: 1.2;
+      z-index: 2;
+    }
+    .quote-copy-btn:hover { background: var(--hover-bg); color: var(--text); border-color: var(--blue1); }
+    .quote-copy-btn.copy-ok { background: var(--green, #01C000) !important; border-color: var(--green, #01C000) !important; color: #fff !important; }
+    @media (max-width: 600px) {
+      .quote-copy-btn { padding: 3px 10px; font-size: 11px; border-radius: 6px; }
+    }
+
     .modal-detail hr, .ann-body hr, .variant-detail hr, .resource-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 
     /* R194e（用户 01:33）：高度按最多规格统一——变体 tab / 公告 tab 38 对齐分类 tag 与顶栏 tab 的 tab 类规格 */
@@ -1229,9 +1258,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
        relative 会覆盖 sticky，且残留的 top:var(--topbar-h) 会把整条栏往下位移 64px 压住产品网格（R231 收尾实测回归） */
     .cat-slide-ind { position: absolute; left: 0; top: 0; height: 2px; background: var(--blue1); border-radius: 3px; z-index: 1; transition: transform 0.2s var(--ease-out); width: 0; } /* R246（用户 09-23 12:33）：改 top:0 为基准，JS 用 transform: translateX/translateY 精确定位到激活标签底缘下方 2px，width 直设分数值（弃 scaleX） */
     .cat-slide-ind.hidden { display: none; } /* 无激活标签（异常兜底）时藏 */
-    /* 子分类切换淡入：容器重建内容后挂 re-in 触发一次 0.15s 淡入 */
+    /* 子分类切换淡入：容器重建内容后挂 re-in 触发一次淡入 */
     @keyframes subCatIn { from { opacity: 0.35; } to { opacity: 1; } }
-    .sub-category-bar.re-in { animation: subCatIn 0.15s ease; }
+    .sub-category-bar.re-in { animation: subCatIn var(--dur-fast) ease; } /* v297（用户 10-04 02:14）：C-043 动画时长统一→0.15s收归fast档 */
 
 /* ---------- R256：新增骨架样式 ---------- */
 

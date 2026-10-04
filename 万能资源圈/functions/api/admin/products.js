@@ -1,9 +1,10 @@
-﻿/**
+/**
  * GET  /api/admin/products        → 全部资源列表（含隐藏），管理后台用
  * POST /api/admin/products        → 新增资源（需登录）
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
+ * R303（09-30）：GET 支持分页按页拉取（page + page_size），支持筛选（kw / cid / status）
  */
-import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable, ensureCodeIssuesTable, recentIssues } from '../../_utils.js';
+import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable, ensureCodeIssuesTable } from '../../_utils.js';
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
 async function attachVariants(env, list) {
@@ -13,8 +14,6 @@ async function attachVariants(env, list) {
   const { results: vrows } = await env.DB.prepare(
     `SELECT * FROM product_variants WHERE product_id IN (${placeholders}) ORDER BY sort ASC, id ASC`
   ).bind(...ids).all();
-  // R113：顺带批量返回每类型已绑定设备数（编辑弹窗即开即显时的「绑定 N」徽章，
-  // 口径与 /api/admin/variants 完全一致）；查询失败按 0 兜底，不让整个列表 500
   const bindMap = {};
   try {
     await ensureBindingsTable(env);
@@ -23,14 +22,12 @@ async function attachVariants(env, list) {
     ).bind(...ids).all();
     (bindRows || []).forEach((r) => { bindMap[r.variant_id] = r.n; });
   } catch (e) { console.error('R113 绑定计数批量查询失败（按0兜底）:', e && e.message); }
-  // R221：顺带批量返回每类型最近发码记录（资源码下拉面板展示）
   await ensureCodeIssuesTable(env);
   const map = {};
   for (const v of (vrows || [])) {
     if (!map[v.product_id]) map[v.product_id] = [];
     map[v.product_id].push(Object.assign(cleanVariant(v), {
       bindings: bindMap[v.id] || 0,
-      issues: await recentIssues(env, v.id, 5),
     }));
   }
   list.forEach((p) => { p.variants = map[p.id] || []; });
@@ -44,28 +41,58 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-  // page_size=0 或未传 → 返回全部（管理后台一次展示所有资源）
   const pageSize = Math.min(100, Math.max(0, Number(url.searchParams.get('page_size')) || 0));
+  const kw = String(url.searchParams.get('kw') || '').trim().toLowerCase();
+  const cid = String(url.searchParams.get('cid') || '0');
+  const status = String(url.searchParams.get('status') || '');
 
-  // 不分页（page_size=0 或未传）：返回全部
+  // 构建 WHERE 条件
+  let where = 'WHERE 1=1';
+  const params = [];
+
+  if (kw) {
+    where += ' AND (LOWER(title) LIKE ? OR LOWER("desc") LIKE ?)';
+    params.push('%' + kw + '%', '%' + kw + '%');
+  }
+
+  if (cid && cid !== '0') {
+    const catVal = Number(cid);
+    // 检查是否一级分类（含子分类）
+    const subRes = await env.DB.prepare('SELECT id FROM categories WHERE parent_id = ?').bind(catVal).all();
+    const subIds = (subRes.results || []).map((r) => r.id);
+    if (subIds.length > 0) {
+      where += ' AND (cid = ? OR cid IN (' + subIds.map(() => '?').join(',') + '))';
+      params.push(catVal, ...subIds);
+    } else {
+      where += ' AND cid = ?';
+      params.push(catVal);
+    }
+  }
+
+  if (status === 'online') {
+    where += ' AND is_online = 1 AND is_hidden = 0';
+  } else if (status === 'hidden') {
+    where += ' AND (is_online = 0 OR is_hidden = 1)';
+  }
+
+  await ensureVariantColumns(env);
+
+  // 不分页（page_size=0 或未传）：返回全部（兼容旧口径）
   if (pageSize === 0) {
     const { results } = await env.DB.prepare(
-      'SELECT * FROM products ORDER BY sort ASC, id DESC'
-    ).all();
-    await ensureProductColumns(env);
-    await ensureVariantColumns(env);
+      'SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC'
+    ).bind(...params).all();
     const list = await attachVariants(env, results.map(cleanProduct));
     return json({ ok: true, list: list, total: list.length });
   }
 
   // 分页查询
   const offset = (page - 1) * pageSize;
-  await ensureVariantColumns(env);
-  const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products').first();
+  const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products ' + where).bind(...params).first();
   const total = countRes ? countRes.n : 0;
   const { results } = await env.DB.prepare(
-    'SELECT * FROM products ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
-  ).bind(pageSize, offset).all();
+    'SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
+  ).bind(...params, pageSize, offset).all();
 
   return json({
     ok: true,
@@ -86,8 +113,6 @@ export async function onRequestPost(context) {
   const b = await readJSON(request);
   if (!String(b.title || '').trim()) return json({ ok: false, msg: '请填写资源标题' }, 400);
 
-  // R270（用户 09-27 17:30）：根因→前端发 JSON 字符串，服务端只认数组 → cover_images 永远存 "[]"
-  // 修法→兼容字符串/数组两种格式，先 parse 再过滤空串/非字符串项
   var ci = b.cover_images;
   if (typeof ci === 'string') { try { ci = JSON.parse(ci); } catch (e) { ci = []; } }
   if (!Array.isArray(ci)) ci = [];

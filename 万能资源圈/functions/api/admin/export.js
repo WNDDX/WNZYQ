@@ -11,13 +11,31 @@
  *   issues    发码记录（code_issues 全量：码、发放时间、状态、剩余有效天数、绑定时间）
  *   trend     每日趋势（全量保留天数，北京时区切日，空档日期补 0）
  *   byProduct 按资源统计（全量口径，不限 30 天窗口）
- *   recent    访问记录明细（stats 全量，最近 10000 条封顶：时间/资源/类型/IP）
+ *   recent    访问记录明细（stats 全量：时间/资源/类型/IP）
  * 纯技术表（admins / sessions / login_attempts）含敏感凭据，不导出。
  */
 import { json, requireAuth, ensureBindingsTable, ensureCodeIssuesTable, ensureVariantColumns, ensureProductColumns } from '../../_utils.js';
 
-// 访问记录明细单表上限（防极端量级把浏览器导出卡死；正常 60 天去重数据远低于此）
-const RECENT_LIMIT = 10000;
+/* R307（用户 09-30 拍板「不再做限制，没有封顶」）：访问记录明细不再封顶 10000 条——
+   RECENT_LIMIT 人为上限已移除，改为 id 游标分批全量拉取（每批 5000 条拼接），
+   大数据量不靠单次大查询、不加人为条数上限；游标每轮严格递减，循环必然终止。 */
+const RECENT_BATCH = 5000;
+async function fetchAllRecent(DB) {
+  let rows = [];
+  let cursor = Number.MAX_SAFE_INTEGER;
+  for (;;) {
+    const b = await DB.prepare(
+      `SELECT s.id, s.created_at, s.type, s.ip, p.title AS product_title
+       FROM stats s LEFT JOIN products p ON p.id = s.product_id
+       WHERE s.id <= ? ORDER BY s.id DESC LIMIT ?`
+    ).bind(cursor, RECENT_BATCH).all();
+    const part = (b && b.results) || [];
+    rows = rows.concat(part);
+    if (part.length < RECENT_BATCH) break;
+    cursor = part[part.length - 1].id - 1;
+  }
+  return rows;
+}
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -88,11 +106,8 @@ export async function onRequestGet(context) {
        GROUP BY p.id
        ORDER BY views DESC, p.id DESC`
     ).all(),
-    DB.prepare(
-      `SELECT s.created_at, s.type, s.ip, p.title AS product_title
-       FROM stats s LEFT JOIN products p ON p.id = s.product_id
-       ORDER BY s.id DESC LIMIT ?`
-    ).bind(RECENT_LIMIT).all(),
+    // R307（用户 09-30）：导出不再做条数限制，没有封顶——全量游标分批拉取
+    fetchAllRecent(env.DB),
     DB.prepare('SELECT COUNT(*) AS n FROM stats').first(),
   ]);
 
@@ -203,7 +218,7 @@ export async function onRequestGet(context) {
       resource_unlocks: p.resource_unlocks,
       bindings: p.bindings,
     })),
-    recent: (recentRes.results || []).map((r) => ({
+    recent: (recentRes || []).map((r) => ({
       created_at: r.created_at,
       type_text: TYPE_TEXT[r.type] || r.type,
       product_title: r.product_title || '(已删除)',
@@ -217,9 +232,9 @@ export async function onRequestGet(context) {
       issues: issues.length,
       trend: trend.length,
       byProduct: (byProductRes.results || []).length,
-      recent: (recentRes.results || []).length,
+      // R307（用户 09-30）：不再输出 recent_limit 封顶字段（已无封顶）
+      recent: (recentRes || []).length,
       recent_total: recentTotalRes ? recentTotalRes.n : 0,
-      recent_limit: RECENT_LIMIT,
     },
   });
 }

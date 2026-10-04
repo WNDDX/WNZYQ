@@ -39,6 +39,9 @@ export async function onRequestPost(context) {
     const ip = getClientIP(request);
 
     if (!username || !password) return json({ ok: false, msg: '请输入账号和密码' }, 400);
+    // R307 U9（用户 09-30 拍板）：后端密码校验加 50 字符上限——与前端 maxlength=50 一致，
+    // 超长直接拒绝，不进哈希比对
+    if (password.length > 50) return json({ ok: false, msg: '密码最多 50 个字符' }, 400);
 
     // 1. 检查是否被锁定
     const attempt = await env.DB.prepare(
@@ -50,7 +53,8 @@ export async function onRequestPost(context) {
       const lockUntil = new Date(attempt.locked_until.replace(' ', 'T') + 'Z');
       if (now < lockUntil) {
         const remainMin = Math.ceil((lockUntil - now) / 60000);
-        return json({ ok: false, msg: `尝试次数过多，请 ${remainMin} 分钟后再试` }, 429);
+        const remainSec = Math.ceil((lockUntil - now) / 1000);
+        return json({ ok: false, msg: `尝试次数过多，请 ${remainMin} 分钟后再试`, retryAfter: remainSec }, 429); // v294：125 返回retryAfter供前端显示
       }
     }
 
@@ -84,16 +88,7 @@ export async function onRequestPost(context) {
     ).bind(token, row.id).run();
 
     // R30-#4：令牌只写进 HttpOnly Cookie（网页脚本读不到），不再随响应体下发
-    // R30-#10：顺带滚动清理 30 天前的登录失败记录与旧会话（失败不影响登录）
-    // R207（用户 09-18 14:39）：sessions 清理统一按 created_at（录入时间）滚动 60 天，
-    // 与老板「按录入时间」口径一致；login_attempts 保留 last_attempt（该表录入时间即最近一次尝试时间）
-    try {
-      await env.DB.batch([
-        // R73：滚动清理窗口统一 60 天（与全系统保留策略一致）
-        env.DB.prepare("DELETE FROM login_attempts WHERE last_attempt < datetime('now', '-60 days')"),
-        env.DB.prepare("DELETE FROM sessions WHERE created_at < datetime('now', '-60 days')"),
-      ]);
-    } catch (e) { console.error('滚动清理失败(不影响登录):', e); }
+    // R298：60 天清理统一移到 track.js 每日清理，登录成功不再捎带删除
 
     const cookie = [
       'wnzyq_token=' + encodeURIComponent(token),

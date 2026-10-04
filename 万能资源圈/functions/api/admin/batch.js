@@ -21,7 +21,8 @@ export async function onRequestPost(context) {
   const action = String(b.action || '');
 
   if (ids.length === 0) return json({ ok: false, msg: '请选择资源' }, 400);
-  if (ids.length > 500) return json({ ok: false, msg: '单次批量操作最多 500 条' }, 400);
+  // R307（用户 09-30）：单次批量操作最多 500 条的限制已取消，不再做条数限制；
+  // 底层单次执行机制（placeholders + 事务）保持不变
   if (!['online', 'offline', 'hide', 'show', 'delete', 'changeCat', 'changePrice'].includes(action)) {
     return json({ ok: false, msg: '未知操作' }, 400);
   }

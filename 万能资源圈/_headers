@@ -24,16 +24,18 @@
   Cache-Control: no-cache, must-revalidate
 
 # R181（用户 09-17 拍板第9项）：图片恢复 30 天长缓存——全站图片一律带 ?v= 版本号（R176 起），
+# R304 U1（用户 09-30）：本地图标缓存统一 365 天（原 30 天三处，v287 验证口径）。
+# 图标换新走 ?v= 版本号换 URL（见四页 HTML 图标引用），长缓存不残留。
 # 换图必换 URL、长缓存永远拿新图，旧顾虑（R172 图片残留）根源已不存在；
 # 收益是省去每次访问 5 张图的条件请求往返（304 也是一次网络行程，弱网手机有感）。
 # JS/CSS/HTML/SW 仍维持 no-cache（R172 口径，更新即时生效）。
 /assets/*.png
-  Cache-Control: public, max-age=2592000, immutable
+  Cache-Control: public, max-age=31536000, immutable
 /*.png
-  Cache-Control: public, max-age=2592000, immutable
+  Cache-Control: public, max-age=31536000, immutable
 
 /*.ico
-  Cache-Control: public, max-age=2592000, immutable
+  Cache-Control: public, max-age=31536000, immutable
 
 # HTML 不缓存（确保更新即时生效）
 /*.html

@@ -36,6 +36,15 @@ export async function onRequestPut(context) {
 
   const b = await readJSON(request);
 
+  // v294（用户 10-04 02:14）：211 并发编辑乐观锁——读取当前 updated_at，与前端传来的比对
+  const currentRow = await env.DB.prepare('SELECT updated_at FROM products WHERE id = ?').bind(id).first();
+  if (!currentRow) return json({ ok: false, msg: '资源不存在' }, 404);
+  const clientUpdatedAt = String(b.updated_at || '').trim();
+  const dbUpdatedAt = String(currentRow.updated_at || '').trim();
+  if (clientUpdatedAt && dbUpdatedAt && clientUpdatedAt !== dbUpdatedAt) {
+    return json({ ok: false, msg: '该资源已被修改，请刷新后重试' }, 409);
+  }
+
   // R270（用户 09-27 17:30）：根因→前端发 JSON 字符串，服务端只认数组 → cover_images 永远存 "[]"
   // 修法→兼容字符串/数组两种格式，先 parse 再过滤空串/非字符串项
   var ci = b.cover_images;

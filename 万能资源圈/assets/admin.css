@@ -136,7 +136,7 @@
     @media (hover: hover) and (pointer: fine) { html, body { overscroll-behavior: auto; } }
     /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
     /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition var(--dur-mid)，从上往下揭开） */
-    .pull-refresh { position: fixed; /* R170（用户 22:52）：位置回到 top:80px——与 toast/之前下拉弹窗同位（用户拍板"高度要跟之前弹窗高度一致"；R166 的 top:0 作废） */ top: 80px; left: 0; right: 0; height: 0; /* R170：不裁切+胶囊平移——根治"滑回去中间消失"（原 flex-start 钉顶+overflow:hidden 高度裁切，划回时胶囊从下往上被裁掉） */ overflow: visible; display: flex; /* 防拉伸：容器高 0，stretch 会把子项拉成 0 高 */ align-items: flex-start; justify-content: center; z-index: 300; pointer-events: none; background: transparent; }
+    .pull-refresh { position: fixed; /* R170（用户 22:52）：位置回到 top:80px——与 toast/之前下拉弹窗同位（用户拍板"高度要跟之前弹窗高度一致"；R166 的 top:0 作废） */ top: 80px; left: 0; right: 0; height: 0; /* R170：不裁切+胶囊平移——根治"滑回去中间消失"（原 flex-start 钉顶+overflow:hidden 高度裁切，划回时胶囊从下往上被裁掉） */ overflow: visible; display: flex; /* 防拉伸：容器高 0，stretch 会把子项拉成 0 高 */ align-items: flex-start; justify-content: center; z-index: 998; /* v293（用户 10-04 02:14）：047下拉刷新z-index→四页统一998 */ pointer-events: none; background: transparent; }
     .pull-refresh-text { font-size: 12px; line-height: 18px; color: var(--blue1); background: rgba(255,255,255,.92); border: 1px solid var(--blue2); border-radius: 999px; padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-pop); /* R170：胶囊默认藏在 top:80px 上方（占 32~64px 区），跟手滑到 translateY(0)=80px 位；松手回弹用此 transition */ transform: translateY(-48px); opacity: 0; transition: transform var(--dur-slow) ease, opacity var(--dur-mid) ease; }
     .pull-refresh-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2); border-top-color: var(--blue1); border-radius: 50%; animation: btnSpin 0.6s linear infinite; }
     .topbar {
@@ -145,7 +145,7 @@
       min-height: 60px; /* R275：桌面端对齐资源页高度（R279 起 view-toggle 38px 与 .tab 同高，管理页 logo 38px 同为最高元素，两页内容行高一致） */
     }
     @media (max-width: 600px) {
-      .topbar { max-height: 97px; overflow: hidden; } /* R275：移动端对齐资源页高度（差异来自 tabs 38px vs 搜索框 33px，截断 3px 来自 padding-bottom，视觉上不可见） */
+      .topbar { overflow: hidden; } /* v293（用户 10-04 02:14）：033去掉max-height:97px→改自适应，防止390px手机截内容 | R275：移动端对齐资源页高度（差异来自 tabs 38px vs 搜索框 33px，截断 3px 来自 padding-bottom，视觉上不可见） */
     }
     .topbar-inner {
       max-width: 1200px; margin: 0 auto;
@@ -211,7 +211,7 @@
     .view-switch-anim { animation: viewSwitch var(--dur-mid) ease; }
     .btn-blue, .row-btn, .variant-add { display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
     .toolbar .btn-blue { width: auto; height: 40px; padding: 0 20px; margin: 0; display: inline-flex; align-items: center; justify-content: center; }
-    .toolbar-hint { font-size: 13px; color: var(--text-faint); }
+    .toolbar-hint { font-size: 13px; color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ }
     .admin-search:focus-within { box-shadow: 0 0 0 3px rgba(30,136,229,0.15); transition: box-shadow var(--dur-mid) var(--ease-out); } /* R231 条12：聚焦光晕（与前台同款） */
     .admin-search {
       position: relative;
@@ -225,7 +225,7 @@
       transform: translateY(-50%);
       width: 18px;
       height: 18px;
-      color: var(--text-faint);
+      color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */
       pointer-events: none;
     }
     .admin-search input { /* R182-2/3：38→33px 对齐筛选行下拉框；字号 13→14、左距 38 与前台搜索框完全同款 */
@@ -257,7 +257,7 @@
     }
     .product-row:active { cursor: grabbing; }
     .cat-row.dragging, .ann-item.dragging { opacity: 0.4; transform: scale(0.98); }
-    .cat-row.drag-over, .ann-item.drag-over { border-top: 3px solid var(--blue1); margin-top: -3px; }
+    .cat-row.drag-over, .ann-item.drag-over { border-top: 2px solid var(--blue1); /* v293（用户 10-04 02:14）：074拖拽占位线3→2px→装饰性粗线统一2px */ margin-top: -2px; /* v293（用户 10-04 02:14）：074配合线粗调间距 */ }
     .drag-handle { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: var(--blue-tint); color: var(--blue1); font-size: 13px; cursor: grab; user-select: none; flex-shrink: 0; touch-action: none; } /* R285 条45：写死色接颜色本子 */
 
     .drag-handle:active { cursor: grabbing; }
@@ -266,8 +266,8 @@
       transform: scale(0.98);
     }
     .product-row.drag-over {
-      border-top: 3px solid var(--blue1);
-      margin-top: -3px;
+      border-top: 2px solid var(--blue1); /* v293（用户 10-04 02:14）：074拖拽占位线3→2px→装饰性粗线统一2px */
+      margin-top: -2px; /* v293（用户 10-04 02:14）：074配合线粗调间距 */
     }
     .product-row .thumb {
       width: 96px; height: 96px; border-radius: 10px;
@@ -279,7 +279,7 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .product-row .p-sub {
-      font-size: 12px; color: var(--text-faint); margin-top: 3px;
+      font-size: 12px; color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ margin-top: 3px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .product-row .p-sub .p-desc { color: var(--blue1); } /* R24：简介字体颜色复用资源页弹窗简介的蓝色 */
@@ -291,7 +291,7 @@
       font-size: 12px; flex-shrink: 0;
     }
     .badge.on { background: #e6f7e6; color: var(--green); }
-    .badge.off { background: #f2f2f2; color: var(--text-faint); }
+    .badge.off { background: #f2f2f2; color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ }
 
     /* 显示/隐藏直接切换下拉（显示/隐藏，与分类管理同款，两字宽度一致） */
                             .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 8px; padding: 6px 12px; font-size: 13px; color: var(--text-light); }
@@ -430,7 +430,7 @@
       text-align: center; padding: 10px 8px; font-size: 14px;
       border-bottom: 1px solid var(--border);
     }
-    .stat-table th { color: var(--text-faint); font-weight: 500; }
+    .stat-table th { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ font-weight: 500; }
     /* 统计表所有列统一居中，字段等分 */
     .stat-table td, .stat-table th { text-align: center; }
     /* 列宽等分（由 table-layout:fixed 自动分配） */
@@ -465,8 +465,8 @@
     .cat-row .c-name { flex: 1 1 140px; font-size: 15px; min-width: 0; word-break: break-word; }
     /* R25：所有二级分类（含虚拟「全部」行）缩进对齐分类筛选面板——层级深度 20px（=筛选面板 cp-sub(30px) 与 cp-top(10px) 文字位置差；56px = 36px 行内箭头占位补偿 + 20px 层级缩进）；手机端见下方媒体查询（同为 56px，补偿后同为 20px） */
     .cat-row.cat-sub .c-name { padding-left: 56px; }
-    .cat-row .c-count { color: var(--text-faint); font-size: 13px; text-decoration: none !important; border-bottom: none !important; width: 80px; min-width: 80px; text-align: left; flex-shrink: 0; }
-    .cat-row .c-sort { color: var(--text-faint); font-size: 12px; width: 60px; min-width: 60px; text-align: left; flex-shrink: 0; }
+    .cat-row .c-count { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ font-size: 13px; text-decoration: none !important; border-bottom: none !important; width: 80px; min-width: 80px; text-align: left; flex-shrink: 0; }
+    .cat-row .c-sort { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ font-size: 12px; width: 60px; min-width: 60px; text-align: left; flex-shrink: 0; }
     /* 分类行状态框移到右侧（复用资源管理）：显示/隐藏 → 编辑 → 删除 */
     .cat-row .select-picker { order: 50; }
     .cat-row .row-btn { order: 60; }
@@ -518,7 +518,7 @@
     }
     .variant-item .v-name { flex: 1; font-size: 14px; font-weight: 500; }
     .variant-item .v-price { color: var(--price-orange, #ff6b35); font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
-    .variant-item .v-sort { color: var(--text-faint); font-size: 12px; }
+    .variant-item .v-sort { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
     .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-bottom: 6px; background: var(--bg-light); }
     .ann-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
@@ -528,7 +528,7 @@
     .ann-item.primary { background: var(--hover-bg); border-color: var(--blue1); }
     .ann-item.primary .ann-title-input { pointer-events: none; background: transparent; border: none; color: #1a73e8; font-weight: 600; font-size: 14px; }
     .ann-item.primary .select-picker { pointer-events: none; visibility: hidden; cursor: default; }
-    .ann-item.primary .select-picker .cat-picker-display { background: var(--bg-light); color: var(--text-faint); border-color: var(--border); }
+    .ann-item.primary .select-picker .cat-picker-display { background: var(--bg-light); color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ border-color: var(--border); }
     .ann-item.primary .row-btn { visibility: hidden; pointer-events: none; }
 
     /* ---------- 弹窗 ---------- */
@@ -585,9 +585,9 @@
     .modal-share-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
     .form label { display: block; font-size: 13px; color: var(--text-light); margin: 12px 0 5px; }
     /* R182-1.A：输入框占位文字全清，说明型规则挪到名字标签旁的小灰字（不占框内） */
-    .label-hint { font-size: 12px; font-weight: 400; color: var(--text-faint); margin-left: 6px; }
+    .label-hint { font-size: 12px; font-weight: 400; color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ margin-left: 6px; }
     .form input, .form textarea, .form select, .input {
-      width: 100%; border: 1px solid var(--border); border-radius: 10px;
+      width: 100%; height: 42px; /* v293（用户 10-04 02:14）：079编辑弹窗输入框高度→跟登录框统一42px */ border: 1px solid var(--border); border-radius: 10px;
       padding: 10px 12px; outline: none; background: var(--card-bg);
     }
     .form input:focus, .form textarea:focus, .form select:focus, .input:focus { border-color: var(--blue1); }
@@ -605,7 +605,7 @@
 
     .cat-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
     .cat-picker-display .cpd-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .cat-picker-display .cpd-text.placeholder { color: var(--text-faint); }
+    .cat-picker-display .cpd-text.placeholder { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ }
     .cat-picker-display .cpd-arrow { width: 16px; height: 16px; color: var(--blue1); transition: transform var(--dur-mid) ease, color var(--dur-mid) ease; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); }
 
     .cat-picker-display .cpd-arrow svg { width: 100%; height: 100%; display: block; }
@@ -897,7 +897,7 @@
     #previewMask .resource-code-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--blue1); }
     #previewMask .resource-code-icon { width: 18px; height: 18px; flex-shrink: 0; }
     #previewMask .resource-code-input-row { display: flex; gap: 8px; }
-    #previewMask .resource-code-input { flex: 1; min-width: 0; height: 40px; padding: 0 14px; border: 1.5px solid var(--border-light, #c8e0f5); border-radius: 8px; font-size: 14px; color: var(--text); background: var(--card-bg); outline: none; transition: border-color var(--dur-mid) var(--ease-out); box-sizing: border-box; }
+    #previewMask .resource-code-input { flex: 1; min-width: 0; height: 40px; padding: 0 14px; border: 1px solid var(--border-light, #c8e0f5); /* v293（用户 10-04 02:14）：072分隔线粗细统一→1.5px改1px归入1px/2px/3px三档 */ border-radius: 8px; font-size: 14px; color: var(--text); background: var(--card-bg); outline: none; transition: border-color var(--dur-mid) var(--ease-out); box-sizing: border-box; }
     #previewMask .resource-code-input:focus { border-color: var(--blue1); }
     #previewMask .resource-code-btn { height: 40px; padding: 0 20px; border: none; border-radius: 8px; background: var(--blue1); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ; flex-shrink: 0; }
 
@@ -1049,7 +1049,7 @@
     /* R68：网格对齐柱状绘图区（left 与 .trend-bars 的 padding-left 5% 一致），数字紧贴柱区左缘——与折线图数字贴折线区同理；R70 高度跟随 --barZone */
     .trend-grid { position: absolute; left: 5%; right: 2.5%; top: var(--gridTop, 20px); height: var(--barZone, 100px); pointer-events: none; } /* R162：top 定位（=折线网格顶 20k），高度=折线网格跨度 150k→间距 37.5k 逐像素一致（原 bottom:24+百分比制间距 45k-9 不一致） */
     .trend-grid .tg-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--border); } /* R285 条44：图表装饰线归档（极浅档=标准边框灰） */
-    .trend-grid .tg-num { position: absolute; right: calc(100% + var(--numGap, 6px)); /* R162：右缘=折线 Y 数字右缘 34k（间隙 6k） */ top: -5.8px; font-size: 10px; color: var(--text-faint); text-align: right; line-height: 1.16; } /* R147：两图轴数字统一取小 10px（用户 00:50①）；数字顶距网格线 4.8px 口径，折线 Y 轴已对齐 */
+    .trend-grid .tg-num { position: absolute; right: calc(100% + var(--numGap, 6px)); /* R162：右缘=折线 Y 数字右缘 34k（间隙 6k） */ top: -5.8px; font-size: 10px; color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ text-align: right; line-height: 1.16; } /* R147：两图轴数字统一取小 10px（用户 00:50①）；数字顶距网格线 4.8px 口径，折线 Y 轴已对齐 */
     .trend-bars::-webkit-scrollbar { display: none; }
     .trend-col { flex: 1 1 0; min-width: 0; position: relative; height: 100%; }
     .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: var(--bLift, 30px); display: flex; flex-direction: row; justify-content: flex-end; height: var(--barZone, 100px); gap: 3px; } /* R162：柱底=折线网格底线（距 trend-bars 底 30k，随视口同步） */
@@ -1082,7 +1082,7 @@
     .bar-hover-box .bhb-cur { flex: 1 1 auto; }
     .bar-hover-box .bhb-prev { flex: 0 0 auto; text-align: right; }
 .trend-labels { position: absolute; left: 0; right: 0; bottom: var(--xLift, 8px); height: 12px; pointer-events: none; } /* R162：X 标签独立层（底距=折线标签 baseline 距底 8k） */
-.trend-label { position: absolute; bottom: 0; left: 0; transform: translateX(-50%); text-align: center; font-size: 10px; color: var(--text-faint); white-space: nowrap; line-height: 1.16; } /* R162：left 按 SVG 点坐标换百分比（与折线 X 标签同 x 同间隔，点对齐） */
+.trend-label { position: absolute; bottom: 0; left: 0; transform: translateX(-50%); text-align: center; font-size: 10px; color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ white-space: nowrap; line-height: 1.16; } /* R162：left 按 SVG 点坐标换百分比（与折线 X 标签同 x 同间隔，点对齐） */
     .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; line-height: 1.16; color: var(--text-light); justify-content: center; } /* R145：图例与轴数字统一 13px/1.16 同高 */
     .trend-legend span:not(.lg-group)::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
@@ -1829,3 +1829,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* ===== R285 条41：手机点击蓝色高亮全清（兜底全量——按钮/可点元素一律不闪蓝） ===== */
 button, [role="button"], .row-btn, .batch-btn, .rte-btn, [onclick] { -webkit-tap-highlight-color: transparent; }
+
+/* v293（用户 10-04 02:14）：066管理页手机缩略图→切1:1跟资源页列表视图统一 */
+@media (max-width: 600px) {
+  .product-row .thumb { width: 108px; min-width: 108px; aspect-ratio: 1 / 1; height: auto; }
+}
+
