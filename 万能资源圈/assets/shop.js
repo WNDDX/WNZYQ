@@ -41,6 +41,31 @@
     var catExpanded = false;      // 一级分类是否展开（保存状态，重新渲染后恢复）
     var subCatExpanded = false;   // 二级分类是否展开（保存状态，重新渲染后恢复）
 
+    // v312（用户 10-05 15:21）：根因→后端分页下每次切分类都发网络请求，期间旧内容淡出成空白等待；
+    // 修法→分类/搜索/翻页内存缓存——看过的组合(cid+subCid+kw+page)存内存，再切回来立即渲染零等待，后台静默刷新（stale-while-revalidate）。
+    var __pageCache = {};        // key='cid:subCid:kw:page'，value={products,categories,total,totalPages,page,_backendPaged,timestamp}
+    var __pageCacheLoading = {}; // key同上，value=Promise（防重复请求）
+    function __cacheKey(page, cid, subCid, kw) {
+      return (cid || 0) + ':' + (subCid || 0) + ':' + (kw || '') + ':' + (page || 1);
+    }
+    function __showPageLoading() {
+      var bar = document.getElementById('pageLoadingBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'pageLoadingBar';
+        bar.className = 'page-loading-bar';
+        var wrap = productGrid.parentNode;
+        if (wrap) wrap.insertBefore(bar, productGrid);
+      }
+      bar.style.display = 'block';
+      bar.style.animation = 'none'; void bar.offsetWidth;
+      bar.style.animation = '';
+    }
+    function __hidePageLoading() {
+      var bar = document.getElementById('pageLoadingBar');
+      if (bar) bar.style.display = 'none';
+    }
+
     // R246（用户 09-23 12:33）：分类指示条精确定位——用 getBoundingClientRect 取分数值，
     // width 直设 + transform: translateX/translateY 定位，动画仍走 transform 过渡（合成层不回流）。
     function updateCatIndicator(bar) {
@@ -689,63 +714,52 @@
 
     /* R239（用户 09-22 派单）：资源页从无限滚动追加改为单页替换（旧 checkScroll 距底 200px 追加分支整段退役）。
        翻页动作收口本函数单点：分页条按键（onPage）走本路径，
-       行为=R231 条19+23 原路径：旧内容 0.1s 淡出 → 重建单页（单页 20 卡替换，不再累积追加）→ 平滑回顶。
-       R303：后端分页时翻页才拉对应页数据。 */
+       R303：后端分页时翻页才拉对应页数据。
+       v312（用户 10-05 15:21）：根因→翻页时旧内容淡出成空白等待；修法→有缓存立即出、无缓存保留旧内容+轻量进度条，数据回来再替换。 */
     function __turnToPage(p) {
       if (p === currentPage || __pageTurning) return;
-      __pageTurning = true; /* R231 条19：淡出期间防重复翻页 */
-      productGrid.classList.add('page-fade-out');
-      setTimeout(function () {
-        currentPage = p;
-        if (usingRemote && DATA._backendPaged) {
-          fetchRemote({ page: p }).then(function () {
-            renderProducts();
-            productGrid.classList.remove('page-fade-out');
-            __pageTurning = false;
-            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
-          }).catch(function () {
-            renderProducts();
-            productGrid.classList.remove('page-fade-out');
-            __pageTurning = false;
-            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
-          });
-        } else {
+      __pageTurning = true; /* R231 条19：翻页期间防重复 */
+      currentPage = p;
+      if (usingRemote && DATA._backendPaged) {
+        fetchRemote({ page: p }).then(function () {
           renderProducts();
-          productGrid.classList.remove('page-fade-out');
           __pageTurning = false;
           try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
-        }
-      }, 100);
+        }).catch(function () {
+          renderProducts();
+          __pageTurning = false;
+          try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+        });
+      } else {
+        renderProducts();
+        __pageTurning = false;
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+      }
     }
     /* R243（用户 09-22 23:18）：条15 分类/搜索切换与翻页统一同款过渡
-       R303：后端分页时分类/搜索切换重新拉取第1页。 */
+       R303：后端分页时分类/搜索切换重新拉取第1页。
+       v312（用户 10-05 15:21）：根因→切分类时旧内容淡出成空白等待；修法→有缓存立即渲染零等待，无缓存保留旧内容+轻量进度条，数据回来再替换。 */
     function __fadeRenderProducts(cb) {
       if (__pageTurning) return;
       __pageTurning = true;
-      productGrid.classList.add('page-fade-out');
-      setTimeout(function () {
-        if (cb) cb();
-        if (usingRemote && DATA._backendPaged) {
-          fetchRemote({
-            page: currentPage,
-            cid: currentCat,
-            subCid: currentSubCat,
-            kw: (searchInput.value || '').trim()
-          }).then(function () {
-            renderProducts();
-            productGrid.classList.remove('page-fade-out');
-            __pageTurning = false;
-          }).catch(function () {
-            renderProducts();
-            productGrid.classList.remove('page-fade-out');
-            __pageTurning = false;
-          });
-        } else {
+      if (cb) cb();
+      if (usingRemote && DATA._backendPaged) {
+        fetchRemote({
+          page: currentPage,
+          cid: currentCat,
+          subCid: currentSubCat,
+          kw: (searchInput.value || '').trim()
+        }).then(function () {
           renderProducts();
-          productGrid.classList.remove('page-fade-out');
           __pageTurning = false;
-        }
-      }, 100);
+        }).catch(function () {
+          renderProducts();
+          __pageTurning = false;
+        });
+      } else {
+        renderProducts();
+        __pageTurning = false;
+      }
     }
 
     // R181（第8项）：资源卡片构造公共函数——分页渲染与无限滚动追加原本各复制一份，
@@ -1438,7 +1452,7 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=311', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=314', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1749,7 +1763,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=311', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=314', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else showToast('暂未设置客服链接', 'info');
     });
 
@@ -2035,100 +2049,127 @@
 
     // R243 条32：上次拉取时间戳（visibilitychange 60s 缓存判定用）
     window.__lastFetchTime = 0;
+    // v312（用户 10-05 15:21）：根因→后端分页下每次切分类都发网络请求，期间旧内容淡出成空白等待；
+    // 修法→分类/搜索/翻页内存缓存——看过的组合(cid+subCid+kw+page)存内存，再切回来立即渲染零等待，后台静默刷新（stale-while-revalidate）。
     function fetchRemote(opts) {
       opts = opts || {};
-      var fetchOpts = opts.force ? { cache: 'no-store' } : { cache: 'no-cache' };
-      // force 时加时间戳防 HTTP 缓存（与 no-store 双保险）
-      var ts = opts.force ? ('?_t=' + Date.now()) : '';
-      // R303：分页与筛选参数——翻到哪页拉哪页
       var page = Math.max(1, opts.page || 1);
       var pageSize = opts.pageSize || PAGE_SIZE;
       var cid = opts.cid !== undefined ? opts.cid : currentCat;
       var subCid = opts.subCid !== undefined ? opts.subCid : currentSubCat;
       var kw = opts.kw !== undefined ? opts.kw : (searchInput.value || '').trim();
-      var qs = '?page=' + page + '&page_size=' + pageSize;
-      if (cid > 0) qs += '&cid=' + cid;
-      if (subCid > 0) qs += '&sub_cid=' + subCid;
-      if (kw) qs += '&kw=' + encodeURIComponent(kw);
-      function withTimeout(p, ms) {
-        return Promise.race([
-          p,
-          new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, ms); }),
-        ]);
+      var key = __cacheKey(page, cid, subCid, kw);
+      var cached = __pageCache[key];
+
+      // 内部：执行真实网络请求，把数据写到 DATA 和 localStorage
+      function doRealFetch() {
+        if (__pageCacheLoading[key]) return __pageCacheLoading[key];
+        var fetchOpts = opts.force ? { cache: 'no-store' } : { cache: 'no-cache' };
+        var ts = opts.force ? ('?_t=' + Date.now()) : '';
+        var qs = '?page=' + page + '&page_size=' + pageSize;
+        if (cid > 0) qs += '&cid=' + cid;
+        if (subCid > 0) qs += '&sub_cid=' + subCid;
+        if (kw) qs += '&kw=' + encodeURIComponent(kw);
+        function withTimeout(p, ms) {
+          return Promise.race([p, new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, ms); })]);
+        }
+        var _oldProducts = JSON.stringify(DATA.products || []);
+        var _oldCategories = JSON.stringify(DATA.categories || []);
+        var _oldAnn = DATA.announcement;
+        var _oldAnnMode = DATA.announcementMode;
+        var _oldShopName = DATA.shopName;
+        __pageCacheLoading[key] = Promise.all([
+          withTimeout(__dedupFetch('/api/products' + qs + (ts ? ts.replace('?', '&') : ''), fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000),
+          withTimeout(__dedupFetch('/api/categories' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000),
+          withTimeout(__dedupFetch('/api/settings' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000)
+        ]).then(function (res) {
+          var _changed = false;
+          if (res[0] && res[0].ok && res[1] && res[1].ok) {
+            DATA.products = res[0].list || [];
+            DATA.categories = res[1].list || [];
+            usingRemote = true;
+            if (res[0].total_pages !== undefined) {
+              DATA.total = res[0].total || 0;
+              DATA.totalPages = res[0].total_pages || 1;
+              DATA.page = res[0].page || 1;
+              DATA._backendPaged = true;
+            } else {
+              DATA._backendPaged = false;
+            }
+            __setShopCache('wnzyq_shop_data', { products: DATA.products, categories: DATA.categories });
+            if (JSON.stringify(DATA.products) !== _oldProducts || JSON.stringify(DATA.categories) !== _oldCategories) _changed = true;
+          }
+          if (res[2] && res[2].ok) {
+            var _newAnn = (res[2].settings || {}).announcement || '';
+            var _newAnnMode = (res[2].settings || {}).announcement_mode || 'always';
+            if (!_newAnn && !(res[2].settings || {}).announcements) {
+              try { localStorage.removeItem('wnzyq_ann_date'); localStorage.removeItem('wnzyq_ann_session'); } catch(e) {}
+            }
+            DATA.announcement = _newAnn;
+            DATA.announcementMode = _newAnnMode;
+            DATA.announcements = window.parseAnnouncements(res[2].settings || {}, { filterHidden: true });
+            if ((res[2].settings || {}).shop_name) { DATA.shopName = res[2].settings.shop_name; }
+            window._globalContact = (res[2].settings || {}).contact_url || getDefaultContact();
+            if (window.__kfPreconnect) window.__kfPreconnect(window._globalContact);
+            try {
+              var cacheData = JSON.parse(localStorage.getItem('wnzyq_shop_data') || '{}');
+              cacheData.announcement = DATA.announcement;
+              cacheData.announcement_mode = DATA.announcementMode;
+              cacheData.announcements = DATA.announcements;
+              if (DATA.shopName) cacheData.shop_name = DATA.shopName;
+              __setShopCache('wnzyq_shop_data', cacheData);
+            } catch (e) {}
+            if (DATA.announcement !== _oldAnn || DATA.announcementMode !== _oldAnnMode || DATA.shopName !== _oldShopName) _changed = true;
+          }
+          var _wasSkel = !!window.__skelPhase;
+          if (window.__skelPhase) { window.__skelPhase = false; if (!DATA.products.length) loadFallback(); }
+          window.__lastFetchTime = Date.now();
+          // 写内存缓存
+          __pageCache[key] = {
+            products: DATA.products, categories: DATA.categories,
+            total: DATA.total, totalPages: DATA.totalPages, page: DATA.page, _backendPaged: DATA._backendPaged,
+            announcement: DATA.announcement, announcementMode: DATA.announcementMode,
+            announcements: DATA.announcements, shopName: DATA.shopName,
+            _globalContact: window._globalContact,
+            _changed: _changed, _wasSkel: _wasSkel
+          };
+          return { changed: _changed, wasSkel: _wasSkel };
+        }).catch(function (err) {
+          if (window.__skelPhase) { window.__skelPhase = false; if (!DATA.products.length) loadFallback(); }
+          throw err;
+        });
+        return __pageCacheLoading[key];
       }
-      // R276：快照旧数据，后台拉齐后 diff——没变不渲染，有变才悄悄换新
-      var _oldProducts = JSON.stringify(DATA.products || []);
-      var _oldCategories = JSON.stringify(DATA.categories || []);
-      var _oldAnn = DATA.announcement;
-      var _oldAnnMode = DATA.announcementMode;
-      var _oldShopName = DATA.shopName;
-      return Promise.all([
-        withTimeout(__dedupFetch('/api/products' + qs + (ts ? ts.replace('?', '&') : ''), fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000),
-        withTimeout(__dedupFetch('/api/categories' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000),
-        withTimeout(__dedupFetch('/api/settings' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 8000)
-      ]).then(function (res) {
-        var _changed = false;
-        if (res[0] && res[0].ok && res[1] && res[1].ok) {
-          DATA.products = res[0].list || [];
-          DATA.categories = res[1].list || [];
-          usingRemote = true;
-          // R303：记录后端分页元数据
-          if (res[0].total_pages !== undefined) {
-            DATA.total = res[0].total || 0;
-            DATA.totalPages = res[0].total_pages || 1;
-            DATA.page = res[0].page || 1;
-            DATA._backendPaged = true;
-          } else {
-            DATA._backendPaged = false;
-          }
-          // 存 localStorage 缓存（R243 条35：比对后写）
-          __setShopCache('wnzyq_shop_data', { products: DATA.products, categories: DATA.categories });
-          if (JSON.stringify(DATA.products) !== _oldProducts || JSON.stringify(DATA.categories) !== _oldCategories) _changed = true;
-        }
-        if (res[2] && res[2].ok) {
-          var _newAnn = (res[2].settings || {}).announcement || '';
-          var _newAnnMode = (res[2].settings || {}).announcement_mode || 'always';
-          // v294（用户 10-04 02:14）：123 公告清空后立即清除本地缓存
-          if (!_newAnn && !(res[2].settings || {}).announcements) {
-            try { localStorage.removeItem('wnzyq_ann_date'); localStorage.removeItem('wnzyq_ann_session'); } catch(e) {}
-          }
-          DATA.announcement = _newAnn;
-          DATA.announcementMode = _newAnnMode;
-          DATA.announcements = window.parseAnnouncements(res[2].settings || {}, { filterHidden: true });
-          // 店铺名与全局客服链接：统一在这一次 settings 请求里更新（不再另发请求）
-          if ((res[2].settings || {}).shop_name) { DATA.shopName = res[2].settings.shop_name; }
-          window._globalContact = (res[2].settings || {}).contact_url || getDefaultContact();
-          // R188/R189 建议8：客服域 preconnect——页面加载期提前与客服域名建好连接（DNS+TLS 握手提前完成），
-          // 用户点「咨询客服」时直接复用已建好的连接，省掉约 1 秒的现场连接等待（点开即达）
-          if (window.__kfPreconnect) window.__kfPreconnect(window._globalContact);
-          try {
-            var cacheData = JSON.parse(localStorage.getItem('wnzyq_shop_data') || '{}');
-            cacheData.announcement = DATA.announcement;
-            cacheData.announcement_mode = DATA.announcementMode;
-            cacheData.announcements = DATA.announcements;
-            if (DATA.shopName) cacheData.shop_name = DATA.shopName;
-            __setShopCache('wnzyq_shop_data', cacheData);
-          } catch (e) {}
-          if (DATA.announcement !== _oldAnn || DATA.announcementMode !== _oldAnnMode || DATA.shopName !== _oldShopName) _changed = true;
-        }
-        // 骨架期或数据有变才渲染；无变纹丝不动（R276 第三步）
-        var _wasSkel = !!window.__skelPhase;
-        if (window.__skelPhase) { window.__skelPhase = false; if (!DATA.products.length) loadFallback(); } /* R193 方案A：骨架期结束——远端没数据时 config 兜底 */
-        if (_changed || _wasSkel) renderAll();
-        // R243 条32：记录成功拉取时间
-        window.__lastFetchTime = Date.now();
-        // R10 分享链接：远端数据已到，处理 ?pid= 自动打开资源弹窗（此数据源可信，查不到则提示失效）
-        checkSharePid(true);
-      }).catch(function () {
-        // v294（用户 10-04 02:14）：255 首页加载失败时自动重试一次
-        if (window.__skelPhase) { window.__skelPhase = false; if (!DATA.products.length) loadFallback(); } /* R193 方案A：网络异常也收骨架 */
-        renderAll();
-        // 自动重试：3秒后如果页面还是空状态，再试一次
-        setTimeout(function() {
-          if (!DATA.products.length) loadProducts(true);
-        }, 3000);
-        // R10 分享链接：网络失败时基于缓存尽力打开（缓存查不到不提示失效——可能是缓存过期误报）
-        checkSharePid(false);
+
+      // v312：有缓存且非 force → 立即用缓存数据写 DATA 并 resolve，同时后台静默刷新（stale-while-revalidate）
+      if (cached && !opts.force) {
+        DATA.products = cached.products;
+        DATA.categories = cached.categories;
+        DATA.total = cached.total;
+        DATA.totalPages = cached.totalPages;
+        DATA.page = cached.page;
+        DATA._backendPaged = cached._backendPaged;
+        DATA.announcement = cached.announcement;
+        DATA.announcementMode = cached.announcementMode;
+        DATA.announcements = cached.announcements;
+        if (cached.shopName) DATA.shopName = cached.shopName;
+        if (cached._globalContact) window._globalContact = cached._globalContact;
+        usingRemote = true;
+        // 后台静默刷新：回来后如果当前显示的还是同一个 key，且数据有变，才重渲染
+        doRealFetch().then(function (res) {
+          var curKey = __cacheKey(currentPage, currentCat, currentSubCat, (searchInput.value || '').trim());
+          if (curKey === key && res.changed) { renderAll(); }
+        }).catch(function () {});
+        return Promise.resolve();
+      }
+
+      // 无缓存或 force → 显示轻量进度条，等网络请求
+      __showPageLoading();
+      return doRealFetch().then(function () {
+        __hidePageLoading();
+      }).catch(function (err) {
+        __hidePageLoading();
+        throw err;
       });
     }
 
@@ -2217,6 +2258,8 @@
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
         try { localStorage.removeItem('wnzyq_shop_data'); } catch (e) {}
+        // v312（用户 10-05 15:21）：下拉刷新同时清除内存缓存，确保强制重新拉取
+        __pageCache = {}; __pageCacheLoading = {};
         setTimeout(function () {
           if (window.location.protocol === 'file:') {
             loadFallback();

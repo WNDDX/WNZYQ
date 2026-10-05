@@ -140,7 +140,7 @@ if ('serviceWorker' in navigator) {
         img.style.opacity = '';
       };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=311';
+      img.src = qrImg || '/assets/images/kefu.png?v=314';
       if (img.complete) {
         if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
         else { img.onerror(); }
@@ -197,7 +197,7 @@ if ('serviceWorker' in navigator) {
     var jb = m.querySelector('button[data-u]');
     if (jb) jb.setAttribute('data-u', url || '');
     var im = document.getElementById('kfFallbackImg');
-    if (im) { im.src = '/assets/images/kefu.png?v=311'; }
+    if (im) { im.src = '/assets/images/kefu.png?v=314'; }
     try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
     m.style.display = 'flex';
     if (window.lockBodyScroll) window.lockBodyScroll(true);

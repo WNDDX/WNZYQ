@@ -713,12 +713,14 @@
       opts.credentials = opts.credentials || 'include';
       // R30：鉴权统一走 HttpOnly Cookie，不再从 localStorage 读 token
       // R286-57：管理页所有请求加8秒超时保护，网络一卡不再无限转圈
+      // v313：首屏 dashboard 放宽到30秒（老板网络 2.7~11.7 秒，8秒必超），操作类维持8秒
       // R308：GET 请求失败自动重试一次（立刻、不延时），只试一次
       var isGet = (!opts.method || opts.method === 'GET');
+      var timeout = opts.timeout || 8000;
       var doFetch = function (isRetry) {
         return Promise.race([
           fetch('/api/' + path, opts),
-          new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, 8000); })
+          new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, timeout); })
         ]).then(function (r) {
           __apiInFlight.delete(reqKey);
           var ct = r.headers.get('content-type') || '';
@@ -764,6 +766,9 @@
     // 清除资源和分类的 API 缓存（管理员修改后调用，不阻塞主流程）
     function clearCache() {
       api('admin/clear-cache', { method: 'POST' }).catch(function () {});
+      // v314（用户 10-05 15:59）：根因→后端清缓存后前端内存缓存仍保留旧数据，切换回来显示过期内容；修法→同步清前端内存缓存，下次切换立即走网络拿最新
+      __adminProductCache = {};
+      __adminProductCacheLoading = {};
     }
 
     // ---------- R221：复制即换码 ----------
@@ -1033,7 +1038,8 @@ function boot() {
       // R248：页面加载后尝试恢复编辑草稿（自动刷新保护）
       try { setTimeout(function () { if (window.__restoreEditingDraft) window.__restoreEditingDraft(); }, 200); } catch (e) {}
       function _safe(fn) { try { fn(); } catch (e) { /* R213 P2⑤：调试日志已删（隔离逻辑保留） */ } }
-      window.__plS = 1; window.__plC = 1; window.__plP = 1;
+      // v313：dashboard 只返回轻量 stats overview，不标记 stats 已完整加载——切到 stats tab 时自动触发 loadStats 拉取明细
+      window.__plC = 1; window.__plP = 1;
       // R276：先读 sessionStorage 缓存，刷新时秒显上一次内容
       var _cache = __getAdminCache();
       var _hasCache = _cache.products && _cache.products.length && _cache.timestamp && (Date.now() - _cache.timestamp < 600000);
@@ -1092,12 +1098,22 @@ function boot() {
          R173 口径不变：只认 __plS 等单条件、不重新拉数据 */
       var __pv = document.getElementById('panel-' + name);
       if (__pv) { __pv.classList.remove('panel-in'); void __pv.offsetWidth; __pv.classList.add('panel-in'); }
-      if (name === 'products' && !window.__plP) { window.__plP = 1; loadProducts(); }
+      // v314（用户 10-05 15:59）：Tab切换立即出结果——首次加载数据，后续切回时已有数据秒显+后台静默刷新保最新。
+      if (name === 'products') {
+        if (!window.__plP) { window.__plP = 1; loadProducts(); }
+        else { loadProducts(true).catch(function () {}); } // 切回后台静默刷新
+      }
       // R173（用户 00:28）：回退 R171 的门控放宽——切 tab 只认 __plS 单条件（R170 口径）；
       // 放宽后每次切 tab 都重新拉数据+全页淡入，用户实测"更难看"
-      if (name === 'stats' && !window.__plS) { window.__plS = 1; loadStats(); }
+      if (name === 'stats') {
+        if (!window.__plS) { window.__plS = 1; loadStats(); }
+        else { loadStats(undefined, undefined, 1, 1).catch(function () {}); } // 切回后台静默刷新（silent=1）
+      }
       if (name === 'stats') { try { if (window.__rerenderLine) window.__rerenderLine(); } catch (e) {} } // R145：面板可见后重画，轴字号按真实宽度补偿
-      if (name === 'categories' && !window.__plC) { window.__plC = 1; loadCategories(); }
+      if (name === 'categories') {
+        if (!window.__plC) { window.__plC = 1; loadCategories(); }
+        else { loadCategories(true).catch(function () {}); } // 切回后台静默刷新
+      }
       if (name === 'settings') { if (!window.__plSet) loadSettings(); }
     }
 
@@ -1263,6 +1279,28 @@ function boot() {
     }
 
     function loadProducts(silent) { /* R281：silent=切回窗口静默重拉——不铺骨架、不弹 toast；快照比对没变不重画 */
+      /* v314（用户 10-05 15:59）：根因→管理页资源列表翻页/搜索/筛选每次走网络，旧内容淡出成空白等待；修法→内存缓存秒开+后台静默刷新（stale-while-revalidate）。看过的组合(page+kw+filterCat+filterStatus)存内存，再切回来立即渲染零等待。首次切到新组合不清空旧内容+轻量进度条，数据回来再替换。真失败toast提示+收骨架不留灰态。下拉刷新清缓存拿最新。 */
+      var kw = (document.getElementById('adminSearch').value || '').trim();
+      var filterCat = document.getElementById('filterCat').value;
+      var filterStatus = document.getElementById('filterStatus').value;
+      var _cacheKey = __adminProductCacheKey(adminPage, kw, filterCat, filterStatus);
+      var _cache = __adminProductCache[_cacheKey];
+      // silent 模式（后台静默刷新）不走缓存命中立即渲染路径
+      if (!silent && _cache) {
+        // 命中缓存：秒开——先渲染已有数据，零等待
+        state.products = _cache.products || [];
+        state.totalPages = _cache.totalPages || 1;
+        state.total = _cache.total || 0;
+        state._backendPaged = _cache._backendPaged;
+        renderProducts();
+        initFilterCatPicker();
+        // 后台静默刷新（stale-while-revalidate）
+        loadProducts(true).catch(function () {});
+        return Promise.resolve();
+      }
+      // 防重复请求
+      var _loading = __adminProductCacheLoading[_cacheKey];
+      if (_loading) return _loading;
       /* R230：首次加载（列表空且无数据）先铺骨架——数量=一页 20 条、槽位尺寸与真行一致；
          CRUD 后的刷新已有数据在先，不铺（与资源页「骨架只铺数据在路上」同口径） */
       // R256：骨架已内嵌在 admin.html，有则不复建，避免闪两下/残影
@@ -1273,6 +1311,9 @@ function boot() {
           window.__adminSkelP = true; renderProductSkeleton();
         } else if (_hasSkel) {
           window.__adminSkelP = true;
+        } else if (state.products.length) {
+          // v314：有旧内容时不淡出清空，保留旧内容+轻量进度条
+          __showAdminPageLoading();
         }
       }
       var _snapP = silent ? __adminDataSig(state.products) : null;
@@ -1284,52 +1325,65 @@ function boot() {
             }
           });
       // R303：分页与筛选参数
-      var kw = (document.getElementById('adminSearch').value || '').trim();
-      var filterCat = document.getElementById('filterCat').value;
-      var filterStatus = document.getElementById('filterStatus').value;
       var qs = '?page=' + adminPage + '&page_size=' + ADMIN_PAGE_SIZE;
       if (kw) qs += '&kw=' + encodeURIComponent(kw);
       if (filterCat && filterCat !== '0') qs += '&cid=' + encodeURIComponent(filterCat);
       if (filterStatus) qs += '&status=' + encodeURIComponent(filterStatus);
-      return ensureCat.then(function () {
-        // 分类筛选已改为级联选择器（与新增/编辑资源一致）；R281：silent 时不预重建（下拉 DOM 每次重建非幂等，数据有变才在成功回调里补建）
-        if (!silent) initFilterCatPicker();
-        return api('admin/products' + qs);
-      }).then(function (res) {
-        if (!res.ok) {
-          if (silent) return; /* R281：静默失败不动画面不弹 toast、不更新时间戳（下次切回再试） */
-          /* R230：接口异常收骨架走空态，不卡灰（对齐资源页 fetchRemote 兜底） */
-          window.__adminSkelP = false; __clearAdminSkel(document.getElementById('productList'));
-          var _em = document.getElementById('productEmpty');
-          if (_em) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = '暂无资源'; }
-          toast(res.msg || '加载失败', 'error'); return; }
-        window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳 */
-        var _newP = res.list || [];
-        if (silent && __adminDataSig(_newP) === _snapP) return; /* R281：数据没变——纹丝不动（不重画不预载不重存） */
-        if (silent) initFilterCatPicker(); /* R281：有变才补建筛选器（分类选项同步） */
-        window.__adminSkelP = false;
-        state.products = _newP;
-        // R303：记录后端分页元数据
-        if (res.total_pages !== undefined) {
-          state.totalPages = res.total_pages || 1;
-          state.total = res.total || 0;
-          state._backendPaged = true;
-        } else {
-          state._backendPaged = false;
-        }
-        renderProducts();
-        if (!silent) backfillCoverThumbs(_newP); /* R304 P18：非静默加载（首次/翻页/筛选）时静默补生成存量旧图小图 */
-        prefetchBindings(); // R114：随产品列表一起静默预载全部类型绑定数据，点「绑定 N」即开即显
-        // R276：一次性拉齐——后台并行预载所有资源的类型（variants），点开编辑弹窗秒开
-        var _vp = (state.products || []).map(function (p) {
-          if (!p.id || Array.isArray(p.variants)) return Promise.resolve();
-          return api('admin/variants?product_id=' + p.id).then(function (vr) {
-            if (vr && vr.ok) p.variants = vr.list || [];
-          }).catch(function () {});
+      var _doFetch = function () {
+        return ensureCat.then(function () {
+          // 分类筛选已改为级联选择器（与新增/编辑资源一致）；R281：silent 时不预重建（下拉 DOM 每次重建非幂等，数据有变才在成功回调里补建）
+          if (!silent) initFilterCatPicker();
+          return api('admin/products' + qs);
+        }).then(function (res) {
+          if (!res.ok) {
+            if (silent) return; /* R281：静默失败不动画面不弹 toast、不更新时间戳（下次切回再试） */
+            /* R230：接口异常收骨架走空态，不卡灰（对齐资源页 fetchRemote 兜底） */
+            window.__adminSkelP = false; __clearAdminSkel(document.getElementById('productList'));
+            __hideAdminPageLoading();
+            var _em = document.getElementById('productEmpty');
+            if (_em) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = '暂无资源'; }
+            toast(res.msg || '加载失败', 'error'); return; }
+          window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳 */
+          var _newP = res.list || [];
+          if (silent && __adminDataSig(_newP) === _snapP) return; /* R281：数据没变——纹丝不动（不重画不预载不重存） */
+          if (silent) initFilterCatPicker(); /* R281：有变才补建筛选器（分类选项同步） */
+          window.__adminSkelP = false;
+          __hideAdminPageLoading();
+          state.products = _newP;
+          // R303：记录后端分页元数据
+          if (res.total_pages !== undefined) {
+            state.totalPages = res.total_pages || 1;
+            state.total = res.total || 0;
+            state._backendPaged = true;
+          } else {
+            state._backendPaged = false;
+          }
+          // v314：写入内存缓存
+          __adminProductCache[_cacheKey] = {
+            products: _newP,
+            totalPages: state.totalPages,
+            total: state.total,
+            _backendPaged: state._backendPaged,
+            timestamp: Date.now()
+          };
+          renderProducts();
+          if (!silent) backfillCoverThumbs(_newP); /* R304 P18：非静默加载（首次/翻页/筛选）时静默补生成存量旧图小图 */
+          prefetchBindings(); // R114：随产品列表一起静默预载全部类型绑定数据，点「绑定 N」即开即显
+          // R276：一次性拉齐——后台并行预载所有资源的类型（variants），点开编辑弹窗秒开
+          var _vp = (state.products || []).map(function (p) {
+            if (!p.id || Array.isArray(p.variants)) return Promise.resolve();
+            return api('admin/variants?product_id=' + p.id).then(function (vr) {
+              if (vr && vr.ok) p.variants = vr.list || [];
+            }).catch(function () {});
+          });
+          Promise.all(_vp).then(function () { __saveAdminState(); });
+          __saveAdminState();
         });
-        Promise.all(_vp).then(function () { __saveAdminState(); });
-        __saveAdminState();
-      });
+      };
+      var _p = _doFetch();
+      if (!silent) __adminProductCacheLoading[_cacheKey] = _p;
+      _p.then(function () { delete __adminProductCacheLoading[_cacheKey]; }).catch(function () { delete __adminProductCacheLoading[_cacheKey]; });
+      return _p;
     }
 
     // 筛选器事件
@@ -1352,6 +1406,30 @@ function boot() {
       }
     });
 
+    // v314（用户 10-05 15:59）：根因→管理页资源列表翻页/搜索/筛选每次走网络，旧内容淡出成空白等待；修法→内存缓存秒开+后台静默刷新（stale-while-revalidate）。看过的组合(page+kw+filterCat+filterStatus)存内存，再切回来立即渲染零等待。首次切到新组合不清空旧内容+轻量进度条，数据回来再替换。真失败toast提示+收骨架不留灰态。下拉刷新清缓存拿最新。
+    var __adminProductCache = {};        // key='page:kw:filterCat:filterStatus'，value={products,total,totalPages,_backendPaged,timestamp}
+    var __adminProductCacheLoading = {}; // key同上，value=Promise（防重复请求）
+    function __adminProductCacheKey(page, kw, filterCat, filterStatus) {
+      return (page || 1) + ':' + (kw || '') + ':' + (filterCat || '0') + ':' + (filterStatus || '');
+    }
+    function __showAdminPageLoading() {
+      var bar = document.getElementById('adminPageLoadingBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'adminPageLoadingBar';
+        bar.className = 'page-loading-bar';
+        var wrap = document.getElementById('productList');
+        if (wrap && wrap.parentNode) wrap.parentNode.insertBefore(bar, wrap);
+      }
+      bar.style.display = 'block';
+      bar.style.animation = 'none'; void bar.offsetWidth;
+      bar.style.animation = '';
+    }
+    function __hideAdminPageLoading() {
+      var bar = document.getElementById('adminPageLoadingBar');
+      if (bar) bar.style.display = 'none';
+    }
+
     var adminPage = 1;
     var __adminTurning = false; /* R231 条19：翻页淡出期间锁，防重复触发 */
     var ADMIN_PAGE_SIZE = 20; // 全系统统一：一页 20 条（与资源页/统计面板一致），配合翻页控件使用
@@ -1363,34 +1441,29 @@ function boot() {
     var __adminTotalPages = 1; /* renderProducts 每次渲染回写，供续滑翻页 getTotalPages 用 */
     function __adminTurnPage(p) {
       if (p === adminPage || __adminTurning) return;
-      __adminTurning = true; /* R231 条19：淡出期间防重复翻页 */
-      var _pl = document.getElementById('productList');
-      if (_pl) { _pl.style.transition = 'opacity 0.1s ease'; _pl.style.opacity = '0'; }
-      setTimeout(function () {
-        adminPage = p;
-        // R303：后端分页时翻页需重新拉取对应页数据；前端分页时本地重渲染
-        if (state._backendPaged) {
-          loadProducts().then(function () {
-            if (_pl) _pl.style.opacity = '';
-            __adminTurning = false;
-            try {
-              var _pl2 = document.getElementById('productList');
-              if (_pl2) _pl2.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } catch (e) {}
-          }).catch(function () {
-            if (_pl) _pl.style.opacity = '';
-            __adminTurning = false;
-          });
-        } else {
-          renderProducts();
-          if (_pl) _pl.style.opacity = '';
+      __adminTurning = true; /* R231 条19：翻页期间防重复 */
+      adminPage = p;
+      // v314（用户 10-05 15:59）：翻页立即出结果——有缓存秒开（loadProducts 内自动走 __adminProductCache），
+      // 无缓存保留旧内容+轻量进度条，数据回来再替换。去掉旧内容 0.1s 淡出动画。
+      // R303：后端分页时翻页需重新拉取对应页数据；前端分页时本地重渲染
+      if (state._backendPaged) {
+        loadProducts().then(function () {
           __adminTurning = false;
           try {
             var _pl2 = document.getElementById('productList');
             if (_pl2) _pl2.scrollIntoView({ behavior: 'smooth', block: 'start' });
           } catch (e) {}
-        }
-      }, 100);
+        }).catch(function () {
+          __adminTurning = false;
+        });
+      } else {
+        renderProducts();
+        __adminTurning = false;
+        try {
+          var _pl2 = document.getElementById('productList');
+          if (_pl2) _pl2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {}
+      }
     }
     // R146（用户 00:34）：admin 端价格格式化（与前台 shop.js formatPrice 同口径）
     // 0/空返回 ''（免费不显示），整数 ¥99，小数 ¥99.00
@@ -6273,7 +6346,7 @@ document.addEventListener('click', function (e) {
       // R272：加载圈已删除，无需再隐藏。
     }
 
-    /* R308：进页请求合一 + 数据没变不重传 + 优先缓存 */
+    /* v313：进页请求走轻量 dashboard（去掉重的 stats 子查询），timeout 30 秒防老板网络超时 */
     function loadAdminHome(silent) {
       var cachedVersion = '';
       try {
@@ -6283,7 +6356,7 @@ document.addEventListener('click', function (e) {
           cachedVersion = c.version || '';
         }
       } catch (e) {}
-      return api('admin/home?v=' + encodeURIComponent(cachedVersion)).then(function (res) {
+      return api('admin/dashboard?v=' + encodeURIComponent(cachedVersion), { timeout: 30000 }).then(function (res) {
         if (res && res.unchanged === true) {
           window.__lastFetchTime = Date.now();
           return;
@@ -6308,36 +6381,42 @@ document.addEventListener('click', function (e) {
         if (res.settings) {
           state.settings = res.settings;
         }
-        // 解包统计（复用现有渲染链）
+        // 解包统计（v313：dashboard 只返回轻量 overview，完整明细留给切 stats tab 时 loadStats 拉取）
         if (res.stats) {
           var sr = res.stats;
           state.statsOverview = sr.overview || {};
           state.statsOverviewPrev = sr.overview_prev || null;
-          state.statsTrendAll = sr.trend || [];
-          state.statsTrendAllPrev = sr.trend_prev || [];
-          state.statByProduct = sr.byProduct || [];
-          state.statByCategory = sr.byCategory || [];
-          state.statRecent = sr.recent || [];
-          var days = state.statsDays || 7;
-          var trendData, trendPrev;
-          if (sr.hourly && sr.hourly.length) {
-            trendData = sr.hourly.map(function (h) {
-              return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
-            });
-            trendPrev = (sr.hourly_prev && sr.hourly_prev.length === sr.hourly.length) ? sr.hourly_prev.map(function (h) {
-              return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
-            }) : null;
+          // v313：dashboard 有完整 stats 明细才覆盖（兼容老 home 接口），否则保留缓存/空值
+          if (sr.trend && sr.trend.length) {
+            state.statsTrendAll = sr.trend || [];
+            state.statsTrendAllPrev = sr.trend_prev || [];
+            state.statByProduct = sr.byProduct || [];
+            state.statByCategory = sr.byCategory || [];
+            state.statRecent = sr.recent || [];
+            var days = state.statsDays || 7;
+            var trendData, trendPrev;
+            if (sr.hourly && sr.hourly.length) {
+              trendData = sr.hourly.map(function (h) {
+                return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
+              });
+              trendPrev = (sr.hourly_prev && sr.hourly_prev.length === sr.hourly.length) ? sr.hourly_prev.map(function (h) {
+                return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
+              }) : null;
+            } else {
+              trendData = (sr.trend || []).slice(-days);
+              trendPrev = (sr.trend_prev || []).length ? sr.trend_prev.slice(-days) : null;
+            }
+            state.statsTrend = trendData;
+            state.statsTrendPrev = trendPrev || null;
+            state.statsByProduct = sr.byProduct || [];
+            renderStatCards(state.statsOverview, state.statsCmpPrev ? state.statsOverviewPrev : null);
+            renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
+            renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
+            renderStatTables();
           } else {
-            trendData = (sr.trend || []).slice(-days);
-            trendPrev = (sr.trend_prev || []).length ? sr.trend_prev.slice(-days) : null;
+            // v313：轻量 dashboard 只渲染六卡概览，图表/三表等用户切到 stats tab 再拉
+            renderStatCards(state.statsOverview, state.statsCmpPrev ? state.statsOverviewPrev : null);
           }
-          state.statsTrend = trendData;
-          state.statsTrendPrev = trendPrev || null;
-          state.statsByProduct = sr.byProduct || [];
-          renderStatCards(state.statsOverview, state.statsCmpPrev ? state.statsOverviewPrev : null);
-          renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
-          renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
-          renderStatTables();
         }
         // 版本号
         state._homeVersion = res.version || '';
@@ -6355,7 +6434,13 @@ document.addEventListener('click', function (e) {
         }
         window.__lastFetchTime = Date.now();
       }).catch(function (e) {
-        if (!silent) toast('首页数据加载失败，请刷新重试', 'error');
+        // v313：失败收骨架走空态 + 明确提示，不让老板永远看灰框
+        window.__adminSkelP = false;
+        __clearAdminSkel(document.getElementById('productList'));
+        __clearAdminSkel(document.getElementById('catList'));
+        var _em = document.getElementById('productEmpty');
+        if (_em) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = '暂无资源'; }
+        if (!silent) toast('网络不佳，请刷新重试', 'error');
       });
     }
 
@@ -7424,7 +7509,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=311', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=314', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
