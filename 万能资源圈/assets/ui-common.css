@@ -78,7 +78,7 @@
 @keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
 .kf-box {
   background: var(--card-bg); border-radius: var(--radius-lg); padding: 26px 22px; position: relative;
-  max-width: 480px; width: 100%; max-height: 84vh; overflow-y: auto; text-align: center;
+  max-width: 480px; width: 100%; max-height: 84vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
   animation: kfBoxIn var(--dur-mid) var(--ease-out);
 }
 @keyframes kfBoxIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：客服弹窗卡片入场加展开（与关闭收缩对称） */
@@ -325,7 +325,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 .m-loading.is-video { background: #000; }
 .modal-box, .ann-box, .kf-box, .preview-box { overflow-x: hidden; }
 /* 富文本内媒体（尺寸未知不锁比例）：统一加载底色，避免加载中空白塌陷的突兀跳动 */
-.modal-detail img, .resource-content img, .ann-body img, .rte-editor img, .variant-detail img, .preview-detail img { background: var(--bg-light); }
+.modal-detail img, .resource-content img, .ann-body img, .rte-editor img, .variant-detail img, .preview-detail img { background: var(--bg-light); min-height: 80px; } /* v309:统一最小高度占位*/
 .modal-detail video, .resource-content video, .ann-body video, .rte-editor video, .variant-detail video, .preview-detail video { background: #000; }
 /* R215 条4（老板 09-21）：富文本复选框前台展示——与文字同高（1em）、可点击勾选，后台编辑器内同款 */
 .rte-editor input[type="checkbox"], .modal-detail input[type="checkbox"], .resource-content input[type="checkbox"], .ann-body input[type="checkbox"], .variant-detail input[type="checkbox"], .preview-detail input[type="checkbox"] {
@@ -617,7 +617,7 @@ body { transition: background-color 0.3s ease, color 0.3s ease; }
 .cp-mask .cp-input { width: 100%; height: 50px; border: none; outline: none; background: transparent; color: var(--text, #222); font-size: 16px; padding: 0 18px; letter-spacing: 1.2px; }
 /* R255（老板 17:55）：Ctrl+K 命令面板输入框聚焦态显式去 outline（同 shop/admin 搜索框口径） */
 .cp-mask .cp-input:focus, .cp-mask .cp-input:focus-visible { outline: none; outline-width: 0; box-shadow: 0 0 0 3px rgba(30,136,229,0.15); /* v293（用户 10-04 02:14）：058命令面板输入框获焦点→补淡蓝光晕，跟搜索框统一 */ }
-.cp-mask .cp-list { max-height: 46vh; overflow-y: auto; padding: 6px; border-top: 1px solid var(--border); }
+.cp-mask .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 6px; border-top: 1px solid var(--border); }
 .cp-mask .cp-item { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text, #222); }
 .cp-mask .cp-item .cp-lab { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cp-mask .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }

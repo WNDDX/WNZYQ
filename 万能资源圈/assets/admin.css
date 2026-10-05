@@ -16,7 +16,7 @@
       --red:   #ff4444; /* R265（用户 09-27 15:04）：根因→R259 同作用域自引用 var(--red, #ff4444) 导致 CSS 变量无效，恢复 v256 原文 */
       --green: #01C000;
       /* R50：暗色相关变量统一移至 ui-common.css（含 [data-theme=dark] 暗色值），此处不再重复定义 */
-    }
+    } [data-theme="dark"]{--blue1:#0e2a4f;--blue2:#15365f;--blue3:#1c2c4e;} /* v310（用户 10-05 14:25）：差异→统一口径。B1 品牌蓝暗色深浅四页统一 */
     /* R49：暗色变量块为死代码（0 处引用），已删，勿再空挂 */
     @keyframes pageFadeIn {
       from { opacity: 0; transform: translateY(8px); }
@@ -78,15 +78,14 @@
       margin: 0 auto;
       border-radius: 50%;
       overflow: hidden;
-      background: var(--blue1); /* R141：纯色（原末尾 !important 覆盖合并进主规则） */
-      background: var(--bg-light);
-      background: transparent;
+      background: transparent; /* v310（用户 10-05 14:25）：差异→统一口径。A3 加载前底色统一透明，删冗余覆盖 */
       color: #fff; font-size: 34px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: var(--avatar-shadow); border: 3px solid var(--card-bg, #fff); box-sizing: border-box; /* R285 条45：白色描边接颜色本子（深色模式跟随） */
+      box-shadow: var(--avatar-shadow); border: 3px solid var(--card-bg); box-sizing: border-box; /* v310（用户 10-05 14:25）：差异→统一口径。A1 去掉 fallback，四页统一 */
       /* animation triggered by JS onload */
       transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
     }
+    .login-logo-link:hover .login-logo { box-shadow: 0 0 0 3px rgba(255,255,255,0.45); } /* v310（用户 10-05 14:25）：差异→统一口径。A2 hover 发光四页统一 */
     .login-logo-link:active .login-logo {
       transform: scale(0.94) !important; opacity: 0.8 !important; /* R163：压过 logoFadeIn forwards 填充 */
     }
@@ -171,6 +170,7 @@
       transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
       text-decoration: none;
     }
+    .topbar-logo-link:hover .topbar-logo { box-shadow: 0 0 0 3px rgba(255,255,255,0.45); } /* v310（用户 10-05 14:25）：差异→统一口径。A2 hover 发光四页统一 */
     .topbar-logo-link:active {
       transform: scale(0.94) !important; opacity: 0.8 !important; /* R163：压过 logoFadeIn forwards 填充 */
     }
@@ -182,7 +182,7 @@
       height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      background: transparent; box-sizing: border-box; border: 3px solid var(--card-bg, #fff); box-shadow: var(--avatar-shadow); transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease; flex-shrink: 0; /* R285 条45：白色描边接颜色本子 */
+      background: transparent; box-sizing: border-box; border: 3px solid var(--card-bg); box-shadow: var(--avatar-shadow); transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease; flex-shrink: 0; /* v310（用户 10-05 14:25）：差异→统一口径。A1 去掉 fallback，四页统一 */
     }
     .tabs { display: flex; gap: 6px; flex: 1; }
     /* .tab 按钮样式已抽入 ui-common.css 全站公共组件（与资源页顶栏咨询客服/分享同一份，零复制） */
@@ -520,7 +520,7 @@
     .variant-item .v-price { color: var(--price-orange, #ff6b35); font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .variant-item .v-sort { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
-    .ann-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-bottom: 6px; background: var(--bg-light); }
+    .ann-list { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-bottom: 6px; background: var(--bg-light); }
     .ann-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
     .ann-item:last-child { margin-bottom: 0; }
     .ann-item.ann-cur { border-color: var(--blue1); box-shadow: 0 0 0 1px var(--blue1) inset; }
@@ -536,12 +536,12 @@
       position: fixed; inset: 0; z-index: 200;
       background: var(--overlay-modal);
       display: none; align-items: flex-start; /* R159：子元素 margin:auto 居中，超高时可滚 */ justify-content: center; padding: 16px;
-      overflow-y: auto; /* R159：遮罩可滚——弹窗超出可视高度时底部永远可达 */
+      overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ /* R159：遮罩可滚——弹窗超出可视高度时底部永远可达 */
     }
     .modal-mask.open { display: flex; animation: maskIn var(--dur-mid) ease; }
     .modal-box {
       position: relative; background: var(--card-bg); border-radius: 14px;
-      width: 100%; max-width: 400px; max-height: 88vh; max-height: 88dvh; /* R159 */ overflow-y: auto; min-height: 160px;
+      width: 100%; max-width: 400px; max-height: 88vh; max-height: 88dvh; /* R159 */ overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ min-height: 160px;
       padding: 26px 22px; text-align: left; animation: modalIn var(--dur-mid) var(--ease-out);
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
@@ -612,7 +612,7 @@
     .cat-picker.open .cpd-arrow { transform: rotate(0deg); }
     .cat-picker-panel {
       display: none; position: fixed; z-index: 6002;
-      max-height: 264px; overflow-y: auto; background: var(--card-bg); border: 1px solid var(--border);
+      max-height: 264px; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ background: var(--card-bg); border: 1px solid var(--border);
       border-radius: 10px; box-shadow: var(--shadow-pop); /* R285 条20：归悬浮面板档 */ padding: 6px;
     }
     .cat-picker.open .cat-picker-panel { display: block; }
@@ -812,7 +812,7 @@
       /* R179（用户 19:35，反转 R173 的 contain）：编辑器滚到顶/底边界后继续滑，滚动链放行穿透到
          编辑器外的页面（旧 contain 到头即停，手机在长内容编辑器里滑很久都滑不出去）；
          默认 overscroll-behavior:auto 正是"未到边界留本容器、到边界传给祖先"，无需额外属性 */
-      min-height: 150px; max-height: 400px; overflow-y: auto;
+      min-height: 150px; max-height: 400px; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
       padding: 12px; border: 1px solid var(--border); border-radius: 0 0 10px 10px;
       background: var(--card-bg); line-height: 1.7; font-size: 14px; color: var(--text);
       outline: none;
@@ -824,7 +824,7 @@
       width: 96vw; max-width: 1200px; height: calc(100vh - 116px); height: calc(100dvh - 116px); /* R159 */ max-height: none !important; min-height: 320px !important;
       z-index: 6000; background: var(--card-bg); border: 2px solid var(--blue1); border-top: none;
       border-radius: 0 0 10px 10px; box-shadow: 0 0 0 100vw var(--overlay-modal), 0 16px 48px rgba(0,0,0,0.35); /* R285 条43 遮罩归档 */
-      overflow-y: auto;
+      overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
     }
     .rte-editor.rte-large ~ * { }
     .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 0; right: 0; margin: 0 auto; top: 12px; width: 96vw; max-width: 1200px; z-index: 6001; background: var(--card-bg); border: 2px solid var(--blue1); border-bottom: none; border-radius: 10px 10px 0 0; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } /* R240（老板 09-22 19:15）：放大态原用 left:50%+transform:translateX(-50%) 居中——transform 会让工具栏成为其内部 position:fixed 后代（字体/字号下拉面板）的包含块，面板的视口坐标被按工具栏盒子原点重新解释，出现"放大后字体和字号选择框偏移这么多"（实测横向偏 122px）。改 left:0/right:0+margin:0 auto 居中（绝对定位下 auto 边距均分剩余空间），不再产生包含块，面板回到视口坐标系，落点就在对应按键正下方 */ .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size: 15px; padding: 0 12px; height: 36px; }
@@ -833,7 +833,7 @@
     /* R173（用户 00:38/00:40）：编辑器内媒体出格根治——原规则无 !important，内联 style width:600px 的
        粘贴图/视频会撑出编辑器（放大态 96vw 也压不住）；作者样式表 !important 可压过内联非 important 样式，
        内联宽仍生效但渲染宽被 max-width 钳在容器内，任何态不再越界 */
-    .rte-editor img, .rte-editor video { max-width: 100% !important; border-radius: 8px; margin: 8px 0; } .rte-editor video { width: 100% !important; height: auto !important; display: block; }
+    .rte-editor img, .rte-editor video { max-width: 100% !important; border-radius: 8px; margin: 8px 0; min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/ .rte-editor video { width: 100% !important; height: auto !important; display: block; background: #000; }
     .rte-editor img.rte-media-sel, .rte-editor video.rte-media-sel { outline: 2px solid var(--blue1); outline-offset: 2px; } /* R165：自绘选中框——部分内核原生 selection 蓝层越出弹窗，outline 跟随元素自身绘制、受 contain:paint 裁剪不越界 */
     .rte-editor a { color: var(--blue1); } /* R240（老板 09-22）：编辑器内链接下划线不再由 CSS 画死——改为标记驱动（插入时带<u>、下划线按键加/删<u>）。原先 CSS 强制 underline 时，按键删掉<u>屏幕上仍有下划线，看起来"按了没反应" */
     .rte-editor ul, .rte-editor ol { padding-left: 24px; margin: 6px 0; }
@@ -879,7 +879,7 @@
     #previewMask .preview-price { color: var(--price-orange, #ff6b35); font-size: 24px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     #previewMask .preview-desc { font-size: 15px; color: var(--blue1); margin-bottom: 14px; font-weight: 600; line-height: 1.6; }
     /* R36：预览弹窗富文本图/视频与资源页一致——宽度 100% 且高度上限，竖长图不撑爆弹窗 */
-    #previewMask .preview-detail img, #previewMask .preview-detail video { max-width: 100%; max-height: 60vh; max-height: 60dvh; /* R159 */ height: auto; display: block; margin: 10px auto; border-radius: 8px; }
+    #previewMask .preview-detail img, #previewMask .preview-detail video { max-width: 100%; max-height: 60vh; max-height: 60dvh; /* R159 */ height: auto; display: block; margin: 10px auto; border-radius: 8px; min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
     #previewMask .preview-detail { background: var(--bg-light); border-radius: 10px; padding: 14px 16px; font-size: 14px; color: var(--text-light); line-height: 1.9; white-space: pre-wrap; margin-bottom: 14px; border-left: 3px solid var(--blue2); word-break: break-word; overflow-wrap: break-word; }
     /* 类型切换：与资源页 .variant-tabs / .variant-tab / .variant-detail / .variant-header 同款 */
     #previewMask .variant-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
@@ -904,7 +904,7 @@
     #previewMask .resource-code-btn:active { transform: scale(0.94); }
     #previewMask .resource-code-error { margin-top: 8px; font-size: 12px; color: var(--red, #ff4444); }
     #previewMask .resource-content { margin-top: 12px; padding: 14px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); font-size: 13px; color: var(--text); line-height: 1.8; animation: fadeInUp var(--dur-switch) var(--ease-out); } /* R231 条15/22：0.20s+keyframes 公共化（原管理页无定义属漏网） */
-    #previewMask .resource-content img, #previewMask .resource-content video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
+    #previewMask .resource-content img, #previewMask .resource-content video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
     #previewMask .resource-content a { color: var(--blue1); word-break: break-all; } /* R240：预览与前台一致改为标记驱动下划线（<u> 有则显示），CSS 不再强制 */
     /* 底部按键：与资源页 .btn-contact / .btn-close-modal 同款（46px/16px/hover/active 动画一致），
        且两键等宽（资源页 .modal-footer button { flex:1 } 同款） */
@@ -949,6 +949,11 @@
     }
     /* 感叹号占位自适应：容器内完整显示、居中、淡白填充、不溢出 */
     img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background: var(--bg-light)!important;}
+    /* v308（用户 10-05 13:29）：管理页缩略图占位符首帧即终态——消除 cover→contain 闪烁 */
+    .product-row .thumb[src^="data:image/svg+xml"] {
+      object-fit: contain !important;
+      object-position: center !important;
+    }
     /* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
     .modal-box img[src^="data:image/svg+xml"]:not(.preview-cover), .preview-box img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; }
     /* R280 ①：预览封面占位/加载失败态与固定展示框同尺寸——#previewMask img.preview-cover[…]（1,2,1）
@@ -1125,7 +1130,7 @@
     #panel-stats .trend-chart > div:first-child > div { flex: 1 1 100% !important; order: 1; }
 
     /* 折线图 */
-    .line-chart { position: relative; background: var(--bg-light); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; } /* R285 条42：能滑不露条 */
+    .line-chart { position: relative; background: var(--bg-light); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ -webkit-overflow-scrolling: touch; scrollbar-width: none; } /* R285 条42：能滑不露条 */
     .line-chart::-webkit-scrollbar { display: none; } /* R285 条42 */
     .line-chart svg { display: block; }
     .line-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; line-height: 1.16; color: var(--text-light); justify-content: center; }
@@ -1162,7 +1167,7 @@
       .topbar-right { flex-shrink: 0; }
       .tabs {
         order: 3; width: 100%; flex: 0 0 100%;
-        display: flex; gap: 6px; overflow-x: auto;
+        display: flex; gap: 6px; overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
         -webkit-overflow-scrolling: touch; scrollbar-width: none;
       }
       .tabs::-webkit-scrollbar { display: none; }
@@ -1268,7 +1273,7 @@
        此功能本身已有（一行显示+横滑+蓝色三角展开键切多行全显），不加新东西；
        只修电脑端排布奇怪的根因：①工具栏子项全端 flex-shrink:0 不压缩（见基础段，原只在手机档）
        ②展开键 sticky 钉右缘常显——横滑到任何位置都一眼可见、一键展开 */
-    .rte-toolbar.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; }
+    .rte-toolbar.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ }
     .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 0; margin-left: 0; z-index: 2; box-shadow: -6px 0 8px -6px rgba(0, 0, 0, 0.25); }
     .rte-toolbar.rte-collapsed .rte-expand .toggle-arrow { transform: rotate(0deg); }
 
@@ -1313,9 +1318,9 @@
     .ann-item .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { max-height: 84vh; max-height: 84dvh; /* R159 */ display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
     .modal-mask#annMask > .modal-box .modal-title, .modal-mask#editMask > .modal-box .modal-title, .modal-mask#variantMask > .modal-box .modal-title, .modal-mask#annMask > .modal-box .modal-footer, .modal-mask#editMask > .modal-box .modal-footer, .modal-mask#variantMask > .modal-box .modal-footer { flex-shrink: 0; width: 100% !important; }
-    .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; margin-right: -22px; padding-right: 22px; padding-bottom: 8px; /* R159：最后字段底部留呼吸空间，不再贴边像被裁 */ }
+    .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ min-height: 0; margin-right: -22px; padding-right: 22px; padding-bottom: 8px; /* R159：最后字段底部留呼吸空间，不再贴边像被裁 */ }
     .modal-mask#catMask > .modal-box { max-height: 84vh; max-height: 84dvh; /* R159 */ display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
-    .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; min-height: 0; margin-right: -22px; padding-right: 22px; padding-bottom: 8px; /* R159 */ }
+    .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ min-height: 0; margin-right: -22px; padding-right: 22px; padding-bottom: 8px; /* R159 */ }
     .cat-row { animation: rowIn var(--dur-mid) ease; }
     #productList, #catList { transition: opacity var(--dur-fast) ease; }
     .stat-card { animation: rowIn var(--dur-mid) ease; }
@@ -1628,7 +1633,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .cp-box { width: min(560px, 100%); background: var(--card-bg, #fff); border-radius: 10px; box-shadow: var(--shadow-modal); /* R285 条20：命令面板归弹窗大影档 */ overflow: hidden; animation: cpIn var(--dur-mid) var(--ease-out); /* R285 条30：走全站标准速度+动感 */ }
     @keyframes cpIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
     .cp-input { width: 100%; height: 50px; border: none; outline: none; background: transparent; color: var(--text); font-size: 16px; padding: 0 18px; letter-spacing: 1.2px; }
-    .cp-list { max-height: 46vh; overflow-y: auto; padding: 6px; border-top: 1px solid var(--border); } /* R285 条44：边框灰收敛——写死 #e8e8e8 归档 var(--border) */
+    .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 6px; border-top: 1px solid var(--border); } /* R285 条44：边框灰收敛——写死 #e8e8e8 归档 var(--border) */
     .cp-item { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text); }
     .cp-item .cp-lab { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }

@@ -148,7 +148,7 @@
               fd.append('mode', 'thumb');
               fd.append('base', u.replace(/^\/img\//, ''));
               fd.append('file', tb, 'thumb.webp');
-              return fetch('/api/admin/upload-image', { method: 'POST', body: fd }).then(function (r2) {
+              return fetch('/api/admin/upload-image', { method: 'POST', body: fd, credentials: 'include' }).then(function (r2) {
                 if (r2 && r2.ok) markOk(u);
               }).catch(function () {});
             });
@@ -160,6 +160,15 @@
     function togglePwdVisibility() {
       var pwd = document.getElementById('loginPass');
       var btn = document.getElementById('pwdToggleBtn');
+      if (!pwd || !btn) return;
+      if (pwd.type === 'password') { pwd.type = 'text'; btn.innerHTML = PWD_EYE_OFF_SVG; btn.setAttribute('aria-label', '隐藏密码'); }
+      else { pwd.type = 'password'; btn.innerHTML = PWD_EYE_OPEN_SVG; btn.setAttribute('aria-label', '显示密码'); }
+    }
+
+    // v306（用户 10-05 02:24）：修改密码弹窗小眼睛复用登录页 SVG 图标
+    function toggleModalPwdVisibility(inputId, btnId) {
+      var pwd = document.getElementById(inputId);
+      var btn = document.getElementById(btnId);
       if (!pwd || !btn) return;
       if (pwd.type === 'password') { pwd.type = 'text'; btn.innerHTML = PWD_EYE_OFF_SVG; btn.setAttribute('aria-label', '隐藏密码'); }
       else { pwd.type = 'password'; btn.innerHTML = PWD_EYE_OPEN_SVG; btn.setAttribute('aria-label', '显示密码'); }
@@ -185,7 +194,6 @@
       if (t.tagName === 'IMG' && !t.dataset.fh) {
         t.dataset.fh = '1';
         t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
-        t.style.objectFit = 'contain';
         t.style.display = 'block'; t.style.opacity = '1';
       } else if (t.tagName === 'VIDEO' && !t.dataset.fh) {
         t.dataset.fh = '1';
@@ -229,8 +237,8 @@
         }
       }
     }, true);
-    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail'); t.style.objectFit = 'contain'; t.style.display = 'block'; t.style.opacity = '1'; } }, true);
-    document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; } });
+    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail'); t.style.display = 'block'; t.style.opacity = '1'; } }, true);
+    document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
 
     // ---------- DOM ----------
     var loginView = document.getElementById('loginView');
@@ -699,6 +707,10 @@
       if (__apiInFlight.has(reqKey)) { return __apiInFlight.get(reqKey); }
       opts.headers = opts.headers || {};
       opts.headers['Content-Type'] = 'application/json';
+      // v305（用户 10-05 02:26）：根因→fetch 默认 credentials 在同源下应带 cookie，
+      // 但某些浏览器/边缘环境中 cookie 会丢失，导致登录后所有 admin 请求 401；
+      // 修法→显式设置 credentials: 'include'，确保 HttpOnly Cookie 必被带上。
+      opts.credentials = opts.credentials || 'include';
       // R30：鉴权统一走 HttpOnly Cookie，不再从 localStorage 读 token
       // R286-57：管理页所有请求加8秒超时保护，网络一卡不再无限转圈
       // R308：GET 请求失败自动重试一次（立刻、不延时），只试一次
@@ -4608,7 +4620,7 @@ document.addEventListener('click', function (e) {
       var form = new FormData();
       form.append('file', file);
       toast('上传中', 'info');
-      fetch('/api/upload', { method: 'POST', body: form })
+      fetch('/api/upload', { method: 'POST', body: form, credentials: 'include' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
           if (res && res.ok && res.url) {
@@ -7412,7 +7424,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=301', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=311', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {

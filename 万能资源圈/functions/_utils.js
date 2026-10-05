@@ -42,6 +42,7 @@ export function corsHeaders(request) {
   } catch (e) { /* 解析失败按无 Origin 处理 */ }
   if (origin && (origin === selfOrigin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))) {
     headers['Access-Control-Allow-Origin'] = origin;
+    headers['Access-Control-Allow-Credentials'] = 'true'; // v305：允许浏览器携带 Cookie，确保会话链路不断
     headers['Vary'] = 'Origin';
   }
   return headers;

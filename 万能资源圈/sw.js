@@ -17,7 +17,7 @@
 // P16+P5：60 天清理统一每天一次——纯代码实现，不碰后台定时配置；跨天首访触发，先检查真有旧数据才删。
 // P15：缓存优先——JS/CSS/图片一律缓存优先+后台更新，文件没变不重复下载。
 // R303（用户 09-30）：P1/P7/P11 翻页按页拉取 + P13 列表 diff 更新 + U3 解锁超时（v288→v289）。
-const CACHE_NAME = 'wnzyq-v303'; // v302（用户 10-05 00:09）：骨架屏统一20条+趋势/每日数据图去骨架+弹窗只允许层层关闭 // v299（用户 10-04 23:11）：修复 api/shop/home.js 引用层级错误 // v295（用户 10-04 02:52）：分享描述统一+全页面补齐分享按钮和弹窗+logo版本同步 // v294（用户 10-04 02:14）：B功能批升级 // v293（用户 10-04 02:14）：版本升级→CACHE_NAME同步到v293 // R307（用户 09-30）：U5 失败立即停转+10s 自动关、U6/U7 全系统取消视频/图片上传大小限制（前端 30MB 预拦+后端 25/100MB 视频+10MB 图片拒绝全删，KV 25MB 为 Cloudflare 平台硬上限代码无法解除）、U8 统计日期固定北京时间+8、U9 密码 50 字上限、导出 10000 封顶取消、批量 500 上限取消、发码接口 5 条 issues 遗留清理。// R304（用户 09-30 02:00）：图片按页加载全系统 + 小图（缩略图）+ 图标缓存统一 365 天 + 图标版本号随版。// v287：R297 旋转圈视觉居中+间距方向修复。// v286：R295 忙碌态样式统一——全系统加载文案去「…」、__btnBusy 圈插文字后（appendChild）。// v285：R293 恢复「确定中」忙碌态+全系统排查补齐防连点保护。// v284：R292 一分钟节点回归——撤"确定中…"忙碌态+删切回/pageshow 非一分钟同步触发+编辑期间弹窗保护 // v283：R291 实时同步轮询首分钟盲区修复——初始基线用页面当前显示值 // v282：R289 数据加载架构重构——进页预载+页内零加载+实时同步→没变不重画（表格 DOM 节点引用不变）、有变化才重渲染；④loadStats silent 路径不铺骨架（R238 保新鲜刷新同修：静默清真行铺骨架会闪且没变的表会停留在骨架态）。与 shop.js R243 条32（visibilitychange/pageshow 60s 门）+ R276（快照 diff 没变不 renderAll）同一套口径。R279（老板 09-28「1.编辑资源封面图选中闪一下；2.封面占位符感叹号不居中；3.管理页顶栏logo/文字偏高+全系统按键高度统一」）：①admin.js selectCoverImage 不再走 renderCoverGallery 全量 innerHTML 重建（点选→所有缩略图 opacity:0→load→1 重走=老板看到的闪一下），改纯选中态：只在现有 .cg-item 上切 .active 类+同步链接输入框/预览，结构性操作（增删/重排/输入/上传）保留重建。②admin.css 弹窗占位图 16:9 撑高规则（height:auto!important+aspect-ratio:16/9+min-height:120px）误命中封面 72px 槽内 data:svg 占位图（实测 68×120 被裁下半截、感叹号偏上不完整），补 .modal-box .cover-gallery .cg-item img[src^=data:svg] 高特异性覆盖（height:100%/aspect-ratio:auto/min-height:0/contain），占位图槽内完整居中。③ui-common.css .view-btn height 40→38px（R182-4 作废）与顶栏咨询客服/分享 .tab 同一基准，列表/网格按键全系统统一 38px，一处改两页生效；shop 顶栏内容行由 40→38 后与 admin 顶栏（logo 38px）内容行等高，老板反馈的管理页 logo/文字偏高 1px（修前实测 admin cy=29 vs shop cy=30）随 ②③ 一并归零拉齐。
+const CACHE_NAME = 'wnzyq-v311'; // v311（用户 10-05 14:38）：老板拍板方案C→16处内部滚动区统一加 overscroll-behavior: contain，弹窗/列表/编辑器/表格等滑到头只在自己区域弹、不传到背后页面。 // v309（用户 10-05 13:29）：根因→卡片封面占位符初始CSS object-fit:cover 与 JS后置改写 contain 不一致，导致切换分类时先顶格后居中闪烁；修法→CSS首帧钉死占位符 contain + 全系统删除 JS objectFit='contain' 后置改写，确保初始态=终态。// v305（用户 10-05 02:26）：根因→fetch 默认 credentials 在某些浏览器/边缘环境中丢失 cookie，导致登录后 admin 接口全部 401 数据加载不出来；修法→全系统显式设置 credentials: 'include' + CORS 响应补 Access-Control-Allow-Credentials: true，确保 HttpOnly Cookie 会话链路必通。// v304（用户 10-05 00:09）：骨架屏统一20条+趋势/每日数据图去骨架+弹窗只允许层层关闭 // v302（用户 10-05 00:09）：骨架屏统一20条+趋势/每日数据图去骨架+弹窗只允许层层关闭 // v299（用户 10-04 23:11）：修复 api/shop/home.js 引用层级错误 // v295（用户 10-04 02:52）：分享描述统一+全页面补齐分享按钮和弹窗+logo版本同步 // v294（用户 10-04 02:14）：B功能批升级 // v293（用户 10-04 02:14）：版本升级→CACHE_NAME同步到v293 // R307（用户 09-30）：U5 失败立即停转+10s 自动关、U6/U7 全系统取消视频/图片上传大小限制（前端 30MB 预拦+后端 25/100MB 视频+10MB 图片拒绝全删，KV 25MB 为 Cloudflare 平台硬上限代码无法解除）、U8 统计日期固定北京时间+8、U9 密码 50 字上限、导出 10000 封顶取消、批量 500 上限取消、发码接口 5 条 issues 遗留清理。// R304（用户 09-30 02:00）：图片按页加载全系统 + 小图（缩略图）+ 图标缓存统一 365 天 + 图标版本号随版。// v287：R297 旋转圈视觉居中+间距方向修复。// v286：R295 忙碌态样式统一——全系统加载文案去「…」、__btnBusy 圈插文字后（appendChild）。// v285：R293 恢复「确定中」忙碌态+全系统排查补齐防连点保护。// v284：R292 一分钟节点回归——撤"确定中…"忙碌态+删切回/pageshow 非一分钟同步触发+编辑期间弹窗保护 // v283：R291 实时同步轮询首分钟盲区修复——初始基线用页面当前显示值 // v282：R289 数据加载架构重构——进页预载+页内零加载+实时同步→没变不重画（表格 DOM 节点引用不变）、有变化才重渲染；④loadStats silent 路径不铺骨架（R238 保新鲜刷新同修：静默清真行铺骨架会闪且没变的表会停留在骨架态）。与 shop.js R243 条32（visibilitychange/pageshow 60s 门）+ R276（快照 diff 没变不 renderAll）同一套口径。R279（老板 09-28「1.编辑资源封面图选中闪一下；2.封面占位符感叹号不居中；3.管理页顶栏logo/文字偏高+全系统按键高度统一」）：①admin.js selectCoverImage 不再走 renderCoverGallery 全量 innerHTML 重建（点选→所有缩略图 opacity:0→load→1 重走=老板看到的闪一下），改纯选中态：只在现有 .cg-item 上切 .active 类+同步链接输入框/预览，结构性操作（增删/重排/输入/上传）保留重建。②admin.css 弹窗占位图 16:9 撑高规则（height:auto!important+aspect-ratio:16/9+min-height:120px）误命中封面 72px 槽内 data:svg 占位图（实测 68×120 被裁下半截、感叹号偏上不完整），补 .modal-box .cover-gallery .cg-item img[src^=data:svg] 高特异性覆盖（height:100%/aspect-ratio:auto/min-height:0/contain），占位图槽内完整居中。③ui-common.css .view-btn height 40→38px（R182-4 作废）与顶栏咨询客服/分享 .tab 同一基准，列表/网格按键全系统统一 38px，一处改两页生效；shop 顶栏内容行由 40→38 后与 admin 顶栏（logo 38px）内容行等高，老板反馈的管理页 logo/文字偏高 1px（修前实测 admin cy=29 vs shop cy=30）随 ②③ 一并归零拉齐。
 
 const STATIC_ASSETS = [
   './',
@@ -35,10 +35,10 @@ const STATIC_ASSETS = [
   './assets/shop.css',
   './assets/shop.js',
   './assets/qrcode.min.js',
-  './assets/images/logo.png?v=300',
-  './assets/images/kefu.png?v=301',
-  './assets/images/qun.png?v=301',
-  './assets/images/gzh.png?v=301'
+  './assets/images/logo.png?v=311',
+  './assets/images/kefu.png?v=311',
+  './assets/images/qun.png?v=311',
+  './assets/images/gzh.png?v=311'
 ];
 
 // 安装：逐项缓存静态资源（单项失败不影响整体）

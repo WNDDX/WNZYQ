@@ -85,11 +85,15 @@
     }
 
     // logo 加载失败兜底：替换为感叹号占位（与全站一致）
-    window.__logoFail = function (im) { try { im.onerror = null; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) {} };
+    window.__logoFail = function (im) { try { im.onerror = null; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) {} };
     var __shopFetchInFlight = new Map();
     function __dedupFetch(url, opts) {
       var key = url + '|' + (opts && opts.body ? opts.body : '');
       if (__shopFetchInFlight.has(key)) return __shopFetchInFlight.get(key);
+      // v305（用户 10-05 02:26）：根因→fetch 默认 credentials 在某些浏览器/边缘环境中 cookie 会丢失；
+      // 修法→显式设置 credentials: 'include'，确保会话 Cookie 必被带上（全系统统一）。
+      if (!opts) opts = {};
+      opts.credentials = opts.credentials || 'include';
       // R308：GET 请求失败自动重试一次（立刻、不延时），只试一次
       var isGet = (!opts || !opts.method || opts.method === 'GET');
       var doFetch = function (isRetry) {
@@ -113,7 +117,6 @@
         if (t.tagName === 'IMG') {
           t.dataset.fh = '1';
           t.src = IMG_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
-          t.style.objectFit = 'contain';
           t.style.display = 'block'; t.style.opacity = '1';
         } else if (t.tagName === 'VIDEO') {
           // R81：视频失败不再换感叹号死图，统一兜底卡（可点新窗口打开原链接）
@@ -125,7 +128,7 @@
           else if (t.parentNode) t.parentNode.removeChild(t);
         }
       }, true);
-      document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; } });
+      document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
     }
 
     // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
@@ -137,13 +140,12 @@
         im.addEventListener('error', function () {
           im.onerror = null;
           im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail');
-          im.style.objectFit = 'contain';
           im.style.display = 'block';
         });
-        im.addEventListener('load', function () { if (!im.dataset.fh && im.naturalWidth === 0 && String(im.getAttribute('src') || '').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; } });
+        im.addEventListener('load', function () { if (!im.dataset.fh && im.naturalWidth === 0 && String(im.getAttribute('src') || '').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
         var _s = im.getAttribute('src') || '';
         if (!_s || _s.indexOf('data:') === 0 || (im.complete && im.naturalWidth === 0)) {
-          im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block';
+          im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block';
         }
       })(imgs[i]);
       var vids = root.querySelectorAll('video');
@@ -206,7 +208,6 @@
         this.onerror = null; // 防止占位图也加载失败导致死循环
         this.src = IMG_PLACEHOLDER; if (this && this.classList) { this.classList.add('media-fail'); this.classList.remove('m-loading'); } this.style.opacity = '1';
         this.style.display = 'block';
-        this.style.objectFit = 'contain';
       };
       img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); this.classList.add('img-in'); }; /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
       if (img.classList && img.classList.contains('modal-cover')) img.classList.add('m-loading'); /* R215 条9：封面加载期固定 16:9 居中槽，首帧不再靠左 */
@@ -214,7 +215,7 @@
       /* R280（老板 09-28 00:35 ①）：封面改固定展示框（CSS 定宽高 + contain）——框尺寸恒定，
          加载前后布局天然零收敛，R258 按 16:9 加载槽比例内联定型的补丁（与固定框冲突）整体退役。 */
       // R93：封面缺省/加载失败回退感叹号占位（R91 文字版已被用户否决回退）
-      if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading'); } img.style.display = 'block'; img.style.opacity = '1'; img.style.objectFit = 'contain'; }
+      if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading'); } img.style.display = 'block'; img.style.opacity = '1'; }
       /* R213 P2⑦（质检 R212）：R191 时代的旧媒体回退注释尸体已删（全局兜底已上移至脚本顶部统一注册） */
     }
 
@@ -1064,8 +1065,9 @@
         im.alt = '';
         im.style.cursor = 'zoom-in';
         im.style.opacity = '0';
-        im.onload = function () { im.style.opacity = '1'; };
-        im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.style.opacity = '1'; this.style.objectFit = 'contain'; this.style.display = 'block'; };
+        im.className = 'm-loading'; /* v309:加载前CSS占位，尺寸恒定*/
+        im.onload = function () { this.classList.remove('m-loading'); this.style.opacity = '1'; };
+        im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; this.style.display = 'block'; };
         im.src = url;
         im.addEventListener('click', function () { window.openLightbox(url); });
         if (window.mediaStable) window.mediaStable(im);
@@ -1077,6 +1079,7 @@
         v.src = url;
         v.controls = true;
         v.playsInline = true;
+        v.style.background = '#000'; /* v309:视频加载前黑底占位，不塌陷*/
         /* R278（老板 09-27）：详情视频补点击放大 → 全屏大图（与同区图片的显式 handler 同款；
          * 原实现只有 controls、无任何放大绑定——「全系统点击放大视频」缺口。不为 modalMedia 整体
          * bindLightbox，避免与上方图片的显式 handler 双绑定。 */
@@ -1372,7 +1375,7 @@
         // R266（用户 09-27 15:08）：onerror 必须在 src 赋值前注册，杜绝注册前即失败导致的裸闪破损图标。
         im.onerror = function () {
           this.onerror = null;
-          this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.style.objectFit = 'contain'; this.style.display = 'block';
+          this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.style.display = 'block';
         };
         im.src = currentVariant.img;
         im.alt = '';
@@ -1435,7 +1438,7 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=301', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=311', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1746,7 +1749,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=301', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=311', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else showToast('暂未设置客服链接', 'info');
     });
 
@@ -2345,8 +2348,12 @@
     function __shopBackGuard() {
       setTimeout(function () { try { var grid = document.getElementById('productGrid'); if (grid && !grid.children.length && typeof initData === 'function') initData(); } catch (err) {} }, 60);
     }
-    // 内联兜底：公共脚本未加载时 bfcache 恢复也会强制刷新（返回/前进页面状态混乱导致白屏的唯一根治）
-    window.addEventListener('pageshow', function (e) { if (e.persisted) { try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} window.location.reload(); } });
+    // v307：bfcache 恢复时不再强制刷新——根治"切回来闪一下"。公共脚本已同步修复，此处兜底也取消 reload。
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) {
+        try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {}
+      }
+    });
     window.addEventListener('pageshow', function (e) { if (e.persisted) return; __shopBackGuard(); });
     window.addEventListener('popstate', __shopBackGuard);
     var savedScroll = parseInt(localStorage.getItem(SCROLL_KEY) || '0', 10);

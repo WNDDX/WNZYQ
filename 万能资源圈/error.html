@@ -11,11 +11,11 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="万能资源圈">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="/assets/images/logo.png?v=300">
+<meta property="og:image" content="/assets/images/logo.png?v=311">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="万能资源圈・错误">
 <meta name="twitter:description" content="优质资源聚合平台">
-<meta name="twitter:image" content="/assets/images/logo.png?v=300">
+<meta name="twitter:image" content="/assets/images/logo.png?v=311">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)" /* v293（用户 10-04 02:14）：002/067深色地址栏→四页统一#14151f */>
@@ -39,7 +39,7 @@ body{background:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius: 10px; text-decoration:none;font-size:16px; /* v293（用户 10-04 02:14）：017错误页按钮圆角999→10px→跟全站普通按钮统一 */font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow: var(--shadow-pop); /* v293（用户 10-04 02:14）：044本地阴影收归5档→0 4px 15px rgba(0,0,0,0.2)改var(--shadow-pop) */} /* R231 条7：放大式并入微亮+浮起 */
 .btn:active{transform:scale(0.96);} /* R231 条7：按下缩下去（全站统一） */
-.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 24px;opacity:0;overflow:hidden; /* R33：logo下方24px与大标题下方24px对称 */background:transparent;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22); /* R53：logo 无链接但特效全保留（与导航页 logo 同款 hover/active） */text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease,opacity 0.8s ease;}
+.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 24px;opacity:0;overflow:hidden; /* R33：logo下方24px与大标题下方24px对称 */background:transparent;box-sizing:border-box;border:3px solid var(--card-bg);box-shadow:var(--avatar-shadow); // v310（用户 10-05 14:25）：差异→统一口径。A1+A4 logo 边框+阴影统一 /* R53：logo 无链接但特效全保留（与导航页 logo 同款 hover/active） */text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease,opacity 0.8s ease;}
 .logo:hover{box-shadow:0 0 0 3px rgba(255,255,255,0.45);}
 .logo:active{transform:scale(0.94);opacity:0.8;}
 .logo img{width:100%;height:100%;object-fit:cover;}
@@ -122,7 +122,7 @@ document.addEventListener('error', function (e) {
 (function () {
   var logo = document.getElementById('errLogo');
   if (logo) {
-    logo.src = '/assets/images/logo.png?v=300'; // 绝对路径，加载失败自动显示感叹号占位
+    logo.src = '/assets/images/logo.png?v=311'; // 绝对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
       this.onerror = null;

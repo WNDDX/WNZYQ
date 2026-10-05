@@ -15,8 +15,8 @@ window.__uiCommonLoaded = true;
 
 
 /* ===== R34 全站统一 PWA Service Worker 注册（一处定义四页生效；原导航页/资源页各自的注册已收编于此） =====
- * 注册后每次打开都主动检查更新；新版 SW 接管（controllerchange）时自动刷新一次页面——
- * 配合 sw.js 的导航网络竞速策略，部署新版后访客刷新一次即拿到全新页面，不再先闪旧版。 */
+ * v307：新版 SW 接管（controllerchange）时不再强制刷新当前页面——改为温和提示，避免用户正操作时页面突然闪一下。
+ * 下次用户自然打开页面时，SW 的导航网络竞速策略会确保拿到最新内容。 */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('/sw.js').then(function (reg) {
@@ -25,8 +25,9 @@ if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', function () {
         if (_swReloaded) return;
         _swReloaded = true;
-        try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} // R248：编辑中时先落草稿再刷新
-        window.location.reload();
+        try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} // R248：编辑中时先落草稿
+        // v307：不强制刷新，只提示用户有新版本——根治"放着放着自己刷一下"
+        try { window.toast && window.toast('已更新到最新版本，下次打开自动生效', 'info', 'info', 4000); } catch (e) {}
       });
     }).catch(function () {});
   });
@@ -139,7 +140,7 @@ if ('serviceWorker' in navigator) {
         img.style.opacity = '';
       };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=301';
+      img.src = qrImg || '/assets/images/kefu.png?v=311';
       if (img.complete) {
         if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
         else { img.onerror(); }
@@ -196,7 +197,7 @@ if ('serviceWorker' in navigator) {
     var jb = m.querySelector('button[data-u]');
     if (jb) jb.setAttribute('data-u', url || '');
     var im = document.getElementById('kfFallbackImg');
-    if (im) { im.src = '/assets/images/kefu.png?v=301'; }
+    if (im) { im.src = '/assets/images/kefu.png?v=311'; }
     try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
     m.style.display = 'flex';
     if (window.lockBodyScroll) window.lockBodyScroll(true);
@@ -544,28 +545,63 @@ if ('serviceWorker' in navigator) {
   }
 
   // ===== 弹窗滚动锁：打开弹窗锁定背景滚动（PC overflow + 移动端拦截穿透），弹窗内部内容仍可正常滚动 =====
-  var __touchLocked = false;
+  // v307：全面加固——引用计数防嵌套弹窗误解锁、touchmove+wheel 双拦截、允许容器覆盖全站所有弹窗类型
+  var __bodyLockCount = 0;
+  var __BLOCK_TOUCH_SEL = '.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.ann-box,.lightbox,.cp-box,.qr-preview-box,.stat-modal,.picker-panel,.cat-picker-panel';
   function __blockTouch(e) {
     if (!e.target || !e.target.closest) return;
-    var allow = e.target.closest('.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.ann-box');
+    var allow = e.target.closest(__BLOCK_TOUCH_SEL);
     if (!allow) e.preventDefault();
   }
+  function __blockWheel(e) {
+    if (!e.target || !e.target.closest) return;
+    var allow = e.target.closest(__BLOCK_TOUCH_SEL);
+    if (!allow) e.preventDefault();
+  }
+  // v307：lockBodyScroll 保留引用计数，确保嵌套弹窗（弹窗里再开弹窗）全部关闭后才恢复背景滚动
+  var __bodyLockCount = 0;
+  var __touchLocked = false, __wheelLocked = false;
   window.lockBodyScroll = function (lock) {
     if (lock) {
-      // 同时锁 body 与 html：不同浏览器的主滚动容器归属不一致，双锁确保 PC 鼠标滚轮也让背景纹丝不动
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-      if (!__touchLocked) { document.addEventListener('touchmove', __blockTouch, { passive: false }); __touchLocked = true; }
+      __bodyLockCount++;
+      if (__bodyLockCount === 1) {
+        // 同时锁 body 与 html：不同浏览器的主滚动容器归属不一致，双锁确保 PC 鼠标滚轮也让背景纹丝不动
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        if (!__touchLocked) { document.addEventListener('touchmove', __blockTouch, { passive: false }); __touchLocked = true; }
+        if (!__wheelLocked) { document.addEventListener('wheel', __blockWheel, { passive: false }); __wheelLocked = true; }
+      }
     } else {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      if (__touchLocked) { document.removeEventListener('touchmove', __blockTouch); __touchLocked = false; }
+      __bodyLockCount = Math.max(0, __bodyLockCount - 1);
+      if (__bodyLockCount === 0) {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        if (__touchLocked) { document.removeEventListener('touchmove', __blockTouch); __touchLocked = false; }
+        if (__wheelLocked) { document.removeEventListener('wheel', __blockWheel); __wheelLocked = false; }
+      }
     }
   };
   var __prevModalOpen = false;
   window.syncBodyLock = function () {
-    var open = !!document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open,.lightbox.open');
-    window.lockBodyScroll(open);
+    // v307：扩大选择器覆盖全部弹窗类型（admin 的公告/命令面板、shop 的二维码预览等）
+    var open = !!document.querySelector('.modal-mask.open,.kf-mask.open,.share-mask.open,.lightbox-mask.open,.alert-mask.open,.lightbox.open,.cp-mask.open,.qr-preview-mask.open,.ann-mask.open,.stat-modal.open,.picker-panel.open,.cat-picker-panel.open');
+    // v307：syncBodyLock 直接操作底层样式+事件，不经过 lockBodyScroll 引用计数——
+    // syncBodyLock 是"根据当前 DOM 有多少弹窗开着"来强制同步状态，不是"增/减一次锁定"
+    if (open !== __prevModalOpen) {
+      if (open) {
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        if (!__touchLocked) { document.addEventListener('touchmove', __blockTouch, { passive: false }); __touchLocked = true; }
+        if (!__wheelLocked) { document.addEventListener('wheel', __blockWheel, { passive: false }); __wheelLocked = true; }
+      } else {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        if (__touchLocked) { document.removeEventListener('touchmove', __blockTouch); __touchLocked = false; }
+        if (__wheelLocked) { document.removeEventListener('wheel', __blockWheel); __wheelLocked = false; }
+        // 同步清空手动引用计数，避免手动路径和自动路径打架
+        __bodyLockCount = 0;
+      }
+    }
     // R167：只在弹窗开合状态真正「变迁」时隐藏 #uiTip——本函数由全文档 class/childList
     // 变化观察器防抖触发（连 uiTip 自身创建都会触发），无条件隐藏会把刚弹出的小框 30ms 后
     // 无端收掉；状态未变（仅普通 class 变化）时不动小框。
@@ -584,8 +620,13 @@ if ('serviceWorker' in navigator) {
     });
     __lockObserver.observe(document.documentElement, { subtree: true, childList: true, attributeFilter: ['class'] });
   } catch (e) {}
-  // 浏览器返回 / bfcache 恢复时强制刷新，防止从管理页返回商品页白屏
-  window.addEventListener('pageshow', function (e) { if (e.persisted) { try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} window.location.reload(); } });
+  // v307：浏览器返回 / bfcache 恢复时不再强制刷新——根治"切回来闪一下"。
+  // 数据新鲜度由各页面自己的轮询/同步机制保证，恢复后只保存草稿即可。
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) {
+      try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {}
+    }
+  });
 
   // ===== R14 全站统一翻页组件（buildUniPager）：复用数据统计翻页的胶囊样式（.uni-pager，样式在 ui-common.css）=====
   // window.buildUniPager(container, { page, totalPages, total, unit, onPage })：
@@ -1506,7 +1547,7 @@ window.__cpPanel = function (opts) {
 };
 
 /* v293（用户 10-04 02:14）：063Logo错误处理统一→提取公共函数，四页共用 */
-window.__logoFail = function (im) { try { im.onerror = null; im.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"%3E%3Crect fill="%23e2e5e9" width="80" height="80" rx="8"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="central" text-anchor="middle" fill="%23999" font-size="28"%3E%3C/t%3E%3C/svg%3E'; if (im && im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) {} };
+window.__logoFail = function (im) { try { im.onerror = null; im.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"%3E%3Crect fill="%23e2e5e9" width="80" height="80" rx="8"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="central" text-anchor="middle" fill="%23999" font-size="28"%3E%3C/t%3E%3C/svg%3E'; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) {} };
 
 /* v297（用户 10-04 02:14）：C-242 翻页按钮置灰逻辑提取到公共函数，前后台共用 */
 window.__setPagerDisabled = function (btn, disabled) { btn.disabled = disabled; btn.style.opacity = disabled ? '0.4' : ''; };
