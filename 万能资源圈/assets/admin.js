@@ -483,6 +483,7 @@
         statByCategory: state.statByCategory,
         statRecent: state.statRecent,
         version: state._homeVersion || '',
+        _cacheFormat: 'v317', // v317：缓存格式标记，用于版本切换时自动失效旧缓存
         timestamp: Date.now()
       });
     }
@@ -1042,7 +1043,7 @@ function boot() {
       window.__plC = 1; window.__plP = 1;
       // R276：先读 sessionStorage 缓存，刷新时秒显上一次内容
       var _cache = __getAdminCache();
-      var _hasCache = _cache.products && _cache.products.length && _cache.timestamp && (Date.now() - _cache.timestamp < 600000);
+      var _hasCache = _cache._cacheFormat === 'v317' && _cache.products && _cache.products.length && _cache.timestamp && (Date.now() - _cache.timestamp < 600000);
       if (_hasCache) {
         state.products = _cache.products || [];
         state.categories = _cache.categories || [];
@@ -1055,6 +1056,8 @@ function boot() {
         state.statByProduct = _cache.statByProduct;
         state.statByCategory = _cache.statByCategory;
         state.statRecent = _cache.statRecent;
+        // v317：缓存恢复后标记为后端分页模式（首屏只拿第一页，翻页/搜索/筛选点到才拉）
+        state._backendPaged = true;
         // 恢复 __statsCache，切日期时秒开
         var _sd = state.statsDays || 1;
         __statsCache[_sd] = { end: __bjToday(), res: { ok: true, overview: state.statsOverview, overview_prev: state.statsOverviewPrev, trend: state.statsTrend, trend_prev: state.statsTrendPrev, byProduct: state.statByProduct, byCategory: state.statByCategory, recent: state.statRecent } };
@@ -1280,6 +1283,7 @@ function boot() {
 
     function loadProducts(silent) { /* R281：silent=切回窗口静默重拉——不铺骨架、不弹 toast；快照比对没变不重画 */
       /* v314（用户 10-05 15:59）：根因→管理页资源列表翻页/搜索/筛选每次走网络，旧内容淡出成空白等待；修法→内存缓存秒开+后台静默刷新（stale-while-revalidate）。看过的组合(page+kw+filterCat+filterStatus)存内存，再切回来立即渲染零等待。首次切到新组合不清空旧内容+轻量进度条，数据回来再替换。真失败toast提示+收骨架不留灰态。下拉刷新清缓存拿最新。 */
+      /* v317（用户 10-05 18:40）：老板拍板规则1/2/3/4+优化2/3/4，首屏只拿第一页，翻页/搜索/筛选点到才拉+缓存秒出。 */
       var kw = (document.getElementById('adminSearch').value || '').trim();
       var filterCat = document.getElementById('filterCat').value;
       var filterStatus = document.getElementById('filterStatus').value;
@@ -1312,8 +1316,7 @@ function boot() {
         } else if (_hasSkel) {
           window.__adminSkelP = true;
         } else if (state.products.length) {
-          // v314：有旧内容时不淡出清空，保留旧内容+轻量进度条
-          __showAdminPageLoading();
+          // v315（用户 10-05 17:33）：进度条全删——老板不要进度条
         }
       }
       var _snapP = silent ? __adminDataSig(state.products) : null;
@@ -1339,7 +1342,7 @@ function boot() {
             if (silent) return; /* R281：静默失败不动画面不弹 toast、不更新时间戳（下次切回再试） */
             /* R230：接口异常收骨架走空态，不卡灰（对齐资源页 fetchRemote 兜底） */
             window.__adminSkelP = false; __clearAdminSkel(document.getElementById('productList'));
-            __hideAdminPageLoading();
+            // v315（用户 10-05 17:33）：进度条全删
             var _em = document.getElementById('productEmpty');
             if (_em) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = '暂无资源'; }
             toast(res.msg || '加载失败', 'error'); return; }
@@ -1348,15 +1351,15 @@ function boot() {
           if (silent && __adminDataSig(_newP) === _snapP) return; /* R281：数据没变——纹丝不动（不重画不预载不重存） */
           if (silent) initFilterCatPicker(); /* R281：有变才补建筛选器（分类选项同步） */
           window.__adminSkelP = false;
-          __hideAdminPageLoading();
+          // v315（用户 10-05 17:33）：进度条全删
           state.products = _newP;
-          // R303：记录后端分页元数据
+          // v317：记录后端分页元数据（恢复后端分页，_backendPaged 始终 true）
           if (res.total_pages !== undefined) {
             state.totalPages = res.total_pages || 1;
             state.total = res.total || 0;
             state._backendPaged = true;
           } else {
-            state._backendPaged = false;
+            state._backendPaged = true;
           }
           // v314：写入内存缓存
           __adminProductCache[_cacheKey] = {
@@ -1392,7 +1395,7 @@ function boot() {
         adminPage = 1;
         /* R183 条21：筛选条件持久化（下次登录自动恢复） */
         try { localStorage.setItem('wnzyq_admin_filter', JSON.stringify({ c: document.getElementById('filterCat').value, s: document.getElementById('filterStatus').value })); } catch (e0) {}
-        // R303：筛选条件变化时从后端重新拉取（后端分页路径）
+        // v317：翻页/搜索/筛选点到才拉，走 loadProducts（带内存缓存秒出）
         loadProducts();
       }
     });
@@ -1400,34 +1403,23 @@ function boot() {
     document.addEventListener('input', function (e) {
       if (e.target.id === 'adminSearch') {
         clearTimeout(window.__adminSearchTimer);
-        window.__adminSearchTimer = setTimeout(function () { adminPage = 1; loadProducts(); var __sv = document.getElementById('adminSearch').value; if (__sv.trim()) window.pushSearchHist('adminSearchHist', __sv); }, 300); /* R186 建议1：搜索稳定 300ms 后记录 */
+        window.__adminSearchTimer = setTimeout(function () {
+          adminPage = 1;
+          // v317：翻页/搜索/筛选点到才拉，走 loadProducts（带内存缓存秒出）
+          loadProducts();
+          var __sv = document.getElementById('adminSearch').value; if (__sv.trim()) window.pushSearchHist('adminSearchHist', __sv);
+        }, 300); /* R186 建议1：搜索稳定 300ms 后记录 */
         var __ac = document.getElementById('adminSearchClear');
         if (__ac) __ac.classList.toggle('show', e.target.value.length > 0);
       }
     });
 
     // v314（用户 10-05 15:59）：根因→管理页资源列表翻页/搜索/筛选每次走网络，旧内容淡出成空白等待；修法→内存缓存秒开+后台静默刷新（stale-while-revalidate）。看过的组合(page+kw+filterCat+filterStatus)存内存，再切回来立即渲染零等待。首次切到新组合不清空旧内容+轻量进度条，数据回来再替换。真失败toast提示+收骨架不留灰态。下拉刷新清缓存拿最新。
+    // v315（用户 10-05 17:33）：进度条全删——老板不要进度条。
     var __adminProductCache = {};        // key='page:kw:filterCat:filterStatus'，value={products,total,totalPages,_backendPaged,timestamp}
     var __adminProductCacheLoading = {}; // key同上，value=Promise（防重复请求）
     function __adminProductCacheKey(page, kw, filterCat, filterStatus) {
       return (page || 1) + ':' + (kw || '') + ':' + (filterCat || '0') + ':' + (filterStatus || '');
-    }
-    function __showAdminPageLoading() {
-      var bar = document.getElementById('adminPageLoadingBar');
-      if (!bar) {
-        bar = document.createElement('div');
-        bar.id = 'adminPageLoadingBar';
-        bar.className = 'page-loading-bar';
-        var wrap = document.getElementById('productList');
-        if (wrap && wrap.parentNode) wrap.parentNode.insertBefore(bar, wrap);
-      }
-      bar.style.display = 'block';
-      bar.style.animation = 'none'; void bar.offsetWidth;
-      bar.style.animation = '';
-    }
-    function __hideAdminPageLoading() {
-      var bar = document.getElementById('adminPageLoadingBar');
-      if (bar) bar.style.display = 'none';
     }
 
     var adminPage = 1;
@@ -6359,6 +6351,8 @@ document.addEventListener('click', function (e) {
       return api('admin/dashboard?v=' + encodeURIComponent(cachedVersion), { timeout: 30000 }).then(function (res) {
         if (res && res.unchanged === true) {
           window.__lastFetchTime = Date.now();
+          // v317：数据未变，保持后端分页模式（翻页/搜索/筛选点到才拉）
+          if (state._backendPaged === undefined) state._backendPaged = true;
           return;
         }
         if (!res || !res.ok) {
@@ -6371,6 +6365,7 @@ document.addEventListener('click', function (e) {
           state.totalProducts = res.products.total || 0;
           state.totalProductPages = res.products.total_pages || 1;
           state.currentProductPage = res.products.page || 1;
+          // v317（用户 10-05 18:40）：老板拍板规则1/2/3/4+优化2/3/4，首屏只拿第一页，翻页/搜索/筛选点到才拉+缓存秒出
           state._backendPaged = true;
         }
         // 解包分类
@@ -7509,7 +7504,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=314', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=317', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {

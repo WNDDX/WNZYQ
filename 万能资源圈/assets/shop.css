@@ -293,10 +293,7 @@
     .view-switch-anim { animation: viewSwitch var(--dur-mid) ease; }
     /* R231 条19：翻页旧内容 0.1s 淡出（容器级——子卡的 stagger-in 动画不干扰容器透明度） */
     .page-fade-out { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); /* R285 条32：0.1s 手写走标准档 */ }
-    /* v312（用户 10-05 15:21）：首次切到未缓存分类/翻页时，顶部轻量进度条——卡片区上缘细蓝条滑动，不做全屏骨架 */
-    .page-loading-bar { position: relative; height: 2px; background: transparent; overflow: hidden; margin: -4px 0 6px; display: none; }
-    .page-loading-bar::after { content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: var(--blue1, #1E88E5); animation: pageLoadSlide 0.8s ease-in-out infinite; }
-    @keyframes pageLoadSlide { 0% { left: -40%; } 100% { left: 100%; } }
+    /* v315（用户 10-05 17:33）：进度条全删——老板不要进度条 */
     /* R243（用户 09-22 23:18）：条6 详情弹窗类型切换淡出 */
     .variant-fade-out { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); /* R285 条32：0.1s 手写走标准档 */ }
     /* R243（用户 09-22 23:18）：条6 价格数字闪一下强调变化 */

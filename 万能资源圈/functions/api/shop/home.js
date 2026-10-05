@@ -5,8 +5,9 @@
  */
 import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns, ensureProductColumns } from '../../_utils.js'; // v299（用户 10-04 23:11）：修复引用层级错误致 Cloudflare 构建失败
 
+// v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v315全量返回需改回首屏只拿第一页，翻页/切分类/搜索点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置，其余前端按需拉取。
 const PUBLIC_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'];
-const PAGE_SIZE = 20;
+const HOME_PAGE_SIZE = 20;
 
 // 计算数据版本（ Beijing 时间口径，与 U8 统一 ）
 async function computeVersion(env) {
@@ -52,12 +53,12 @@ export async function onRequestGet(context) {
   await ensureProductColumns(env);
   await ensureVariantColumns(env);
 
-  // 1. 产品列表（第 1 页，显示中）
+  // v317（用户 10-05 18:40）：首屏只拿第一页 20 条，翻页/切分类/搜索走 /api/products 按需拉取
   const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0').first();
   const total = countRes ? countRes.n : 0;
   const { results: prodRows } = await env.DB.prepare(
-    'SELECT * FROM products WHERE is_online = 1 AND is_hidden = 0 ORDER BY sort ASC, id DESC LIMIT ? OFFSET 0'
-  ).bind(PAGE_SIZE).all();
+    'SELECT * FROM products WHERE is_online = 1 AND is_hidden = 0 ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
+  ).bind(HOME_PAGE_SIZE, 0).all();
 
   const ids = prodRows.map((p) => p.id);
   let variantsByProduct = {};
@@ -91,6 +92,7 @@ export async function onRequestGet(context) {
     if (PUBLIC_KEYS.indexOf(r.key) !== -1) settings[r.key] = r.value;
   }
 
+  // v317（用户 10-05 18:40）：首屏返回第一页分页元数据，前端按后端分页口径渲染
   return json({
     ok: true,
     version,
@@ -98,8 +100,8 @@ export async function onRequestGet(context) {
       list: products,
       total,
       page: 1,
-      page_size: PAGE_SIZE,
-      total_pages: Math.ceil(total / PAGE_SIZE)
+      page_size: HOME_PAGE_SIZE,
+      total_pages: Math.ceil(total / HOME_PAGE_SIZE)
     },
     categories,
     settings

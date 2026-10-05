@@ -11,11 +11,11 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="万能资源圈">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="/assets/images/logo.png?v=314">
+<meta property="og:image" content="/assets/images/logo.png?v=317">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="万能资源圈・错误">
 <meta name="twitter:description" content="优质资源聚合平台">
-<meta name="twitter:image" content="/assets/images/logo.png?v=314">
+<meta name="twitter:image" content="/assets/images/logo.png?v=317">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#1E88E5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14151f" media="(prefers-color-scheme: dark)" /* v293（用户 10-04 02:14）：002/067深色地址栏→四页统一#14151f */>
@@ -122,7 +122,7 @@ document.addEventListener('error', function (e) {
 (function () {
   var logo = document.getElementById('errLogo');
   if (logo) {
-    logo.src = '/assets/images/logo.png?v=314'; // 绝对路径，加载失败自动显示感叹号占位
+    logo.src = '/assets/images/logo.png?v=317'; // 绝对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
       this.onerror = null;

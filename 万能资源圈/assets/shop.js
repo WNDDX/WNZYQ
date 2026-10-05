@@ -43,27 +43,11 @@
 
     // v312（用户 10-05 15:21）：根因→后端分页下每次切分类都发网络请求，期间旧内容淡出成空白等待；
     // 修法→分类/搜索/翻页内存缓存——看过的组合(cid+subCid+kw+page)存内存，再切回来立即渲染零等待，后台静默刷新（stale-while-revalidate）。
+    // v315（用户 10-05 17:33）：进度条全删——老板不要进度条，要「直接出来」的零等待体验。
     var __pageCache = {};        // key='cid:subCid:kw:page'，value={products,categories,total,totalPages,page,_backendPaged,timestamp}
     var __pageCacheLoading = {}; // key同上，value=Promise（防重复请求）
     function __cacheKey(page, cid, subCid, kw) {
       return (cid || 0) + ':' + (subCid || 0) + ':' + (kw || '') + ':' + (page || 1);
-    }
-    function __showPageLoading() {
-      var bar = document.getElementById('pageLoadingBar');
-      if (!bar) {
-        bar = document.createElement('div');
-        bar.id = 'pageLoadingBar';
-        bar.className = 'page-loading-bar';
-        var wrap = productGrid.parentNode;
-        if (wrap) wrap.insertBefore(bar, productGrid);
-      }
-      bar.style.display = 'block';
-      bar.style.animation = 'none'; void bar.offsetWidth;
-      bar.style.animation = '';
-    }
-    function __hidePageLoading() {
-      var bar = document.getElementById('pageLoadingBar');
-      if (bar) bar.style.display = 'none';
     }
 
     // R246（用户 09-23 12:33）：分类指示条精确定位——用 getBoundingClientRect 取分数值，
@@ -1452,7 +1436,7 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=314', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=317', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1763,7 +1747,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=314', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=317', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else showToast('暂未设置客服链接', 'info');
     });
 
@@ -2003,6 +1987,7 @@
           }
           if (!res.ok) return;
           // 解包产品
+          // v317（用户 10-05 18:40）：老板拍板规则1/2/3/4+优化2/3/4，首屏只拿第一页，翻页/切分类/搜索点到才拉+缓存秒出
           if (res.products) {
             DATA.products = res.products.list || [];
             DATA.total = res.products.total || 0;
@@ -2088,13 +2073,14 @@
             DATA.products = res[0].list || [];
             DATA.categories = res[1].list || [];
             usingRemote = true;
+            // v317（用户 10-05 18:40）：恢复后端分页，fetchRemote 走真实网络请求，_backendPaged=true
             if (res[0].total_pages !== undefined) {
               DATA.total = res[0].total || 0;
               DATA.totalPages = res[0].total_pages || 1;
               DATA.page = res[0].page || 1;
               DATA._backendPaged = true;
             } else {
-              DATA._backendPaged = false;
+              DATA._backendPaged = true;
             }
             __setShopCache('wnzyq_shop_data', { products: DATA.products, categories: DATA.categories });
             if (JSON.stringify(DATA.products) !== _oldProducts || JSON.stringify(DATA.categories) !== _oldCategories) _changed = true;
@@ -2163,14 +2149,8 @@
         return Promise.resolve();
       }
 
-      // 无缓存或 force → 显示轻量进度条，等网络请求
-      __showPageLoading();
-      return doRealFetch().then(function () {
-        __hidePageLoading();
-      }).catch(function (err) {
-        __hidePageLoading();
-        throw err;
-      });
+      // v315（用户 10-05 17:33）：进度条全删——老板不要进度条
+      return doRealFetch();
     }
 
     // ---------- R10 分享链接落地：?pid= 自动打开资源弹窗 ----------

@@ -1831,7 +1831,4 @@ button, [role="button"], .row-btn, .batch-btn, .rte-btn, [onclick] { -webkit-tap
 
 
 
-/* v314（用户 10-05 15:59）：根因→管理页资源列表翻页/搜索/筛选首次切到未缓存组合时无加载指示；修法→引入与资源页同口径的 2px 顶部进度条 */
-.page-loading-bar { position: relative; height: 2px; background: transparent; overflow: hidden; margin: -4px 0 6px; display: none; }
-.page-loading-bar::after { content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: var(--blue1, #1E88E5); animation: pageLoadSlide 0.8s ease-in-out infinite; }
-@keyframes pageLoadSlide { 0% { left: -40%; } 100% { left: 100%; } }
+/* v315（用户 10-05 17:33）：进度条全删——老板不要进度条 */

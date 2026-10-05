@@ -7,6 +7,7 @@
  */
 import { json, requireAuth, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable } from '../../_utils.js';
 
+// v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v316全量返回需改回首屏只拿第一页，翻页/搜索/筛选点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置+统计概览，其余前端按需拉取。
 const ADMIN_PAGE_SIZE = 20;
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
@@ -75,7 +76,7 @@ export async function onRequestGet(context) {
   const [countRes, { results: prodRows }, { results: catRows }, { results: setRows },
     oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, oBindings] = await Promise.all([
     env.DB.prepare('SELECT COUNT(*) AS n FROM products').first(),
-    env.DB.prepare('SELECT * FROM products ORDER BY sort ASC, id DESC LIMIT ? OFFSET 0').bind(pageSize).all(),
+    env.DB.prepare('SELECT * FROM products ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?').bind(ADMIN_PAGE_SIZE, 0).all(), // v317：首屏只拿第一页
     env.DB.prepare(
       `SELECT c.id, c.name, c.sort, c.parent_id, c.is_hidden,
               (SELECT COUNT(*) FROM products p WHERE p.cid = c.id) AS cnt
@@ -125,8 +126,8 @@ export async function onRequestGet(context) {
       list: products,
       total,
       page: 1,
-      page_size: pageSize,
-      total_pages: Math.ceil(total / pageSize)
+      page_size: ADMIN_PAGE_SIZE, // v317：首屏第一页
+      total_pages: Math.ceil(total / ADMIN_PAGE_SIZE)
     },
     categories,
     settings,
