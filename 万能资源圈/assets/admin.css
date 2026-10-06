@@ -498,23 +498,7 @@
       .input-row { flex-wrap: wrap; }
       .input-row .input-upload-btn { font-size: 12px; padding: 0 12px; }
     }
-    /* v320（用户 10-05 22:37）：文件弹窗专用样式 */
-    /* v321（用户 10-05 23:38）：file-link-toggle 已删除，链接类型自动判断 */
-    .file-upload-menu { display: flex; gap: 8px; margin-bottom: 10px; }
-    .file-upload-menu button {
-      flex: 1; border: 1px solid #d0d7de; background: #f6f8fa; border-radius: 6px;
-      padding: 6px 0; font-size: 13px; color: #333; cursor: pointer;
-    }
-    .file-upload-menu button:hover { background: #eef1f5; }
-    .file-drop-zone {
-      border: 2px dashed #d0d7de; border-radius: 8px; padding: 18px;
-      text-align: center; color: #888; font-size: 13px; margin-bottom: 12px;
-      transition: border-color .2s, background .2s;
-    }
-    .file-drop-zone.drag-over { border-color: var(--blue1); background: #f0f7ff; color: var(--blue1); }
-    .file-drop-zone p { margin: 6px 0 0; }
-    .file-drop-zone svg { stroke: #aaa; }
-    .file-drop-zone.drag-over svg { stroke: var(--blue1); }
+    /* v328（用户 10-06 15:37）：文件弹窗专用样式已删除——极简设计无二级菜单无拖拽区 */
     /* 编辑器内文件卡 */
     .file-card-wrap { border: 1px solid #e1e4e8; border-radius: 8px; padding: 10px 12px; margin: 6px 0; background: #fafbfc; font-size: 13px; }
     .file-card-header { display: flex; align-items: center; gap: 8px; cursor: pointer; }

@@ -17,7 +17,7 @@
 // P16+P5：60 天清理统一每天一次——纯代码实现，不碰后台定时配置；跨天首访触发，先检查真有旧数据才删。
 // P15：缓存优先——JS/CSS/图片一律缓存优先+后台更新，文件没变不重复下载。
 // R303（用户 09-30）：P1/P7/P11 翻页按页拉取 + P13 列表 diff 更新 + U3 解锁超时（v288→v289）。
-const CACHE_NAME = 'wnzyq-v325'; // v325（老板 10-06 13:41）：根因→占位图加载失败时 media-fail 类被 ui-common.css 加上 1px 边框，浅色底上看着像黑边；修法→删除 ui-common.css:388 img.media-fail 边框规则，占位图与正常图统一无框。
+const CACHE_NAME = 'wnzyq-v328'; // v327（用户 10-06 15:23）：根因→资源页封面区域三处常驻边框（暗色模式黑边/浅色模式灰边）；修法→删 shop.css 三处 border（.card-img/.modal-cover/.cover-carousel），其余样式不动。
 // v321（用户 10-05 23:38）：根因→老板要求弹窗精简3处；修法→①弹窗标题「插入文件或文件夹」→「插入文件」；②删除「文件链接/文件夹链接」手动切换，改为URL自动判断（网盘域名→文件夹卡/文件扩展名→文件卡/默认文件卡）；③编辑器内链接卡加管理员可见类型切换标识（判断错了可一键改）；④上传本地文件按键现状已支持文件+文件夹，无需改动。 // v319（用户 10-05 22:15）：根因→老板4问题（切分类加载/弹窗下拉穿透/登录网络提示/手机列表文字叠封面）；修法→①shop/admin 首屏后台拉齐各分类第一页，切分类直接渲染零等待；②弹窗打开时禁用整页 pull-to-refresh；③登录容错（缓存优先、超时15秒、真失败才弹一次toast）；④390px 列表模式加固 overflow/min-width 防文字溢入封面图。 // v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，首屏一趟拿第一页+分类+设置+统计，翻页/切分类/搜索点到才拉+缓存秒出，图片分级列表小图详情原图，第二次进页版本号 unchanged 不重拿；修法→①shop home.js / admin dashboard.js 恢复20条分页首屏只拿第一页；②shop.js fetchRemote / admin.js loadProducts 恢复后端分页+内存缓存秒出；③admin sessionStorage 加 _cacheFormat='v317' 防版本切换混用；④全系统?v=同步升317。// v316（用户 10-05 18:09）：根因→管理页翻页/搜索/筛选每次按页拉取，老板网络一趟2~11秒；修法→CACHE_NAME升v316，管理页dashboard改全量返回+本地分页，全系统?v=同步。// v315（用户 10-05 17:33）：根因→后端分页下每次切分类都发网络请求，老板网络一趟 2~11 秒，每个第一次看的分类都要等；修法→①后端 /api/shop/home 改全量返回（去掉 20 条分页限制），前端切分类/子分类/搜索/翻页全部本地过滤+本地分页切片，零网络零等待。②全站进度条（v312/v314 加的 2px 蓝条）全部删除——老板不要进度条，要「直接出来」的零等待体验。// v312（用户 10-05 15:21）：根因→后端分页下每次切分类都发网络请求，期间旧内容淡出成空白等待；修法→分类/搜索/翻页内存缓存——看过的组合(cid+subCid+kw+page)存内存，再切回来立即渲染零等待，后台静默刷新（stale-while-revalidate）。首次切到新分类/翻页时不淡出清空，保留旧内容+轻量进度条，数据回来再替换。// v311（用户 10-05 14:38）：老板拍板方案C→16处内部滚动区统一加 overscroll-behavior: contain，弹窗/列表/编辑器/表格等滑到头只在自己区域弹、不传到背后页面。 // v309（用户 10-05 13:29）：根因→卡片封面占位符初始CSS object-fit:cover 与 JS后置改写 contain 不一致，导致切换分类时先顶格后居中闪烁；修法→CSS首帧钉死占位符 contain + 全系统删除 JS objectFit='contain' 后置改写，确保初始态=终态。// v305（用户 10-05 02:26）：根因→fetch 默认 credentials 在某些浏览器/边缘环境中丢失 cookie，导致登录后 admin 接口全部 401 数据加载不出来；修法→全系统显式设置 credentials: 'include' + CORS 响应补 Access-Control-Allow-Credentials: true，确保 HttpOnly Cookie 会话链路必通。// v304（用户 10-05 00:09）：骨架屏统一20条+趋势/每日数据图去骨架+弹窗只允许层层关闭 // v302（用户 10-05 00:09）：骨架屏统一20条+趋势/每日数据图去骨架+弹窗只允许层层关闭 // v299（用户 10-04 23:11）：修复 api/shop/home.js 引用层级错误 // v295（用户 10-04 02:52）：分享描述统一+全页面补齐分享按钮和弹窗+logo版本同步 // v294（用户 10-04 02:14）：B功能批升级 // v293（用户 10-04 02:14）：版本升级→CACHE_NAME同步到v293 // R307（用户 09-30）：U5 失败立即停转+10s 自动关、U6/U7 全系统取消视频/图片上传大小限制（前端 30MB 预拦+后端 25/100MB 视频+10MB 图片拒绝全删，KV 25MB 为 Cloudflare 平台硬上限代码无法解除）、U8 统计日期固定北京时间+8、U9 密码 50 字上限、导出 10000 封顶取消、批量 500 上限取消、发码接口 5 条 issues 遗留清理。// R304（用户 09-30 02:00）：图片按页加载全系统 + 小图（缩略图）+ 图标缓存统一 365 天 + 图标版本号随版。// v287：R297 旋转圈视觉居中+间距方向修复。// v286：R295 忙碌态样式统一——全系统加载文案去「…」、__btnBusy 圈插文字后（appendChild）。// v285：R293 恢复「确定中」忙碌态+全系统排查补齐防连点保护。// v284：R292 一分钟节点回归——撤"确定中…"忙碌态+删切回/pageshow 非一分钟同步触发+编辑期间弹窗保护 // v283：R291 实时同步轮询首分钟盲区修复——初始基线用页面当前显示值 // v282：R289 数据加载架构重构——进页预载+页内零加载+实时同步→没变不重画（表格 DOM 节点引用不变）、有变化才重渲染；④loadStats silent 路径不铺骨架（R238 保新鲜刷新同修：静默清真行铺骨架会闪且没变的表会停留在骨架态）。与 shop.js R243 条32（visibilitychange/pageshow 60s 门）+ R276（快照 diff 没变不 renderAll）同一套口径。R279（老板 09-28「1.编辑资源封面图选中闪一下；2.封面占位符感叹号不居中；3.管理页顶栏logo/文字偏高+全系统按键高度统一」）：①admin.js selectCoverImage 不再走 renderCoverGallery 全量 innerHTML 重建（点选→所有缩略图 opacity:0→load→1 重走=老板看到的闪一下），改纯选中态：只在现有 .cg-item 上切 .active 类+同步链接输入框/预览，结构性操作（增删/重排/输入/上传）保留重建。②admin.css 弹窗占位图 16:9 撑高规则（height:auto!important+aspect-ratio:16/9+min-height:120px）误命中封面 72px 槽内 data:svg 占位图（实测 68×120 被裁下半截、感叹号偏上不完整），补 .modal-box .cover-gallery .cg-item img[src^=data:svg] 高特异性覆盖（height:100%/aspect-ratio:auto/min-height:0/contain），占位图槽内完整居中。③ui-common.css .view-btn height 40→38px（R182-4 作废）与顶栏咨询客服/分享 .tab 同一基准，列表/网格按键全系统统一 38px，一处改两页生效；shop 顶栏内容行由 40→38 后与 admin 顶栏（logo 38px）内容行等高，老板反馈的管理页 logo/文字偏高 1px（修前实测 admin cy=29 vs shop cy=30）随 ②③ 一并归零拉齐。
 
 const STATIC_ASSETS = [
@@ -36,10 +36,10 @@ const STATIC_ASSETS = [
   './assets/shop.css',
   './assets/shop.js',
   './assets/qrcode.min.js',
-  './assets/images/logo.png?v=325',
-  './assets/images/kefu.png?v=325',
-  './assets/images/qun.png?v=325',
-  './assets/images/gzh.png?v=325'
+  './assets/images/logo.png?v=328',
+  './assets/images/kefu.png?v=328',
+  './assets/images/qun.png?v=328',
+  './assets/images/gzh.png?v=328'
 ];
 
 // 安装：逐项缓存静态资源（单项失败不影响整体）

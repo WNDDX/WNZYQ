@@ -342,10 +342,16 @@
     // R36：本地上传按钮——选文件 → 上传 → 链接填进输入框 → 自动确定插入
     inputUploadBtn.addEventListener('click', function () {
       var kind = inputUploadBtn.dataset.kind;
-      // v320（用户 10-05 22:37）：文件上传分支——点按钮出菜单（选文件/选文件夹），不走直接打开
+      // v328（用户 10-06 15:37）：文件上传分支——点按钮直接弹文件选择框（可多选），极简无二级菜单
       if (kind === 'file') {
-        var menu = document.getElementById('fileUploadMenu');
-        if (menu) { menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex'; }
+        var inp = document.createElement('input');
+        inp.type = 'file'; inp.multiple = true;
+        inp.addEventListener('change', function () {
+          var files = Array.from(inp.files || []);
+          var editor = __rte.editor || document.getElementById('fDetail');
+          processLocalFiles(files, editor, null);
+        });
+        inp.click();
         return;
       }
       var inp = document.createElement('input');
@@ -1291,6 +1297,17 @@ function boot() {
     function __adminDataSig(list) {
       return JSON.stringify((list || []).map(function (p) { var c = {}; for (var k in p) { if (k !== 'variants') c[k] = p[k]; } return c; }));
     } /* R281：diff 剔除运行时缓存字段 variants（首载预载写回），其余全字段比对（名称/价格/排序/上下架状态都在内） */
+    // v326（用户 10-06 15:18）：根因→管理页空态文案只认搜索词，分类/状态筛空时一律「暂无资源」，老板分不清是筛空还是真没数据；
+    // 修法→按搜索/分类/状态/全空四档出对应文案，全系统统一「数据加载完成且筛空」才出立方+灰字，加载中绝不显示。
+    function __getAdminEmptyText() {
+      var __kw = (document.getElementById('adminSearch').value || '').trim();
+      var __fc = document.getElementById('filterCat').value;
+      var __fs = document.getElementById('filterStatus').value;
+      if (__kw) return '该搜索暂无资源';
+      if (__fc && __fc !== '0') return '该分类暂无资源';
+      if (__fs) return '该状态暂无资源';
+      return '暂无资源';
+    }
     function __adminCatSig(list) {
       return JSON.stringify((list || []).map(function (c) { var o = {}; for (var k in c) { if (k !== 'cnt' && k !== 'totalCnt') o[k] = c[k]; } return o; }));
     } /* R281：分类 diff 剔除运行时衍生字段 cnt/totalCnt（refreshCatCnts 现场计算写回），服务端字段（id/name/sort/parent_id/is_hidden）没变即视为没变 */
@@ -1370,7 +1387,8 @@ function boot() {
             window.__adminSkelP = false; __clearAdminSkel(document.getElementById('productList'));
             // v315（用户 10-05 17:33）：进度条全删
             var _em = document.getElementById('productEmpty');
-            if (_em) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = '暂无资源'; }
+            // v326（用户 10-06 15:18）：接口异常收骨架走空态时也按当前筛选条件出对应文案。
+            if (_em) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = __getAdminEmptyText(); }
             // v319（用户 10-05 22:15）：根因→登录后/切分类时网络失败反复弹「加载失败」toast，老板网络本就慢、体验差；
             // 修法→已有数据时不弹 toast（保持现有列表显示），只在列表为空时才提示。
             if (!(state.products || []).length) {
@@ -1628,8 +1646,8 @@ function renderProducts() {
       if (list.length === 0) {
         /* R230：数据已到但为空——先收掉骨架再走空态（对齐资源页） */
         if (__reuse) box.innerHTML = '';
-        /* R193：标题文案对齐前台口径——有搜索词=「该搜索暂无资源」+清除按钮；否则=「暂无资源」 */
-        document.getElementById('productEmptyTitle').textContent = (document.getElementById('adminSearch').value || '').trim() ? '该搜索暂无资源' : '暂无资源';
+        // v326（用户 10-06 15:18）：空态文案四档——搜索/分类/状态/全空，对应「该搜索/分类/状态暂无资源」/「暂无资源」。
+        document.getElementById('productEmptyTitle').textContent = __getAdminEmptyText();
         /* R183 条17：搜索空态提供「清除搜索」按钮（与前台同步；非搜索空态不显示） */
         var __oe = empty.querySelector('.empty-clear-btn');
         if (__oe) __oe.parentNode.removeChild(__oe);
@@ -3090,6 +3108,7 @@ function renderProducts() {
 
     // ========== 富文本编辑器功能 ==========
     var rteEditor = document.getElementById('fDetail');
+    bindFileCardManagement(rteEditor); // v328：文件卡管理事件绑定（此前零调用导致死按钮）
 
     // ===== 富文本统一：记忆最后编辑的编辑器与选区，弹窗(链接/图片/视频)关闭后仍能插回原位置 =====
     var __rte = { editor: null, range: null };
@@ -4582,10 +4601,7 @@ document.addEventListener('click', function (e) {
             var files = Array.from(inp.files || []);
             var list = card.querySelector('[data-folder-list]');
             var addBtn = list ? list.querySelector('[data-action="add-item"]') : null;
-            var existing = card.querySelectorAll('.file-folder-item').length;
-            var MAX_FOLDER_FILES = 50;
-            files.forEach(function (f, idx) {
-              if (existing + idx >= MAX_FOLDER_FILES) return;
+            files.forEach(function (f) {
               var oversize = f.size > 25 * 1024 * 1024;
               var row = document.createElement('div');
               row.className = oversize ? 'file-folder-item oversize' : 'file-folder-item';
@@ -4623,66 +4639,23 @@ document.addEventListener('click', function (e) {
       });
     }
 
-    // v320（用户 10-05 22:37）：文件弹窗主控——打开弹窗、绑定一次性事件、协调上传与插入
+    // v328（用户 10-06 15:37）：文件弹窗主控——极简设计：一行说明+链接框+上传按钮，无虚线框无二级菜单
     function setupFileDialog(editor) {
       if (!editor) return;
-      // 一次性绑定选择按钮和拖拽区
+      // 一次性绑定弹窗级拖拽（整个弹窗都是 drop 区）
       if (!window.__fileDialogBound) {
         window.__fileDialogBound = true;
-        var filePickFile = document.getElementById('filePickFile');
-        var filePickFolder = document.getElementById('filePickFolder');
-        var fileDropZone = document.getElementById('fileDropZone');
-        var fileUploadMenu = document.getElementById('fileUploadMenu');
-        // 选择文件（可多选）
-        if (filePickFile) {
-          filePickFile.addEventListener('click', function () {
-            if (fileUploadMenu) fileUploadMenu.style.display = 'none';
-            var inp = document.createElement('input');
-            inp.type = 'file'; inp.multiple = true;
-            inp.addEventListener('change', function () {
-              var files = Array.from(inp.files || []);
-              processLocalFiles(files, editor, null);
-            });
-            inp.click();
-          });
-        }
-        // 选择文件夹（webkitdirectory）
-        if (filePickFolder) {
-          filePickFolder.addEventListener('click', function () {
-            if (fileUploadMenu) fileUploadMenu.style.display = 'none';
-            var inp = document.createElement('input');
-            inp.type = 'file'; inp.webkitdirectory = true;
-            inp.addEventListener('change', function () {
-              var files = Array.from(inp.files || []);
-              // 从 webkitRelativePath 提取文件夹名
-              var folderName = '';
-              if (files.length && files[0].webkitRelativePath) {
-                folderName = files[0].webkitRelativePath.split('/')[0];
-              }
-              processLocalFiles(files, editor, folderName || '文件夹');
-            });
-            inp.click();
-          });
-        }
-        // 拖拽区
-        if (fileDropZone) {
-          fileDropZone.addEventListener('dragover', function (e) {
+        var mask = document.getElementById('inputMask');
+        if (mask) {
+          mask.addEventListener('dragover', function (e) { e.preventDefault(); });
+          mask.addEventListener('drop', function (e) {
             e.preventDefault();
-            fileDropZone.classList.add('dragover');
-          });
-          fileDropZone.addEventListener('dragleave', function () {
-            fileDropZone.classList.remove('dragover');
-          });
-          fileDropZone.addEventListener('drop', function (e) {
-            e.preventDefault();
-            fileDropZone.classList.remove('dragover');
             handleFileDrop(e, editor);
           });
         }
       }
-      // v321（用户 10-05 23:38）：打开弹窗（uploadKind='file' 启用文件分支）
       showInput('插入文件',
-        '左侧粘贴网络链接，或点右侧「上传本地文件」按钮选择文件/文件夹，也可以拖拽到下方区域',
+        '粘贴网络链接，或点「上传本地文件」选择文件；也可直接拖文件/文件夹到弹窗',
         'https://...',
         handleFileInsert(editor), '', 'file');
     }
@@ -4692,17 +4665,11 @@ document.addEventListener('click', function (e) {
     function processLocalFiles(files, editor, folderName) {
       if (!files || !files.length) return;
       var MAX_FILE_SIZE = 25 * 1024 * 1024;
-      var MAX_FOLDER_FILES = 50;
       // 过滤并标记超大文件
       var items = [];
       files.forEach(function (f) {
         items.push({ file: f, name: f.name, size: f.size, oversize: f.size > MAX_FILE_SIZE });
       });
-      // 限制数量
-      if (items.length > MAX_FOLDER_FILES) {
-        items = items.slice(0, MAX_FOLDER_FILES);
-        toast('文件夹内文件超过 50 个，已自动截断', 'warning');
-      }
       // 单文件且不是文件夹模式 → 文件卡
       var isSingleFile = items.length === 1 && !folderName;
       // 先关闭弹窗，避免遮挡
@@ -5305,6 +5272,7 @@ document.addEventListener('click', function (e) {
 
 // ========== 平台公告富文本编辑器 ==========
     var annEditor = document.getElementById('setAnnouncement');
+    bindFileCardManagement(annEditor); // v328：文件卡管理事件绑定（此前零调用导致死按钮）
     var annTitleInput = document.getElementById('annTitleInput');
     var annListEl = document.getElementById('annList');
     var annEditLabel = document.getElementById('annEditLabel');
@@ -5851,6 +5819,7 @@ document.addEventListener('click', function (e) {
           });
         });
       }
+      bindFileCardManagement(editor); // v328：文件卡管理事件绑定（此前零调用导致死按钮）
     }
     // 初始化类型描述和资源码专属内容的富文本编辑器
     initVariantRte('vDescRteToolbar', 'vDescEditor', 'vDescRteLink', 'vDescRteImg', 'vDescRteVideo', 'vDescFormatBrush');
@@ -7025,7 +6994,8 @@ document.addEventListener('click', function (e) {
         __clearAdminSkel(document.getElementById('productList'));
         __clearAdminSkel(document.getElementById('catList'));
         var _em = document.getElementById('productEmpty');
-        if (_em) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = '暂无资源'; }
+        // v326（用户 10-06 15:18）：失败收骨架走空态时也按当前筛选条件出对应文案。
+        if (_em) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = __getAdminEmptyText(); }
         var _hasCache = __getAdminCache()._cacheFormat === 'v317' && (__getAdminCache().products || []).length;
         if (!silent && !_hasCache && !(state.products || []).length) {
           toast('网络不佳，请刷新重试', 'error');
