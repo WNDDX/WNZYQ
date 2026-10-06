@@ -315,7 +315,7 @@
        R134 把下三角换成饱满 path 是对「图标调大」的误解（用户指的实为浏览器 favicon，见 R140）；
        下方 space-between（R134 ②两端对齐）与 1.2em 容器等高（R131 补）均保留 */
     .p-ops .select-picker.code-picker .cp-item { justify-content: space-between; }
-    #productList.card-view .product-row .p-ops .select-picker.code-picker { margin: 0; flex: 1; min-width: 0; align-self: auto; }
+    #productList.card-view .product-row .p-ops .select-picker.code-picker { margin: 0; flex: 1 1 auto; min-width: 88px; align-self: auto; } // v325：网格卡片资源码键最小宽度保底 88px（"资源码"三字+箭头完整可见），flex-wrap 配合自动换行
     @media (max-width: 600px) {
       /* 手机窄列：旁边按键为等分平铺（两行文字 ~48px 宽）；资源码带箭头+三字，
          等分宽会挤掉文字——改为内容自适应宽（white-space nowrap 同 card-view 下拉口径），高度仍 stretch 等高 */
@@ -388,6 +388,7 @@
     #productList.card-view .product-row .p-ops {
       width: 100%;
       display: flex;
+      flex-wrap: wrap; /* v325：允许换行，防止 5 颗按钮挤在一行把资源码压没 */
       gap: 8px; /* R165（用户 19:11）：网格卡片按键拥挤——间距 12→8 收敛 */
       padding: 2px 12px 12px;
       justify-content: flex-start;
@@ -497,6 +498,45 @@
       .input-row { flex-wrap: wrap; }
       .input-row .input-upload-btn { font-size: 12px; padding: 0 12px; }
     }
+    /* v320（用户 10-05 22:37）：文件弹窗专用样式 */
+    /* v321（用户 10-05 23:38）：file-link-toggle 已删除，链接类型自动判断 */
+    .file-upload-menu { display: flex; gap: 8px; margin-bottom: 10px; }
+    .file-upload-menu button {
+      flex: 1; border: 1px solid #d0d7de; background: #f6f8fa; border-radius: 6px;
+      padding: 6px 0; font-size: 13px; color: #333; cursor: pointer;
+    }
+    .file-upload-menu button:hover { background: #eef1f5; }
+    .file-drop-zone {
+      border: 2px dashed #d0d7de; border-radius: 8px; padding: 18px;
+      text-align: center; color: #888; font-size: 13px; margin-bottom: 12px;
+      transition: border-color .2s, background .2s;
+    }
+    .file-drop-zone.drag-over { border-color: var(--blue1); background: #f0f7ff; color: var(--blue1); }
+    .file-drop-zone p { margin: 6px 0 0; }
+    .file-drop-zone svg { stroke: #aaa; }
+    .file-drop-zone.drag-over svg { stroke: var(--blue1); }
+    /* 编辑器内文件卡 */
+    .file-card-wrap { border: 1px solid #e1e4e8; border-radius: 8px; padding: 10px 12px; margin: 6px 0; background: #fafbfc; font-size: 13px; }
+    .file-card-header { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .file-card-header svg { flex-shrink: 0; }
+    .file-card-name { flex: 1; font-weight: 500; color: #333; }
+    .file-card-size { color: #888; font-size: 12px; }
+    .file-card-del { border: none; background: none; color: #999; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
+    .file-card-del:hover { color: #d32f2f; }
+    /* v321（用户 10-05 23:38）：链接卡类型切换标识（管理员可见，判断错了可一键改） */
+    .file-card-type-toggle { border: none; background: #e3f2fd; color: #1976d2; cursor: pointer; font-size: 11px; line-height: 1; padding: 2px 5px; border-radius: 4px; margin-right: 4px; }
+    .file-card-type-toggle:hover { background: #1976d2; color: #fff; }
+    .file-folder-list { margin-top: 8px; padding-left: 8px; border-left: 2px solid #e1e4e8; }
+    .file-folder-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px; }
+    .file-folder-item .fname { flex: 1; color: #444; }
+    .file-folder-item .fsize { color: #888; font-size: 11px; }
+    .file-folder-item .fremove { border: none; background: none; color: #bbb; cursor: pointer; font-size: 14px; padding: 0 2px; }
+    .file-folder-item .fremove:hover { color: #d32f2f; }
+    .file-folder-item.oversize .fname { color: #d32f2f; }
+    .file-folder-item.oversize .fsize { color: #d32f2f; }
+    .file-folder-add { display: flex; align-items: center; gap: 4px; padding: 6px 0 2px; font-size: 12px; color: var(--blue1); cursor: pointer; }
+    .file-folder-add:hover { text-decoration: underline; }
+    .file-card-rename { border: none; background: transparent; border-bottom: 1px dashed #aaa; font-size: 13px; font-weight: 500; color: #333; padding: 0; outline: none; width: 100%; }
     /* R40：新增类型按钮——与「上传本地图片」按钮一模一样（除文字）。
        值全部取自实测渲染值：纯蓝底 var(--blue1)、白字 13px/500、8px 圆角、
        0 16px 内边距、40px 高、normal 字距（R36 旧版渐变小键与上传键不一致，本轮对齐） */
@@ -780,7 +820,7 @@
       .tbl-custom-input { width: 48px; height: 32px; }
       .tbl-custom-btn { padding: 0 10px; font-size: 12px; }
       /* R285：手机端 390px 网格模式资源码选择框修复——height:100% 在父无显式高度时循环引用导致高度坍缩，字不显示 */
-      #productList.card-view .product-row .p-ops .select-picker.code-picker { flex: 1 1 0; min-width: 0; }
+      #productList.card-view .product-row .p-ops .select-picker.code-picker { flex: 1 1 auto; min-width: 88px; } // v325：同步桌面端保底 88px，"资源码"三字完整可见
       #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display { height: auto; min-height: 28px; padding: 5px 4px; font-size: 11px; gap: 2px; justify-content: center; }
       #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display .cpd-text { font-size: 11px; }
       #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { width: 12px; height: 12px; }
@@ -1187,13 +1227,14 @@
         column-gap: 10px; row-gap: 8px;
         align-items: center;
         padding: 10px 12px;
+        overflow: hidden; /* v319（用户 10-05 22:15）：根因→grid 子项默认 min-width:auto 可能拒绝收缩，整行加 hidden 防溢出 */
       }
       #productList:not(.card-view) .product-row .drag-handle { grid-row: 1; grid-column: 4; width: 24px; height: 24px; font-size: 12px; align-self: start; }
       #productList:not(.card-view) .product-row .row-check { grid-row: 1; grid-column: 1; position: static; width: 20px; height: 20px; margin: 0; }
-      #productList:not(.card-view) .product-row .thumb { grid-row: 1; grid-column: 2; width: 60px; height: 60px; border-radius: 8px; }
-      #productList:not(.card-view) .product-row .info { grid-row: 1; grid-column: 3; min-width: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-      #productList:not(.card-view) .product-row .p-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
-      #productList:not(.card-view) .product-row .p-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+      #productList:not(.card-view) .product-row .thumb { grid-row: 1; grid-column: 2; width: 60px; height: 60px; min-width: 60px; border-radius: 8px; position: relative; z-index: 1; /* v322（用户 10-05 22:15）：390px 列表模式封面图 min-width 溢出根治 */ }
+      #productList:not(.card-view) .product-row .info { grid-row: 1; grid-column: 3; min-width: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; overflow: hidden; /* v319：强制 info 区域不溢出到相邻 grid cell */ }
+      #productList:not(.card-view) .product-row .p-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; min-width: 0; max-width: 100%; /* v319：flex item 默认 min-width:auto 会取 min-content，显式归零确保收缩 */ }
+      #productList:not(.card-view) .product-row .p-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; min-width: 0; max-width: 100%; /* v319：同上 */ }
       #productList:not(.card-view) .product-row .badge { align-self: flex-start; font-size: 10px; padding: 1px 6px; }
       #productList:not(.card-view) .product-row .select-picker { grid-row: 2; grid-column: 1 / 3; margin: 0; align-self: center; justify-self: start; }
       #productList:not(.card-view) .product-row .p-ops { grid-row: 2; grid-column: 3 / 5; display: flex; gap: 8px; padding: 0; }

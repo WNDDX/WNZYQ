@@ -384,8 +384,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   .uni-pager .pg-info { font-size: 12px; }
 }
 
-/* R119：图片占位符（加载失败换感叹号占位）统一灰色线边框——失败边界可见；颜色复用全局 --border 灰 */
-img.media-fail { border: 1px solid var(--border); }
+
 
 
 /* ===== R167（用户 20:27）：截断文字悬停/点按小框 #uiTip 全站版（收编自 admin.css R102） =====

@@ -140,7 +140,7 @@ if ('serviceWorker' in navigator) {
         img.style.opacity = '';
       };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=317';
+      img.src = qrImg || '/assets/images/kefu.png?v=325';
       if (img.complete) {
         if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
         else { img.onerror(); }
@@ -197,7 +197,7 @@ if ('serviceWorker' in navigator) {
     var jb = m.querySelector('button[data-u]');
     if (jb) jb.setAttribute('data-u', url || '');
     var im = document.getElementById('kfFallbackImg');
-    if (im) { im.src = '/assets/images/kefu.png?v=317'; }
+    if (im) { im.src = '/assets/images/kefu.png?v=325'; }
     try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) {} v.style.visibility = 'hidden'; } }); } catch (e) {}
     m.style.display = 'flex';
     if (window.lockBodyScroll) window.lockBodyScroll(true);
@@ -337,12 +337,12 @@ if ('serviceWorker' in navigator) {
     var animated = flipper.flip(function () {
       if (view === opts.viewA) {
         container.classList.add(opts.viewClass);
-        if (btnA) btnA.classList.remove('active');
-        if (btnB) btnB.classList.add('active');
+        if (btnA) btnA.classList.add('active');      // v325：修正——viewA 对应 btnA 选中（原写反了）
+        if (btnB) btnB.classList.remove('active');   // v325：修正——btnB 未选中
       } else {
         container.classList.remove(opts.viewClass);
-        if (btnA) btnA.classList.add('active');
-        if (btnB) btnB.classList.remove('active');
+        if (btnA) btnA.classList.remove('active');   // v325：修正——btnA 未选中
+        if (btnB) btnB.classList.add('active');      // v325：修正——btnB 选中
       }
       if (opts.storageKey) localStorage.setItem(opts.storageKey, view);
       if (opts.onChange) opts.onChange(view);

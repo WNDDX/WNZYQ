@@ -176,6 +176,93 @@
       })(vids[j]);
     }
 
+    // v320（用户 10-05 22:37）：客户端文件卡渲染——文件卡点击下载、文件夹卡展开+全部下载、链接文件夹卡打开跳转
+    function bindFileCards(root) {
+      if (!root) return;
+      var fileCards = root.querySelectorAll('.file-card-wrap[data-file-type="file"]');
+      fileCards.forEach(function (card) {
+        var a = card.querySelector('a[data-dl]');
+        if (!a) return;
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', function (e) {
+          if (e.target.closest('button')) return;
+          a.click();
+        });
+      });
+      var folderCards = root.querySelectorAll('.file-card-wrap[data-file-type="folder"]');
+      folderCards.forEach(function (card) {
+        var list = card.querySelector('[data-folder-list]');
+        var header = card.querySelector('.file-card-header');
+        if (list) {
+          // 上传型文件夹卡：展开/收起
+          if (header) {
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', function (e) {
+              if (e.target.closest('button')) return;
+              var show = list.style.display === 'none';
+              list.style.display = show ? 'block' : 'none';
+              var arrow = header.querySelector('svg[style*="transition"]');
+              if (arrow) arrow.style.transform = show ? 'rotate(180deg)' : '';
+            });
+          }
+          // 每个文件行点击下载
+          var items = list.querySelectorAll('.file-folder-item');
+          items.forEach(function (row) {
+            var key = row.getAttribute('data-key');
+            if (!key) return;
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', function (e) {
+              if (e.target.closest('button')) return;
+              triggerDownload('/files/' + key);
+            });
+          });
+          // 全部下载按钮（不存在时才加）
+          if (!card.querySelector('.file-folder-bulk')) {
+            var bulk = document.createElement('div');
+            bulk.className = 'file-folder-bulk';
+            var bulkBtn = document.createElement('button');
+            bulkBtn.type = 'button';
+            bulkBtn.textContent = '全部下载';
+            bulkBtn.addEventListener('click', function () {
+              items.forEach(function (row, idx) {
+                var key = row.getAttribute('data-key');
+                if (!key) return;
+                setTimeout(function () { triggerDownload('/files/' + key); }, idx * 300);
+              });
+            });
+            bulk.appendChild(bulkBtn);
+            list.appendChild(bulk);
+          }
+        } else {
+          // 链接型文件夹卡：添加「打开」按钮
+          if (!card.querySelector('.file-folder-open')) {
+            var linkA = card.querySelector('a[data-dl]');
+            var url = linkA ? linkA.getAttribute('href') : '';
+            if (url) {
+              var openWrap = document.createElement('div');
+              openWrap.className = 'file-folder-open';
+              var openBtn = document.createElement('a');
+              openBtn.href = url;
+              openBtn.target = '_blank';
+              openBtn.rel = 'noopener noreferrer';
+              openBtn.textContent = '打开';
+              openWrap.appendChild(openBtn);
+              card.appendChild(openWrap);
+            }
+          }
+        }
+      });
+    }
+    function triggerDownload(url) {
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = '';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
     // R81：视频加载失败/无地址的统一兜底卡（全站三处兜底逻辑共用）
     // R97 定稿（用户）：卡内灰字全部删除——只留按键
     // 「点击在新窗口播放视频」，flex column 纵横居中=按键天然上下左右居中；
@@ -292,39 +379,54 @@
 
     function sanitizeHTML(html) {
       if (!html) return '';
+      // v320（用户 10-05 22:37）：放行文件卡相关标签（SVG 细线条图标）
       var allowed = { A:1, BR:1, P:1, STRONG:1, EM:1, B:1, I:1, U:1, S:1, SPAN:1, DIV:1, FONT:1,
         UL:1, OL:1, LI:1, H1:1, H2:1, H3:1, H4:1, H5:1, H6:1, BLOCKQUOTE:1, CODE:1, PRE:1, HR:1,
         IMG:1, VIDEO:1, SOURCE:1,
-        TABLE:1, TBODY:1, THEAD:1, TR:1, TD:1, TH:1, INPUT:1 }; /* R194：后台编辑器新增表格，前台同步放行；R215 条4：复选框（type=checkbox）放行 */
+        TABLE:1, TBODY:1, THEAD:1, TR:1, TD:1, TH:1, INPUT:1,
+        SVG:1, PATH:1, POLYLINE:1, LINE:1, POLYGON:1, RECT:1, CIRCLE:1, ELLIPSE:1, G:1, DEFS:1, USE:1, TEXT:1 }; /* R194 + v320 */
       // 允许的属性
+      // v320（用户 10-05 22:37）：放行文件卡 data-* 属性 + SVG 绘制属性
       var allowedAttrs = {
-        A: ['href','target','rel','title'],
+        A: ['href','target','rel','title','data-dl'],
         IMG: ['src','alt','title','style','width','height'],
         VIDEO: ['src','controls','autoplay','loop','muted','poster','style','width','height'],
         SOURCE: ['src','type'],
-        SPAN: ['style','color'],
+        SPAN: ['style','color','data-action'],
         FONT: ['color','size','face'],
-        DIV: ['style'],
+        DIV: ['style','data-file-id','data-file-type','data-action','data-folder-list'],
         P: ['style'],
         H1: ['style'], H2: ['style'], H3: ['style'], H4: ['style'], H5: ['style'], H6: ['style'],
         LI: ['style'], UL: ['style'], OL: ['style'],
         BLOCKQUOTE: ['style'], CODE: ['style'], PRE: ['style'],
         TABLE: ['style','width'], TBODY: ['style'], THEAD: ['style'], TR: ['style'],
         TD: ['style','colspan','rowspan','width'], TH: ['style','colspan','rowspan','width'], /* R194 */
-        INPUT: ['type','checked'] /* R215 条4：复选框只放行 type/checked */
+        INPUT: ['type','checked'], /* R215 条4：复选框只放行 type/checked */
+        BUTTON: ['type','title','data-action'],
+        SVG: ['viewBox','width','height','fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','style'],
+        PATH: ['d'],
+        POLYLINE: ['points'],
+        LINE: ['x1','y1','x2','y2'],
+        POLYGON: ['points'],
+        RECT: ['x','y','width','height','rx','ry'],
+        CIRCLE: ['cx','cy','r'],
+        ELLIPSE: ['cx','cy','rx','ry'],
+        G: ['transform'],
+        USE: ['href','xlink:href'],
+        TEXT: ['x','y','dx','dy']
       };
       try {
         var doc = new DOMParser().parseFromString(html, 'text/html');
         var els = doc.body.querySelectorAll('*');
         els.forEach(function (el) {
-          var tag = el.tagName;
+          var tag = el.tagName.toUpperCase();
           if (!allowed[tag]) {
             var text = document.createTextNode(el.textContent);
             if (el.parentNode) el.parentNode.replaceChild(text, el);
             return;
           }
           // 只保留允许的属性，移除危险属性
-          var tagAllowed = allowedAttrs[tag] || [];
+          var tagAllowed = allowedAttrs[tag] || allowedAttrs[el.tagName] || [];
           Array.from(el.attributes).forEach(function (attr) {
             var name = attr.name.toLowerCase();
             // 移除 on* 事件属性
@@ -414,7 +516,7 @@
       if (!d) return;
       var bd = document.getElementById('annBody');
       if (bd) { var _c3 = sanitizeHTML(d.content || ''); bd.innerHTML = _c3 || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(bd); bindLightbox(bd);
-      bindQuoteCopyButtons(bd); } // v303（用户 10-05 00:16）：公告空态复用搜索空态三件套（图标+同款字体），文字统一
+      bindQuoteCopyButtons(bd); bindFileCards(bd); } // v303 + v320
       var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active');
       document.querySelectorAll('#annTabs .ann-tab').forEach(function (x) { x.classList.remove('active'); });
     }
@@ -443,7 +545,7 @@
                 bd.classList.add('ann-body-fade-out'); /* R243（用户 09-22 23:18）：条37 旧内容淡出 */
                 setTimeout(function () {
                   var _c2 = sanitizeHTML(a.content || ''); bd.innerHTML = _c2 || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(bd); bindLightbox(bd);
-                  bindQuoteCopyButtons(bd); // v303（用户 10-05 00:16）：公告空态复用搜索空态三件套（图标+同款字体），文字统一
+                  bindQuoteCopyButtons(bd); bindFileCards(bd); // v303 + v320
                   bd.classList.remove('ann-body-fade-out'); /* R243（用户 09-22 23:18）：条37 新内容淡入 */
                   __annTransitioning = false;
                 }, 100);
@@ -457,7 +559,7 @@
       // 默认显示第一条（一级公告）并选中"公告"标题
       var body = document.getElementById('annBody');
       var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(body); bindLightbox(body);
-      bindQuoteCopyButtons(body); } // v303（用户 10-05 00:16）：公告空态复用搜索空态三件套（图标+同款字体），文字统一
+      bindQuoteCopyButtons(body); bindFileCards(body); } // v303 + v320
     }
     function renderAnnouncement() {
       try { var mask = document.getElementById('annModal');
@@ -695,13 +797,30 @@
     var __variantTransitioning = false; /* R243（用户 09-22 23:18）：条6 类型切换淡出期间锁 */
     var __annTransitioning = false; /* R243（用户 09-22 23:18）：条37 公告切换淡出期间锁 */
     var PAGE_SIZE = 20;
+    // v318（用户 10-05 22:06）：根因→翻页/搜索请求飞行期间 __pageTurning=true，防抖新触发被直接丢弃，导致多字输入只搜到第一个字；修法→被锁住时记下最新搜索意图（pending），当前请求 settle 后立刻补发，保证最后一个输入的词一定搜。
+    var __pendingSearchOpts = null;
+    // v318（用户 10-05 22:06）：命令面板全量数据缓存——v317 首屏只拿第一页 20 条，命令面板用 DATA.products 只能搜到第一页；修法→后台单独拉 page_size=0 全量通道给命令面板用，不影响主列表。
+    var __allProductsForCmd = null;
 
+    // v318（用户 10-05 22:06）：翻页/搜索锁期间被丢弃的意图，在锁释放后立刻补发——保证最后一个输入的词一定搜。
+    function __flushPendingSearch() {
+      if (!__pendingSearchOpts) return;
+      var _opts = __pendingSearchOpts;
+      __pendingSearchOpts = null;
+      if (_opts.page) __turnToPage(_opts.page);
+      else __fadeRenderProducts(_opts.cb);
+    }
     /* R239（用户 09-22 派单）：资源页从无限滚动追加改为单页替换（旧 checkScroll 距底 200px 追加分支整段退役）。
        翻页动作收口本函数单点：分页条按键（onPage）走本路径，
        R303：后端分页时翻页才拉对应页数据。
-       v312（用户 10-05 15:21）：根因→翻页时旧内容淡出成空白等待；修法→有缓存立即出、无缓存保留旧内容+轻量进度条，数据回来再替换。 */
+       v312（用户 10-05 15:21）：根因→翻页时旧内容淡出成空白等待；修法→有缓存立即出、无缓存保留旧内容+轻量进度条，数据回来再替换。
+       v318（用户 10-05 22:06）：被 __pageTurning 锁住时不直接丢弃，记下 pending，请求 settle 后补发。 */
     function __turnToPage(p) {
-      if (p === currentPage || __pageTurning) return;
+      if (p === currentPage || __pageTurning) {
+        // v318（用户 10-05 22:06）：翻页锁期间点分页，记下最新页码意图，锁释放后补发
+        if (__pageTurning && p !== currentPage) __pendingSearchOpts = { page: p };
+        return;
+      }
       __pageTurning = true; /* R231 条19：翻页期间防重复 */
       currentPage = p;
       if (usingRemote && DATA._backendPaged) {
@@ -709,22 +828,29 @@
           renderProducts();
           __pageTurning = false;
           try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+          __flushPendingSearch();
         }).catch(function () {
           renderProducts();
           __pageTurning = false;
           try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+          __flushPendingSearch();
         });
       } else {
         renderProducts();
         __pageTurning = false;
         try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+        __flushPendingSearch();
       }
     }
     /* R243（用户 09-22 23:18）：条15 分类/搜索切换与翻页统一同款过渡
        R303：后端分页时分类/搜索切换重新拉取第1页。
-       v312（用户 10-05 15:21）：根因→切分类时旧内容淡出成空白等待；修法→有缓存立即渲染零等待，无缓存保留旧内容+轻量进度条，数据回来再替换。 */
+       v312（用户 10-05 15:21）：根因→切分类时旧内容淡出成空白等待；修法→有缓存立即渲染零等待，无缓存保留旧内容+轻量进度条，数据回来再替换。
+       v318（用户 10-05 22:06）：被 __pageTurning 锁住时不直接丢弃，记下 pending，请求 settle 后补发。 */
     function __fadeRenderProducts(cb) {
-      if (__pageTurning) return;
+      if (__pageTurning) {
+        __pendingSearchOpts = { cb: cb };
+        return;
+      }
       __pageTurning = true;
       if (cb) cb();
       if (usingRemote && DATA._backendPaged) {
@@ -736,13 +862,16 @@
         }).then(function () {
           renderProducts();
           __pageTurning = false;
+          __flushPendingSearch();
         }).catch(function () {
           renderProducts();
           __pageTurning = false;
+          __flushPendingSearch();
         });
       } else {
         renderProducts();
         __pageTurning = false;
+        __flushPendingSearch();
       }
     }
 
@@ -1045,8 +1174,9 @@
       // 详细描述（支持 HTML 超链接，如 <a href="https://...">点击查看</a>）
       if (p.detail && p.detail.trim()) {
         modalDetail.innerHTML = sanitizeHTML(p.detail);
-      bindQuoteCopyButtons(modalDetail); // v296（用户 10-04 03:01）：引用块加复制按钮
+        bindQuoteCopyButtons(modalDetail); // v296（用户 10-04 03:01）：引用块加复制按钮
         bindMediaFail(modalDetail); bindLightbox(modalDetail);
+        bindFileCards(modalDetail); // v320（用户 10-05 22:37）：客户端文件卡渲染
         modalDetail.style.display = 'block';
       } else {
         modalDetail.style.display = 'none';
@@ -1436,7 +1566,7 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=317', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=325', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1693,7 +1823,8 @@
 
     /* R243 条19②：Ctrl+K 命令面板（入口仅键盘，页面零新增图标/按键）——
        前台命令 = 资源直达：搜到资源回车直接打开详情弹窗（openModal，与 ?pid= 分享链接同一通道）；
-       面板本体由 ui-common.js __cpPanel 全站组件提供，本页只传命令源（load 后兜底，同搜索历史时序） */
+       面板本体由 ui-common.js __cpPanel 全站组件提供，本页只传命令源（load 后兜底，同搜索历史时序）
+       v318（用户 10-05 22:06）：命令面板数据源改用 __allProductsForCmd（后台拉取的全量数据），搜得到非第一页资源；若全量还没回来，先用 DATA.products 兜底。 */
     (function () {
       var __bindCP = function () {
         if (!window.__cpPanel) return;
@@ -1701,7 +1832,8 @@
           placeholder: '请输入资源名', /* R285 条38：口径统一「动作+对象」（回车直达详情属功能说明，并入 help/title） */
           cmds: function () {
             var c = [];
-            (DATA.products || []).forEach(function (p) {
+            var _src = __allProductsForCmd || DATA.products || [];
+            _src.forEach(function (p) {
               if (p.is_online !== true && p.is_online !== 1) return;
               if (p.is_hidden === true || p.is_hidden === 1) return;
               c.push({ lab: String(p.title || '(无标题)'), tag: '资源', kw: String(p.title || ''), run: function () { try { openModal(p); } catch (e) {} } });
@@ -1747,7 +1879,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=317', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=325', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else showToast('暂未设置客服链接', 'info');
     });
 
@@ -1962,6 +2094,9 @@
         loadShopHome({ cachedVersion: cachedVersion }).then(function () {
           window.__shopEntryDone = true;
           if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+          // v319（用户 10-05 22:15）：根因→首屏只拿「全部」第一页，切分类时现场拉取老板看到「点进去才加载」；
+          // 修法→首屏成功后后台并行预加载各分类第一页（每分类20条）到内存缓存，切分类直接秒出。
+          __preloadCategoryFirstPages();
         }).catch(function () {
           window.__shopEntryDone = true;
           if (window.__exitPageEntryMode) window.__exitPageEntryMode();
@@ -2119,6 +2254,8 @@
             _globalContact: window._globalContact,
             _changed: _changed, _wasSkel: _wasSkel
           };
+          // v318（用户 10-05 22:06）：主列表数据回来后，后台静默拉命令面板全量数据（只执行一次，不影响主列表）。
+          __loadAllProductsForCmd();
           return { changed: _changed, wasSkel: _wasSkel };
         }).catch(function (err) {
           if (window.__skelPhase) { window.__skelPhase = false; if (!DATA.products.length) loadFallback(); }
@@ -2151,6 +2288,36 @@
 
       // v315（用户 10-05 17:33）：进度条全删——老板不要进度条
       return doRealFetch();
+    }
+
+    // v318（用户 10-05 22:06）：命令面板走 page_size=0 全量通道，后台静默拉取，不影响主列表分页。
+    function __loadAllProductsForCmd() {
+      if (__allProductsForCmd) return; // 只拉一次
+      __dedupFetch('/api/products?page_size=0', { cache: 'no-cache', credentials: 'include' }).then(function (r) {
+        return r.ok ? r.json() : null;
+      }).then(function (res) {
+        if (res && res.ok && res.list) {
+          __allProductsForCmd = (res.list || []).filter(function (p) {
+            return (p.is_online === true || p.is_online === 1) && (p.is_hidden !== true && p.is_hidden !== 1);
+          });
+        }
+      }).catch(function () {});
+    }
+
+    // v319（用户 10-05 22:15）：根因→首屏只拿「全部」第一页，切分类时现场拉取老板看到「点进去才加载」；
+    // 修法→首屏成功后后台并行预加载各分类第一页到内存缓存，切分类直接秒出。上限安全线：产品+分类总数>500条时只预加载前8个分类并报数。
+    function __preloadCategoryFirstPages() {
+      var cats = (DATA.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
+      var totalItems = (DATA.products || []).length + cats.length;
+      if (totalItems > 500) {
+        try { console.log('[v319] 预加载跳过：产品+分类=' + totalItems + ' > 500 安全线'); } catch (e) {}
+        return;
+      }
+      cats.forEach(function (c) {
+        if (Number(c.id) === 0) return; // 「全部」已在首屏加载
+        // 只预加载第一页，后台静默执行，不阻塞、不弹错误
+        fetchRemote({ page: 1, cid: c.id, subCid: 0, kw: '' }).catch(function () {});
+      });
     }
 
     // ---------- R10 分享链接落地：?pid= 自动打开资源弹窗 ----------
@@ -2198,9 +2365,14 @@
     var isPulling = false;
     var pullDistance = 0;
     var PULL_THRESHOLD = 60; // 下拉超过60px触发刷新
+    // v319（用户 10-05 22:15）：根因→弹窗内下拉滚动穿透到 body 触发整页下拉刷新；
+    // 修法→下拉刷新前检查所有弹窗类型，任一弹窗打开时不触发。
+    function __anyModalOpen() {
+      return document.querySelector('.modal-mask.open, .ann-modal.open, .share-mask.open, .kf-mask.open, .lightbox.open') !== null;
+    }
     document.addEventListener('touchstart', function (e) {
       if (window.__flipAnimating) return; /* R211 二批：FLIP 飞位期间不判定下拉刷新（手势隔离） */
-      if (window.scrollY <= 0 && !modalMask.classList.contains('open')) {
+      if (window.scrollY <= 0 && !__anyModalOpen()) {
         pullStartY = e.touches[0].clientY;
         pullStartX = e.touches[0].clientX;
         isPulling = true;
@@ -2643,7 +2815,7 @@
     // R257：flipSetShopView 已合并到 ui-common.js flipViewSwitch，薄封装调用
     function flipSetShopView(view) {
       window.flipViewSwitch('productGrid', view, {
-        btnA: 'viewGridBtn', btnB: 'viewListBtn',
+        btnA: 'viewListBtn', btnB: 'viewGridBtn', // v325：解除交叉——btnA 配 viewA（list）自然配对
         flipperKey: '__shopFlipper',
         viewClass: 'list-view', viewA: 'list',
         storageKey: 'shop_view',

@@ -1355,3 +1355,55 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* ===== R285 条17：搜索清除钮固定 SVG 尺寸口径 ===== */
 .search-clear > svg { width: 12px; height: 12px; display: block; }
+
+/* ===== v320（用户 10-05 22:37）：客户端文件卡样式 ===== */
+.file-card-wrap {
+  margin: 10px 0;
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 8px;
+  background: var(--card-bg, #fff);
+  overflow: hidden;
+  user-select: none;
+}
+.file-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.file-card-header svg { flex-shrink: 0; }
+.file-card-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-card-size { font-size: 12px; color: #888; flex-shrink: 0; }
+.file-folder-list { border-top: 1px dashed var(--border, #e0e0e0); padding: 8px 12px; }
+.file-folder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.file-folder-item:last-child { border-bottom: none; }
+.file-folder-item .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-folder-item .fsize { font-size: 11px; color: #888; flex-shrink: 0; }
+.file-folder-item.oversize .fname { color: #c62828; }
+.file-folder-item.oversize .fsize { color: #c62828; font-weight: 500; }
+.file-folder-bulk { padding: 8px 0 4px; text-align: center; }
+.file-folder-bulk button {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 14px; border-radius: 6px; border: 1px solid var(--primary, #4a6cf7);
+  background: var(--primary, #4a6cf7); color: #fff; font-size: 13px; cursor: pointer;
+}
+.file-folder-open { padding: 8px 12px; text-align: center; }
+.file-folder-open a {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 14px; border-radius: 6px; border: 1px solid var(--primary, #4a6cf7);
+  background: var(--primary, #4a6cf7); color: #fff; font-size: 13px; text-decoration: none;
+}
+/* v320：390px 双端文件卡无重叠 */
+@media (max-width: 390px) {
+  .file-card-header { padding: 8px 10px; font-size: 13px; gap: 6px; }
+  .file-folder-item { gap: 6px; font-size: 12px; }
+  .file-folder-bulk button, .file-folder-open a { padding: 5px 10px; font-size: 12px; }
+}

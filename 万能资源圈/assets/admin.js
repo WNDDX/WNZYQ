@@ -319,12 +319,21 @@
       inputCallback = callback;
       // R36：媒体插入统一弹窗——uploadKind('image'/'video') 时显示输入框右侧的本地上传按钮，
       // 网络地址与本地上传共用这一个输入框；弹窗关闭后按钮随 CSS 隐藏（#inputMask:not(.open)）
-      if (uploadKind) {
+      // v320（用户 10-05 22:37）：uploadKind='file' 时启用文件弹窗分支
+      var fileExtras = document.getElementById('fileInputExtras');
+      if (uploadKind === 'file') {
+        inputRow.classList.add('has-upload');
+        inputUploadBtn.textContent = '上传本地文件';
+        inputUploadBtn.dataset.kind = 'file';
+        if (fileExtras) fileExtras.style.display = 'block';
+      } else if (uploadKind) {
         inputRow.classList.add('has-upload');
         inputUploadBtn.textContent = uploadKind === 'video' ? '上传本地视频' : '上传本地图片';
         inputUploadBtn.dataset.kind = uploadKind;
+        if (fileExtras) fileExtras.style.display = 'none';
       } else {
         inputRow.classList.remove('has-upload');
+        if (fileExtras) fileExtras.style.display = 'none';
       }
       inputMask.classList.add('open');
       setTimeout(function () { inputValue.focus(); }, 100);
@@ -333,6 +342,12 @@
     // R36：本地上传按钮——选文件 → 上传 → 链接填进输入框 → 自动确定插入
     inputUploadBtn.addEventListener('click', function () {
       var kind = inputUploadBtn.dataset.kind;
+      // v320（用户 10-05 22:37）：文件上传分支——点按钮出菜单（选文件/选文件夹），不走直接打开
+      if (kind === 'file') {
+        var menu = document.getElementById('fileUploadMenu');
+        if (menu) { menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex'; }
+        return;
+      }
       var inp = document.createElement('input');
       inp.type = 'file';
       if (kind === 'video') inp.accept = 'video/mp4,video/webm,video/quicktime';
@@ -715,9 +730,10 @@
       // R30：鉴权统一走 HttpOnly Cookie，不再从 localStorage 读 token
       // R286-57：管理页所有请求加8秒超时保护，网络一卡不再无限转圈
       // v313：首屏 dashboard 放宽到30秒（老板网络 2.7~11.7 秒，8秒必超），操作类维持8秒
+      // v319（用户 10-05 22:15）：根因→老板网络一趟 2~11 秒，8 秒超时必弹「网络不佳」；修法→默认超时 8→15 秒，给慢网留余量。
       // R308：GET 请求失败自动重试一次（立刻、不延时），只试一次
       var isGet = (!opts.method || opts.method === 'GET');
-      var timeout = opts.timeout || 8000;
+      var timeout = opts.timeout || 15000;
       var doFetch = function (isRetry) {
         return Promise.race([
           fetch('/api/' + path, opts),
@@ -922,9 +938,14 @@
       document.body.appendChild(tip);
       var sy = 0, sx = 0, pulling = false, dist = 0, TH = 60;
       function activeTab() { var t = document.querySelector('.tab.active'); return t ? t.dataset.tab : 'products'; }
+      // v319（用户 10-05 22:15）：根因→弹窗内下拉滚动穿透到 body 触发整页下拉刷新；修法→任一弹窗打开时不触发下拉刷新。
+      function __anyModalOpenAdmin() {
+        return document.querySelector('.modal-mask.open, .ann-modal.open, .share-mask.open, .kf-mask.open, .lightbox.open') !== null;
+      }
       document.addEventListener('touchstart', function (e) {
         // R20：登录页也允许下拉刷新（原来只在 mainView 可见时启用，登录页拉不动）；未登录时刷新动作走整页 reload
-        if ((window.scrollY || 0) <= 0) {
+        // v319：弹窗打开时禁止下拉刷新，防止滚动穿透。
+        if ((window.scrollY || 0) <= 0 && !__anyModalOpenAdmin()) {
           sy = e.touches[0].clientY; sx = e.touches[0].clientX; pulling = true; dist = 0;
         }
       }, { passive: true });
@@ -1332,12 +1353,17 @@ function boot() {
       if (kw) qs += '&kw=' + encodeURIComponent(kw);
       if (filterCat && filterCat !== '0') qs += '&cid=' + encodeURIComponent(filterCat);
       if (filterStatus) qs += '&status=' + encodeURIComponent(filterStatus);
+      // v318（用户 10-05 22:06）：记录请求时的 cacheKey，响应回来后与当前条件比较，不一致则丢弃（防搜索词快速变化时旧响应覆盖新结果）。
+      var _reqCacheKey = _cacheKey;
       var _doFetch = function () {
         return ensureCat.then(function () {
           // 分类筛选已改为级联选择器（与新增/编辑资源一致）；R281：silent 时不预重建（下拉 DOM 每次重建非幂等，数据有变才在成功回调里补建）
           if (!silent) initFilterCatPicker();
           return api('admin/products' + qs);
         }).then(function (res) {
+          // v318（用户 10-05 22:06）：响应序号守卫——请求发出后搜索词/页码/筛选又变了，丢弃旧响应。
+          var curCacheKey = __adminProductCacheKey(adminPage, (document.getElementById('adminSearch').value || '').trim(), document.getElementById('filterCat').value, document.getElementById('filterStatus').value);
+          if (curCacheKey !== _reqCacheKey) return;
           if (!res.ok) {
             if (silent) return; /* R281：静默失败不动画面不弹 toast、不更新时间戳（下次切回再试） */
             /* R230：接口异常收骨架走空态，不卡灰（对齐资源页 fetchRemote 兜底） */
@@ -1345,7 +1371,12 @@ function boot() {
             // v315（用户 10-05 17:33）：进度条全删
             var _em = document.getElementById('productEmpty');
             if (_em) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = '暂无资源'; }
-            toast(res.msg || '加载失败', 'error'); return; }
+            // v319（用户 10-05 22:15）：根因→登录后/切分类时网络失败反复弹「加载失败」toast，老板网络本就慢、体验差；
+            // 修法→已有数据时不弹 toast（保持现有列表显示），只在列表为空时才提示。
+            if (!(state.products || []).length) {
+              toast(res.msg || '加载失败', 'error');
+            }
+            return; }
           window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳 */
           var _newP = res.list || [];
           if (silent && __adminDataSig(_newP) === _snapP) return; /* R281：数据没变——纹丝不动（不重画不预载不重存） */
@@ -1362,7 +1393,7 @@ function boot() {
             state._backendPaged = true;
           }
           // v314：写入内存缓存
-          __adminProductCache[_cacheKey] = {
+          __adminProductCache[_reqCacheKey] = {
             products: _newP,
             totalPages: state.totalPages,
             total: state.total,
@@ -1424,15 +1455,31 @@ function boot() {
 
     var adminPage = 1;
     var __adminTurning = false; /* R231 条19：翻页淡出期间锁，防重复触发 */
+    // v318（用户 10-05 22:06）：根因→翻页请求飞行期间 __adminTurning=true，点分页被丢弃；修法→记下 pending 意图，锁释放后补发。
+    var __pendingAdminOpts = null;
+    // v318（用户 10-05 22:06）：根因→搜索词快速变化时旧响应后回来覆盖新结果；修法→响应回来后比较请求时的条件与当前条件，不一致则丢弃。
+    var __lastAdminSeq = 0;
     var ADMIN_PAGE_SIZE = 20; // 全系统统一：一页 20 条（与资源页/统计面板一致），配合翻页控件使用
 
+    // v318（用户 10-05 22:06）：翻页锁期间被丢弃的意图，在锁释放后立刻补发。
+    function __flushPendingAdmin() {
+      if (!__pendingAdminOpts) return;
+      var _opts = __pendingAdminOpts;
+      __pendingAdminOpts = null;
+      if (_opts.page) __adminTurnPage(_opts.page);
+      else if (_opts.reload) loadProducts();
+    }
     /* R239（用户 09-22 派单）：管理页资源列表接入全站「到底续滑翻页」——整页滚动贴底后继续滑≈60px 翻下一页。
        翻页动作收口 __adminTurnPage 单点：分页条按键（onPage）与到底续滑触发走完全同一条路径
        （R231 条19+23 原行为：旧内容 0.1s 淡出 → 重建单页 → 平滑滚回列表顶）；
-       只在资源管理 tab 处于激活且没有弹窗打开时判定（active 守卫）。 */
+       只在资源管理 tab 处于激活且没有弹窗打开时判定（active 守卫）。
+       v318（用户 10-05 22:06）：被 __adminTurning 锁住时不直接丢弃，记下 pending，锁释放后补发。 */
     var __adminTotalPages = 1; /* renderProducts 每次渲染回写，供续滑翻页 getTotalPages 用 */
     function __adminTurnPage(p) {
-      if (p === adminPage || __adminTurning) return;
+      if (p === adminPage || __adminTurning) {
+        if (__adminTurning && p !== adminPage) __pendingAdminOpts = { page: p };
+        return;
+      }
       __adminTurning = true; /* R231 条19：翻页期间防重复 */
       adminPage = p;
       // v314（用户 10-05 15:59）：翻页立即出结果——有缓存秒开（loadProducts 内自动走 __adminProductCache），
@@ -1445,8 +1492,10 @@ function boot() {
             var _pl2 = document.getElementById('productList');
             if (_pl2) _pl2.scrollIntoView({ behavior: 'smooth', block: 'start' });
           } catch (e) {}
+          __flushPendingAdmin();
         }).catch(function () {
           __adminTurning = false;
+          __flushPendingAdmin();
         });
       } else {
         renderProducts();
@@ -1455,6 +1504,7 @@ function boot() {
           var _pl2 = document.getElementById('productList');
           if (_pl2) _pl2.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (e) {}
+        __flushPendingAdmin();
       }
     }
     // R146（用户 00:34）：admin 端价格格式化（与前台 shop.js formatPrice 同口径）
@@ -4324,6 +4374,532 @@ document.addEventListener('click', function (e) {
       xhr.send(fd);
     }
 
+    // v320（用户 10-05 22:37）：文件上传——复用 IMAGE_BUCKET 通道，存到 files/ 目录
+    function uploadFileToBucket(file, cb, onProgress) {
+      if (!file) return;
+      var MAX_FILE_SIZE = 25 * 1024 * 1024;
+      if (file.size > MAX_FILE_SIZE) { cb(null, 'size'); return; }
+      var fd = new FormData();
+      fd.append('file', file, file.name || 'file');
+      var xhr = new XMLHttpRequest();
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', function (e) {
+          if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+        });
+      }
+      xhr.onload = function () {
+        try {
+          var res = JSON.parse(xhr.responseText);
+          if (res && res.ok && res.url) cb(res.url, null, res.key);
+          else cb(null, (res && (res.msg || res.error)) || '上传失败');
+        } catch (e) { cb(null, '上传失败'); }
+      };
+      xhr.onerror = function () { cb(null, '上传失败'); };
+      xhr.open('POST', '/api/admin/upload-file');
+      xhr.send(fd);
+    }
+
+    // v320：格式化文件大小
+    function fmtFileSize(b) {
+      if (!b || b < 0) return '0 B';
+      var units = ['B','KB','MB','GB'];
+      var i = 0;
+      while (b >= 1024 && i < units.length - 1) { b /= 1024; i++; }
+      return (i === 0 ? b : b.toFixed(1)) + ' ' + units[i];
+    }
+
+    // v320：生成唯一文件卡 ID
+    function genFileId() { return 'fc_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36); }
+
+    // v320：构建文件卡 HTML（单文件或文件夹）
+    // data 结构：{ id, type:'file'|'folder', name, url?, items:[{name,size,url,key}], isLink? }
+    function buildFileCardHTML(data) {
+      var id = escapeHtml(data.id || genFileId());
+      var type = data.type || 'file';
+      var name = escapeHtml(data.name || '未命名');
+      var folderSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f4a261" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+      var fileSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c8aef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      var linkSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+      if (type === 'file') {
+        var url = escapeHtml(data.url || '');
+        var size = fmtFileSize(data.size || 0);
+        // v321（用户 10-05 23:38）：链接型文件卡加类型切换标识（管理员可见，判断错了可一键改）
+        var typeToggle = data.isLink ? '<button type="button" class="file-card-type-toggle" title="切换为文件夹链接" data-action="toggle-link-type">文</button>' : '';
+        return '<div class="file-card-wrap" data-file-id="' + id + '" data-file-type="file" contenteditable="false">' +
+          '<div class="file-card-header">' + fileSvg +
+          '<span class="file-card-name">' + name + '</span>' +
+          '<span class="file-card-size">' + size + '</span>' + typeToggle +
+          '<button type="button" class="file-card-del" title="删除" data-action="del-card">×</button></div>' +
+          '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="display:none" data-dl></a></div>';
+      }
+      // folder
+      var isLink = !!data.isLink;
+      var items = data.items || [];
+      var itemsHtml = '';
+      if (!isLink && items.length) {
+        itemsHtml = '<div class="file-folder-list" data-folder-list>';
+        items.forEach(function (it) {
+          var cls = it.oversize ? 'file-folder-item oversize' : 'file-folder-item';
+          itemsHtml += '<div class="' + cls + '" data-key="' + escapeHtml(it.key || '') + '">' + fileSvg +
+            '<span class="fname">' + escapeHtml(it.name) + '</span>' +
+            '<span class="fsize">' + fmtFileSize(it.size) + '</span>' +
+            '<button type="button" class="fremove" title="删除" data-action="del-item">×</button></div>';
+        });
+        itemsHtml += '<div class="file-folder-add" data-action="add-item">＋ 往这个文件夹里补文件</div></div>';
+      }
+      var arrow = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>';
+      // v320（用户 10-05 22:37）：链接型文件夹卡用隐藏 a 存 URL，客户端统一读取
+      var linkHidden = isLink ? '<a href="' + escapeHtml(data.url || '') + '" target="_blank" rel="noopener noreferrer" style="display:none" data-dl></a>' : '';
+      // v321（用户 10-05 23:38）：链接型文件夹卡加类型切换标识（管理员可见，判断错了可一键改）
+      var typeToggle2 = isLink ? '<button type="button" class="file-card-type-toggle" title="切换为文件链接" data-action="toggle-link-type">夹</button>' : '';
+      return '<div class="file-card-wrap" data-file-id="' + id + '" data-file-type="folder" contenteditable="false">' +
+        '<div class="file-card-header" data-action="toggle-folder">' + (isLink ? linkSvg : folderSvg) +
+        '<span class="file-card-name" data-action="rename">' + name + '</span>' + typeToggle2 +
+        '<button type="button" class="file-card-del" title="删除" data-action="del-card">×</button></div>' +
+        itemsHtml + linkHidden + '</div>';
+    }
+
+    // v320：从文件卡 DOM 反序列化数据
+    function parseFileCard(el) {
+      var id = el.getAttribute('data-file-id') || genFileId();
+      var type = el.getAttribute('data-file-type') || 'file';
+      var nameEl = el.querySelector('.file-card-name');
+      var name = nameEl ? nameEl.textContent : '未命名';
+      if (type === 'file') {
+        var a = el.querySelector('a[data-dl]');
+        return { id: id, type: 'file', name: name, url: a ? a.getAttribute('href') : '' };
+      }
+      var items = [];
+      var list = el.querySelector('[data-folder-list]');
+      if (list) {
+        list.querySelectorAll('.file-folder-item').forEach(function (row) {
+          items.push({
+            name: row.querySelector('.fname') ? row.querySelector('.fname').textContent : '',
+            size: 0,
+            key: row.getAttribute('data-key') || '',
+            oversize: row.classList.contains('oversize')
+          });
+        });
+      }
+      return { id: id, type: 'folder', name: name, items: items };
+    }
+
+    // v320：绑定编辑器内文件卡管理事件
+    function bindFileCardManagement(editor) {
+      if (!editor || editor.__fileBound) return;
+      editor.__fileBound = true;
+      editor.addEventListener('click', function (e) {
+        var target = e.target;
+        // 删除整卡
+        if (target.closest('[data-action="del-card"]')) {
+          var card = target.closest('.file-card-wrap');
+          if (card) { card.parentNode.removeChild(card); }
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // v321（用户 10-05 23:38）：链接卡类型切换（管理员可见，自动判断错了可一键改）
+        if (target.closest('[data-action="toggle-link-type"]')) {
+          var card = target.closest('.file-card-wrap');
+          if (card) {
+            var curType = card.getAttribute('data-file-type') || 'file';
+            var newType = curType === 'file' ? 'folder' : 'file';
+            var nameSpan = card.querySelector('.file-card-name');
+            var header = card.querySelector('.file-card-header');
+            var toggleBtn = card.querySelector('[data-action="toggle-link-type"]');
+            var a = card.querySelector('a[data-dl]');
+            var url = a ? a.getAttribute('href') : '';
+            card.setAttribute('data-file-type', newType);
+            if (nameSpan) nameSpan.textContent = newType === 'folder' ? '文件夹链接' : '文件链接';
+            if (toggleBtn) {
+              toggleBtn.textContent = newType === 'folder' ? '夹' : '文';
+              toggleBtn.title = newType === 'folder' ? '切换为文件链接' : '切换为文件夹链接';
+            }
+            // 同步更换图标
+            var svg = header ? header.querySelector('svg') : null;
+            if (svg) {
+              var folderSvgStr = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f4a261" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+              var fileSvgStr = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c8aef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+              var linkSvgStr = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+              svg.outerHTML = newType === 'folder' ? linkSvgStr : linkSvgStr; // 链接卡统一用链接图标
+            }
+            // folder 类型需要给 header 加 toggle-folder 行为
+            if (header) {
+              if (newType === 'folder') header.setAttribute('data-action', 'toggle-folder');
+              else header.removeAttribute('data-action');
+            }
+          }
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 改名（放在 toggle-folder 之前：nameSpan 在 header 内部，点名字优先改名而不是展开）
+        if (target.closest('[data-action="rename"]')) {
+          var nameSpan = target.closest('[data-action="rename"]');
+          if (!nameSpan || nameSpan.querySelector('input')) return;
+          var oldName = nameSpan.textContent;
+          var inp = document.createElement('input');
+          inp.type = 'text'; inp.value = oldName;
+          inp.className = 'file-card-rename';
+          nameSpan.innerHTML = '';
+          nameSpan.appendChild(inp);
+          inp.focus(); inp.select();
+          var save = function () {
+            var v = inp.value.trim() || oldName;
+            nameSpan.textContent = v;
+          };
+          inp.addEventListener('blur', save);
+          inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { save(); } });
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 展开/收起文件夹
+        var header = target.closest('[data-action="toggle-folder"]');
+        if (header) {
+          var card = header.closest('.file-card-wrap');
+          var list = card ? card.querySelector('[data-folder-list]') : null;
+          if (list) {
+            var show = list.style.display === 'none';
+            list.style.display = show ? 'block' : 'none';
+            var arrow = header.querySelector('svg[style*="transition"]');
+            if (arrow) arrow.style.transform = show ? 'rotate(180deg)' : '';
+          }
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 删除文件夹内单个文件
+        if (target.closest('[data-action="del-item"]')) {
+          var row = target.closest('.file-folder-item');
+          if (row) row.parentNode.removeChild(row);
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 补文件
+        if (target.closest('[data-action="add-item"]')) {
+          var card = target.closest('.file-card-wrap');
+          if (!card) return;
+          var inp = document.createElement('input');
+          inp.type = 'file'; inp.multiple = true;
+          inp.addEventListener('change', function () {
+            var files = Array.from(inp.files || []);
+            var list = card.querySelector('[data-folder-list]');
+            var addBtn = list ? list.querySelector('[data-action="add-item"]') : null;
+            var existing = card.querySelectorAll('.file-folder-item').length;
+            var MAX_FOLDER_FILES = 50;
+            files.forEach(function (f, idx) {
+              if (existing + idx >= MAX_FOLDER_FILES) return;
+              var oversize = f.size > 25 * 1024 * 1024;
+              var row = document.createElement('div');
+              row.className = oversize ? 'file-folder-item oversize' : 'file-folder-item';
+              row.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c8aef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+                '<span class="fname">' + escapeHtml(f.name) + '</span>' +
+                '<span class="fsize">' + (oversize ? '超 25MB 没传上' : '上传中…') + '</span>' +
+                '<button type="button" class="fremove" title="删除" data-action="del-item">×</button>';
+              if (list && addBtn) list.insertBefore(row, addBtn);
+              if (!oversize) {
+                uploadFileToBucket(f, function (url, err, key) {
+                  var s = row.querySelector('.fsize');
+                  if (url) { row.setAttribute('data-key', key || ''); if (s) s.textContent = fmtFileSize(f.size); }
+                  else { row.classList.add('oversize'); if (s) s.textContent = err === 'size' ? '超 25MB 没传上' : '上传失败'; }
+                });
+              }
+            });
+          });
+          inp.click();
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+      });
+      // 键盘 Delete 删整卡
+      editor.addEventListener('keydown', function (e) {
+        if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+        var sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        var node = sel.getRangeAt(0).commonAncestorContainer;
+        if (node.nodeType === 3) node = node.parentNode;
+        var card = node.closest ? node.closest('.file-card-wrap') : null;
+        if (card && card.parentNode) {
+          card.parentNode.removeChild(card);
+          e.preventDefault();
+        }
+      });
+    }
+
+    // v320（用户 10-05 22:37）：文件弹窗主控——打开弹窗、绑定一次性事件、协调上传与插入
+    function setupFileDialog(editor) {
+      if (!editor) return;
+      // 一次性绑定选择按钮和拖拽区
+      if (!window.__fileDialogBound) {
+        window.__fileDialogBound = true;
+        var filePickFile = document.getElementById('filePickFile');
+        var filePickFolder = document.getElementById('filePickFolder');
+        var fileDropZone = document.getElementById('fileDropZone');
+        var fileUploadMenu = document.getElementById('fileUploadMenu');
+        // 选择文件（可多选）
+        if (filePickFile) {
+          filePickFile.addEventListener('click', function () {
+            if (fileUploadMenu) fileUploadMenu.style.display = 'none';
+            var inp = document.createElement('input');
+            inp.type = 'file'; inp.multiple = true;
+            inp.addEventListener('change', function () {
+              var files = Array.from(inp.files || []);
+              processLocalFiles(files, editor, null);
+            });
+            inp.click();
+          });
+        }
+        // 选择文件夹（webkitdirectory）
+        if (filePickFolder) {
+          filePickFolder.addEventListener('click', function () {
+            if (fileUploadMenu) fileUploadMenu.style.display = 'none';
+            var inp = document.createElement('input');
+            inp.type = 'file'; inp.webkitdirectory = true;
+            inp.addEventListener('change', function () {
+              var files = Array.from(inp.files || []);
+              // 从 webkitRelativePath 提取文件夹名
+              var folderName = '';
+              if (files.length && files[0].webkitRelativePath) {
+                folderName = files[0].webkitRelativePath.split('/')[0];
+              }
+              processLocalFiles(files, editor, folderName || '文件夹');
+            });
+            inp.click();
+          });
+        }
+        // 拖拽区
+        if (fileDropZone) {
+          fileDropZone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            fileDropZone.classList.add('dragover');
+          });
+          fileDropZone.addEventListener('dragleave', function () {
+            fileDropZone.classList.remove('dragover');
+          });
+          fileDropZone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            fileDropZone.classList.remove('dragover');
+            handleFileDrop(e, editor);
+          });
+        }
+      }
+      // v321（用户 10-05 23:38）：打开弹窗（uploadKind='file' 启用文件分支）
+      showInput('插入文件',
+        '左侧粘贴网络链接，或点右侧「上传本地文件」按钮选择文件/文件夹，也可以拖拽到下方区域',
+        'https://...',
+        handleFileInsert(editor), '', 'file');
+    }
+
+    // v320：处理本地文件列表——上传后自动插入卡片
+    // folderName 有值表示来自文件夹选择器；null 表示普通多文件（自动打包成文件夹卡）
+    function processLocalFiles(files, editor, folderName) {
+      if (!files || !files.length) return;
+      var MAX_FILE_SIZE = 25 * 1024 * 1024;
+      var MAX_FOLDER_FILES = 50;
+      // 过滤并标记超大文件
+      var items = [];
+      files.forEach(function (f) {
+        items.push({ file: f, name: f.name, size: f.size, oversize: f.size > MAX_FILE_SIZE });
+      });
+      // 限制数量
+      if (items.length > MAX_FOLDER_FILES) {
+        items = items.slice(0, MAX_FOLDER_FILES);
+        toast('文件夹内文件超过 50 个，已自动截断', 'warning');
+      }
+      // 单文件且不是文件夹模式 → 文件卡
+      var isSingleFile = items.length === 1 && !folderName;
+      // 先关闭弹窗，避免遮挡
+      window.closeInput && window.closeInput();
+      if (isSingleFile) {
+        var it = items[0];
+        if (it.oversize) {
+          var html = buildFileCardHTML({ type: 'file', name: it.name, url: '', size: it.size });
+          rteInsert(editor, html);
+          toast('文件超 25MB，未上传', 'error');
+          return;
+        }
+        uploadFileToBucket(it.file, function (url, err, key) {
+          if (url) {
+            var html = buildFileCardHTML({ type: 'file', name: it.name, url: url, size: it.size, key: key });
+            rteInsert(editor, html);
+            toast('文件已插入', 'success');
+          } else {
+            toast(err || '上传失败', 'error');
+          }
+        });
+        return;
+      }
+      // 多文件或文件夹 → 文件夹卡
+      var cardData = {
+        type: 'folder',
+        name: folderName || ('文件包 (' + items.length + ')'),
+        items: []
+      };
+      // 先插入占位卡（带上传中状态）
+      items.forEach(function (it) {
+        cardData.items.push({
+          name: it.name,
+          size: it.size,
+          url: '',
+          key: '',
+          oversize: it.oversize
+        });
+      });
+      var html = buildFileCardHTML(cardData);
+      rteInsert(editor, html);
+      // 并行上传（非超大文件）
+      var pending = 0;
+      items.forEach(function (it, idx) {
+        if (it.oversize) return;
+        pending++;
+        uploadFileToBucket(it.file, function (url, err, key) {
+          pending--;
+          // 找到刚插入的卡片，更新对应条目
+          var cards = editor.querySelectorAll('.file-card-wrap[data-file-type="folder"]');
+          var card = cards[cards.length - 1];
+          if (card) {
+            var rows = card.querySelectorAll('.file-folder-item');
+            var row = rows[idx];
+            if (row) {
+              if (url) {
+                row.setAttribute('data-key', key || '');
+                var s = row.querySelector('.fsize');
+                if (s) s.textContent = fmtFileSize(it.size);
+              } else {
+                row.classList.add('oversize');
+                var s2 = row.querySelector('.fsize');
+                if (s2) s2.textContent = err === 'size' ? '超 25MB 没传上' : '上传失败';
+              }
+            }
+          }
+          if (pending === 0) toast('文件上传完成', 'success');
+        });
+      });
+      if (pending === 0) toast('文件夹已插入（无可上传文件）', 'info');
+    }
+
+    // v320：拖拽处理——webkitGetAsEntry 自动识别文件/文件夹
+    function handleFileDrop(e, editor) {
+      var dt = e.dataTransfer;
+      if (!dt) return;
+      var items = dt.items;
+      if (!items || !items.length) {
+        // fallback 到 files
+        var files = Array.from(dt.files || []);
+        processLocalFiles(files, editor, null);
+        return;
+      }
+      // 优先用 DataTransferItemList 识别文件夹
+      var entries = [];
+      for (var i = 0; i < items.length; i++) {
+        var entry = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
+        if (entry) entries.push(entry);
+      }
+      if (!entries.length) {
+        processLocalFiles(Array.from(dt.files || []), editor, null);
+        return;
+      }
+      // 判断是否为单个文件夹
+      var isFolder = entries.length === 1 && entries[0].isDirectory;
+      if (isFolder) {
+        readDirectoryEntry(entries[0], function (files, folderName) {
+          processLocalFiles(files, editor, folderName);
+        });
+        return;
+      }
+      // 混合拖拽（多个文件/文件夹）→ 全部平铺成文件列表，自动打包成文件夹卡
+      var allFiles = [];
+      var pending = entries.length;
+      entries.forEach(function (entry) {
+        if (entry.isFile) {
+          entry.file(function (f) { allFiles.push(f); pending--; if (pending === 0) processLocalFiles(allFiles, editor, null); });
+        } else if (entry.isDirectory) {
+          readDirectoryEntry(entry, function (files) { allFiles = allFiles.concat(files); pending--; if (pending === 0) processLocalFiles(allFiles, editor, null); });
+        } else { pending--; if (pending === 0) processLocalFiles(allFiles, editor, null); }
+      });
+    }
+
+    // v320：递归读取目录条目（DirectoryEntry API）
+    function readDirectoryEntry(dirEntry, cb) {
+      var files = [];
+      var reader = dirEntry.createReader();
+      var folderName = dirEntry.name;
+      function readBatch() {
+        reader.readEntries(function (entries) {
+          if (!entries.length) { cb(files, folderName); return; }
+          var pending = entries.length;
+          entries.forEach(function (entry) {
+            if (entry.isFile) {
+              entry.file(function (f) { files.push(f); pending--; if (pending === 0) readBatch(); });
+            } else if (entry.isDirectory) {
+              readDirectoryEntry(entry, function (subFiles) { files = files.concat(subFiles); pending--; if (pending === 0) readBatch(); });
+            } else { pending--; if (pending === 0) readBatch(); }
+          });
+        }, function () { cb(files, folderName); });
+      }
+      readBatch();
+    }
+
+    // v321（用户 10-05 23:38）：自动判断链接类型——网盘域名→文件夹卡，文件扩展名→文件卡，默认文件卡
+    function detectLinkType(url) {
+      var u = (url || '').toLowerCase();
+      // 常见网盘/分享域名清单（可维护）
+      var folderDomains = [
+        'pan.baidu.com',
+        'alipan.com', 'aliyundrive.net', 'aliyundrive.com',
+        'lanzou', 'lanzouw.com', 'lanzoux.com', 'lanzoui.com',
+        '123pan.com', '123pan.cn',
+        'pan.quark.cn', 'quark.cn',
+        'cowtransfer.com',
+        'wenshushu.cn',
+        'cloud.189.cn',
+        'pan.xunlei.com',
+        'yun.139.com',
+        'www.jianguoyun.com',
+        'mega.nz',
+        'drive.google.com',
+        'onedrive.live.com',
+        'sharepoint.com',
+        'dropbox.com',
+        'terabox.com',
+        'mediafire.com',
+        'megaup.net',
+        'zippyshare.com',
+        'uploadgig.com',
+        'rapidgator.net',
+        'nitroflare.com',
+        'katfile.com',
+        'scribd.com'
+      ];
+      var isFolder = false;
+      for (var i = 0; i < folderDomains.length; i++) {
+        if (u.indexOf(folderDomains[i]) !== -1) { isFolder = true; break; }
+      }
+      // 兜底： lanzou 系列子域名通配（lanzou[a-z]*.com）
+      if (!isFolder && /lanzou[a-z]*\.com/.test(u)) isFolder = true;
+      if (isFolder) return 'folder';
+      // 常见文件扩展名
+      var fileExts = /\.(pdf|zip|rar|7z|tar|gz|bz2|xz|mp4|mp3|avi|mkv|mov|wmv|flv|doc|docx|xls|xlsx|ppt|pptx|txt|rtf|apk|exe|dmg|pkg|ipa|iso|img|torrent|csv|json|xml|html|htm|js|css|png|jpg|jpeg|gif|webp|svg|psd|ai|eps|woff|woff2|ttf|otf|eot|md|epub|mobi|azw3|fb2|djvu|chm|hlp|log|ini|cfg|conf|sql|py|java|c|cpp|h|hpp|cs|php|rb|go|rs|swift|kt|ts|jsx|tsx|vue|scss|less|sass|styl|coffee|lua|pl|sh|bat|cmd|ps1|vbs|wsf|reg|msi|msp|msm|mst|cab|dll|sys|drv|ocx|ax|tlb|olb|rll|mui|inf|cat|cer|crt|pfx|p12|pem|key|csr|crl|ocsp|tsa|sst|stl|spc|p7b|p7c|p7m|p7s|ps1xml|cdxml|xaml|baml|resx|resources|config|manifest|cfg|ini|inf|reg|cmd|bat|ps1|vbs|wsf|hta|msc|adp|ade|accdb|accdt|accdr|accdw|accde|mda|mde|adp|ade|dbf|db|mdb|sqlite|sqlite3|db3|s3db|sl3|nwdb|fdb|gdb|ib|myd|myi|frm|ibd|dbf|dbt|mdx|cdx|idx|ntx|db|sdf|mdb|accdb|odb|udl|dsn|qry|rqy|odc|udl|dac|dtsx|dbs|dbm|dbt|dbx|dbc|dbi|dbl|dbm|dbo|dbp|dbs|dbt|dbv|dbw|dbx|dby|dbz)$/i;
+      if (fileExts.test(u)) return 'file';
+      return 'file'; // 默认文件卡
+    }
+
+    // v321（用户 10-05 23:38）：文件弹窗——处理链接输入结果并插入编辑器（自动判断类型，无手动切换）
+    function handleFileInsert(editor) {
+      return function (val, done) {
+        var url = (val || '').trim();
+        if (!url) { if (done) done(); return; }
+        var type = detectLinkType(url);
+        var html = buildFileCardHTML({
+          type: type,
+          name: type === 'folder' ? '文件夹链接' : '文件链接',
+          url: url,
+          isLink: true,
+          items: []
+        });
+        rteInsert(editor, html);
+        toast('已插入', 'success');
+        if (done) done();
+      };
+    }
+
     // 封面图「上传本地图片」按钮
     (function () {
       var btn = document.getElementById('fImgUpload');
@@ -4398,6 +4974,11 @@ document.addEventListener('click', function (e) {
         rteInsert(__rte.editor || document.getElementById('fDetail'), html);
         toast('视频已插入', 'success');
       });
+    });
+
+    // v320（用户 10-05 22:37）：插入文件或文件夹（详情编辑器）
+    document.getElementById('detailRteFile').addEventListener('click', function () {
+      setupFileDialog(__rte.editor || document.getElementById('fDetail'));
     });
 
     // 占位符显示/隐藏
@@ -5035,6 +5616,11 @@ document.addEventListener('click', function (e) {
         rteInsert(__rte.editor || document.getElementById('setAnnouncement'), html);
         toast('视频已插入', 'success');
       });
+    });
+
+    // v320（用户 10-05 22:37）：插入文件或文件夹
+    document.getElementById('announcementRteFile').addEventListener('click', function () {
+      setupFileDialog(__rte.editor || document.getElementById('setAnnouncement'));
     });
 
     // 格式刷
@@ -6428,14 +7014,51 @@ document.addEventListener('click', function (e) {
           });
         }
         window.__lastFetchTime = Date.now();
+        // v319（用户 10-05 22:15）：根因→首屏只拿「全部」第一页，切分类/筛选时现场拉取老板看到「点进去才加载」；
+        // 修法→首屏成功后后台并行预加载各分类+常用筛选组合第一页到内存缓存，切分类/筛选直接秒出。
+        __preloadAdminCategoryPages();
       }).catch(function (e) {
         // v313：失败收骨架走空态 + 明确提示，不让老板永远看灰框
+        // v319（用户 10-05 22:15）：根因→登录后首屏网络失败弹「网络不佳」toast，老板首次加载本就慢、体验差；
+        // 修法→有缓存时静默失败不弹 toast（骨架已收、缓存已渲染），只在无缓存且无数据时提示一次。
         window.__adminSkelP = false;
         __clearAdminSkel(document.getElementById('productList'));
         __clearAdminSkel(document.getElementById('catList'));
         var _em = document.getElementById('productEmpty');
         if (_em) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = '暂无资源'; }
-        if (!silent) toast('网络不佳，请刷新重试', 'error');
+        var _hasCache = __getAdminCache()._cacheFormat === 'v317' && (__getAdminCache().products || []).length;
+        if (!silent && !_hasCache && !(state.products || []).length) {
+          toast('网络不佳，请刷新重试', 'error');
+        }
+      });
+    }
+
+    // v319（用户 10-05 22:15）：根因→首屏只拿「全部」第一页，切分类/筛选时现场拉取老板看到「点进去才加载」；
+    // 修法→后台并行预加载各分类+常用筛选组合第一页到内存缓存，切分类/筛选直接秒出。上限安全线>500条时跳过并报数。
+    function __preloadAdminCategoryPages() {
+      var cats = (state.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
+      var totalItems = (state.products || []).length + cats.length;
+      if (totalItems > 500) {
+        try { console.log('[v319] admin 预加载跳过：产品+分类=' + totalItems + ' > 500 安全线'); } catch (e) {}
+        return;
+      }
+      // 预加载各分类第一页（直接走 api，不动 DOM，避免触发 change 事件）
+      cats.forEach(function (c) {
+        if (Number(c.id) === 0) return;
+        var _k = __adminProductCacheKey(1, '', String(c.id), '');
+        if (__adminProductCache[_k]) return; // 已有缓存跳过
+        var _qs = '?page=1&page_size=' + ADMIN_PAGE_SIZE + '&cid=' + encodeURIComponent(c.id);
+        api('admin/products' + _qs).then(function (res) {
+          if (res && res.ok) {
+            __adminProductCache[_k] = {
+              products: res.list || [],
+              totalPages: res.total_pages || 1,
+              total: res.total || 0,
+              _backendPaged: true,
+              timestamp: Date.now()
+            };
+          }
+        }).catch(function () {});
       });
     }
 
@@ -7504,7 +8127,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=317', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=325', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
