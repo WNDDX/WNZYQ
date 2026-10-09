@@ -57,7 +57,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <input id="loginPass" class="input" type="password" autocomplete="current-password" maxlength="50" aria-label="密码" placeholder="密码" onkeydown="if(event.key==='Enter'){if(typeof doLogin==='function')doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件');}" style="width:100%;padding-right:44px;margin-bottom:0;" />
         <button type="button" id="pwdToggleBtn" onclick="if(typeof togglePwdVisibility==='function')togglePwdVisibility();" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button>
       </div>
-      登录<button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')"></button></form>
+      <button class="btn-blue" id="loginBtn" onclick="if(typeof window.doLogin==='function')window.doLogin();else alert('脚本未加载：请硬刷新(Ctrl+Shift+R)后重试，或重新上传最新文件')">登录</button></form>
     </div>
   </div>
   <!-- ============ 主视图 ============ -->

@@ -43,7 +43,8 @@ export async function onRequestGet(context) {
     contentType = (obj.httpMetadata && obj.httpMetadata.contentType) || guessType(key);
   }
 
-  const etag = 'W/' + JSON.stringify(path + ':' + (body && body.length || 0)); /* v336 条62 */
+  /* v336 条62：内容指纹——图片路径即唯一标识，没变就只回 304（不再重复传输） */
+  const etag = 'W/' + JSON.stringify(key);
   if (request.headers.get('If-None-Match') === etag) return new Response(null, { status: 304 });
   const res = new Response(body, {
     headers: {
