@@ -77,24 +77,33 @@
 }
 
 /* ===== v336 条99/100：全站弹窗“关闭叉”唯一规格（用户拍板：关闭键统一用删除那种红色） =====
-   32×32 圆钮、红底白叉、热区撑到 44×44（视觉不变、点得中） */
-.modal-mask .modal-close, .modal-mask .modal-close-x, .share-mask .share-close, .share-mask .share-x,
-.kf-mask .kf-close, .kf-mask .kf-x, .lightbox .lb-close, .preview-close-btn, .btn-close-modal, .modal-close {
+   ★ v339 修复（用户反馈“组件畸形/位置偏移”的根因）：原实现一刀切把「确定/关闭」等文字按钮
+   也压成 32px 红色小圆，且 position:relative 覆盖了各弹窗关闭叉的绝对定位（关闭叉被挤进
+   文档流、顶出弹窗边缘）。现拆成两组——
+   A组 = 真正的圆形 × 图标钮（红底白叉、热区 44px）
+   B组 = 文字关闭/确定钮（保留各自原有形状，只换成红色系配色呼应“关闭=红”） */
+/* A组：圆形 × 图标钮 */
+.modal-mask .modal-close-x, .kf-mask .kf-x, .lightbox .lb-close {
   background: var(--red) !important; color: #fff !important; border: none !important;
-  width: 32px !important; height: 32px !important; border-radius: 50% !important;
-  font-size: 16px !important; line-height: 32px !important; text-align: center !important;
-  position: relative;
+  width: 32px !important; height: 32px !important; min-width: 32px !important; border-radius: 50% !important;
+  font-size: 16px !important; line-height: 1 !important; padding: 0 !important;
 }
-.modal-mask .modal-close::after, .modal-mask .modal-close-x::after, .share-mask .share-close::after,
-.share-mask .share-x::after, .kf-mask .kf-close::after, .kf-mask .kf-x::after,
-.lightbox .lb-close::after, .preview-close-btn::after, .btn-close-modal::after, .modal-close::after {
+/* A组热区撑到 44×44（自身均为 absolute 定位，::after 相对自身锚定） */
+.modal-mask .modal-close-x::after, .kf-mask .kf-x::after, .lightbox .lb-close::after {
   content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px;
   transform: translate(-50%, -50%);
 }
-.modal-mask .modal-close:hover, .modal-mask .modal-close-x:hover, .share-mask .share-close:hover,
-.share-mask .share-x:hover, .kf-mask .kf-close:hover, .kf-mask .kf-x:hover,
-.lightbox .lb-close:hover, .preview-close-btn:hover, .btn-close-modal:hover, .modal-close:hover {
+.modal-mask .modal-close-x:hover, .kf-mask .kf-x:hover, .lightbox .lb-close:hover {
   background: #d32f2f !important; filter: none;
+}
+/* B组：文字关闭/确定钮——形状、尺寸、圆角、内边距一概不碰，只换红色系皮肤 */
+.modal-mask .modal-close, .kf-mask .kf-close, .share-mask .share-close,
+.preview-close-btn, .btn-close-modal {
+  background: #fdecea !important; color: #c62828 !important; border: 1px solid #f5c6c2 !important;
+}
+.modal-mask .modal-close:hover, .kf-mask .kf-close:hover, .share-mask .share-close:hover,
+.preview-close-btn:hover, .btn-close-modal:hover {
+  background: #c62828 !important; color: #fff !important; border-color: #c62828 !important; filter: none;
 }
 
 /* 隐藏所有滚动条（页面/弹窗/列表），滚动手势照常可用 */
