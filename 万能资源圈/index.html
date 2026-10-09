@@ -11,11 +11,11 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="万能资源圈">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="/assets/images/logo.png?v=330">
+<meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="万能资源圈・导航">
 <meta name="twitter:description" content="优质资源聚合平台"> <!-- v295（用户 10-04 02:52）：分享描述统一→优质资源聚合平台 -->
-<meta name="twitter:image" content="/assets/images/logo.png?v=330">
+<meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
   <link rel="stylesheet" href="/assets/ui-common.css">
   <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
   <link rel="preload" href="/assets/ui-common.js" as="script">
@@ -108,7 +108,7 @@ body{
 }
 .page-title{
     color: #ffffff;
-    font-size: 38px;
+    font-size: 36px;
     font-weight: 600 /* v336 条115 */;
     text-align: center;
     margin-bottom: 32px; /* R33：与标题上方间距对称（原44/20不均） */
@@ -193,17 +193,17 @@ body{
 .modal-box{
     background: var(--card-bg);
     border-radius: 14px;
-    padding: 26px 22px;
+    padding: 26px 20px;
     position: relative; max-width: 480px; max-height: 84vh; max-height: 84dvh; /* R285 条3：dvh 可视视口口径（对齐 R159 ①） */ overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
     width: 100%;
     text-align: center;
 }
 .modal-title{
-    font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 19px 保持） */
+    font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 18px 保持） */
     color: var(--text);
     margin-bottom: 16px;
     letter-spacing: 1px;
-    padding: 0 34px;
+    padding: 0 32px;
     text-align: center;
 }
 .qrcode-wrap{
@@ -281,7 +281,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 .prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:btnSpin 0.6s linear infinite;}
 /* R285 条48：prtspin 已删——统一走 ui-common.css btnSpin */
 /* 弹窗右上角关闭按钮（与资源页/管理页一致） */
-.modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background: var(--bg-light);color: var(--text-light);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.10s ease, opacity 0.10s ease, background 0.10s ease, color 0.10s ease; /* R231 条1：all 收窄为显式属性 */line-height:1;}
+.modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background: var(--bg-light);color: var(--text-light);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.10s ease, opacity 0.10s ease, background 0.10s ease, color 0.10s ease; /* R231 条1：all 收窄为显式属性 */line-height:1;}
 .modal-close-x:hover{background:#ff4444;color:#fff;transform:scale(0.97);} /* v293（用户 10-04 02:14）：020去掉opacity:0.9→完全交给公共样式管，不本地覆盖 */
 .modal-close-x:active{transform:scale(0.94);opacity:0.8;filter:brightness(0.9);}
 /* === 弹窗横向溢出防护：禁止底部滑轮 === */
@@ -295,18 +295,18 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   .logo-box { width: 100px; height: 100px; }
   .logo-wrap { margin-bottom: 28px; } /* R33：移动端同步上下间距对称 */
   .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.2px; text-indent: 0.4px /* v336 条127 */; }
-  .btn-item { padding: 16px 18px; font-size: 22px; margin-bottom: 12px; border-radius: 10px; gap: 12px; }
-  .icon-svg { width: 34px; height: 34px; }
+  .btn-item { padding: 16px 18px; font-size: 20px; margin-bottom: 12px; border-radius: 10px; gap: 12px; }
+  .icon-svg { width: 32px; height: 32px; }
   .btn-item .btn-sub { font-size: 12px; } /* v330 条30：手机档副标题同步降一档 */
   .qrcode-wrap { width: 200px; height: 200px; }
   .modal-box { padding: 20px 16px; }
-  .modal-title { font-size: 19px; }
+  .modal-title { font-size: 18px; }
   .modal-inner-btn, .modal-close { font-size: 16px; padding: 10px 24px; }
   .modal-tip { font-size: 14px; }
 }
 @media (min-width: 601px) and (max-width: 900px) {
   .page-title { font-size: 32px; }
-  .btn-item { font-size: 23px; }
+  .btn-item { font-size: 24px; }
 }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 </style>

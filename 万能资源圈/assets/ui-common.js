@@ -1,3 +1,60 @@
+
+/* v343 条5：统一取数据通道——前台与后台共用同一份核心。
+   统一负责：超时、GET 失败重试一次、带上登录凭证、非 JSON 错误兜底、
+   同一请求在途去重、登录过期回调。页面只管拿结果，不再各写一套。 */
+window.WNApi = (function () {
+  var inflight = new Map();
+  function buildUrl(path) {
+    if (/^https?:/i.test(path)) return path;
+    if (path.charAt(0) === '/') return path;
+    return '/api/' + path;
+  }
+  function request(path, opts) {
+    opts = opts || {};
+    var url = buildUrl(path);
+    var method = (opts.method || 'GET').toUpperCase();
+    var isGet = method === 'GET';
+    var cfg = window.WN_CONST || {};
+    var timeout = opts.timeout || cfg.TIMEOUT || 10000;
+    var fopts = { method: method, credentials: opts.credentials || 'include' };
+    var headers = opts.headers || {};
+    if (method !== 'GET' && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    fopts.headers = headers;
+    if (opts.body) fopts.body = opts.body;
+    if (opts.cache) fopts.cache = opts.cache;
+    var key = url + '|' + (opts.body || '');
+    if (inflight.has(key)) return inflight.get(key);
+    function once(isRetry) {
+      return Promise.race([
+        fetch(url, fopts),
+        new Promise(function (_, rej) { setTimeout(function () { rej(new Error('timeout')); }, timeout); })
+      ]).then(function (r) {
+        if (opts.raw) return r;
+        var ct = r.headers.get('content-type') || '';
+        if (r.status >= 400 && ct.indexOf('application/json') === -1) {
+          return { ok: false, msg: '服务开小差了，请稍后再试', _status: r.status };
+        }
+        return r.json().then(function (d) {
+          if (d && typeof d === 'object') d._status = r.status;
+          if (r.status === 401 && opts.on401) { try { opts.on401(); } catch (e) {} }
+          return d;
+        }).catch(function () {
+          return r.status === 204 ? { ok: true, _status: 204 } : { ok: false, msg: '服务开小差了，请稍后再试', _status: r.status };
+        });
+      }).catch(function (e) {
+        if (isGet && !isRetry) return once(true);
+        if (opts.throwOnError) throw e;
+        var msg = (e && e.message === 'timeout') ? '网络不佳，请稍后再试' : '当前网络不可用，请检查网络连接';
+        return { ok: false, msg: msg, _net: true };
+      });
+    }
+    var p = once(false).then(function (d) { inflight.delete(key); return d; }, function (e) { inflight.delete(key); throw e; });
+    inflight.set(key, p);
+    return p;
+  }
+  return { request: request };
+})();
+
 // R256：HTML 属性转义（全站共享）
 function escapeHtml(text) {
   if (!text) return '';
@@ -27,7 +84,9 @@ if ('serviceWorker' in navigator) {
         _swReloaded = true;
         try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} // R248：编辑中时先落草稿
         // v307：不强制刷新，只提示用户有新版本——根治"放着放着自己刷一下"
-        try { window.toast && window.toast('已更新到最新版本，下次打开自动生效', 'info', 'info', 4000); } catch (e) {}
+        /* v345 条6：去掉「已更新到最新版本」这类高频提示（每次刷新都弹，很烦）——
+           新版本依然会静默生效，不再打扰用户。 */
+        try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {}
       });
     }).catch(function () {});
   });
@@ -95,7 +154,7 @@ if ('serviceWorker' in navigator) {
       __hideBgVideos(false);
       // v294（用户 10-04 02:14）：222 关闭弹窗时暂停所有视频
       try { document.querySelectorAll('video').forEach(function(v){ v.pause(); }); } catch(e) {}
-      // 不直接解锁：若还有其他弹窗（如商品弹窗）开着，必须保持背景锁定
+      // 不直接解锁：若还有其他弹窗（如资源弹窗）开着，必须保持背景锁定
       if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overflow = '');
     }
     m.addEventListener('click', function (e) { if (e.target === m) close(); }); /* R217：恢复点外关闭（R215 误删——老板原意只删下滑手势） */
@@ -1474,10 +1533,16 @@ window.uiToast = (function () {
   var q = [], busy = false;
   /* v336 条135/140：撤销条独立通道——不排队、出现那一刻才起算 10 秒、多条并存底部。
      根治“连删两条时第二条的撤销是假动作”（旧实现排队导致真删先于撤销按钮出现）。 */
+  var __undoStack = []; /* v343 条53：连删多条时，撤销条纵向排开，互不遮挡 */
+  function __relayoutUndo() {
+    var base = __toastTop() + 8;
+    __undoStack.forEach(function (x, i) { try { x.style.top = (base + i * 54) + 'px'; } catch (e) {} });
+  }
   function showImmediate(it) {
     var t = document.createElement('div');
-    t.className = 'ui-toast' + (it.t === 'error' ? ' error' : ''); t.setAttribute('role','status'); t.setAttribute('aria-live','polite'); t.style.top = __toastTop() + 'px'; /* v341 */
-    var left = 10, done = false;
+    t.className = 'ui-toast' + (it.t === 'error' ? ' error' : ''); t.setAttribute('role','status'); t.setAttribute('aria-live','polite');
+    __undoStack.push(t); __relayoutUndo();
+    var left = Math.round(((window.WN_CONST && window.WN_CONST.UNDO_MS) || 10000) / 1000), done = false; /* v343 条8：撤销秒数走常量 */
     var txt = document.createElement('span'); txt.textContent = it.m;
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'undo-btn'; btn.textContent = '撤销（' + left + 's）';
@@ -1489,6 +1554,8 @@ window.uiToast = (function () {
       if (done) return; done = true;
       clearInterval(timer);
       try { if (t.parentNode) t.parentNode.removeChild(t); } catch (e) {}
+      var ix = __undoStack.indexOf(t); if (ix > -1) __undoStack.splice(ix, 1);
+      __relayoutUndo(); /* v343 条53：移除后其余自动上移 */
     }
     btn.addEventListener('click', function () {
       if (done) return;
@@ -1499,7 +1566,7 @@ window.uiToast = (function () {
     });
     t.appendChild(txt); t.appendChild(btn);
     document.body.appendChild(t);
-    setTimeout(cleanup, 10500);
+    setTimeout(cleanup, (((window.WN_CONST && window.WN_CONST.UNDO_MS) || 10000) + 500));
   }
   /* v341：提示条位置按「真实顶栏底部 + 12px」计算——顶栏在手机上会换成两行（约 100px），
      死写 80px 会压住第二行的标签栏（也是「资源管理被挡住、下划线看不见」的真因）。 */
@@ -1552,6 +1619,17 @@ window.__btnFit = function () {
         if (grp.scrollWidth <= avail + 1) break;
         btns[j].classList.add('ico-only');
       }
+    }
+    /* v345 条4：单按钮级——文字被截断/放不下时，收起文字改显图标（图标与文字只显其一） */
+    for (var k = 0; k < btns.length; k++) {
+      var bt = btns[k];
+      if (bt.classList.contains('ico-only')) continue;
+      var clipped = bt.scrollWidth > bt.clientWidth + 1;
+      if (!clipped) {
+        var lab = bt.querySelector('.btn-lab');
+        if (lab && lab.scrollWidth > lab.clientWidth + 1) clipped = true;
+      }
+      if (clipped) bt.classList.add('ico-only');
     }
   } catch (e) {}
 };
@@ -2075,3 +2153,17 @@ window.__sanitizeHTML = function (html) {
   try { if (html && __res && __res.length < __before * 0.6 && window.uiToast) uiToast('已自动移除部分不支持的内容'); } catch (e) {}
   return __res;
 };
+
+/* v343 条66：弹窗打开时把键盘范围“圈住”——Tab 只在弹窗内循环，不会跑到背后被遮住的按钮上（防误操作） */
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Tab') return;
+  var masks = document.querySelectorAll('.modal-mask.open, .share-mask.open, .kf-mask.open, .qrcode-mask.open, .lightbox.open');
+  if (!masks.length) return;
+  var box = masks[masks.length - 1];
+  var f = box.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+  f = Array.prototype.filter.call(f, function (el) { return el.offsetParent !== null; });
+  if (!f.length) return;
+  var first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});

@@ -49,4 +49,5 @@ window.SHOP_CONFIG = {
 };
 
 /* v336 条33：全站常量唯一源（超时/撤销时长/每页条数） */
-window.WN_CONST = { TIMEOUT: 10000, UNDO_MS: 10000, PAGE_SIZE: 20, ADMIN_PAGE_SIZE: 20, IMG_RETRIES: 3 };
+window.WN_CONST = { TIMEOUT: 10000, UNDO_MS: 10000, PAGE_SIZE: 20, ADMIN_PAGE_SIZE: 20, IMG_RETRIES: 3, CACHE_SCHEMA: 4 };
+/* CACHE_SCHEMA：访客设备里暂存数据的“格式版本号”。改大了以后，旧格式自动作废重取，避免升级后看到旧数据。 */

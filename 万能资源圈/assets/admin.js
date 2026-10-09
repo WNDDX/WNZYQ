@@ -128,7 +128,7 @@
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
-      if (t.tagName === 'IMG' && !t.dataset.fh) {
+      if (t.tagName === 'IMG' && !t.dataset.fh && !t.dataset.lf) { /* v345 条3：由页面自己接管的图片不抢 */
         t.dataset.fh = '1';
         t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
         t.style.display = 'block'; t.style.opacity = '1';
@@ -174,8 +174,8 @@
         }
       }
     }, true);
-    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail'); t.style.display = 'block'; t.style.opacity = '1'; } }, true);
-    document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
+    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh || t.dataset.lf) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail'); t.style.display = 'block'; t.style.opacity = '1'; } }, true);
+    document.querySelectorAll('img').forEach(function (im) { if (im.dataset.lf) return; if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
 
     // ---------- DOM ----------
     var loginView = document.getElementById('loginView');
@@ -652,65 +652,23 @@
     var __apiInFlight = new Map();
     function api(path, opts) {
       opts = opts || {};
-      var reqKey = path + '|' + (opts.body || '');
-      if (__apiInFlight.has(reqKey)) { return __apiInFlight.get(reqKey); }
-      opts.headers = opts.headers || {};
-      opts.headers['Content-Type'] = 'application/json';
-      // v305（用户 10-05 02:26）：根因→fetch 默认 credentials 在同源下应带 cookie，
-      // 但某些浏览器/边缘环境中 cookie 会丢失，导致登录后所有 admin 请求 401；
-      // 修法→显式设置 credentials: 'include'，确保 HttpOnly Cookie 必被带上。
-      opts.credentials = opts.credentials || 'include';
-      // R30：鉴权统一走 HttpOnly Cookie，不再从 localStorage 读 token
-      // R286-57：管理页所有请求加8秒超时保护，网络一卡不再无限转圈
-      // v313：首屏 dashboard 放宽到30秒（老板网络 2.7~11.7 秒，8秒必超），操作类维持8秒
-      // v319（用户 10-05 22:15）：根因→老板网络一趟 2~11 秒，8 秒超时必弹「网络不佳」；修法→默认超时 8→15 秒，给慢网留余量。
-      // R308：GET 请求失败自动重试一次（立刻、不延时），只试一次
-      var isGet = (!opts.method || opts.method === 'GET');
-      var timeout = opts.timeout || 15000;
-      var doFetch = function (isRetry) {
-        return Promise.race([
-          fetch('/api/' + path, opts),
-          new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, timeout); })
-        ]).then(function (r) {
-          __apiInFlight.delete(reqKey);
-          var ct = r.headers.get('content-type') || '';
-          // v301（用户 10-05 00:00）：服务器返回 404/500 等非 JSON 错误时，报真实原因，不再赖网络
-          if (r.status >= 400 && ct.indexOf('application/json') === -1) {
-            return { ok: false, msg: '服务开小差了，请稍后再试', _status: r.status };
-          }
-          return r.json().then(function (d) {
-            d._status = r.status;
-            if (r.status === 401) {
-              if (mainView.style.display !== 'none') {
-                toast('登录已过期，请重新登录', 'error');
-                setTimeout(function () { location.reload(); }, 1200);
-              }
+      /* v343 条5：后台取数据改走统一通道（与前台同一份核心），保留 15 秒超时与登录过期处理 */
+      return window.WNApi.request('/api/' + path, {
+        method: opts.method, body: opts.body, cache: opts.cache,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', timeout: opts.timeout || 15000,
+        on401: function () {
+          try {
+            if (mainView && mainView.style.display !== 'none') {
+              toast('登录已过期，请重新登录', 'error');
+              setTimeout(function () { location.reload(); }, 1200);
             }
-            return d;
-          }).catch(function () {
-            return { ok: false, msg: '服务开小差了，请稍后再试', _status: r.status };
-          });
-        }).catch(function (e) {
-          __apiInFlight.delete(reqKey);
-          if (isGet && !isRetry) {
-            return doFetch(true);
-          }
-          // v301（用户 10-05 00:00）：区分超时与网络断开，真断网才报网络问题
-          if (e && e.message === 'timeout') {
-            return { ok: false, msg: '网络不佳，请稍后再试' };
-          }
-          return { ok: false, msg: '当前网络不可用，请检查网络连接' };
-        });
-      };
-      var p = doFetch(false);
-      // R307 U5：任何失败（8 秒超时/网络断/服务器错误/业务 ok:false）返回那一刻，
-      // 弹窗 busy 在途就立即停转确定按钮（10 秒自动关定时线不动）
-      p = p.then(function (d) {
+          } catch (e) {}
+        }
+      }).then(function (d) {
         if (d && d.ok === false && window.__maskBusyReset) { try { window.__maskBusyReset(); } catch (e) {} }
         return d;
       });
-      __apiInFlight.set(reqKey, p);
-      return p;
     }
 
     // 清除资源和分类的 API 缓存（管理员修改后调用，不阻塞主流程）
@@ -1141,11 +1099,11 @@ function boot() {
     setTimeout(function () { if (window.__btnFit) window.__btnFit(); }, 100);
 
     // ---------- 视图切换（列表/卡片） ----------
-    var currentView = localStorage.getItem('admin_product_view') || 'list';
+    var currentView = localStorage.getItem('wnzyq_admin_product_view') || 'list';
 
     function setView(view) {
       currentView = view;
-      localStorage.setItem('admin_product_view', view);
+      localStorage.setItem('wnzyq_admin_product_view', view);
       var listBtn = document.getElementById('viewListBtn');
       var cardBtn = document.getElementById('viewCardBtn');
       var productList = document.getElementById('productList');
@@ -1170,7 +1128,7 @@ function boot() {
         btnA: 'viewCardBtn', btnB: 'viewListBtn',
         flipperKey: '__adminFlipper',
         viewClass: 'card-view', viewA: 'card',
-        storageKey: 'admin_product_view',
+        storageKey: 'wnzyq_admin_product_view',
         fallbackFn: setView,
         triggerAnim: triggerViewAnim,
         onChange: function (v) { currentView = v; }
@@ -5637,7 +5595,7 @@ document.addEventListener('click', function (e) {
           } catch (e0) {}
           /* v330 条8：客服保存按钮已就地打✓，不再重复弹提示条 */
           // v294：213 广播通知其他标签页客服链接已更新
-          try { localStorage.setItem('__kfUrlUpdated', Date.now().toString()); } catch(e) {} if (window.__haptic) window.__haptic(); /* R183 条12 */
+          try { localStorage.setItem('wnzyq_kf_url_updated', Date.now().toString()); } catch(e) {} if (window.__haptic) window.__haptic(); /* R183 条12 */
           try { window.__clearEditingDraft(); } catch (e) {} // R248：清除 localStorage 草稿
           document.getElementById('contactMask').classList.remove('open');
         }
@@ -8536,6 +8494,27 @@ refreshCatCnts();
     })();
 
     // ---------- 初始化 ----------
+
+    /* v343 条56：后台滚动位置记忆——切到别的区再回到资源管理时，回到原来的滚动位置 */
+    (function () {
+      var KEY = 'wnzyq_admin_scroll_y';
+      var t = null;
+      window.addEventListener('scroll', function () {
+        if (t) clearTimeout(t);
+        t = setTimeout(function () { try { sessionStorage.setItem(KEY, String(window.scrollY || 0)); } catch (e) {} }, 200);
+      }, { passive: true });
+      document.addEventListener('click', function (e) {
+        var el = e.target && e.target.closest ? e.target.closest('.tab, [class*=tab]') : null;
+        if (!el) return;
+        var txt = (el.textContent || '');
+        if (/资源管理|资源/.test(txt)) {
+          setTimeout(function () {
+            try { var y = parseInt(sessionStorage.getItem(KEY) || '0', 10); if (y > 0) window.scrollTo(0, y); } catch (e2) {}
+          }, 400);
+        }
+      }, true);
+    })();
+
     boot();
 
 /* ===== R102→R167：截断文字悬停/点按小框 #uiTip 已收编至 ui-common.js（全站四页统一） =====

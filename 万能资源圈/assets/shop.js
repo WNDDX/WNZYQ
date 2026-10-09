@@ -103,23 +103,17 @@
        （下面 121 行原本就调 window.__logoFail，无需改动）。 */
     var __shopFetchInFlight = new Map();
     function __dedupFetch(url, opts) {
-      var key = url + '|' + (opts && opts.body ? opts.body : '');
-      if (__shopFetchInFlight.has(key)) return __shopFetchInFlight.get(key);
-      // v305（用户 10-05 02:26）：根因→fetch 默认 credentials 在某些浏览器/边缘环境中 cookie 会丢失；
-      // 修法→显式设置 credentials: 'include'，确保会话 Cookie 必被带上（全系统统一）。
-      if (!opts) opts = {};
+      /* v343 条5：改走统一取数据通道（超时/重试/去重/凭证由公共层统一负责），这里保持“返回 Response”语义，调用点零改动 */
+      opts = opts || {};
       opts.credentials = opts.credentials || 'include';
-      // R308：GET 请求失败自动重试一次（立刻、不延时），只试一次
-      var isGet = (!opts || !opts.method || opts.method === 'GET');
-      var doFetch = function (isRetry) {
-        return fetch(url, opts).then(function (r) { return r; }).catch(function (e) {
-          if (isGet && !isRetry) return doFetch(true);
-          throw e;
-        });
-      };
-      var p = doFetch(false).then(function (r) { __shopFetchInFlight.delete(key); return r; }).catch(function (e) { __shopFetchInFlight.delete(key); throw e; });
-      __shopFetchInFlight.set(key, p);
-      return p;
+      var to = (window.WN_CONST && window.WN_CONST.TIMEOUT) || 10000;
+      return window.WNApi.request(url, {
+        method: opts.method, credentials: opts.credentials, headers: opts.headers,
+        body: opts.body, cache: opts.cache, raw: true, timeout: to
+      }).then(function (r) {
+        if (r && r._net) throw new Error(r.msg || 'network'); /* 网络失败：抛出，交给调用方原有 catch 处理 */
+        return r;
+      });
     }
     (function () {
     var _sl = document.getElementById('shopLogo'); if (_sl && _sl.complete && _sl.naturalWidth === 0 && String(_sl.getAttribute('src')).indexOf('data:') !== 0) window.__logoFail(_sl); })();
@@ -130,6 +124,7 @@
         var t = e.target;
         if (!t || !t.tagName || t.dataset.fh) return;
         if (t.tagName === 'IMG') {
+          if (t.dataset.lf) return; /* v345 条3：卡片图由 loadImg 处理回退与占位，这里不插手，避免先闪占位符 */
           t.dataset.fh = '1';
           t.src = IMG_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
           t.style.display = 'block'; t.style.opacity = '1';
@@ -143,7 +138,7 @@
           else if (t.parentNode) t.parentNode.removeChild(t);
         }
       }, true);
-      document.querySelectorAll('img').forEach(function (im) { if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
+      document.querySelectorAll('img').forEach(function (im) { if (im.dataset.lf) return; /* v345 条3 */ if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
     }
 
     // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
@@ -299,7 +294,8 @@
       return u.replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp');
     }
 
-    function loadImg(img, src, fallbackSrc) { /* R304 P18：fallbackSrc=小图加载失败先回退的原图；不传（详情弹窗/轮播走原图）行为与原先完全一致 */
+    function loadImg(img, src, fallbackSrc) {
+      img.dataset.lf = '1'; /* v345 条3：标记为“由 loadImg 接管”，全局兜底不再抢先换成占位符（避免闪一下） */ /* R304 P18：fallbackSrc=小图加载失败先回退的原图；不传（详情弹窗/轮播走原图）行为与原先完全一致 */
       if (img.getAttribute('src') === src && img.src && img.complete) { img.style.display = 'block'; img.style.opacity = '1'; return; }
       img.decoding = 'async'; img.loading = 'lazy'; /* v336 条48 */ /* R193c ⑩：异步解码——解码不占主线程，列表图多时滑动更跟手 */
       /* R304 P14（用户 09-30 02:00 拍板「按我的思路做，应用到全系统页面，只有翻页才加载翻页后的内容数据」）：
@@ -499,7 +495,7 @@
           currentSubCat = 0;  // 切换一级分类时重置二级
           currentPage = 1;
           // v294（用户 10-04 02:14）：249 分类筛选存localStorage
-          try { if (c.id) localStorage.setItem('__shopCategory', String(c.id)); else localStorage.removeItem('__shopCategory'); } catch(e) {}
+          try { if (c.id) localStorage.setItem('wnzyq_shop_category', String(c.id)); else localStorage.removeItem('wnzyq_shop_category'); } catch(e) {}
           renderCategories();
           __fadeRenderProducts(); /* R243（用户 09-22 23:18）：条15 分类切换统一翻页同款过渡 */
         });
@@ -794,8 +790,7 @@
       title.className = 'card-title';
       var __kw = (searchInput && searchInput.value || '').trim();
       title.innerHTML = __kw ? hlTitle(p.title || '', __kw) : (p.title || ''); /* R192 二④：命中词淡绿高亮 */
-      title.title = p.title || ''; // v294：194 标题过长悬停显示完整内容
-      title.title = p.title || ''; // v294：194 标题过长悬停显示完整内容
+      title.title = p.title || ''; // v294：194 标题过长悬停显示完整内容（v343 条16：去掉重复写入）
       var desc = document.createElement('div');
       desc.className = 'card-desc';
       desc.textContent = p.desc || '';
@@ -880,6 +875,17 @@
             renderProducts();
           });
           emptyTip.appendChild(__clr);
+        }
+        /* v343 条44：非搜索的“空分类”也给一个下一步按钮——一键回到全部资源 */
+        if (!kw && (currentCat || currentSubCat)) {
+          var __all2 = document.createElement('button');
+          __all2.type = 'button'; __all2.className = 'empty-clear-btn'; __all2.textContent = '查看全部资源';
+          __all2.addEventListener('click', function () {
+            currentCat = 0; currentSubCat = 0; currentPage = 1;
+            renderCategories();
+            fetchRemote({ page: 1, cid: 0, subCid: 0, kw: '' }).then(function () { renderAll(); }).catch(function () {});
+          });
+          emptyTip.appendChild(__all2);
         }
         return;
       }
@@ -1706,7 +1712,7 @@
       searchTimer = setTimeout(function () {
         currentPage = 1;
         // v294（用户 10-04 02:14）：214 搜索关键词存localStorage
-        try { if (self.value.trim()) localStorage.setItem('__shopSearch', self.value.trim()); else localStorage.removeItem('__shopSearch'); } catch(e) {}
+        try { if (self.value.trim()) localStorage.setItem('wnzyq_shop_search', self.value.trim()); else localStorage.removeItem('wnzyq_shop_search'); } catch(e) {}
         __fadeRenderProducts(function () {
           if (self.value.trim()) window.pushSearchHist('shopSearchHist', self.value); /* R186 建议1：搜索稳定 300ms 后记录 */
         }); /* R243（用户 09-22 23:18）：条15 搜索切换统一翻页同款过渡 */
@@ -1877,7 +1883,10 @@
     }
 
     // R243 条35：localStorage 写入前先比对，内容变了才写（减少写入次数、延长存储寿命）
+    var __cacheTimer = null, __cachePending = null;
     function __setShopCache(key, obj) {
+      /* v343 条4：写入时带上“格式版本号”，格式变了旧数据自动作废（不再出现升级后错乱） */
+      try { if (obj && typeof obj === 'object') obj.__schema = (window.WN_CONST && window.WN_CONST.CACHE_SCHEMA) || 4; } catch (e) {}
       try {
         /* v333 修：原来整份覆盖——切分类/搜索/翻页时用「只有 products + categories 两个字段」的对象
            把首屏那份完整缓存（含公告、店铺名、版本号 _homeVersion）冲掉，导致每次进页面都被当成
@@ -1893,7 +1902,12 @@
           } catch (e2) {}
         }
         var json = JSON.stringify(merged);
-        if (localStorage.getItem(key) !== json) localStorage.setItem(key, json);
+        /* v343 条19：写本地暂存做 400ms 节流合并，避免频繁读写卡顿 */
+        __cachePending = { key: key, json: json };
+        if (__cacheTimer) clearTimeout(__cacheTimer);
+        __cacheTimer = setTimeout(function () {
+          try { var pd = __cachePending; if (pd && localStorage.getItem(pd.key) !== pd.json) localStorage.setItem(pd.key, pd.json); } catch (e) {}
+        }, 400);
       } catch (e) {}
     }
 
@@ -1966,6 +1980,8 @@
       // 先读 localStorage 缓存，秒开
       try {
         var cached = localStorage.getItem('wnzyq_shop_data');
+        /* v343 条4：读取校验格式版本号，不一致直接当没有缓存 */
+        try { if (cached) { var _cs = JSON.parse(cached); if (_cs && _cs.__schema !== ((window.WN_CONST && window.WN_CONST.CACHE_SCHEMA) || 4)) cached = null; } } catch (e) { cached = null; }
         if (cached) {
           var c = JSON.parse(cached);
           if (c.products && c.categories) {
@@ -2129,15 +2145,24 @@
         var _oldAnn = DATA.announcement;
         var _oldAnnMode = DATA.announcementMode;
         var _oldShopName = DATA.shopName;
+        /* v343 条18：分类与设置极少变化——内存记 60 秒，切分类/翻页时不再重复拉（3 请求 → 1 请求） */
+        var __mc = window.__shopMetaCache || (window.__shopMetaCache = { cats: null, sets: null, t: 0 });
+        var __metaFresh = !!opts.force || !__mc.cats || (Date.now() - (__mc.t || 0) > 60000);
+        function __metaFetch(url, key) {
+          if (!__metaFresh && __mc[key]) {
+            return Promise.resolve(key === 'cats' ? { ok: true, list: __mc.cats } : { ok: true, settings: __mc.sets });
+          }
+          return withTimeout(__dedupFetch(url + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 10000);
+        }
         __pageCacheLoading[key] = Promise.all([
           withTimeout(__dedupFetch('/api/products' + qs + (ts ? ts.replace('?', '&') : ''), fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 10000) /* v336 条11：与后台统一 10 秒 */,
-          withTimeout(__dedupFetch('/api/categories' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 10000) /* v336 条11：与后台统一 10 秒 */,
-          withTimeout(__dedupFetch('/api/settings' + ts, fetchOpts).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 10000) /* v336 条11：与后台统一 10 秒 */
+          __metaFetch('/api/categories', 'cats'),
+          __metaFetch('/api/settings', 'sets')
         ]).then(function (res) {
           var _changed = false;
           if (res[0] && res[0].ok && res[1] && res[1].ok) {
             DATA.products = res[0].list || [];
-            DATA.categories = res[1].list || [];
+            DATA.categories = res[1].list || []; try { __mc.cats = DATA.categories; __mc.t = Date.now(); } catch (e) {}
             usingRemote = true;
             // v317（用户 10-05 18:40）：恢复后端分页，fetchRemote 走真实网络请求，_backendPaged=true
             if (res[0].total_pages !== undefined) {
@@ -2160,6 +2185,7 @@
             DATA.announcement = _newAnn;
             DATA.announcementMode = _newAnnMode;
             DATA.announcements = window.parseAnnouncements(res[2].settings || {}, { filterHidden: true });
+            try { __mc.sets = res[2].settings || {}; __mc.t = Date.now(); } catch (e) {}
             if ((res[2].settings || {}).shop_name) { DATA.shopName = res[2].settings.shop_name; }
             window._globalContact = (res[2].settings || {}).contact_url || getDefaultContact();
             if (window.__kfPreconnect) window.__kfPreconnect(window._globalContact);
@@ -2695,7 +2721,7 @@
 
     // v294（用户 10-04 02:14）：213 广播通知其他标签页客服链接已更新
     window.addEventListener('storage', function (e) {
-      if (e.key === '__kfUrlUpdated') {
+      if (e.key === 'wnzyq_kf_url_updated') {
         // 重新拉取 settings 更新客服链接
         __dedupFetch('/api/settings?_t=' + Date.now())
           .then(function (r) { return r.ok ? r.json() : null; })
@@ -2711,7 +2737,7 @@
 
     // 视图切换（网格/列表）；R211 二批（用户 09-20 老板点名）：FLIP 平滑飞位——按钮点击路径走 FlipAnimator，
     // 卡片从旧位置飞到新位置；初始化恢复视图不触发动画；FLIP 不可用/系统减少动效时回退原容器切换动画
-    var currentView = localStorage.getItem('shop_view') || 'list';
+    var currentView = localStorage.getItem('wnzyq_shop_view') || 'list';
     // R277：首帧即给骨架屏容器加正确模式类，避免静态骨架形状与当前模式不符（R255 静态骨架存在时 renderSkeleton 不执行）
     var _grid = document.getElementById('productGrid');
     if (_grid) _grid.classList.toggle('list-view', currentView === 'list');
@@ -2719,7 +2745,7 @@
 
     function setShopView(view) {
       currentView = view;
-      localStorage.setItem('shop_view', view);
+      localStorage.setItem('wnzyq_shop_view', view);
       var grid = document.getElementById('productGrid');
       var gridBtn = document.getElementById('viewGridBtn');
       var listBtn = document.getElementById('viewListBtn');
@@ -2745,7 +2771,7 @@
         btnA: 'viewListBtn', btnB: 'viewGridBtn', // v325：解除交叉——btnA 配 viewA（list）自然配对
         flipperKey: '__shopFlipper',
         viewClass: 'list-view', viewA: 'list',
-        storageKey: 'shop_view',
+        storageKey: 'wnzyq_shop_view',
         fallbackFn: setShopView,
         triggerAnim: triggerViewAnim,
         onChange: function (v) {

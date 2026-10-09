@@ -124,7 +124,7 @@
   animation: kfBoxIn var(--dur-mid) var(--ease-out);
 }
 @keyframes kfBoxIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：客服弹窗卡片入场加展开（与关闭收缩对称） */
-.kf-title { font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 19px 保持） */ color: var(--text); margin-bottom: 16px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
+.kf-title { font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 18px 保持） */ color: var(--text); margin-bottom: 16px; letter-spacing: 1px; padding: 0 32px; text-align: center; }
 .kf-qr {
   width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border); background: var(--bg-light);
   margin: 0 auto 14px; position: relative; display: flex; align-items: center;
@@ -161,10 +161,10 @@
 .alert-ok:active, .ann-ok:active, .btn-item:active, .modal-inner-btn:active, .modal-close:active, .kf-jump:active, .kf-close:active {
   transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
 }
-.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease ; line-height: 1; } /* R186：× 回退标准口径——弹窗右上角同款灰圆，hover 变红 */
+.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease ; line-height: 1; } /* R186：× 回退标准口径——弹窗右上角同款灰圆，hover 变红 */
 @media (max-width: 600px) {
   .kf-box { padding: 20px 16px; }
-  .kf-title { font-size: 19px; }
+  .kf-title { font-size: 18px; }
   .kf-qr { width: 200px; height: 200px; }
   .kf-jump, .kf-close { font-size: 16px; padding: 10px 24px; }
 }
@@ -185,7 +185,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   width: 32px !important; height: 32px !important;
   border-radius: 50% !important; border: none !important;
   background: var(--gray-bg) !important; color: var(--gray-text) !important;
-  font-size: 19px !important; line-height: 1 !important; cursor: pointer !important;
+  font-size: 18px !important; line-height: 1 !important; cursor: pointer !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
   padding: 0 !important; margin: 0 !important;
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease !important;
@@ -296,7 +296,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
    两页禁止各自再写 .tab 样式（复用，非复制）。 */
 .tab {
   border: none; background: rgba(255, 255, 255, 0.18);
-  color: #fff; padding: 0 16px; height: 38px;
+  color: #fff; padding: 0 16px; height: 36px;
   display: inline-flex; align-items: center; justify-content: center;
   box-sizing: border-box; border-radius: 999px;
   font-size: 14px; white-space: nowrap; line-height: 1.2; gap: 5px;
@@ -320,8 +320,8 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 .view-btn {
   padding: 0 10px; border: 1px solid var(--blue2, var(--blue2)); border-radius: 8px;
   background: var(--blue2, var(--blue2)); color: #fff; cursor: pointer;   /* 未激活（R87）：淡蓝底白字，与状态按钮隐藏态同色 */
-  font-size: 13px; height: 38px; box-sizing: border-box; /* R279（老板 09-28 00:18）：38→40px 的 R182-4 作废——全系统按键高度统一，
-  列表/网格切换按键与顶栏咨询客服/分享按键（.tab，38px）同高；两页共用本规则，一处改两页生效 */
+  font-size: 13px; height: 36px; box-sizing: border-box; /* R279（老板 09-28 00:18）：38→40px 的 R182-4 作废——全系统按键高度统一，
+  列表/网格切换按键与顶栏咨询客服/分享按键（.tab，36px）同高；两页共用本规则，一处改两页生效 */
   display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; gap: 4px;
   transition: background var(--dur-mid) ease, color var(--dur-mid) ease, transform var(--dur-fast) ease;
   -webkit-tap-highlight-color: transparent;
@@ -696,7 +696,7 @@ body { transition: background-color 0.3s ease, color 0.3s ease; }
   height: 33px;
   border: none;
   border-radius: 999px;
-  padding: 0 36px 0 38px;
+  padding: 0 36px 0 36px;
   font-size: 14px;
   background: var(--card-bg);
   outline: none;
@@ -714,8 +714,8 @@ body { transition: background-color 0.3s ease, color 0.3s ease; }
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   border: none;
   background: var(--bg-light);
@@ -778,6 +778,7 @@ input::placeholder, textarea::placeholder { color: var(--text-light, #999); opac
     content: ''; position: absolute; left: 50%; top: 50%;
     width: 44px; height: 44px; min-width: 44px; min-height: 44px;
     transform: translate(-50%, -50%);
+    background: transparent; /* v345：热区只扩大点击范围，绝不显示颜色 */
   }
 }
 
@@ -791,7 +792,9 @@ input::placeholder, textarea::placeholder { color: var(--text-light, #999); opac
 @media (prefers-reduced-motion: reduce) { .ctx-menu, .longpress-menu { animation: none !important; } }
 
 /* 条18：全系统按钮「图标 + 文字」——空间不够时按优先级收成纯图标（JS 侧 __btnFit 控制加 .ico-only） */
-.btn-ico { width: 15px; height: 15px; flex: none; display: block; }
+/* v345 条4：图标默认不显示，只有文字放不下/被截断时才显示（显示图标即隐藏文字，二者只显其一） */
+.btn-ico { width: 15px; height: 15px; flex: none; display: none; }
+.ico-only .btn-ico { display: block; }
 .btn-lab { white-space: nowrap; }
 .ico-only .btn-lab { display: none; }
 .ico-only { padding-left: 8px; padding-right: 8px; }
@@ -852,3 +855,53 @@ body { padding-bottom: var(--safe-b); }
 .cc-dot::after { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
 .sh-del, .row-check, .type-tag .t-del { position: relative; }
 .sh-del::after, .row-check::after { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); }
+
+/* v343 条65：键盘选中（Tab 切换）时统一蓝色光圈——鼠标点击不出现，键盘用户看得见自己在哪 */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
+.category-tag:focus-visible, .tab:focus-visible {
+  outline: 3px solid #7fb2e8 !important;
+  outline-offset: 2px !important;
+  border-radius: 8px;
+}
+
+/* v343 条28：尊重系统「减少动态效果」开关——开启后全站动画/过渡几乎关闭（对易晕人群友好） */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* v343 条40：长文本统一「一行放不下打省略号」，鼠标移上去看全称（title 由脚本补） */
+.tx-ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.tx-ellip-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* v343 条26：超大显示器上内容居中并限制最大宽度，两侧留白对称 */
+@media (min-width: 1600px) {
+  .product-grid { max-width: 1500px; margin-left: auto; margin-right: auto; }
+  .topbar-inner, .toolbar, .category-bar { max-width: 1500px; margin-left: auto; margin-right: auto; }
+  .page-wrap, .wrap { max-width: 1500px; margin-left: auto; margin-right: auto; }
+}
+
+/* v343 条30：放大到 200% 或窄屏时，避免写死宽度导致错位——关键容器允许收缩换行 */
+.topbar-inner, .toolbar, .filter-bar, .modal-footer, .row { min-width: 0; }
+.card, .product-card, .stat-card, .modal-box { max-width: 100%; }
+.modal-footer { flex-wrap: wrap; }
+
+/* v343 条44：全站空态统一为「插画 + 标题 + 一句说明 + 下一步按钮」 */
+.empty-tip, .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 46px 20px; text-align: center; }
+.empty-tip .empty-icon, .empty-tip .empty-ico, .empty-state .empty-icon { width: 48px; height: 48px; color: #b9c6d4; line-height: 1; opacity: .95; }
+.empty-tip .empty-icon svg, .empty-state .empty-icon svg { width: 48px; height: 48px; display: block; }
+.empty-tip .empty-title, .empty-state .empty-title { font-size: 16px; font-weight: 600; color: #5b6b7b; }
+.empty-tip .empty-desc, .empty-state .empty-desc { font-size: 13px; color: #8395a6; }
+.empty-tip .empty-clear-btn, .empty-tip .empty-action, .empty-state .empty-action { margin-top: 8px; border: 1px solid var(--blue1, #1E88E5); background: #fff; color: var(--blue1, #1E88E5); font-size: 13.5px; font-weight: 600; border-radius: 999px; padding: 8px 18px; cursor: pointer; }
+.empty-tip .empty-clear-btn:hover, .empty-tip .empty-action:hover { background: var(--blue1, #1E88E5); color: #fff; }
+
+/* v343 条40b：列表/表格里的过长文字统一打省略号（鼠标移上去看全称），避免顶破布局 */
+.p-title, .cell-title, .cell-ellip,
+.admin-table td.td-title, .stat-table td:first-child, .bind-table td:first-child {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}

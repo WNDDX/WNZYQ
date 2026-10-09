@@ -23,7 +23,7 @@
   <style id="critical-css">/* v336 条38：首屏关键样式内联（不等外链大文件） */
 :root{--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;--green:#01C000;--red:#ff4444;--orange:#FF9900;--bg-page:#f2f7fd;--bg-light:#f5f7fa;--card-bg:#fff;--border:#d0d0d0;--text:#222;--text-light:#666;--text-faint:#999;--topbar-h:64px;--radius:8px;--radius-lg:12px;--radius-btn:10px;--radius-micro:4px;--overlay-modal:rgba(0,0,0,0.76);--shadow-pop:0 8px 30px rgba(0,0,0,.14);--dur-fast:.16s;--dur-mid:.24s;--ease-out:cubic-bezier(.25,1,.5,1);color-scheme:light}
 body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-.topbar{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:12px;padding:0 16px;height:56px;background:linear-gradient(135deg,#2196F3,#1E88E5);color:#fff}
+.topbar{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:12px;padding:0 16px;min-height:56px;height:auto;background:linear-gradient(135deg,#2196F3,#1E88E5);color:#fff}/* v344：顶栏改自适应高度——此前写死 56px，手机端两行内容会被垂直居中挤出屏幕（logo 与名称跑到上面看不见） */
 .card-skeleton{background:var(--card-bg);border-radius:12px;overflow:hidden}
 .card-skeleton .sk{background:linear-gradient(90deg,#eceff3 25%,#f7f9fb 37%,#eceff3 63%);background-size:400% 100%;animation:skShimmer 1.6s ease infinite}
 @keyframes skShimmer{0%{background-position:100% 0}100%{background-position:0 0}}
@@ -37,6 +37,12 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <link rel="preload" href="/assets/ui-common.js" as="script">
   <link rel="preload" href="/assets/admin.js" as="script">
   <link rel="stylesheet" href="/assets/admin.css">
+<style>
+/* v343 条15：首屏关键样式内联——背景、顶栏、内容区底色先到位，外链样式到达前不闪白/不跳版 */
+html,body{margin:0;background:#eef3f9;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+.topbar{background:linear-gradient(135deg,#1565c0,#1E88E5);min-height:60px}
+.card-skeleton .sk-img{aspect-ratio:3/2;width:100%;background:#e9eef4;border-radius:8px}
+</style>
 </head>
 <body><a class="skip-link" href="#mainContent">跳到主要内容</a>
   <!-- ============ 登录视图 ============ -->
@@ -146,6 +152,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <div class="empty-tip" id="productEmpty">
           <div class="empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div> <!-- R285 条18：文字表情换固定 SVG -->
           <div class="empty-title" id="productEmptyTitle">暂无资源</div>
+          <button class="empty-clear-btn" type="button" onclick="(function(){var b=[].slice.call(document.querySelectorAll('button')).filter(function(x){return /新增|添加/.test(x.textContent||'')});if(b[0])b[0].click();})()">去添加资源</button>
         </div>
       </section>
       <!-- 数据统计 -->
