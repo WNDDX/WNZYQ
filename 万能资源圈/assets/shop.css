@@ -1053,7 +1053,7 @@
       .product-grid.list-view .card-img { width: 96px; min-width: 96px; aspect-ratio: 1 / 1; }
       .product-grid.list-view .card-body { padding: 10px; }
       .product-grid.list-view .card-title { -webkit-line-clamp: 2; min-height: 38px; }
-      .back-top { right: 16px; bottom: 20px; width: 40px; height: 40px; }
+      .back-top { right: 16px; bottom: calc(20px + var(--safe-b, 0px)) /* v336 条65 */; width: 40px; height: 40px; }
       .variant-tab { padding: 5px 14px; font-size: 12px; }
     }
 

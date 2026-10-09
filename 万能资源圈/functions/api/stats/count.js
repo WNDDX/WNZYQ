@@ -1,5 +1,5 @@
 // v336 条52：导航页资源总数专用轻接口（替代拉整页 products，只回一个数字）
-import { json } from '../_utils.js';
+import { json } from '../../_utils.js';
 export async function onRequestGet(context) {
   const { env } = context;
   try {
