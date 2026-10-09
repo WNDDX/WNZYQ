@@ -267,6 +267,9 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
 }
 .modal-footer .modal-close { background: #fdecea; color: #c62828; border: 1px solid #f5c6c2; }
 .modal-footer .modal-close:hover { background: #c62828; color: #fff; border-color: #c62828; }
+/* v340 条1：公众号讯弹窗只有一颗关闭键时，宽度恢复原样（不跟着减半） */
+.modal-footer { position: relative; }
+.modal-footer .modal-close:only-child { max-width: 100%; flex: 1 1 100%; }
 .btn-item,.modal-inner-btn,.modal-close{
     -webkit-tap-highlight-color: transparent;
 }
@@ -531,7 +534,7 @@ dom.modalImg.addEventListener('click', function () {
 
 //页面按钮事件
 function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
-function openService() { /* v340 条2：与其他两个按钮（群聊/公众号）统一走同一个弹窗组件——此前客服弹窗用的是另一套 kf 弹窗，导致「同一套按钮却长短不一、弹窗不是一个类型」 */ showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); }
+function openService() { /* v340 条2：与其他两个按钮（群聊/公众号）统一走同一个弹窗组件 */ showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); /* v340 条1：跳转键颜色=导航页「咨询客服」那颗绿 */ try { var _j = document.getElementById("modalJumpBtn"); if (_j) { _j.style.backgroundColor = "#01C000"; _j.style.borderColor = "#01C000"; _j.style.color = "#fff"; } } catch (e) {} }
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 // v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮

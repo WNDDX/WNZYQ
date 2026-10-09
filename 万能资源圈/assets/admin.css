@@ -144,7 +144,9 @@
       min-height: 60px; /* R275：桌面端对齐资源页高度（R279 起 view-toggle 38px 与 .tab 同高，管理页 logo 38px 同为最高元素，两页内容行高一致） */
     }
     @media (max-width: 600px) {
-      .topbar { overflow: hidden; } /* v293（用户 10-04 02:14）：033去掉max-height:97px→改自适应，防止390px手机截内容 | R275：移动端对齐资源页高度（差异来自 tabs 38px vs 搜索框 33px，截断 3px 来自 padding-bottom，视觉上不可见） */
+      /* v340 条10 修复：顶栏容器此前被钉成 60px 高，而手机端 logo 行+标签行实际约 100px，
+         内容被挤成负偏移叠在一起。改为自适应高度，高度变量由 JS 实测回写。 */
+      .topbar { height: auto !important; min-height: 0 !important; overflow: visible !important; } /* v293（用户 10-04 02:14）：033去掉max-height:97px→改自适应，防止390px手机截内容 | R275：移动端对齐资源页高度（差异来自 tabs 38px vs 搜索框 33px，截断 3px 来自 padding-bottom，视觉上不可见） */
     }
     .topbar-inner {
       max-width: 1200px; margin: 0 auto;
@@ -834,6 +836,8 @@
     .rte-editor table { border-collapse: collapse; width: 100%; margin: 8px 0; min-width: 40%; background: transparent; }
     .rte-editor th, .rte-editor td { border: 1px solid var(--border-strong, #9fb0c0); padding: 6px 8px; min-width: 40px; font-size: 14px; line-height: 1.5; vertical-align: top; word-break: break-word; }
     .rte-editor th { background: var(--hover-bg); font-weight: 600; }
+/* v340 条8：编辑器滚动到头/到尾后，继续滑动应带动页面滚动（此前被 contain 圈死） */
+.rte-editor, .rte-body, .rte-content, .rte-scroll { overscroll-behavior: auto !important; touch-action: pan-y !important; }
     .rte-editor td.tbl-cell-sel { background: rgba(30, 136, 229, 0.12) !important; }
     /* 列宽拖拽热区提示 */
     .rte-editor table.rte-col-resizing { cursor: col-resize; user-select: none; }
@@ -1930,3 +1934,12 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   .topbar-inner { row-gap: 8px; padding-bottom: 8px; }
   .topbar-brand { flex: 0 1 auto; min-width: 0; }
 }
+
+/* v341 条3：封面缩略图畸形修复——图片按裁切填满小框、圆角统一，"封面"角标压在图上不挤位 */
+.cover-gallery .cg-item { position: relative; overflow: hidden; border-radius: 8px; background: var(--bg-light); }
+.cover-gallery .cg-item > img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 8px; }
+.cover-gallery .cg-item .cg-badge, .cover-gallery .cg-item .cg-cover-tag { position: absolute; left: 4px; top: 4px; z-index: 3; font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: 6px; background: rgba(30,136,229,.92); color: #fff; pointer-events: none; }
+
+/* v341 条3 收尾：编辑器「放大编辑」图标此前尺寸为 0（渲染成空按钮）——强制给尺寸 */
+.rte-zoom-ico { width: 16px !important; height: 16px !important; display: block; }
+.rte-zoom { display: inline-flex; align-items: center; justify-content: center; }

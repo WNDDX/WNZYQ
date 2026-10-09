@@ -952,6 +952,17 @@
   for (var k in limits) bindLimit(k, limits[k]);
 })();
 
+/* v340 条10：手机端顶栏两行时高度远超 64px——实测回写 --topbar-h */
+    function __syncTopbarH() {
+      try {
+        var tb = document.querySelector('.topbar');
+        if (!tb) return;
+        document.documentElement.style.setProperty('--topbar-h', (tb.offsetHeight || 64) + 'px');
+      } catch (e) {}
+    }
+    window.addEventListener('resize', __syncTopbarH);
+    if (document.readyState !== 'loading') setTimeout(__syncTopbarH, 0); else document.addEventListener('DOMContentLoaded', __syncTopbarH);
+
 function boot() {
       // 本地环境（file:// 或 localhost）不发起 API 请求，避免 404 报错
       var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -1867,6 +1878,8 @@ function renderProducts() {
       var cpPanel = document.createElement('div');
       cpPanel.className = 'cat-picker-panel';
       cpPanel.dataset.pickerId = __cpid; /* R255：挂同一 id——positionCatPanel/文档点击关闭链按 data-picker-id 找到已移入 body 的本面板 */
+      /* v341 条4/5：资源码控件统一成「图标+文字」，空间不够时自动只留钥匙图标（全站同一套 __btnFit 机制） */
+      try { if (window.__decorateBtn) window.__decorateBtn(cpDisp, 'key', 4); } catch (e) {}
       codePicker.appendChild(cpDisp); codePicker.appendChild(cpPanel);
       function renderCodePanel(variants) {
         cpPanel.innerHTML = '';
@@ -1907,6 +1920,8 @@ function renderProducts() {
             // R144（用户 23:57）：有码=蓝底白字（参考"显示"按键配色），宽高不变
             cd.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);';
             cd.textContent = v.resourceCode;
+            /* v341 条4/5：码键在赋值文字之后再挂图标（先挂会被 textContent 覆盖），并参与「空间不够收成纯图标」 */
+            try { if (window.__decorateBtn) window.__decorateBtn(cd, 'key', 5); } catch (e2) {}
             cd.title = v.resourceCode + '（点击复制并发新码）'; /* R179：固定宽截断后悬停 title 看全码 */
             item.appendChild(cd);
             (function (cvObj, cdEl) {

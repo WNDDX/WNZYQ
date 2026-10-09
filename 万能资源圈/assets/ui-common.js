@@ -1070,6 +1070,17 @@ window.__quoteCopyOk = function (q) {
   try {
     q.classList.add('copy-ok-text');
     setTimeout(function () { try { q.classList.remove('copy-ok-text'); } catch (e) {} }, 1500);
+    /* v340 条2：反馈加强——复制按钮同步变「已复制」绿 1.5 秒，避免只在文字变绿时不易察觉 */
+    var btn = q.querySelector('.quote-copy-btn');
+    if (btn && !btn.dataset.okBusy) {
+      btn.dataset.okBusy = '1';
+      var old = btn.textContent;
+      btn.textContent = '已复制';
+      btn.classList.add('ok');
+      setTimeout(function () {
+        try { btn.textContent = old; btn.classList.remove('ok'); delete btn.dataset.okBusy; } catch (e) {}
+      }, 1500);
+    }
   } catch (e) {}
 };
 window.__fallbackCopyQuote = function (text, q) {
@@ -1465,7 +1476,7 @@ window.uiToast = (function () {
      根治“连删两条时第二条的撤销是假动作”（旧实现排队导致真删先于撤销按钮出现）。 */
   function showImmediate(it) {
     var t = document.createElement('div');
-    t.className = 'ui-toast' + (it.t === 'error' ? ' error' : ''); t.setAttribute('role','status'); t.setAttribute('aria-live','polite');
+    t.className = 'ui-toast' + (it.t === 'error' ? ' error' : ''); t.setAttribute('role','status'); t.setAttribute('aria-live','polite'); t.style.top = __toastTop() + 'px'; /* v341 */
     var left = 10, done = false;
     var txt = document.createElement('span'); txt.textContent = it.m;
     var btn = document.createElement('button');
@@ -1490,12 +1501,24 @@ window.uiToast = (function () {
     document.body.appendChild(t);
     setTimeout(cleanup, 10500);
   }
+  /* v341：提示条位置按「真实顶栏底部 + 12px」计算——顶栏在手机上会换成两行（约 100px），
+     死写 80px 会压住第二行的标签栏（也是「资源管理被挡住、下划线看不见」的真因）。 */
+  function __toastTop() {
+    try {
+      var tb = document.querySelector('.topbar');
+      if (tb) {
+        var b = tb.getBoundingClientRect().bottom;
+        if (b > 0) return Math.round(b + 12);
+      }
+    } catch (e) {}
+    return 80;
+  }
   function next() {
     if (!q.length) { busy = false; return; }
     busy = true;
     var it = q.shift();
     var t = document.createElement('div');
-    t.className = 'ui-toast' + (it.t === 'error' ? ' error' : ''); t.setAttribute('role','status'); t.setAttribute('aria-live','polite'); /* v336 条184 */
+    t.className = 'ui-toast' + (it.t === 'error' ? ' error' : ''); t.setAttribute('role','status'); t.setAttribute('aria-live','polite'); t.style.top = __toastTop() + 'px'; /* v341 */ /* v336 条184 */
     if (it.undo) { showImmediate(it); busy = false; next(); return; } /* 不再占用队列 */
     t.textContent = it.m;
     document.body.appendChild(t);
@@ -1885,6 +1908,8 @@ window.__btnIcon = function (name) {
     show: '<path d="M3 12s4-7 9-7 9 7 9 7-4 7-9 7-9-7-9-7z"/><circle cx="12" cy="12" r="3"/>',
     del: '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/>',
     code: '<path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/>',
+    /* v341 条4：资源码专用钥匙图标（形如钥匙：圆环+齿） */
+    key: '<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3"/><path d="M17 6l3 3"/>',
     bind: '<path d="M9 15l6-6"/><path d="M11 6l1-1a4 4 0 016 6l-1 1"/><path d="M13 18l-1 1a4 4 0 01-6-6l1-1"/>',
     add: '<path d="M12 5v14"/><path d="M5 12h14"/>',
     save: '<path d="M5 4h11l3 3v13H5z"/><path d="M9 4v5h6V4"/><path d="M8 20v-6h8v6"/>',

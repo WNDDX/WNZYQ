@@ -83,19 +83,19 @@
    A组 = 真正的圆形 × 图标钮（红底白叉、热区 44px）
    B组 = 文字关闭/确定钮（保留各自原有形状，只换成红色系配色呼应“关闭=红”） */
 /* A组：圆形 × 图标钮 */
-.modal-mask .modal-close-x, .kf-mask .kf-x, .lightbox .lb-close {
+.modal-mask .modal-close-x, .kf-mask .kf-x, .lightbox .lb-close, .lightbox .modal-close-x {
   /* v340 条9：× 默认淡红底+红图标，鼠标指到/按下才实红底白图标（与分享键同一套规则） */
   background: #fdecea !important; color: #e53935 !important; border: none !important;
   width: 32px !important; height: 32px !important; min-width: 32px !important; border-radius: 50% !important;
   font-size: 16px !important; line-height: 1 !important; padding: 0 !important;
 }
 /* A组热区撑到 44×44（自身均为 absolute 定位，::after 相对自身锚定） */
-.modal-mask .modal-close-x::after, .kf-mask .kf-x::after, .lightbox .lb-close::after {
+.modal-mask .modal-close-x::after, .kf-mask .kf-x::after, .lightbox .lb-close::after, .lightbox .modal-close-x::after {
   content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px;
   transform: translate(-50%, -50%);
 }
-.modal-mask .modal-close-x:hover, .kf-mask .kf-x:hover, .lightbox .lb-close:hover,
-.modal-mask .modal-close-x:active, .kf-mask .kf-x:active, .lightbox .lb-close:active {
+.modal-mask .modal-close-x:hover, .kf-mask .kf-x:hover, .lightbox .lb-close:hover, .lightbox .modal-close-x:hover,
+.modal-mask .modal-close-x:active, .kf-mask .kf-x:active, .lightbox .lb-close:active, .lightbox .modal-close-x:active {
   background: var(--red) !important; color: #fff !important; filter: none; /* v340 条9 */
 }
 /* B组：文字关闭/确定钮——形状、尺寸、圆角、内边距一概不碰，只换红色系皮肤 */
@@ -481,6 +481,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
       z-index: 2;
     }
     .quote-copy-btn:hover { background: var(--hover-bg); color: var(--text); border-color: var(--blue1); }
+.quote-copy-btn.ok { color: #fff !important; background: var(--green, #01C000) !important; border-color: var(--green, #01C000) !important; } /* v340 条2 */
     @media (max-width: 600px) {
       .quote-copy-btn { padding: 3px 10px; font-size: 11px; border-radius: 8px; }
     }
@@ -638,7 +639,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 :root { --dur-close: 0.16s; }
 /* 条11：toast 公共样式（资源页 R192 定稿观感：白底0.92+蓝字+圆角20+语义色；下落入场 240ms） */
 .ui-toast {
-  position: fixed; top: 80px; left: 50%; transform: translateX(-50%); /* v340 条11：提示条统一到顶部 80px——与下拉刷新提示同高同位（此前在底部，属特殊化） */
+  position: fixed; top: calc(80px + max(0px, (var(--topbar-h, 64px) - 64px))); left: 50%; transform: translateX(-50%); /* v340 条11：提示条统一到顶部，随顶栏实测高度下移（手机端顶栏两行时不被压住） */
   color: var(--blue1, #1E88E5); background: var(--toast-bg, rgba(255,255,255,0.92));
   border: 1px solid var(--blue2, #64B5F6); border-radius: 999px;
   padding: 6px 16px; font-size: 12px; line-height: 18px;
