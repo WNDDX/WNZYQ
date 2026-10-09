@@ -22,13 +22,16 @@ export async function onRequestGet(context) {
     return new Response(cached.body, cached);
   }
 
-  // 2. 定时显示/隐藏检查：到了显示时间自动显示，到了隐藏时间自动隐藏
-  try {
-    const pre = await env.DB.prepare(
+  // 2. 定时显示/隐藏检查 + 列迁移（v339 条225：两件互不依赖的事并行做，减少一次串行来回）
+  const [pre] = await Promise.all([
+    env.DB.prepare(
       `SELECT
          EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')) AS need_show,
          EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')) AS need_hide`
-    ).first();
+    ).first().catch(() => null),
+    (async () => { await ensureProductColumns(env); await ensureVariantColumns(env); })().catch(() => {}),
+  ]);
+  try {
     if (pre && pre.need_show) {
       await env.DB.prepare(
         `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now')
@@ -42,9 +45,6 @@ export async function onRequestGet(context) {
       ).run();
     }
   } catch (e) { /* 忽略定时显示/隐藏错误 */ }
-
-  await ensureProductColumns(env);
-  await ensureVariantColumns(env);
 
   // R303：分页参数
   const url = new URL(request.url);
@@ -96,20 +96,21 @@ export async function onRequestGet(context) {
     params.push('%' + kw + '%', '%' + kw + '%');
   }
 
-  // 3. 查数据库
+  // 3. 查库（v339 条225：总数与列表并行，省一次串行来回）
   let results, total;
+  const offset = (page - 1) * pageSize;
+  let countP, listP;
   if (pageSize === 0) {
     // 不分页：兼容旧口径
-    const r = await env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC').bind(...params).all();
-    results = r.results || [];
-    total = results.length;
+    countP = Promise.resolve(null);
+    listP = env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC').bind(...params).all();
   } else {
-    const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products ' + where).bind(...params).first();
-    total = countRes ? countRes.n : 0;
-    const offset = (page - 1) * pageSize;
-    const r = await env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?').bind(...params, pageSize, offset).all();
-    results = r.results || [];
+    countP = env.DB.prepare('SELECT COUNT(*) AS n FROM products ' + where).bind(...params).first();
+    listP = env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?').bind(...params, pageSize, offset).all();
   }
+  const [countRes2, listRes] = await Promise.all([countP, listP]);
+  total = pageSize === 0 ? (listRes.results || []).length : (countRes2 ? countRes2.n : 0);
+  results = listRes.results || [];
 
   // 3. 批量查类型
   const ids = results.map((p) => p.id);

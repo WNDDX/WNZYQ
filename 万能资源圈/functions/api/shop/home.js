@@ -22,20 +22,29 @@ async function computeVersion(env) {
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  const version = await computeVersion(env);
+  /* v339 条225：原来 9 次串行查库（每次一个跨区域来回）导致进页接口首字节 2.5 秒+。
+     改为 4 轮并行——第 1 轮把互不依赖的查询全部同时发出，实测首字节显著下降。 */
+  // 第 1 轮（并行）：版本指纹 + 定时预检 + 列迁移 + 分类 + 设置
+  const [version, pre, , catRes, setRes] = await Promise.all([
+    computeVersion(env),
+    env.DB.prepare(
+      `SELECT
+         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')) AS need_show,
+         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')) AS need_hide`
+    ).first().catch(() => null),
+    (async () => { await ensureProductColumns(env); await ensureVariantColumns(env); })().catch(() => {}),
+    env.DB.prepare('SELECT id, name, sort, parent_id, is_hidden FROM categories WHERE is_hidden = 0 ORDER BY sort ASC, id ASC').all().catch(() => ({ results: [] })),
+    env.DB.prepare('SELECT key, value FROM settings').all().catch(() => ({ results: [] })),
+  ]);
+
   const url = new URL(request.url);
   const clientV = url.searchParams.get('v') || '';
   if (clientV && clientV === version) {
     return json({ ok: true, unchanged: true, version });
   }
 
-  // 定时显示/隐藏检查
+  // 第 2 轮：定时显示/隐藏（绝大多数请求是空操作，有需要才写库）
   try {
-    const pre = await env.DB.prepare(
-      `SELECT
-         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')) AS need_show,
-         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')) AS need_hide`
-    ).first();
     if (pre && pre.need_show) {
       await env.DB.prepare(
         `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now')
@@ -50,16 +59,17 @@ export async function onRequestGet(context) {
     }
   } catch (e) {}
 
-  await ensureProductColumns(env);
-  await ensureVariantColumns(env);
-
-  // v317（用户 10-05 18:40）：首屏只拿第一页 20 条，翻页/切分类/搜索走 /api/products 按需拉取
-  const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0').first();
+  // 第 3 轮（并行）：总数 + 第一页资源
+  const [countRes, prodRes] = await Promise.all([
+    env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0').first(),
+    env.DB.prepare(
+      'SELECT * FROM products WHERE is_online = 1 AND is_hidden = 0 ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
+    ).bind(HOME_PAGE_SIZE, 0).all(),
+  ]);
   const total = countRes ? countRes.n : 0;
-  const { results: prodRows } = await env.DB.prepare(
-    'SELECT * FROM products WHERE is_online = 1 AND is_hidden = 0 ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
-  ).bind(HOME_PAGE_SIZE, 0).all();
+  const prodRows = prodRes.results || [];
 
+  // 第 4 轮：类型（依赖资源 id 列表）
   const ids = prodRows.map((p) => p.id);
   let variantsByProduct = {};
   if (ids.length > 0) {
@@ -79,16 +89,9 @@ export async function onRequestGet(context) {
     return item;
   });
 
-  // 2. 分类列表
-  const { results: catRows } = await env.DB.prepare(
-    'SELECT id, name, sort, parent_id, is_hidden FROM categories WHERE is_hidden = 0 ORDER BY sort ASC, id ASC'
-  ).all();
-  const categories = catRows || [];
-
-  // 3. 设置
-  const { results: setRows } = await env.DB.prepare('SELECT key, value FROM settings').all();
+  const categories = catRes.results || [];
   const settings = {};
-  for (const r of setRows) {
+  for (const r of (setRes.results || [])) {
     if (PUBLIC_KEYS.indexOf(r.key) !== -1) settings[r.key] = r.value;
   }
 

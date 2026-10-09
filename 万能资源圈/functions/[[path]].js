@@ -13,7 +13,17 @@
  *    真实页面返回，保证 clean URL（不带 .html、不带子目录前缀）始终可用。
  *  - /api/* 由 functions/api/ 目录下更具体的 Function 处理，不会被本 catch-all 接管。
  */
-const HTML_HEADERS = { 'content-type': 'text/html; charset=utf-8' };
+/* v339 条221：安全防护头——干净网址页面（/index、/shop）由本函数返回响应，而函数响应不经过
+   _headers 文件（静态文件才走），导致这些防护此前从未在线上生效。现直接内置到每个响应：
+   ①CSP 防注入/防外链脚本 ②防嵌套点击劫持 ③防 MIME 嗅探 ④引用来源隐私 ⑤强制 HTTPS 记忆 */
+const SECURITY_HEADERS = {
+  'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+  'x-frame-options': 'DENY',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+};
+const HTML_HEADERS = { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache, must-revalidate', ...SECURITY_HEADERS };
 
 // 已知页面：clean URL 名 → 实际文件名
 // R63：error 恢复直达页面——/error 作为 sitemap 列出的正式地址返回 200（用户要求 sitemap 加 /error），
@@ -47,7 +57,7 @@ async function serveHome(context) {
     for (const u of candidates) {
       const res = await context.env.ASSETS.fetch(new URL(u + '.html', context.request.url));
       if (res && res.ok) {
-        return new Response(null, { status: 302, headers: { location: u } });
+        return new Response(null, { status: 302, headers: { location: u, ...SECURITY_HEADERS } });
       }
     }
   } catch (e) {
@@ -84,9 +94,13 @@ async function serveAsset(context, path) {
       if (res && res.ok) {
         const ext = (path.split('.').pop() || '').toLowerCase();
         const headers = new Headers(res.headers);
+        Object.keys(SECURITY_HEADERS).forEach((k) => headers.set(k, SECURITY_HEADERS[k])); /* v339 条221：静态兜底响应同样带防护 */
         if (path.split('/').pop() === 'sw.js') {
           // Service Worker 绝不缓存：部署新 sw.js 后所有用户立即生效，杜绝旧 SW 缓存旧页面导致“改了没效果”
           headers.set('cache-control', 'no-cache, no-store, must-revalidate');
+        } else if (ext === 'js' || ext === 'css') {
+          /* v339 条222：JS/CSS 未带指纹，必须每次校验（no-cache），改完上传立即生效 */
+          headers.set('cache-control', 'no-cache, must-revalidate');
         } else if (LONG_CACHE_EXTS.indexOf(ext) !== -1) {
           // 图片/字体：7 天强缓存（同一 URL 全站/跨页直接用浏览器缓存，不再发请求）
           headers.set('cache-control', 'public, max-age=604800, immutable');
