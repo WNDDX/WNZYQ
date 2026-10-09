@@ -53,6 +53,23 @@ export async function onRequestGet(context) {
   const cid = Number(url.searchParams.get('cid') || 0);
   const subCid = Number(url.searchParams.get('sub_cid') || 0);
   const kw = String(url.searchParams.get('kw') || '').trim().toLowerCase();
+  /* v338 条40：列表瘦身——brief=1 时不下发详情大字段（detail/detailImages/detailVideos），
+     打开详情弹窗时前台按 id 单拉完整数据；id 参数则直接返回单个完整资源 */
+  const brief = url.searchParams.get('brief') === '1';
+  const singleId = Number(url.searchParams.get('id') || 0);
+
+  // 单品完整数据（详情弹窗按需拉取用）
+  if (singleId > 0) {
+    const r = await env.DB.prepare('SELECT * FROM products WHERE id = ? AND is_online = 1 AND is_hidden = 0').bind(singleId).first();
+    if (!r) return json({ ok: false, msg: '资源不存在或已下架' }, 404);
+    const item = cleanProduct(r);
+    const { results: vrows } = await env.DB.prepare('SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort ASC, id ASC').bind(singleId).all();
+    item.variants = (vrows || []).filter((v) => !v.is_hidden).map(cleanVariantPublic);
+    const singleResp = new Response(JSON.stringify({ ok: true, product: item }), {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=20' },
+    });
+    return singleResp;
+  }
 
   // 构建 WHERE 条件
   let where = 'WHERE is_online = 1 AND is_hidden = 0';
@@ -113,13 +130,15 @@ export async function onRequestGet(context) {
   const list = results.map((p) => {
     const item = cleanProduct(p);
     item.variants = variantsByProduct[p.id] || [];
+    /* v338 条40：瘦身模式剥掉详情大字段（详情 HTML/详情多图/多视频往往占列表体积九成以上） */
+    if (brief) { delete item.detail; delete item.detailImages; delete item.detailVideos; }
     return item;
   });
 
   // 5. 写入缓存（20 秒，兼顾性能与后台改动快速生效）
   const respBody = { ok: true, list };
   /* v336 条55：内容指纹——没变就只回 304，重复访问传输量从几十 KB 降到几十字节 */
-  const etag = 'W/"' + total + '-' + list.length + '-' + (list[0] ? list[0].id : 0) + '"'; /* v336 条55 修正：用真实字段做指纹 */
+  const etag = 'W/"' + (brief ? 'b.' : '') + total + '-' + list.length + '-' + (list[0] ? list[0].id : 0) + '"'; /* v336 条55 + v338 条40：指纹含瘦身标记 */
 
   if (request.headers.get('If-None-Match') === etag) {
     const notMod = new Response(null, { status: 304 });

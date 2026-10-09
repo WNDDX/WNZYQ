@@ -1012,6 +1012,23 @@
 
     // ---------- 详情弹窗 ----------
     function openModal(p) {
+      /* v338 条40：列表瘦身模式——列表数据不带详情大字段（'detail' 键整个不存在）。
+         打开弹窗时先按 id 单拉完整数据再展示，拉失败则按无详情降级，绝不开天窗。 */
+      if (p && !('detail' in p)) {
+        __dedupFetch('/api/products?id=' + encodeURIComponent(p.id), { cache: 'no-cache', credentials: 'include' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (res) {
+            var full = (res && res.ok && res.product) ? res.product : null;
+            if (full) {
+              (DATA.products || []).forEach(function (x, i) { if (x && x.id === full.id) DATA.products[i] = full; });
+              openModal(full);
+            } else {
+              p.detail = ''; openModal(p); /* 单拉失败：降级为无详情展示 */
+            }
+          })
+          .catch(function () { p.detail = ''; openModal(p); });
+        return;
+      }
       // v294（用户 10-04 02:14）：207 弹窗打开时pushState，后退先关弹窗
       try { if (!window.location.search.includes('pid=')) history.pushState({modal:true}, '', window.location.pathname + '?pid=' + p.id); } catch(e) {}
       currentProduct = p;
@@ -2070,6 +2087,8 @@
         var fetchOpts = opts.force ? { cache: 'no-store' } : { cache: 'no-cache' };
         var ts = opts.force ? ('?_t=' + Date.now()) : '';
         var qs = '?page=' + page + '&page_size=' + pageSize;
+        /* v338 条40：列表瘦身——详情大字段不随列表下发，打开详情时按 id 单拉（详情弹窗自动补拉） */
+        qs += '&brief=1';
         /* v336 条53：分类与设置几乎不变——本会话第二次起只拉资源本身，请求数从 3 降到 1 */
         var _onlyProducts = __catsSettingsCached;
         if (cid > 0) qs += '&cid=' + cid;
@@ -2187,7 +2206,7 @@
     function __cmdNotify() { try { if (window.__cpPanelInst && window.__cpPanelInst.refresh) window.__cpPanelInst.refresh(); } catch (e) {} }
     function __loadAllProductsForCmd() {
       if (__allProductsForCmd) return; // 只拉一次
-      __dedupFetch('/api/products?page_size=0', { cache: 'no-cache', credentials: 'include' }).then(function (r) {
+      __dedupFetch('/api/products?page_size=0&brief=1', { cache: 'no-cache', credentials: 'include' }).then(function (r) {
         return r.ok ? r.json() : null;
       }).then(function (res) {
         if (res && res.ok && res.list) {

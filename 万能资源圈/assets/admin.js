@@ -6162,9 +6162,19 @@ document.addEventListener('click', function (e) {
         // ③ 发放时间
         tr.appendChild(mk(m.issue ? window.__utcToLocal(m.issue.issued_at) : ''));
         // ④⑤⑥ 设备 / 绑定时间 / 最近访问（R136 设备名合并 UA，R156 UTC→北京时间）
+        /* v338 条193：时间列用 <time datetime> 语义标签（读屏与搜索引擎可读原始时间） */
+        var mkTime = function (iso, txt) {
+          var td = document.createElement('td');
+          if (!txt) return td;
+          var t = document.createElement('time');
+          try { if (iso) t.setAttribute('datetime', String(iso)); } catch (e) {}
+          t.textContent = txt;
+          td.appendChild(t);
+          return td;
+        };
         tr.appendChild(mk(m.binding ? ((m.binding.device || '-') + (m.binding.ua ? ' · ' + m.binding.ua : '')) : ''));
-        tr.appendChild(mk(m.binding ? window.__utcToLocal(m.binding.created_at) : ''));
-        tr.appendChild(mk(m.binding ? window.__utcToLocal(m.binding.last_access) : ''));
+        tr.appendChild(mkTime(m.binding ? m.binding.created_at : '', m.binding ? window.__utcToLocal(m.binding.created_at) : ''));
+        tr.appendChild(mkTime(m.binding ? m.binding.last_access : '', m.binding ? window.__utcToLocal(m.binding.last_access) : ''));
         // ⑦ 操作：解绑（未绑定行显「—」）
         var tdOp = document.createElement('td');
         if (m.binding) {

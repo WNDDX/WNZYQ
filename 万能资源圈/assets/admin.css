@@ -1908,3 +1908,12 @@ button, [role="button"], .row-btn, .batch-btn, .rte-btn, [onclick] { -webkit-tap
 
 /* v336 条86：原生下拉外观统一（保留原生行为，去系统箭头/主题色） */
 select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
+
+/* v338 条69：平板档（601~1024px）保护——卡片网格降列、工具栏允许换行、表格容器横向可滑 */
+@media (min-width: 601px) and (max-width: 1024px) {
+  #productList.card-view { grid-template-columns: repeat(3, 1fr); }
+  .toolbar, .filter-bar { flex-wrap: wrap; row-gap: 8px; }
+  .stat-table-wrap, .bind-table-wrap, .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .stat-table-wrap table, .bind-table-wrap table, .table-scroll table { min-width: 640px; }
+  .modal-box, .edit-mask .modal-box { max-width: 92vw; }
+}
