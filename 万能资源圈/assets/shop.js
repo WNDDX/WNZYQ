@@ -86,7 +86,7 @@
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
     /* v336 条9：占位图统一为“感叹号”画风（与公共层一致），全站不再有两种画风 */
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Ctext x="12" y="12" dominant-baseline="central" text-anchor="middle" fill="%23999" font-size="9"%3E!%3C/text%3E%3C/svg%3E';
+    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
 
     // 滚动锁已取消（用户要求恢复自由滚动）：即使 ui-common.js 未加载，也不再拦截 touchmove/wheel
     if (!window.lockBodyScroll) {
@@ -991,7 +991,7 @@
 
     // R269（用户 09-27 15:14）：根因→R268 修复在 v265 打包时回退丢失，补 renderCarousel + coverImages 字段修正重做
     // ---------- 封面轮播组件 ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Ctext x="12" y="12" dominant-baseline="central" text-anchor="middle" fill="%23999" font-size="9"%3E!%3C/text%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
     /* v333 整理：这段约 86 行的轮播实现与 admin.js 里那份逐字相同，已统一提取到
        ui-common.js 的 window.__renderCarousel（以后只改那一处，前后台自动同步）。
        这里保留转发，公共层万一没加载也不会整页崩。 */
@@ -1015,18 +1015,45 @@
       /* v338 条40：列表瘦身模式——列表数据不带详情大字段（'detail' 键整个不存在）。
          打开弹窗时先按 id 单拉完整数据再展示，拉失败则按无详情降级，绝不开天窗。 */
       if (p && !('detail' in p)) {
-        __dedupFetch('/api/products?id=' + encodeURIComponent(p.id), { cache: 'no-cache', credentials: 'include' })
+        /* v340 条6：秒开——不再等接口回来才开弹窗（此前点卡片要等约 1 秒）。
+           先用列表已有数据立刻打开，详情大字段回来后再就地补进详情区。 */
+        var __pid = p.id;
+        p.detail = '';
+        openModal(p);
+        __dedupFetch('/api/products?id=' + encodeURIComponent(__pid), { cache: 'no-cache', credentials: 'include' })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (res) {
             var full = (res && res.ok && res.product) ? res.product : null;
-            if (full) {
-              (DATA.products || []).forEach(function (x, i) { if (x && x.id === full.id) DATA.products[i] = full; });
-              openModal(full);
-            } else {
-              p.detail = ''; openModal(p); /* 单拉失败：降级为无详情展示 */
+            if (!full) return;
+            (DATA.products || []).forEach(function (x, i) { if (x && x.id === full.id) DATA.products[i] = full; });
+            /* 弹窗仍停在这条资源上才补内容，避免补错窗口 */
+            if (!currentProduct || currentProduct.id !== __pid) return;
+            if (!document.getElementById('modalMask') || !document.getElementById('modalMask').classList.contains('open')) return;
+            currentProduct.detail = full.detail || '';
+            if (full.detail) {
+              modalDetail.innerHTML = sanitizeHTML(full.detail);
+              bindQuoteCopyButtons(modalDetail);
+              bindMediaFail(modalDetail); bindLightbox(modalDetail); bindFileCards(modalDetail);
+              modalDetail.style.display = 'block';
+            }
+            var _imgs = full.detailImages || [];
+            if (_imgs.length) {
+              currentProduct.detailImages = _imgs;
+              _imgs.forEach(function (url) {
+                if (!url) return;
+                var im = document.createElement('img');
+                im.decoding = 'async'; im.alt = ''; im.style.cursor = 'zoom-in'; im.style.opacity = '0';
+                im.className = 'm-loading';
+                im.onload = function () { this.classList.remove('m-loading'); this.style.opacity = '1'; };
+                im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; };
+                im.src = url;
+                im.addEventListener('click', function () { window.openLightbox(url); });
+                if (window.mediaStable) window.mediaStable(im);
+                modalMedia.appendChild(im);
+              });
             }
           })
-          .catch(function () { p.detail = ''; openModal(p); });
+          .catch(function () {});
         return;
       }
       // v294（用户 10-04 02:14）：207 弹窗打开时pushState，后退先关弹窗

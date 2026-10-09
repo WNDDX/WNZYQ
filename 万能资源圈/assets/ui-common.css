@@ -18,7 +18,7 @@
   --blue3: #BBDEFB;  /* 门户渐变第三色（导航页/错误页/登录页共用），变量唯一源 */
   --green: #01C000;
   --red: #ff4444;
-  --orange: #FF9900; /* 警示橙（门户壳留用） */
+  --orange: #F57C00; /* 警示橙（门户壳留用） */
   --brand-orange: #F57C00; /* v336 条197：白字可读（原 #FF9900 对比度 2.1 不达标） */  /* v336 条129：门户四色收变量（青色按老板要求保持原值 #008C8C） */
   --brand-green: #00A828; /* v336 条197：白字可读 */
   --brand-blue: #1E88E5;
@@ -39,8 +39,8 @@
      9999客服遮罩 10040右键菜单/表格操作条 10050命令面板遮罩 100000图片灯箱 100001提示胶囊
      100002兜底toast 100100顶部进度条 100200部署警示横幅（原 2147483647 死数已清） */
   --gap: 10px;
-  --price-orange: #FF9900;
-  --price-text: #C86800; /* v336 条199：价格文字用深橙（保持橙语义、白底可读） */
+  --price-orange: #F57C00;
+  --price-text: #F57C00; /* v336 条199：价格文字用深橙（保持橙语义、白底可读） */
   --link-blue: #1565c0;
   --border-light: #c8e0f5;
   --danger-border: #ffc8c8;
@@ -84,7 +84,8 @@
    B组 = 文字关闭/确定钮（保留各自原有形状，只换成红色系配色呼应“关闭=红”） */
 /* A组：圆形 × 图标钮 */
 .modal-mask .modal-close-x, .kf-mask .kf-x, .lightbox .lb-close {
-  background: var(--red) !important; color: #fff !important; border: none !important;
+  /* v340 条9：× 默认淡红底+红图标，鼠标指到/按下才实红底白图标（与分享键同一套规则） */
+  background: #fdecea !important; color: #e53935 !important; border: none !important;
   width: 32px !important; height: 32px !important; min-width: 32px !important; border-radius: 50% !important;
   font-size: 16px !important; line-height: 1 !important; padding: 0 !important;
 }
@@ -93,15 +94,16 @@
   content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px;
   transform: translate(-50%, -50%);
 }
-.modal-mask .modal-close-x:hover, .kf-mask .kf-x:hover, .lightbox .lb-close:hover {
-  background: #d32f2f !important; filter: none;
+.modal-mask .modal-close-x:hover, .kf-mask .kf-x:hover, .lightbox .lb-close:hover,
+.modal-mask .modal-close-x:active, .kf-mask .kf-x:active, .lightbox .lb-close:active {
+  background: var(--red) !important; color: #fff !important; filter: none; /* v340 条9 */
 }
 /* B组：文字关闭/确定钮——形状、尺寸、圆角、内边距一概不碰，只换红色系皮肤 */
-.modal-mask .modal-close, .kf-mask .kf-close, .share-mask .share-close,
+.modal-mask .modal-close, .kf-mask .kf-close,
 .preview-close-btn, .btn-close-modal {
   background: #fdecea !important; color: #c62828 !important; border: 1px solid #f5c6c2 !important;
 }
-.modal-mask .modal-close:hover, .kf-mask .kf-close:hover, .share-mask .share-close:hover,
+.modal-mask .modal-close:hover, .kf-mask .kf-close:hover,
 .preview-close-btn:hover, .btn-close-modal:hover {
   background: #c62828 !important; color: #fff !important; border-color: #c62828 !important; filter: none;
 }
@@ -636,7 +638,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 :root { --dur-close: 0.16s; }
 /* 条11：toast 公共样式（资源页 R192 定稿观感：白底0.92+蓝字+圆角20+语义色；下落入场 240ms） */
 .ui-toast {
-  position: fixed; bottom: calc(24px + var(--safe-b, 0px)); left: 50%; transform: translateX(-50%); /* v336 条141：撤销条移到底部，不再盖批量条 */
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%); /* v340 条11：提示条统一到顶部 80px——与下拉刷新提示同高同位（此前在底部，属特殊化） */
   color: var(--blue1, #1E88E5); background: var(--toast-bg, rgba(255,255,255,0.92));
   border: 1px solid var(--blue2, #64B5F6); border-radius: 999px;
   padding: 6px 16px; font-size: 12px; line-height: 18px;

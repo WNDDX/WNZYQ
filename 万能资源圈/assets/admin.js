@@ -408,7 +408,7 @@
     // 改密码弹窗
 
     // 占位图统一使用 EXC_PLACEHOLDER（见上方定义），IMG_PLACEHOLDER 保留兼容旧引用
-    var IMG_PLACEHOLDER = EXC_PLACEHOLDER; // 兼容旧引用，统一感叹号占位
+    var IMG_PLACEHOLDER = EXC_PLACEHOLDER; // 兼容旧引用，统一人形剪影占位（v339 全站恢复）
     var state = {
       categories: [],
       products: [],
@@ -1707,8 +1707,8 @@ function renderProducts() {
       row.draggable = false;
       row.dataset.id = p.id;
       row.dataset.idx = idx;
-      var handle = document.createElement('span'); handle.className = 'drag-handle'; h.tabIndex = 0; h.setAttribute('role', 'button'); h.setAttribute('aria-label', '拖动排序（也可用方向键）'); /* v336 条196 */
-      h.addEventListener('keydown', function (ev) { if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') { ev.preventDefault(); var row = h.closest('[data-id]'); var sib = ev.key === 'ArrowUp' ? row.previousElementSibling : row.nextElementSibling; if (row && sib && row.parentNode) { row.parentNode.insertBefore(ev.key === 'ArrowUp' ? row : sib, ev.key === 'ArrowUp' ? sib : row); try { toast('已' + (ev.key === 'ArrowUp' ? '上移' : '下移') + '，记得保存顺序', 'success'); } catch (e) {} } } });; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19：拖拽抓手换六点网格图标 */ row.appendChild(handle);
+      var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.tabIndex = 0; handle.setAttribute('role', 'button'); handle.setAttribute('aria-label', '拖动排序（也可用方向键）'); /* v336 条196 修复：原误写 h.* 致后台列表渲染崩溃 */
+      handle.addEventListener('keydown', function (ev) { if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') { ev.preventDefault(); var row = handle.closest('[data-id]'); var sib = ev.key === 'ArrowUp' ? row.previousElementSibling : row.nextElementSibling; if (row && sib && row.parentNode) { row.parentNode.insertBefore(ev.key === 'ArrowUp' ? row : sib, ev.key === 'ArrowUp' ? sib : row); try { toast('已' + (ev.key === 'ArrowUp' ? '上移' : '下移') + '，记得保存顺序', 'success'); } catch (e) {} } } });; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19：拖拽抓手换六点网格图标 */ row.appendChild(handle);
 
       // 拖拽事件
       row.addEventListener('dragstart', function (e) {

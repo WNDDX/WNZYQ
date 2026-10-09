@@ -169,15 +169,16 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <!-- ============ 详情弹窗 ============ -->
   <div class="modal-mask" id="modalMask">
     <div class="modal-wrap">
-      <button aria-label="关闭" class="modal-close-x" id="modalCloseX"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <!-- R10 资源分享键（左上角，与×成对角）：转发样式图标，淡蓝底蓝图标，悬停蓝底白图标 -->
+      <div class="modal-box" id="modalBox">
+      <!-- v340 条5：关闭叉与分享键移入弹窗本体——挂在弹窗角上，尺寸/比例变化时不再偏离 -->
+      <button aria-label="关闭" class="modal-close-x" id="modalCloseX"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <button class="modal-share-x" id="modalShareX" type="button" title="分享资源" aria-label="分享资源">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="15 17 20 12 15 7"></polyline>
           <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
         </svg>
       </button>
-      <div class="modal-box" id="modalBox">
         <!-- R256：封面轮播 -->
         <div class="cover-carousel" id="modalCarousel" style="display:none;">
           <div class="cc-track" id="modalCcTrack"></div>

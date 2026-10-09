@@ -256,6 +256,17 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
     -webkit-user-select: none;
 }
 /*按钮交互统一样式：按压效果复用 ui-common.css 全站统一弹窗按键规则（变暗+降透明、不缩放、字重恒定）*/
+/* v340 条2：门户弹窗底部按键统一规格——跳转键与关闭键同宽同高（此前一颗 80% 一颗自适应，
+   造成「同一套弹窗按键大小不一样」）。 */
+.modal-footer { display: flex; gap: 14px; align-items: center; justify-content: center; }
+.modal-footer .modal-inner-btn, .modal-footer .modal-close {
+  /* v340 条2：关闭键尺寸恒定——有跳转键时并排各占一半，没有时（公众号讯）保持同宽居中，
+     三个弹窗「同一套按钮、只差一颗跳转键」 */
+  flex: 1 1 0; max-width: calc(50% - 7px); min-width: 0; width: auto; margin: 0; height: 46px; padding: 0 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 10px;
+}
+.modal-footer .modal-close { background: #fdecea; color: #c62828; border: 1px solid #f5c6c2; }
+.modal-footer .modal-close:hover { background: #c62828; color: #fff; border-color: #c62828; }
 .btn-item,.modal-inner-btn,.modal-close{
     -webkit-tap-highlight-color: transparent;
 }
@@ -360,7 +371,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         <button aria-label="关闭" class="modal-close-x" type="button" onclick="closeModal()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>        <div class="modal-title" id="modalTitle"></div>
         <div class="qrcode-wrap">
             <img class="modal-qrcode qph" id="modalImg" alt="二维码" decoding="async">
-          <button type="button" id="saveQrBtn" class="modal-inner-btn" style="margin-top:10px;background:#fff;color:#1E88E5;border:2px solid #1E88E5;">保存二维码</button> <!-- v336 条27：二维码功能保留并加保存入口 -->
             <div class="qrcode-fail-icon" id="qrFail">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -403,7 +413,7 @@ const dom = {
 };
 
 // 全站统一：图片加载失败显示感叹号占位（与资源页/管理页/错误页一致）
-var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Ctext x="12" y="12" dominant-baseline="central" text-anchor="middle" fill="%23999" font-size="9"%3E!%3C/text%3E%3C/svg%3E';
+var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
 /**图片重试加载 */
 function loadImg(imgDom, src, retryCount = 0) {
     // 同一地址已加载完成：直接显示，避免 opacity 卡 0
@@ -485,7 +495,7 @@ function closeModal() {
     /* R231 条10：同上，隐藏由 .open 摘除 + 全站关场收缩接管 */
     dom.mask.classList.remove('open'); // R114：与打开侧同步摘除
     dom.modalJumpBtn.style.display = 'none';
-    dom.modalJumpBtn.style.backgroundColor = ''; // v304：复位按钮颜色，防止下次弹窗继承绿色
+    dom.modalJumpBtn.style.backgroundColor = ''; /* v340 条4：跳转键统一主蓝，不再有绿色特例 */
     if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
     dom.modalJumpBtn.onclick = null;
     dom.modalCloseBtn.style.display = 'none';
@@ -521,7 +531,7 @@ dom.modalImg.addEventListener('click', function () {
 
 //页面按钮事件
 function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
-function openService() { if (window.openContactModal) { window.openContactModal(CONFIG.serviceWeixinUrl, CONFIG.serviceQrImg, CONFIG.tipService, "跳转-咨询在线客服"); } else { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); dom.modalJumpBtn.style.backgroundColor = 'var(--green)'; } }
+function openService() { /* v340 条2：与其他两个按钮（群聊/公众号）统一走同一个弹窗组件——此前客服弹窗用的是另一套 kf 弹窗，导致「同一套按钮却长短不一、弹窗不是一个类型」 */ showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); }
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 // v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮
@@ -634,19 +644,6 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
   </script>
 
 <script>
-  /* v336 条27：保存二维码——点击把当前弹窗里的二维码图下载到手机/电脑 */
-  (function () {
-    var btn = document.getElementById('saveQrBtn');
-    if (!btn) return;
-    btn.addEventListener('click', function () {
-      var img = document.getElementById('modalImg');
-      var t = document.getElementById('modalTitle');
-      if (!img || !img.src || img.src.indexOf('data:') !== 0 && img.src.indexOf('blob') !== 0 && img.src.indexOf('/assets/') !== 0) { if (window.warn) window.warn('二维码还没加载好，稍等一下再试'); return; }
-      var a = document.createElement('a');
-      a.href = img.src; a.download = ((t && t.textContent) || '二维码') + '.png';
-      document.body.appendChild(a); a.click(); a.remove();
-    });
-  })();
-  </script>
+</script>
 </body>
 </html>

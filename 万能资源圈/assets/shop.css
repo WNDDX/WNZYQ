@@ -489,6 +489,7 @@
       max-width: 680px;
     }
     .modal-box {
+      position: relative; /* v340 条5：关闭叉/分享键改为挂在弹窗本体角上——尺寸一变不再偏离弹窗外 */
       background: var(--card-bg);
       border-radius: 12px;
       width: 100%;
@@ -529,7 +530,7 @@
       width: 32px; height: 32px;
       border-radius: 50%;
       border: none;
-      background: rgba(100,176,241,0.18);
+      background: #e8f2fd; /* v340 条9：默认淡蓝底+蓝图标，悬停/按下实蓝底白图标（与关闭叉同一规则） */
       color: var(--blue1); /* R141：材质蓝→站点蓝 */
       cursor: pointer;
       display: flex;

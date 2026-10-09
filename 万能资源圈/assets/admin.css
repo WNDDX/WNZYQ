@@ -1166,7 +1166,7 @@
     #panel-stats .trend-chart > div:first-child > div { flex: 1 1 100% !important; order: 1; }
 
     /* 折线图 */
-    .line-chart { position: relative; background: var(--bg-light); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */  scrollbar-width: none; } /* R285 条42：能滑不露条 */
+    .line-chart { position: relative; background: var(--bg-light); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; overscroll-behavior: auto; touch-action: pan-y pinch-zoom; /* v340 条10：滚动手势照常传给页面——此前 contain 把滚动圈死，指到图上滚不动 */  scrollbar-width: none; } /* R285 条42：能滑不露条 */
     .line-chart::-webkit-scrollbar { display: none; } /* R285 条42 */
     .line-chart svg { display: block; }
     .line-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; line-height: 1.16; color: var(--text-light); justify-content: center; }
@@ -1916,4 +1916,17 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   .stat-table-wrap, .bind-table-wrap, .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .stat-table-wrap table, .bind-table-wrap table, .table-scroll table { min-width: 640px; }
   .modal-box, .edit-mask .modal-box { max-width: 92vw; }
+}
+
+/* v340 条13：统计卡尺寸恒定——「对比上期」开关切换时涨跌小字进出不再把卡片撑大（手机档小字改绝对定位） */
+.stat-card { min-height: 104px; }
+@media (max-width: 600px) {
+  .stat-card { min-height: 96px; }
+  .stat-card .delta { position: absolute; right: 10px; bottom: 10px; top: auto; transform: none; font-size: 11px; }
+}
+/* v340 条13：手机端后台顶栏不再重叠/裁切（logo 与标签行各占一行、各留间距） */
+@media (max-width: 600px) {
+  .topbar { overflow: visible; }
+  .topbar-inner { row-gap: 8px; padding-bottom: 8px; }
+  .topbar-brand { flex: 0 1 auto; min-width: 0; }
 }

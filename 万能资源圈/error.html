@@ -79,6 +79,17 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 </div>
 <script>
+/* v340 条1：错误页三个按钮依赖的跳转函数——v336 精简错误页时删了公共脚本却漏了这段定义，
+   导致「导航页/资源页/去登录」全部点不动。现内联补回（含相对路径兜底）。 */
+window.jumpTo = function (href) {
+  try {
+    if (!href) return;
+    if (/^https?:/i.test(href)) { location.href = href; return; }
+    location.href = href.replace(/\.html$/, '');
+  } catch (e) { try { location.href = href; } catch (e2) {} }
+};
+</script>
+<script>
 // 根据URL参数显示不同的错误信息
 var params = new URLSearchParams(window.location.search);
 var code = params.get('code') || '';
