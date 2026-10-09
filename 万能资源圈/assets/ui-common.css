@@ -1,0 +1,842 @@
+/* ============================================
+   万能资源圈 全站公共样式（唯一公共样式文件，全站引用）
+   - 滚动条全部隐藏（用户要求取消滚动轮，滚动功能保留）
+   - CSS 变量统一：颜色/圆角/间距一处定义全站生效
+   ============================================ */
+
+/* v293（用户 10-04 02:14）：057文字选中颜色统一→亮色淡蓝底深字，深色深蓝底浅字 */
+::selection { background: rgba(30,136,229,0.25); color: inherit; }
+/* ===== CSS 变量（全站统一，页面样式也复用同一套语义变量） ===== */
+:root {
+  /* v336 条65：屏幕安全区（刘海/home条），悬浮件与弹窗自动避让 */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px); color-scheme: light; /* v336 条80：告知浏览器本站恒亮，系统下拉/日期控件不再用黑底 */
+  --blue1: #1E88E5;
+  --blue2: #64B5F6;
+  --blue3: #BBDEFB;  /* 门户渐变第三色（导航页/错误页/登录页共用），变量唯一源 */
+  --green: #01C000;
+  --red: #ff4444;
+  --orange: #FF9900; /* 警示橙（门户壳留用） */
+  --brand-orange: #F57C00; /* v336 条197：白字可读（原 #FF9900 对比度 2.1 不达标） */  /* v336 条129：门户四色收变量（青色按老板要求保持原值 #008C8C） */
+  --brand-green: #00A828; /* v336 条197：白字可读 */
+  --brand-blue: #1E88E5;
+  --brand-cyan: #008C8C;
+  --gray-bg: #f0f2f5;
+  --gray-text: #666;
+  --border-soft: #eee;
+  --radius: 8px;      /* R285 条22：小件档（小按钮/标签/输入类） */
+  --radius-lg: 12px; /* v336 条101：四档=4/8/12/999+50% */  /* R285 条22：弹窗大件档 */
+  --radius-btn: 10px;    /* R285 条22：普通按钮/卡片/图框档（全站圆角阶梯=3微装饰/8小件/10普通/14弹窗大件/999胶囊/50%圆） */
+  --radius-micro: 4px;    /* R285 条22：微装饰档（图例点/骨架条/高亮块） */
+  --overlay-modal: rgba(0, 0, 0, 0.76);    /* R285 条43：全站遮罩归两档——普通弹窗档 */
+  --overlay-lightbox: rgba(0, 0, 0, 0.92); /* R285 条43：全屏灯箱档 */
+  --ls-tight: 0.5px;  /* R285 条14：字距三档——紧凑（辅助小字） */
+  --ls-normal: 1px;   /* R285 条14：正文/标题档 */
+  --ls-btn: 1.2px;    /* R285 条14：按钮/输入/标签档 */
+  /* R285 条50：全站叠放层级明账（低→高）：200详情遮罩 998分享遮罩 6000-6002富文本面板 6001拖拽幽灵
+     9999客服遮罩 10040右键菜单/表格操作条 10050命令面板遮罩 100000图片灯箱 100001提示胶囊
+     100002兜底toast 100100顶部进度条 100200部署警示横幅（原 2147483647 死数已清） */
+  --gap: 10px;
+  --price-orange: #FF9900;
+  --price-text: #C86800; /* v336 条199：价格文字用深橙（保持橙语义、白底可读） */
+  --link-blue: #1565c0;
+  --border-light: #c8e0f5;
+  --danger-border: #ffc8c8;
+  --text-primary: #333;
+  --text-dark: #1a1a1a;  /* R259：价格橙收变量 */
+  --avatar-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22);  /* R259：头像阴影收变量 */
+
+  /* ===== 语义底色/文字变量（亮色唯一源） ===== */
+  --bg-page: #f2f7fd;    /* 页面底色 */
+  --bg-light: #f5f7fa;   /* 浅色区块（次级底/占位/灰块） */
+  --card-bg: #ffffff;    /* 卡片/弹窗/输入框/白底组件 */
+  --border: #d0d0d0;     /* 分隔线/描边（v281：修复R285自引用循环，比原#e8e8e8深一档） */
+  --text: #222;          /* 主文字 */
+  --text-light: #666;    /* 次要文字 */
+  --text-faint: #999;    /* 提示/占位文字（placeholder/hint） */
+  --hover-bg: #f0f7ff;   /* 悬停浅蓝底 */
+  --toast-bg: rgba(255, 255, 255, 0.92);
+  /* v336 条94：中性色阶唯一源 */
+  --neutral-1: #f5f7fa;  /* 最浅填充（代码块/骨架底/浅底） */
+  --neutral-2: #eef1f4;  /* 浅填充（hover 底/次级底） */
+  --neutral-3: #e4e8ec;  /* 边框弱/分隔 */
+  --border-strong: #9fb0c0; /* 表单/表格边框 */
+  /* v336 条95：层级表（低→高）内容200/遮罩998/浮层6000/客服9999/菜单10040/面板10050/灯箱100000/提示100001/兜底100002/进度100100/警示100200 */
+  --shadow-1: 0 1px 4px rgba(30,80,140,.10);   /* v336 条104：小件 */
+  --shadow-2: 0 4px 14px rgba(30,80,140,.14);  /* 卡片/悬浮 */
+  --shadow-3: 0 8px 30px rgba(0,0,0,.16);      /* 弹窗 */
+  --z-overlay: 998; --z-float: 6000; --z-kf: 9999; --z-menu: 10040; --z-cmdk: 10050; --z-lightbox: 100000; --z-toast: 100001; --z-toast2: 100002; --z-bar: 100100; --z-warn: 100200; /* R186 建议5：全站 toast/提示胶囊底色（暗色覆盖为深底） */
+
+  /* R211：缓动 Token 四档 */
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-press: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== v336 条99/100：全站弹窗“关闭叉”唯一规格（用户拍板：关闭键统一用删除那种红色） =====
+   32×32 圆钮、红底白叉、热区撑到 44×44（视觉不变、点得中） */
+.modal-mask .modal-close, .modal-mask .modal-close-x, .share-mask .share-close, .share-mask .share-x,
+.kf-mask .kf-close, .kf-mask .kf-x, .lightbox .lb-close, .preview-close-btn, .btn-close-modal, .modal-close {
+  background: var(--red) !important; color: #fff !important; border: none !important;
+  width: 32px !important; height: 32px !important; border-radius: 50% !important;
+  font-size: 16px !important; line-height: 32px !important; text-align: center !important;
+  position: relative;
+}
+.modal-mask .modal-close::after, .modal-mask .modal-close-x::after, .share-mask .share-close::after,
+.share-mask .share-x::after, .kf-mask .kf-close::after, .kf-mask .kf-x::after,
+.lightbox .lb-close::after, .preview-close-btn::after, .btn-close-modal::after, .modal-close::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px;
+  transform: translate(-50%, -50%);
+}
+.modal-mask .modal-close:hover, .modal-mask .modal-close-x:hover, .share-mask .share-close:hover,
+.share-mask .share-x:hover, .kf-mask .kf-close:hover, .kf-mask .kf-x:hover,
+.lightbox .lb-close:hover, .preview-close-btn:hover, .btn-close-modal:hover, .modal-close:hover {
+  background: #d32f2f !important; filter: none;
+}
+
+/* 隐藏所有滚动条（页面/弹窗/列表），滚动手势照常可用 */
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
+* { scrollbar-width: none;  }
+
+/* ===== 全站统一「咨询客服」弹窗（对齐导航页：结构/尺寸/样式/动画一处定义全站生效） ===== */
+.kf-mask {
+  position: fixed; inset: 0; background: var(--overlay-modal); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.kf-mask.open { display: flex; animation: kfMaskIn var(--dur-mid) var(--ease-out); }
+@keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
+.kf-box {
+  background: var(--card-bg); border-radius: var(--radius-lg); padding: 24px /* v336 条106 */; position: relative;
+  max-width: 480px; width: 100%; max-height: 84vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
+  animation: kfBoxIn var(--dur-mid) var(--ease-out);
+}
+@keyframes kfBoxIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：客服弹窗卡片入场加展开（与关闭收缩对称） */
+.kf-title { font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 19px 保持） */ color: var(--text); margin-bottom: 16px; letter-spacing: 1px; padding: 0 34px; text-align: center; }
+.kf-qr {
+  width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border); background: var(--bg-light);
+  margin: 0 auto 14px; position: relative; display: flex; align-items: center;
+  justify-content: center; border-radius: 10px; background: var(--bg-light, #f3f4f6); /* R192 一②：二维码图框圆角对齐全站 12px（原 6px 漏网） */
+}
+.kf-qr img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: 8px; } /* R215 条7：圆角对齐交流群图片（.modal-qrcode 8px） */
+.kf-qr img[src^="data:image/svg+xml"] { width: 100%; height: 100%; object-fit: contain !important; }
+/* 二维码统一出场动画（每次打开客服弹窗由 ui-common.js 重放，全站时序/动效完全一致） */
+@keyframes kfQrIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+.kf-qr img.kf-qr-in { animation: kfQrIn var(--dur-mid) var(--ease-out); }
+/* 二维码统一出场动画（导航页公众号/群聊二维码与客服二维码同一套动效，全站复用） */
+#modalImg.kf-qr-in { animation: kfQrIn var(--dur-mid) var(--ease-out); }
+.kf-tip { font-size: 16px; color: var(--text-light); margin-bottom: 16px; /* R186 建议5：gray-text 暗色下过暗，统一语义次级文字 */ letter-spacing: 1px; word-break: break-word; }
+.kf-jump {
+  width: 80%; margin: 0 auto 14px; border: none; border-radius: var(--radius); padding: 11px 32px;
+  background: var(--green); color: #fff; font-size: 18px; font-weight: 600; /* v293（用户 10-04 02:14）：006按钮字重统一→500改600跟全站按钮统一 */ cursor: pointer;
+  letter-spacing: 1px; display: inline-flex; align-items: center; justify-content: center;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
+}
+.kf-close {
+  background: var(--gray-bg, #f0f2f5); color: var(--text-light, #666); border: 1px solid var(--border, #e6eaf0); padding: 11px 32px; border-radius: var(--radius);
+  font-size: 18px; cursor: pointer; letter-spacing: 1px; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
+} /* v330 条4：红色只留给"删除"——关闭类按钮改中性次级（语义色不再滥用） */
+/* ===== 全站统一弹窗按键动效（R17 唯一标准，所有弹窗确定/关闭键复用这一份）=====
+   标准 = 资源页资源弹窗底部「咨询客服/关闭」两键的动效：
+   鼠标经过 hover：轻微缩小 + 微降透明度（scale 0.97 / opacity 0.9）
+   按压 active：更小 + 更淡 + 变暗（scale 0.94 / opacity 0.8 / brightness 0.9）
+   过渡时长统一 var(--dur-fast) ease；文字、颜色、大小等外观各键保持自身样式不变。
+   各页面禁止再为弹窗按键写本地 hover/active 缩放副本。 */
+.alert-ok, .ann-ok, .btn-item, .modal-inner-btn, .modal-close, .kf-jump, .kf-close {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
+}
+.alert-ok:active, .ann-ok:active, .btn-item:active, .modal-inner-btn:active, .modal-close:active, .kf-jump:active, .kf-close:active {
+  transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
+}
+.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease ; line-height: 1; } /* R186：× 回退标准口径——弹窗右上角同款灰圆，hover 变红 */
+@media (max-width: 600px) {
+  .kf-box { padding: 20px 16px; }
+  .kf-title { font-size: 19px; }
+  .kf-qr { width: 200px; height: 200px; }
+  .kf-jump, .kf-close { font-size: 16px; padding: 10px 24px; }
+}
+
+/* R192 二④：搜索命中高亮——全站唯一绿（咨询客服 #01C000）淡化底，不新增颜色 */
+mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; border-radius: 4px; padding: 0 1px; }
+/* R192 二②：卡片/行错峰入场；R211 二批（用户 09-20）升级：位移 10→16px、时长 0.18→0.30s（--dur-slow）、缓动换 --ease-emphasized，逐张 20ms 落位 180ms 封顶（JS 侧配合）；系统「减少动态效果」自动关闭 */
+@keyframes staggerIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.stagger-in { animation: staggerIn var(--dur-slow) var(--ease-emphasized) both; }
+@media (prefers-reduced-motion: reduce) {
+  /* v336 条81：加载指示类动画保留（转圈停了分不清加载还是卡死） */
+  .sk-spin, .loading-spin, .btn-busy .spin, [class*="spin"] { animation-duration: 1.2s !important; animation-iteration-count: infinite !important; } .stagger-in { animation: none !important; } }
+
+/* ===== 全站统一关闭 ×（R186 回退标准）：32px 圆形淡灰底，hover 变红（弹窗/客服/放大预览通用） ===== */
+.modal-close-x,
+.kf-x {
+  position: absolute; top: 12px; right: 12px; z-index: 10;
+  width: 32px !important; height: 32px !important;
+  border-radius: 50% !important; border: none !important;
+  background: var(--gray-bg) !important; color: var(--gray-text) !important;
+  font-size: 19px !important; line-height: 1 !important; cursor: pointer !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  padding: 0 !important; margin: 0 !important;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease !important;
+}
+.modal-close-x:hover,
+.kf-x:hover { /* R231 条7：控件悬停统一微亮+浮起（缩放式退役） */
+  background: var(--red) !important; color: #fff !important; transform: scale(0.97); opacity: 0.9;
+}
+.modal-close-x:active,
+.kf-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+
+/* ===== 全站统一图片/视频放大查看器（lightbox） ===== */
+.lightbox {
+  position: fixed; inset: 0; z-index: 100000; display: none;
+  align-items: center; justify-content: center;
+  background: var(--overlay-lightbox); touch-action: none;
+  cursor: zoom-out;
+}
+.lightbox.open { display: flex; }
+
+/* ===== 全站弹窗层级规范（强制，后开永远在上层，杜绝倒挂/被媒体内容遮挡） =====
+   业务弹窗遮罩 2000 → 分享/确认 3000 → 编辑器放大 6000/6001 →
+   弹窗内子弹窗（时间选择/通用输入/插入链接/分类面板）6002 → 客服 10001 →
+   放大预览 100000 → 轻提示 100001
+   注：子弹窗统一取 6002，保证在"编辑器放大模式(6000/6001)"之上——放大态点插入图片/视频/链接
+   的填写弹窗、时间选择等都不会被压住 */
+.modal-mask { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); /* v336 条123：遮罩毛玻璃 */ z-index: 2000 !important; }
+#inputMask { z-index: 6002 !important; } /* R15：编辑器插入图片/视频等"弹窗里的输入弹窗"，必须高于业务弹窗与放大编辑器 */
+.share-mask { z-index: 3000 !important; }
+/* R16c：分享链接弹窗确定键——与资源页分享本站弹窗 .share-close 逐字复用（含按压动画，此前动态弹窗为纯内联样式无反馈） */
+.share-ok {
+  display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;
+  background: #1E88E5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; letter-spacing: 1px; -webkit-tap-highlight-color: transparent;
+}
+.share-ok:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+.share-ok:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7：控件悬停统一微亮+浮起 */
+/* v297（用户 10-04 17:48）：撤回 v295 超范围改动→三页分享弹窗已删，以下样式死代码已清理；.share-mask z-index 保留（资源页+动态弹窗仍用） */
+#rteExitZoom { z-index: 6001 !important; }
+.kf-mask, #kfFallback { z-index: 10001 !important; }
+.lightbox { z-index: 100000 !important; }
+/* R285 条5：旧 .toast 死规则已删（在用者为 .ui-toast） */
+
+/* ===== 全站弹窗底部按键区统一：一行 N 键 N 等分、统一间距、等高、文字居中（所有弹窗复用） ===== */
+.modal-footer {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--gap) !important;
+  margin-top: 16px !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+.modal-footer > button,
+.modal-footer > .btn,
+.modal-footer > a,
+.modal-footer > input,
+.modal-footer > .modal-inner-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 46px !important; /* R285 条1：弹窗底部按钮统一 46px（R192 一③ 主按钮口径） */
+  margin: 0 !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  white-space: nowrap;
+  border-radius: var(--radius-btn) !important; /* R285 条1：一个模子——圆角/字号/字距统一 */
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: var(--ls-btn) !important;
+}
+/* 窄屏：预览键独占整行排最前，保存/取消在下一行二等分；PC 端三键同一行三等分 */
+@media (max-width: 600px) {
+  .modal-footer > .preview-btn { flex: 1 1 100% !important; width: 100% !important; order: -1; }
+}
+/* 咨询客服弹窗底部按键：等分容器（jump/close 两键各占一半） */
+.kf-actions {
+  display: flex !important;
+  gap: var(--gap) !important;
+  width: 100% !important;
+  margin-top: 16px !important;
+}
+.kf-actions > button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 46px !important; /* R285 条1：客服窗底部按钮同步 46px */
+  margin: 0 !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  border-radius: var(--radius-btn) !important; /* R285 条1：统一模子 */
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: var(--ls-btn) !important;
+}
+.kf-jump { width: auto !important; margin: 0 !important; }
+
+/* ===== 全站统一顶栏 tab 按键（唯一实现）=====
+   资源页顶栏「咨询客服/分享」、管理页「资源管理/分类管理/数据统计/平台设置/退出」
+   完全同一套样式：蓝渐变顶栏上的半透明白胶囊，激活白底蓝字。
+   两页禁止各自再写 .tab 样式（复用，非复制）。 */
+.tab {
+  border: none; background: rgba(255, 255, 255, 0.18);
+  color: #fff; padding: 0 16px; height: 38px;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box; border-radius: 999px;
+  font-size: 14px; white-space: nowrap; line-height: 1.2; gap: 5px;
+  transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out) ; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
+.tab:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
+/* 按下瞬间变白底蓝字：与管理页 tab 激活态同一观感（资源页咨询客服/分享按下也变白，两页统一） */
+.tab:active { background: #fff; color: var(--blue1); transform: scale(0.94); }
+.tab svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
+.tab svg + span { margin-left: 5px; }
+
+/* ===== 全站统一列表/网格切换（唯一实现，两页同色）=====
+   R8 统一配色（用户定稿）：激活按键 = 淡白色底，未激活按键 = 淡蓝色底，
+   两页（资源页蓝顶栏 / 管理页白背景工具栏）完全同一套色值，不再区分上下文。
+   R87（用户定稿）：未激活改为「淡蓝底白字」var(--blue2)——与显示/隐藏状态按钮的淡蓝同色（全系统统一）；激活态不变（淡白底蓝字）。
+   两页禁止各自再写 view-btn 样式（复用，非复制）。 */
+.view-toggle {
+  display: flex; align-items: center; gap: 4px;
+}
+.view-btn {
+  padding: 0 10px; border: 1px solid var(--blue2, var(--blue2)); border-radius: 8px;
+  background: var(--blue2, var(--blue2)); color: #fff; cursor: pointer;   /* 未激活（R87）：淡蓝底白字，与状态按钮隐藏态同色 */
+  font-size: 13px; height: 38px; box-sizing: border-box; /* R279（老板 09-28 00:18）：38→40px 的 R182-4 作废——全系统按键高度统一，
+  列表/网格切换按键与顶栏咨询客服/分享按键（.tab，38px）同高；两页共用本规则，一处改两页生效 */
+  display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; gap: 4px;
+  transition: background var(--dur-mid) ease, color var(--dur-mid) ease, transform var(--dur-fast) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.view-btn:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
+.view-btn:active { transform: scale(0.94); opacity: 0.8; }
+.view-btn.active {
+  background: var(--card-bg, #FFFFFF); color: var(--blue1); border-color: var(--blue2); font-weight: 600; /* 激活：淡白底蓝字（R141 色收敛到站点蓝） */
+}
+
+/* 窄屏统一适配（tab 与 view-btn 同步缩放，两页一致） */
+@media (max-width: 600px) {
+  .tab { padding: 7px 12px; font-size: 13px; }
+  .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
+  /* R8 小屏适配：带图标的按键（咨询客服/分享/列表/网格）窄屏只留图标、隐藏文字，
+     title 悬停提示保留——手机顶栏空间有限，图标语义已足够，PC 端仍显示完整"图标+文字" */
+  .tab svg + span { display: none; }
+  .tab svg { margin: 0; }
+  .topbar-actions .tab, .view-toggle .view-btn { padding: 6px 10px; }
+  .view-btn span { display: none; }
+}
+
+/* ===== 弹窗底部按键隐藏修复 =====
+   上方 .modal-footer > button / .kf-actions > button 的 display:inline-flex !important
+   会覆盖 JS 设置的内联 style.display='none'，导致本该隐藏的按键被强行渲染
+   （资源页"公众号讯"弹窗左侧多出空的绿色跳转键就是这个 bug）。
+   内联样式写了 display:none 的按键必须真正隐藏：选择器特异性高于上面两条通用规则。 */
+.modal-footer > button[style*="display: none"],
+.modal-footer > button[style*="display:none"],
+.modal-footer > .modal-inner-btn[style*="display: none"],
+.modal-footer > .modal-inner-btn[style*="display:none"],
+.kf-actions > button[style*="display: none"],
+.kf-actions > button[style*="display:none"] {
+  display: none !important;
+}
+
+/* ===== 弹窗媒体统一稳定（全站复用，禁止各弹窗单独写） =====
+   1) 加载前用 .m-loading 预留 16:9 占位，图片/视频加载完成不会撑开弹窗导致尺寸跳动
+   2) 媒体宽度锁死内容区、box-sizing 统一，右侧不会超出弹窗被遮挡，左右边距对称
+   3) 弹窗仅允许纵向滚动，横向一律裁切，不出现横向滚动条 */
+.modal-box img, .modal-box video, .kf-box img, .ann-box img, .ann-box video, .preview-box img, .preview-box video {
+  max-width: 100%; box-sizing: border-box;
+}
+.m-loading { aspect-ratio: 16 / 9; background: var(--bg-light); border-radius: var(--radius); width: 100%; }
+.m-loading.is-video { background: #000; }
+.modal-box, .ann-box, .kf-box, .preview-box { overflow-x: hidden; }
+/* 富文本内媒体（尺寸未知不锁比例）：统一加载底色，避免加载中空白塌陷的突兀跳动 */
+.modal-detail img, .resource-content img, .ann-body img, .rte-editor img, .variant-detail img, .preview-detail img { background: var(--bg-light); min-height: 80px; } /* v309:统一最小高度占位*/
+.modal-detail video, .resource-content video, .ann-body video, .rte-editor video, .variant-detail video, .preview-detail video { background: #000; }
+/* R215 条4（老板 09-21）：富文本复选框前台展示——与文字同高（1em）、可点击勾选，后台编辑器内同款 */
+.rte-editor input[type="checkbox"], .modal-detail input[type="checkbox"], .resource-content input[type="checkbox"], .ann-body input[type="checkbox"], .variant-detail input[type="checkbox"], .preview-detail input[type="checkbox"] {
+  width: 1em; height: 1em; vertical-align: -0.12em; margin: 0 0.35em 0 0; cursor: pointer; accent-color: #1E88E5; flex: none;
+}
+
+/* ===== 全站统一加载失败占位图（感叹号）尺寸：固定 16:9 + 最小高度，任何位置都不撑破容器、不引起弹窗高度跳动 ===== */
+.modal-box img[src^="data:image/svg+xml"], .ann-box img[src^="data:image/svg+xml"], .resource-content img[src^="data:image/svg+xml"], .lightbox img[src^="data:image/svg+xml"] {
+  height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; object-fit: contain;
+}
+/* R173（用户 00:27）：占位封面与真图统一居中口径——旧满宽 calc(100%-32px)+左右 16px 在
+   真图（auto 居中）/占位符（满宽）/加载失败换占位三态间左右横跳；改 min(320px) 上限居中，
+   与真图 margin auto 同源，任何态都水平居中、不再跳位置 */
+/* R280（老板 09-28 00:35 ①）：封面改固定展示框后，占位封面与真图同尺寸（框恒定）——
+   双端各自的页面级 !important 规则（shop.css/admin.css）在此基础上再收口，本规则作兜底同口径 */
+.modal-cover[src^="data:image/svg+xml"], .preview-cover[src^="data:image/svg+xml"] {
+  aspect-ratio: auto !important; height: min(48vh, 400px) !important; width: calc(100% - 32px) !important;
+  min-height: 0 !important; object-fit: contain !important; margin: 16px auto 0 !important;
+}
+
+
+/* ===== R14 全站统一翻页组件（.uni-pager）：复用数据统计翻页样式（胶囊按钮），两页三处共用 =====
+   结构（R35 两组，换行按组折行不拆散）：
+   [上一页 | 页码信息（N / M（共X条））| 下一页] 一组  +  [跳页输入+跳转键] 一组 */
+.uni-pager {
+  display: flex; justify-content: center; align-items: center;
+  gap: 8px; padding: 14px 4px 2px; flex-wrap: wrap;
+}
+/* R35：翻页主组（上一页/页码/下一页）永不拆散——窄屏整体换行 */
+.uni-pager .pg-main { display: inline-flex; align-items: center; gap: 8px; }
+.uni-pager button.pg-btn {
+  padding: 8px 16px; border: 1px solid var(--blue2, var(--blue2)); background: var(--card-bg);
+  color: var(--blue1, #1E88E5); border-radius: 999px; cursor: pointer; font-size: 13px;
+  -webkit-tap-highlight-color: transparent;
+}
+.uni-pager button.pg-btn:hover:not(:disabled) { background: var(--hover-bg); }
+.uni-pager button.pg-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; } /* R285 条33：置灰三件套（透明+禁用手势+点不动） */
+.uni-pager .pg-info { color: var(--text-light); font-size: 13px; }
+.uni-pager .pg-jump { display: inline-flex; align-items: center; gap: 6px; }
+.uni-pager .pg-jump input {
+  width: 52px; padding: 7px 4px; border: 1px solid var(--blue2, var(--blue2)); border-radius: 8px;
+  text-align: center; font-size: 13px; box-sizing: border-box; color: var(--text);
+  -moz-appearance: textfield; appearance: textfield;
+}
+.uni-pager .pg-jump input::-webkit-outer-spin-button,
+.uni-pager .pg-jump input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.uni-pager .pg-jump button {
+  padding: 8px 12px; border: 1px solid var(--blue2, var(--blue2)); background: var(--card-bg);
+  color: var(--blue1, #1E88E5); border-radius: 8px; cursor: pointer; font-size: 13px;
+  -webkit-tap-highlight-color: transparent;
+}
+.uni-pager .pg-jump button:hover { background: var(--hover-bg); }
+@media (max-width: 600px) {
+  .uni-pager { gap: 6px; }
+  .uni-pager button.pg-btn { padding: 7px 12px; font-size: 12px; }
+  .uni-pager .pg-info { font-size: 12px; }
+}
+
+
+
+
+/* ===== R167（用户 20:27）：截断文字悬停/点按小框 #uiTip 全站版（收编自 admin.css R102） =====
+   弹窗同款（白底/细边/圆角/投影），内部允许换行，只在文字真的被截断时出现；
+   z-index 100002 与兜底 toast 同级，pointer-events:none 不挡任何交互；
+   定位在 ui-common.js show() 内做左右/上下 8px 钳制（与后台分类下拉面板同款口径），永不越出屏幕。 */
+#uiTip {
+  position: fixed; z-index: 100002; display: none;
+  max-width: 340px; padding: 8px 12px;
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: var(--shadow-pop);
+  font-size: 13px; line-height: 1.6; color: var(--text);
+  white-space: normal; word-break: break-all; pointer-events: none;
+}
+
+/* ===== R183（用户 09-17 终极清单拍板）：动效三档 Token / 图片入场 / 弹窗对称收缩 / 按钮转圈 / 复制反馈 / 焦点环 / 等宽数字 / 空态清除键 ===== */
+:root { --dur-fast: 0.10s; --dur-mid: 0.18s; --dur-slow: 0.30s; }
+/* R229（用户 09-21 19:44「全系统全页面底部留白统一，以大的为标准」）：页面底部留白全站统一标准值。
+   实测四页原有值：导航 body 底 24px（最大，即标准源）/ 商城 0px（翻页器贴底）/ 管理 .container 底 16px（390 档 12px）/ 错误 body 底 20px。
+   统一口径 = 滚动到底时最后内容到页面底边的距离；短内容居中页（导航/错误）的剩余视口空间是布局天性不计入。 */
+:root { --page-bottom-gap: 24px; }
+/* 条2：图片入场（R183 同二维码 kfQrIn 口径）；R211 二批（用户 09-20）按 UI 设计师规格微调：scale 0.9→1 起跳改为 1.02→1 轻落位（渐入更含蓄，二维码 kfQrIn 保持原口径不动） */
+.img-in { animation: imgQrIn var(--dur-mid) var(--ease-out); }
+@keyframes imgQrIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
+/* 条4：保存/登录/解锁按钮忙碌转圈（不动 disabled 防重与全屏遮罩——用户拍板） */
+.btn-spin { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: btnSpin 0.6s linear infinite; margin-left: 6px; margin-top: 1.5px; flex: none; }
+@keyframes btnSpin { to { transform: rotate(360deg); } }
+/* 条11：复制成功键短暂变绿（1.2s） */
+.copy-ok { background: var(--green, #01C000) !important; /* v293（用户 10-04 02:14）：003复制成功绿→跟全站统一绿#01C000 */ border-color: var(--green, #01C000) !important; /* v293（用户 10-04 02:14）：003同步 */ color: #fff !important; }
+    /* R209（用户 09-19 00:41）：根因→分享弹窗链接文字套 .copy-ok 变成整块绿底白字；
+       修法→新增 .copy-ok-text 只变字体绿色、不动背景，供链接文字专用 */
+    .copy-ok-text { color: var(--green, #01C000) !important; /* v293（用户 10-04 02:14）：003复制成功文字绿→跟全站统一绿#01C000 */ }
+    /* ===== v327：引用块「复制」按键——全站唯一通用样式（资源页详情/公告/类型/管理页预览共用），改一处全站同步 ===== */
+    .quote-copy-btn {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card-bg);
+      color: var(--text-light);
+      font-size: 12px;
+      cursor: pointer;
+      line-height: 1.2;
+      z-index: 2;
+    }
+    .quote-copy-btn:hover { background: var(--hover-bg); color: var(--text); border-color: var(--blue1); }
+    @media (max-width: 600px) {
+      .quote-copy-btn { padding: 3px 10px; font-size: 11px; border-radius: 8px; }
+    }
+/* 条29：键盘焦点环统一（鼠标/触摸点击不显示） */
+:focus-visible { outline: 2px solid var(--blue1, #1E88E5); outline-offset: 2px; }
+:focus:not(:focus-visible) { outline: none; }
+/* 条17：搜索空态「清除搜索」按钮（前后台同款，33px 与搜索框同高） */
+.empty-clear-btn { display: block; margin: 14px auto 0; padding: 0 18px; height: 33px; line-height: 31px; border: 1px solid var(--blue2, #64B5F6); border-radius: 999px; background: transparent; color: var(--blue1, #1E88E5); font-size: 13px; cursor: pointer; }
+.empty-clear-btn:hover { background: var(--blue1, #1E88E5); color: #fff; }
+/* R193（用户 22:32 拍板）：空状态三件套（📦 图标+标题+可选按钮）全站统一——前后台结构尺寸一模一样；
+   图标 48px/半透明、标题 16px/500、60px 上下留白、fixed 屏幕居中（从 shop.css 原样收编，shop.css 原块删除） */
+.empty-tip { text-align: center; color: var(--text-light, #999); padding: 60px 20px; font-size: 14px; display: none; }
+/* v336 条132：空态 fixed 旧层级死代码已删 */
+.empty-tip .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty-tip .empty-title { font-size: 16px; color: var(--text-light, #999); font-weight: 600 /* v336 条115 */; }
+/* 条27：价格/统计/表格数字等宽（跳动对齐） */
+.p-price, .v-price, .cp-price, .variant-price, .stat-card .num, .stat-card .delta, table td, table th { font-variant-numeric: tabular-nums; }
+/* R184 条27 延伸（全系统检查）：翻页数字、趋势图轴数字（柱图 .tg-num + 折线 SVG text）一并等宽——轴数字宽度一致后网格线间距视觉均等，翻页数字不再随位数抖动 */
+.uni-pager button.pg-btn, .tg-num, .trend-grid svg text { font-variant-numeric: tabular-nums; }
+/* 条8：全站弹窗关闭收缩——ui-common.js 观察者在 .open 被移除的当帧补挂 .mask-closing 维持可见并播 var(--dur-mid) 收缩
+   （与入场对称：入场 box 展开 scale 0.92→1（modalIn），关闭 1→0.92（boxOut）；遮罩层双向 var(--dur-mid) 淡入淡出；
+   关闭动画期间重新打开会自动撤掉收缩态、重放入场） */
+.modal-mask.mask-closing, .share-mask.mask-closing, .kf-mask.mask-closing, .lightbox.mask-closing {
+  display: flex;
+  animation: maskOut var(--dur-close) var(--ease-out) forwards; /* R231 条10：关场统一 160ms——关比开快是高级产品通行手感 */
+  pointer-events: none;
+}
+@keyframes maskOut { from { opacity: 1; } to { opacity: 0; } }
+.modal-mask.mask-closing > .modal-box, .share-mask.mask-closing > .share-box, .kf-mask.mask-closing > .kf-box, .lightbox.mask-closing > img, .lightbox.mask-closing > video {
+  animation: boxOut var(--dur-close) var(--ease-out) forwards; /* R231 条10 */
+}
+@keyframes boxOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.92); } }
+
+/* ===== R184 条5：顶部网络进度条 + 条31：阴影 5 档 Token ===== */
+#fetch-bar { position: fixed; top: 0; left: 0; height: 2px; width: 100%; transform: scaleX(0); transform-origin: 0 50%; background: linear-gradient(90deg, #fff, rgba(255,255,255,0.85)); box-shadow: 0 0 6px rgba(255,255,255,0.85); z-index: 100100; pointer-events: none; opacity: 0; transition: transform .25s ease, opacity .2s ease; border-radius: 0 3px 3px 0; } /* R231 条2：width→scaleX——宽度动画每次步进都强制整页重排（恰逢骨架屏+图片入场最忙时），缩放在合成层完成，视觉完全一样 */ /* R184 补：白色高亮——四页顶栏/页面渐变均为品牌蓝，原蓝色条叠蓝底不可见；白条+微光晕在蓝底上恒清晰（GitHub 顶栏同款） */
+:root { --shadow-card: 0 1px 4px rgba(0,0,0,0.07); --shadow-pop: 0 4px 16px rgba(0,0,0,0.14); --shadow-modal: 0 10px 40px rgba(0,0,0,0.25); --shadow-blue: 0 3px 10px rgba(30,136,229,0.3); --shadow-blue-strong: 0 6px 20px rgba(30,136,229,0.4); } /* R184 条31：全站阴影归 5 档——卡片微浮/悬浮面板/弹窗大影/品牌蓝晕/品牌强晕（focus 环、白高光环、方向性投影等语义阴影不归档） */
+/* R187：手动主题钮已撤（用户拍板纯自动跟随系统），.theme-btn 全部移除 */
+
+/* ===== R186 建议1：搜索历史下拉（前后台搜索框共用）=====
+   定位：absolute 挂搜索框容器下方；词条=tab 淡蓝胶囊家族（R185 搜索场景定稿观感）；
+   单条删除 = R186 × 回退标准（灰圆、hover/点击变红），小号 16px。 */
+.search-hist { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-pop); padding: 10px 12px; z-index: 800; animation: kfBoxIn var(--dur-fast) var(--ease-out); }
+.search-hist .sh-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.search-hist .sh-title { font-size: 12px; color: var(--text-faint); letter-spacing: 0.5px; }
+.search-hist .sh-clear { border: none; background: transparent; color: var(--blue1); font-size: 12px; cursor: pointer; padding: 2px 6px; border-radius: 8px; }
+.search-hist .sh-clear:hover { background: var(--hover-bg); }
+.search-hist .sh-list { display: flex; flex-wrap: wrap; gap: 8px 8px; }
+.search-hist .sh-item { position: relative; display: inline-flex; }
+.search-hist .sh-word { /* 复用 tab 家族：淡蓝底蓝字胶囊（搜索场景按键，R185 口径） */
+  border: none; background: rgba(30, 136, 229, 0.12); color: var(--blue1);
+  border-radius: 999px; padding: 5px 14px; font-size: 13px; cursor: pointer; line-height: 1.4;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; -webkit-tap-highlight-color: transparent;
+}
+.search-hist .sh-word:hover { background: rgba(30, 136, 229, 0.2); }
+.search-hist .sh-word:active { transform: scale(0.94); opacity: 0.85; }
+.search-hist .sh-del { /* R186 × 回退标准（灰圆、hover/点击变红），小号 */
+  position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; border-radius: 50%;
+  border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 10px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
+}
+.search-hist .sh-del:hover { background: var(--red); color: #fff; transform: scale(0.97); opacity: 0.9; } /* v293（用户 10-04 02:14）：075搜索历史×hover→跟弹窗×统一scale+opacity，不要浮起式 */ /* R231 条7：放大式并入浮起式 */
+.search-hist .sh-del:active { transform: scale(0.9); opacity: 0.8; }
+
+
+/* ===== R193 二⑤⑦（用户 22:32 定稿）：长按小菜单（全站统一，配合 ui-common.js __ctxMenu）=====
+   白卡圆角 10px（弹窗档）+ shadow-pop 级阴影；条目 40px 高、hover 灰底（--bg-light）；
+   颜色只用现有 Token，深色模式自动跟随；条目字距 1.2px（R192 全站字距标准） */
+/* R193c（用户 23:10）：长按小菜单与后台「资源码下拉框」(cat-picker-panel/cp-item) 同款规格——
+   面板 padding 6px/圆角 10px/投影 0 10px 28px rgba(20,60,110,0.16)；条目 flex 布局 padding 9px 10px/
+   圆角 8px/14px/hover var(--hover-bg)，视觉与后台下拉完全一致 */
+.ctx-menu { position: fixed; z-index: 10040; display: none; min-width: 148px; max-width: 220px; padding: 6px; background: var(--card-bg, #fff); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-pop); /* R285 条20：归悬浮面板档 */ }
+.ctx-item { display: flex; align-items: center; gap: 6px; width: 100%; padding: 9px 10px; border: none; border-radius: 8px; background: transparent; color: var(--text, #222); font-size: 14px; letter-spacing: 1.2px; text-align: left; cursor: pointer; font-family: inherit; transition: background var(--dur-fast, 0.1s); }
+.ctx-item:hover { background: var(--hover-bg, #f0f2f5); }
+.ctx-item:active { transform: scale(0.97); }
+
+
+/* R211（用户 09-19 17:10）：sticky hover 隔离——触屏设备不挂 hover 态 */
+@media (hover: hover) and (pointer: fine) {
+  .alert-ok:hover, .ann-ok:hover, .btn-item:hover, .modal-inner-btn:hover, .modal-close:hover, .kf-jump:hover, .kf-close:hover {
+    filter: brightness(1.06); box-shadow: 0 4px 12px rgba(30,136,229,0.25);
+  }
+  .kf-x:hover { background: var(--red); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
+  .kf-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+}
+
+/* R211（用户 09-19 17:10）：View Transitions 跨页跳转——MPA 全适配（四页经 ui-common.css 全覆盖） */
+@view-transition { navigation: auto; }
+/* R231（用户 09-21 23:38）条13：reduced-motion 用户跳过转场——三伪元素动画全关（直接瞬切），
+   派单口径"reduced-motion 用户跳过"；另：条13 要求管理页也上——admin.html 引本文件即已生效，
+   管理页（DOM 较大）跳转性能实测见交付评论 r231-verify 数据 */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* R211：按钮 ✓ 成功态弹入 */
+@keyframes btnSuccessPop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+    /* ===== R230（老板 09-21 21:10 拍板）：骨架屏公共基础（自 shop.css R193/R211/R213 迁入，全站一份） =====
+       商城 .card-skeleton 与管理页 .skel 行同源：灰框占座、数据到达同位置逐条渐变成真行。
+       管理页骨架件复用真实行类名并挂 .sk-piece（尺寸/圆角由各页形状规则补齐）；
+       底色走 Token var(--bg-light)（暗色模式自动跟随），高光带 --sk-hi 亮/暗两套。
+       .sk-piece 双写提升特异性（0,3,0）——管理页真实行类（.thumb 等）自带 background（0,2,0），
+       不双写会被更靠后的页内样式压掉失去微光；系统「减少动态效果」降级为呼吸脉冲。 */
+    .skel, .card-skeleton { pointer-events: none; --sk-hi: #e8eaef; }
+    /* R213 口径（随迁）：渐变高光带整体移入磁贴后半段（55%/75%/95%）——高光在动画边界帧
+       不贴右缘，扫过全程无残影 */
+    .skel .sk-piece, .skel .sk-piece.sk-piece,
+    .skel .sk-img, .skel .sk-line,
+    .card-skeleton .sk-img, .card-skeleton .sk-line {
+      background: linear-gradient(90deg, var(--bg-light, #f0f2f5) 55%, var(--sk-hi, #e8eaef) 75%, var(--bg-light, #f0f2f5) 95%);
+      background-size: 200% 100%;
+      animation: skShimmer 1.6s linear infinite;
+    }
+    .skel .sk-line, .card-skeleton .sk-line { height: 13px; border-radius: 4px; margin-top: 10px; }
+    .skel .sk-line.w70, .card-skeleton .sk-line.w70 { width: 70%; }
+    .skel .sk-line.w95, .card-skeleton .sk-line.w95 { width: 95%; }
+    .skel .sk-piece { border-radius: 10px; } /* v293（用户 10-04 02:14）：078骨架屏圆角→跟真实卡片统一10px */
+    @keyframes skPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+    @keyframes skShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* 系统「减少动态效果」：恢复原呼吸式脉冲、禁用背景位移（微光位移感更强） */
+    @media (prefers-reduced-motion: reduce) {
+      .skel .sk-piece, .skel .sk-piece.sk-piece, .skel .sk-img, .skel .sk-line, .card-skeleton .sk-img, .card-skeleton .sk-line {
+        animation: skPulse 1.2s ease-in-out infinite; background: var(--bg-light, #f0f2f5); background-size: auto;
+      }
+    }
+
+/* ---------- R231（用户 09-21 23:38）条1：系统级减少动画全局兜底 ----------
+   用户开省电模式/系统设置关动画时，全站动画与过渡自动归零（无障碍通行做法）。
+   先于 42 处 transition 修复落地：无论后面动画怎么加，这张安全网都在。 */
+@media (prefers-reduced-motion: reduce) {
+  /* R231 条1 补丁：选择器提特异性到 (0,3,0)——站点存在 .product-card/.product-row/.modal-close-x 等
+     带 !important 的 transition 简写（特异性 0,1,0），原 * 兜底在 !important 层被它们压过、逐个漏网；
+     :root 连写三叠后任何单类/双类简写都压不过这张网 */
+  :root:root:root,
+  :root:root:root *,
+  :root:root:root *::before,
+  :root:root:root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ===== R231（用户 09-21 23:38）批次 B 公共层 ===== */
+/* 条10：弹窗入场 keyframes 抽公共（原 admin.css / shop.css 各持一份重复定义，删本地留这一份） */
+@keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：入场加展开（与关闭收缩对称） */
+/* 条10：关场时长变量（160ms）——与入场 var(--dur-mid) 区分，关比开快 */
+:root { --dur-close: 0.16s; }
+/* 条11：toast 公共样式（资源页 R192 定稿观感：白底0.92+蓝字+圆角20+语义色；下落入场 240ms） */
+.ui-toast {
+  position: fixed; bottom: calc(24px + var(--safe-b, 0px)); left: 50%; transform: translateX(-50%); /* v336 条141：撤销条移到底部，不再盖批量条 */
+  color: var(--blue1, #1E88E5); background: var(--toast-bg, rgba(255,255,255,0.92));
+  border: 1px solid var(--blue2, #64B5F6); border-radius: 999px;
+  padding: 6px 16px; font-size: 12px; line-height: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100002;
+  pointer-events: none; max-width: 90%; text-align: center;
+  animation: uiToastDrop 0.24s var(--ease-out) both; /* R231 条11：入场带下落分量（从上 8px 落下） */
+}
+.ui-toast.error { color: var(--red); border-color: #e57373; }
+.ui-toast.leaving { opacity: 0; transition: opacity var(--dur-slow) var(--ease-out); } /* R285 条32 */
+@keyframes uiToastDrop { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+/* 条31：暗色模式切换过渡——只过渡 body 背景色与文字色（禁全局 *，避免拖慢其它动画） */
+body { transition: background-color 0.3s ease, color 0.3s ease; }
+/* 条34：动画资源使用规矩——加速资源（will-change/合成层）只允许动画播放期间临时占用、结束释放；
+   禁止常驻声明（本站唯一一处常驻 admin.css topbar 已在 R231 删除）。
+   新增动画需要层的：JS 播放前 element.style.willChange='transform'，transitionend/animationend 后置 ''。 */
+
+/* 条15（老板修正 09-21）：切换淡入上移统一 0.20s（原 0.18s）——详情弹窗类型切换 / 管理页预览与码面板同类 */
+:root { --dur-switch: 0.20s; }
+/* 条22：视图切换/淡入上移 keyframes 抽公共（原 shop.css、admin.css 三份重复，admin 用 fadeInUp 无定义属漏网） */
+@keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+
+/* ===== R243 条19②：命令面板（Ctrl+K）全站样式 =====
+   从 admin.css 命令面板块引用而来（值逐条一致，admin 页两份同值不冲突）；
+   选择器加 .cp-mask 作用域——避免与 admin.css 分类选择器同名 .cp-item 家族互相污染。
+   入口仅键盘（Ctrl+K），无任何页面图标/按键。 */
+.cp-mask { position: fixed; inset: 0; z-index: 10050; background: var(--overlay-modal); display: none; align-items: flex-start; justify-content: center; padding: 12vh 16px 0; }
+.cp-mask.open { display: flex; }
+.cp-mask .cp-box { width: min(560px, 100%); background: var(--card-bg, #fff); border-radius: 10px; box-shadow: var(--shadow-modal); /* R285 条20：命令面板归弹窗大影档 */ overflow: hidden; animation: cpIn var(--dur-mid) var(--ease-out); /* R285 条30：走全站标准速度+动感 */ }
+@keyframes cpIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.cp-mask .cp-input { width: 100%; height: 50px; border: none; outline: none; background: transparent; color: var(--text, #222); font-size: 16px; padding: 0 18px; letter-spacing: 1.2px; }
+/* R255（老板 17:55）：Ctrl+K 命令面板输入框聚焦态显式去 outline（同 shop/admin 搜索框口径） */
+.cp-mask .cp-input:focus, .cp-mask .cp-input:focus-visible { outline: none; outline-width: 0; box-shadow: 0 0 0 3px rgba(30,136,229,0.15); /* v293（用户 10-04 02:14）：058命令面板输入框获焦点→补淡蓝光晕，跟搜索框统一 */ }
+.cp-mask .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 6px; border-top: 1px solid var(--border); }
+.cp-mask .cp-item { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text, #222); }
+.cp-mask .cp-item .cp-lab { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-mask .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }
+.cp-mask .cp-item.active { background: var(--blue1); color: #fff; } /* R285 条34：命令面板选中统一深蓝底白字 */
+
+.cp-mask .cp-item:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--hover-bg); } /* v293（用户 10-04 02:14）：073命令面板条目hover→接入全站微飘起+微亮标准 */
+.cp-mask .cp-item:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+.cp-mask .cp-empty { padding: 18px; text-align: center; color: var(--text-light); font-size: 14px; } /* R285 条40：提示灰统一一档 */
+@media (prefers-reduced-motion: reduce) { .cp-mask .cp-box { animation: none; } }
+
+/* ===== R243 条19①：顶栏搜索框家族样式抽公共 =====
+   从 shop.css 搜索框块引用而来（值逐条一致；shop 页 shop.css 后加载同值覆盖、观感零变化；
+   admin 页搜索框为 .admin-search 作用域（特异度更高），不受影响）——
+   供前台首页（index）引用管理页/资源页同款搜索框使用：同组件同样式同交互。 */
+.search-box { flex: 1; position: relative; }
+.search-box:focus-within { box-shadow: 0 0 0 3px rgba(30,136,229,0.15); transition: box-shadow 0.18s ease; }
+.search-input { /* R182-3：38→33px 与管理页搜索框同步统一 */
+  width: 100%;
+  height: 33px;
+  border: none;
+  border-radius: 999px;
+  padding: 0 36px 0 38px;
+  font-size: 14px;
+  background: var(--card-bg);
+  outline: none;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px; height: 18px;
+  color: var(--text-light);
+}
+.search-clear { /* R188：× 全系统统一灰圆款（用户定稿，弹窗右上角标准） */
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-light);
+  color: var(--text-light);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.search-clear:active { transform: translateY(-50%) scale(0.94); }
+.search-clear.show { display: flex; }
+@media (hover: hover) and (pointer: fine) { /* R211 sticky hover 隔离：触屏设备不挂 hover 态 */
+  /* v333 修：此处原为 translateY(calc(50% - 1px))，基准缺失负号 —— × 号会从居中位置瞬间向下跳一个身位；改成 -50% 基准 */
+  .search-clear:hover { background: #ff4444; color: #fff; transform: translateY(calc(-50% - 1px)); filter: brightness(1.06); }
+}
+
+
+/* ===== R285 条52：手机弹窗全屏兜底（三页共用一份，门户页顺带保护） ===== */
+@media (max-width: 600px) {
+  .modal-mask, .share-mask, .lightbox { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: auto !important; /* v336 条78 */ height: 100vh !important; height: 100dvh !important; margin: 0 !important; padding: 16px !important; box-sizing: border-box !important; align-items: flex-start !important; justify-content: center !important; flex-direction: row !important; overflow-y: auto !important; }
+}
+
+/* ===== R285 条17/18：固定 SVG 尺寸口径（× / 空状态图标） ===== */
+.modal-close-x > svg, .kf-x > svg { width: 16px; height: 16px; display: block; }
+.sh-del > svg { width: 10px; height: 10px; display: block; }
+
+.empty-tip .empty-icon > svg { display: block; margin: 0 auto; }
+
+/* ===== R285 条40：输入框提示灰统一一档（覆盖浏览器默认灰，全站一致；富文本编辑区空态提示同档） ===== */
+input::placeholder, textarea::placeholder { color: var(--text-light, #999); opacity: 1; }
+.rte-editor:empty::before, [contenteditable="true"]:empty::before { color: var(--text-light, #999); }
+
+/* ===================== v330 体验优化批次（用户 10-09 拍板） ===================== */
+
+/* 条1：数字等宽（tabular-nums）——统计/价格/计数刷新时不再左右抖动 */
+.num, .pg-info, .stat-num, .badge-count, .batch-count, .card-price,
+.uni-pager .pg-info, .overview-num, .ui-toast {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 条2：手机档输入框 ≥16px——防 iOS 聚焦时自动放大整个页面 */
+@media (max-width: 600px) {
+  input, textarea, select,
+  .search-input, .admin-search input, .pg-jump input {
+    font-size: 16px !important;
+  }
+}
+
+/* 条6：小控件点击热区 ≥44×44（视觉尺寸不变，热区用 padding/伪元素撑开，仅手机档） */
+@media (max-width: 600px) {
+  .search-clear, .pg-btn, .pg-jump button, .view-btn, .tab, .icon-btn, .row-btn, .ib {
+    position: relative;
+  }
+  .search-clear::after, .pg-btn::after, .pg-jump button::after,
+  .view-btn::after, .tab::after, .icon-btn::after, .row-btn::after, .ib::after {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* 条11：空态改为「内容区内居中」——不再 fixed 钉在屏幕正中（滚动时不动像浮层 bug） */
+.empty-tip { position: static; transform: none; display: none; padding: 56px 20px; }
+.empty-tip.show { position: static; transform: none; display: block; z-index: auto; }
+
+/* 条12：长按菜单入场动画——从触点轻微放大浮现（160ms） */
+.ctx-menu.ctx-anim { animation: ctxMenuIn 160ms var(--ease-out) both; transform-origin: var(--ctx-origin, left top); }
+@keyframes ctxMenuIn { from { opacity: 0; transform: scale(0.86); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .ctx-menu, .longpress-menu { animation: none !important; } }
+
+/* 条18：全系统按钮「图标 + 文字」——空间不够时按优先级收成纯图标（JS 侧 __btnFit 控制加 .ico-only） */
+.btn-ico { width: 15px; height: 15px; flex: none; display: block; }
+.btn-lab { white-space: nowrap; }
+.ico-only .btn-lab { display: none; }
+.ico-only { padding-left: 8px; padding-right: 8px; }
+.btn-fit { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* 条20：换场反馈——切分类/筛选时旧内容降到 60% 透明且不可点（明确"正在换"，不再干等） */
+.is-switching { opacity: 0.6; pointer-events: none; transition: opacity var(--dur-fast) var(--ease-out); }
+
+/* 条21：加载失败就地重试块 */
+.load-retry { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 40px 20px; color: var(--text-light, #666); font-size: 14px; }
+.load-retry .lr-btn { background: var(--blue1, #1E88E5); color: #fff; border: none; border-radius: 8px;
+  padding: 8px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+/* 条26：撤销条（全系统统一 10 秒后悔时间） */
+.ui-toast .undo-btn { color: var(--blue1, #1E88E5); font-weight: 700; font-size: 13px; pointer-events: auto; /* v333 修：外层 .ui-toast 是 pointer-events:none，撤销按钮必须单独放开，否则"后悔 10 秒"的撤销点不动 */
+  background: none; border: none; cursor: pointer; padding: 2px 4px; margin-left: 4px;
+  font-variant-numeric: tabular-nums; }
+.ui-toast .undo-btn:hover { text-decoration: underline; }
+
+/* ===== v336 条87：打印样式——打印报表/二维码不再白底白字、悬浮件不占页 ===== */
+@media print {
+  body { background: #fff !important; }
+  .topbar, .category-bar, .ui-toast, #fetch-bar, .btn-back-top, .pull-refresh,
+  .modal-mask, .share-mask, .kf-mask, .lightbox, .cp-mask, .ctx-menu { display: none !important; }
+  * { color: #000 !important; box-shadow: none !important; text-shadow: none !important; background-image: none !important; }
+  a[href]:after { content: ' (' attr(href) ')'; font-size: 11px; }
+}
+
+/* v336 条159：二维码弹窗图片加载中/失败都先显示浅蓝占位底，不再一片空白 */
+img.qph { background: var(--bg-light, #f5f7fa); min-height: 120px; }
+
+/* v336 条190：键盘直达正文 */
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 200000; background: #1E88E5; color: #fff; padding: 10px 18px; border-radius: 0 0 8px 0; }
+.skip-link:focus { left: 0; }
+
+/* v336 条216：错误原因列表 */
+.err-reasons { list-style: none; padding: 0; margin: 6px 0; }
+.err-reasons li { margin: 2px 0; }
+
+/* v336 条203：表单控件边框加深到 3:1 可辨（装饰性分隔线保持浅色） */
+input, select, textarea { border-color: #a9b8c6; }
+input:hover, select:hover, textarea:hover { border-color: #8fa3b5; }
+
+/* v336 条65：悬浮件与弹窗避让 home 条/刘海 */
+.modal-mask, .share-mask, .kf-mask, .lightbox, .cp-mask { padding-left: max(16px, var(--safe-l)) !important; padding-right: max(16px, var(--safe-r)) !important; padding-bottom: max(16px, var(--safe-b)) !important; }
+body { padding-bottom: var(--safe-b); }
+
+/* v336 条130：门面大标题唯一规格（导航页/错误页共用） */
+.display-title, .page-title, .code { font-weight: 600; }
+
+/* v336 条134：截断两件套（单行省略/两行截断），名称类文本统一用这俩 */
+.u-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.u-clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* v336 条76/77：小件热区统一——视觉不变、可点范围撑到 44；只向上下扩张防左右重叠 */
+.cc-dot { position: relative; }
+.cc-dot::after { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
+.sh-del, .row-check, .type-tag .t-del { position: relative; }
+.sh-del::after, .row-check::after { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); }

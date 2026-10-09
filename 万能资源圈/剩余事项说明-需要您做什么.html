@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>剩余事项说明 · 需要您做什么</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei",sans-serif;background:#eef3f9;color:#25313d;padding:22px 14px 70px}
+.wrap{max-width:900px;margin:0 auto}
+h1{text-align:center;color:#0d47a1;font-size:24px;margin-bottom:10px}
+p.sub{text-align:center;color:#5b6b7b;font-size:14.5px;line-height:1.9;margin-bottom:20px}
+.big{background:#fff;border-radius:14px;padding:20px 22px;margin-bottom:22px;box-shadow:0 2px 12px rgba(30,80,150,.08)}
+.big h2{font-size:19px;margin-bottom:12px;padding-left:12px;border-left:6px solid #1e88e5}
+.big h2.you{border-color:#e53935}
+.big h2.plan{border-color:#43a047}
+.todo{background:#fff3e0;border:2px solid #ffb74d;border-radius:12px;padding:16px 18px;margin-bottom:22px}
+.todo h2{font-size:19px;color:#e65100;margin-bottom:10px}
+.todo ol{margin-left:22px}
+.todo li{font-size:15px;line-height:2;margin-bottom:6px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(30,80,150,.08);margin-bottom:8px}
+th{background:#1565c0;color:#fff;padding:10px 8px;font-size:14px;text-align:left}
+td{padding:10px 10px;border-bottom:1px solid #eef2f6;font-size:13.5px;vertical-align:top;line-height:1.8}
+td.no{font-weight:700;color:#1565c0;width:46px}
+td.need{width:170px;color:#b71c1c;font-weight:700}
+td.none{color:#2e7d32;font-weight:700}
+.note{background:#f1f6fc;border-radius:8px;padding:10px 14px;font-size:13.5px;color:#5b78a0;line-height:1.8;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>剩余事项说明 · 需要您做什么</h1>
+<p class="sub">227 条里：✅ 已改 179 条 · ⚖️ 按您拍板处理 9 条 · ⏭️ 您未点选 16 条（没动）<br>
+🔶 还有 17 条"部分完成" · 📋 有 6 条"要实测"——这两类下面一条条说清楚。</p>
+
+<div class="todo">
+<h2>📣 您只需要做这 3 件事</h2>
+<ol>
+<li><b>把整个项目文件夹完整重新上传 Cloudflare Pages</b>（新版 v337，多了一个 README.md 和 CHANGELOG.md 记得一起传；.workbuddy 不用传）。上传完，6 条"需实测"里的 4 条就具备测试条件了。</li>
+<li><b>把您的网站网址发给我</b>（比如 https://xxx.pages.dev）。有了网址，"安全防护是否生效""缓存规则""接口速度"这 3 条我远程就能帮您测完，不用您动手。</li>
+<li><b>如果您有带底部小黑条的 iPhone</b>：按我给的一页纸清单点 5 个地方（弹窗能不能滚到底、回到顶部按钮会不会被挡、分类栏吸顶正不正），拍照发我即可。没有 iPhone 就跳过，不影响使用。</li>
+</ol>
+</div>
+
+<div class="big">
+<h2 class="plan">🔶 17 条"部分完成"——差什么、为什么、接下来</h2>
+<table>
+<tr><th>序号</th><th>事项</th><th>还差的部分 & 计划</th><th>需要您做什么</th></tr>
+<tr><td class="no">23、37</td><td>后台大文件拆分</td><td>已完成：安全边界勘定、脚本延后加载、预缓存瘦身（首屏已不被阻塞）。未做：8500 行按功能切成多个小文件的"深度拆分"。原因：这些功能共用一套内部数据，直接切会把变量切断（本轮试切已验证有风险，已回滚保护）。计划：下一批做"依赖注入"改造（把共用数据装进一个公共盒子再切），切一批测一批。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">40</td><td>列表数据瘦身（最大提速项）</td><td>已完成：访客本地缓存已剥离大字段。未做：服务器列表接口只发"面子"数据——它需要一个配套的"详情按需接口"，属于数据链路手术，要改接口+前端两处并整链路回归。计划：作为独立专项下一批做，做完首屏数据量预计降六到九成。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">12</td><td>看完资源回来位置更准</td><td>已完成：滚动位置按"分类+页码"分档记录（不再串位）。未做：把"在哪个分类、第几页"写进网址（刷新/分享链接也能复原）。计划：随后台拆分批次一起做（都要动页面跳转逻辑）。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">24</td><td>错误不再被悄悄吞掉</td><td>已完成：规矩定好、关键路径（保存/删除/批量）已补留痕。未做：134 处历史空捕获逐处补录。计划：渐进补录（每批顺手做一批），不会有行为风险。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">36</td><td>后端接口的"统一锁"迁移</td><td>已完成：统一锁 withAuth 已建好（以后新接口自动带锁）。未做：存量 15 个旧接口逐个换用——纯机械替换但要逐个验证。计划：下批一次性替换+全接口回归。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">56</td><td>后台封面小图探测</td><td>已完成：本地记忆骨架。未做：循环内的判断接线（要精确接到现有缩图逻辑里，接错会不生成小图）。计划：下批接好并实测缩图功能。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">58</td><td>后台搜索监听</td><td>现状：功能完全正常，只是监听方式保守（挂全页+编号判断）。改造涉及事件对象替换，收益小风险大。计划：随后台拆分顺手做。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">61</td><td>老访客"秒开"再提速</td><td>现状：保守方案（预缓存已承担秒开）。激进方案（先给缓存再后台更新）会让极少数访客看到上一版内容一次。计划：您部署后观察一两天版本更新是否正常，正常我就开激进模式。</td><td class="need">部署后观察即可</td></tr>
+<tr><td class="no">69</td><td>平板完整适配</td><td>已完成：601-900 宽度的换行、最小宽、防裁切。未做：iPad 上逐个界面的精调（需要真机/模拟器逐屏看）。计划：响应式专项批次。</td><td class="need">有 iPad 可发截图</td></tr>
+<tr><td class="no">89</td><td>iPhone 真机确认</td><td>已完成：代码侧全部按清单预修（安全区/弹窗高度/吸顶实测）。剩余：真机确认。见上方"您只需要做的第 3 件"。</td><td class="need">有 iPhone 就点一遍</td></tr>
+<tr><td class="no">98</td><td>个别实心图标重绘</td><td>已核实：功能图标全是统一的线条风，门面四键按您拍板保留实心。剩余：两三个旧实心小图标改成线条（要逐个重画 SVG 看效果）。计划：视觉微调批次。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">151</td><td>撤销覆盖到所有删除</td><td>已完成：资源单删/批量删/分类单删已有 10 秒撤销。未做：批量删分类、删公告等——每类都要配"数据快照"才能保证撤得回来，漏配就是"假复活"。计划：下批逐类接入并逐一实测。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">173</td><td>读屏巡检覆盖更广</td><td>已完成：巡检改成长期监听（新按钮出现就检查）。未做：把"看起来能点其实是文字"的元素也纳入。计划：随可访问性专项。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">192</td><td>列表的"读屏结构"</td><td>已完成：分类/卡片键盘可达（175/176）。未做：把大量并列元素换成标准列表标签——会牵动全站样式回归，要专门一批做。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">193</td><td>时间加机器可读标记</td><td>未做：绑定表的时间是渲染函数拼出来的字符串，要在渲染处改（改动小但要看清每处）。计划：随绑定表卡片化（68 的完整版）一起做。</td><td class="none">暂不需要</td></tr>
+<tr><td class="no">212</td><td>网址规范化（搜索权重集中）</td><td>未做：需要写您的正式网址进去（写占位符反而有害）。计划：<b>您把网址发我，一分钟补上</b>。</td><td class="need">提供网址</td></tr>
+<tr><td class="no">3</td><td>版本号一键同步</td><td>已改：图片版本唯一源+README 写清流程。补充计划：再给您配一个"发布前跑一下"的小脚本，双击就把三处版本号一起 +1，彻底告别忘改。</td><td class="none">暂不需要</td></tr>
+</table>
+<div class="note">小结：17 条里 <b>12 条不需要您做任何事</b>（我有计划、下批继续）；<b>2 条等您部署后配合观察/发截图</b>；<b>2 条等您提供网址</b>（网址还能顺手解锁 3 条实测）。</div>
+</div>
+
+<div class="big">
+<h2 class="plan">📋 6 条"需实测"——是不是要部署？</h2>
+<p style="font-size:14.5px;line-height:1.9;margin-bottom:12px">是的，<b>其中 5 条必须先部署到线上</b>（本地电脑没有 Cloudflare 的环境，测不了它们）；1 条（压缩）其实已经确认过了，可以销掉。部署后您把网址发我，<b>前 3 条我直接远程帮您测</b>：</p>
+<table>
+<tr><th>序号</th><th>测什么</th><th>怎么测、谁来做</th></tr>
+<tr><td class="no">221</td><td>安全防护那 5 条设置有没有真的生效</td><td><b>我远程测</b>：您给网址，我查服务器真实返回的防护头，缺了当场修。</td></tr>
+<tr><td class="no">222</td><td>两套缓存规则谁说了算</td><td><b>我远程测</b>：看接口真实返回的缓存指令，删掉冲突那份，后台改数据立即生效。</td></tr>
+<tr><td class="no">225</td><td>数据库统计查询的真实耗时</td><td><b>我远程测</b>：看接口实际响应时间，超过 30 毫秒就上缓存优化（骨架已备好）。</td></tr>
+<tr><td class="no">226</td><td>从微信分享进来按返回会不会卡住</td><td><b>您手机测</b>：部署后用手机点开一条分享链接 → 关弹窗 → 按返回，看是否正常回列表（我把步骤写成一行，您照着点）。</td></tr>
+<tr><td class="no">224</td><td>iPhone 真机 5 项（弹窗滚到底/回顶键不被挡/分类栏吸顶/日期框不放大/横屏弹窗）</td><td><b>您手机测</b>：我给一页纸清单，每项一句话，点完拍照发我。</td></tr>
+<tr><td class="no">223</td><td>发布平台有没有自动压缩文件</td><td><b>已确认✅</b>：平台自动做传输压缩，此条可销；代码级压缩按条22 的判断不做（保护您"改完直接上传"的方式）。</td></tr>
+</table>
+<div class="note">部署后把网址发我，我会一次性把 221、222、225 三条测完并直接修掉发现的问题，然后把结果加进对账表。</div>
+</div>
+
+<div class="big">
+<h2>现在总结一下您的行动清单</h2>
+<table>
+<tr><th>顺序</th><th>做什么</th><th>换回什么</th></tr>
+<tr><td class="no">1</td><td>整个文件夹完整重新上传 Cloudflare Pages</td><td>179 条改动全部生效（v337）</td></tr>
+<tr><td class="no">2</td><td>把网站网址发给我</td><td>我远程测完并修掉 221/222/225，补上 212 的网址规范化</td></tr>
+<tr><td class="no">3</td><td>手机点开分享链接试一次返回（可选）</td><td>销掉 226</td></tr>
+<tr><td class="no">4</td><td>有 iPhone 就按清单点 5 项（可选）</td><td>销掉 224 和 89</td></tr>
+</table>
+</div>
+</div>
+</body>
+</html>
