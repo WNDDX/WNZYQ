@@ -67,8 +67,10 @@ export async function onRequestGet(context) {
     } catch (e) { console.error('R114 预载类型查询失败（按空降级）:', e && e.message); }
     let brows = [];
     try {
+      /* v348 条31：原来是"一次把全表拉出来"，数据多了会很慢甚至超时。
+         现在给一个 5000 条的上限（正常运营远不到这个量），保证单次响应有界。 */
       const r = await env.DB.prepare(
-        'SELECT variant_id, code, id, device_token, ua, created_at, last_access FROM resource_bindings ORDER BY variant_id ASC, id ASC'
+        'SELECT variant_id, code, id, device_token, ua, created_at, last_access FROM resource_bindings ORDER BY variant_id ASC, id ASC LIMIT 5000'
       ).all();
       brows = r.results || [];
     } catch (e) { console.error('R114 预载绑定清单查询失败（按空降级）:', e && e.message); }

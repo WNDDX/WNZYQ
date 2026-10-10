@@ -46,15 +46,23 @@ export async function onRequestGet(context) {
   /* v336 条62：内容指纹——图片路径即唯一标识，没变就只回 304（不再重复传输） */
   const etag = 'W/' + JSON.stringify(key);
   if (request.headers.get('If-None-Match') === etag) return new Response(null, { status: 304 });
-  const res = new Response(body, {
-    headers: {
-      'ETag': etag,
-      'Content-Type': contentType,
-      /* v333 安全加固：禁止浏览器"猜内容类型"，避免上传的可疑文件被当成 HTML 在同源域名下执行 */
-      'X-Content-Type-Options': 'nosniff',
-      'Cache-Control': 'public, max-age=31536000, immutable',
-    },
-  });
+
+  /* v348 条35：只放行图片/视频类型。
+     原先内容类型照抄上传时的声明，若有人传了网页文件或矢量图（含脚本），
+     就会带着 text/html 之类在本站域名下被直接打开＝在我们的地盘上开窗口。
+     现在非白名单类型一律改成"强制下载"，浏览器不会内联渲染。 */
+  const SAFE = /^(image\/(png|jpeg|jpg|webp|gif|avif|bmp|ico)|video\/(mp4|webm|ogg|quicktime|x-m4v))$/i;
+  const safeType = SAFE.test(String(contentType || ''));
+  const headers = {
+    'ETag': etag,
+    'Content-Type': safeType ? contentType : 'application/octet-stream',
+    /* v333 安全加固：禁止浏览器"猜内容类型"，避免上传的可疑文件被当成 HTML 在同源域名下执行 */
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+    'Cache-Control': 'public, max-age=31536000, immutable',
+  };
+  if (!safeType) headers['Content-Disposition'] = 'attachment';
+  const res = new Response(body, { headers });
   try { if (waitUntil) waitUntil(caches.default.put(request, res.clone())); } catch (e) {}
   return res;
 }

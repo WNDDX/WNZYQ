@@ -188,7 +188,7 @@
       if (!tops.length) {
         var empty = document.createElement('div');
         empty.className = 'cp-empty';
-        empty.textContent = '暂无分类，请先到分类管理添加';
+        empty.innerHTML = window.__adminEmpty('暂无分类', '请先到「分类管理」添加分类'); /* v349 条9：统一空态 */
         panelEl.appendChild(empty);
       }
       tops.forEach(function (top) {
@@ -594,6 +594,15 @@
           try { window.__clearEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); } // R248：同时清 localStorage 草稿
           /* v330 条8：成功不再弹提示条——按钮已就地打✓「已保存」+ 列表对应行蓝光高亮，反馈就在视线里 */ if (window.__haptic) window.__haptic();
           clearCache();
+          /* v351 C2：自动清理"旧版本有、新版本已不再引用"的文件——
+             后端删前会再核对该 key 是否仍被任何资源/类型引用，被引用的一律保留，绝不误删 */
+          try {
+            var _oldP = (state.products || []).find(function (x) { return x.id === state.editingId; });
+            var _oldText = _oldP ? ((_oldP.detail || '') + (_oldP.img || '') + (_oldP.detailImages || []).join('') + (_oldP.detailVideos || []).join('') + (_oldP.coverImages || []).join('') + ((_oldP.variants || []).map(function (v) { return v.desc || ''; }).join(''))) : '';
+            var _newKeys = window.__collectFileKeys((data.detail || '') + (data.img || '') + (data.cover_images || ''));
+            var _gone = window.__collectFileKeys(_oldText).filter(function (k) { return _newKeys.indexOf(k) === -1; });
+            if (_gone.length && state.editingId) api('admin/cleanup-files', { method: 'POST', body: JSON.stringify({ keys: _gone }) }).catch(function () {});
+          } catch (e) { if (window.__silent) window.__silent(e); }
           renderProducts();
           /* R231 条25（用户 09-21 23:38）：保存后列表新改行蓝光高亮 1s 渐隐——
              关弹窗后视线落回列表，刚改过的行有一眼可辨的确认反馈 */
@@ -610,7 +619,7 @@
       }).catch(function () {
         saving = false;
         saveProductBtn.disabled = false; saveProductBtn.textContent = '确定';
-        toast('网络不佳，请检查一下再试', 'error'); // v294：087 网络提示统一
+        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
       });
     }
 
@@ -630,7 +639,7 @@
     function renderVariants() {
       variantListEl.innerHTML = '';
       if (!state.variants.length) {
-        variantListEl.innerHTML = '<div style="color:#bbb;font-size:12px;padding:8px 0">暂无类型，点右上角"新增类型"（可拖拽排序）</div>';
+        variantListEl.innerHTML = window.__adminEmpty('暂无类型', '点右上角「新增类型」添加，可拖拽排序'); /* v349 条9：统一空态 */
         return;
       }
       state.variants.forEach(function (v, idx) {

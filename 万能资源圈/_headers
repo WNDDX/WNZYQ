@@ -6,12 +6,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
-# API 接口不缓存
-# v346 条6：注意——本文件只对"静态文件"生效；/api/* 由 functions/ 返回，实际缓存头以函数内设置为准
-# （functions/_utils.js 的 json()），此处的规则仅供参考，不代表函数响应。
-/api/*
-  Cache-Control: no-store, no-cache, must-revalidate
-  X-Content-Type-Options: nosniff
+# v349 条10：删除了对 /api/* 的规则——本文件只对"静态文件"生效，
+# /api/* 由 functions/ 返回、这里的规则根本轮不到它（写了等于自欺），实际缓存头以 functions/_utils.js 的 json() 为准。
 
 # Service Worker 与清单必须每次校验，保证新版本立即被发现并激活
 /sw.js

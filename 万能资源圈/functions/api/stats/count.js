@@ -5,7 +5,8 @@ export async function onRequestGet(context) {
   try {
     const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0').first();
     const res = json({ ok: true, total: (r && r.n) || 0 });
-    res.headers.set('Cache-Control', 'public, max-age=60');
+    /* v348 条29：原 60 秒太长（后台改完前台最多要等一分钟才更新）→ 缩到 10 秒并要求回源确认 */
+    res.headers.set('Cache-Control', 'public, max-age=10, must-revalidate');
     return res;
   } catch (e) {
     return json({ ok: false, total: 0, msg: '统计失败' }, 200); /* v346 条85：错误体补 msg，与全站统一 */

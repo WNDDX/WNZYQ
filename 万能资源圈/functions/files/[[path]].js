@@ -21,6 +21,19 @@ function guessType(key) {
   return map[ext] || 'application/octet-stream';
 }
 
+/* v348 条36：下载文件名净化——原实现把上传时的原始文件名直接拼进响应头，
+   名字里若带引号/换行，等于让别人能往响应头里塞内容。这里只保留安全字符。 */
+function safeFilename(name) {
+  let f = String(name || '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/["\\\/]+/g, '_')
+    .replace(/[\x00-\x1f\x7f]/g, '')
+    .trim();
+  if (!f) f = 'download';
+  if (f.length > 120) f = f.slice(0, 120);
+  return f;
+}
+
 export async function onRequestGet(context) {
   const { env, request, params, waitUntil } = context;
   const key = (params.path || []).join('/');
@@ -53,7 +66,7 @@ export async function onRequestGet(context) {
       'Content-Type': contentType,
       'X-Content-Type-Options': 'nosniff', /* v333：与 /img/ 路由同口径，禁止浏览器猜类型 */
       'Cache-Control': 'public, max-age=31536000, immutable',
-      'Content-Disposition': 'attachment; filename="' + (filename || 'download') + '"',
+      'Content-Disposition': 'attachment; filename="' + safeFilename(filename) + '"',
     },
   });
   try { if (waitUntil) waitUntil(caches.default.put(request, res.clone())); } catch (e) {}

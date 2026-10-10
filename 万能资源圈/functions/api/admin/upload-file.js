@@ -33,6 +33,14 @@ export async function onRequestPost(context) {
   const now = new Date();
   const extMatch = String(file.name || '').match(/\.([a-zA-Z0-9]+)$/);
   const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
+  /* v348 条36：文件类型白名单——原先什么扩展名都能传，只看大小 25MB。
+     现在只允许下面这些（与 files 路由 guessType 的映射一一对应，别处不会拿到不认识的类型）。 */
+  const ALLOW = ['pdf','zip','rar','7z','tar','gz','doc','docx','xls','xlsx','ppt','pptx',
+    'txt','md','json','csv','mp3','wav','ogg','flac','mp4','webm','avi','mov',
+    'png','jpg','jpeg','webp','gif'];
+  if (ALLOW.indexOf(ext) === -1) {
+    return json({ ok: false, msg: '不支持的文件类型：.' + ext }, 400);
+  }
   const key = 'files/' + now.getUTCFullYear() + '/' + String(now.getUTCMonth() + 1).padStart(2, '0') + '/' + crypto.randomUUID() + '.' + ext;
 
   if (isKVBucket(bucket)) {

@@ -159,6 +159,15 @@ export async function getAuthAdmin(env, request) {
       await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(auth).run();
       return null;
     }
+    /* v348 条28：会话自动续期——只要还在用就不踢下线。
+       原先固定 +24h 到期即失效，后台开着放着到点就被强制登出；
+       现在剩余不足一半（12 小时）时自动再续 24 小时，长时间不用才要求重新登录。 */
+    const halfMs = 12 * 60 * 60 * 1000;
+    if (exp.getTime() - now.getTime() < halfMs) {
+      try {
+        await env.DB.prepare("UPDATE sessions SET expires_at = datetime('now', '+24 hours') WHERE token = ?").bind(auth).run();
+      } catch (e) { /* 续期失败不影响本次请求 */ }
+    }
   }
   return row;
 }
@@ -412,7 +421,8 @@ export async function clearPublicCache(request) {
       '/api/products?page_size=0',
       '/api/categories',
       '/api/settings',
-      '/api/shop/home'
+      '/api/shop/home',
+      '/api/stats/count' /* v348 条29：前台「一共多少资源」也一并清，改完立刻是新数字 */
     ];
     for (const p of paths) {
       try { await cache.delete(new Request(new URL(p, origin).toString())); } catch (e2) { /* 单条失败不影响其余 */ }

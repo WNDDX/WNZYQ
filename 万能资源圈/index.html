@@ -26,6 +26,9 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <meta name="theme-color" content="#1E88E5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="万能资源圈">
 <link rel="preload" href="/assets/images/logo.png?v=330" as="image">
 <style>
 /* 变量唯一源：--blue1/2/3、--orange、--green、--red 等全部由 ui-common.css :root 提供，本页禁止再定义 */
@@ -265,11 +268,12 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
   flex: 1 1 0; max-width: calc(50% - 7px); min-width: 0; width: auto; margin: 0; height: 46px; padding: 0 12px;
   display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 10px;
 }
-.modal-footer .modal-close { background: #fdecea; color: #c62828; border: 1px solid #f5c6c2; }
-.modal-footer .modal-close:hover { background: #c62828; color: #fff; border-color: #c62828; }
+.modal-footer .modal-close { background: var(--danger-bg); color: var(--red-strong); border: 1px solid var(--danger-border-strong); }
+.modal-footer .modal-close:hover { background: var(--red-strong); color: #fff; border-color: var(--red-strong); }
 /* v340 条1：公众号讯弹窗只有一颗关闭键时，宽度恢复原样（不跟着减半） */
 .modal-footer { position: relative; }
 .modal-footer .modal-close:only-child { max-width: 100%; flex: 1 1 100%; }
+.modal-footer .modal-close.solo { max-width: 100%; flex: 1 1 100%; } /* v350 条3：真正的单键判定（跳转键 display:none 仍占名额，:only-child 永远不成立） */
 .btn-item,.modal-inner-btn,.modal-close{
     -webkit-tap-highlight-color: transparent;
 }
@@ -488,9 +492,13 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
         dom.modalJumpBtn.textContent = btnText;
         dom.modalJumpBtn.onclick = ()=>window.open(jumpUrl,"_blank");
         dom.modalCloseBtn.style.display = 'flex';
+        dom.modalCloseBtn.classList.remove('solo');
     }else{
         dom.modalJumpBtn.style.display = 'none';
         dom.modalCloseBtn.style.display = 'flex';
+        /* v350 条3：只有一颗关闭键时挂 solo（原 :only-child 判定永远不成立——
+           跳转键只是 display:none 仍占着名额，公众号讯弹窗的关闭键因此一直卡在半宽） */
+        dom.modalCloseBtn.classList.add('solo');
     }
 }
 function closeModal() {
@@ -533,7 +541,7 @@ dom.modalImg.addEventListener('click', function () {
 
 //页面按钮事件
 function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
-function openService() { /* v340 条2：与其他两个按钮（群聊/公众号）统一走同一个弹窗组件 */ showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); /* v340 条1：跳转键颜色=导航页「咨询客服」那颗绿 */ try { var _j = document.getElementById("modalJumpBtn"); if (_j) { _j.style.backgroundColor = "#01C000"; _j.style.borderColor = "#01C000"; _j.style.color = "#fff"; } } catch (e) {} }
+function openService() { /* v340 条2：与其他两个按钮（群聊/公众号）统一走同一个弹窗组件 */ showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); /* v340 条1 + v350 条6：跳转键颜色=导航页「咨询客服」那颗绿，改走手册变量（原写死 #01C000，与按钮的 #00A828 同屏两种绿） */ try { var _j = document.getElementById("modalJumpBtn"); if (_j) { _j.style.backgroundColor = "var(--brand-green, #00A828)"; _j.style.borderColor = "var(--brand-green, #00A828)"; _j.style.color = "#fff"; } } catch (e) {} }
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 // v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮
@@ -608,9 +616,9 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
   (function () {
     window.addEventListener('load', function () {
       setTimeout(function () {
-        if (!window.__uiCommonLoaded) window.warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML');
+        if (!window.__uiCommonLoaded) { if (window.warn) window.warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML'); }
         var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
-        if (!ok) window.warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）');
+        if (!ok) { if (window.warn) window.warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）'); }
       }, 800);
     });
   })();

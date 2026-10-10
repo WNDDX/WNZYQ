@@ -59,19 +59,19 @@ window.WNApi = (function () {
         if (opts.raw) return r;
         var ct = r.headers.get('content-type') || '';
         if (r.status >= 400 && ct.indexOf('application/json') === -1) {
-          return { ok: false, msg: '服务开小差了，请稍后再试', _status: r.status };
+          return { ok: false, msg: '网络开小差了，请稍后再试', _status: r.status };
         }
         return r.json().then(function (d) {
           if (d && typeof d === 'object') d._status = r.status;
           if (r.status === 401 && opts.on401) { try { opts.on401(); } catch (e) { if (window.__silent) window.__silent(e); } }
           return d;
         }).catch(function () {
-          return r.status === 204 ? { ok: true, _status: 204 } : { ok: false, msg: '服务开小差了，请稍后再试', _status: r.status };
+          return r.status === 204 ? { ok: true, _status: 204 } : { ok: false, msg: '网络开小差了，请稍后再试', _status: r.status };
         });
       }).catch(function (e) {
         if (isGet && !isRetry) return once(true);
         if (opts.throwOnError) throw e;
-        var msg = (e && e.message === 'timeout') ? '网络不佳，请稍后再试' : '当前网络不可用，请检查网络连接';
+        var msg = (e && e.message === 'timeout') ? '网络开小差了，请稍后再试' : '网络开小差了，请稍后再试';
         return { ok: false, msg: msg, _net: true };
       });
     }
@@ -226,7 +226,7 @@ if ('serviceWorker' in navigator) {
         img.style.opacity = '';
       };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || '/assets/images/kefu.png?v=325';
+      img.src = qrImg || window.__kefuQrSrc();
       if (img.complete) {
         if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
         else { img.onerror(); }
@@ -283,7 +283,7 @@ if ('serviceWorker' in navigator) {
     var jb = m.querySelector('button[data-u]');
     if (jb) jb.setAttribute('data-u', url || '');
     var im = document.getElementById('kfFallbackImg');
-    if (im) { im.src = '/assets/images/kefu.png?v=325'; }
+    if (im) { im.src = window.__kefuQrSrc(); }
     try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) { if (window.__silent) window.__silent(e); } v.style.visibility = 'hidden'; } }); } catch (e) { if (window.__silent) window.__silent(e); }
     m.style.display = 'flex';
     if (window.lockBodyScroll) window.lockBodyScroll(true);
@@ -333,12 +333,6 @@ if ('serviceWorker' in navigator) {
     if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
     im.style.cssText = 'width:min(90vw,1200px);height:min(90vh,800px);object-fit:contain;border-radius:8px;transition:transform .05s linear;' + (isVideo ? 'width:min(90vw,1200px);aspect-ratio:16/9;background:#000;' : '');
     __lbMask.appendChild(im);
-    /* v346 条51：灯箱底部操作说明（此前无任何提示，用户不知如何关闭/缩放） */
-    var __lbHint = document.createElement('div');
-    __lbHint.className = 'lb-hint';
-    __lbHint.textContent = isVideo ? '点空白处关闭' : '点空白处关闭 · 双指可缩放';
-    __lbHint.setAttribute('aria-hidden', 'true');
-    __lbMask.appendChild(__lbHint);
     __lbScale = 1;
     window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     __lbMask.classList.add('open');
@@ -387,7 +381,7 @@ if ('serviceWorker' in navigator) {
     if (!Array.isArray(arr)) arr = [];
     if (!arr.length && settings.announcement) arr = [{ id: 0, title: '公告', content: String(settings.announcement || ''), hidden: 0, sort: 0, level: 1 }];
     if (opts.filterHidden) arr = arr.filter(function (a) { return !a.hidden; });
-    /* v346 条73：正文为空的公告不显示——避免弹出「该公告暂无内容」空框（正文只含图片的保留） */
+    /* v346 条73：正文为空的公告不显示——避免弹出「暂无公告内容」空框（正文只含图片的保留） */
     arr = arr.filter(function (a) { if (!a) return false; var s = String(a.content || ''); if (/<img\b/i.test(s)) return true; return s.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim() !== ''; });
     if (opts.sortLevel) {
       arr.sort(function (a, b) { var la = a.level === 1 ? -1 : 0, lb = b.level === 1 ? -1 : 0; if (la !== lb) return la - lb; return (a.sort || 0) - (b.sort || 0); });
@@ -543,7 +537,7 @@ if ('serviceWorker' in navigator) {
         '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-modal); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 10px 40px rgba(0,0,0,0.3)改var(--shadow-modal) */ animation:modalIn 0.18s ease;">' +
           '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
           '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
-          '<div data-share-tip style="font-size:13px;color:#888;margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
+          '<div data-share-tip style="font-size:13px;color:var(--gray-mid);margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
           '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
           '<button data-share-ok type="button" class="share-ok">确定</button>' +
         '</div>';
@@ -780,10 +774,9 @@ var __BLOCK_TOUCH_SEL = '.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.
       input.max = String(totalPages);
     }
     function go(p) {
-      var raw = parseInt(p, 10);
-      if (isNaN(raw)) { if (typeof window.showToast === 'function') window.showToast('请输入 1~' + totalPages + ' 之间的页码'); return; }
-      if (raw < 1 || raw > totalPages) { if (typeof window.showToast === 'function') window.showToast('请输入 1~' + totalPages + ' 之间的页码'); } /* v346 条54：跳页越界给提示（原先静默重置，用户以为坏了） */
-      p = Math.min(Math.max(raw, 1), totalPages);
+      p = parseInt(p, 10);
+      if (isNaN(p)) return;
+      p = Math.min(Math.max(p, 1), totalPages);
       if (p === page) { input.value = page; return; }
       page = p; render(); onPage(page);
     }
@@ -1145,7 +1138,20 @@ window.__haptic = function () {
 // 条4：按钮忙碌态（文字 + 转圈图标；不动 disabled 防重与全屏遮罩——用户拍板「防重复点击，也代替全屏遮罩」不做）
 window.__btnBusy = function (btn, text) {
   if (!btn) return;
-  btn.textContent = text;
+  /* v348 条15：只换「文字那一份」，不再整颗按钮清空——
+     原写法 btn.textContent = text 会把按钮里的小图标一起抹掉，忙碌时按钮看着空一块。 */
+  var lab = btn.querySelector('.btn-lab');
+  if (lab) { lab.textContent = text; }
+  else {
+    var txt = null;
+    for (var i = 0; i < btn.childNodes.length; i++) {
+      var n = btn.childNodes[i];
+      if (n.nodeType === 3 && String(n.nodeValue || '').trim()) { if (!txt) txt = n; else n.nodeValue = ''; }
+    }
+    if (txt) txt.nodeValue = text;
+    else btn.insertBefore(document.createTextNode(text), btn.firstChild);
+  }
+  if (btn.querySelector('.btn-spin')) return;
   var s = document.createElement('span');
   s.className = 'btn-spin';
   btn.appendChild(s);
@@ -1639,45 +1645,6 @@ window.uiToast = (function () {
    每个按钮挂 data-pri（数字越小优先级越高，1=最先保留文字），容器加 .btn-fit-group。
    空间不够时从优先级最低的开始收成纯图标（加 .ico-only），优先保证高优先级（如"编辑"）显示文字。
    调用：window.__btnFit()（页面渲染后 / 窗口 resize 时） */
-/* v346 条47：行内按钮组放不下时，把末尾（优先级最低）的按钮收进「⋯更多」下拉 */
-document.addEventListener('click', function () {
-  try { document.querySelectorAll('.ops-more-list.show').forEach(function (m) { m.classList.remove('show'); }); } catch (e) {}
-});
-window.__packOps = function () {
-  try {
-    var groups = document.querySelectorAll('.p-ops');
-    for (var g = 0; g < groups.length; g++) {
-      var host = groups[g];
-      var old = host.querySelector('.ops-more-wrap');
-      if (old && old.parentNode) old.parentNode.removeChild(old);
-      var kids = Array.prototype.slice.call(host.children).filter(function (el) { return !el.classList.contains('ops-more-wrap'); });
-      kids.forEach(function (el) { el.style.display = ''; });
-      if (!kids.length || !host.clientWidth) continue;
-      var hidden = [];
-      for (var i = kids.length - 1; i >= 0 && host.scrollWidth > host.clientWidth + 1; i--) {
-        kids[i].style.display = 'none'; hidden.unshift(kids[i]);
-      }
-      if (!hidden.length) continue;
-      var wrap = document.createElement('div'); wrap.className = 'ops-more-wrap';
-      var more = document.createElement('button'); more.type = 'button'; more.className = 'ops-more'; more.textContent = '⋯'; more.title = '更多操作';
-      var list = document.createElement('div'); list.className = 'ops-more-list';
-      hidden.forEach(function (b) {
-        var it = document.createElement('button'); it.type = 'button'; it.className = 'ops-more-item';
-        it.textContent = String(b.textContent || b.getAttribute('title') || '操作').trim() || '操作';
-        it.addEventListener('click', function (e) { e.stopPropagation(); list.classList.remove('show'); b.click(); });
-        list.appendChild(it);
-      });
-      wrap.appendChild(more); wrap.appendChild(list); host.appendChild(wrap);
-      more.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var open = list.classList.contains('show');
-        document.querySelectorAll('.ops-more-list.show').forEach(function (m) { m.classList.remove('show'); });
-        if (!open) list.classList.add('show');
-      });
-    }
-  } catch (e) {}
-};
-
 window.__btnFit = function () {
   try {
     var groups = document.querySelectorAll('.btn-fit-group');
@@ -1775,7 +1742,7 @@ window.warn = function (t) {
   if (document.getElementById('__deployWarn')) return;
   var b = document.createElement('div');
   b.id = '__deployWarn';
-  b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:100200;background:#d32f2f;color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14))';
+  b.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:100200;background:var(--red-strong);color:#fff;font:14px/1.6 sans-serif;padding:10px 14px;text-align:center;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14))';
   b.textContent = t;
   if (document.body) document.body.appendChild(b);
   document.addEventListener('DOMContentLoaded', function () { if (!b.parentNode && document.body) document.body.appendChild(b); });
@@ -1870,6 +1837,14 @@ window.__cpPanel = function (opts) {
   }
   window.__cpPanelInst = { setCmds: function (fn) { if (fn) getCmds = fn; }, refresh: function () { if (mask.classList.contains('open')) cpRender(); } }; /* v327：refresh——数据源异步就绪后通知面板重画（面板开着才重画） */
 };
+
+/* v349：图片版本号与客服二维码唯一来源。
+   原先客服弹窗里的二维码写死 ?v=325（其余图片已统一 v330），换客服码后弹窗里仍是旧图；
+   且 /assets/images/ 的版本号统一脚本只在页面加载时跑一次，动态赋值的二维码根本没被同步。 */
+window.__imgVer = function () {
+  try { return String(window.IMG_VERSION || '330').replace(/^v/, ''); } catch (e) { return '330'; }
+};
+window.__kefuQrSrc = function () { return '/assets/images/kefu.png?v=' + window.__imgVer(); };
 
 /* v293（用户 10-04 02:14）：063Logo错误处理统一→提取公共函数，四页共用 */
 /* v330 条29：图片版本号集中生效——扫描站内 /assets/images/ 图片，
@@ -2120,7 +2095,7 @@ window.__sanitizeCore = function (html) {
     SOURCE: ['src','type'],
     SPAN: ['style','color','data-action'],
     FONT: ['color','size','face'],
-    DIV: ['style','data-file-id','data-file-type','data-action','data-folder-list'],
+    DIV: ['style','data-file-id','data-file-type','data-action','data-folder-list','data-key','data-size','data-ftype'], /* v351：文件行的 data-key/size/ftype 放行（客户下载依赖；data 属性本身无行为） */
     P: ['style'],
     H1: ['style'], H2: ['style'], H3: ['style'], H4: ['style'], H5: ['style'], H6: ['style'],
     LI: ['style'], UL: ['style'], OL: ['style'],
@@ -2147,6 +2122,10 @@ window.__sanitizeCore = function (html) {
     els.forEach(function (el) {
       var tag = el.tagName.toUpperCase();
       if (!allowed[tag]) {
+        /* v351：BUTTON 整个移除（不转文字）——正文里的按键是文件卡的管理端控件
+           （删除×/复制/替换等），剥成文字会在客户页留下一排孤立 ×；正文编辑器也
+           没有任何入口能插入按键，整删不影响正常内容 */
+        if (tag === 'BUTTON') { if (el.parentNode) el.parentNode.removeChild(el); return; }
         var text = document.createTextNode(el.textContent);
         if (el.parentNode) el.parentNode.replaceChild(text, el);
         return;
@@ -2221,6 +2200,31 @@ window.__fmtDateTime = function (input, kind) {
   }, true);
 })();
 
+/* v349 条7：图片加载失败的占位图——全站唯一一份（原先资源页/管理页/公共层各抄一份，改一处漏两处） */
+window.WN_MEDIA_FALLBACK = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+
+/* v349 条9：后台「空空的列表」统一小空态（图标＋标题＋提示）——
+   原先后台各处空态是一行干巴巴的小字，和前台带插画的空态不是一个画风。 */
+window.__adminEmpty = function (title, hint) {
+  return '<div style="text-align:center;padding:26px 12px;">'
+    + '<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.45;margin-bottom:8px;color:var(--text-faint,#999);display:inline-block;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'
+    + '<div style="font-size:13px;font-weight:600;color:var(--text-light,#666);">' + String(title || '暂无内容') + '</div>'
+    + (hint ? '<div style="font-size:12px;color:var(--text-faint,#999);margin-top:4px;">' + String(hint) + '</div>' : '')
+    + '</div>';
+};
+
+/* v351 C2：收集一段富文本里引用到的全部存储文件 key（/img/ 与 /files/ 两种前缀）——
+   保存资源时新旧对比，"只在旧版本出现"的文件交后端复核后自动删除，不留垃圾 */
+window.__collectFileKeys = function (text) {
+  var out = [], seen = new Set();
+  var re = /\/(?:files|img)\/((?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}\.[a-zA-Z0-9]+(?:_t)?)/g;
+  String(text || '').replace(re, function (m, key) {
+    if (!seen.has(key)) { seen.add(key); out.push(key); }
+    return m;
+  });
+  return out;
+};
+
 /* v336 条208：安检包装——内容被大幅剥离时给管理员一次轻提示（不再无声吞掉） */
 window.__sanitizeHTML = function (html) {
   var __before = html ? html.length : 0;
@@ -2239,6 +2243,85 @@ document.addEventListener('keydown', function (e) {
   f = Array.prototype.filter.call(f, function (el) { return el.offsetParent !== null; });
   if (!f.length) return;
   var first = f[0], last = f[f.length - 1];
-  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
+
+/* v347：二维码生成——全站共享一份（资源页 + 管理页长按菜单统一「存二维码」） */
+(function () {
+  function __toast(msg, type) {
+    try { if (typeof window.uiToast === 'function') window.uiToast(msg, type); else if (typeof window.showToast === 'function') window.showToast(msg, type); } catch (e) { if (window.__silent) window.__silent(e); }
+  }
+  /* 生成指向资源页的分享地址：在资源页沿用当前路径，在后台等其他页统一指向 /shop */
+  function __makeQrUrl(pid) {
+    var path = /shop/i.test(window.location.pathname) ? window.location.pathname : '/shop';
+    return window.location.origin + path + '?pid=' + pid;
+  }
+  function __genQrPng(url, size, cb) {
+    try {
+      var QRCode = window.qrcode || window.QRCode;
+      if (!QRCode) { cb && cb(null); return; }
+      size = size || 300;
+      var qr = QRCode(0, 'M');
+      qr.addData(url);
+      qr.make();
+      var n = qr.getModuleCount();
+      var cell = Math.floor(size / n);
+      var realSize = cell * n;
+      var canvas = document.createElement('canvas');
+      canvas.width = realSize; canvas.height = realSize;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, realSize, realSize);
+      ctx.fillStyle = '#000000';
+      for (var r = 0; r < n; r++) { for (var c = 0; c < n; c++) { if (qr.isDark(r, c)) ctx.fillRect(c * cell, r * cell, cell, cell); } }
+      cb && cb(canvas.toDataURL('image/png'));
+    } catch (e) { cb && cb(null); }
+  }
+  window.__genQrPng = __genQrPng;
+  function __qrFileName(pid, name) {
+    var base = (name || '').replace(/[\\\/:*?"<>|]/g, '-').trim();
+    if (!base) base = '资源' + pid;
+    return base + '-二维码.png';
+  }
+  /* 存二维码：把二维码做成一张「站名 + 资源名」的竖版图，直接可发朋友圈 */
+  window.__savePosterPng = function (pid, onDone, name) {
+    var url = __makeQrUrl(pid);
+    __genQrPng(url, 300, function (qrUrl) {
+      if (!qrUrl) { __toast('二维码生成失败', 'error'); onDone && onDone(null); return; }
+      try {
+        var W = 420, H = 580;
+        var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+        var g = cv.getContext('2d');
+        g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+        g.fillStyle = '#1E88E5'; g.fillRect(0, 0, W, 84);
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillStyle = '#ffffff';
+        g.font = '600 24px system-ui, "Microsoft YaHei", sans-serif';
+        g.fillText((window.SHOP_CONFIG && window.SHOP_CONFIG.shopName) || '万能资源圈', W / 2, 42);
+        var _t = String(name || '').trim() || ('资源' + pid);
+        if (_t.length > 16) _t = _t.slice(0, 16) + '…';
+        g.fillStyle = '#222';
+        g.font = '600 19px system-ui, "Microsoft YaHei", sans-serif';
+        g.fillText(_t, W / 2, 132);
+        var qs = 280;
+        var img = new Image();
+        img.onload = function () {
+          try {
+            g.drawImage(img, (W - qs) / 2, 172, qs, qs);
+            g.fillStyle = '#999';
+            g.font = '15px system-ui, "Microsoft YaHei", sans-serif';
+            g.fillText('长按识别二维码 · 查看资源', W / 2, 172 + qs + 48);
+            var dataUrl = cv.toDataURL('image/png');
+            var a = document.createElement('a');
+            a.href = dataUrl; a.download = __qrFileName(pid, name);
+            document.body.appendChild(a); a.click(); a.remove();
+            __toast('二维码已保存', 'success');
+            onDone && onDone(dataUrl);
+          } catch (e) { __toast('二维码生成失败', 'error'); onDone && onDone(null); }
+        };
+        img.onerror = function () { __toast('二维码生成失败', 'error'); onDone && onDone(null); };
+        img.src = qrUrl;
+      } catch (e) { __toast('二维码生成失败', 'error'); onDone && onDone(null); }
+    });
+  };
+})();

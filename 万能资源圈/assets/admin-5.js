@@ -143,7 +143,7 @@
             toast(_okc ? '已复制资源码 ' + m.issue.code : '复制失败', _okc ? 'success' : 'error');
           };
         } else {
-          tdCode.style.cssText = 'color:#aaa;font-size:12px;';
+          tdCode.style.cssText = 'color:var(--text-faint);font-size:12px;';
           tdCode.textContent = '早期绑定';
           tdCode.title = 'R221 复制即换码上线前的存量绑定，无发码记录';
         }
@@ -151,7 +151,7 @@
         // ② 有效状态（R224 两列合一）：已绑定=绿 / 剩 N 天=蓝 / 已过期=灰，不加粗（老板点名）
         var tdStatus = document.createElement('td');
         var _spTxt = '', _spColor = '';
-        if (m.binding) { _spTxt = '已绑定'; _spColor = '#2e7d32'; }
+        if (m.binding) { _spTxt = '已绑定'; _spColor = 'var(--green-strong)'; }
         else if (m.issue && m.issue.status === '待用') { _spTxt = '剩 ' + m.issue.remaining_days + ' 天'; _spColor = '#1e88e5'; }
         else if (m.issue) { _spTxt = '已过期'; _spColor = '#999'; }
         if (_spTxt) {
@@ -215,7 +215,7 @@
     function refreshBindings(variantId) {
       api('admin/bindings?variant_id=' + variantId).then(function (res) {
         if (!res || !res.ok) {
-          if (!__bindingsCache[variantId]) document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="7" style="color:#999;">加载失败</td></tr>';
+          if (!__bindingsCache[variantId]) document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="7" style="color:#999;">加载失败，网络开小差了</td></tr>';
           return;
         }
         __bindingsCache[variantId] = res;
@@ -937,7 +937,7 @@
         }
         if (!res.ok) { /* R230：接口异常收三表骨架，不卡灰 */
           __clearAdminSkel(document.getElementById('statRows')); __clearAdminSkel(document.getElementById('statCatRows')); __clearAdminSkel(document.getElementById('statRecentRows'));
-          toast(res.msg || '加载失败', 'error'); return; }
+          toast(res.msg || '加载失败，网络开小差了', 'error'); return; }
         window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳（切回窗口 60s 判定） */
         var ov = res.overview || {};
         // R57：环比——前三个是库存快照（不适用环比），只给后三个流量卡配涨跌小字；
@@ -1175,6 +1175,13 @@
        另外两张表元素不销毁、错峰淡入动画不重放（全屏跳动的根因）。
        无参调用（切日期档/切 tab 的 loadStats 路径）仍是三表全量刷新——数据真变了，全量合理。 */
     function renderStatTables(onlyKey) {
+      /* v348 条34：统计表里的资源名/分类名先转义再拼进表格——
+         原写法直接拼 innerHTML，名字里若夹带标签会被当成页面内容执行。 */
+      function __escCell(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
       var defs = [
         {
           key: 'product', tbodyId: 'statRows', pagerId: 'statPagerProduct', wrapId: 'statWrapProduct',
@@ -1182,7 +1189,7 @@
           row: function (r) {
             var tr = document.createElement('tr');
             var status = (r.is_online && !r.is_hidden) ? '显示' : '隐藏';
-            tr.innerHTML = '<td>' + (r.title || '(无标题)') + '</td><td>' + status + '</td><td>' + (r.views || 0) + '</td><td>' + (r.contacts || 0) + '</td><td>' + (r.resource_unlocks || 0) + '</td><td>' + (r.bindings || 0) + '</td>';
+            tr.innerHTML = '<td>' + __escCell(r.title || '(无标题)') + '</td><td>' + status + '</td><td>' + (r.views || 0) + '</td><td>' + (r.contacts || 0) + '</td><td>' + (r.resource_unlocks || 0) + '</td><td>' + (r.bindings || 0) + '</td>';
             return tr;
           }
         },
@@ -1191,7 +1198,7 @@
           list: state.statByCategory || [],
           row: function (r) {
             var tr = document.createElement('tr');
-            tr.innerHTML = '<td>' + (r.name || '') + '</td><td>' + (r.product_count || 0) + '</td><td>' + (r.total_views || 0) + '</td>';
+            tr.innerHTML = '<td>' + __escCell(r.name || '') + '</td><td>' + (r.product_count || 0) + '</td><td>' + (r.total_views || 0) + '</td>';
             return tr;
           }
         },
@@ -1201,7 +1208,7 @@
           row: function (r) {
             var tr = document.createElement('tr');
             var typeText = r.type === 'view' ? '浏览' : (r.type === 'contact' ? '咨询客服' : (r.type === 'resource_unlock' ? '资源码解锁' : r.type));
-            tr.innerHTML = '<td>' + window.__utcToLocal(r.created_at) + '</td><td>' + typeText + '</td><td>' + (r.title || '') + '</td>'; /* R156：UTC→北京时间 */
+            tr.innerHTML = '<td>' + __escCell(window.__utcToLocal(r.created_at)) + '</td><td>' + __escCell(typeText) + '</td><td>' + __escCell(r.title || '') + '</td>'; /* R156：UTC→北京时间 */
             return tr;
           }
         }
@@ -1335,7 +1342,7 @@
       // (分类请求已合并到上一行 window.__catLoading 的 then 回调，避免重复请求)
         // 修复：失败分支也要返回 res，让 loadProducts 等调用方能正确感知失败状态
         if (!res.ok) {
-          if (!silent) { window.__catSkelP = false; __clearAdminSkel(_cbox0); toast(res.msg || '加载失败', 'error'); } /* R281：静默失败不动画面不弹 toast */
+          if (!silent) { window.__catSkelP = false; __clearAdminSkel(_cbox0); toast(res.msg || '加载失败，网络开小差了', 'error'); } /* R281：静默失败不动画面不弹 toast */
           return res; }
         window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳 */
         var _ordered = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }));
@@ -1395,7 +1402,7 @@ refreshCatCnts();
 
       ordered.forEach(function (c, ci) {
         if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row cat-sub'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; // “全部”项不渲染选中框（固定项）
-          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19 */_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vmeta.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:#888;cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vmeta.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
+          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19 */_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vmeta.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:var(--gray-mid);cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vmeta.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
           _vrow.classList.add('stagger-in'); _vrow.style.animationDelay = Math.min(ci * 20, 180) + 'ms'; /* R230：错峰淡入（资源页同款） */
           if (__reuse && __skels[ci]) __skels[ci].parentNode.replaceChild(_vrow, __skels[ci]); else box.appendChild(_vrow);
           return; }
@@ -1532,7 +1539,7 @@ refreshCatCnts();
         cnt.className = 'c-count';
         cnt.textContent = (c.totalCnt !== undefined ? c.totalCnt : (c.cnt || 0)) + ' 件资源';
         cnt.style.cursor = 'pointer';
-        cnt.style.color = '#888';
+        cnt.style.color = 'var(--gray-mid)';
         cnt.style.textDecoration = 'none';
         cnt.title = '点击查看该分类下的资源';
         cnt.addEventListener('click', function (e) {
@@ -1841,7 +1848,7 @@ refreshCatCnts();
         }
       }).catch(function () {
         catSaving = false; catOk.disabled = false; catOk.style.opacity = ''; catOk.textContent = _catOkText;
-        toast('网络不佳，请检查一下再试', 'error'); // v294：087 网络提示统一
+        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
       });
     });
 
@@ -1872,8 +1879,8 @@ refreshCatCnts();
       var confirmPwd = document.getElementById('confirmPwd').value;
       var __pwErr = function (id, msg) { /* v336 条153：错误写在出错框下方红字 1.5 秒+红框+聚焦 */
         var el = document.getElementById(id); if (!el) { toast(msg, 'error'); return; }
-        el.style.borderColor = '#e53935'; el.focus();
-        var tip = document.createElement('div'); tip.textContent = msg; tip.style.cssText = 'color:#e53935;font-size:12px;margin:4px 0 0;';
+        el.style.borderColor = 'var(--red-strong)'; el.focus();
+        var tip = document.createElement('div'); tip.textContent = msg; tip.style.cssText = 'color:var(--red-strong);font-size:12px;margin:4px 0 0;';
         el.parentNode.appendChild(tip);
         setTimeout(function () { tip.remove(); el.style.borderColor = ''; }, 1500);
       };
@@ -2076,7 +2083,7 @@ refreshCatCnts();
       detailEl.appendChild(header);
       var d = document.createElement('div');
       d.className = 'v-desc';
-      d.innerHTML = (v.desc && String(v.desc).trim()) ? v.desc : '该类型暂无额外说明';
+      d.innerHTML = (v.desc && String(v.desc).trim()) ? v.desc : '暂无额外说明';
       detailEl.appendChild(d);
       bindLightbox(detailEl);
       initPvResourceSection(v); // R158：预览同步资源页——类型内容区下方渲染资源码解锁区
@@ -2229,7 +2236,7 @@ refreshCatCnts();
       if (!url) url = fContactUrl.value.trim();
       var g = document.getElementById('setContactUrl');
       if (!url && g) url = g.value.trim();
-      if (url) { if (window.openContactModal) { window.openContactModal(url, '/assets/images/kefu.png?v=325', null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
@@ -2418,11 +2425,8 @@ refreshCatCnts();
       }
       function __saveQrAdminFn(pid) {
         return function () {
-          if (window.__saveQrPng) {
-            window.__saveQrPng(pid, function (dataUrl) {
-              if (dataUrl && window.__showQrPreview) window.__showQrPreview(dataUrl, pid, __adminProdTitle(pid));
-            }, __adminProdTitle(pid));
-          }
+          /* v347：统一走公共层「存二维码」（生成带站名+资源名的图），与资源页同一份实现 */
+          if (window.__savePosterPng) window.__savePosterPng(pid, null, __adminProdTitle(pid));
         };
       }
       function imgItemsAdmin(img) {

@@ -128,7 +128,7 @@
             // v319（用户 10-05 22:15）：根因→登录后/切分类时网络失败反复弹「加载失败」toast，老板网络本就慢、体验差；
             // 修法→已有数据时不弹 toast（保持现有列表显示），只在列表为空时才提示。
             if (!(state.products || []).length) {
-              toast(res.msg || '加载失败', 'error');
+              toast(res.msg || '加载失败，网络开小差了', 'error');
             }
             return; }
           window.__lastFetchTime = Date.now(); /* R281：成功拉取记录时间戳 */
@@ -660,7 +660,7 @@ function renderProducts() {
       function renderCodePanel(variants) {
         cpPanel.innerHTML = '';
         if (!variants || !variants.length) {
-          cpPanel.innerHTML = '<div style="color:#bbb;font-size:12px;padding:8px 10px">暂无类型</div>';
+          cpPanel.innerHTML = window.__adminEmpty('暂无类型', '先到「类型管理」新增类型'); /* v349 条9：统一空态 */
           return;
         }
         variants.forEach(function (v) {
@@ -841,7 +841,6 @@ function renderProducts() {
 
       updateBatchBar();
       if (window.__btnFit) window.__btnFit(); /* v330 条18：渲染后按可用宽度决定按钮显示文字还是纯图标 */
-      if (window.__packOps) window.__packOps(); /* v346 条47：行内按钮溢出时收进「⋯更多」 */
     }
 
     // ---------- 复制资源 ----------
@@ -950,14 +949,19 @@ function renderProducts() {
     // 批量操作
     var __batchBusy = false;
     var __inflight = {}; /* v336 条26：在途请求集合——同一动作未回来前再点直接忽略 */
+    /* v349：防重标记必须在「所有出口」复位。
+       原实现只在「复制」和「改分类成功」两处复位 —— 取消选中、批量显示、批量隐藏、批量改价格、
+       批量删除 只要点过一次，标记就永久为 true，之后再点按钮完全静默无反应（连提示都没有），
+       改分类弹窗点叉取消也会锁死。现统一：动作一旦派发（弹出确认框或发出请求）就立即解除防重。 */
+    function __bDone(a) { __inflight[a] = false; }
     function batchAction(action) {
       // v294（用户 10-04 02:14）：114 批量操作按钮加忙碌态
       if (__batchBusy) return;
       if (__inflight[action]) return; __inflight[action] = true; /* v336 条26 */
       /* v336 条139：批量操作本地即时生效（点了立刻变），失败按快照回滚——与删除分支同一套口径 */
       var __preSnapshot = JSON.stringify(state.products || []);
-      if (action === 'clearSel') { state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); var _sa = document.getElementById('selectAll'); if (_sa) _sa.checked = false; updateBatchBar(); return; } var ids = Array.from(document.querySelectorAll('.row-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
-      if (ids.length === 0) return;
+      if (action === 'clearSel') { state.prodSelected = {}; document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = false; }); var _sa = document.getElementById('selectAll'); if (_sa) _sa.checked = false; updateBatchBar(); __bDone(action); return; } var ids = Array.from(document.querySelectorAll('.row-check:checked')).map(function (cb) { return Number(cb.dataset.id); });
+      if (ids.length === 0) { __bDone(action); return; }
       var actionNames = { online: '批量显示', offline: '批量隐藏', delete: '批量删除', changeCat: '批量改分类', changePrice: '批量改价格' };
       var msgs = {
         online: '确定显示选中的 ' + ids.length + ' 个资源？',
@@ -971,6 +975,7 @@ function renderProducts() {
         buildCatPicker(document.getElementById('batchCatPicker'), select,
           document.getElementById('batchCatDisplay'), document.getElementById('batchCatPanel'),
           Number(select.value) || 0, { allowUncategorized: true, }); /* R215 条5：批量移动同步恢复二级「全部」 */
+        __bDone(action); /* v349：弹窗已打开即可解除防重（用户取消也不会锁死按钮） */
         document.getElementById('batchCatMask').classList.add('open'); if (!document.getElementById('batchCatMask')._bm) { document.getElementById('batchCatMask')._bm = 1; document.getElementById('batchCatMask').addEventListener('click', function (e) { if (e.target === this) { this.classList.remove('open'); try { this.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e) { if (window.__silent) window.__silent(e); } } }); } /* R217：恢复点外关闭（R215 误删） */
         // 确认按钮事件（只绑定一次）
         var okBtn = document.getElementById('batchCatOk');
@@ -987,7 +992,7 @@ function renderProducts() {
                 /* v336 条139：本地已在请求前即时生效，此处只做后台静默对账 */ silentSyncProducts();
               }
               else toast(res.msg || '操作失败', 'error');
-            __inflight[action] = false; }).catch(function () { closeConfirm(); toast('网络不佳，请检查一下再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误
+            __inflight[action] = false; }).catch(function () { closeConfirm(); __bDone(action); toast('网络开小差了，请稍后再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
           });
         };
         return;
@@ -995,6 +1000,7 @@ function renderProducts() {
 
       // 改价格：弹出价格输入
       if (action === 'changePrice') {
+        __bDone(action); /* v349：输入框已弹出即可解除防重（用户取消也不会锁死按钮） */
         showInput('批量改价格', '输入新价格（数字，0表示免费）', '请输入新价格', function (priceInput) {
           if (priceInput === null || priceInput === '') return;
           var newPrice = Number(priceInput);
@@ -1007,7 +1013,7 @@ function renderProducts() {
                 /* v336 条139：本地已在请求前即时生效 */ silentSyncProducts();
               }
               else toast(res.msg || '操作失败', 'error');
-            }).catch(function () { closeConfirm(); toast('网络不佳，请检查一下再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误
+            }).catch(function () { closeConfirm(); __bDone(action); toast('网络开小差了，请稍后再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
           });
         });
         return;
@@ -1025,11 +1031,12 @@ function renderProducts() {
               api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: action }) }).then(function (res) {
                 if (res && res.ok) { clearCache(); silentSyncProducts(); }
                 else { toast((res && res.msg) || '批量删除失败', 'error'); state.products = _snap; renderProducts(); }
-              }).catch(function () { toast('网络不佳，请检查一下再试', 'error'); state.products = _snap; renderProducts(); });
+              }).catch(function () { toast('网络开小差了，请稍后再试', 'error'); state.products = _snap; renderProducts(); });
             },
             function () { state.products = _snap; renderProducts(); } /* 撤销：原样还原快照 */
           );
         };
+        __bDone(action); /* v349：延迟删除已排程（撤销条接手），立即解除防重 */
         if (ids.length > 10) showConfirm(actionNames[action], msgs[action], function (closeConfirm) { closeConfirm(); _runDelete(); });
         else _runDelete();
         return;
@@ -1048,7 +1055,7 @@ function renderProducts() {
           } else {
             toast(res.msg || '操作失败', 'error');
           }
-        }).catch(function () { closeConfirm(); toast('网络不佳，请检查一下再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误
+        }).catch(function () { closeConfirm(); __bDone(action); toast('网络开小差了，请稍后再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
       });
     }
 
@@ -1214,6 +1221,6 @@ function renderProducts() {
         /* v330 条25：网络异常同样回滚——乐观 UI 必须"要么成功、要么复原"，不留中间态 */
         target.is_online = prevOnline; target.is_hidden = prevHidden; window.__skipRenderOnce = false;
         renderProducts();
-        toast('网络不佳，请检查一下再试', 'error'); // v294：087 网络提示统一
+        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
       });
     }

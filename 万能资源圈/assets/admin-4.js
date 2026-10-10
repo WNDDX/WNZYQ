@@ -24,13 +24,22 @@
         im.src = objUrl;
       } catch (e) { cb(null); }
     }
-    function uploadToBucket(file, cb, onProgress) {
+    function uploadToBucket(file, cb, onProgress, task) { /* v351：第4参 task=队列任务句柄（可取消） */
       if (!file) return;
+      /* v349：图片上传原来没有大小上限（视频和文件都有 25MB 硬限），
+         选一张几百 MB 的图会一直转到超时为止。现在与视频/文件同口径：25MB 秒拒。 */
+      var MAX_IMAGE_SIZE = 25 * 1024 * 1024;
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast('该图片超过 25MB，暂不支持上传，请压缩后再试', 'error');
+        if (cb) cb(null, 'size');
+        return;
+      }
       var isPng = file.type === 'image/png';
       var sizeMB = file.size / 1048576;
       var needCompress = (!isPng && sizeMB > 1.5) || sizeMB > 8;
       var send = function (fd) {
         var xhr = new XMLHttpRequest();
+        if (task) task.xhr = xhr; /* v351：把请求句柄交给队列，取消=abort */
         if (onProgress) {
           xhr.upload.addEventListener('progress', function (e) {
             if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
@@ -40,10 +49,11 @@
           try {
             var res = JSON.parse(xhr.responseText);
             if (res && res.ok && res.url) cb(res.url);
-            else toast((res && (res.msg || res.error)) || '上传失败', 'error');
-          } catch (e) { toast('上传失败，请重试', 'error'); }
+            else { toast((res && (res.msg || res.error)) || '上传失败', 'error'); if (cb) cb(null, (res && (res.msg || res.error)) || '上传失败'); }
+          } catch (e) { toast('上传失败，请重试', 'error'); if (cb) cb(null, '上传失败'); }
         };
-        xhr.onerror = function () { toast('上传失败，请重试', 'error'); };
+        xhr.onerror = function () { window.__uploadXHR = null; toast('上传失败，请重试', 'error'); if (cb) cb(null, '上传失败'); };
+        xhr.onabort = function () { window.__uploadXHR = null; }; /* v349：中止时清句柄，避免误停下一次上传 */
         xhr.open('POST', '/api/admin/upload-image');
         xhr.send(fd);
       };
@@ -94,6 +104,7 @@
       fd.append('file', file, file.name || 'video.mp4');
       var xhr = new XMLHttpRequest();
       window.__uploadXHR = xhr;
+      if (opts && opts.task) opts.task.xhr = xhr; /* v351：队列任务句柄 */
       if (opts && opts.onProgress) {
         xhr.upload.addEventListener('progress', function (e) {
           if (e.lengthComputable) opts.onProgress(Math.round(e.loaded / e.total * 100));
@@ -114,13 +125,14 @@
     }
 
     // v320（用户 10-05 22:37）：文件上传——复用 IMAGE_BUCKET 通道，存到 files/ 目录
-    function uploadFileToBucket(file, cb, onProgress) {
+    function uploadFileToBucket(file, cb, onProgress, task) { /* v351：第4参 task */
       if (!file) return;
       var MAX_FILE_SIZE = 25 * 1024 * 1024;
       if (file.size > MAX_FILE_SIZE) { cb(null, 'size'); return; }
       var fd = new FormData();
       fd.append('file', file, file.name || 'file');
       var xhr = new XMLHttpRequest();
+      if (task) task.xhr = xhr; /* v351：队列任务句柄 */
       if (onProgress) {
         xhr.upload.addEventListener('progress', function (e) {
           if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
@@ -152,53 +164,287 @@
 
     // v320：构建文件卡 HTML（单文件或文件夹）
     // data 结构：{ id, type:'file'|'folder', name, url?, items:[{name,size,url,key}], isLink? }
+    /* ===== v351：文件类型图标（全面覆盖）=====
+       文档/表格/演示/图片/视频/音频/压缩包/代码/安装包/镜像/文本/种子…都有专属色标，
+       没列到的扩展名走默认蓝。 */
+    var FC_EXT_COLOR = {
+      pdf: '#e53935',
+      doc: '#1565c0', docx: '#1565c0', rtf: '#1565c0',
+      xls: '#2e7d32', xlsx: '#2e7d32', csv: '#2e7d32',
+      ppt: '#e07b00', pptx: '#e07b00',
+      png: '#8e44ad', jpg: '#8e44ad', jpeg: '#8e44ad', webp: '#8e44ad', gif: '#8e44ad', svg: '#8e44ad', bmp: '#8e44ad', ico: '#8e44ad',
+      mp4: '#c2185b', mov: '#c2185b', avi: '#c2185b', webm: '#c2185b', mkv: '#c2185b', flv: '#c2185b',
+      mp3: '#00838f', wav: '#00838f', flac: '#00838f', ogg: '#00838f', m4a: '#00838f', aac: '#00838f',
+      zip: '#5d4037', rar: '#5d4037', '7z': '#5d4037', tar: '#5d4037', gz: '#5d4037', bz2: '#5d4037', iso: '#5d4037',
+      txt: '#546e7a', md: '#546e7a', json: '#455a64', xml: '#455a64', html: '#455a64', htm: '#455a64', js: '#455a64', css: '#455a64',
+      exe: '#455a64', msi: '#455a64', apk: '#2e7d32', dmg: '#5d4037', torrent: '#455a64', psd: '#1565c0', ai: '#e07b00'
+    };
+    function fcFileIconSvg(name) {
+      var ext = (String(name || '').split('.').pop() || '').toLowerCase();
+      var color = FC_EXT_COLOR[ext] || '#5c8aef';
+      var label = ext ? ext.slice(0, 4).toUpperCase() : 'FILE';
+      return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="flex:none">' +
+        '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round"/>' +
+        '<polyline points="14 2 14 8 20 8" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round"/>' +
+        '<rect x="3.2" y="13" width="13.6" height="7.2" rx="1.4" fill="' + color + '"/>' +
+        '<text x="10" y="18.3" text-anchor="middle" font-size="4.6" font-weight="700" fill="#fff" font-family="Arial,sans-serif">' + label + '</text></svg>';
+    }
+    function fcFolderIconSvg() {
+      return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f4a261" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+    }
+    function fcLinkIconSvg() {
+      return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+    }
+    /* 系统同款蓝色三角（与分类栏展开/收起同一颗） */
+    function fcArrowSvg() {
+      return '<svg class="fc-arrow-svg toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" style="flex:none"><path d="M7 10l5 5 5-5z"/></svg>';
+    }
+    /* 系统同款红色 ×（与关闭键同一颗） */
+    function fcXSvg() {
+      return '<svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg>';
+    }
+    /* v351 C3：同名自动改名——第一个重复的变「名称-1.后缀」，第二个变「名称-2.后缀」，绝不覆盖 */
+    function fcUniqueName(name, taken) {
+      if (!taken.has(name)) return name;
+      var dot = name.lastIndexOf('.');
+      var base = dot > 0 ? name.slice(0, dot) : name;
+      var ext = dot > 0 ? name.slice(dot) : '';
+      var i = 1;
+      while (taken.has(base + '-' + i + ext)) i++;
+      return base + '-' + i + ext;
+    }
+    function fcCollectNames(listEl) {
+      var set = new Set();
+      if (!listEl) return set;
+      listEl.querySelectorAll(':scope > .file-folder-item > .fc-row-head > .fname, :scope > .file-folder-item > .fname').forEach(function (n) { set.add(n.textContent); });
+      return set;
+    }
+    /* 文件夹统计：N 项 · 合计大小（递归） */
+    function fcFolderStats(listEl) {
+      var n = 0, total = 0;
+      if (!listEl) return { n: 0, total: 0 };
+      listEl.querySelectorAll('.file-folder-item').forEach(function (row) {
+        if (row.classList.contains('is-folder')) return;
+        n++;
+        var s = row.getAttribute('data-size');
+        if (s) total += Number(s) || 0;
+      });
+      return { n: n, total: total };
+    }
+
+    /* ===== v351：统一上传管理器（进度条 + 取消 + 重试，图片/视频/文件全走这里）=====
+       用法：window.__upman.run(file, 'file'|'image'|'video', { onDone(url,key), onFail(msg), onCancel() })
+       面板固定在右下角，每个文件一行：图标 + 名称 + 进度条（不显示百分比）+ 取消 ×，失败变「重试」。 */
+    (function () {
+      if (window.__upman) return;
+      var host = null;
+      function ensureHost() {
+        if (host) return host;
+        host = document.createElement('div');
+        host.className = 'upman-host';
+        host.setAttribute('aria-live', 'polite');
+        document.body.appendChild(host);
+        return host;
+      }
+      function run(file, kind, opts) {
+        opts = opts || {};
+        var MAXS = { file: 25 * 1024 * 1024, image: 25 * 1024 * 1024, video: 25 * 1024 * 1024 };
+        var box = ensureHost();
+        var row = document.createElement('div');
+        row.className = 'upman-row';
+        row.innerHTML =
+          '<div class="upman-ico">' + fcFileIconSvg(file && file.name) + '</div>' +
+          '<div class="upman-main">' +
+            '<div class="upman-name">' + escapeHtml((file && file.name) || '未命名') + '</div>' +
+            '<div class="upman-bar"><i></i></div>' +
+            '<div class="upman-state">上传中…</div>' +
+          '</div>' +
+          '<button type="button" class="upman-cancel" title="取消上传">' + fcXSvg() + '</button>';
+        box.appendChild(row);
+        var bar = row.querySelector('.upman-bar > i');
+        var state = row.querySelector('.upman-state');
+        var done = false;
+        var task = { xhr: null, retries: 0 };
+        function finish(cls, txt) {
+          done = true;
+          row.classList.add(cls);
+          if (state) state.textContent = txt;
+          var b = row.querySelector('.upman-cancel');
+          if (b) b.parentNode.removeChild(b);
+          var barWrap = row.querySelector('.upman-bar');
+          if (barWrap) barWrap.style.display = 'none';
+          setTimeout(function () {
+            row.classList.add('upman-out');
+            setTimeout(function () { if (row.parentNode) row.parentNode.removeChild(row); }, 350);
+          }, cls === 'upman-ok' ? 900 : 2600);
+        }
+        function start() {
+          row.classList.remove('upman-err');
+          if (state) state.textContent = '上传中…';
+          var onProgress = function (p) { if (bar) bar.style.width = Math.max(6, Math.min(100, p)) + '%'; };
+          var cb = function (url, err, key) {
+            if (done) return;
+            if (url) {
+              if (bar) bar.style.width = '100%';
+              finish('upman-ok', '上传完成');
+              if (opts.onDone) opts.onDone(url, key);
+            } else {
+              row.classList.add('upman-err');
+              var msg = err === 'size' ? '超过 25MB，没传上' : (err || '上传失败');
+              if (state) state.textContent = msg;
+              /* A3：失败一键重试 */
+              if (!row.querySelector('.upman-retry')) {
+                var r = document.createElement('button');
+                r.type = 'button'; r.className = 'upman-retry'; r.textContent = '重试';
+                r.addEventListener('click', function () { start(); });
+                row.insertBefore(r, row.querySelector('.upman-cancel'));
+              }
+              if (opts.onFail) opts.onFail(msg);
+            }
+          };
+          if (kind === 'image') uploadToBucket(file, function (url) { cb(url, url ? null : '上传失败'); }, onProgress, task);
+          else if (kind === 'video') uploadVideoToBucket(file, function (url, err) { cb(url, err); }, { onProgress: onProgress, task: task });
+          else uploadFileToBucket(file, cb, onProgress, task);
+        }
+        row.querySelector('.upman-cancel').addEventListener('click', function () {
+          if (done) return;
+          try { if (task.xhr && task.xhr.abort) task.xhr.abort(); } catch (e) {}
+          done = true;
+          if (row.parentNode) row.parentNode.removeChild(row);
+          if (opts.onCancel) opts.onCancel();
+        });
+        if (file && file.size > MAXS[kind] ) {
+          /* A4：超大文件在这里就被拦下，面板里标红说明，不发起上传 */
+          row.classList.add('upman-err');
+          if (state) state.textContent = '超过 25MB，没传上';
+          setTimeout(function () { if (row.parentNode) row.parentNode.removeChild(row); }, 2600);
+          if (opts.onFail) opts.onFail('size');
+          return null;
+        }
+        start();
+        return task;
+      }
+      window.__upman = { run: run };
+    })();
+
+    /* ===== v351：文件/文件夹卡（支持多级嵌套 · 默认收起 · 管理员/客户端双形态）===== */
     function buildFileCardHTML(data) {
       var id = escapeHtml(data.id || genFileId());
       var type = data.type || 'file';
-      var name = escapeHtml(data.name || '未命名');
-      var folderSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f4a261" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
-      var fileSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c8aef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-      var linkSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
       if (type === 'file') {
         var url = escapeHtml(data.url || '');
         var size = fmtFileSize(data.size || 0);
-        // v321（用户 10-05 23:38）：链接型文件卡加类型切换标识（管理员可见，判断错了可一键改）
         var typeToggle = data.isLink ? '<button type="button" class="file-card-type-toggle" title="切换为文件夹链接" data-action="toggle-link-type">文</button>' : '';
         return '<div class="file-card-wrap" data-file-id="' + id + '" data-file-type="file" contenteditable="false">' +
-          '<div class="file-card-header">' + fileSvg +
-          '<span class="file-card-name">' + name + '</span>' +
+          '<div class="file-card-header">' + (data.isLink ? fcLinkIconSvg() : fcFileIconSvg(data.name)) +
+          '<span class="file-card-name" data-action="rename" title="点一下改名">' + escapeHtml(data.name || '未命名') + '</span>' +
           '<span class="file-card-size">' + size + '</span>' + typeToggle +
-          '<button type="button" class="file-card-del" title="删除" data-action="del-card">×</button></div>' +
+          '<span class="fc-admin-only">' +
+            '<button type="button" class="fc-btn" data-action="copy-link" title="复制链接">复制</button>' +
+            '<button type="button" class="fc-btn" data-action="replace-file" title="替换文件">替换</button>' +
+          '</span>' +
+          '<button type="button" class="file-card-del fc-admin-only" title="删除" data-action="del-card">' + fcXSvg() + '</button></div>' +
           '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="display:none" data-dl></a></div>';
       }
-      // folder
+      // folder（链接型走旧形态；上传型走嵌套结构）
       var isLink = !!data.isLink;
-      var items = data.items || [];
-      var itemsHtml = '';
-      if (!isLink && items.length) {
-        itemsHtml = '<div class="file-folder-list" data-folder-list>';
-        items.forEach(function (it) {
-          var cls = it.oversize ? 'file-folder-item oversize' : 'file-folder-item';
-          itemsHtml += '<div class="' + cls + '" data-key="' + escapeHtml(it.key || '') + '">' + fileSvg +
-            '<span class="fname">' + escapeHtml(it.name) + '</span>' +
-            '<span class="fsize">' + fmtFileSize(it.size) + '</span>' +
-            '<button type="button" class="fremove" title="删除" data-action="del-item">×</button></div>';
-        });
-        itemsHtml += '<div class="file-folder-add" data-action="add-item">＋ 往这个文件夹里补文件</div></div>';
-      }
-      var arrow = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>';
-      // v320（用户 10-05 22:37）：链接型文件夹卡用隐藏 a 存 URL，客户端统一读取
-      var linkHidden = isLink ? '<a href="' + escapeHtml(data.url || '') + '" target="_blank" rel="noopener noreferrer" style="display:none" data-dl></a>' : '';
-      // v321（用户 10-05 23:38）：链接型文件夹卡加类型切换标识（管理员可见，判断错了可一键改）
       var typeToggle2 = isLink ? '<button type="button" class="file-card-type-toggle" title="切换为文件链接" data-action="toggle-link-type">夹</button>' : '';
+      var linkHidden = isLink ? '<a href="' + escapeHtml(data.url || '') + '" target="_blank" rel="noopener noreferrer" style="display:none" data-dl></a>' : '';
+      var inner = isLink ? '' : fcKidsHTML(data.items || [], 0);
       return '<div class="file-card-wrap" data-file-id="' + id + '" data-file-type="folder" contenteditable="false">' +
-        '<div class="file-card-header" data-action="toggle-folder">' + (isLink ? linkSvg : folderSvg) +
-        '<span class="file-card-name" data-action="rename">' + name + '</span>' + typeToggle2 +
-        '<button type="button" class="file-card-del" title="删除" data-action="del-card">×</button></div>' +
-        itemsHtml + linkHidden + '</div>';
+        '<div class="file-card-header" data-action="toggle-folder">' + (isLink ? fcLinkIconSvg() : fcFolderIconSvg()) +
+        '<span class="file-card-name" data-action="rename" title="点一下改名">' + escapeHtml(data.name || '未命名') + '</span>' + typeToggle2 +
+        '<button type="button" class="file-card-del fc-admin-only" title="删除" data-action="del-card">' + fcXSvg() + '</button></div>' +
+        inner + linkHidden + '</div>';
     }
 
-    // v320：从文件卡 DOM 反序列化数据
+    /* 递归渲染一个条目（file 或 folder）；adminOnly 控制管理按键是否生成 */
+    function fcItemHTML(node, level) {
+      var isFolder = node.ftype === 'folder';
+      if (!isFolder) {
+        return '<div class="file-folder-item' + (node.oversize ? ' oversize' : '') + '" data-key="' + escapeHtml(node.key || '') + '" data-size="' + (node.size || 0) + '">' +
+          fcFileIconSvg(node.name) +
+          '<span class="fname">' + escapeHtml(node.name || '') + '</span>' +
+          '<span class="fsize">' + (node.oversize ? '超 25MB 没传上' : fmtFileSize(node.size || 0)) + '</span>' +
+          '<span class="fc-admin-only">' +
+            '<button type="button" class="fc-btn" data-action="copy-item" title="复制链接">复制</button>' +
+            '<button type="button" class="fc-btn" data-action="replace-item" title="替换文件">替换</button>' +
+          '</span>' +
+          '<button type="button" class="fremove fc-admin-only" title="删除" data-action="del-item">' + fcXSvg() + '</button></div>';
+      }
+      var kids = node.items || [];
+      var stats = fcStatsOf(kids);
+      var kidsHtml = '';
+      if (kids.length) {
+        for (var i = 0; i < kids.length; i++) kidsHtml += fcItemHTML(kids[i], level + 1);
+      } else {
+        kidsHtml = '<div class="fc-empty fc-admin-only">空文件夹，点右上「＋文件」放东西进来</div>';
+      }
+      return '<div class="file-folder-item is-folder" data-ftype="folder">' +
+        '<div class="fc-row-head">' + fcFolderIconSvg() +
+          '<span class="fname" data-action="rename" title="点一下改名">' + escapeHtml(node.name || '未命名') + '</span>' +
+          '<span class="fmeta">' + stats.n + ' 项' + (stats.total ? ' · ' + fmtFileSize(stats.total) : '') + '</span>' +
+          '<span class="fc-admin-only">' +
+            '<button type="button" class="fc-btn" data-action="add-file-here" title="往这个文件夹里加文件">＋文件</button>' +
+            '<button type="button" class="fc-btn" data-action="add-folder-here" title="在这个文件夹里补个子文件夹">＋夹</button>' +
+          '</span>' +
+          '<button type="button" class="fremove fc-admin-only" title="删除" data-action="del-item">' + fcXSvg() + '</button>' +
+          '<button type="button" class="fc-arrow" data-action="toggle-kids" title="展开/收起">' + fcArrowSvg() + '</button>' +
+        '</div>' +
+        '<div class="file-folder-list fc-kids" style="display:none">' + kidsHtml +
+          '<div class="fc-actions fc-admin-only">' +
+            '<button type="button" class="fc-btn fc-btn-strong" data-action="add-file-here">新增文件</button>' +
+            '<button type="button" class="fc-btn fc-btn-strong" data-action="add-folder-here">补文件夹</button>' +
+          '</div>' +
+        '</div></div>';
+    }
+    function fcKidsHTML(items, level) {
+      /* v351：根列表默认收起（整卡只露标题行，与用户要求的「默认收起」一致） */
+      var html = '<div class="file-folder-list" data-folder-list style="display:none">';
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i] || {};
+        html += fcItemHTML({ ftype: it.ftype || (it.items ? 'folder' : 'file'), name: it.name, size: it.size, key: it.key, oversize: it.oversize, items: it.items }, level);
+      }
+      html += '<div class="fc-actions fc-admin-only">' +
+        '<button type="button" class="fc-btn fc-btn-strong" data-action="add-file-here">新增文件</button>' +
+        '<button type="button" class="fc-btn fc-btn-strong" data-action="add-folder-here">补文件夹</button>' +
+        '</div></div>';
+      return html;
+    }
+    function fcStatsOf(kids) {
+      var n = 0, total = 0;
+      function walk(arr) {
+        (arr || []).forEach(function (x) {
+          if (!x) return;
+          if (x.ftype === 'folder' || x.items) { walk(x.items); return; }
+          n++; total += Number(x.size) || 0;
+        });
+      }
+      walk(kids);
+      return { n: n, total: total };
+    }
+
+    /* v351：从文件卡 DOM 反序列化（兼容旧版扁平结构 + 新版多级嵌套） */
+    function fcParseList(listEl) {
+      var items = [];
+      if (!listEl) return items;
+      Array.prototype.forEach.call(listEl.children, function (child) {
+        if (!child.classList || !child.classList.contains('file-folder-item')) return;
+        if (child.classList.contains('is-folder')) {
+          var kids = child.querySelector(':scope > .file-folder-list');
+          items.push({ ftype: 'folder', name: (child.querySelector(':scope > .fc-row-head > .fname') || {}).textContent || '未命名', items: fcParseList(kids) });
+          return;
+        }
+        items.push({
+          ftype: 'file',
+          name: child.querySelector('.fname') ? child.querySelector('.fname').textContent : '',
+          size: Number(child.getAttribute('data-size')) || 0,
+          key: child.getAttribute('data-key') || '',
+          oversize: child.classList.contains('oversize')
+        });
+      });
+      return items;
+    }
     function parseFileCard(el) {
       var id = el.getAttribute('data-file-id') || genFileId();
       var type = el.getAttribute('data-file-type') || 'file';
@@ -208,13 +454,18 @@
         var a = el.querySelector('a[data-dl]');
         return { id: id, type: 'file', name: name, url: a ? a.getAttribute('href') : '' };
       }
-      var items = [];
       var list = el.querySelector('[data-folder-list]');
+      if (list && list.querySelector('.file-folder-item.is-folder')) {
+        return { id: id, type: 'folder', name: name, items: fcParseList(list) };
+      }
+      var items = [];
       if (list) {
         list.querySelectorAll('.file-folder-item').forEach(function (row) {
+          if (row.classList.contains('is-folder')) return;
           items.push({
+            ftype: 'file',
             name: row.querySelector('.fname') ? row.querySelector('.fname').textContent : '',
-            size: 0,
+            size: Number(row.getAttribute('data-size')) || 0,
             key: row.getAttribute('data-key') || '',
             oversize: row.classList.contains('oversize')
           });
@@ -222,23 +473,41 @@
       }
       return { id: id, type: 'folder', name: name, items: items };
     }
-
-    // v320：绑定编辑器内文件卡管理事件
+    /* ===== v351：编辑器内文件卡管理（点击/改名/复制/替换/删除/展开收起/多级增删）===== */
     function bindFileCardManagement(editor) {
       if (!editor || editor.__fileBound) return;
       editor.__fileBound = true;
       editor.addEventListener('click', function (e) {
         var target = e.target;
+        var card, row, list;
+
         // 删除整卡
         if (target.closest('[data-action="del-card"]')) {
-          var card = target.closest('.file-card-wrap');
-          if (card) { card.parentNode.removeChild(card); }
+          card = target.closest('.file-card-wrap');
+          if (card) card.parentNode.removeChild(card);
           e.preventDefault(); e.stopPropagation();
           return;
         }
-        // v321（用户 10-05 23:38）：链接卡类型切换（管理员可见，自动判断错了可一键改）
+        // 复制链接（整卡）
+        if (target.closest('[data-action="copy-link"]')) {
+          card = target.closest('.file-card-wrap');
+          var a0 = card ? card.querySelector('a[data-dl]') : null;
+          var u0 = a0 ? a0.getAttribute('href') : '';
+          if (u0 && window.__shareCopyText) window.__shareCopyText(location.origin + u0, '') || window.__shareCopyText(u0, '');
+          if (u0) toast('链接已复制', 'success'); else toast('这个文件还没上传，没有链接可复制', 'info');
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 替换文件（整卡）
+        if (target.closest('[data-action="replace-file"]')) {
+          card = target.closest('.file-card-wrap');
+          fcPickAndReplace(card, null);
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 链接卡类型切换
         if (target.closest('[data-action="toggle-link-type"]')) {
-          var card = target.closest('.file-card-wrap');
+          card = target.closest('.file-card-wrap');
           if (card) {
             var curType = card.getAttribute('data-file-type') || 'file';
             var newType = curType === 'file' ? 'folder' : 'file';
@@ -253,15 +522,8 @@
               toggleBtn.textContent = newType === 'folder' ? '夹' : '文';
               toggleBtn.title = newType === 'folder' ? '切换为文件链接' : '切换为文件夹链接';
             }
-            // 同步更换图标
             var svg = header ? header.querySelector('svg') : null;
-            if (svg) {
-              var folderSvgStr = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f4a261" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
-              var fileSvgStr = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c8aef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-              var linkSvgStr = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
-              svg.outerHTML = newType === 'folder' ? linkSvgStr : linkSvgStr; // 链接卡统一用链接图标
-            }
-            // folder 类型需要给 header 加 toggle-folder 行为
+            if (svg) svg.outerHTML = fcLinkIconSvg(); // 链接卡统一用链接图标
             if (header) {
               if (newType === 'folder') header.setAttribute('data-action', 'toggle-folder');
               else header.removeAttribute('data-action');
@@ -270,76 +532,61 @@
           e.preventDefault(); e.stopPropagation();
           return;
         }
-        // 改名（放在 toggle-folder 之前：nameSpan 在 header 内部，点名字优先改名而不是展开）
-        if (target.closest('[data-action="rename"]')) {
-          var nameSpan = target.closest('[data-action="rename"]');
-          if (!nameSpan || nameSpan.querySelector('input')) return;
-          var oldName = nameSpan.textContent;
-          var inp = document.createElement('input');
-          inp.type = 'text'; inp.value = oldName;
-          inp.className = 'file-card-rename';
-          nameSpan.innerHTML = '';
-          nameSpan.appendChild(inp);
-          inp.focus(); inp.select();
-          var save = function () {
-            var v = inp.value.trim() || oldName;
-            nameSpan.textContent = v;
-          };
-          inp.addEventListener('blur', save);
-          inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { save(); } });
+        // 改名（文件卡 / 文件夹卡 / 文件夹内文件与子文件夹都支持）
+        var nameEl = target.closest('[data-action="rename"]');
+        if (nameEl && !nameEl.querySelector('input')) {
+          fcStartRename(nameEl);
           e.preventDefault(); e.stopPropagation();
           return;
         }
-        // 展开/收起文件夹
-        var header = target.closest('[data-action="toggle-folder"]');
-        if (header) {
-          var card = header.closest('.file-card-wrap');
-          var list = card ? card.querySelector('[data-folder-list]') : null;
-          if (list) {
-            var show = list.style.display === 'none';
-            list.style.display = show ? 'block' : 'none';
-            var arrow = header.querySelector('svg[style*="transition"]');
-            if (arrow) arrow.style.transform = show ? 'rotate(180deg)' : '';
-          }
+        // 展开/收起（整卡 header 或 文件夹行右侧三角）
+        if (target.closest('[data-action="toggle-folder"]') || target.closest('[data-action="toggle-kids"]')) {
+          var head = target.closest('.file-card-header') || target.closest('.fc-row-head');
+          card = head ? head.closest('.file-card-wrap') : null;
+          var kids = head ? (head.closest('.file-folder-item') ? head.parentNode.querySelector(':scope > .file-folder-list') : card.querySelector('[data-folder-list]')) : null;
+          if (kids) fcToggleKids(head, kids);
           e.preventDefault(); e.stopPropagation();
           return;
         }
-        // 删除文件夹内单个文件
+        // 删除文件夹内单个条目（文件或子文件夹）
         if (target.closest('[data-action="del-item"]')) {
-          var row = target.closest('.file-folder-item');
-          if (row) row.parentNode.removeChild(row);
+          row = target.closest('.file-folder-item');
+          if (row) { var _pl = row.parentNode; row.parentNode.removeChild(row); if (_pl && _pl.classList.contains('file-folder-list')) fcRefreshMeta(_pl); }
           e.preventDefault(); e.stopPropagation();
           return;
         }
-        // 补文件
-        if (target.closest('[data-action="add-item"]')) {
-          var card = target.closest('.file-card-wrap');
-          if (!card) return;
-          var inp = document.createElement('input');
-          inp.type = 'file'; inp.multiple = true;
-          inp.addEventListener('change', function () {
-            var files = Array.from(inp.files || []);
-            var list = card.querySelector('[data-folder-list]');
-            var addBtn = list ? list.querySelector('[data-action="add-item"]') : null;
-            files.forEach(function (f) {
-              var oversize = f.size > 25 * 1024 * 1024;
-              var row = document.createElement('div');
-              row.className = oversize ? 'file-folder-item oversize' : 'file-folder-item';
-              row.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c8aef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
-                '<span class="fname">' + escapeHtml(f.name) + '</span>' +
-                '<span class="fsize">' + (oversize ? '超 25MB 没传上' : '上传中…') + '</span>' +
-                '<button type="button" class="fremove" title="删除" data-action="del-item">×</button>';
-              if (list && addBtn) list.insertBefore(row, addBtn);
-              if (!oversize) {
-                uploadFileToBucket(f, function (url, err, key) {
-                  var s = row.querySelector('.fsize');
-                  if (url) { row.setAttribute('data-key', key || ''); if (s) s.textContent = fmtFileSize(f.size); }
-                  else { row.classList.add('oversize'); if (s) s.textContent = err === 'size' ? '超 25MB 没传上' : '上传失败'; }
-                });
-              }
-            });
-          });
-          inp.click();
+        // 复制链接（文件夹内文件行）
+        if (target.closest('[data-action="copy-item"]')) {
+          row = target.closest('.file-folder-item');
+          var key = row ? (row.getAttribute('data-key') || '') : '';
+          if (key && window.__shareCopyText) window.__shareCopyText(location.origin + '/files/' + key, '');
+          if (key) toast('链接已复制', 'success'); else toast('这个文件还没上传，没有链接可复制', 'info');
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 替换文件（文件夹内文件行）
+        if (target.closest('[data-action="replace-item"]')) {
+          row = target.closest('.file-folder-item');
+          if (row) fcPickAndReplace(null, row);
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 往指定文件夹加文件（「＋文件」/「新增文件」共用）
+        // 目标：按钮在文件夹行标题上 → 该文件夹自己的子列表；按钮在底部操作条上 → 所在列表
+        if (target.closest('[data-action="add-file-here"]')) {
+          var btn = target.closest('[data-action="add-file-here"]');
+          var head0 = btn.closest('.fc-row-head');
+          var list = head0 ? head0.parentNode.querySelector(':scope > .file-folder-list') : btn.closest('.file-folder-list');
+          if (list) fcAddFilesInto(list, editor);
+          e.preventDefault(); e.stopPropagation();
+          return;
+        }
+        // 在指定文件夹里补一个子文件夹（「＋夹」/「补文件夹」共用）
+        if (target.closest('[data-action="add-folder-here"]')) {
+          var btn2 = target.closest('[data-action="add-folder-here"]');
+          var head1 = btn2.closest('.fc-row-head');
+          var list2 = head1 ? head1.parentNode.querySelector(':scope > .file-folder-list') : btn2.closest('.file-folder-list');
+          if (list2) fcAddFolderInto(list2);
           e.preventDefault(); e.stopPropagation();
           return;
         }
@@ -352,12 +599,238 @@
         var node = sel.getRangeAt(0).commonAncestorContainer;
         if (node.nodeType === 3) node = node.parentNode;
         var card = node.closest ? node.closest('.file-card-wrap') : null;
-        if (card && card.parentNode) {
-          card.parentNode.removeChild(card);
-          e.preventDefault();
+        if (card && card.parentNode) { card.parentNode.removeChild(card); e.preventDefault(); }
+      });
+
+      /* v351 B1：文件/文件夹直接拖进正文就传（拖到哪插到哪） */
+      editor.addEventListener('dragover', function (e) {
+        if (!e.dataTransfer || Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') === -1) return;
+        e.preventDefault();
+        editor.classList.add('fc-drop-hover');
+      });
+      editor.addEventListener('dragleave', function (e) {
+        if (e.target === editor) editor.classList.remove('fc-drop-hover');
+      });
+      editor.addEventListener('drop', function (e) {
+        if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+        e.preventDefault();
+        editor.classList.remove('fc-drop-hover');
+        /* 把光标挪到落点上：插入位置=松手的位置，不再只会插到文末 */
+        try {
+          var rng = document.caretRangeFromPoint
+            ? document.caretRangeFromPoint(e.clientX, e.clientY)
+            : (document.caretPositionFromPoint
+              ? (function () { var p = document.caretPositionFromPoint(e.clientX, e.clientY); var r = document.createRange(); r.setStart(p.offsetNode, p.offset); return r; })()
+              : null);
+          if (rng && window.__rte) { window.__rte.editor = editor; window.__rte.range = rng; }
+        } catch (err) {}
+        /* 支持文件夹 Entry 的浏览器走递归读取（保留文件夹名）；不支持的直接传文件列表 */
+        var hasEntry = false;
+        try {
+          for (var di = 0; di < e.dataTransfer.items.length; di++) {
+            if (e.dataTransfer.items[di].webkitGetAsEntry) { hasEntry = true; break; }
+          }
+        } catch (err2) {}
+        if (hasEntry) {
+          fcReadDropped(e.dataTransfer.items, function (files, folderName) {
+            if (files && files.length) processLocalFiles(files, editor, folderName);
+          });
+        } else {
+          processLocalFiles(Array.prototype.slice.call(e.dataTransfer.files), editor, null);
         }
       });
+
+      /* v351 B2：截图/复制的文件直接 Ctrl+V 粘贴即传 */
+      editor.addEventListener('paste', function (e) {
+        var dt = e.clipboardData;
+        if (!dt || !dt.files || !dt.files.length) return;
+        e.preventDefault();
+        try {
+          var sel = window.getSelection();
+          if (sel && sel.rangeCount && window.__rte) { window.__rte.editor = editor; window.__rte.range = sel.getRangeAt(0).cloneRange(); }
+        } catch (err) {}
+        processLocalFiles(Array.prototype.slice.call(dt.files), editor, null);
+      });
     }
+
+    /* v351：加/删文件后刷新所属文件夹的「N 项 · 合计大小」 */
+    function fcRefreshMeta(listEl) {
+      var ownerRow = listEl.closest ? listEl.closest('.file-folder-item.is-folder') : null;
+      if (!ownerRow) return;
+      var st = fcFolderStats(listEl);
+      var m = ownerRow.querySelector(':scope > .fc-row-head > .fmeta');
+      if (m) m.textContent = st.n + ' 项' + (st.total ? ' · ' + fmtFileSize(st.total) : '');
+    }
+    /* 展开某一行所在的父级链（上传完成后让新文件露出来） */
+    function fcExpandParents(node) {
+      var p = node.parentNode;
+      while (p && p !== document.body) {
+        if (p.classList && p.classList.contains('fc-kids') && p.style.display === 'none') {
+          p.style.display = 'block';
+          var owner = p.parentNode ? p.parentNode.querySelector(':scope > .fc-row-head') : null;
+          if (owner) fcSetArrow(owner, true);
+        }
+        p = p.parentNode;
+      }
+    }
+    function fcSetArrow(head, open) {
+      var arr = head ? head.querySelector('.fc-arrow-svg') : null;
+      if (arr) arr.style.transform = open ? 'rotate(0deg)' : 'rotate(-90deg)';
+    }
+    function fcToggleKids(head, kids) {
+      var show = kids.style.display === 'none';
+      kids.style.display = show ? 'block' : 'none';
+      fcSetArrow(head, show);
+    }
+    /* 点名字 → 原地变输入框，回车/失焦保存（文件和文件夹通用） */
+    function fcStartRename(nameEl) {
+      var oldName = nameEl.textContent;
+      var inp = document.createElement('input');
+      inp.type = 'text'; inp.value = oldName;
+      inp.className = 'file-card-rename';
+      nameEl.innerHTML = '';
+      nameEl.appendChild(inp);
+      inp.focus(); inp.select();
+      var save = function () { nameEl.textContent = inp.value.trim() || oldName; };
+      inp.addEventListener('blur', save);
+      inp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { inp.blur(); }
+        if (ev.key === 'Escape') { inp.value = oldName; inp.blur(); }
+      });
+    }
+    /* 往指定列表里加文件：同名自动 -1/-2，上传走统一队列（进度/取消/重试） */
+    function fcAddFilesInto(list, editor) {
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.multiple = true;
+      inp.addEventListener('change', function () {
+        var files = Array.prototype.slice.call(inp.files || []);
+        if (!files.length) return;
+        var taken = fcCollectNames(list);
+        var addBtn = list.querySelector(':scope > .fc-actions');
+        files.forEach(function (f) {
+          var finalName = fcUniqueName(f.name, taken);
+          taken.add(finalName);
+          var oversize = f.size > 25 * 1024 * 1024;
+          var row = document.createElement('div');
+          row.className = 'file-folder-item' + (oversize ? ' oversize' : '');
+          row.innerHTML = fcFileIconSvg(finalName) +
+            '<span class="fname">' + escapeHtml(finalName) + '</span>' +
+            '<span class="fsize">' + (oversize ? '超 25MB 没传上' : '上传中…') + '</span>' +
+            '<span class="fc-admin-only">' +
+              '<button type="button" class="fc-btn" data-action="copy-item" title="复制链接">复制</button>' +
+              '<button type="button" class="fc-btn" data-action="replace-item" title="替换文件">替换</button>' +
+            '</span>' +
+            '<button type="button" class="fremove fc-admin-only" title="删除" data-action="del-item">' + fcXSvg() + '</button>';
+          if (addBtn) list.insertBefore(row, addBtn); else list.appendChild(row);
+          fcRefreshMeta(list); /* v351：计数即时刷新 */
+          if (oversize) return; /* A4：超大直接标红，不发起上传 */
+          window.__upman.run(f, 'file', {
+            onDone: function (url, key) {
+              row.setAttribute('data-key', key || '');
+              row.setAttribute('data-size', f.size);
+              var s = row.querySelector('.fsize');
+              if (s) s.textContent = fmtFileSize(f.size);
+              fcExpandParents(row);
+              fcRefreshMeta(list); /* v351：合计大小刷新 */
+            },
+            onFail: function () { row.classList.add('oversize'); }
+          });
+        });
+      });
+      inp.click();
+    }
+    /* 往指定列表里补一个空的子文件夹（默认收起），插进去直接改名 */
+    function fcAddFolderInto(list) {
+      var taken = fcCollectNames(list);
+      var name = fcUniqueName('新建文件夹', taken);
+      taken.add(name);
+      var wrap = document.createElement('div');
+      wrap.className = 'file-folder-item is-folder';
+      wrap.setAttribute('data-ftype', 'folder');
+      wrap.innerHTML =
+        '<div class="fc-row-head">' + fcFolderIconSvg() +
+          '<span class="fname" data-action="rename" title="点一下改名">' + escapeHtml(name) + '</span>' +
+          '<span class="fmeta">0 项</span>' +
+          '<span class="fc-admin-only">' +
+            '<button type="button" class="fc-btn" data-action="add-file-here" title="往这个文件夹里加文件">＋文件</button>' +
+            '<button type="button" class="fc-btn" data-action="add-folder-here" title="在这个文件夹里补个子文件夹">＋夹</button>' +
+          '</span>' +
+          '<button type="button" class="fremove fc-admin-only" title="删除" data-action="del-item">' + fcXSvg() + '</button>' +
+          '<button type="button" class="fc-arrow" data-action="toggle-kids" title="展开/收起">' + fcArrowSvg() + '</button>' +
+        '</div>' +
+        '<div class="file-folder-list fc-kids" style="display:none">' +
+          '<div class="fc-empty fc-admin-only">空文件夹，点右上「＋文件」放东西进来</div>' +
+          '<div class="fc-actions fc-admin-only">' +
+            '<button type="button" class="fc-btn fc-btn-strong" data-action="add-file-here">新增文件</button>' +
+            '<button type="button" class="fc-btn fc-btn-strong" data-action="add-folder-here">补文件夹</button>' +
+          '</div>' +
+        '</div>';
+      var addBtn = list.querySelector(':scope > .fc-actions');
+      if (addBtn) list.insertBefore(wrap, addBtn); else list.appendChild(wrap);
+      fcExpandParents(wrap);
+      var nameEl = wrap.querySelector('.fname');
+      if (nameEl) fcStartRename(nameEl);
+    }
+    /* 替换文件：整卡（data-dl 的 a）或文件夹内某一行 */
+    function fcPickAndReplace(card, row) {
+      var inp = document.createElement('input');
+      inp.type = 'file';
+      inp.addEventListener('change', function () {
+        var f = inp.files && inp.files[0];
+        if (!f) return;
+        window.__upman.run(f, 'file', {
+          onDone: function (url, key) {
+            if (row) {
+              row.setAttribute('data-key', key || '');
+              row.setAttribute('data-size', f.size);
+              var s = row.querySelector('.fsize');
+              if (s) s.textContent = fmtFileSize(f.size);
+              row.classList.remove('oversize');
+              toast('文件已替换', 'success');
+            } else if (card) {
+              var a = card.querySelector('a[data-dl]');
+              if (a) a.setAttribute('href', url);
+              var sz = card.querySelector('.file-card-size');
+              if (sz) sz.textContent = fmtFileSize(f.size);
+              toast('文件已替换', 'success');
+            }
+          }
+        });
+      });
+      inp.click();
+    }
+    /* 递归读取拖拽进来的文件/文件夹（保留文件夹名） */
+    function fcReadDropped(dtItems, cb) {
+      var entries = [];
+      for (var i = 0; i < (dtItems ? dtItems.length : 0); i++) {
+        var it = dtItems[i];
+        if (it.kind === 'file') {
+          var ent = it.webkitGetAsEntry && it.webkitGetAsEntry();
+          if (ent) entries.push(ent);
+        }
+      }
+      if (!entries.length) return; /* 调用方自行回退到 dataTransfer.files */
+      var files = [], folderName = null, pending = entries.length;
+      function walk(entry, parent) {
+        if (entry.isFile) {
+          entry.file(function (f) { if (parent) f.__folderName = parent; files.push(f); settle(); }, settle);
+        } else if (entry.isDirectory) {
+          if (!parent) folderName = entry.name;
+          var reader = entry.createReader();
+          var readBatch = function () {
+            reader.readEntries(function (batch) {
+              if (!batch.length) return;
+              batch.forEach(function (en) { walk(en, parent || entry.name); });
+              readBatch();
+            }, settle);
+          };
+          readBatch();
+        } else settle();
+      }
+      function settle() { pending--; if (pending <= 0) { files.sort(function (a, b) { return (a.__folderName || '').localeCompare(b.__folderName || '') || a.name.localeCompare(b.name); }); cb(files, folderName); } }
+      entries.forEach(function (en) { walk(en, null); });
+    }
+
 
     // v328（用户 10-06 15:37）：文件弹窗主控——极简设计：一行说明+链接框+上传按钮，无虚线框无二级菜单
     function setupFileDialog(editor) {
@@ -380,87 +853,65 @@
         handleFileInsert(editor), '', 'file');
     }
 
-    // v320：处理本地文件列表——上传后自动插入卡片
+    // v351：处理本地文件列表——先插卡（即时反馈），上传统一走队列（进度条/取消/重试）
     // folderName 有值表示来自文件夹选择器；null 表示普通多文件（自动打包成文件夹卡）
     function processLocalFiles(files, editor, folderName) {
       if (!files || !files.length) return;
-      var MAX_FILE_SIZE = 25 * 1024 * 1024;
-      // 过滤并标记超大文件
-      var items = [];
-      files.forEach(function (f) {
-        items.push({ file: f, name: f.name, size: f.size, oversize: f.size > MAX_FILE_SIZE });
-      });
-      // 单文件且不是文件夹模式 → 文件卡
-      var isSingleFile = items.length === 1 && !folderName;
-      // 先关闭弹窗，避免遮挡
       window.closeInput && window.closeInput();
-      if (isSingleFile) {
+      var items = Array.prototype.slice.call(files).map(function (f) {
+        return { file: f, name: f.name, size: f.size, oversize: f.size > 25 * 1024 * 1024 };
+      });
+      var pid = genFileId();
+      /* 单文件 → 一张文件卡，先插"上传中"状态，传完原地补链接 */
+      if (items.length === 1 && !folderName) {
         var it = items[0];
-        if (it.oversize) {
-          var html = buildFileCardHTML({ type: 'file', name: it.name, url: '', size: it.size });
-          rteInsert(editor, html);
-          toast('文件超 25MB，未上传', 'error');
+        rteInsert(editor, buildFileCardHTML({ id: pid, type: 'file', name: it.name, url: '', size: it.size }));
+        var card = editor.querySelector('[data-file-id="' + pid + '"]');
+        if (it.oversize) { /* A4：超大在队列面板里就标红说明，这里卡片同步打失败态 */
+          if (card) { card.classList.add('fc-failed'); var sz0 = card.querySelector('.file-card-size'); if (sz0) sz0.textContent = '超 25MB 没传上'; }
           return;
         }
-        uploadFileToBucket(it.file, function (url, err, key) {
-          if (url) {
-            var html = buildFileCardHTML({ type: 'file', name: it.name, url: url, size: it.size, key: key });
-            rteInsert(editor, html);
+        window.__upman.run(it.file, 'file', {
+          onDone: function (url, key) {
+            if (!card) return;
+            var a = card.querySelector('a[data-dl]'); if (a) a.setAttribute('href', url);
+            var sz = card.querySelector('.file-card-size'); if (sz) sz.textContent = fmtFileSize(it.size);
             toast('文件已插入', 'success');
-          } else {
-            toast(err || '上传失败', 'error');
-          }
+          },
+          onFail: function () { if (card) card.classList.add('fc-failed'); }
         });
         return;
       }
-      // 多文件或文件夹 → 文件夹卡
-      var cardData = {
-        type: 'folder',
-        name: folderName || ('文件包 (' + items.length + ')'),
-        items: []
-      };
-      // 先插入占位卡（带上传中状态）
-      items.forEach(function (it) {
-        cardData.items.push({
-          name: it.name,
-          size: it.size,
-          url: '',
-          key: '',
-          oversize: it.oversize
-        });
+      /* 多文件 / 文件夹 → 文件夹卡（默认收起，传完自动展开）；同名自动 -1/-2 */
+      var taken = new Set();
+      var kids = items.map(function (x) {
+        var nm = fcUniqueName(x.name, taken); taken.add(nm);
+        return { ftype: 'file', name: nm, size: x.size, key: '', oversize: x.oversize };
       });
-      var html = buildFileCardHTML(cardData);
-      rteInsert(editor, html);
-      // 并行上传（非超大文件）
-      var pending = 0;
+      rteInsert(editor, buildFileCardHTML({ id: pid, type: 'folder', name: folderName || ('文件包 (' + items.length + ')'), items: kids }));
+      var fcard = editor.querySelector('[data-file-id="' + pid + '"]');
+      var rows = fcard ? fcard.querySelectorAll('.file-folder-item:not(.is-folder)') : [];
       items.forEach(function (it, idx) {
-        if (it.oversize) return;
-        pending++;
-        uploadFileToBucket(it.file, function (url, err, key) {
-          pending--;
-          // 找到刚插入的卡片，更新对应条目
-          var cards = editor.querySelectorAll('.file-card-wrap[data-file-type="folder"]');
-          var card = cards[cards.length - 1];
-          if (card) {
-            var rows = card.querySelectorAll('.file-folder-item');
-            var row = rows[idx];
-            if (row) {
-              if (url) {
-                row.setAttribute('data-key', key || '');
-                var s = row.querySelector('.fsize');
-                if (s) s.textContent = fmtFileSize(it.size);
-              } else {
-                row.classList.add('oversize');
-                var s2 = row.querySelector('.fsize');
-                if (s2) s2.textContent = err === 'size' ? '超 25MB 没传上' : '上传失败';
-              }
-            }
+        var row = rows[idx];
+        if (!row) return;
+        if (it.oversize) return; /* 已在卡上标红 */
+        window.__upman.run(it.file, 'file', {
+          onDone: function (url, key) {
+            row.setAttribute('data-key', key || '');
+            row.setAttribute('data-size', it.size);
+            var s = row.querySelector('.fsize');
+            if (s) s.textContent = fmtFileSize(it.size);
+            fcExpandParents(row);
+          },
+          onFail: function (msg) {
+            row.classList.add('oversize');
+            var s2 = row.querySelector('.fsize');
+            if (s2) s2.textContent = msg === 'size' ? '超 25MB 没传上' : '上传失败';
           }
-          if (pending === 0) toast('文件上传完成', 'success');
         });
       });
-      if (pending === 0) toast('文件夹已插入（无可上传文件）', 'info');
     }
+
 
     // v320：拖拽处理——webkitGetAsEntry 自动识别文件/文件夹
     function handleFileDrop(e, editor) {
@@ -600,19 +1051,20 @@
       inp.addEventListener('change', function () {
         var _origText = btn.textContent;
         btn.disabled = true;
-        uploadToBucket(inp.files && inp.files[0], function (url) {
-          btn.disabled = false;
-          if (url) {
+        /* v351 A1-A3：封面图上传统一走队列面板（进度条/可取消/失败可重试） */
+        window.__upman.run(inp.files && inp.files[0], 'image', {
+          onDone: function (url) {
+            btn.disabled = false;
             btn.textContent = '✓ 完成';
-            btn.style.background = '#2e7d32';
+            btn.style.background = 'var(--green-strong)';
             setTimeout(function () { btn.textContent = _origText; btn.style.background = ''; }, 1200);
             fImg.value = url;
             if (typeof fImg.dispatchEvent === 'function') fImg.dispatchEvent(new Event('input'));
             toast('封面图已上传，链接已自动填入', 'success');
-          } else {
-            btn.textContent = _origText;
-          }
-        }, function (pct) { btn.textContent = '上传中 ' + pct + '%'; });
+          },
+          onFail: function () { btn.disabled = false; btn.textContent = _origText; },
+          onCancel: function () { btn.disabled = false; btn.textContent = _origText; }
+        });
       });
     })();
 
@@ -1193,7 +1645,7 @@
         } else { annBtn.disabled = false; annBtn.textContent = _annBtnText; toast(res.msg || '保存失败', 'error'); }
       }).catch(function () {
         annBtn.disabled = false; annBtn.textContent = _annBtnText;
-        toast('网络不佳，请检查一下再试', 'error'); // v294：087 网络提示统一
+        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
       });
     });
     // 取消公告（不保存，下次打开重新加载已保存状态）
@@ -1244,7 +1696,7 @@
         else { cBtn.disabled = false; cBtn.textContent = _cBtnText; toast(res.msg || '保存失败', 'error'); }
       }).catch(function () {
         cBtn.disabled = false; cBtn.textContent = _cBtnText;
-        toast('网络不佳，请检查一下再试', 'error'); // v294：087 网络提示统一
+        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
       });
     });
     document.getElementById('cancelContactBtn').addEventListener('click', function () { contactDraftPending = false; document.getElementById('contactUrlInput').value = ''; document.getElementById('contactMask').classList.remove('open'); });
@@ -1608,6 +2060,6 @@
         }
       }).catch(function () {
         variantOk.disabled = false; variantOk.textContent = _variantOkText;
-        toast('网络不佳，请检查一下再试', 'error'); // v294：087 网络提示统一
+        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
       });
     });

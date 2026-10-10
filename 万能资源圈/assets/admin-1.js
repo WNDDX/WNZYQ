@@ -124,7 +124,7 @@
       return d.getUTCFullYear() + '-' + p2(d.getUTCMonth() + 1) + '-' + p2(d.getUTCDate()) + ' ' + p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()) + ':' + p2(d.getUTCSeconds());
     };
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    var EXC_PLACEHOLDER = window.WN_MEDIA_FALLBACK; /* v349 条7：占位图统一取公共层一份（原先这里整段抄了一遍，改一处漏一处） */
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
@@ -301,31 +301,14 @@
         var _origText = inputUploadBtn.textContent;
         inputUploadBtn.disabled = true;
         var cancelBtn = null;
-        /* R243 条8：视频上传加取消键 */
-        if (kind === 'video') {
-          cancelBtn = document.createElement('button');
-          cancelBtn.type = 'button';
-          cancelBtn.className = 'row-btn';
-          cancelBtn.textContent = '取消';
-          cancelBtn.style.marginLeft = '8px';
-          cancelBtn.onclick = function () {
-            if (window.__uploadXHR) { window.__uploadXHR.abort(); window.__uploadXHR = null; }
-            inputUploadBtn.disabled = false;
-            inputUploadBtn.textContent = _origText;
-            if (cancelBtn && cancelBtn.parentNode) cancelBtn.parentNode.removeChild(cancelBtn);
-          };
-          inputUploadBtn.parentNode.appendChild(cancelBtn);
-        }
-        var onProgress = function (pct) {
-          inputUploadBtn.textContent = '上传中 ' + pct + '%';
-        };
+        /* v351：原「取消键 + 百分比文字」由统一队列面板接管（面板自带取消 × 与失败重试） */
         var done = function (url, note) {
           inputUploadBtn.disabled = false;
           if (cancelBtn && cancelBtn.parentNode) cancelBtn.parentNode.removeChild(cancelBtn);
           // R307：size_limit 死分支已清（全系统上传大小限制均已取消，上传链不再产生该标记）
           if (url) {
             inputUploadBtn.textContent = '✓ 完成';
-            inputUploadBtn.style.background = '#2e7d32';
+            inputUploadBtn.style.background = 'var(--green-strong)';
             setTimeout(function () { inputUploadBtn.textContent = _origText; inputUploadBtn.style.background = ''; }, 1200);
             inputValue.value = url;
             if (note) toast(note, 'info');
@@ -334,8 +317,18 @@
             inputUploadBtn.textContent = _origText;
           }
         };
-        if (kind === 'video') uploadVideoToBucket(f, done, { onProgress: onProgress });
-        else uploadToBucket(f, done, onProgress);
+        /* v351 A1-A3：本地上传统一走队列面板——进度条（不显示百分比）/ 可取消 / 失败可重试；图片、视频、文件同一套 */
+        window.__upman.run(f, kind === 'video' ? 'video' : 'file', {
+          onDone: function (url) { done(url); },
+          onFail: function () {
+            inputUploadBtn.disabled = false;
+            inputUploadBtn.textContent = _origText;
+          },
+          onCancel: function () {
+            inputUploadBtn.disabled = false;
+            inputUploadBtn.textContent = _origText;
+          }
+        });
       });
       inp.click();
     });
@@ -932,7 +925,7 @@
     // ---------- 平台设置 ----------
     function loadSettings() {
       return api('admin/settings').then(function (res) {
-        if (!res.ok) { toast(res.msg || '加载失败', 'error'); return; }
+        if (!res.ok) { toast(res.msg || '加载失败，网络开小差了', 'error'); return; }
         var s = res.settings || {};
         window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || ''; if (document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = s.contact_url || '';
         // 客服状态文字已按需求移除
@@ -1064,10 +1057,10 @@
             // 失败路径只弹一个弹窗（此前 toast+showAlert+分支内 showAlert 会叠出两个弹窗，已修复去重）
             var _local = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             // v294（用户 10-04 02:14）：113 登录失败提示统一
-            if (_local) { toast('网络不佳，请检查一下再试', 'error'); }
+            if (_local) { toast('网络开小差了，请稍后再试', 'error'); }
             else if (res._status === 429) { var waitMin = res && res.retryAfter ? Math.ceil(res.retryAfter / 60) : 10;
             toast('尝试次数过多，请 ' + waitMin + ' 分钟后再试', 'error'); } // v294：125 提示加等待时间 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误
-            else { toast('登录失败：' + (res.msg || '网络不佳，请检查一下再试'), 'error'); }
+            else { toast('登录失败：' + (res.msg || '网络开小差了，请稍后再试'), 'error'); }
           }
         })
         .finally(function () {

@@ -27,62 +27,74 @@ export async function onRequestPost(context) {
     return json({ ok: false, msg: '未知操作' }, 400);
   }
 
-  const placeholders = ids.map(() => '?').join(',');
+  /* v348 条30：不设条数上限（按老板要求），但一条 SQL 能带的变量有上限——
+     一次塞几千个 id 会整批报错。现在按 200 条一批拆分执行，选多少都能稳稳做完。 */
+  const CHUNK = 200;
+  const chunks = [];
+  for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+  const ph = (arr) => arr.map(() => '?').join(',');
 
   if (action === 'delete') {
     // R31-#7：批量删除前先取出图片字段，删除后联动清理图仓里的自有图片
     // R36：清理范围扩到详情视频 + 类型富文本字段
+    const sources = [];
     try {
-      const { results: imgRows } = await env.DB.prepare(`SELECT img, detail, detail_images, detail_videos FROM products WHERE id IN (${placeholders})`).bind(...ids).all();
-      const { results: vRows } = await env.DB.prepare(`SELECT "desc", img, video, resource_content FROM product_variants WHERE product_id IN (${placeholders})`).bind(...ids).all();
-      const sources = [];
-      for (const r of (imgRows || [])) sources.push(r.img, r.detail, r.detail_images, r.detail_videos);
-      for (const v of (vRows || [])) sources.push(v.desc, v.img, v.video, v.resource_content);
-      if (sources.length) {
-        // 先删库再清图（deleteBucketImages 里的引用保护按"删完后库里还有谁在用"判断）
-        await Promise.all([
-          env.DB.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).bind(...ids).run(),
-          env.DB.prepare(`DELETE FROM product_variants WHERE product_id IN (${placeholders})`).bind(...ids).run(),
-          env.DB.prepare(`DELETE FROM stats WHERE product_id IN (${placeholders})`).bind(...ids).run(),
-        ]);
-        await deleteBucketImages(env, sources);
-        return json({ ok: true, count: ids.length });
+      for (const c of chunks) {
+        const p = ph(c);
+        const { results: imgRows } = await env.DB.prepare(`SELECT img, detail, detail_images, detail_videos FROM products WHERE id IN (${p})`).bind(...c).all();
+        const { results: vRows } = await env.DB.prepare(`SELECT "desc", img, video, resource_content FROM product_variants WHERE product_id IN (${p})`).bind(...c).all();
+        for (const r of (imgRows || [])) sources.push(r.img, r.detail, r.detail_images, r.detail_videos);
+        for (const v of (vRows || [])) sources.push(v.desc, v.img, v.video, v.resource_content);
       }
     } catch (e) { console.error('批量删除取媒体字段失败(不影响删除):', e); }
-    // 性能：三条删除并行执行（原先串行三次 D1 往返），批量删除耗时约降为 1/3
-    await Promise.all([
-      env.DB.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).bind(...ids).run(),
-      env.DB.prepare(`DELETE FROM product_variants WHERE product_id IN (${placeholders})`).bind(...ids).run(),
-      env.DB.prepare(`DELETE FROM stats WHERE product_id IN (${placeholders})`).bind(...ids).run(),
-    ]);
+    // 逐批删除（每批内三条并行）；全部删完再清图仓
+    for (const c of chunks) {
+      const p = ph(c);
+      await Promise.all([
+        env.DB.prepare(`DELETE FROM products WHERE id IN (${p})`).bind(...c).run(),
+        env.DB.prepare(`DELETE FROM product_variants WHERE product_id IN (${p})`).bind(...c).run(),
+        env.DB.prepare(`DELETE FROM stats WHERE product_id IN (${p})`).bind(...c).run(),
+      ]);
+    }
+    if (sources.length) await deleteBucketImages(env, sources);
   } else if (action === 'changeCat') {
     const cid = Number(b.cid);
     if (isNaN(cid)) return json({ ok: false, msg: '请提供分类ID' }, 400);
-    await env.DB.prepare(
-      `UPDATE products SET cid = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
-    ).bind(cid, ...ids).run();
+    for (const c of chunks) {
+      await env.DB.prepare(
+        `UPDATE products SET cid = ?, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+      ).bind(cid, ...c).run();
+    }
   } else if (action === 'changePrice') {
     const price = Number(b.price);
     if (isNaN(price) || price < 0) return json({ ok: false, msg: '请提供有效价格' }, 400);
-    await env.DB.prepare(
-      `UPDATE products SET price = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
-    ).bind(price, ...ids).run();
+    for (const c of chunks) {
+      await env.DB.prepare(
+        `UPDATE products SET price = ?, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+      ).bind(price, ...c).run();
+    }
   } else if (action === 'online') {
     // 两态：显示 = is_online=1 且清掉 is_hidden（旧隐藏数据也能真正显示）
-    await env.DB.prepare(
-      `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${placeholders})`
-    ).bind(...ids).run();
+    for (const c of chunks) {
+      await env.DB.prepare(
+        `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+      ).bind(...c).run();
+    }
   } else if (action === 'offline') {
     // 两态：隐藏 = is_online=0 且清掉 is_hidden
-    await env.DB.prepare(
-      `UPDATE products SET is_online = 0, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${placeholders})`
-    ).bind(...ids).run();
+    for (const c of chunks) {
+      await env.DB.prepare(
+        `UPDATE products SET is_online = 0, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+      ).bind(...c).run();
+    }
   } else {
     // hide/show：旧版动作兼容（前端已不再调用）
     const val = action === 'show' ? 1 : 0;
-    await env.DB.prepare(
-      `UPDATE products SET is_hidden = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
-    ).bind(val, ...ids).run();
+    for (const c of chunks) {
+      await env.DB.prepare(
+        `UPDATE products SET is_hidden = ?, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+      ).bind(val, ...c).run();
+    }
   }
 
   return json({ ok: true, count: ids.length });
