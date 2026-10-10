@@ -584,6 +584,19 @@
       letter-spacing: 1px; /* v356 条8：弹窗标题字距统一 1px（原 1.2px 是按钮档） */
       padding-right: 36px;
     }
+    /* v358 S3：详情弹窗上/下一条箭头（左右居中半透明圆钮；到头自动隐藏） */
+    .modal-nav-arrow {
+      position: fixed; top: 50%; transform: translateY(-50%);
+      width: 40px; height: 40px; border-radius: 50%;
+      border: none; background: rgba(0,0,0,0.35); color: #fff;
+      font-size: 22px; line-height: 1; cursor: pointer; z-index: 60;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--dur-fast) ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .modal-nav-arrow:hover { background: rgba(0,0,0,0.55); }
+    .modal-nav-arrow#modalPrev { left: 6px; }
+    .modal-nav-arrow#modalNext { right: 6px; }
     .modal-price {
       color: var(--price-text, #C86800);
       font-size: 24px;

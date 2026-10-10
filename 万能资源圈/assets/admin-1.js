@@ -889,6 +889,11 @@
     });
 
     function switchTab(name) {
+      /* v358 S2：离开当前标签页时存滚动位置，进入新标签页恢复（所有状态内容原样回来） */
+      try {
+        var __cur = document.querySelector('.tab.active');
+        if (__cur && __cur.dataset.tab) { window.__tabScroll = window.__tabScroll || {}; window.__tabScroll[__cur.dataset.tab] = window.scrollY || 0; }
+      } catch (e) {}
       document.querySelectorAll('.tab').forEach(function (t) {
         t.classList.toggle('active', t.dataset.tab === name);
       });
@@ -900,6 +905,8 @@
          R173 口径不变：只认 __plS 等单条件、不重新拉数据 */
       var __pv = document.getElementById('panel-' + name);
       if (__pv) { __pv.classList.remove('panel-in'); void __pv.offsetWidth; __pv.classList.add('panel-in'); }
+      /* v358 S2：恢复该标签页离开时的滚动位置 */
+      try { var __sv = (window.__tabScroll || {})[name]; if (typeof __sv === 'number' && __sv > 0) setTimeout(function () { try { window.scrollTo(0, __sv); } catch (e) {} }, 80); } catch (e) {}
       // v314（用户 10-05 15:59）：Tab切换立即出结果——首次加载数据，后续切回时已有数据秒显+后台静默刷新保最新。
       if (name === 'products') {
         if (!window.__plP) { window.__plP = 1; loadProducts(); }
@@ -907,6 +914,16 @@
       }
       // R173（用户 00:28）：回退 R171 的门控放宽——切 tab 只认 __plS 单条件（R170 口径）；
       // 放宽后每次切 tab 都重新拉数据+全页淡入，用户实测"更难看"
+      /* v359 条2：后台滑切标签页改用全站统一手势（一套逻辑，到头自然弹回、无提示） */
+      window.__bindSwipeSwitch(document, function (d) {
+        var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab[data-tab]'));
+        if (!tabs.length) return;
+        var cur = -1;
+        tabs.forEach(function (t, i) { if (t.classList.contains('active')) cur = i; });
+        var ni = cur + d;
+        if (ni < 0 || ni >= tabs.length) return; /* 到头：不动即自然弹回 */
+        switchTab(tabs[ni].dataset.tab);
+      }, function () { return !document.querySelector('.modal-mask.open'); });
       if (name === 'stats') {
         if (!window.__plS) { window.__plS = 1; loadStats(); }
         else { loadStats(undefined, undefined, 1, 1).catch(function () {}); } // 切回后台静默刷新（silent=1）

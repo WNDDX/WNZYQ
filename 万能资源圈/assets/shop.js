@@ -884,6 +884,7 @@
     }
     function renderProducts() {
       var list = getFilteredProducts();
+      window.__visibleIds = list.map(function (p) { return p.id; }); /* v358 S3：详情弹窗上/下一条按此顺序切换 */
       /* R193 二① 方案A：骨架期（数据在路上）列表不动——骨架已铺满一页，空态不该抢跑 */
       if (window.__skelPhase && !list.length) { emptyTip.classList.remove('show'); return; }
       var __skels = productGrid.querySelectorAll('.card-skeleton');
@@ -1026,12 +1027,15 @@
       var frag = document.createDocumentFragment();
       pageList.forEach(function (p, i) {
         var card = buildProductCard(p);
-        card.classList.add('stagger-in'); /* R192 二②；R211 二批（用户 09-20）：错峰 30ms 递升改 20ms/项、180ms 封顶（长列表尾部不再越等越久） */
-        card.style.animationDelay = Math.min(i * 20, 180) + 'ms';
+        if (!window.__shopPainted) { /* v357 老问题1：错峰淡入只在首次进页播一次——切分类/筛选重播会让无封面卡的占位图跟着"闪几下" */
+          card.classList.add('stagger-in'); /* R192 二②；R211 二批（用户 09-20）：错峰 30ms 递升改 20ms/项、180ms 封顶（长列表尾部不再越等越久） */
+          card.style.animationDelay = Math.min(i * 20, 180) + 'ms';
+        }
         if (__reuse && __skels[i]) __skels[i].parentNode.replaceChild(card, __skels[i]);
         else frag.appendChild(card);
       });
       productGrid.appendChild(frag);
+      window.__shopPainted = true; /* v357：首次绘制完成标记（其后切分类/筛选不再重播错峰动画） */
       /* 真实条数少于骨架数：多余骨架收尾移除（真条数>骨架数时新增卡已在上方 append） */
       if (__reuse) { for (var j = pageList.length; j < __skels.length; j++) { if (__skels[j].parentNode) __skels[j].parentNode.removeChild(__skels[j]); } }
 
@@ -1196,6 +1200,27 @@
       currentVariant = null;
       track(p.id, 'view');
 
+      /* v358 S3：详情弹窗上/下一条——左右箭头＋横滑（列表顺序）；关闭弹窗不做任何滚动操作 */
+      try {
+        var _ids = window.__visibleIds || [];
+        var _mi = _ids.indexOf(Number(p.id));
+        window.__modalSeq = { ids: _ids, i: _mi };
+        var _mm = document.getElementById('modalMask');
+        if (_mm && !_mm.querySelector('.modal-nav-arrow')) {
+          ['modalPrev', 'modalNext'].forEach(function (aid, k) {
+            var ab = document.createElement('button');
+            ab.type = 'button'; ab.id = aid; ab.className = 'modal-nav-arrow';
+            ab.textContent = k === 0 ? '‹' : '›';
+            ab.setAttribute('aria-label', k === 0 ? '上一个资源' : '下一个资源');
+            ab.addEventListener('click', function (e) { e.stopPropagation(); window.__modalGo(k === 0 ? -1 : 1); });
+            _mm.appendChild(ab);
+          });
+        }
+        var _pv = document.getElementById('modalPrev'), _nx = document.getElementById('modalNext');
+        if (_pv) _pv.style.visibility = _mi > 0 ? 'visible' : 'hidden';
+        if (_nx) _nx.style.visibility = (_mi > -1 && _mi < _ids.length - 1) ? 'visible' : 'hidden';
+      } catch (e0) { if (window.__silent) window.__silent(e0); }
+
       // R256：清除详情弹窗骨架
       var _mdSkel = document.getElementById('modalSkeleton'); if (_mdSkel) _mdSkel.style.display = 'none';
       // R256：详情弹窗封面轮播
@@ -1238,7 +1263,11 @@
         im.onload = function () { this.classList.remove('m-loading'); this.style.opacity = '1'; };
         im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; this.style.display = 'block'; };
         im.src = url;
-        im.addEventListener('click', function () { window.openLightbox(url); });
+        im.addEventListener('click', function () {
+          /* v359 条3：本媒体区即一组（封面+正文媒体同容器）——组内所有图/视频传给灯箱，左右滑在本组内切 */
+          var srcs = Array.prototype.map.call(modalMedia.querySelectorAll('img, video'), function (x) { return x.currentSrc || x.src; });
+          window.openLightbox(url, { list: srcs });
+        });
         if (window.mediaStable) window.mediaStable(im);
         modalMedia.appendChild(im);
       });
@@ -1253,7 +1282,12 @@
          * 原实现只有 controls、无任何放大绑定——「全系统点击放大视频」缺口。不为 modalMedia 整体
          * bindLightbox，避免与上方图片的显式 handler 双绑定。 */
         v.style.cursor = 'zoom-in';
-        v.addEventListener('click', function () { v.pause(); window.openLightbox(url); });
+        v.addEventListener('click', function () {
+          v.pause();
+          /* v359 条3：同组（本媒体区所有图/视频）传给灯箱 */
+          var srcs2 = Array.prototype.map.call(modalMedia.querySelectorAll('img, video'), function (x) { return x.currentSrc || x.src; });
+          window.openLightbox(url, { list: srcs2 });
+        });
         if (window.mediaStable) window.mediaStable(v, true);
         modalMedia.appendChild(v);
       });
@@ -1636,6 +1670,33 @@
       closeModal();
     }
     function closeModalDiscard() { __codeDraft = null; closeModal(); }
+
+    /* ===== v359 条2：S3/S1 改用全站统一手势（一套逻辑，到头自然弹回、无提示） ===== */
+    window.__modalGo = function (d) {
+      var s = window.__modalSeq; if (!s || !s.ids.length) return;
+      var ni = s.i + d;
+      if (ni < 0 || ni >= s.ids.length) return; /* 到头：不动 */
+      var np = (DATA.products || []).find(function (x) { return Number(x.id) === Number(s.ids[ni]); });
+      if (np) { s.i = ni; openModal(np); }
+    };
+    /* S3：详情弹窗左右滑切上/下一条 */
+    (function () {
+      var _mm = document.getElementById('modalMask');
+      if (_mm) window.__bindSwipeSwitch(_mm, function (d) { window.__modalGo(d); });
+    })();
+    /* S1：列表横滑切分类（弹窗开着时不响应；img 上滑动排除已由统一排除表承担，滑动超阈值浏览器不会误触点击） */
+    window.__bindSwipeSwitch(document, function (d) {
+      var tags = Array.prototype.slice.call(document.querySelectorAll('.category-tag'));
+      if (!tags.length) return;
+      var cur = -1;
+      tags.forEach(function (t, i2) { if (t.classList.contains('active')) cur = i2; });
+      var ni = cur + d;
+      if (ni < 0 || ni >= tags.length) return; /* 到头：不动即自然弹回 */
+      tags[ni].click();
+    }, function () {
+      var m = document.getElementById('modalMask');
+      return !(m && m.classList.contains('open')); /* 弹窗开着=归详情手势 */
+    });
 
     // v294（用户 10-04 02:14）：207 浏览器后退先关弹窗
     // v333 清理：原来一模一样注册了两遍，后退时 closeModal 被调两次。删掉重复的一份。

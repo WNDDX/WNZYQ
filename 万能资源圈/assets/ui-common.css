@@ -98,11 +98,7 @@
   width: 32px !important; height: 32px !important; min-width: 32px !important; border-radius: 50% !important;
   font-size: 16px !important; line-height: 1 !important; padding: 0 !important;
 }
-/* A组热区撑到 44×44（自身均为 absolute 定位，::after 相对自身锚定） */
-.modal-mask .modal-close-x::after, .kf-mask .kf-x::after, .lightbox .lb-close::after, .lightbox .modal-close-x::after {
-  content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px;
-  transform: translate(-50%, -50%);
-}
+/* v359 条1：× 钮 44×44 扩大热区已按老板要求全面移除——可点范围=视觉大小，不再放大 */
 .modal-mask .modal-close-x:hover, .kf-mask .kf-x:hover, .lightbox .lb-close:hover, .lightbox .modal-close-x:hover,
 .modal-mask .modal-close-x:active, .kf-mask .kf-x:active, .lightbox .lb-close:active, .lightbox .modal-close-x:active {
   background: var(--red-strong) !important; color: #fff !important; filter: none; /* v340 条9 / v348 条5：hover 实底也统一用同一档红 */
@@ -781,20 +777,7 @@ input::placeholder, textarea::placeholder { color: var(--text-light, #999); opac
   }
 }
 
-/* 条6：小控件点击热区 ≥44×44（视觉尺寸不变，热区用 padding/伪元素撑开，仅手机档） */
-@media (max-width: 600px) {
-  .search-clear, .pg-btn, .pg-jump button, .view-btn, .tab, .icon-btn, .row-btn, .ib, .category-tag, .sub-category-tag {
-    position: relative;
-  }
-  .search-clear::after, .pg-btn::after, .pg-jump button::after,
-  .view-btn::after, .tab::after, .icon-btn::after, .row-btn::after, .ib::after,
-  .category-tag::after, .sub-category-tag::after {
-    content: ''; position: absolute; left: 50%; top: 50%;
-    width: 44px; height: 44px; min-width: 44px; min-height: 44px;
-    transform: translate(-50%, -50%);
-    background: transparent; /* v345：热区只扩大点击范围，绝不显示颜色 */
-  }
-}
+/* v359 条1：手机档小控件 44×44 扩大热区已按老板要求全面移除——可点范围=视觉大小 */
 
 /* 条11：空态改为「内容区内居中」——不再 fixed 钉在屏幕正中（滚动时不动像浮层 bug） */
 .empty-tip { position: static; transform: none; display: none; padding: 44px 20px; }
@@ -865,11 +848,7 @@ body { padding-bottom: var(--safe-b); }
 .u-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .u-clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* v336 条76/77：小件热区统一——视觉不变、可点范围撑到 44；只向上下扩张防左右重叠 */
-.cc-dot { position: relative; }
-.cc-dot::after { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
-.sh-del, .row-check, .type-tag .t-del { position: relative; }
-.sh-del::after, .row-check::after { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); }
+/* v359 条1：小件 40×44 扩大热区已按老板要求全面移除——可点范围=视觉大小 */
 
 /* v343 条65：键盘选中（Tab 切换）时统一蓝色光圈——鼠标点击不出现，键盘用户看得见自己在哪 */
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,

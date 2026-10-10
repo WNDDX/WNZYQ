@@ -305,7 +305,7 @@ if ('serviceWorker' in navigator) {
     // 不直接解锁：若底下还有弹窗（二维码弹窗/客服弹窗）开着，必须保持背景锁定
     if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overflow = '');
   };
-  window.openLightbox = function (src) {
+  window.openLightbox = function (src, group) {
     if (!src) return;
     /* v281：全系统单一播放规则——打开灯箱前暂停页面全部已有 video（不含灯箱内新建的） */
     try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('.lightbox')) v.pause(); }); } catch (e) { if (window.__silent) window.__silent(e); }
@@ -313,27 +313,49 @@ if ('serviceWorker' in navigator) {
       __lbMask = document.createElement('div');
       __lbMask.className = 'lightbox';
       // R111：点图片本身不算「弹窗外」，只有点空白遮罩才关（与全站口径一致）；R217：恢复（R215 误删）
+      // v358：图片盒子改为按真实比例渲染（见 __lbShow）——原 object-fit:contain 的透明假盒子占满 90vw×90vh，
+      //       点「图片外的空白」其实仍点在 img 元素里导致关不掉、要点很远才命中遮罩
       __lbMask.onclick = function (e) { if (e.target === __lbMask) window.closeLightbox(); };
       document.body.appendChild(__lbMask);
       // R111：注册进统一弹窗栈，Esc 逐层路由（只关最上层）
       if (window.__modalKit) window.__modalKit.register(__lbMask, { discard: window.closeLightbox, stash: window.closeLightbox });
+      /* v359 条2：改用全站统一手势（一套逻辑）；__lbGroup 组内切换，到头自然弹回、无提示 */
+      window.__bindSwipeSwitch(__lbMask, function (dir) {
+        var g = window.__lbGroup; if (!g) return;
+        var ni = g.idx + dir;
+        if (ni < 0 || ni >= g.list.length) return; /* 到头：不动即自然弹回 */
+        g.idx = ni; window.__lbShow(g.list[g.idx]);
+      });
     }
-    __lbMask.textContent = '';
+    window.__lbGroup = (group && group.list && group.list.length > 1) ? { list: group.list.slice(), idx: Math.max(0, group.list.indexOf(src)) } : null;
+    window.__lbShow = function (s) {
+      __lbMask.querySelectorAll('img, video').forEach(function (n) { n.remove(); });
+      var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(s) || /video|\.m3u8/i.test(s);
+      var im = document.createElement(isVideo ? 'video' : 'img');
+      // R266（用户 09-27 15:08）：灯箱图片加 onerror 兜底，杜绝坏链接裸闪破损图标。
+      if (!isVideo) {
+        im.onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; if (this.classList) this.classList.add('media-fail'); };
+        im.onload = function () {
+          /* v358：按图片真实比例设定盒子尺寸——盒子=看得见的图，点「图片外」即点遮罩，立刻可关 */
+          try {
+            var vw = Math.min(window.innerWidth * 0.92, 1200), vh = Math.min(window.innerHeight * 0.92, 800);
+            var r = Math.min(vw / (this.naturalWidth || 1), vh / (this.naturalHeight || 1));
+            this.style.width = Math.max(80, Math.round((this.naturalWidth || 1) * r)) + 'px';
+            this.style.height = Math.max(80, Math.round((this.naturalHeight || 1) * r)) + 'px';
+          } catch (e0) { if (window.__silent) window.__silent(e0); }
+        };
+      }
+      im.src = s;
+      if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
+      im.style.cssText = 'object-fit:contain;border-radius:8px;max-width:92vw;max-height:88vh;transition:transform .05s linear;' + (isVideo ? 'width:min(92vw,1200px);aspect-ratio:16/9;background:#000;' : '');
+      __lbMask.appendChild(im);
+      __lbScale = 1;
+    };
     var x = document.createElement('button');
     x.type = 'button'; x.className = 'modal-close-x'; x.innerHTML = '<svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg>'; /* R285 条17：× 文字符号换固定 SVG */
     x.onclick = function (e) { e.stopPropagation(); window.closeLightbox(); };
     __lbMask.appendChild(x);
-    var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(src) || /video|\.m3u8/i.test(src);
-    var im = document.createElement(isVideo ? 'video' : 'img');
-    // R266（用户 09-27 15:08）：灯箱图片加 onerror 兜底，杜绝坏链接裸闪破损图标。
-    if (!isVideo) {
-      im.onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; if (this.classList) this.classList.add('media-fail'); };
-    }
-    im.src = src;
-    if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
-    im.style.cssText = 'width:min(90vw,1200px);height:min(90vh,800px);object-fit:contain;border-radius:8px;transition:transform .05s linear;' + (isVideo ? 'width:min(90vw,1200px);aspect-ratio:16/9;background:#000;' : '');
-    __lbMask.appendChild(im);
-    __lbScale = 1;
+    window.__lbShow(src);
     window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
     __lbMask.classList.add('open');
   };
@@ -1431,13 +1453,42 @@ window.formatPrice = function (price) {
   return '¥' + p.toFixed(2);
 };
 // 灯箱绑定：为 root 内所有 img/video 添加单击放大
+/* ===== v359 条2：全站统一横滑切换手势（一套逻辑全站通用） =====
+   阈值 60px / 横向位移须为纵向 2 倍以上 / 到头自然弹回、无任何提示。
+   onSwipe(dir)：dir=1 左滑（下一个）、-1 右滑（上一个）。
+   isActive()：可选，返回 false 时本次手势不响应（如弹窗开着时不响应页面级手势）。
+   排除区（统一）：输入框/下拉/按钮/链接/视频/富文本/统计图表/轮播/文件卡——这些区域有自己的交互。 */
+window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-chart, .modal-nav-arrow, .cat-picker-panel, .modal-carousel, .file-folder-wrap, .lightbox';
+window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
+  if (!el || !onSwipe) return;
+  var sx = 0, sy = 0, on = false;
+  el.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1) { on = false; return; }
+    if (isActive && !isActive()) { on = false; return; }
+    var t = e.target;
+    if (window.__swipeExclude && t.closest && t.closest(window.__swipeExclude)) { on = false; return; }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; on = true;
+  }, { passive: true });
+  el.addEventListener('touchend', function (e) {
+    if (!on) return; on = false;
+    var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    onSwipe(dx < 0 ? 1 : -1);
+  }, { passive: true });
+};
+
 window.bindLightbox = function (root) {
   if (!root) return;
   root.querySelectorAll('img').forEach(function (im) {
     if (im.dataset.lb) return;
     im.dataset.lb = '1';
     im.style.cursor = 'zoom-in';
-    im.addEventListener('click', function (ev) { ev.stopPropagation(); window.openLightbox(im.currentSrc || im.src); });
+    im.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      /* v358 S3：把同容器内所有图收集成一组——灯箱内左右滑可切本组图/视频 */
+      var srcs = Array.prototype.map.call(root.querySelectorAll('img'), function (x2) { return x2.currentSrc || x2.src; });
+      window.openLightbox(im.currentSrc || im.src, { list: srcs });
+    });
   });
   root.querySelectorAll('video').forEach(function (v) {
     if (v.dataset.lb) return;

@@ -1609,7 +1609,12 @@
           stateAnn.list.forEach(function (v2, i) { v2.sort = i + 1; });
           renderAnnList();
         });
-        item.appendChild(handle); item.appendChild(txt); item.appendChild(sortEl); item.appendChild(annStatusBtn); item.appendChild(delBtn);
+        /* v357 条6：绑定分组——公告名+排序一组；显示/隐藏+删除一组 */
+        var _agMain = document.createElement('span'); _agMain.className = 'ann-group ann-main-group';
+        _agMain.appendChild(txt); _agMain.appendChild(sortEl);
+        var _agAct = document.createElement('span'); _agAct.className = 'ann-group ann-act-group';
+        _agAct.appendChild(annStatusBtn); _agAct.appendChild(delBtn);
+        item.appendChild(handle); item.appendChild(_agMain); item.appendChild(_agAct);
         annListEl.appendChild(item);
       });
     }

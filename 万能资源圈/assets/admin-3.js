@@ -782,13 +782,15 @@
           renderVariants();
         });
 
+        /* v357 条5：绑定分组——名称+金额+排序一组、码+绑定一组（原有）、编辑+删除一组；换行整组走不拆散 */
+        var _gMain = document.createElement('span'); _gMain.className = 'v-group v-main-group';
+        _gMain.appendChild(name); if (_vipEl) _gMain.appendChild(_vipEl); _gMain.appendChild(sort);
+        var _gAct = document.createElement('span'); _gAct.className = 'v-group v-act-group';
+        _gAct.appendChild(editBtn); _gAct.appendChild(delBtn);
         item.appendChild(handle);
-        item.appendChild(name);
-        if (_vipEl) item.appendChild(_vipEl); /* R148：金额在类型名称与资源码中间 */
+        item.appendChild(_gMain);
         item.appendChild(codeSpan);
-        item.appendChild(sort);
-        item.appendChild(editBtn);
-        item.appendChild(delBtn);
+        item.appendChild(_gAct);
         variantListEl.appendChild(item);
       });
     }

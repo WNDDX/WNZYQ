@@ -306,7 +306,7 @@
     /* 显示/隐藏直接切换下拉（显示/隐藏，与分类管理同款，两字宽度一致） */
                             .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 8px; padding: 4px 12px; font-size: 13px; color: var(--text-light); }
 
-    .product-row .p-ops { display: flex; align-items: center; gap: 12px; position: relative; }
+    .product-row .p-ops { display: flex; align-items: center; gap: 0; position: relative; } /* v357 条3：间距唯一来源=row-btn 相邻 8px（原 gap12+margin8 叠加成 20px，与分类行 8px 不一） */
     /* v345 条1：行内所有按键统一高度与间距（资源码此前比其它键高 2px） */
     .p-ops .row-btn, .p-ops .select-picker.code-picker, .p-ops .select-picker.code-picker .cat-picker-display,
     .p-ops .status-btn, .p-ops .code-slot { height: 30px; min-height: 30px; box-sizing: border-box; }
@@ -605,6 +605,10 @@
     /* ---------- 弹窗 ---------- */
     .modal-mask {
       position: fixed; inset: 0; z-index: 200;
+    }
+    .modal-mask#variantMask { z-index: 260; } /* v357 条8：类型弹窗恒高于编辑弹窗，杜绝"打开但被盖住=像卡死" */
+    .modal-mask#inputMask { z-index: 320; } /* v357 条8：输入弹窗更高一级 */
+    .modal-mask#editMask { z-index: 200; }
       background: var(--overlay-modal);
       display: none; align-items: flex-start; /* R159：子元素 margin:auto 居中，超高时可滚 */ justify-content: center; padding: 16px;
       overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ /* R159：遮罩可滚——弹窗超出可视高度时底部永远可达 */
@@ -1241,6 +1245,11 @@
     /* 手机端适配 */
     @media (max-width: 600px) {
       .topbar-inner { gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
+      /* v357 老问题B：顶栏固定两段——第一行 logo+名称(左)+退出(贴右)，第二行 tabs 横滚；不再随意换行 */
+      .topbar-inner .topbar-brand { order: 1; margin-right: auto; }
+      .topbar-inner .topbar-right { order: 2; margin-left: 0; }
+      .topbar-inner .tabs { order: 3; flex: 1 1 100%; overflow-x: auto; scrollbar-width: none; }
+      .topbar-inner .tabs::-webkit-scrollbar { display: none; }
       .topbar-logo { width: 30px; height: 30px; }
       .topbar-brand { flex: 1; min-width: 0; font-size: 16px; }
         .topbar-brand span { display: none; }
@@ -1277,8 +1286,9 @@
       #productList:not(.card-view) .product-row .p-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; min-width: 0; max-width: 100%; /* v319：同上 */ }
       #productList:not(.card-view) .product-row .badge { align-self: flex-start; font-size: 10px; padding: 4px 4px; }
       #productList:not(.card-view) .product-row .select-picker { grid-row: 2; grid-column: 1 / 3; margin: 0; align-self: center; justify-self: start; }
-      #productList:not(.card-view) .product-row .p-ops { grid-row: 2; grid-column: 3 / 5; display: flex; gap: 8px; padding: 0; }
+      #productList:not(.card-view) .product-row .p-ops { grid-row: 2; grid-column: 3 / 5; display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; padding: 0; align-items: stretch; } /* v357 条2：五键强制等分一行（资源码+复制+显示+编辑+删除），grid 无视 flex/min-width 干扰 */
       #productList:not(.card-view) .product-row .p-ops .row-btn { flex: 1; text-align: center; }
+      #productList:not(.card-view) .product-row .p-ops .select-picker.code-picker { flex: 1 1 0; min-width: 0; } /* v357 条2：资源码键与其它键等分（原被挤成 22px 宽、图标被裁） */
       /* R37：网格视图（card-view）保持竖版卡片——原来竖排基础由列表模式"顺带"提供，
          列表模式改横向 grid 后，把竖排基础显式落到 card-view 自己头上 */
       #productList.card-view .product-row {
@@ -1313,15 +1323,15 @@
       .rte-toolbar .rte-btn, .rte-toolbar .rte-group, .rte-toolbar .select-picker, .rte-toolbar .rte-palette { flex-shrink: 0; }
       .rte-toolbar .rte-btn, .rte-toolbar .rte-select { font-size: 12px; padding: 0 4px; height: 32px; }
       .rte-toolbar .select-picker .cat-picker-display { padding: 0 4px; } /* R236：小屏下拉左 padding 与按钮同档 6px（桌面 0 10px 全局规则已与按钮一致） */
-      .tb-row2 { gap: 8px; flex-wrap: wrap; }
+      .tb-row2 { gap: 12px; flex-wrap: wrap; } /* v357 条1：与分类管理 .tb-row 的 12px 统一 */
       /* v355 条9（老板 10-11 00:32 拍板）：手机端三行固定——
          第一行=新增+全选（靠左）+视图切换（自觉靠右）；第二行=分类+状态（各占一半，必同一行）；第三行=搜索（独占）。
          视图切换必须给 order（此前漏给，默认 0 反而排到最前——这就是与描述对不上的原因） */
       .tb-row2 .btn-blue { order: 1; flex: 0 0 auto; }
       .tb-row2 label.sel-all-lbl { order: 2; flex: 0 0 auto; }
       .tb-row2 .view-toggle { order: 3; flex: 0 0 auto; margin-left: auto; } /* 第一行右侧 */
-      .tb-row2 .cat-picker { order: 4; flex: 1 1 calc(50% - 4px); width: auto; min-width: 0; }
-      .tb-row2 .select-picker { order: 5; flex: 1 1 calc(50% - 4px); width: auto; min-width: 0; }
+      .tb-row2 .cat-picker { order: 4; flex: 1 1 calc(50% - 6px); width: auto; min-width: 0; }
+      .tb-row2 .select-picker { order: 5; flex: 1 1 calc(50% - 6px); width: auto; min-width: 0; }
       .tb-row2 .admin-search { order: 6; flex: 1 1 100%; min-width: 0; margin-left: 0 !important; } /* 独占第三行 */
       /* v352 遗留1：列表视图里资源码下拉与复制/显示/编辑/删除一样 flex:1 —— 五颗键同宽同距 */
       #productList:not(.card-view) .product-row .p-ops .select-picker.code-picker { flex: 1 1 0; min-width: 0; margin-left: 8px; /* v352：与旁边按键的 8px 左距一致，五颗键间距统一 */ }
@@ -1492,17 +1502,20 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .cat-row .c-meta { display: contents; }
 
 @media (max-width: 600px) {
+  /* v357 条4：分类行改单行——名称+排序+资源数+蓝三角一行；操作按键默认收起，点三角展开（同绑定组整行走） */
   .cat-row {
-    display: grid;
-    grid-template-columns: 28px 20px 24px minmax(0, 1fr);
-    column-gap: 8px; row-gap: 8px;
-    align-items: center;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
   }
-  .cat-row .c-name { grid-row: 1; grid-column: 4; }
+  .cat-row .c-name { flex: 0 1 auto; min-width: 0; }
   .cat-row .c-meta {
-    grid-row: 2; grid-column: 1 / -1;
-    display: flex; flex-wrap: wrap; gap: 8px 8px; align-items: center;
+    display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    flex: 1 1 auto; min-width: 0;
   }
+  .cat-row .c-meta .row-btn { display: none; } /* 默认收起：编辑/删除不占行 */
+  .cat-row.cat-open .c-meta .row-btn { display: inline-flex; }
+  .cat-fold { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: auto; }
+  .cat-fold .toggle-arrow { transform: rotate(-90deg); transition: transform var(--dur-mid) var(--ease-out); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); }
+  .cat-row.cat-open .cat-fold .toggle-arrow { transform: rotate(0deg); }
 }
 
 /* R137（用户 18:14）：后台视频加载失败兜底卡——与前台 shop.css 同款逐参数照抄（复用，不搞差异化），
@@ -1944,9 +1957,7 @@ button, [role="button"], .row-btn, .batch-btn, .rte-btn, [onclick] { -webkit-tap
 /* v336 条88：长英文/网址强制换行 */
 .preview-title, .modal-box .modal-title { overflow-wrap: anywhere; word-break: break-word; }
 
-/* v336 条143：行内操作键视觉32/热区44；删除键与其他键拉开 8px */
-.row-btn { position: relative; }
-.row-btn::after { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%,-50%); }
+/* v359 条1：行内操作键 44×44 扩大热区已按老板要求全面移除——可点范围=视觉大小 */
 .row-btn + .row-btn { margin-left: 8px; }
 
 /* v336 条117：统计表文本列左对齐、数字列右对齐（等宽数字） */

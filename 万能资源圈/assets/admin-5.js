@@ -1618,6 +1618,19 @@ refreshCatCnts();
       });
       /* R230：真实条数少于骨架数时收尾移除多余骨架（资源页同款） */
       if (__reuse) { for (var __cj = ordered.length; __cj < __skels.length; __cj++) { if (__skels[__cj] && __skels[__cj].parentNode) __skels[__cj].parentNode.removeChild(__skels[__cj]); } }
+      /* v357 条4：手机档每行行尾注入展开/收起蓝三角（与分类栏同款三角；虚拟"全部"行不给） */
+      try {
+        if (window.matchMedia('(max-width: 600px)').matches) {
+          box.querySelectorAll('.cat-row').forEach(function (row) {
+            if (row.querySelector('.cat-fold') || row.querySelector('.cat-check') === null) return;
+            var fold = document.createElement('button');
+            fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '展开/收起操作'; fold.setAttribute('aria-label', '展开/收起操作');
+            fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
+            fold.addEventListener('click', function (e) { e.stopPropagation(); row.classList.toggle('cat-open'); });
+            row.appendChild(fold);
+          });
+        }
+      } catch (e) { if (window.__silent) window.__silent(e); }
     }
 
     setTimeout(function () { var _cb = document.getElementById('catList'); if (_cb) { _cb.classList.remove('prod-fade'); void _cb.offsetWidth; _cb.classList.add('prod-fade'); } }, 10);
