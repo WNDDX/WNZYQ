@@ -431,7 +431,7 @@
     }
 
     saveProductBtn.addEventListener('click', saveProduct);
-    editCancel.addEventListener('click', function () { editMask.classList.remove('open'); clearDraft(); });
+    editCancel.addEventListener('click', function () { try { if (window.__fcSweepEdit) window.__fcSweepEdit(editMask); } catch (e) {} editMask.classList.remove('open'); clearDraft(); }); /* v353：丢弃编辑=这次传的没用上的文件统一追删（后端核对引用，绝不误删） */
     editMask.addEventListener('click', function (e) { if (e.target === editMask) { saveDraft(); editMask.classList.remove('open'); } }); // R257（老板 09-23 19:08）：点外=暂存草稿（重开 openEdit 自动回填离开时内容）；×/取消=丢弃（clearDraft）。R111 原暂存语义恢复，R145 丢弃口径按老板最新反馈废除
 
     // ---------- 表单必填校验 ----------

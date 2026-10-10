@@ -30,11 +30,7 @@
     // v296（用户 10-04 02:44）：安全修复——把 shop.js 的 sanitizeHTML 复用到 admin.js
     // 富文本展示前过滤恶意代码（script/事件/javascript:协议/expression样式等）
     function sanitizeHTML(html) { return window.__sanitizeHTML ? window.__sanitizeHTML(html) : ""; } /* v336 条4：与前台同一套标准 */
-    function thumbOf(url) {
-      var u = String(url || '');
-      if (!/^\/img\/images\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpe?g|webp|gif)$/i.test(u)) return u;
-      return u.replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp');
-    }
+    var thumbOf = function (url) { return window.__thumbOf(url); }; /* v356 条22：合并至公共层唯一源 */
 
     /* R304 P18（用户 09-30 02:00）：存量旧图自动补生成小图——管理页拉到列表后，对本页图仓封面
        逐张探测派生小图是否存在：HEAD 200 记 localStorage 下次跳过；404 → 下载原图 canvas 生成
@@ -354,6 +350,7 @@
     });
     inputCancel.addEventListener('click', function () {
       if (__inputBusy) return;
+      try { if (window.__fcSweepEdit) window.__fcSweepEdit(inputMask); } catch (e) {} /* v354：丢弃输入弹窗=这次传的没用上的文件追删（后端核对引用，绝不误删） */
       inputMask.classList.remove('open');
       inputCallback = null;
     });

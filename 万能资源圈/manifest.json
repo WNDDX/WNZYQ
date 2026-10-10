@@ -13,7 +13,7 @@
   "icons": [
     {
       "src": "/assets/icons/icon-192.png",
-      "sizes": "192x192",
+      "sizes": "192x192", "purpose": "any maskable",
       "type": "image/png",
       "purpose": "any"
     },

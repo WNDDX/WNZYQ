@@ -50,5 +50,6 @@ export async function onRequestPost(context) {
   }
 
   const note = ext === 'mov' ? '（提示：mov 在部分浏览器可能无法直接播放，建议转成 mp4 再上传）' : '';
+  try { await recordUpload(env, key); } catch (e) {} /* v354：记台账 */
   return json({ ok: true, key, url: '/img/' + key, note: note });
 }

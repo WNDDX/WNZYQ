@@ -348,11 +348,7 @@
        （/img/images/…/uuid.ext）的固定小图为同目录 uuid_t.webp（上传封面时前端 canvas 生成、
        与原图同请求一起存储；管理页后台首次访问会自动给存量旧图补生成）。外链图派生不出小图，
        原样返回，读取侧无差别处理。 */
-    function thumbOf(url) {
-      var u = String(url || '');
-      if (!/^\/img\/images\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpe?g|webp|gif)$/i.test(u)) return u;
-      return u.replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp');
-    }
+    var thumbOf = function (url) { return window.__thumbOf(url); }; /* v356 条22：合并至公共层唯一源 */
 
     function loadImg(img, src, fallbackSrc) {
       img.dataset.lf = '1'; /* v345 条3：标记为“由 loadImg 接管”，全局兜底不再抢先换成占位符（避免闪一下） */ /* R304 P18：fallbackSrc=小图加载失败先回退的原图；不传（详情弹窗/轮播走原图）行为与原先完全一致 */
@@ -436,11 +432,11 @@
     }
     // 默认公告（一级公告）展示：选中"公告"标题，内容渲染到正文区
     function showAnnDefault() {
-      var l = (window.DATA && DATA.announcements) || [];
+      var l = DATA.announcements || []; /* v352 修：原读 window.DATA（从未赋值，恒 undefined）→ 点大标题永远静默返回；改用本模块的 DATA */
       var d = l.find(function (x) { return x.level === 1; }) || l[0];
       if (!d) return;
       var bd = document.getElementById('annBody');
-      if (bd) { var _c3 = sanitizeHTML(d.content || ''); bd.innerHTML = _c3 || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">暂无公告内容</div></div>'; bindMediaFail(bd); bindLightbox(bd);
+      if (bd) { var _c3 = sanitizeHTML(d.content || ''); bd.innerHTML = _c3 || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(bd); bindLightbox(bd);
       bindQuoteCopyButtons(bd); bindFileCards(bd); } // v303 + v320
       var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active');
       document.querySelectorAll('#annTabs .ann-tab').forEach(function (x) { x.classList.remove('active'); });
@@ -469,7 +465,7 @@
               if (bd) {
                 bd.classList.add('ann-body-fade-out'); /* R243（用户 09-22 23:18）：条37 旧内容淡出 */
                 setTimeout(function () {
-                  var _c2 = sanitizeHTML(a.content || ''); bd.innerHTML = _c2 || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">暂无公告内容</div></div>'; bindMediaFail(bd); bindLightbox(bd);
+                  var _c2 = sanitizeHTML(a.content || ''); bd.innerHTML = _c2 || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(bd); bindLightbox(bd);
                   bindQuoteCopyButtons(bd); bindFileCards(bd); // v303 + v320
                   bd.classList.remove('ann-body-fade-out'); /* R243（用户 09-22 23:18）：条37 新内容淡入 */
                   __annTransitioning = false;
@@ -483,7 +479,7 @@
       }
       // 默认显示第一条（一级公告）并选中"公告"标题
       var body = document.getElementById('annBody');
-      var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">暂无公告内容</div></div>'; bindMediaFail(body); bindLightbox(body);
+      var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(body); bindLightbox(body);
       bindQuoteCopyButtons(body); bindFileCards(body); } // v303 + v320
     }
     function renderAnnouncement() {
@@ -845,7 +841,14 @@
       img.alt = p.title || '';
       /* R304 P14：去 lazy——当前页卡片图全部一起加载（老板 09-30 拍板全系统按页加载） */
       var __thumb = thumbOf(p.img), __orig = p.img || '';
-      loadImg(img, __thumb, __orig); /* R304 P18：列表卡片读小图、小图缺失回退原图；详情弹窗封面/轮播/详情图仍走原图 */
+      /* v352 遗留3：无封面的资源直接上占位图（原先是空 src → 等报错再换占位图，
+         每次渲染都"空白→占位"闪一下，切分类回来又闪）；有封面才走小图/回退逻辑 */
+      if (!__orig) {
+        img.src = window.WN_MEDIA_FALLBACK || EXC_PLACEHOLDER;
+        img.classList.add('media-fail');
+      } else {
+        loadImg(img, __thumb, __orig); /* R304 P18：列表卡片读小图、小图缺失回退原图；详情弹窗封面/轮播/详情图仍走原图 */
+      }
       /* v346 条14：多尺寸——小图给普通屏、原图给高清屏（2x）；手机/大屏各取所需，不再一律同一尺寸 */
       if (__thumb && __orig && __thumb !== __orig) { img.srcset = __thumb + ' 1x, ' + __orig + ' 2x'; img.sizes = '(max-width:600px) 50vw, (max-width:900px) 33vw, 20vw'; }
       var body = document.createElement('div');

@@ -174,7 +174,21 @@
       var _p = _doFetch();
       if (!silent) __adminProductCacheLoading[_cacheKey] = _p;
       _p.then(function () { delete __adminProductCacheLoading[_cacheKey]; })
-        .catch(function () { delete __adminProductCacheLoading[_cacheKey]; __clearSwitching(); /* v330 条20：网络异常也要收掉换场态 */ });
+        .catch(function () {
+          delete __adminProductCacheLoading[_cacheKey]; __clearSwitching(); /* v330 条20：网络异常也要收掉换场态 */
+          /* v356 条13：网络异常路径补齐失败出口——与接口异常分支同一套空态+就地重试 */
+          try {
+            if (!silent) {
+              window.__adminSkelP = false; __clearAdminSkel(document.getElementById('productList'));
+              var _em = document.getElementById('productEmpty');
+              if (_em) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = __getAdminEmptyText(); }
+              var _plb = document.getElementById('productList');
+              if (_plb && !(state.products || []).length) {
+                window.__showLoadRetry(_plb.parentNode || _plb, function () { __adminProductCache = {}; loadProducts(); });
+              }
+            }
+          } catch (e0) { if (window.__silent) window.__silent(e0); }
+        });
       return _p;
     }
 
@@ -389,10 +403,7 @@
       });
     }
 
-    // v294（用户 10-04 02:14）：152 视图切换滚动位置记忆
-var __lastScrollY = 0;
-function saveScroll() { __lastScrollY = window.scrollY || window.pageYOffset || 0; }
-function restoreScroll() { window.scrollTo(0, __lastScrollY || 0); }
+    /* v356 条19：滚动记忆三件套死代码已删（全项目零调用） */
 function renderProducts() {
       if (window.__skipRenderOnce) { window.__skipRenderOnce = false; return; }
       refreshCatCnts();

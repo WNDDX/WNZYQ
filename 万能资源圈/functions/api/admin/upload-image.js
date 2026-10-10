@@ -6,7 +6,7 @@
  * 需登录。图片通过本站路由 /img/<key> 访问（自家域名 + CDN 缓存，无需填任何公开地址）。
  * R32：改为免绑卡 KV 方案 + 自家路由直出，URL 为相对路径 /img/...
  */
-import { json, requireAuth , putToBucket } from '../../_utils.js';
+import { json, requireAuth , putToBucket, recordUpload } from '../../_utils.js';
 
 const ALLOWED_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
 
@@ -47,6 +47,7 @@ export async function onRequestPost(context) {
         httpMetadata: { contentType: 'image/webp', cacheControl: 'public, max-age=31536000, immutable' },
       });
     }
+    try { await recordUpload(env, tkey); } catch (e) {} /* v354：记台账（24h 保护期依据） */
     return json({ ok: true, key: tkey, url: '/img/' + tkey });
   }
 

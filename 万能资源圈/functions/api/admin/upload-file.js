@@ -52,5 +52,6 @@ export async function onRequestPost(context) {
     });
   }
 
+  try { await recordUpload(env, key); } catch (e) {} /* v354：记台账 */
   return json({ ok: true, key, url: '/files/' + key });
 }

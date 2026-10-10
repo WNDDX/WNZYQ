@@ -505,3 +505,58 @@ export function withAuth(handler) {
     return handler(context);
   };
 }
+
+/* ===== v354：上传台账 + 全局孤儿清理（用户拍板：全系统一切没用上的上传文件都自动清） ===== */
+/* 记台账：每个上传成功的文件记一笔（24 小时内的新文件受保护，防误删编辑中途的文件） */
+export async function recordUpload(env, key) {
+  try {
+    await env.DB.prepare('CREATE TABLE IF NOT EXISTS uploads (key TEXT PRIMARY KEY, created_at TEXT NOT NULL)').run();
+    await env.DB.prepare("INSERT INTO uploads (key, created_at) VALUES (?, datetime('now')) ON CONFLICT(key) DO NOTHING").bind(key).run();
+  } catch (e) { /* 台账失败不影响上传 */ }
+}
+
+/* 拉全量内容文本（资源 + 类型 + 设置——公告也存在 settings 里），用于引用核对 */
+export async function buildContentText(env) {
+  const parts = [];
+  try {
+    const { results } = await env.DB.prepare('SELECT "img","detail","detail_images","detail_videos","resource_content" FROM products').all();
+    for (const r of (results || [])) parts.push(r.img, r.detail, r.detail_images, r.detail_videos, r.resource_content);
+  } catch (e) { return null; }
+  try {
+    const { results } = await env.DB.prepare('SELECT "desc","img","video","resource_content" FROM product_variants').all();
+    for (const r of (results || [])) parts.push(r.desc, r.img, r.video, r.resource_content);
+  } catch (e) { return null; }
+  try {
+    const { results } = await env.DB.prepare('SELECT "value" FROM settings').all();
+    for (const r of (results || [])) parts.push(r.value);
+  } catch (e) { return null; }
+  return parts.filter(Boolean).join('\n');
+}
+
+/* 引用核对：文件是否仍被任何内容引用。核对失败一律当作被引用（宁可保留，绝不误删） */
+export async function isKeyReferenced(env, key) {
+  try {
+    const txt = await buildContentText(env);
+    if (txt === null) return true;
+    return txt.indexOf(key) !== -1;
+  } catch (e) { return true; }
+}
+
+/* 保存自动追删：oldText 里有、newText 里没有的文件钥匙 → 逐个核对引用后删除 */
+export async function sweepDroppedKeys(env, oldText, newText) {
+  try {
+    const re = /(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+/g;
+    const olds = new Set(String(oldText || '').match(re) || []);
+    const news = new Set(String(newText || '').match(re) || []);
+    const gone = Array.from(olds).filter(function (k) { return !news.has(k); }).slice(0, 200);
+    if (!gone.length) return 0;
+    const bucket = env.IMAGE_BUCKET;
+    if (!bucket) return 0;
+    let n = 0;
+    for (const key of gone) {
+      if (await isKeyReferenced(env, key)) continue;
+      try { await bucket.delete(key); n++; } catch (e) {}
+    }
+    return n;
+  } catch (e) { return 0; }
+}

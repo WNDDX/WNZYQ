@@ -3,7 +3,7 @@
  * PUT    /api/admin/variants/:id   → 更新类型
  * DELETE /api/admin/variants/:id   → 删除类型
  */
-import { json, requireAuth, readJSON, ensureVariantColumns, clearPublicCache } from '../../../_utils.js';
+import { json, requireAuth, readJSON, ensureVariantColumns, clearPublicCache, sweepDroppedKeys } from '../../../_utils.js';
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
@@ -17,6 +17,13 @@ export async function onRequestPut(context) {
   const name = String(b.name || '').trim();
   if (!name) return json({ ok: false, msg: '请填写类型名称' }, 400);
   await ensureVariantColumns(env);
+
+  /* v354：改类型前记下旧内容——保存后把"旧有新无"的上传文件自动追删（后端核对全库引用，绝不误删） */
+  let __oldVariant = '';
+  try {
+    const __or = await env.DB.prepare('SELECT "desc",img,video,resource_content FROM product_variants WHERE id = ?').bind(id).first();
+    if (__or) __oldVariant = [__or.desc, __or.img, __or.video, __or.resource_content].join('\n');
+  } catch (e) {}
 
   // R106：绑定设备上限挪进类型表单（<1 或非法一律按 1）
   const bindLimit = Math.max(1, parseInt(b.bindLimit, 10) || 1);
@@ -42,6 +49,7 @@ export async function onRequestPut(context) {
     .run();
 
   await clearPublicCache(request);
+  try { await sweepDroppedKeys(env, __oldVariant, JSON.stringify({ d: b.desc, i: b.img, v: b.video, r: b.resourceContent })); } catch (e) {} /* v354 */
   return json({ ok: true });
 }
 

@@ -34,7 +34,8 @@ body{margin:0;font-family:Microsoft YaHei,sans-serif;background:#f2f7fd;color:#2
 .err-reasons{list-style:none;padding:0;margin:6px 0}.err-reasons li{margin:2px 0}.skip-link{position:absolute;left:-9999px}.skip-link:focus{left:0}/* v349 条6：补全站同款键盘焦点光晕（此前 Tab 键看不出选中在哪） */a:focus-visible,button:focus-visible{outline:3px solid #7fb2e8;outline-offset:2px;border-radius:4px}</style>
 <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
 <style>
-/* 变量唯一源：--blue1/2/3 由 ui-common.css :root 提供，本页禁止再定义 */
+/* v356 条20：本页不加载公共样式，--blue1/2/3 在此自定义（原注释称由公共层提供是错的，导致后续新增无 fallback 的变量直接失效） */
+:root{--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;}
 *,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
 body{background:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 20px var(--page-bottom-gap,24px); /* v293（用户 10-04 02:14）：070顶部留白20→24px→跟导航页统一 *//*R229(用户 09-21 19:44):底部留白全站统一,原20→24*/}

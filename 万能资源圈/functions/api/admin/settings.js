@@ -3,7 +3,7 @@
  * PUT  /api/admin/settings   → 批量更新平台设置（需登录）
  * body (PUT): { shop_name, shop_logo, contact_url, ... }
  */
-import { json, requireAuth, readJSON } from '../../_utils.js';
+import { json, requireAuth, readJSON, sweepDroppedKeys } from '../../_utils.js';
 
 // 允许设置的 key 白名单
 const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'] /* R54：r2_public_base 已废弃删除（图片走 /img/ 路由，无需直连地址） */
@@ -26,6 +26,10 @@ export async function onRequestPut(context) {
 
   const b = await readJSON(request);
 
+  /* v354：保存前记下旧值——保存完成后把"旧有新无"的上传文件自动追删（后端核对全库引用，绝不误删） */
+  let __oldSettings = '';
+  try { const { results } = await env.DB.prepare('SELECT value FROM settings').all(); for (const r of (results || [])) __oldSettings += (r.value || '') + '\n'; } catch (e) {}
+
   for (const key of ALLOWED_KEYS) {
     if (key in b) {
       const val = String(b[key] || '');
@@ -38,5 +42,6 @@ export async function onRequestPut(context) {
     }
   }
 
+  try { await sweepDroppedKeys(env, __oldSettings, JSON.stringify(b)); } catch (e) {} /* v354：换掉的图/删掉的公告里的文件自动追删 */
   return json({ ok: true, msg: '设置已保存' });
 }

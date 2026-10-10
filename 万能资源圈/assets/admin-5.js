@@ -123,7 +123,7 @@
       var pager = document.getElementById('bindingsPager');
 
       if (!total) {
-        tbody.innerHTML = '<tr><td colspan="7" style="color:#999;">暂无资源码与绑定设备，访客输入正确资源码后将自动绑定其设备</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">' + window.__adminEmpty('暂无资源码与绑定设备', '访客输入正确资源码后将自动绑定其设备') + '</td></tr>'; /* v356 条11：统一空态 */
         if (pager) pager.innerHTML = '';
         return;
       }
@@ -260,7 +260,7 @@
       void _rmIdx; /* 保留索引备用（撤销按快照整体还原） */
     }
 
-    variantCancel.addEventListener('click', function () { variantDraftPending = false; variantMask.classList.remove('open'); });
+    variantCancel.addEventListener('click', function () { try { if (window.__fcSweepEdit) window.__fcSweepEdit(variantMask); } catch (e) {} /* v354：丢弃类型弹窗=这次传的没用上的文件追删 */ variantDraftPending = false; variantMask.classList.remove('open'); });
     variantMask.addEventListener('click', function (e) { if (e.target === variantMask) { variantDraftPending = true; variantMask.classList.remove('open'); } }); // R257（老板 09-23 19:08）：点外=暂存输入（variantDraftFor 保留，重开同类型自动恢复）；×/取消=丢弃
 
     function fmtDay(s) { var p = String(s || '').split('-'); return p.length >= 3 ? String(Number(p[2])) : s; } // R52：图表标签只显号数（用户要求去掉月份）
@@ -2629,6 +2629,12 @@ function boot() {
     }
 
     function showMain(username) {
+      /* v354：全局孤儿清理自动触发——进后台立刻扫一次，之后每 30 分钟一次；后端节流+24h 保护期兜底 */
+      try {
+        var __gc = function () { try { fetch('/api/admin/global-cleanup', { method: 'POST', credentials: 'include' }).catch(function () {}); } catch (e) {} };
+        __gc();
+        if (!window.__gcTimer) window.__gcTimer = setInterval(__gc, 30 * 60 * 1000);
+      } catch (e) {}
       loginView.style.display = 'none';
       mainView.style.display = 'block';
       // v294（用户 10-04 02:14）：131 记录登录时间，23小时后提示即将过期

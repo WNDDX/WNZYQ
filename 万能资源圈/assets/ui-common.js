@@ -381,8 +381,7 @@ if ('serviceWorker' in navigator) {
     if (!Array.isArray(arr)) arr = [];
     if (!arr.length && settings.announcement) arr = [{ id: 0, title: '公告', content: String(settings.announcement || ''), hidden: 0, sort: 0, level: 1 }];
     if (opts.filterHidden) arr = arr.filter(function (a) { return !a.hidden; });
-    /* v346 条73：正文为空的公告不显示——避免弹出「暂无公告内容」空框（正文只含图片的保留） */
-    arr = arr.filter(function (a) { if (!a) return false; var s = String(a.content || ''); if (/<img\b/i.test(s)) return true; return s.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim() !== ''; });
+    /* v352：空公告不再过滤（老板 10-10 要求空公告项也要显示，点开显示「该公告暂无内容」占位） */
     if (opts.sortLevel) {
       arr.sort(function (a, b) { var la = a.level === 1 ? -1 : 0, lb = b.level === 1 ? -1 : 0; if (la !== lb) return la - lb; return (a.sort || 0) - (b.sort || 0); });
     } else {
@@ -476,11 +475,11 @@ if ('serviceWorker' in navigator) {
       mask.className = 'modal-mask alert-mask open';
       mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:10060;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
-        '<div class="modal-box" style="background:#fff;border-radius:14px;width:100%;max-width:400px;padding:26px 22px;position:relative;text-align:center;max-height:84vh;overflow-y:auto;min-height:auto;">' +
+        '<div class="modal-box" style="background:#fff;border-radius:12px;width:100%;max-width:400px;padding:24px 22px;position:relative;text-align:center;max-height:min(88vh,88dvh);overflow-y:auto;min-height:auto;">' + /* v356 条1：12px/24px/88dvh 对齐全站弹窗档 */
           '<button type="button" class="modal-close-x" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
-          '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1.2px;padding:0 34px;text-align:center;"></div>' +
+          '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1px;padding:0 32px;text-align:center;"></div>' + /* v356 条9：字距/边距对齐弹窗标题档 */
           '<div class="alert-body" style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
-          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:10px;padding:11px 0;background:#1E88E5 /* v293（用户 10-04 02:14）：069alert-ok圆角8→10px→跟全站按钮统一 */;color:#fff;font-size:16px;cursor:pointer;letter-spacing:1px;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);box-shadow:var(--shadow-blue); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 2px 6px rgba(30,136,229,0.25)改var(--shadow-blue) */ -webkit-tap-highlight-color:transparent;">确定</button></div>' +
+          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:10px;height:46px;padding:0;background:#1E88E5 /* v293（用户 10-04 02:14）：069alert-ok圆角8→10px→跟全站按钮统一 */;color:#fff;font-size:16px;font-weight:600;cursor:pointer;letter-spacing:1.2px;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);box-shadow:var(--shadow-blue); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 2px 6px rgba(30,136,229,0.25)改var(--shadow-blue) */ -webkit-tap-highlight-color:transparent;">确定</button></div>' +
         '</div>';
       var titleEl = mask.querySelector('.modal-title');
       var bodyEl = mask.querySelector('.alert-body');
@@ -534,9 +533,9 @@ if ('serviceWorker' in navigator) {
       mask.setAttribute('role', 'dialog');
       mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
-        '<div class="share-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-modal); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 10px 40px rgba(0,0,0,0.3)改var(--shadow-modal) */ animation:modalIn 0.18s ease;">' +
-          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
-          '<div data-share-title style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
+        '<div class="share-box" style="background:#fff;border-radius:12px;position:relative;padding:24px 20px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-modal); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 10px 40px rgba(0,0,0,0.3)改var(--shadow-modal) */ animation:modalIn var(--dur-mid) var(--ease-out); /* v356 条2：12px/24px/统一时长缓动 */">' +
+          '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:var(--danger-bg,#fdecea);color:var(--red-strong,#c62828);font-size:19px; /* v356 条4：×键纳入全站红系 */cursor:pointer;line-height:1;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
+          '<div data-share-title style="font-size:20px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' + /* v356 条6：标题统一 20px */
           '<div data-share-tip style="font-size:13px;color:var(--gray-mid);margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
           '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
           '<button data-share-ok type="button" class="share-ok">确定</button>' +
@@ -1650,28 +1649,31 @@ window.__btnFit = function () {
     var groups = document.querySelectorAll('.btn-fit-group');
     for (var g = 0; g < groups.length; g++) {
       var grp = groups[g];
+      /* v352 条10：先量宽度，量不到（面板隐藏/未布局=宽 0）就整组跳过、保持原状——
+         原写法先把全部按钮恢复成文字、再发现量不到直接 continue，
+         结果隐藏过的组一被扫到就全变文字且不再收回去（图标⇄文字来回跳、文字显示不全的根因） */
+      var avail = grp.clientWidth;
+      if (!avail) continue;
       var btns = Array.prototype.slice.call(grp.querySelectorAll('.btn-fit[data-pri]'));
       if (!btns.length) continue;
       btns.sort(function (a, b) { return (Number(a.dataset.pri) || 99) - (Number(b.dataset.pri) || 99); });
       /* 先全部恢复文字，再按优先级从低到高逐个收起，直到不溢出 */
       for (var i = 0; i < btns.length; i++) btns[i].classList.remove('ico-only');
-      var avail = grp.clientWidth;
-      if (!avail) continue;
       for (var j = btns.length - 1; j >= 0; j--) {
         if (grp.scrollWidth <= avail + 1) break;
         btns[j].classList.add('ico-only');
       }
-    }
-    /* v345 条4：单按钮级——文字被截断/放不下时，收起文字改显图标（图标与文字只显其一） */
-    for (var k = 0; k < btns.length; k++) {
-      var bt = btns[k];
-      if (bt.classList.contains('ico-only')) continue;
-      var clipped = bt.scrollWidth > bt.clientWidth + 1;
-      if (!clipped) {
-        var lab = bt.querySelector('.btn-lab');
-        if (lab && lab.scrollWidth > lab.clientWidth + 1) clipped = true;
+      /* v345 条4 + v352 修：单按钮级截断检测——原来写在组循环外面、只会扫到最后一组，已移进各组 */
+      for (var k = 0; k < btns.length; k++) {
+        var bt = btns[k];
+        if (bt.classList.contains('ico-only')) continue;
+        var clipped = bt.scrollWidth > bt.clientWidth + 1;
+        if (!clipped) {
+          var lab = bt.querySelector('.btn-lab');
+          if (lab && lab.scrollWidth > lab.clientWidth + 1) clipped = true;
+        }
+        if (clipped) bt.classList.add('ico-only');
       }
-      if (clipped) bt.classList.add('ico-only');
     }
   } catch (e) { if (window.__silent) window.__silent(e); }
 };
@@ -2225,12 +2227,18 @@ window.__collectFileKeys = function (text) {
   return out;
 };
 
+/* v356 条22：缩略图地址换算唯一源（原资源页/管理页各抄一份） */
+window.__thumbOf = function (url) {
+  var u = String(url || '');
+  if (!/^\/img\/images\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpe?g|webp|gif)$/i.test(u)) return u;
+  return u.replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp');
+};
+
 /* v336 条208：安检包装——内容被大幅剥离时给管理员一次轻提示（不再无声吞掉） */
 window.__sanitizeHTML = function (html) {
-  var __before = html ? html.length : 0;
-  var __res = window.__sanitizeCore(html);
-  try { if (html && __res && __res.length < __before * 0.6 && window.uiToast) uiToast('已自动移除部分不支持的内容'); } catch (e) { if (window.__silent) window.__silent(e); }
-  return __res;
+  /* v352 遗留6：去掉"已自动移除部分不支持的内容"提示——详情/公告里带文件卡时这句每次进页都弹，烦；
+     净化本身照常静默执行（内容安全性不受影响） */
+  return window.__sanitizeCore(html);
 };
 
 /* v343 条66：弹窗打开时把键盘范围“圈住”——Tab 只在弹窗内循环，不会跑到背后被遮住的按钮上（防误操作） */

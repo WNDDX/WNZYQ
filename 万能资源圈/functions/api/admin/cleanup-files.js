@@ -5,9 +5,9 @@
  * 安全：①需登录；②key 白名单校验；③删前逐个核对该 key 是否仍被任何资源/类型引用，被引用的一律保留；
  *     ④单次最多 200 个 key。
  */
-import { json, requireAuth, readJSON } from '../../_utils.js';
+import { json, requireAuth, readJSON, buildContentText } from '../../_utils.js';
 
-const KEY_RE = /^(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}\.[a-zA-Z0-9]+(?:_t)?$/;
+const KEY_RE = /^(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+$/;
 const P_FIELDS = ['img', 'detail', 'detail_images', 'detail_videos', 'resource_content'];
 const V_FIELDS = ['desc', 'img', 'video', 'resource_content'];
 
@@ -25,21 +25,12 @@ export async function onRequestPost(context) {
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) return json({ ok: false, msg: '存储未绑定（IMAGE_BUCKET）' }, 400);
 
+  /* v354：引用核对升级——一次拉全库内容（资源+类型+设置，公告也在 settings 里），更快也更全 */
+  const contentText = await buildContentText(env);
   let deleted = 0;
   for (const key of keys) {
-    /* 删前引用核对：任何资源/类型的任何字段里还出现这个 key，就坚决不删 */
-    let used = true;
-    try {
-      const like = '%' + key + '%';
-      const pSel = await env.DB.prepare(
-        'SELECT COUNT(*) AS n FROM products WHERE ' + P_FIELDS.map(function (f) { return '"' + f + '" LIKE ?'; }).join(' OR ')
-      ).bind.apply(null, [like, like, like, like, like]).first();
-      const vSel = await env.DB.prepare(
-        'SELECT COUNT(*) AS n FROM product_variants WHERE ' + V_FIELDS.map(function (f) { return '"' + f + '" LIKE ?'; }).join(' OR ')
-      ).bind.apply(null, [like, like, like, like]).first();
-      used = ((pSel && pSel.n) || 0) > 0 || ((vSel && vSel.n) || 0) > 0;
-    } catch (e) { used = true; } /* 核对失败宁可保留，绝不误删 */
-    if (used) continue;
+    if (contentText === null) break; /* 核对失败宁可全保留，绝不误删 */
+    if (contentText.indexOf(key) !== -1) continue; /* 仍被引用，坚决不删 */
     try { await bucket.delete(key); deleted++; } catch (e) { /* 单个失败不影响其余 */ }
   }
   return json({ ok: true, deleted: deleted });

@@ -339,7 +339,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <section id="panel-categories" style="display:none">
         <div class="toolbar">
           <div class="tb-row"><button class="btn-blue" id="addCatBtn">新增分类</button><label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#333;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="catSelectAll" /> 全选</label></div>
-          <span class="toolbar-hint">"全部"为固定分类，不可修改删除；排序值越小越靠前</span>
+          
         </div>
         <!-- 分类批量操作栏 -->
         <div class="batch-bar" id="catBatchBar">
@@ -542,7 +542,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <label for="fTitle">标题</label><input id="fTitle" maxlength="100" />
         <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
         <!-- R256：封面多图轮播——横排小图列表 -->
-        <label>资源封面图 <span class="label-hint">第一张为封面图，用于列表卡片显示；可添加多张轮播</span></label>
+        <label>资源封面图 </label>
         <div class="cover-gallery" id="coverGallery"></div>
         <div style="display:flex;gap:8px;align-items:stretch;margin-top:8px;">
           <input id="fImg" style="flex:1;min-width:0;" maxlength="500" />
@@ -550,8 +550,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         </div>
         <div style="font-size:12px;color:var(--text-light,#666);margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" decoding="async" style="display:none;" />
-        <label>简介 <span class="label-hint">列表卡片上显示的一句话</span></label><input id="fDesc" maxlength="200" />
-        <label>详细描述 <span class="label-hint">支持文字、图片、视频混排</span></label>
+        <label>简介 </label><input id="fDesc" maxlength="200" />
+        <label>详细描述 </label>
         <div class="rte-toolbar rte-collapsed" id="detailRteToolbar" data-editor="fDetail"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="fDetail" title="字体">
             <option value="">字体</option>
@@ -618,19 +618,19 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           </h4>
           <div id="variantList"></div>
         </div>
-        <label>价格 <span class="label-hint">单位元，不填或 0 = 免费</span></label>
+        <label>价格 </label>
         <input id="fPrice" type="number" step="0.01" min="0" inputmode="decimal" />
-        <label>咨询客服链接 <span class="label-hint">可不填，默认用全局客服</span></label>
+        <label>咨询客服链接 </label>
         <input id="fContactUrl" maxlength="500" />
-        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="fSort" type="number" step="any" value="0" inputmode="numeric" />
+        <label>排序 </label><input id="fSort" type="number" step="any" value="0" inputmode="numeric" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 显示（勾选后资源页可见，取消则隐藏）</label>
         <div class="sch-row">
           <div class="sch-col">
-            <label>定时显示 <span class="label-hint">可不填＝不定时自动显示</span></label>
+            <label>定时显示 </label>
             <input id="fScheduleOn" type="text" readonly class="dt-field" data-dt="datetime" />
           </div>
           <div class="sch-col">
-            <label>定时隐藏 <span class="label-hint">可不填＝不定时自动隐藏</span></label>
+            <label>定时隐藏 </label>
             <input id="fScheduleOff" type="text" readonly class="dt-field" data-dt="datetime" />
           </div>
         </div>
@@ -662,7 +662,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           <label>所属一级分类</label>
           <div class="cat-picker" id="catParentPicker" style="margin-bottom:8px;"><input type="hidden" id="catParentValue" value="0" /><div class="cat-picker-display" id="catParentDisplay"><span class="cpd-text">请选择所属一级分类</span><span class="cpd-arrow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="catParentPanel"></div></div>
         </div>
-        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="catSort" class="input" type="number" step="any" value="0" inputmode="numeric" />
+        <label>排序 </label><input id="catSort" class="input" type="number" step="any" value="0" inputmode="numeric" />
         <label class="checkbox-row"><input type="checkbox" id="catHidden" /> 隐藏（资源页不显示，仅管理页可见）</label>
       </div>
       <div class="modal-footer">
@@ -734,10 +734,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <button aria-label="关闭" class="modal-close-x" data-close="variantMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="variantModalTitle">新增类型</h2>
       <div class="form">
-        <label>类型名称 <span class="label-hint">如：基础版 / 高级版 / 单月卡</span></label><input id="vName" />
+        <label>类型名称 </label><input id="vName" />
         <!-- R148（用户 01:50）：类型名称输入框下新增类型标题——前台资源类型信息栏第一行黑字显示此内容，留空回退类型名称 -->
-        <label>类型标题 <span class="label-hint">留空显示类型名称</span></label><input id="vTitle" />
-        <label>类型描述 <span class="label-hint">支持文字、图片、视频、超链接</span></label>
+        <label>类型标题 </label><input id="vTitle" />
+        <label>类型描述 </label>
         <div class="rte-toolbar rte-collapsed" id="vDescRteToolbar" data-editor="vDescEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="vDescEditor" title="字体">
             <option value="">字体</option>
@@ -796,13 +796,13 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <div class="rte-editor" id="vDescEditor" contenteditable="true" style="min-height:60px;max-height:120px;border-radius:0 0 8px 8px;"></div>
         <div class="rte-count" data-for="vDescEditor">已输入 0 字</div>
         <label class="checkbox-row"><input type="checkbox" id="vHidden" /> 隐藏该类型（资源页不显示，仅管理页可见）</label>
-        <label>专属客服链接 <span class="label-hint">可不填，默认用资源/全局客服</span></label><input id="vContactUrl" />
-        <label>类型价格 <span class="label-hint">不填或 0 则用资源价格</span></label>
+        <label>专属客服链接 </label><input id="vContactUrl" />
+        <label>类型价格 </label>
         <input id="vPrice" type="number" step="0.01" min="0" inputmode="decimal" />
-        <label>排序 <span class="label-hint">数值越小越靠前</span></label><input id="vSort" type="number" value="0" inputmode="numeric" />
-        <label>资源码 <span class="label-hint">可不填，访客咨询客服后获取</span></label>
+        <label>排序 </label><input id="vSort" type="number" value="0" inputmode="numeric" />
+        <label>资源码 </label>
         <input id="vResourceCode" maxlength="8" />
-        <label>绑定设备上限 <span class="label-hint">最多可绑定台数，默认 1</span></label>
+        <label>绑定设备上限 </label>
         <input id="vBindLimit" type="number" min="1" step="1" value="1" />
         <label>专属内容（支持文字/链接/图片/视频）</label>
         <div class="rte-toolbar rte-collapsed" id="vContentRteToolbar" data-editor="vContentEditor" style="border-radius:8px 8px 0 0;"><span class="rte-group">

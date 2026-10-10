@@ -46,7 +46,7 @@
   --ls-btn: 1.2px;    /* R285 条14：按钮/输入/标签档 */
   /* R285 条50：全站叠放层级明账（低→高）：200详情遮罩 998分享遮罩 6000-6002富文本面板 6001拖拽幽灵
      9999客服遮罩 10040右键菜单/表格操作条 10050命令面板遮罩 100000图片灯箱 100001提示胶囊
-     100002兜底toast 100100顶部进度条 100200部署警示横幅（原 2147483647 死数已清） */
+     100002兜底toast 100100顶部进度条 100200部署警示横幅 10060JS提示弹窗（v356 条18 入账） */
   --gap: 10px;
   --price-orange: #C86800; /* v346 条32：价格文字加深（原 #F57C00 白底对比仅 2.7，达不到可读标准；改 #C86800 约 4.6） */
   --price-text: #C86800; /* v346 条32：同上，价格文字统一深橙 */
@@ -124,12 +124,13 @@
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页：结构/尺寸/样式/动画一处定义全站生效） ===== */
 .kf-mask {
   position: fixed; inset: 0; background: var(--overlay-modal); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); /* v356 条5：遮罩毛玻璃对齐 modal-mask */
 }
 .kf-mask.open { display: flex; animation: kfMaskIn var(--dur-mid) var(--ease-out); }
 @keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
 .kf-box {
   background: var(--card-bg); border-radius: var(--radius-lg); padding: 24px /* v336 条106 */; position: relative;
-  max-width: 480px; width: 100%; max-height: 84vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
+  max-width: 480px; width: 100%; max-height: min(84vh, 84dvh); overflow-y: auto; /* v356 条5：dvh 兜底 */ overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
   animation: kfBoxIn var(--dur-mid) var(--ease-out);
 }
 @keyframes kfBoxIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：客服弹窗卡片入场加展开（与关闭收缩对称） */
@@ -137,7 +138,7 @@
 .kf-qr {
   width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border); background: var(--bg-light);
   margin: 0 auto 12px; position: relative; display: flex; align-items: center;
-  justify-content: center; border-radius: 10px; background: var(--bg-light, #f3f4f6); /* R192 一②：二维码图框圆角对齐全站 12px（原 6px 漏网） */
+  justify-content: center; border-radius: 12px; background: var(--bg-light, #f3f4f6); /* R192 一②：二维码图框圆角对齐全站 12px（v356 条15：原 10px 与注释不符已修） */
 }
 .kf-qr img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: 8px; } /* R215 条7：圆角对齐交流群图片（.modal-qrcode 8px） */
 .kf-qr img[src^="data:image/svg+xml"] { width: 100%; height: 100%; object-fit: contain !important; }
@@ -148,9 +149,9 @@
 #modalImg.kf-qr-in { animation: kfQrIn var(--dur-mid) var(--ease-out); }
 .kf-tip { font-size: 16px; color: var(--text-light); margin-bottom: 16px; /* R186 建议5：gray-text 暗色下过暗，统一语义次级文字 */ letter-spacing: 1px; word-break: break-word; }
 .kf-jump {
-  width: 80%; margin: 0 auto 12px; border: none; border-radius: var(--radius); padding: 12px 32px;
-  background: var(--green); color: #fff; font-size: 18px; font-weight: 600; /* v293（用户 10-04 02:14）：006按钮字重统一→500改600跟全站按钮统一 */ cursor: pointer;
-  letter-spacing: 1px; display: inline-flex; align-items: center; justify-content: center;
+  width: 80%; margin: 0 auto 12px; border: none; border-radius: var(--radius); height: 46px; padding: 0 32px;
+  background: var(--green); color: #fff; font-size: 16px; font-weight: 600; /* v293（用户 10-04 02:14）：006按钮字重统一→500改600跟全站按钮统一 | v356 条12：统一 46px/16px 模子 */ cursor: pointer;
+  letter-spacing: var(--ls-btn, 1.2px); display: inline-flex; align-items: center; justify-content: center;
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
 .kf-close {
@@ -224,10 +225,13 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 .modal-mask { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); /* v336 条123：遮罩毛玻璃 */ z-index: 2000 !important; }
 #inputMask { z-index: 6002 !important; } /* R15：编辑器插入图片/视频等"弹窗里的输入弹窗"，必须高于业务弹窗与放大编辑器 */
 .share-mask { z-index: 3000 !important; }
+/* v356 条4：分享弹窗 × 键纳入全站红系（静态版底色 + 动态版 hover，与其他弹窗 × 同一套） */
+.share-mask .modal-close-x { background: var(--danger-bg, #fdecea) !important; color: var(--red-strong, #c62828) !important; } /* v356 条4：192 行灰底兜底带 !important，此处需同级覆盖 */
+.share-mask .modal-close-x:hover { background: var(--red-strong, #c62828) !important; color: #fff !important; filter: none; }
 /* R16c：分享链接弹窗确定键——与资源页分享本站弹窗 .share-close 逐字复用（含按压动画，此前动态弹窗为纯内联样式无反馈） */
 .share-ok {
-  display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: 10px;
-  background: #1E88E5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+  display: block; width: 100%; margin-top: 16px; height: 46px; padding: 0; border: none; border-radius: 10px;
+  background: #1E88E5; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; /* v356 条12：统一 46px/16px 模子 */
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; letter-spacing: 1px; -webkit-tap-highlight-color: transparent;
 }
 .share-ok:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }

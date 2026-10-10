@@ -48,7 +48,7 @@
         xhr.onload = function () {
           try {
             var res = JSON.parse(xhr.responseText);
-            if (res && res.ok && res.url) cb(res.url);
+            if (res && res.ok && res.url) cb(res.url, null, res.key); /* v353：钥匙一并回传，供遗留清理记账 */
             else { toast((res && (res.msg || res.error)) || '上传失败', 'error'); if (cb) cb(null, (res && (res.msg || res.error)) || '上传失败'); }
           } catch (e) { toast('上传失败，请重试', 'error'); if (cb) cb(null, '上传失败'); }
         };
@@ -238,6 +238,7 @@
     (function () {
       if (window.__upman) return;
       var host = null;
+      var tasks = []; /* v353：在途任务登记，弹窗丢弃时统一掐断 */
       function ensureHost() {
         if (host) return host;
         host = document.createElement('div');
@@ -265,6 +266,7 @@
         var state = row.querySelector('.upman-state');
         var done = false;
         var task = { xhr: null, retries: 0 };
+        tasks.push(task); if (tasks.length > 120) tasks.splice(0, tasks.length - 120); /* v353 */
         function finish(cls, txt) {
           done = true;
           row.classList.add(cls);
@@ -325,7 +327,77 @@
         return task;
       }
       window.__upman = { run: run };
+      /* v353：掐断全部在途上传（编辑弹窗丢弃内容时调用，防止传一半的文件白占额度） */
+      window.__upmanAbortAll = function () {
+        for (var i = 0; i < tasks.length; i++) {
+          var t = tasks[i];
+          try { if (t && t.xhr && t.xhr.readyState !== 4 && t.xhr.abort) t.xhr.abort(); } catch (e) {}
+        }
+        tasks.length = 0;
+      };
     })();
+
+    /* ===== v353：上传遗留防护——传了但最后没被用上的文件，自动追删，绝不白占存储额度 =====
+       安全底线：追删走 /api/admin/cleanup-files，后端删前逐个核对全库引用，仍被任何资源引用的一律保留。 */
+    window.__fcSweepKeys = function (keys) {
+      try {
+        keys = (keys || []).filter(Boolean).slice(0, 200);
+        if (!keys.length) return;
+        fetch('/api/admin/cleanup-files', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keys: keys }), keepalive: true /* keepalive：关页瞬间也能把请求发出去 */
+        }).catch(function () {});
+      } catch (e) { if (window.__silent) window.__silent(e); }
+    };
+    window.__fcSweepEdit = function (mask) {
+      try {
+        if (!mask) mask = document.getElementById('editMask');
+        /* ① 掐掉还在半路的上传（没传完的作废） */
+        try { if (window.__upmanAbortAll) window.__upmanAbortAll(); } catch (e) {}
+        /* ② 收集这次编辑里出现过的全部文件钥匙：行卡 data-key + 弹窗 HTML / 封面字段里的链接 */
+        var html = '';
+        try { html = mask ? mask.innerHTML : ''; } catch (e) {}
+        try {
+          /* v354：输入框的当前值是运行时赋的，不在 innerHTML 里——逐个拼进来（通用弹窗的链接/封面等） */
+          if (mask) {
+            var __ios = mask.querySelectorAll('input, textarea');
+            for (var __i = 0; __i < __ios.length; __i++) html += '|' + (__ios[__i].value || '');
+          }
+        } catch (e) {}
+        try {
+          var _fi = document.getElementById('fImg');
+          try { var _fd = document.getElementById('fDetail'); html += '|' + ((_fd && _fd.innerHTML) || ''); } catch (e) {} /* v353：产品正文编辑器显式入扫（双保险） */
+          html += '|' + ((_fi && _fi.value) || '') + '|' + (window.__coverImages ? JSON.stringify(window.__coverImages()) : '');
+        } catch (e) {}
+        var seen = {}, m, RE = /(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+/g;
+        while ((m = RE.exec(html))) seen[m[0]] = true;
+        window.__fcSweepKeys(Object.keys(seen));
+      } catch (e) { if (window.__silent) window.__silent(e); }
+    };
+    /* 直接关页面/刷新时弹窗还开着（内存草稿随页面消失，内容等于全丢）→ 同样追删一把 */
+    if (!window.__fcPagehideBound) {
+      window.__fcPagehideBound = true;
+      window.addEventListener('pagehide', function () {
+        try {
+          /* v354：任何还开着的上传弹窗（编辑/类型/通用输入）关页时统一追删；公告编辑器内容也一并核对 */
+          var __ids = ['editMask', 'variantMask', 'inputMask'];
+          for (var i = 0; i < __ids.length; i++) {
+            var em = document.getElementById(__ids[i]);
+            if (!em || !em.classList.contains('open')) continue;
+            var __busy = document.getElementById('saveProductBtn');
+            if (__ids[i] === 'editMask' && __busy && __busy.disabled) continue; /* 正在保存中，不追删 */
+            window.__fcSweepEdit(em);
+          }
+          var sa = document.getElementById('setAnnouncement');
+          if (sa && sa.innerHTML && /(?:images|videos|files)\//.test(sa.innerHTML)) {
+            var __ak = {}, __am, __are = /(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+/g, __ah = sa.innerHTML;
+            while ((__am = __are.exec(__ah))) __ak[__am[0]] = true;
+            window.__fcSweepKeys(Object.keys(__ak));
+          }
+        } catch (e) {}
+      });
+    }
 
     /* ===== v351：文件/文件夹卡（支持多级嵌套 · 默认收起 · 管理员/客户端双形态）===== */
     function buildFileCardHTML(data) {
@@ -354,7 +426,8 @@
       return '<div class="file-card-wrap" data-file-id="' + id + '" data-file-type="folder" contenteditable="false">' +
         '<div class="file-card-header" data-action="toggle-folder">' + (isLink ? fcLinkIconSvg() : fcFolderIconSvg()) +
         '<span class="file-card-name" data-action="rename" title="点一下改名">' + escapeHtml(data.name || '未命名') + '</span>' + typeToggle2 +
-        '<button type="button" class="file-card-del fc-admin-only" title="删除" data-action="del-card">' + fcXSvg() + '</button></div>' +
+        '<button type="button" class="file-card-del fc-admin-only" title="删除" data-action="del-card">' + fcXSvg() + '</button>' +
+        '<span class="fc-arrow fc-arrow-static" title="展开/收起">' + fcArrowSvg() + '</span></div>' +
         inner + linkHidden + '</div>';
     }
 
@@ -385,7 +458,7 @@
           '<span class="fname" data-action="rename" title="点一下改名">' + escapeHtml(node.name || '未命名') + '</span>' +
           '<span class="fmeta">' + stats.n + ' 项' + (stats.total ? ' · ' + fmtFileSize(stats.total) : '') + '</span>' +
           '<span class="fc-admin-only">' +
-            '<button type="button" class="fc-btn" data-action="add-file-here" title="往这个文件夹里加文件">＋文件</button>' +
+            '<button type="button" class="fc-btn" data-action="add-file-here" title="往这个文件夹里加文件">＋文</button>' +
             '<button type="button" class="fc-btn" data-action="add-folder-here" title="在这个文件夹里补个子文件夹">＋夹</button>' +
           '</span>' +
           '<button type="button" class="fremove fc-admin-only" title="删除" data-action="del-item">' + fcXSvg() + '</button>' +
@@ -484,7 +557,15 @@
         // 删除整卡
         if (target.closest('[data-action="del-card"]')) {
           card = target.closest('.file-card-wrap');
-          if (card) card.parentNode.removeChild(card);
+          if (card) {
+            /* v353：整卡删除时把卡里刚传还没保存的文件追删（后端核对引用） */
+            try {
+              var _ck = {}, _cm, _cre = /(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+/g, _ch = card.outerHTML;
+              while ((_cm = _cre.exec(_ch))) _ck[_cm[0]] = true;
+              window.__fcSweepKeys(Object.keys(_ck));
+            } catch (e) {}
+            card.parentNode.removeChild(card);
+          }
           e.preventDefault(); e.stopPropagation();
           return;
         }
@@ -551,7 +632,15 @@
         // 删除文件夹内单个条目（文件或子文件夹）
         if (target.closest('[data-action="del-item"]')) {
           row = target.closest('.file-folder-item');
-          if (row) { var _pl = row.parentNode; row.parentNode.removeChild(row); if (_pl && _pl.classList.contains('file-folder-list')) fcRefreshMeta(_pl); }
+          if (row) {
+            /* v353：删掉的行里若有刚传还没保存的文件，立即追删（后端核对引用，别处还在用就保留） */
+            try {
+              var _rk = {}, _mm, _re = /(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+/g, _rh = row.outerHTML;
+              while ((_mm = _re.exec(_rh))) _rk[_mm[0]] = true;
+              window.__fcSweepKeys(Object.keys(_rk));
+            } catch (e) {}
+            var _pl = row.parentNode; row.parentNode.removeChild(row); if (_pl && _pl.classList.contains('file-folder-list')) fcRefreshMeta(_pl);
+          }
           e.preventDefault(); e.stopPropagation();
           return;
         }
@@ -752,7 +841,7 @@
           '<span class="fname" data-action="rename" title="点一下改名">' + escapeHtml(name) + '</span>' +
           '<span class="fmeta">0 项</span>' +
           '<span class="fc-admin-only">' +
-            '<button type="button" class="fc-btn" data-action="add-file-here" title="往这个文件夹里加文件">＋文件</button>' +
+            '<button type="button" class="fc-btn" data-action="add-file-here" title="往这个文件夹里加文件">＋文</button>' +
             '<button type="button" class="fc-btn" data-action="add-folder-here" title="在这个文件夹里补个子文件夹">＋夹</button>' +
           '</span>' +
           '<button type="button" class="fremove fc-admin-only" title="删除" data-action="del-item">' + fcXSvg() + '</button>' +
@@ -781,6 +870,8 @@
         window.__upman.run(f, 'file', {
           onDone: function (url, key) {
             if (row) {
+              /* v353：替换腾位置——旧文件若刚传未保存则追删（后端核对引用） */
+              try { var _ok = row.getAttribute('data-key') || ''; if (_ok && _ok !== (key || '') && window.__fcSweepKeys) window.__fcSweepKeys([_ok]); } catch (e) {}
               row.setAttribute('data-key', key || '');
               row.setAttribute('data-size', f.size);
               var s = row.querySelector('.fsize');
@@ -788,6 +879,8 @@
               row.classList.remove('oversize');
               toast('文件已替换', 'success');
             } else if (card) {
+              /* v353：整卡替换同理——旧链接钥匙追删（后端核对引用） */
+              try { var _a0 = card.querySelector('a[data-dl]'); var _oh = _a0 ? (_a0.getAttribute('href') || '') : ''; var _om = _oh.match(/(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+/); if (_om && window.__fcSweepKeys) window.__fcSweepKeys([_om[0]]); } catch (e) {}
               var a = card.querySelector('a[data-dl]');
               if (a) a.setAttribute('href', url);
               var sz = card.querySelector('.file-card-size');
@@ -835,17 +928,19 @@
     // v328（用户 10-06 15:37）：文件弹窗主控——极简设计：一行说明+链接框+上传按钮，无虚线框无二级菜单
     function setupFileDialog(editor) {
       if (!editor) return;
-      // 一次性绑定弹窗级拖拽（整个弹窗都是 drop 区）
-      if (!window.__fileDialogBound) {
-        window.__fileDialogBound = true;
-        var mask = document.getElementById('inputMask');
-        if (mask) {
-          mask.addEventListener('dragover', function (e) { e.preventDefault(); });
-          mask.addEventListener('drop', function (e) {
-            e.preventDefault();
-            handleFileDrop(e, editor);
-          });
-        }
+      /* v352 条3：弹窗级拖拽已移除——拖到弹窗其它位置也会上传但看不到插到哪，浪费存储。
+         只认编辑器本体（bindFileCardManagement 里的 drop），外加全站兜底：拖在编辑器外面只提示不收。 */
+      if (!window.__fileDropGuard) {
+        window.__fileDropGuard = true;
+        document.addEventListener('dragover', function (e) {
+          if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1) e.preventDefault();
+        });
+        document.addEventListener('drop', function (e) {
+          if (!(e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1)) return;
+          e.preventDefault();
+          var inEditor = e.target && e.target.closest && e.target.closest('.rte-editor');
+          if (!inEditor) toast('请把文件拖到正文编辑框里再松手', 'info');
+        }, true);
       }
       showInput('插入文件',
         '粘贴网络链接，或点「上传本地文件」选择文件；也可直接拖文件/文件夹到弹窗',
@@ -1857,7 +1952,7 @@
           '<h2 class="modal-title">插入超链接</h2>' +
           '<div class="form">' +
           '<label>链接地址</label><input id="linkDialogUrl" />' +
-          '<label>显示文字 <span class="label-hint">不填则显示链接地址</span></label><input id="linkDialogText" />' +
+          '<label>显示文字 </label><input id="linkDialogText" />' +
           '</div>' +
           '<div class="modal-footer">' +
           '<button class="modal-inner-btn" id="linkDialogOk">确定</button>' +

@@ -581,7 +581,7 @@
       color: var(--text);
       flex: 1;
       line-height: 1.4;
-      letter-spacing: 1.2px;
+      letter-spacing: 1px; /* v356 条8：弹窗标题字距统一 1px（原 1.2px 是按钮档） */
       padding-right: 36px;
     }
     .modal-price {
@@ -1036,9 +1036,9 @@
       .shop-brand { flex: 0 1 auto; min-width: 0; }
       .shop-name { font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .topbar-actions { order: 1; margin-left: 0; gap: 4px; } /* R9：咨询客服/分享紧跟 logo 名称（左侧） */
-      /* 手机端 .tab/.view-btn 窄屏适配已并入 ui-common.css 公共样式（两页一致） */
-      .view-toggle { order: 1; flex-shrink: 0; margin-left: auto; } /* R9：列表/网格始终靠右 */
-      .search-box { order: 2; flex: 1 1 100%; margin-top: 0; }
+      /* v352 条P8：手机端搜索框不再独占一整行——搜索+列表/网格一起靠右（搜索吃满中间空隙，视图切换贴最右） */
+      .search-box { order: 2; flex: 1 1 auto; min-width: 0; margin-top: 0; }
+      .view-toggle { order: 3; flex-shrink: 0; margin-left: 0; }
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
       .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: 10px; }
@@ -1082,10 +1082,10 @@
     .modal-mask#annModal > .ann-box { height: min(72vh, 600px) !important; height: min(72dvh, 600px) !important; /* R159 */ max-height: none !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
     .modal-mask#annModal > .ann-box > * { box-sizing: border-box; max-width: 100%; }
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
-    .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-light, #999); padding: 24px 0; box-sizing: border-box; text-align: center; }
-.modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #5b6b7b; /* v356 条12：空态色对齐全站档 */ padding: 24px 0; box-sizing: border-box; text-align: center; }
+.modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 1; color: #b9c6d4; } /* v356 条12：图标色对齐 */
 .modal-mask#annModal .ann-empty .ann-empty-icon > svg { display: block; margin: 0 auto; }
-.modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: var(--text-light, #999); font-weight: 600 /* v336 条115 */; }
+.modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: #5b6b7b; font-weight: 600 /* v356 条12 */ /* v336 条115 */; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ overflow-x: hidden; min-height: 0; box-sizing: border-box; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
@@ -1264,7 +1264,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         transform: translateY(-2px);
         box-shadow: var(--shadow-blue-strong);
       }
-  .modal-close-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--red, #ff4444); color: #fff; } /* R285 item 12 */
+  .modal-close-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--red-strong, #c62828); color: #fff; } /* R285 item 12 | v356 条4：红统一唯一档 */
   .modal-share-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--blue1); color: #fff; } /* R285 item 12 */
   .variant-tab:hover {
         border-color: var(--blue1);
