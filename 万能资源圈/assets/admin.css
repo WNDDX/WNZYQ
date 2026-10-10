@@ -10,12 +10,7 @@
     }
 
     :root {
-      --blue1: #1E88E5;
-      --blue-tint: rgba(30, 136, 229, 0.12); /* R285 条45：手柄/浅蓝底色入账本 */
-      --blue2: #64B5F6;
-      --red:   #ff4444; /* R265（用户 09-27 15:04）：根因→R259 同作用域自引用 var(--red, #ff4444) 导致 CSS 变量无效，恢复 v256 原文 */
-      --green: #01C000;
-      /* R50：暗色相关变量统一移至 ui-common.css（含 [data-theme=dark] 暗色值），此处不再重复定义 */
+      --blue-tint: rgba(30, 136, 229, 0.12); /* v346 条22：本页专用；--blue1/--blue2/--red/--green 已删（归 ui-common.css 统一源） */
     }
     /* R49：暗色变量块为死代码（0 处引用），已删，勿再空挂 */
     @keyframes pageFadeIn {
@@ -219,7 +214,7 @@
     .container { max-width: 1200px; margin: 0 auto; padding: 16px 16px var(--page-bottom-gap, 24px); } /* R229（用户 09-21 19:44）：底部留白全站统一（原底 16→24） */
     .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .tb-row2 select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--card-bg); color: var(--text); }
+    .tb-row2 select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--card-bg); color: var(--text); }
     /* .view-btn 按钮本体已抽入 ui-common.css 全站公共组件（与资源页同一份，零复制），
        公共样式已按"融入背景"参数化：管理页白底直接透明融入+激活蓝底白字，资源页由 .on-blue 切白系。 */
     /* R231 条22：viewSwitch keyframes 抽公共到 ui-common.css（本处删除防三份重复） */
@@ -300,9 +295,11 @@
     .product-row .p-sub .p-desc { color: var(--blue1); } /* R24：简介字体颜色复用资源页弹窗简介的蓝色 */
     /* R146（用户 00:34）：副标题分隔点黑色 + 金额橙色（与资源页 .variant-price #FF9900 同色） */
     .product-row .p-sub .p-dot { color: var(--text); }
-    .product-row .p-sub .p-price { color: var(--price-orange, #FF9900); font-weight: 600; }
+    /* v346 条42：管理列表隔行浅底，长列表更易横向读行（此前完全没有隔行底色） */
+    #productList .product-row:nth-child(even) { background: #fafcff; }
+    .product-row .p-sub .p-price { color: var($1, #C86800); font-weight: 600; }
     .badge {
-      display: inline-block; padding: 2px 10px; border-radius: 10px;
+      display: inline-block; padding: 2px 8px; border-radius: 8px; /* v346 条45：角标圆角/内边距并入 8px 档，与封面角标统一 */
       font-size: 12px; flex-shrink: 0;
     }
     .badge.on { background: #e6f7e6; color: var(--green); }
@@ -311,7 +308,15 @@
     /* 显示/隐藏直接切换下拉（显示/隐藏，与分类管理同款，两字宽度一致） */
                             .product-row .select-picker .cat-picker-display { width: auto; min-height: 0; border-radius: 8px; padding: 6px 12px; font-size: 13px; color: var(--text-light); }
 
-    .product-row .p-ops { display: flex; align-items: center; gap: 12px; }
+    .product-row .p-ops { display: flex; align-items: center; gap: 12px; position: relative; }
+    /* v346 条47：行内「⋯更多」下拉（放不下的按钮收进来） */
+    .ops-more-wrap { position: relative; display: inline-flex; }
+    .ops-more { width: 30px; height: 30px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); border-radius: 8px; cursor: pointer; font-size: 16px; line-height: 1; }
+    .ops-more:hover { border-color: var(--blue2); color: var(--blue1); }
+    .ops-more-list { position: absolute; right: 0; top: 34px; z-index: 10040; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-pop); min-width: 128px; padding: 6px; display: none; }
+    .ops-more-list.show { display: block; }
+    .ops-more-item { display: block; width: 100%; text-align: left; padding: 8px 10px; border: none; background: none; font-size: 13px; color: var(--text); border-radius: 8px; cursor: pointer; white-space: nowrap; }
+    .ops-more-item:hover { background: var(--hover-bg); }
     /* v345 条1：行内所有按键统一高度与间距（资源码此前比其它键高 2px） */
     .p-ops .row-btn, .p-ops .select-picker.code-picker, .p-ops .select-picker.code-picker .cat-picker-display,
     .p-ops .status-btn, .p-ops .code-slot { height: 30px; min-height: 30px; box-sizing: border-box; }
@@ -436,7 +441,7 @@
     /* v330 条23：统计卡片统一规格——固定最小高度（开不开"对比上期"都一样高）+ 统一内边距；
        数字等宽（tabular-nums）避免刷新时左右抖动，数字行高固定，卡片高度稳定 */
     .stat-card { min-height: 104px; padding: 16px 18px; }
-    .stat-card .num { font-size: 30px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+    .stat-card .num { font-size: 28px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
     .stat-card .label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
     /* R57：环比「较上期」小字——涨绿降红（蓝底上用亮色变体保证可读） */
     .stat-card .delta { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 600 /* v336 条115 */; margin-top: 0; white-space: nowrap; } /* R81：改放白色数据右中侧，脱离文档流，卡片高度不再被撑大 */
@@ -522,7 +527,7 @@
     }
     /* v328（用户 10-06 15:37）：文件弹窗专用样式已删除——极简设计无二级菜单无拖拽区 */
     /* 编辑器内文件卡 */
-    .file-card-wrap { border: 1px solid #e1e4e8; border-radius: 8px; padding: 10px 12px; margin: 6px 0; background: #fafbfc; font-size: 13px; }
+    .file-card-wrap { border: 1px solid var(--neutral-3, #e4e8ec); border-radius: 8px; padding: 10px 12px; margin: 6px 0; background: #fafbfc; font-size: 13px; }
     .file-card-header { display: flex; align-items: center; gap: 8px; cursor: pointer; }
     .file-card-header svg { flex-shrink: 0; }
     .file-card-name { flex: 1; font-weight: 600 /* v336 条115 */; color: var(--text-primary); }
@@ -559,7 +564,7 @@
       display: flex; align-items: center; gap: 10px;
     }
     .variant-item .v-name { flex: 1; font-size: 14px; font-weight: 600 /* v336 条115 */; }
-    .variant-item .v-price { color: var(--price-orange, #FF9900); font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
+    .variant-item .v-price { color: var($1, #C86800); font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .variant-item .v-sort { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
     .ann-list { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-bottom: 6px; background: var(--bg-light); }
@@ -663,7 +668,7 @@
     .select-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
     .select-picker.open .cpd-arrow { transform: rotate(0deg); }
     .cp-item {
-      display: flex; align-items: center; gap: 6px; padding: 9px 10px; border-radius: 8px;
+      display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 8px;
       cursor: pointer; font-size: 14px; color: var(--text); transition: background var(--dur-fast) var(--ease-out);
     }
 
@@ -672,7 +677,7 @@
     .cp-item.cp-sub { padding-left: 30px; font-weight: 400; color: var(--text); font-size: 14px; }
     .cp-item.cp-all { font-weight: 400; color: var(--text); font-size: 14px; }
     .cp-item .cp-name { flex: 1; }
-    .cp-item .cp-price { color: var(--price-orange, #FF9900); font-weight: 600; font-size: 13px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
+    .cp-item .cp-price { color: var($1, #C86800); font-weight: 600; font-size: 13px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .cp-item .cp-chevron {
       width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
       color: var(--blue1); transition: transform var(--dur-mid) var(--ease-out), color var(--dur-mid) ease; transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
@@ -893,7 +898,7 @@
     }
     .form .checkbox-row {
       display: flex; align-items: center; gap: 10px; margin-top: 14px;
-      cursor: pointer; padding: 9px 12px; background: var(--bg-light);
+      cursor: pointer; padding: 8px 12px; background: var(--bg-light);
       border: 1px solid var(--border); border-radius: 10px; font-size: 15px; color: var(--text);
       transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
     }
@@ -920,7 +925,7 @@
     #previewMask .preview-body { padding: 16px 20px var(--page-bottom-gap, 24px); } /* R285 条27：底部留白三页统一（对齐 shop R229 拍板口径） */
     #previewMask .preview-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
     #previewMask .preview-title { font-size: 20px; font-weight: 700; color: var(--text); flex: 1; line-height: 1.4; letter-spacing: 0.5px; padding-right: 36px; }
-    #previewMask .preview-price { color: var(--price-orange, #FF9900); font-size: 24px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    #previewMask .preview-price { color: var($1, #C86800); font-size: 24px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     #previewMask .preview-desc { font-size: 15px; color: var(--blue1); margin-bottom: 14px; font-weight: 600; line-height: 1.6; }
     /* R36：预览弹窗富文本图/视频与资源页一致——宽度 100% 且高度上限，竖长图不撑爆弹窗 */
     #previewMask .preview-detail img, #previewMask .preview-detail video { max-width: 100%; max-height: 60vh; max-height: 60dvh; /* R159 */ height: auto; display: block; margin: 10px auto; border-radius: 8px; min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
@@ -938,7 +943,7 @@
     #previewMask .variant-detail { background: var(--bg-light); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
     #previewMask .variant-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); }
     #previewMask .variant-name { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; } /* R158：长名称在弹性行内收缩换行，不挤压金额 */
-    #previewMask .variant-price { color: var(--price-orange, #FF9900); font-size: 16px; font-weight: 700; white-space: nowrap; flex-shrink: 0; } /* R158：金额永不换行（评论3） */
+    #previewMask .variant-price { color: var($1, #C86800); font-size: 16px; font-weight: 700; white-space: nowrap; flex-shrink: 0; } /* R158：金额永不换行（评论3） */
     #previewMask .variant-detail .v-desc { font-size: 13px; color: var(--text-light); line-height: 1.75 /* v336 条114 */; white-space: pre-wrap; margin-bottom: 8px; }
     #previewMask .variant-detail img, #previewMask .variant-detail video { width: 100%; border-radius: 8px; margin-bottom: 6px; display: block; }
     /* R158（用户 22:42）：预览同步资源页资源码解锁区（与 shop.css 同款观感，作用域限定 #previewMask） */
@@ -1125,7 +1130,7 @@
     .bar-hover-line { position: absolute; top: var(--gridTop, 20px); bottom: var(--bLift, 30px); width: 0; border-left: 1px dashed #c3ccd9; pointer-events: none; z-index: 5; } /* R162：竖线范围=网格范围（折线 SVG y 20..170 同口径） */
     /* R115：柱状悬浮框与折线 SVG 悬浮框同步——折线框随 viewBox 缩放（外框 150×84、字号 11、行距 16，均乘渲染缩放比）；
        柱状框经 --bhs（JS 每次绘制时写入折线当前缩放比）跟随缩放，两框在任何宽度下外框尺寸/字号一致 */
-    .bar-hover-box { position: absolute; background: rgba(255,255,255,0.96); border: 1px solid #d8dee8; border-radius: calc(3px * var(--bhs, 1)); width: calc(150px * var(--bhs, 1)); height: calc(84px * var(--bhs, 1)); box-sizing: border-box; pointer-events: none; z-index: 6; padding: 0; }
+    .bar-hover-box { position: absolute; background: rgba(255,255,255,0.96); border: 1px solid var(--neutral-3, #e4e8ec); border-radius: calc(3px * var(--bhs, 1)); width: calc(150px * var(--bhs, 1)); height: calc(84px * var(--bhs, 1)); box-sizing: border-box; pointer-events: none; z-index: 6; padding: 0; }
     /* R117：行位置逐行对齐折线 SVG 框——折线侧文字基线=18/34/50/66（框顶起、基准单位），柱侧各行改绝对定位，
        行中心落在 14.14/30.14/46.14/62.14（=折线同字体的字形中心，实测校准），1px 为盒边框偏移 */
     .bar-hover-box .bhb-time { position: absolute; left: 0; right: 0; top: calc(4.14px * var(--bhs, 1) - 1px); height: calc(20px * var(--bhs, 1)); line-height: calc(20px * var(--bhs, 1)); font-size: calc(11px * var(--bhs, 1)); font-weight: 600; color: #555; text-align: center; }
@@ -1261,7 +1266,7 @@
       #productList.card-view .product-row .thumb { width: 100%; height: 96px; /* v336 条97：缩略图统一 96 方形 */ border-radius: 0; }
       #productList.card-view .product-row .info { flex-basis: 100%; padding: 8px 10px 4px; }
       #productList.card-view .product-row .p-ops { width: 100%; display: flex; gap: 6px; padding: 0 10px 8px; flex-wrap: wrap; justify-content: flex-start; }
-      #productList.card-view .product-row .p-ops .row-btn { flex: 1 1 0; min-width: 0; padding: 7px 2px; font-size: 12px; white-space: nowrap; box-sizing: border-box; text-align: center; }
+      #productList.card-view .product-row .p-ops .row-btn { flex: 1 1 0; min-width: 0; padding: 8px 2px; font-size: 12px; white-space: nowrap; box-sizing: border-box; text-align: center; }
       #productList.card-view .product-row .select-picker { margin: 2px 10px 8px; align-self: flex-start; width: auto; max-width: calc(100% - 16px); flex-shrink: 0; }
       /* 网格视图手机端两列 */
       #productList.card-view { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -1272,7 +1277,7 @@
       .preview-btn { flex-basis: 100%; order: -1; }
       .time-filter { flex: 1; }
       .time-btn { flex: 1; padding: 6px 8px; font-size: 12px; }
-      .stat-date-input { flex: 1 1 130px; min-width: 0 !important; font-size: 16px !important; /* v336 条71：iOS 聚焦不再放大整页 */ padding: 7px 8px !important; }
+      .stat-date-input { flex: 1 1 130px; min-width: 0 !important; font-size: 16px !important; /* v336 条71：iOS 聚焦不再放大整页 */ padding: 8px 8px !important; }
       .trend-chart { padding: 12px; }
       .rte-toolbar { gap: 3px; padding: 6px; }
       /* R179b（用户 20:20）：工具栏默认收起态（单行横滚，HTML 初始挂 rte-collapsed），
@@ -1300,7 +1305,7 @@
       .trend-bars { gap: 2px; }
       /* 批量栏按钮紧凑换行，不超出画面 */
       .batch-bar { gap: 6px; padding: 8px 10px; }
-      .batch-btn { padding: 5px 9px; font-size: 12px; }
+      .batch-btn { padding: 5px 8px; font-size: 12px; }
       .back-top { right: 14px; bottom: 18px; width: 40px; height: 40px; }
     }
 
@@ -1526,7 +1531,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .video-fallback .vf-link:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 
 @media (max-width: 600px) {
-  .video-fallback .vf-link { padding: 7px 12px; font-size: 13px; }
+  .video-fallback .vf-link { padding: 8px 12px; font-size: 13px; }
 }
 
 /* R139：资源码下拉面板（cat-picker-panel）内码/无码 row-btn 按键——p-ops 各视图的通栏
@@ -1616,7 +1621,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    屏幕再小按键也不挤压变形（均分 + 换行自然铺开，不影响观感）。
    网格卡片行内 padding 2px→4px（R35 的 2px 太瘪，观感拥挤——本次用户点名）。 */
 @media (max-width: 600px) {
-  .row-btn { padding: 5px 9px; font-size: 12px; }
+  .row-btn { padding: 5px 8px; font-size: 12px; }
   .product-row .p-ops { gap: 8px; flex-wrap: wrap; }
   .modal-footer { gap: 8px; }
   #productList.card-view .product-row .p-ops .row-btn { padding: 6px 4px; }
@@ -1687,7 +1692,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 6px; border-top: 1px solid var(--border); } /* R285 条44：边框灰收敛——写死 #e8e8e8 归档 var(--border) */
     .cp-item { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text); }
     .cp-item .cp-lab { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }
+    .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 2px 8px; flex-shrink: 0; }
     .cp-item.active { background: var(--blue1); color: #fff; } /* R285 条34：命令面板选中条目统一深蓝底白字 */
     .cp-empty { padding: 18px; text-align: center; color: var(--text-light); font-size: 14px; } /* R285 条40：提示灰统一一档 */
     /* R193（用户 22:32）：命令面板底部灰色提示行按拍板删除 */
@@ -1695,7 +1700,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
     /* ---------- R194 第二批：表情面板 / 引用块 / 分割线 / 字数统计 ---------- */
     .emoji-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
-    .emoji-tab { padding: 3px 9px; border-radius: 10px; font-size: 12px; background: var(--bg-light, #f0f2f5); border: none; cursor: pointer; color: var(--text); font-family: inherit; }
+    .emoji-tab { padding: 3px 8px; border-radius: 10px; font-size: 12px; background: var(--bg-light, #f0f2f5); border: none; cursor: pointer; color: var(--text); font-family: inherit; }
     .emoji-tab.active { background: var(--blue1); color: #fff; } /* R285 条34：表情页签选中统一深蓝底白字 */
     .emoji-tab:active { transform: scale(0.94); }
     .emoji-pop-grid { display: grid; grid-template-columns: repeat(10, 32px); gap: 2px; }
@@ -1948,7 +1953,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* v341 条3：封面缩略图畸形修复——图片按裁切填满小框、圆角统一，"封面"角标压在图上不挤位 */
 .cover-gallery .cg-item { position: relative; overflow: hidden; border-radius: 8px; background: var(--bg-light); }
 .cover-gallery .cg-item > img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 8px; }
-.cover-gallery .cg-item .cg-badge, .cover-gallery .cg-item .cg-cover-tag { position: absolute; left: 4px; top: 4px; z-index: 3; font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: 6px; background: rgba(30,136,229,.92); color: #fff; pointer-events: none; }
+.cover-gallery .cg-item .cg-badge, .cover-gallery .cg-item .cg-cover-tag { position: absolute; left: 4px; top: 4px; z-index: 3; font-size: 11px; line-height: 16px; padding: 1px 8px; border-radius: 8px; background: rgba(30,136,229,.92); color: #fff; pointer-events: none; } /* v346 条45：角标圆角并入 8px 档 */
 
 /* v341 条3 收尾：编辑器「放大编辑」图标此前尺寸为 0（渲染成空按钮）——强制给尺寸 */
 .rte-zoom-ico { width: 16px !important; height: 16px !important; display: block; }
@@ -1958,12 +1963,12 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 @media (max-width: 600px) {
   .stat-table-wrap, .bind-table-wrap, .table-scroll, .admin-table-wrap {
     overflow-x: auto !important; -webkit-overflow-scrolling: touch;
-    position: relative; padding-top: 22px;
+    position: relative; padding-top: 24px;
   }
   .stat-table-wrap::before, .bind-table-wrap::before, .table-scroll::before, .admin-table-wrap::before {
     content: "← 左右滑动查看更多 →"; position: absolute; top: 2px; left: 0; right: 0;
-    text-align: center; font-size: 11.5px; color: #5b78a0; background: #f2f7fd;
-    border-radius: 6px; padding: 2px 0;
+    text-align: center; font-size: 11px; color: #5b78a0; background: #f2f7fd;
+    border-radius: 8px; padding: 2px 0;
   }
   .stat-table-wrap table, .bind-table-wrap table, .table-scroll table, .admin-table-wrap table { min-width: 620px; }
 }

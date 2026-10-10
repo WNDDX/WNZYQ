@@ -339,6 +339,7 @@
       try {
         fetch('/api/track', {
           method: 'POST',
+          credentials: 'include', /* v346 条7：补登录凭证——后端靠 Cookie 判定"管理员自己访问不计入统计"，此前漏带导致管理员访问也被计入 */
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ product_id: pid, type: type })
         });
@@ -371,7 +372,7 @@
       window.__annShown = false; window.__annDismissed = true;
       // R256：关闭后重置骨架显示，下次打开时骨架先显示
       var _annSkel = document.getElementById('annSkeleton'); if (_annSkel) _annSkel.style.display = '';
-      try { document.querySelectorAll('#annModal video').forEach(function (v) { v.pause(); }); } catch (e) {}
+      try { document.querySelectorAll('#annModal video').forEach(function (v) { v.pause(); }); } catch (e) { if (window.__silent) window.__silent(e); }
     }
     // 默认公告（一级公告）展示：选中"公告"标题，内容渲染到正文区
     function showAnnDefault() {
@@ -453,7 +454,7 @@
       // 有数据：清除骨架，显示内容
       if (_annSkel) _annSkel.style.display = 'none';
       var mode = DATA.announcementMode || 'always';
-      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) {} } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) {} }
+      if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) { if (window.__silent) window.__silent(e); } } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) { if (window.__silent) window.__silent(e); } }
         // 修复（首次开屏）：弹窗已打开但此前数据未到（首访无缓存先弹空窗），接口返回后在此用最新数据刷新 tabs/默认选中/默认内容
         if (mask.classList.contains('open')) renderAnnContent();
         return; }
@@ -464,17 +465,17 @@
           var today = new Date().toDateString();
           if (localStorage.getItem('wnzyq_ann_date') === today) return;
           localStorage.setItem('wnzyq_ann_date', today);
-        } catch (e) {}
+        } catch (e) { if (window.__silent) window.__silent(e); }
       } else if (mode === 'session') {
         try {
           if (sessionStorage.getItem('wnzyq_ann_session')) return;
           sessionStorage.setItem('wnzyq_ann_session', '1');
-        } catch (e) {}
+        } catch (e) { if (window.__silent) window.__silent(e); }
       }
       window.__annShown = true;
       renderAnnContent();
       mask.classList.add('open');
-      setBodyLock(true); } catch (e) {}
+      setBodyLock(true); } catch (e) { if (window.__silent) window.__silent(e); }
     }
     function renderCategories() {
       var cats = DATA.categories.slice();
@@ -495,7 +496,7 @@
           currentSubCat = 0;  // 切换一级分类时重置二级
           currentPage = 1;
           // v294（用户 10-04 02:14）：249 分类筛选存localStorage
-          try { if (c.id) localStorage.setItem('wnzyq_shop_category', String(c.id)); else localStorage.removeItem('wnzyq_shop_category'); } catch(e) {}
+          try { if (c.id) localStorage.setItem('wnzyq_shop_category', String(c.id)); else localStorage.removeItem('wnzyq_shop_category'); } catch (e) { if (window.__silent) window.__silent(e); }
           renderCategories();
           __fadeRenderProducts(); /* R243（用户 09-22 23:18）：条15 分类切换统一翻页同款过渡 */
         });
@@ -521,7 +522,7 @@
         /* v330 条13：分类多到要横滑时，把当前分类自动滑到看得见的位置（不再藏在后面） */
         try {
           if (act.scrollIntoView) act.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-        } catch (e0) {}
+        } catch (e0) { if (window.__silent) window.__silent(e0); }
       } else {
         ind.classList.add('hidden');
       }
@@ -699,18 +700,18 @@
         fetchRemote({ page: p }).then(function () {
           renderProducts();
           __pageTurning = false;
-          try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+          try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) { if (window.__silent) window.__silent(e2); } }
           __flushPendingSearch();
         }).catch(function () {
           renderProducts();
           __pageTurning = false;
-          try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+          try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) { if (window.__silent) window.__silent(e2); } }
           __flushPendingSearch();
         });
       } else {
         renderProducts();
         __pageTurning = false;
-        try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+        try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) { if (window.__silent) window.__silent(e2); } }
         __flushPendingSearch();
       }
     }
@@ -783,7 +784,10 @@
       img.decoding = 'async'; img.loading = 'lazy'; /* v336 条48 */ /* R193c ⑩：卡片图异步解码 */
       img.alt = p.title || '';
       /* R304 P14：去 lazy——当前页卡片图全部一起加载（老板 09-30 拍板全系统按页加载） */
-      loadImg(img, thumbOf(p.img), p.img); /* R304 P18：列表卡片读小图、小图缺失回退原图；详情弹窗封面/轮播/详情图仍走原图 */
+      var __thumb = thumbOf(p.img), __orig = p.img || '';
+      loadImg(img, __thumb, __orig); /* R304 P18：列表卡片读小图、小图缺失回退原图；详情弹窗封面/轮播/详情图仍走原图 */
+      /* v346 条14：多尺寸——小图给普通屏、原图给高清屏（2x）；手机/大屏各取所需，不再一律同一尺寸 */
+      if (__thumb && __orig && __thumb !== __orig) { img.srcset = __thumb + ' 1x, ' + __orig + ' 2x'; img.sizes = '(max-width:600px) 50vw, (max-width:900px) 33vw, 20vw'; }
       var body = document.createElement('div');
       body.className = 'card-body';
       var title = document.createElement('div');
@@ -839,7 +843,7 @@
           var __rb = emptyTip.querySelector('.empty-clear-btn');
           if (__rb) __rb.parentNode.removeChild(__rb);
           var __retry = document.createElement('button');
-          __retry.type = 'button'; __retry.className = 'empty-clear-btn'; __retry.textContent = '点我重试';
+          __retry.type = 'button'; __retry.className = 'empty-clear-btn'; __retry.textContent = '重试';
           __retry.addEventListener('click', function () {
             window.__loadFailed = false;
             window.__skelPhase = true;
@@ -875,6 +879,11 @@
             renderProducts();
           });
           emptyTip.appendChild(__clr);
+          /* v346 条63：搜不到时给替代建议（不再只有一颗按钮、无任何引导） */
+          var __tip2 = document.createElement('div');
+          __tip2.className = 'empty-desc';
+          __tip2.textContent = '没找到？换个关键词，或浏览全部资源';
+          emptyTip.appendChild(__tip2);
         }
         /* v343 条44：非搜索的“空分类”也给一个下一步按钮——一键回到全部资源 */
         if (!kw && (currentCat || currentSubCat)) {
@@ -993,6 +1002,7 @@
         pager.appendChild(next);
       }
       if (window.__btnFit) window.__btnFit(); /* v330 条18：渲染后按可用宽度决定按钮显示文字还是纯图标 */
+      try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); } /* v346 条60：渲染后刷新「最近看过」一行 */
     }
 
     // R269（用户 09-27 15:14）：根因→R268 修复在 v265 打包时回退丢失，补 renderCarousel + coverImages 字段修正重做
@@ -1017,6 +1027,52 @@
     }
 
     // ---------- 详情弹窗 ----------
+    /* v346 条60：最近浏览——本地记住最近打开的资源（最多 8 条），列表上方给一行快捷入口 */
+    function __pushRecent(id) {
+      try {
+        if (!id) return;
+        var arr = JSON.parse(localStorage.getItem('wnzyq_recent') || '[]');
+        arr = arr.filter(function (x) { return x !== id; });
+        arr.unshift(id);
+        if (arr.length > 8) arr = arr.slice(0, 8);
+        localStorage.setItem('wnzyq_recent', JSON.stringify(arr));
+      } catch (e) { if (window.__silent) window.__silent(e); }
+    }
+    function __renderRecent() {
+      try {
+        var host = document.querySelector('.category-bar-wrap');
+        if (!host || !host.parentNode) return;
+        var ids = JSON.parse(localStorage.getItem('wnzyq_recent') || '[]');
+        var list = (DATA && DATA.products) || [];
+        var items = ids.map(function (id) { for (var i = 0; i < list.length; i++) { if (list[i] && list[i].id === id) return list[i]; } return null; }).filter(Boolean);
+        var old = document.getElementById('recentBar');
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+        if (!items.length) return;
+        var bar = document.createElement('div'); bar.id = 'recentBar'; bar.className = 'recent-bar';
+        var t = document.createElement('span'); t.className = 'recent-title'; t.textContent = '最近看过'; bar.appendChild(t);
+        items.forEach(function (p) {
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'recent-chip'; b.textContent = p.name || '资源';
+          b.addEventListener('click', function () { openModal(p); });
+          bar.appendChild(b);
+        });
+        host.parentNode.insertBefore(bar, host.nextSibling);
+      } catch (e) { if (window.__silent) window.__silent(e); }
+    }
+
+    /* v346 条59：详情弹窗「上一条/下一条」——按当前列表顺序切换，首/末条自动置灰 */
+    function __updateModalNav() {
+      var nav = document.getElementById('modalNav'); if (!nav) return;
+      var list = (DATA && DATA.products) || [];
+      var idx = -1;
+      for (var i = 0; i < list.length; i++) { if (list[i] && currentProduct && list[i].id === currentProduct.id) { idx = i; break; } }
+      if (idx < 0 || list.length < 2) { nav.style.display = 'none'; return; }
+      nav.style.display = '';
+      var pos = document.getElementById('modalNavPos'); if (pos) pos.textContent = (idx + 1) + ' / ' + list.length;
+      var pb = document.getElementById('modalPrev'), nb = document.getElementById('modalNext');
+      if (pb) { pb.disabled = idx <= 0; pb.onclick = function () { if (idx > 0) openModal(list[idx - 1]); }; }
+      if (nb) { nb.disabled = idx >= list.length - 1; nb.onclick = function () { if (idx < list.length - 1) openModal(list[idx + 1]); }; }
+    }
+
     function openModal(p) {
       /* v338 条40：列表瘦身模式——列表数据不带详情大字段（'detail' 键整个不存在）。
          打开弹窗时先按 id 单拉完整数据再展示，拉失败则按无详情降级，绝不开天窗。 */
@@ -1063,8 +1119,11 @@
         return;
       }
       // v294（用户 10-04 02:14）：207 弹窗打开时pushState，后退先关弹窗
-      try { if (!window.location.search.includes('pid=')) history.pushState({modal:true}, '', window.location.pathname + '?pid=' + p.id); } catch(e) {}
+      try { if (!window.location.search.includes('pid=')) history.pushState({modal:true}, '', window.location.pathname + '?pid=' + p.id); } catch (e) { if (window.__silent) window.__silent(e); }
       currentProduct = p;
+      try { __pushRecent(p.id); } catch (e) { if (window.__silent) window.__silent(e); }
+      try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); }
+      try { __updateModalNav(); } catch (e) { if (window.__silent) window.__silent(e); }
       currentVariant = null;
       track(p.id, 'view');
 
@@ -1177,7 +1236,7 @@
         // v294（用户 10-04 02:14）：161 处理上次暂存类型已被删除的情况
         if (!currentVariant && variants.length) {
           currentVariant = variants[0];
-          try { localStorage.removeItem('wnzyq_variant_draft'); } catch(e) {}
+          try { localStorage.removeItem('wnzyq_variant_draft'); } catch (e) { if (window.__silent) window.__silent(e); }
         }
         if (!currentVariant) {
           if (window.showToast) window.showToast('该资源的类型已被删除', 'error');
@@ -1234,14 +1293,14 @@
         if (keys.length >= 50) {
           keys.sort(function (a, b) {
             var ta = 0, tb = 0;
-            try { ta = (JSON.parse(localStorage.getItem(a) || '{}').t) || 0; } catch (e) {}
-            try { tb = (JSON.parse(localStorage.getItem(b) || '{}').t) || 0; } catch (e) {}
+            try { ta = (JSON.parse(localStorage.getItem(a) || '{}').t) || 0; } catch (e) { if (window.__silent) window.__silent(e); }
+            try { tb = (JSON.parse(localStorage.getItem(b) || '{}').t) || 0; } catch (e) { if (window.__silent) window.__silent(e); }
             return ta - tb;
           });
-          for (var j = 0; j < keys.length - 49; j++) { try { localStorage.removeItem(keys[j]); } catch (e) {} }
+          for (var j = 0; j < keys.length - 49; j++) { try { localStorage.removeItem(keys[j]); } catch (e) { if (window.__silent) window.__silent(e); } }
         }
         localStorage.setItem(__unlockCacheKey(pid, vid), JSON.stringify({ t: Date.now(), c: content }));
-      } catch (e) {}
+      } catch (e) { if (window.__silent) window.__silent(e); }
     }
     function __readUnlockCache(pid, vid) {
       try {
@@ -1250,7 +1309,7 @@
         var d = JSON.parse(raw);
         // R286-61：已解锁设备免输码永久有效（不再检查7天过期）
         if (!d || !d.c) {
-          try { localStorage.removeItem(__unlockCacheKey(pid, vid)); } catch (e) {}
+          try { localStorage.removeItem(__unlockCacheKey(pid, vid)); } catch (e) { if (window.__silent) window.__silent(e); }
           return null;
         }
         return d.c;
@@ -1504,7 +1563,7 @@
         var ri = document.getElementById('resourceCodeInput');
         if (ri && ri.value && currentProduct) __codeDraft = { pid: currentProduct.id, vid: currentVariant ? currentVariant.id : null, code: ri.value };
         else __codeDraft = null; // 没输入内容不暂存，避免空草稿覆盖
-      } catch (e) {}
+      } catch (e) { if (window.__silent) window.__silent(e); }
       closeModal();
     }
     function closeModalDiscard() { __codeDraft = null; closeModal(); }
@@ -1514,7 +1573,7 @@
     window.addEventListener('popstate', function(e) {
       if (!e.state || !e.state.modal) { var m = document.getElementById('modalMask'); if (m && m.classList.contains('open')) closeModal(); }
     });
-    function closeModal() { try { document.querySelectorAll('#modalBox video, #modalMedia video').forEach(function (v) { v.pause(); }); } catch (e) {}
+    function closeModal() { try { document.querySelectorAll('#modalBox video, #modalMedia video').forEach(function (v) { v.pause(); }); } catch (e) { if (window.__silent) window.__silent(e); }
       // R280 ③：关弹窗必停轮播定时器——防「关了弹窗后台还在换图」的鬼影残留
       var _ccCar = document.getElementById('modalCarousel');
       if (_ccCar && _ccCar.__ccPause) _ccCar.__ccPause();
@@ -1584,7 +1643,7 @@
       if (!currentProduct || !currentProduct.id) { showToast('该资源暂不能分享', 'info'); return; }
       var url = window.location.origin + window.location.pathname + '?pid=' + currentProduct.id;
       if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (currentProduct.title || '') + ' · 资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
-      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) {} } showToast('链接已复制到剪贴板', 'success'); }
+      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } showToast('链接已复制到剪贴板', 'success'); }
     });
 
     // ---------- 资源码验证 ----------
@@ -1623,7 +1682,7 @@
             setTimeout(function () {
               btn.textContent = btnText; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
             }, 400);
-          } catch (e0) {}
+          } catch (e0) { if (window.__silent) window.__silent(e0); }
           resourceCodeError.style.display = 'none'; // R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行
         } else {
           // v294（用户 10-04 02:14）：081 输错码统一弹胶囊提示（老板批注：统一用弹胶囊）
@@ -1689,7 +1748,7 @@
               setTimeout(function () {
                 btn.textContent = btnText; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
               }, 400);
-            } catch (e0) {}
+            } catch (e0) { if (window.__silent) window.__silent(e0); }
           } else {
             resourceCodeError.textContent = (res && res.msg) || '获取失败';
             resourceCodeError.style.display = 'block';
@@ -1712,9 +1771,9 @@
       searchTimer = setTimeout(function () {
         currentPage = 1;
         // v294（用户 10-04 02:14）：214 搜索关键词存localStorage
-        try { if (self.value.trim()) localStorage.setItem('wnzyq_shop_search', self.value.trim()); else localStorage.removeItem('wnzyq_shop_search'); } catch(e) {}
+        try { if (self.value.trim()) localStorage.setItem('wnzyq_shop_search', self.value.trim()); else localStorage.removeItem('wnzyq_shop_search'); } catch (e) { if (window.__silent) window.__silent(e); }
         __fadeRenderProducts(function () {
-          if (self.value.trim()) window.pushSearchHist('shopSearchHist', self.value); /* R186 建议1：搜索稳定 300ms 后记录 */
+          if (self.value.trim()) window.pushSearchHist('wnzyq_shop_search_hist', self.value); /* R186 建议1：搜索稳定 300ms 后记录 */
         }); /* R243（用户 09-22 23:18）：条15 搜索切换统一翻页同款过渡 */
       }, 300);
     });
@@ -1727,7 +1786,7 @@
     /* R186 建议1：搜索历史下拉（值为空 focus 时显示，复用 tab 胶囊 + 灰圆小 ×）；
        本脚本先于 ui-common.js 加载，同步阶段组件未定义 → load 后兜底绑定 */
     (function () {
-      var __bindSH = function () { window.bindSearchHist(document.querySelector('.search-box'), searchInput, 'shopSearchHist'); };
+      var __bindSH = function () { window.bindSearchHist(document.querySelector('.search-box'), searchInput, 'wnzyq_shop_search_hist'); };
       if (window.bindSearchHist) __bindSH(); else window.addEventListener('load', __bindSH);
     })();
 
@@ -1747,7 +1806,7 @@
             _src.forEach(function (p) {
               if (p.is_online !== true && p.is_online !== 1) return;
               if (p.is_hidden === true || p.is_hidden === 1) return;
-              c.push({ lab: String(p.title || '(无标题)'), tag: '资源', kw: String(p.title || ''), run: function () { try { openModal(p); } catch (e) {} } });
+              c.push({ lab: String(p.title || '(无标题)'), tag: '资源', kw: String(p.title || ''), run: function () { try { openModal(p); } catch (e) { if (window.__silent) window.__silent(e); } } });
             });
             return c;
           }
@@ -1832,12 +1891,12 @@
         // R79：统一分享复制链路——与资源卡片分享/预览分享/弹窗链接点击同一套
         // （R138：clipboard.writeText 异步复制零阻塞），提示文案全站统一
         if (window.__shareCopyText) {
-          try { window.__shareCopyText(url); } catch(e){}
+          try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); }
         } else {
-          try { fallbackCopy(url); } catch(e){}
+          try { fallbackCopy(url); } catch (e) { if (window.__silent) window.__silent(e); }
         }
         // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
-        if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch(e){} }, 1500); } catch(e){} }
+        if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch (e) { if (window.__silent) window.__silent(e); } }, 1500); } catch (e) { if (window.__silent) window.__silent(e); } }
         showToast('链接已复制到剪贴板', 'success');
         if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       } catch (e) {
@@ -1859,10 +1918,10 @@
         var url = shareLinkText.textContent || '';
         if (!url) return;
         // R79+R138：统一走公共复制链路（异步 clipboard API），文案统一
-        if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch(e){} }
-        else { try { fallbackCopy(url); } catch(e){} }
+        if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } }
+        else { try { fallbackCopy(url); } catch (e) { if (window.__silent) window.__silent(e); } }
         // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
-        if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch(e){} }, 1500); } catch(e){} }
+        if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch (e) { if (window.__silent) window.__silent(e); } }, 1500); } catch (e) { if (window.__silent) window.__silent(e); } }
         showToast('链接已复制到剪贴板', 'success');
       });
     }
@@ -1886,7 +1945,7 @@
     var __cacheTimer = null, __cachePending = null;
     function __setShopCache(key, obj) {
       /* v343 条4：写入时带上“格式版本号”，格式变了旧数据自动作废（不再出现升级后错乱） */
-      try { if (obj && typeof obj === 'object') obj.__schema = (window.WN_CONST && window.WN_CONST.CACHE_SCHEMA) || 4; } catch (e) {}
+      try { if (obj && typeof obj === 'object') obj.__schema = (window.WN_CONST && window.WN_CONST.CACHE_SCHEMA) || 4; } catch (e) { if (window.__silent) window.__silent(e); }
       try {
         /* v333 修：原来整份覆盖——切分类/搜索/翻页时用「只有 products + categories 两个字段」的对象
            把首屏那份完整缓存（含公告、店铺名、版本号 _homeVersion）冲掉，导致每次进页面都被当成
@@ -1899,16 +1958,16 @@
             if (prev && typeof prev === 'object') {
               for (var k in prev) { if (!(k in merged)) merged[k] = prev[k]; }
             }
-          } catch (e2) {}
+          } catch (e2) { if (window.__silent) window.__silent(e2); }
         }
         var json = JSON.stringify(merged);
         /* v343 条19：写本地暂存做 400ms 节流合并，避免频繁读写卡顿 */
         __cachePending = { key: key, json: json };
         if (__cacheTimer) clearTimeout(__cacheTimer);
         __cacheTimer = setTimeout(function () {
-          try { var pd = __cachePending; if (pd && localStorage.getItem(pd.key) !== pd.json) localStorage.setItem(pd.key, pd.json); } catch (e) {}
+          try { var pd = __cachePending; if (pd && localStorage.getItem(pd.key) !== pd.json) localStorage.setItem(pd.key, pd.json); } catch (e) { if (window.__silent) window.__silent(e); }
         }, 400);
-      } catch (e) {}
+      } catch (e) { if (window.__silent) window.__silent(e); }
     }
 
     // ---------- 数据加载：本地秒开 + 后端异步升级 ----------
@@ -1972,7 +2031,7 @@
       try {
         var _pidRaw = new URLSearchParams(window.location.search).get('pid');
         if (_pidRaw && /^\d+$/.test(_pidRaw)) sharePid = Number(_pidRaw);
-      } catch (e) {}
+      } catch (e) { if (window.__silent) window.__silent(e); }
       window.__sharePid = sharePid;
       if (sharePid) { window.__annDismissed = true; window.__annShown = false; }
       var hasCache = false;
@@ -2007,7 +2066,7 @@
             hasCache = true;
           }
         }
-      } catch (e) {}
+      } catch (e) { if (window.__silent) window.__silent(e); }
       // 没有缓存时：本地环境（file://）走 config.js 兜底；线上首访铺骨架屏（R193 二① 方案A / R255 内嵌 HTML），数据到达逐条渐变替换
       if (!hasCache) {
         if (window.location.protocol === 'file:') {
@@ -2162,7 +2221,7 @@
           var _changed = false;
           if (res[0] && res[0].ok && res[1] && res[1].ok) {
             DATA.products = res[0].list || [];
-            DATA.categories = res[1].list || []; try { __mc.cats = DATA.categories; __mc.t = Date.now(); } catch (e) {}
+            DATA.categories = res[1].list || []; try { __mc.cats = DATA.categories; __mc.t = Date.now(); } catch (e) { if (window.__silent) window.__silent(e); }
             usingRemote = true;
             // v317（用户 10-05 18:40）：恢复后端分页，fetchRemote 走真实网络请求，_backendPaged=true
             if (res[0].total_pages !== undefined) {
@@ -2180,12 +2239,12 @@
             var _newAnn = (res[2].settings || {}).announcement || '';
             var _newAnnMode = (res[2].settings || {}).announcement_mode || 'always';
             if (!_newAnn && !(res[2].settings || {}).announcements) {
-              try { localStorage.removeItem('wnzyq_ann_date'); localStorage.removeItem('wnzyq_ann_session'); } catch(e) {}
+              try { localStorage.removeItem('wnzyq_ann_date'); localStorage.removeItem('wnzyq_ann_session'); } catch (e) { if (window.__silent) window.__silent(e); }
             }
             DATA.announcement = _newAnn;
             DATA.announcementMode = _newAnnMode;
             DATA.announcements = window.parseAnnouncements(res[2].settings || {}, { filterHidden: true });
-            try { __mc.sets = res[2].settings || {}; __mc.t = Date.now(); } catch (e) {}
+            try { __mc.sets = res[2].settings || {}; __mc.t = Date.now(); } catch (e) { if (window.__silent) window.__silent(e); }
             if ((res[2].settings || {}).shop_name) { DATA.shopName = res[2].settings.shop_name; }
             window._globalContact = (res[2].settings || {}).contact_url || getDefaultContact();
             if (window.__kfPreconnect) window.__kfPreconnect(window._globalContact);
@@ -2196,7 +2255,7 @@
               cacheData.announcements = DATA.announcements;
               if (DATA.shopName) cacheData.shop_name = DATA.shopName;
               __setShopCache('wnzyq_shop_data', cacheData);
-            } catch (e) {}
+            } catch (e) { if (window.__silent) window.__silent(e); }
             if (DATA.announcement !== _oldAnn || DATA.announcementMode !== _oldAnnMode || DATA.shopName !== _oldShopName) _changed = true;
           }
           var _wasSkel = !!window.__skelPhase;
@@ -2256,7 +2315,7 @@
     // v327（用户要求）：补加载状态——命令面板搜索时数据没回来显示「搜索中…」、失败显示「搜索失败，请重试」，不再白屏。
     var __allProductsForCmd = null;
     var __allCmdState = 'loading'; /* loading=还在拉全量 | ready=就绪 | error=拉取失败 */
-    function __cmdNotify() { try { if (window.__cpPanelInst && window.__cpPanelInst.refresh) window.__cpPanelInst.refresh(); } catch (e) {} }
+    function __cmdNotify() { try { if (window.__cpPanelInst && window.__cpPanelInst.refresh) window.__cpPanelInst.refresh(); } catch (e) { if (window.__silent) window.__silent(e); } }
     function __loadAllProductsForCmd() {
       if (__allProductsForCmd) return; // 只拉一次
       __dedupFetch('/api/products?page_size=0&brief=1', { cache: 'no-cache', credentials: 'include' }).then(function (r) {
@@ -2286,7 +2345,7 @@
       var cats = (DATA.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
       var totalItems = (DATA.products || []).length + cats.length;
       if (totalItems > 500) {
-        try { console.log('[v319] 预加载跳过：产品+分类=' + totalItems + ' > 500 安全线'); } catch (e) {}
+        try { console.log('[v319] 预加载跳过：产品+分类=' + totalItems + ' > 500 安全线'); } catch (e) { if (window.__silent) window.__silent(e); }
         return;
       }
       cats.forEach(function (c) {
@@ -2308,7 +2367,7 @@
       __pidHandled = true;
       var p = (DATA.products || []).find(function (x) { return Number(x.id) === pid; });
       if (p) {
-        try { openModal(p); } catch (e) {}
+        try { openModal(p); } catch (e) { if (window.__silent) window.__silent(e); }
       } else if (fromRemote) {
         showToast('该资源已隐藏或不存在', 'error'); /* R118：与全站 toast 胶囊统一 */
       }
@@ -2316,7 +2375,7 @@
         var u = new URL(window.location.href);
         u.searchParams.delete('pid');
         window.history.replaceState(null, '', u.pathname + (u.searchParams.toString() ? '?' + u.searchParams.toString() : ''));
-      } catch (e) {}
+      } catch (e) { if (window.__silent) window.__silent(e); }
       window.__sharePid = null;
     }
 
@@ -2382,10 +2441,10 @@
       if (pullDistance > PULL_THRESHOLD) {
         // 触发刷新
         pill.style.transform = 'translateY(0px)'; // R170：停在 80px 位显示「正在刷新」
-        document.getElementById('pullRefreshText').textContent = '正在刷新';
+        document.getElementById('pullRefreshText').textContent = '正在刷新…';
         window.__annShown = false; window.__annDismissed = false;
         // 清除缓存，重新加载数据
-        try { localStorage.removeItem('wnzyq_shop_data'); } catch (e) {}
+        try { localStorage.removeItem('wnzyq_shop_data'); } catch (e) { if (window.__silent) window.__silent(e); }
         // v312（用户 10-05 15:21）：下拉刷新同时清除内存缓存，确保强制重新拉取
         __pageCache = {}; __pageCacheLoading = {};
         setTimeout(function () {
@@ -2517,12 +2576,12 @@
     });
     // 浏览器返回/回退兜底：bfcache 由 ui-common.js 强制 reload；popstate 与非 persisted pageshow 时，列表为空则重新初始化，杜绝白屏
     function __shopBackGuard() {
-      setTimeout(function () { try { var grid = document.getElementById('productGrid'); if (grid && !grid.children.length && typeof initData === 'function') initData(); } catch (err) {} }, 60);
+      setTimeout(function () { try { var grid = document.getElementById('productGrid'); if (grid && !grid.children.length && typeof initData === 'function') initData(); } catch (err) { if (window.__silent) window.__silent(err); } }, 60);
     }
     // v307：bfcache 恢复时不再强制刷新——根治"切回来闪一下"。公共脚本已同步修复，此处兜底也取消 reload。
     window.addEventListener('pageshow', function (e) {
       if (e.persisted) {
-        try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {}
+        try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); }
       }
     });
     window.addEventListener('pageshow', function (e) { if (e.persisted) return; __shopBackGuard(); });
@@ -2595,6 +2654,53 @@
         });
       }
       window.__saveQrPng = __saveQrPng;
+      /* v346 条83：分享海报——把二维码嵌进一张带站名 + 资源标题的图片，适合直接发朋友圈 */
+      function __posterFileName(pid, name) {
+        var base = (name || '').replace(/[\\\/:*?"<>|]/g, '-').trim();
+        if (!base) base = '资源' + pid;
+        return base + '-分享海报.png';
+      }
+      function __savePosterPng(pid, onDone, name) {
+        var url = __makeQrUrl(pid);
+        __genQrPng(url, 300, function (qrUrl) {
+          if (!qrUrl) { showToast('海报生成失败', 'error'); onDone && onDone(null); return; }
+          try {
+            var W = 420, H = 580;
+            var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+            var g = cv.getContext('2d');
+            g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+            g.fillStyle = '#1E88E5'; g.fillRect(0, 0, W, 84);
+            g.textAlign = 'center'; g.textBaseline = 'middle';
+            g.fillStyle = '#ffffff';
+            g.font = '600 24px system-ui, "Microsoft YaHei", sans-serif';
+            g.fillText((window.SHOP_CONFIG && window.SHOP_CONFIG.shopName) || '万能资源圈', W / 2, 42);
+            var _t = String(name || '').trim() || ('资源' + pid);
+            if (_t.length > 16) _t = _t.slice(0, 16) + '…';
+            g.fillStyle = '#222';
+            g.font = '600 19px system-ui, "Microsoft YaHei", sans-serif';
+            g.fillText(_t, W / 2, 132);
+            var qs = 280;
+            var img = new Image();
+            img.onload = function () {
+              try {
+                g.drawImage(img, (W - qs) / 2, 172, qs, qs);
+                g.fillStyle = '#999';
+                g.font = '15px system-ui, "Microsoft YaHei", sans-serif';
+                g.fillText('长按识别二维码 · 查看资源', W / 2, 172 + qs + 48);
+                var dataUrl = cv.toDataURL('image/png');
+                var a = document.createElement('a');
+                a.href = dataUrl; a.download = __posterFileName(pid, name);
+                document.body.appendChild(a); a.click(); a.remove();
+                showToast('分享海报已保存', 'success');
+                onDone && onDone(dataUrl);
+              } catch (e) { showToast('海报生成失败', 'error'); onDone && onDone(null); }
+            };
+            img.onerror = function () { showToast('海报生成失败', 'error'); onDone && onDone(null); };
+            img.src = qrUrl;
+          } catch (e) { showToast('海报生成失败', 'error'); onDone && onDone(null); }
+        });
+      }
+      window.__savePosterPng = __savePosterPng;
       /* 二维码预览弹窗（参考 showShareLinkModal 同款效果） */
       function __showQrPreview(dataUrl, pid, name) {
         try {
@@ -2604,18 +2710,18 @@
           mask.setAttribute('role', 'dialog');
           mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
           mask.innerHTML =
-            '<div class="share-box qr-preview-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalIn 0.18s ease;">' +
-              '<button class="modal-close-x" data-qr-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
+            '<div class="share-box qr-preview-box" style="background:#fff;border-radius:14px;position:relative;padding:26px 20px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-modal,0 10px 40px rgba(0,0,0,0.25));animation:modalIn 0.18s ease;">' +
+              '<button class="modal-close-x" data-qr-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:#f0f2f5;color:#666;font-size:19px;cursor:pointer;line-height:1;transition:transform 0.10s var(--ease-press), opacity 0.10s var(--ease-press);"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
               '<div style="font-size:18px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;">分享资源二维码</div>' + // R251：标题改「分享资源二维码」
               '<div style="font-size:13px;color:#888;margin-bottom:14px;"><span style="color:#1565c0;">' + _pName + '</span><span style="color:#000;"> · </span>资源二维码已保存到设备</div>' + // R251：灰字带资源名；R254：分色——资源名站内链接蓝/圆点黑/其余保持灰
-              '<div style="display:flex;justify-content:center;margin-bottom:18px;"><img id="qrPreviewImg" style="width:200px;height:200px;border:1px solid #eee;border-radius:8px;object-fit:contain;background:#fff;" alt="二维码"/></div>' +
+              '<div style="display:flex;justify-content:center;margin-bottom:18px;"><img id="qrPreviewImg" style="width:200px;height:200px;border:1px solid var(--border-soft,#eee);border-radius:8px;object-fit:contain;background:#fff;" alt="二维码"/></div>' +
               '<button data-qr-ok type="button" class="share-ok">确定</button>' + // R256（老板 09-23 19:04）：底部按键「再次保存」→「确定」，与分享链接弹窗确定键同款（同 class="share-ok"、无内联样式，去掉原 margin-bottom 内联）；首次保存已在 __saveQrPng 弹窗打开前完成，此处不再重复保存 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误
             '</div>';
           var img = mask.querySelector('#qrPreviewImg');
           if (img) img.src = dataUrl;
           document.body.appendChild(mask);
           function close() {
-            try { document.body.removeChild(mask); } catch (e) {}
+            try { document.body.removeChild(mask); } catch (e) { if (window.__silent) window.__silent(e); }
             if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
           }
           mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
@@ -2623,7 +2729,7 @@
           mask.querySelector('[data-qr-ok]').addEventListener('click', close); // R256：点击「确定」关闭弹窗（保存已在打开前完成，不再重复保存）
           if (window.__modalKit) window.__modalKit.register(mask, { discard: close, stash: close });
           window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
-        } catch (e) {}
+        } catch (e) { if (window.__silent) window.__silent(e); }
       }
       window.__showQrPreview = __showQrPreview;
 
@@ -2648,6 +2754,10 @@
           }, p.title);
         };
       }
+      /* v346 条83：存分享海报（含站名/标题，朋友圈可直接发） */
+      function __savePosterFn(p) {
+        return function () { __savePosterPng(p.id, null, p.title); };
+      }
       function imgItems(img, p) {
         var src = img.currentSrc || img.src || '';
         if (!src) return [];
@@ -2658,6 +2768,7 @@
         if (p) {
           items.push({ label: '分享资源', fn: __shareProdFn(p) });
           items.push({ label: '存二维码', fn: __saveQrFn(p) });
+          items.push({ label: '存分享海报', fn: __savePosterFn(p) });
         }
         return items;
       }
@@ -2665,7 +2776,7 @@
         var full = String(el.innerText || '').trim();
         var items = [{ label: '复制选中', fn: function () {
           var sel = '';
-          try { sel = String(window.getSelection ? window.getSelection() : ''); } catch (e) {}
+          try { sel = String(window.getSelection ? window.getSelection() : ''); } catch (e) { if (window.__silent) window.__silent(e); }
           if (sel) __cp(sel, '选中内容已复制');
           else showToast('先选中文字，再长按即可复制', 'info');
         } }];
@@ -2673,6 +2784,7 @@
         if (p) {
           items.push({ label: '分享资源', fn: __shareProdFn(p) });
           items.push({ label: '存二维码', fn: __saveQrFn(p) });
+          items.push({ label: '存分享海报', fn: __savePosterFn(p) });
         }
         return items;
       }
@@ -2685,7 +2797,8 @@
           { label: '复制标题', fn: function () { __cp(p.title || '', '标题已复制'); } },
           { label: '复制简介', fn: function () { __cp(p.desc || '', '简介已复制'); } },
           { label: '分享资源', fn: __shareProdFn(p) },
-          { label: '存二维码', fn: __saveQrFn(p) }
+          { label: '存二维码', fn: __saveQrFn(p) },
+          { label: '存分享海报', fn: __savePosterFn(p) }
         ];
       });
       // 2. 图片：卡片图 + 详情弹窗内所有图（封面/变体图/富文本插图）

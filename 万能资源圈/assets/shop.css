@@ -14,15 +14,8 @@
     img, video, svg { max-width: 100%; }
     table { max-width: 100%; }
 
-    :root {
-      --blue1: #1E88E5;
-      --blue2: #64B5F6;
-      --blue:  var(--blue1);
-      --blue-live: var(--blue1); /* R285：联系按钮统一用系统通用蓝 */
-      --red:   #ff4444;
-      --topbar-h: 64px; /* v336 条67：JS 会按实测顶栏高度覆盖此变量 */
-      /* R50：暗色相关变量统一移至 ui-common.css 定义（含 [data-theme=dark] 暗色值），此处不再重复定义 */
-    }
+    /* v346 条22：删除本页重复的 :root（--blue1/--blue2/--blue/--blue-live/--red/--topbar-h 已在 ui-common.css 统一源；
+       --topbar-h 由公共兜底 + JS 实测回写，本页无需再定义）。 */
     /* R265（用户 09-27 15:04）：根因→R259 误删 shop.css 本地 :root 变量块，恢复 v256 原文；暗色变量不恢复（R50 已移至公共块，值一致） */
     /* R49：暗色变量块为死代码（0 处引用），已删，勿再空挂 */
     @keyframes pageFadeIn {
@@ -235,7 +228,7 @@
     }
 
     .category-tag.active {
-      background: var(--blue1);
+      background: var(--link-blue, #1565c0); /* v346 条33：选中态蓝加深（原 #1E88E5 上白字对比仅 3.68，改深蓝后达可读） */
       color: #fff;
       border-color: transparent;
       font-weight: 600;
@@ -251,6 +244,8 @@
       grid-template-columns: repeat(5, 1fr);
       gap: 14px;
     }
+    /* v346 条26：超大屏限宽 1500 居中（原先被上方 .product-grid 的 max-width:1200 覆盖，本规则一直失效） */
+    @media (min-width: 1600px) { .product-grid { max-width: 1500px; } }
     @media (max-width: 1200px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
     @media (max-width: 900px)  { .product-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 600px)  {
@@ -378,6 +373,8 @@
     .card-price-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; min-height: 20px; }
     .card-price { color: var(--price-text, #C86800); font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; letter-spacing: 0.2px; }
     .card-price.free { color: var(--green, #01C000); font-size: 13px; font-weight: 600; }
+    /* v346 条43：原价/现价排版规范——划线原价（灰、小一档）在现价左侧，无原价时不显示 */
+    .price-orig { color: var(--text-faint); text-decoration: line-through; font-size: 12px; font-weight: 400; margin-right: 6px; }
     @media (max-width: 600px) {
       .card-title { font-size: 14px; line-height: 1.4; } /* 手机档标题降一档，与描述拉开层级 */
       .card-desc { font-size: 12px; color: var(--text-light); line-height: 1.5; } /* 描述降为更淡的次级信息 */
@@ -588,7 +585,7 @@
       padding-right: 36px;
     }
     .modal-price {
-      color: var(--price-orange, #FF9900);
+      color: var($1, #C86800);
       font-size: 24px;
       font-weight: 700;
       white-space: nowrap;
@@ -707,7 +704,7 @@
       min-width: 0;
     }
     .variant-price {
-      color: var(--price-orange, #FF9900);
+      color: var($1, #C86800);
       font-size: 16px;
       font-weight: 700;
       white-space: nowrap; /* R158：金额永不换行（评论3——长数字类型名把 ¥13 挤成竖排换行） */
@@ -900,7 +897,7 @@
     .ann-modal .ann-body p { margin: 6px 0; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
     /* 交互动效复用 ui-common.css 全站统一弹窗按键规则（R17 统一标准：hover 缩小变淡、按压更小更暗） */
-    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: 10px; background: #1e88e5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
     .ann-modal .modal-close-x { top: 12px; right: 12px; width: 32px; height: 32px; }
     /* 分类栏 */
     .category-bar-wrap {
@@ -1022,7 +1019,7 @@
 
     .sub-category-tag.active {
       background: var(--card-bg);
-      color: var(--blue1);
+      color: var(--link-blue, #1565c0); /* v346 条33：选中态文字加深（原 #1E88E5 对比不足） */
       border-color: var(--blue2);
       font-weight: 600;
     }
@@ -1175,7 +1172,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 @media (max-width: 600px) {
   /* 窄屏与全站 .tab 窄屏档同步（仅 padding/字号缩小，height 36px 与胶囊圆角同 tab 保持） */
-  .video-fallback .vf-link { padding: 7px 12px; font-size: 13px; }
+  .video-fallback .vf-link { padding: 8px 12px; font-size: 13px; }
 }
 
 /* ===== R165（用户 18:59/19:11）：前台同步 =====
@@ -1187,6 +1184,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .resource-code-btn { padding: 0 14px; font-size: 13px; height: 36px; }
   .btn-contact, .btn-close-modal { height: 40px; font-size: 14px; }
 }
+/* v346 条59：详情弹窗「上一条/下一条」导航（按当前列表顺序切换） */
+.modal-nav { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 4px 16px 10px; }
+.modal-nav-btn { flex: 1 1 0; max-width: 130px; height: 34px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); border-radius: 8px; font-size: 13px; cursor: pointer; }
+.modal-nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+.modal-nav-pos { font-size: 12px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+/* v346 条60：最近浏览一行 */
+.recent-bar { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding: 8px 16px; max-width: 1200px; margin: 0 auto; }
+.recent-title { flex: none; font-size: 12px; color: var(--text-faint); }
+.recent-chip { flex: none; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); border-radius: 999px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+.recent-chip:hover { border-color: var(--blue2); color: var(--blue1); }
 
     /* ---------- R193 二① 方案A（用户 22:32 拍板）：骨架屏 ----------
        骨架数量=每页条数（renderSkeleton 铺 PAGE_SIZE 张）；数据到达逐条渐变成真卡。
@@ -1371,7 +1378,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   gap: 8px;
   padding: 6px 0;
   font-size: 13px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-soft, #eee);
 }
 .file-folder-item:last-child { border-bottom: none; }
 .file-folder-item .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1432,9 +1439,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .page-title { margin-top: 6px !important; margin-bottom: 12px !important; }
 }
 
-/* v343 条41：骨架块尺寸与真实卡片逐项对齐（图 3:2、标题一行、描述一行、价格一行），数据到位不跳版 */
-.card-skeleton .sk-img { aspect-ratio: 3 / 2; width: 100%; border-radius: 8px; }
-.card-skeleton .sk-line { height: 14px; border-radius: 4px; margin-top: 8px; }
-.card-skeleton .sk-line.sk-sub { height: 12px; width: 72%; }
-.card-skeleton .sk-line.sk-price { height: 16px; width: 40%; }
-@media (max-width: 600px) { .card-skeleton .sk-img { aspect-ratio: 1 / 1; } }
+/* v346 条41：删除与上文（1205-1213）重复且互相打架的第二套骨架规则——
+   上一套（1205-1213）已覆盖图比例/标题槽/描述槽/内边距/手机档，本处再写会冲突（sk-img 圆角 10 vs 8、
+   sk-line 高度 21/18 vs 14），且 sk-sub/sk-price 两个类 JS 从未生成。骨架口径统一保留单一来源。 */

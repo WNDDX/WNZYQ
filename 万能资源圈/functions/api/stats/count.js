@@ -8,6 +8,6 @@ export async function onRequestGet(context) {
     res.headers.set('Cache-Control', 'public, max-age=60');
     return res;
   } catch (e) {
-    return json({ ok: false, total: 0 }, 200);
+    return json({ ok: false, total: 0, msg: '统计失败' }, 200); /* v346 条85：错误体补 msg，与全站统一 */
   }
 }

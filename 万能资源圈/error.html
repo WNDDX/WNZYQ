@@ -11,11 +11,11 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="万能资源圈">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="/assets/images/logo.png?v=330">
+<meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="万能资源圈・错误">
 <meta name="twitter:description" content="优质资源聚合平台">
-<meta name="twitter:image" content="/assets/images/logo.png?v=330">
+<meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
 <meta name="robots" content="noindex,nofollow">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
@@ -66,7 +66,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 </style>
 </head>
 <body><a class="skip-link" href="#mainContent">跳到主要内容</a>
-<div class="box">
+<div class="box" id="mainContent" role="main"><!-- v346 条70/67：skip-link 目标 + 主区语义 -->
   <div class="logo"><!-- R51：logo 去掉链接纯展示（跳转由下方「导航页」按钮承担） --><img id="errLogo" alt="万能资源圈" decoding="async" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></div>
   <div class="code" id="errorCode" role="heading" aria-level="1">万能资源圈・错误</div>
   <div class="title" id="errorTitle">页面访问异常</div>
@@ -76,6 +76,8 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   <a href="shop" class="btn" id="errShop" style="margin-left:14px;" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">资源页</a>
   <a href="javascript:;" class="btn" id="errReload" style="margin-left:14px;display:none;" onclick="location.reload()">重新加载</a>
   <a href="admin" class="btn" id="errLogin" style="margin-left:14px;display:none;" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">去登录</a>
+  <!-- v346 条50：错误页出路补一颗「咨询客服」（与站内客服链接一致），任何错误都有求助出口 -->
+  <a href="https://work.weixin.qq.com/kfid/kfc39748ad948e8b691" class="btn" id="errKf" style="margin-left:14px;" target="_blank" rel="noopener">咨询客服</a>
   <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 </div>
 <script>

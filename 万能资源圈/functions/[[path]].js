@@ -102,8 +102,8 @@ async function serveAsset(context, path) {
           /* v339 条222：JS/CSS 未带指纹，必须每次校验（no-cache），改完上传立即生效 */
           headers.set('cache-control', 'no-cache, must-revalidate');
         } else if (LONG_CACHE_EXTS.indexOf(ext) !== -1) {
-          // 图片/字体：7 天强缓存（同一 URL 全站/跨页直接用浏览器缓存，不再发请求）
-          headers.set('cache-control', 'public, max-age=604800, immutable');
+          /* v346 条5：图片/字体长缓存对齐 _headers 的 365 天（原 7 天，与静态规则口径不一致） */
+          headers.set('cache-control', 'public, max-age=31536000, immutable');
         } else if (VIDEO_CACHE_EXTS.indexOf(ext) !== -1) {
           // 视频：1 天缓存（文件大，减少重复下载）
           headers.set('cache-control', 'public, max-age=86400');

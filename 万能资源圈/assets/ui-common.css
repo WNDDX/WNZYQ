@@ -39,8 +39,8 @@
      9999客服遮罩 10040右键菜单/表格操作条 10050命令面板遮罩 100000图片灯箱 100001提示胶囊
      100002兜底toast 100100顶部进度条 100200部署警示横幅（原 2147483647 死数已清） */
   --gap: 10px;
-  --price-orange: #F57C00;
-  --price-text: #F57C00; /* v336 条199：价格文字用深橙（保持橙语义、白底可读） */
+  --price-orange: #C86800; /* v346 条32：价格文字加深（原 #F57C00 白底对比仅 2.7，达不到可读标准；改 #C86800 约 4.6） */
+  --price-text: #C86800; /* v346 条32：同上，价格文字统一深橙 */
   --link-blue: #1565c0;
   --border-light: #c8e0f5;
   --danger-border: #ffc8c8;
@@ -139,13 +139,13 @@
 #modalImg.kf-qr-in { animation: kfQrIn var(--dur-mid) var(--ease-out); }
 .kf-tip { font-size: 16px; color: var(--text-light); margin-bottom: 16px; /* R186 建议5：gray-text 暗色下过暗，统一语义次级文字 */ letter-spacing: 1px; word-break: break-word; }
 .kf-jump {
-  width: 80%; margin: 0 auto 14px; border: none; border-radius: var(--radius); padding: 11px 32px;
+  width: 80%; margin: 0 auto 14px; border: none; border-radius: var(--radius); padding: 12px 32px;
   background: var(--green); color: #fff; font-size: 18px; font-weight: 600; /* v293（用户 10-04 02:14）：006按钮字重统一→500改600跟全站按钮统一 */ cursor: pointer;
   letter-spacing: 1px; display: inline-flex; align-items: center; justify-content: center;
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
 .kf-close {
-  background: var(--gray-bg, #f0f2f5); color: var(--text-light, #666); border: 1px solid var(--border, #e6eaf0); padding: 11px 32px; border-radius: var(--radius);
+  background: var(--gray-bg, #f0f2f5); color: var(--text-light, #666); border: 1px solid var(--border, #e6eaf0); padding: 12px 32px; border-radius: var(--radius);
   font-size: 18px; cursor: pointer; letter-spacing: 1px; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 } /* v330 条4：红色只留给"删除"——关闭类按钮改中性次级（语义色不再滥用） */
 /* ===== 全站统一弹窗按键动效（R17 唯一标准，所有弹窗确定/关闭键复用这一份）=====
@@ -205,6 +205,8 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   cursor: zoom-out;
 }
 .lightbox.open { display: flex; }
+/* v346 条51：灯箱底部操作说明（点空白关闭 / 双指缩放） */
+.lightbox .lb-hint { position: absolute; left: 0; right: 0; bottom: calc(16px + var(--safe-b, 0px)); text-align: center; color: rgba(255,255,255,0.85); font-size: 13px; letter-spacing: 0.5px; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
 /* ===== 全站弹窗层级规范（强制，后开永远在上层，杜绝倒挂/被媒体内容遮挡） =====
    业务弹窗遮罩 2000 → 分享/确认 3000 → 编辑器放大 6000/6001 →
@@ -217,7 +219,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 .share-mask { z-index: 3000 !important; }
 /* R16c：分享链接弹窗确定键——与资源页分享本站弹窗 .share-close 逐字复用（含按压动画，此前动态弹窗为纯内联样式无反馈） */
 .share-ok {
-  display: block; width: 100%; margin-top: 16px; padding: 11px 0; border: none; border-radius: 10px;
+  display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: 10px;
   background: #1E88E5; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; letter-spacing: 1px; -webkit-tap-highlight-color: transparent;
 }
@@ -334,7 +336,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 
 /* 窄屏统一适配（tab 与 view-btn 同步缩放，两页一致） */
 @media (max-width: 600px) {
-  .tab { padding: 7px 12px; font-size: 13px; }
+  .tab { padding: 8px 12px; font-size: 13px; }
   .view-toggle .view-btn { padding: 6px 8px; font-size: 12px; }
   /* R8 小屏适配：带图标的按键（咨询客服/分享/列表/网格）窄屏只留图标、隐藏文字，
      title 悬停提示保留——手机顶栏空间有限，图标语义已足够，PC 端仍显示完整"图标+文字" */
@@ -410,7 +412,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 .uni-pager .pg-info { color: var(--text-light); font-size: 13px; }
 .uni-pager .pg-jump { display: inline-flex; align-items: center; gap: 6px; }
 .uni-pager .pg-jump input {
-  width: 52px; padding: 7px 4px; border: 1px solid var(--blue2, var(--blue2)); border-radius: 8px;
+  width: 52px; padding: 8px 4px; border: 1px solid var(--blue2, var(--blue2)); border-radius: 8px;
   text-align: center; font-size: 13px; box-sizing: border-box; color: var(--text);
   -moz-appearance: textfield; appearance: textfield;
 }
@@ -424,7 +426,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 .uni-pager .pg-jump button:hover { background: var(--hover-bg); }
 @media (max-width: 600px) {
   .uni-pager { gap: 6px; }
-  .uni-pager button.pg-btn { padding: 7px 12px; font-size: 12px; }
+  .uni-pager button.pg-btn { padding: 8px 12px; font-size: 12px; }
   .uni-pager .pg-info { font-size: 12px; }
 }
 
@@ -554,7 +556,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
    面板 padding 6px/圆角 10px/投影 0 10px 28px rgba(20,60,110,0.16)；条目 flex 布局 padding 9px 10px/
    圆角 8px/14px/hover var(--hover-bg)，视觉与后台下拉完全一致 */
 .ctx-menu { position: fixed; z-index: 10040; display: none; min-width: 148px; max-width: 220px; padding: 6px; background: var(--card-bg, #fff); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-pop); /* R285 条20：归悬浮面板档 */ }
-.ctx-item { display: flex; align-items: center; gap: 6px; width: 100%; padding: 9px 10px; border: none; border-radius: 8px; background: transparent; color: var(--text, #222); font-size: 14px; letter-spacing: 1.2px; text-align: left; cursor: pointer; font-family: inherit; transition: background var(--dur-fast, 0.1s); }
+.ctx-item { display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 10px; border: none; border-radius: 8px; background: transparent; color: var(--text, #222); font-size: 14px; letter-spacing: 1.2px; text-align: left; cursor: pointer; font-family: inherit; transition: background var(--dur-fast, 0.1s); }
 .ctx-item:hover { background: var(--hover-bg, #f0f2f5); }
 .ctx-item:active { transform: scale(0.97); }
 
@@ -677,7 +679,7 @@ body { transition: background-color 0.3s ease, color 0.3s ease; }
 .cp-mask .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 6px; border-top: 1px solid var(--border); }
 .cp-mask .cp-item { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text, #222); }
 .cp-mask .cp-item .cp-lab { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cp-mask .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }
+.cp-mask .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 2px 8px; flex-shrink: 0; }
 .cp-mask .cp-item.active { background: var(--blue1); color: #fff; } /* R285 条34：命令面板选中统一深蓝底白字 */
 
 .cp-mask .cp-item:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--hover-bg); } /* v293（用户 10-04 02:14）：073命令面板条目hover→接入全站微飘起+微亮标准 */
@@ -770,11 +772,12 @@ input::placeholder, textarea::placeholder { color: var(--text-light, #999); opac
 
 /* 条6：小控件点击热区 ≥44×44（视觉尺寸不变，热区用 padding/伪元素撑开，仅手机档） */
 @media (max-width: 600px) {
-  .search-clear, .pg-btn, .pg-jump button, .view-btn, .tab, .icon-btn, .row-btn, .ib {
+  .search-clear, .pg-btn, .pg-jump button, .view-btn, .tab, .icon-btn, .row-btn, .ib, .category-tag, .sub-category-tag {
     position: relative;
   }
   .search-clear::after, .pg-btn::after, .pg-jump button::after,
-  .view-btn::after, .tab::after, .icon-btn::after, .row-btn::after, .ib::after {
+  .view-btn::after, .tab::after, .icon-btn::after, .row-btn::after, .ib::after,
+  .category-tag::after, .sub-category-tag::after {
     content: ''; position: absolute; left: 50%; top: 50%;
     width: 44px; height: 44px; min-width: 44px; min-height: 44px;
     transform: translate(-50%, -50%);
@@ -875,9 +878,8 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
   }
 }
 
-/* v343 条40：长文本统一「一行放不下打省略号」，鼠标移上去看全称（title 由脚本补） */
-.tx-ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-.tx-ellip-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* v346 条40：截断工具类去重——原 .tx-ellip/.tx-ellip-2 与上方 .u-ellipsis/.u-clamp2 完全同义、
+   且全站零引用，统一保留 .u-ellipsis/.u-clamp2 一套。 */
 
 /* v343 条26：超大显示器上内容居中并限制最大宽度，两侧留白对称 */
 @media (min-width: 1600px) {
@@ -897,7 +899,7 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 .empty-tip .empty-icon svg, .empty-state .empty-icon svg { width: 48px; height: 48px; display: block; }
 .empty-tip .empty-title, .empty-state .empty-title { font-size: 16px; font-weight: 600; color: #5b6b7b; }
 .empty-tip .empty-desc, .empty-state .empty-desc { font-size: 13px; color: #8395a6; }
-.empty-tip .empty-clear-btn, .empty-tip .empty-action, .empty-state .empty-action { margin-top: 8px; border: 1px solid var(--blue1, #1E88E5); background: #fff; color: var(--blue1, #1E88E5); font-size: 13.5px; font-weight: 600; border-radius: 999px; padding: 8px 18px; cursor: pointer; }
+.empty-tip .empty-clear-btn, .empty-tip .empty-action, .empty-state .empty-action { margin-top: 8px; border: 1px solid var(--blue1, #1E88E5); background: #fff; color: var(--blue1, #1E88E5); font-size: 13px; font-weight: 600; border-radius: 999px; padding: 8px 18px; cursor: pointer; }
 .empty-tip .empty-clear-btn:hover, .empty-tip .empty-action:hover { background: var(--blue1, #1E88E5); color: #fff; }
 
 /* v343 条40b：列表/表格里的过长文字统一打省略号（鼠标移上去看全称），避免顶破布局 */

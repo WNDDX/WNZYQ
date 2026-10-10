@@ -9,6 +9,7 @@ export function json(data, status = 200, extraHeaders, request) {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
+      'X-Content-Type-Options': 'nosniff', /* v346 条88：接口响应统一补防嗅探头（此前只有页面/静态有） */
       ...(request ? corsHeaders(request) : corsHeaders()),
       ...(extraHeaders || {}),
     },
@@ -486,9 +487,10 @@ export async function putToBucket(env, filename, body, opts) {
 }
 
 // ===== v336 条36：鉴权样板唯一源——新接口写 export const onRequestPost = withAuth(async (...) => {...) 即自动带锁 =====
+// v346 条2：修正参数顺序（requireAuth 的定义是 (env, request)，原写反，一旦启用即失效）
 export function withAuth(handler) {
   return async function (context) {
-    const gate = await requireAuth(context.request, context.env);
+    const gate = await requireAuth(context.env, context.request);
     if (gate) return gate; // 未登录：requireAuth 已返回 401 响应
     return handler(context);
   };
