@@ -174,6 +174,7 @@
     document.querySelectorAll('img').forEach(function (im) { if (im.dataset.lf) return; if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
 
     // ---------- DOM ----------
+    window.__adminLoggedIn = false; /* v365 条4：开机即明确未登录（守卫依据，不再依赖样式状态） */
     var loginView = document.getElementById('loginView');
     var mainView  = document.getElementById('mainView');
     var loginUser = document.getElementById('loginUser');
@@ -245,6 +246,10 @@
     var inputCallback = null;
 
     function showInput(title, tip, placeholder, callback, defaultValue, uploadKind) {
+      /* v362 条1：登录守卫——登录层还开着时，任何业务弹窗（输入/确认/编辑/类型/分类/客服）一律不放行 */
+      try {
+        if (window.__adminLoggedIn !== true) { if (window.__silent) window.__silent(new Error('guard:login')); return { close: function () {} }; } /* v365 条4：守卫改专用标志位（原依赖 style.display，开机空值态有歧义） */
+      } catch (e) {}
       inputTitle.textContent = title || '请输入';
       inputTip.innerHTML = tip || '';
       inputValue.placeholder = placeholder || '请输入内容'; /* R285 条38：兜底口径「动作+对象」 */
@@ -453,6 +458,7 @@
       document.getElementById('confirmMsg').textContent = msg || '';
       confirmCallback = callback;
       confirmCancelCallback = cancelCallback || null;
+      try { if (window.__adminLoggedIn !== true) { if (window.__silent) window.__silent(new Error('guard:login')); return; } } catch (e0) {} /* v365 条4：守卫改专用标志位 */
       document.getElementById('confirmMask').classList.add('open');
     }
     var __confirmBusy = false;

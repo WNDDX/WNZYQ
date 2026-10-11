@@ -30,7 +30,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="万能资源圈">
 <link rel="preload" href="/assets/images/logo.png?v=330" as="image">
-<style>
+<style>.modal-mask{display:none}.modal-mask.open{display:flex} /* v367 条1：遮罩/空态/浮钮先藏——外部样式晚到窗口期不再裸奔（登录页"请输入"弹窗根因） */
 /* 变量唯一源：--blue1/2/3、--orange、--green、--red 等全部由 ui-common.css :root 提供，本页禁止再定义 */
 *{
     -webkit-tap-highlight-color: transparent;

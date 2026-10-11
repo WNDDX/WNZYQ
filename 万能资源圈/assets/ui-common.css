@@ -348,11 +348,16 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 @media (max-width: 600px) {
   .tab { padding: 8px 12px; font-size: 13px; }
   .view-toggle .view-btn { padding: 4px 8px; font-size: 12px; }
-  /* R8 小屏适配：带图标的按键（咨询客服/分享/列表/网格）窄屏只留图标、隐藏文字，
-     title 悬停提示保留——手机顶栏空间有限，图标语义已足够，PC 端仍显示完整"图标+文字" */
+  /* v366 条1：按老板拍板还原——窄屏这些键恢复原来的"只显图标"样式（v365 改显文字更难看，已回退）。
+     图标显示不全的问题由 shop.css 顶栏网格布局保证（键不再被挤压裁切），与文字显隐无关 */
   .tab svg + span { display: none; }
   .tab svg { margin: 0; }
   .topbar-actions .tab, .view-toggle .view-btn { padding: 4px 8px; }
+  /* v366：图标模式定宽（36px=边框+图标16居中）+禁止压缩——彻底杜绝按键被挤成 18px 图标裁切。
+     真凶注记：btn-fit 体系默认「藏图标显文字」（.btn-ico display:none），而此处又藏文字——
+     两套机制打架导致图标和文字全没了（空壳按键）。此处显式开图标=纯图标模式成立 */
+  .view-toggle .view-btn { flex: 0 0 auto; width: 36px; padding: 0; justify-content: center; flex-shrink: 0; }
+  .view-toggle .view-btn .btn-ico { display: block; }
   .view-btn span { display: none; }
 }
 

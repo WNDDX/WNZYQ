@@ -1252,6 +1252,7 @@
       .topbar-inner .topbar-brand { order: 1; margin-right: auto; }
       .topbar-inner .topbar-right { order: 2; margin-left: 0; }
       .topbar-inner .tabs { order: 3; flex: 1 1 100%; overflow-x: auto; scrollbar-width: none; }
+      .topbar-inner .topbar-brand, .topbar-inner .topbar-right { flex-shrink: 0; } /* v362 条7：组内不拆散 */
       .topbar-inner .tabs::-webkit-scrollbar { display: none; }
       .topbar-logo { width: 30px; height: 30px; }
       .topbar-brand { flex: 1; min-width: 0; font-size: 16px; }

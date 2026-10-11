@@ -108,6 +108,8 @@
       gap: 8px;
       flex-shrink: 0;
     }
+    /* v364 条3：撤销 v362 的客服/分享键强制配色——双端还原为电脑版原样式
+       （ui-common.css 公共 .tab：半透明白胶囊、hover 上浮、按下白底蓝字），不再另立一套 */
     /* 顶栏 tab 按钮：直接引用 ui-common.css 全站公共 .tab（与管理页【资源管理/分类管理】同一份样式，零复制） */
 
     
@@ -1036,18 +1038,24 @@
       .shop-logo { width: 30px; height: 30px; }
       .shop-brand { flex: 0 1 auto; min-width: 0; }
       .shop-name { font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .topbar-actions { order: 1; margin-left: 0; gap: 3px; } /* R9：咨询客服/分享紧跟 logo 名称（左侧） | v360 条7：减压让视图键文字放得下 */
-    /* v360 条5：分享/客服键双端同款=浅蓝底蓝图标、按下蓝底白图标（与详情弹窗分享键同一套参数） */
-    .topbar-actions .tab#topShare, .topbar-actions .tab#topContact { background: #e8f2fd !important; color: var(--blue1) !important; }
-    .topbar-actions .tab#topShare:active, .topbar-actions .tab#topContact:active { background: var(--blue1) !important; color: #fff !important; }
-      /* v352 条P8：手机端搜索框不再独占一整行——搜索+列表/网格一起靠右（搜索吃满中间空隙，视图切换贴最右） */
-      .search-box { order: 2; flex: 1 1 auto; min-width: 0; margin-top: 0; } /* v360 条6：吃剩余宽度伸缩 */
-      /* v360 条5：名称缩一档、给列表/网格文字腾位；视图切换文字始终显示（顶栏其余键已图标化，空间足够） */
-      .topbar-brand span { font-size: 13px !important; }
-      .topbar-inner .view-toggle { flex-shrink: 0 !important; }
-      .view-btn { padding: 6px 9px !important; }
-      .view-btn .btn-lab { display: inline !important; }
-      .view-toggle { order: 3; flex-shrink: 0; margin-left: 0; }
+      .topbar-actions { gap: 4px; flex-shrink: 0; justify-self: end; }
+      /* v365 条3：顶栏分组改网格布局——分组从"换行数学"变成"结构保证"：
+         第一行=logo+名称(brand) | 客服+分享(actions 贴右)；第二行=搜索框(search 拉伸吃剩余) | 列表网格(view 贴右)。
+         任何屏宽都不会拆组、不会掉到第三行；搜索框自动伸缩=第二行剩余宽度 */
+      .topbar-inner {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas: "brand actions" "search view";
+        align-items: center;
+      }
+      .shop-brand { grid-area: brand; }
+      .tb-group-a, .tb-group-b { display: none; } /* v365：空占位分组不参与网格 */
+      .search-box { grid-area: search; margin-top: 0; margin-left: 0; min-width: 0; }
+      .topbar-inner .view-toggle { grid-area: view; margin-left: 12px; margin-right: 0; flex-shrink: 0; min-width: max-content; } /* v366：组宽=内容宽，按键永不挤压裁切 */
+      /* v360 条5：名称缩一档给顶栏腾位 */
+      /* v360 条5→v364 修正：真类名是 .shop-brand（原写成 .topbar-brand 是条死规则） */
+      .shop-brand span { font-size: 13px !important; }
+      .topbar-inner .topbar-brand { flex-shrink: 0; }
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
       .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: 10px; }
@@ -1467,7 +1475,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    sk-line 高度 21/18 vs 14），且 sk-sub/sk-price 两个类 JS 从未生成。骨架口径统一保留单一来源。 */
 
 /* ===== v360 条7：滑动切换平滑动画 ===== */
-.product-grid.list-swap { animation: listSwap var(--dur-mid) var(--ease-out); }
-@keyframes listSwap { from { opacity: 0.35; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.product-grid.list-swap { animation: listSwap var(--dur-mid) var(--ease-out); pointer-events: none; }
+@keyframes listSwap { from { opacity: 0; } to { opacity: 1; } } /* v362 条5：纯淡入（原位移产生小抖动观感） */
 .modal-box.modal-swap { animation: modalSwap var(--dur-mid) var(--ease-out); }
 @keyframes modalSwap { from { opacity: 0.4; transform: translateX(16px); } to { opacity: 1; transform: none; } }

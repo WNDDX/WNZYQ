@@ -1470,10 +1470,11 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     sx = e.touches[0].clientX; sy = e.touches[0].clientY; on = true;
   }, { passive: true });
   el.addEventListener('touchmove', function (e) {
-    /* v360 条9：中途竖向主导（在上下滚页面）即取消本次手势 */
+    /* v360 条9：竖向主导（上下滚页面）取消；v362 条6：横向达阈值立即触发（不等 touchend，真机更可靠） */
     if (!on || !e.touches.length) return;
     var mx = e.touches[0].clientX - sx, my = e.touches[0].clientY - sy;
-    if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) on = false;
+    if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) { on = false; return; }
+    if (Math.abs(mx) >= 60 && Math.abs(mx) > Math.abs(my) * 2) { on = false; onSwipe(mx < 0 ? 1 : -1); }
   }, { passive: true });
   el.addEventListener('touchend', function (e) {
     if (!on) return; on = false;

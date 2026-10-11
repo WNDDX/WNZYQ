@@ -2633,6 +2633,7 @@ function boot() {
     }
 
     function showLogin() {
+      window.__adminLoggedIn = false; /* v365 条4 */
       loginView.style.display = 'flex'; mainView.style.display = 'none';
       // R243 条39：自动回填上次成功登录的用户名
       try {
@@ -2648,6 +2649,7 @@ function boot() {
         __gc();
         if (!window.__gcTimer) window.__gcTimer = setInterval(__gc, 30 * 60 * 1000);
       } catch (e) {}
+      window.__adminLoggedIn = true; /* v365 条4 */
       loginView.style.display = 'none';
       mainView.style.display = 'block';
       // v294（用户 10-04 02:14）：131 记录登录时间，23小时后提示即将过期

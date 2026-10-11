@@ -753,7 +753,8 @@
       __pageTurning = true; /* R231 条19：翻页期间防重复 */
       currentPage = p;
       if (usingRemote && DATA._backendPaged) {
-        fetchRemote({ page: p }).then(function () {
+        fetchRemote({ page: p }).then(function (res) {
+          if (res && res.stale) { __pageTurning = false; return; } /* v363 条1：过期翻页响应不渲染 */
           renderProducts();
           __pageTurning = false;
           try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) { if (window.__silent) window.__silent(e2); } }
@@ -797,9 +798,9 @@
           cid: currentCat,
           subCid: currentSubCat,
           kw: (searchInput.value || '').trim()
-        }).then(function () {
+        }).then(function (res) {
           _clearSwitch();
-          renderProducts();
+          if (!(res && res.stale)) renderProducts(); /* v363 条1：过期换场响应不渲染（用户已切到别的筛选） */
           __pageTurning = false;
           __flushPendingSearch();
         }).catch(function () {
@@ -2363,7 +2364,24 @@
           __metaFetch('/api/categories', 'cats'),
           __metaFetch('/api/settings', 'sets')
         ]).then(function (res) {
+          /* v363 条1：竞态防护——响应回来时若用户已切到别的分类/搜索/页码，这份数据就"过期"了。
+             过期数据只写进对应缓存格（下次回到该筛选秒出），绝不覆盖 DATA、绝不渲染——
+             否则慢的旧响应会把用户刚选的分类顶掉（实测：预加载慢响应让列表显示上一个分类的内容）。 */
+          var _stale = __cacheKey(currentPage, currentCat, currentSubCat, (searchInput.value || '').trim()) !== key;
           var _changed = false;
+          if (_stale) {
+            if (window.__skelPhase) { window.__skelPhase = false; }
+            try {
+              __pageCache[key] = {
+                products: (res[0] && res[0].list) || [], categories: (res[1] && res[1].list) || DATA.categories,
+                total: (res[0] && res[0].total) || 0, totalPages: (res[0] && res[0].total_pages) || 1, page: (res[0] && res[0].page) || 1, _backendPaged: true,
+                announcement: DATA.announcement, announcementMode: DATA.announcementMode,
+                announcements: DATA.announcements, shopName: DATA.shopName,
+                _globalContact: window._globalContact, _changed: false, _wasSkel: false
+              };
+            } catch (e) { if (window.__silent) window.__silent(e); }
+            return { changed: false, wasSkel: false, stale: true };
+          }
           if (res[0] && res[0].ok && res[1] && res[1].ok) {
             DATA.products = res[0].list || [];
             DATA.categories = res[1].list || []; try { __mc.cats = DATA.categories; __mc.t = Date.now(); } catch (e) { if (window.__silent) window.__silent(e); }
@@ -2424,7 +2442,7 @@
              v335 改：原来的重试提示挂在整页骨架的末尾（两屏开外），第一屏全是灰条、
              用户根本看不到重试入口。现改为设置“加载失败”标记，空态区直接显示
              「加载失败，请点按钮重试」大按钮（见 renderProducts 空态分支），一眼可见。 */
-          window.__loadFailed = true;
+          if (__cacheKey(currentPage, currentCat, currentSubCat, (searchInput.value || '').trim()) === key) window.__loadFailed = true; /* v363 条1：过期请求失败不误报当前视图失败 */
           throw err;
         });
         return __pageCacheLoading[key];
