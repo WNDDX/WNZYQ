@@ -1580,9 +1580,11 @@
         annStatusBtn.className = 'row-btn status-btn ' + (a.hidden ? 'status-hidden' : 'status-online');
         annStatusBtn.textContent = a.hidden ? '隐藏' : '显示';
         annStatusBtn.title = '点击切换为' + (a.hidden ? '显示' : '隐藏');
-        annStatusBtn.addEventListener('click', function (e) { e.stopPropagation(); a.hidden = a.hidden ? 0 : 1; this.textContent = a.hidden ? '隐藏' : '显示'; this.classList.remove('status-online', 'status-hidden'); this.classList.add(a.hidden ? 'status-hidden' : 'status-online'); this.title = '点击切换为' + (a.hidden ? '显示' : '隐藏'); });
+        annStatusBtn.addEventListener('click', function (e) { e.stopPropagation(); a.hidden = a.hidden ? 0 : 1; var _lab = this.querySelector('.btn-lab'); if (_lab) _lab.textContent = a.hidden ? '隐藏' : '显示'; else this.textContent = a.hidden ? '隐藏' : '显示'; this.classList.remove('status-online', 'status-hidden'); this.classList.add(a.hidden ? 'status-hidden' : 'status-online'); this.title = '点击切换为' + (a.hidden ? '显示' : '隐藏'); });
+        if (window.__decorateBtn) window.__decorateBtn(annStatusBtn, a.hidden ? 'hide' : 'show', 2); /* v369 条1：空间不够收成图标（保底图标） */
         // 点击公告项整行即可选中编辑（无需单独编辑按钮）
         var delBtn = document.createElement('button'); delBtn.className = 'row-btn danger'; delBtn.textContent = '删除';
+        if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v369 条1 */
         delBtn.addEventListener('click', function (e) {
           e.stopPropagation();
           showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？', function (closeConfirm) {

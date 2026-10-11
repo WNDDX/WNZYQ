@@ -657,7 +657,7 @@ function renderProducts() {
       cpDisp.className = 'cat-picker-display row-btn';
       var cpTxt = document.createElement('span');
       cpTxt.className = 'cpd-text';
-      cpTxt.textContent = '资源码';
+      cpTxt.textContent = '资源'; /* v368 条2：按老板拍板改名 */
       var cpArrow = document.createElement('span');
       cpArrow.className = 'cpd-arrow';
       cpArrow.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>';
@@ -851,7 +851,7 @@ function renderProducts() {
       }
 
       updateBatchBar();
-      if (window.__btnFit) window.__btnFit(); /* v330 条18：渲染后按可用宽度决定按钮显示文字还是纯图标 */
+      if (window.__btnFit) { window.__btnFit(); setTimeout(function () { try { window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); } }, 130); } /* v330 条18 + v369 条1：渲染后跑一次；布局晚定（字体/网格列宽就位）后再补跑一次，防止「量宽时没溢出、落位后溢出」漏收图标化 */
     }
 
     // ---------- 复制资源 ----------

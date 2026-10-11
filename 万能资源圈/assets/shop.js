@@ -801,6 +801,8 @@
         }).then(function (res) {
           _clearSwitch();
           if (!(res && res.stale)) renderProducts(); /* v363 条1：过期换场响应不渲染（用户已切到别的筛选） */
+          var _pg = document.getElementById('productGrid');
+          if (_pg && window.__barDir) { _pg.classList.remove('swap-next', 'swap-prev'); void _pg.offsetWidth; _pg.classList.add(window.__barDir < 0 ? 'swap-prev' : 'swap-next'); setTimeout(function () { _pg.classList.remove('swap-next', 'swap-prev'); }, 300); window.__barDir = 0; } /* v368 条10：列表方向滑入 */
           __pageTurning = false;
           __flushPendingSearch();
         }).catch(function () {
@@ -883,6 +885,21 @@
       card.addEventListener('click', function () { if (Date.now() - (window.__ctxShownAt || 0) < 300) return; /* v336 条163：长按菜单刚弹出，忽略误触 */ openModal(p); });
       return card;
     }
+    window.__buildProductCard = buildProductCard; /* v369 条4：滑切跟手版借用同一卡片构造画邻居画面 */
+    /* v368 条9：轮播跟手滑动——横滑切上/下一张（复用小圆点点击机制） */
+    window.__bindCarouselSwipe = function (carEl, dotsEl) {
+      if (!carEl || !dotsEl || carEl.__sw) return; carEl.__sw = 1;
+      var sx = 0, sy = 0;
+      carEl.addEventListener('touchstart', function (e) { if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } }, { passive: true });
+      carEl.addEventListener('touchend', function (e) {
+        var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+        if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 2) return;
+        var dots = Array.prototype.slice.call(dotsEl.children); if (!dots.length) return;
+        var i = 0; dots.forEach(function (d, k) { if (d.classList.contains('active')) i = k; });
+        var ni = (i + (dx < 0 ? 1 : -1) + dots.length) % dots.length;
+        dots[ni].click();
+      }, { passive: true });
+    };
     function renderProducts() {
       var list = getFilteredProducts();
       window.__visibleIds = list.map(function (p) { return p.id; }); /* v358 S3：详情弹窗上/下一条按此顺序切换 */
@@ -1072,7 +1089,7 @@
         next.onclick = function () { if (currentPage < totalPages) { currentPage++; renderProducts(); window.scrollTo({top:0,behavior:'smooth'}); } };
         pager.appendChild(next);
       }
-      if (window.__btnFit) window.__btnFit(); /* v330 条18：渲染后按可用宽度决定按钮显示文字还是纯图标 */
+      if (window.__btnFit) { window.__btnFit(); setTimeout(function () { try { window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); } }, 130); } /* v330 条18 + v369 条1：布局晚定后补跑一次（同管理页口径） */
       try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); } /* v346 条60：渲染后刷新「最近看过」一行 */
     }
 
@@ -1215,6 +1232,7 @@
       // R256：详情弹窗封面轮播
       var _covArr = Array.isArray(p.coverImages) ? p.coverImages : (p.img ? [p.img] : []);
       renderCarousel(document.getElementById('modalCarousel'), document.getElementById('modalCcTrack'), document.getElementById('modalCcDots'), modalCover, _covArr);
+      if (window.__bindCarouselSwipe) window.__bindCarouselSwipe(document.getElementById('modalCarousel'), document.getElementById('modalCcDots')); /* v368 条9：轮播跟手滑动 */
       // R273：单图回退条件化——多图时 modalCover 由 renderCarousel 隐藏，不再被 loadImg 翻回来
       var _mainImg = _covArr[0] || p.img || '';
       if (_covArr.length <= 1) {
@@ -1669,7 +1687,7 @@
       if (np) {
         s.i = ni;
         var _mb = document.getElementById('modalBox');
-        if (_mb) { _mb.classList.remove('modal-swap'); void _mb.offsetWidth; _mb.classList.add('modal-swap'); } /* v360 条7：切换平滑动画 */
+        if (_mb) { _mb.classList.remove('modal-swap', 'sl-next', 'sl-prev'); void _mb.offsetWidth; _mb.classList.add(d < 0 ? 'sl-prev' : 'sl-next'); } /* v368 条10：按滑动方向滑入 */
         openModal(np);
       }
     };
@@ -1678,8 +1696,9 @@
       var _mm = document.getElementById('modalMask');
       if (_mm) window.__bindSwipeSwitch(_mm, function (d) { window.__modalGo(d); });
     })();
-    /* S1：列表横滑切分类——v360 条8：按层级顺序（本大类下的低级分类滑完才接下一个大类） */
-    window.__swipeCatGo = function (d) {
+    /* S1：列表横滑切分类——v360 条8：按层级顺序（本大类下的低级分类滑完才接下一个大类）
+       v369 条4：抽出 __catSeqTarget（算出滑动方向上的邻居分类），__swipeCatGo 与跟手版共用一份顺序逻辑 */
+    window.__catSeqTarget = function (d) {
       var cats = (DATA.categories || []).filter(function (c) { return Number(c.parent_id) === 0 || c.parent_id === 0; });
       var tops = cats.slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
       var seq = [];
@@ -1692,8 +1711,14 @@
       seq.forEach(function (s, i) { if (s.type === 'sub' ? (s.id === curSub && s.parent === curTop) : (s.type === 'top' && s.id === curTop && !curSub)) cur = i; });
       var ni = cur + d;
       if (cur === -1) ni = (d > 0 ? 0 : seq.length - 1);
-      if (ni < 0 || ni >= seq.length) return; /* 到头：不动即自然弹回 */
+      if (ni < 0 || ni >= seq.length) return null; /* 到头：无邻居（跟手版走橡皮筋回弹） */
       var tgt = seq[ni];
+      var _nameOf = function (id) { var c = (DATA.categories || []).find(function (x) { return Number(x.id) === Number(id); }); return c ? (c.name || '') : ''; };
+      return { type: tgt.type, id: tgt.id, parent: tgt.parent, name: tgt.type === 'sub' ? (_nameOf(tgt.parent) + '·' + _nameOf(tgt.id)) : _nameOf(tgt.id) };
+    };
+    window.__swipeCatGo = function (d) {
+      var tgt = window.__catSeqTarget(d);
+      if (!tgt) return;
       var grid = document.getElementById('productGrid');
       if (grid) { grid.classList.remove('list-swap'); void grid.offsetWidth; grid.classList.add('list-swap'); } /* v360 条7：切换平滑动画 */
       if (tgt.type === 'top') {
@@ -1709,9 +1734,40 @@
         if (topTag && !topTag.classList.contains('active')) { topTag.click(); setTimeout(doSub, 320); } else doSub();
       }
     };
-    window.__bindSwipeSwitch(document, function (d) { window.__swipeCatGo(d); }, function () {
-      var m = document.getElementById('modalMask');
-      return !(m && m.classList.contains('open')); /* 弹窗开着=归详情手势 */
+    /* v369 条4：滑切跟手版（双面板）——拖动时旧列表跟手、邻居分类画面从旁边跟进来；
+       预取邻居第一页并写内存缓存（与 v363 竞态防护同口径：只写缓存格、不动当前画面数据），
+       提交切换时缓存秒出，不再白等 */
+    window.__peekCat = function (cid, subCid) {
+      var key = __cacheKey(1, cid, subCid, '');
+      if (__pageCache[key] && __pageCache[key].products) return Promise.resolve(__pageCache[key].products);
+      if (__pageCacheLoading[key]) return __pageCacheLoading[key].then(function () { return (__pageCache[key] && __pageCache[key].products) || []; }).catch(function () { return []; });
+      var qs = '/api/products?page=1&page_size=' + PAGE_SIZE + '&brief=1';
+      if (cid > 0) qs += '&cid=' + cid;
+      if (subCid > 0) qs += '&sub_cid=' + subCid;
+      return __dedupFetch(qs, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (res) {
+        var list = (res && res.list) || [];
+        if (res && res.ok) {
+          __pageCache[key] = { products: list, categories: DATA.categories, total: res.total || list.length, totalPages: res.total_pages || Math.max(1, Math.ceil(list.length / PAGE_SIZE)), page: 1, _backendPaged: true,
+            announcement: DATA.announcement, announcementMode: DATA.announcementMode, announcements: DATA.announcements, shopName: DATA.shopName, _globalContact: window._globalContact, _changed: false, _wasSkel: false };
+        }
+        return list;
+      }).catch(function () { return []; });
+    };
+    window.__followSwipe({
+      panel: function () { return document.getElementById('productGrid'); },
+      neighbor: function (dir) { return window.__catSeqTarget(dir); },
+      fill: function (nb, dir, panelB) {
+        panelB.className = 'product-grid';
+        window.__peekCat(nb.type === 'top' ? nb.id : nb.parent, nb.type === 'sub' ? nb.id : 0).then(function (list) {
+          if (!panelB.isConnected) return;
+          list.slice(0, 8).forEach(function (p) { try { panelB.appendChild(window.__buildProductCard(p)); } catch (e) { if (window.__silent) window.__silent(e); } });
+        });
+      },
+      commit: function (dir) { window.__swipeCatGo(dir); },
+      isActive: function () {
+        var m = document.getElementById('modalMask');
+        return !(m && m.classList.contains('open')) && !window.__flipAnimating; /* 弹窗开着=归详情手势 */
+      }
     });
 
     // v294（用户 10-04 02:14）：207 浏览器后退先关弹窗
@@ -2951,4 +3007,31 @@ window.closeShare = typeof closeShare !== 'undefined' ? closeShare : window.clos
 window.closeAnnModal = typeof closeAnnModal !== 'undefined' ? closeAnnModal : window.closeAnnModal;
 window.showAnnDefault = typeof showAnnDefault !== 'undefined' ? showAnnDefault : window.showAnnDefault;
 window.loadImg = typeof loadImg !== 'undefined' ? loadImg : window.loadImg;
+})();
+/* v368 条11：分类栏全员参与滑动——栏内横滑=滚动标签；滚到头继续滑=切上/下一个分类（弹回自然）；二级栏同理 */
+(function () {
+  function bindBar(bar, getTags) {
+    if (!bar || bar.__edgeSw) return; bar.__edgeSw = 1;
+    var sx = 0, sy = 0;
+    bar.addEventListener('touchstart', function (e) { if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } }, { passive: true });
+    bar.addEventListener('touchend', function (e) {
+      var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
+      var atEnd = bar.scrollLeft + bar.clientWidth >= bar.scrollWidth - 4;
+      var atStart = bar.scrollLeft <= 4;
+      if (dx < 0 && !atEnd) return; /* 未到右端：刚才那次就是横滚本身 */
+      if (dx > 0 && !atStart) return;
+      var tags = getTags(); if (!tags.length) return;
+      var cur = -1; tags.forEach(function (t, i) { if (t.classList.contains('active')) cur = i; });
+      var ni = cur + (dx < 0 ? 1 : -1);
+      if (ni < 0 || ni >= tags.length) return; /* 到头自然弹回 */
+      window.__barDir = dx < 0 ? 1 : -1; /* v368 条10：方向传给列表过渡 */
+      tags[ni].click();
+    }, { passive: true });
+  }
+  function bind() {
+    var top = document.querySelector('.category-bar'); if (top) bindBar(top, function () { return [...document.querySelectorAll('.category-bar .category-tag')]; });
+    var sub = document.querySelector('.sub-category-bar'); if (sub) bindBar(sub, function () { return [...document.querySelectorAll('.sub-category-bar .sub-category-tag')]; });
+  }
+  if (document.readyState !== 'loading') bind(); else document.addEventListener('DOMContentLoaded', bind);
 })();

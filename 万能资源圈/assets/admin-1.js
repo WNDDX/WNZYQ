@@ -920,16 +920,6 @@
       }
       // R173（用户 00:28）：回退 R171 的门控放宽——切 tab 只认 __plS 单条件（R170 口径）；
       // 放宽后每次切 tab 都重新拉数据+全页淡入，用户实测"更难看"
-      /* v359 条2：后台滑切标签页改用全站统一手势（一套逻辑，到头自然弹回、无提示） */
-      window.__bindSwipeSwitch(document, function (d) {
-        var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab[data-tab]'));
-        if (!tabs.length) return;
-        var cur = -1;
-        tabs.forEach(function (t, i) { if (t.classList.contains('active')) cur = i; });
-        var ni = cur + d;
-        if (ni < 0 || ni >= tabs.length) return; /* 到头：不动即自然弹回 */
-        switchTab(tabs[ni].dataset.tab);
-      }, function () { return !document.querySelector('.modal-mask.open'); });
       if (name === 'stats') {
         if (!window.__plS) { window.__plS = 1; loadStats(); }
         else { loadStats(undefined, undefined, 1, 1).catch(function () {}); } // 切回后台静默刷新（silent=1）
@@ -941,6 +931,42 @@
       }
       if (name === 'settings') { if (!window.__plSet) loadSettings(); }
     }
+
+    /* v369 条4：后台滑切标签页升级跟手版（双面板）——
+       v359 起 bindSwipeSwitch 写在 switchTab 里，每切一次标签就重复绑一次监听（越切越多的隐患）；
+       现改为初始化时只绑一次 __followSwipe：拖动时旧面板跟手、邻居标签面板从旁边跟进来，松手过半切换 */
+    window.__followSwipe({
+      panel: function () {
+        var t = document.querySelector('.tab.active');
+        var n = t && t.dataset.tab;
+        return n ? document.getElementById('panel-' + n) : null;
+      },
+      neighbor: function (dir) {
+        var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab[data-tab]'));
+        if (!tabs.length) return null;
+        var cur = -1;
+        tabs.forEach(function (t, i) { if (t.classList.contains('active')) cur = i; });
+        var ni = (cur === -1) ? (dir > 0 ? 0 : tabs.length - 1) : cur + dir;
+        if (ni < 0 || ni >= tabs.length) return null; /* 到头：回弹 */
+        return { name: tabs[ni].dataset.tab };
+      },
+      fill: function (nb, dir, panelB) {
+        var el = document.getElementById('panel-' + nb.name);
+        if (!el) return;
+        var c = el.cloneNode(true);
+        c.style.display = '';
+        panelB.appendChild(c);
+      },
+      commit: function (dir) {
+        var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab[data-tab]'));
+        var cur = -1;
+        tabs.forEach(function (t, i) { if (t.classList.contains('active')) cur = i; });
+        var ni = cur + dir;
+        if (ni < 0 || ni >= tabs.length) return;
+        switchTab(tabs[ni].dataset.tab);
+      },
+      isActive: function () { return !document.querySelector('.modal-mask.open'); }
+    });
 
     // ---------- 平台设置 ----------
     function loadSettings() {

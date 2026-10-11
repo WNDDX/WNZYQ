@@ -324,7 +324,7 @@ if ('serviceWorker' in navigator) {
         var g = window.__lbGroup; if (!g) return;
         var ni = g.idx + dir;
         if (ni < 0 || ni >= g.list.length) return; /* 到头：不动即自然弹回 */
-        g.idx = ni; window.__lbShow(g.list[g.idx]);
+        g.idx = ni; window.__lbDir = dir; window.__lbShow(g.list[g.idx]); /* v368 条10：方向传递 */
       });
     }
     window.__lbGroup = (group && group.list && group.list.length > 1) ? { list: group.list.slice(), idx: Math.max(0, group.list.indexOf(src)) } : null;
@@ -349,6 +349,7 @@ if ('serviceWorker' in navigator) {
       if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
       im.style.cssText = 'object-fit:contain;border-radius:8px;max-width:92vw;max-height:88vh;transition:transform .05s linear;' + (isVideo ? 'width:min(92vw,1200px);aspect-ratio:16/9;background:#000;' : '');
       __lbMask.appendChild(im);
+      if (window.__lbDir) { im.classList.add(window.__lbDir < 0 ? 'lb-sl-prev' : 'lb-sl-next'); window.__lbDir = 0; } /* v368 条10b：滑入方向 */
       __lbScale = 1;
     };
     var x = document.createElement('button');
@@ -1458,7 +1459,7 @@ window.formatPrice = function (price) {
    onSwipe(dir)：dir=1 左滑（下一个）、-1 右滑（上一个）。
    isActive()：可选，返回 false 时本次手势不响应（如弹窗开着时不响应页面级手势）。
    排除区（统一）：输入框/下拉/按钮/链接/视频/富文本/统计图表/轮播/文件卡——这些区域有自己的交互。 */
-window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-chart, .modal-nav-arrow, .cat-picker-panel, .modal-carousel, .file-folder-wrap, .lightbox, .category-bar, .sub-category-bar, .tabs, .batch-bar, .tb-row2, .upman-host'; /* v360 条9：横滚条自身滚动不触发切换 */
+window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-chart, .modal-nav-arrow, .cat-picker-panel, .file-folder-wrap, .lightbox, .category-bar, .sub-category-bar, .tabs, .batch-bar, .tb-row2, .upman-host' /* v368：分类栏有专属边缘切换手势，全局手势让位防双触发 */ /* v368 条9/11：分类栏/轮播移出排除——各自带专用滑动逻辑（边缘切换/跟手切换），全部参与滑动 */; /* v360 条9：横滚条自身滚动不触发切换 */
 window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
   if (!el || !onSwipe) return;
   var sx = 0, sy = 0, on = false;
@@ -1482,6 +1483,107 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
     onSwipe(dx < 0 ? 1 : -1);
   }, { passive: true });
+};
+
+/* ===== v369 条4：左右切换跟手版（双面板拖拽）=====
+   拖动时旧画面跟着手指走、新画面从旁边一起跟进来（两画面并存，像原生 App 翻页）；
+   松手时拖过 1/4 宽或快速一甩=切过去，否则两画面一起弹回原位。
+   到头（没有下一画面）时旧画面带橡皮筋阻尼、松手自然弹回，无任何提示。
+   opts: {
+     panel:    fn -> 当前画面元素（每次手势开始现取）
+     neighbor: fn(dir) -> 邻居画面描述（null=到头）
+     fill:     fn(nb, dir, panelB) -> 把邻居内容装进 panelB（同步/异步皆可）
+     commit:   fn(dir) -> 真正执行切换
+     isActive: fn -> 弹窗开着=false 等门禁
+   } */
+window.__followSwipe = function (opts) {
+  if (!opts || !opts.panel || !opts.commit) return;
+  var S = null, sx = 0, sy = 0, armed = false;
+  function bgOf(el) {
+    var n = el;
+    while (n && n.nodeType === 1) {
+      var bg = getComputedStyle(n).backgroundColor;
+      if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+      n = n.parentNode;
+    }
+    return 'transparent';
+  }
+  function cleanup() {
+    if (!S) return;
+    try { S.panel.style.visibility = (S.panel.dataset && S.panel.dataset.__fsVis != null) ? S.panel.dataset.__fsVis : ''; if (S.panel.dataset) delete S.panel.dataset.__fsVis; } catch (e) {}
+    try { if (S.stage && S.stage.parentNode) S.stage.parentNode.removeChild(S.stage); } catch (e) {}
+    S = null;
+  }
+  function startDrag(dir) {
+    var panel = opts.panel();
+    if (!panel || !panel.parentNode) return;
+    var r = panel.getBoundingClientRect();
+    if (r.width < 60 || r.height < 40) return;
+    var nb = opts.neighbor ? opts.neighbor(dir) : null;
+    var cs = getComputedStyle(panel);
+    var stage = document.createElement('div');
+    stage.className = '__fs-stage'; /* v369：测试与排错定位用 */
+    stage.style.cssText = 'position:fixed;z-index:98000;overflow:hidden;pointer-events:none;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;background:' + bgOf(panel) + ';border-radius:' + cs.borderRadius + ';';
+    var pA = panel.cloneNode(true);
+    pA.style.cssText += ';position:absolute;left:0;top:0;width:100%;margin:0;box-shadow:none;';
+    stage.appendChild(pA);
+    var pB = null;
+    if (nb) {
+      pB = document.createElement('div');
+      pB.style.cssText = 'position:absolute;left:0;top:0;width:100%;';
+      stage.appendChild(pB);
+    }
+    document.body.appendChild(stage);
+    if (panel.dataset) panel.dataset.__fsVis = panel.style.visibility || '';
+    panel.style.visibility = 'hidden';
+    S = { dir: dir, panel: panel, stage: stage, pA: pA, pB: pB, w: r.width, nb: nb, off: 0, vx: 0, lx: 0, lt: 0 };
+    if (nb && opts.fill) { try { opts.fill(nb, dir, pB); } catch (e) { if (window.__silent) window.__silent(e); } }
+  }
+  function apply(raw) {
+    if (!S) return;
+    S.off = raw;
+    var off = S.nb ? raw : raw * 0.3; /* 到头：橡皮筋阻尼 */
+    S.pA.style.transform = 'translateX(' + off + 'px)';
+    if (S.pB) S.pB.style.transform = 'translateX(' + (S.dir * S.w + off) + 'px)';
+  }
+  function settle(target, cb) {
+    if (!S) return;
+    var t = 'transform .2s var(--ease-out, ease)';
+    S.pA.style.transition = t; if (S.pB) S.pB.style.transition = t;
+    S.pA.style.transform = 'translateX(' + target + 'px)';
+    if (S.pB) S.pB.style.transform = 'translateX(' + (target === 0 ? S.dir * S.w : 0) + 'px)';
+    setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) cb(d); }, 210);
+  }
+  document.addEventListener('touchstart', function (e) {
+    if (S) return;
+    if (e.touches.length !== 1) { armed = false; return; }
+    if (opts.isActive && !opts.isActive()) { armed = false; return; }
+    var t = e.target;
+    if (window.__swipeExclude && t.closest && t.closest(window.__swipeExclude)) { armed = false; return; }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; armed = true;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!armed && !S) return;
+    if (!e.touches.length) return;
+    var x = e.touches[0].clientX, y = e.touches[0].clientY;
+    var dx = x - sx, dy = y - sy;
+    if (!S) {
+      if (Math.abs(dy) > 24 && Math.abs(dy) > Math.abs(dx)) { armed = false; return; } /* 竖向主导=滚页面，退出 */
+      if (Math.abs(dx) >= 18 && Math.abs(dx) > Math.abs(dy) * 1.6) { armed = false; startDrag(dx < 0 ? 1 : -1); if (S) { S.lx = x; S.lt = Date.now(); apply(dx); } }
+      return;
+    }
+    var now = Date.now();
+    if (now - S.lt > 0) S.vx = (x - S.lx) / (now - S.lt);
+    S.lx = x; S.lt = now;
+    apply(dx);
+  }, { passive: true });
+  document.addEventListener('touchend', function () {
+    if (!S) { armed = false; return; }
+    /* 快速一甩=沿滑动方向位移（dir=1 左滑时 off 为负）→ off*dir<0 才算同向 */
+    var commit = S.nb && ((Math.abs(S.off) > S.w * 0.25) || (Math.abs(S.vx) > 0.5 && S.off * S.dir < 0 && Math.abs(S.off) > 8));
+    settle(commit ? -S.dir * S.w : 0, commit ? function (d) { opts.commit(d); } : null);
+  }, { passive: true });
+  document.addEventListener('touchcancel', function () { if (S) cleanup(); armed = false; }, { passive: true });
 };
 
 window.bindLightbox = function (root) {
@@ -2391,3 +2493,8 @@ document.addEventListener('keydown', function (e) {
     });
   };
 })();
+
+/* v368 条7：切视图/切标签后重跑自适应（修「切回来变出格文字、刷新才恢复」） */
+document.addEventListener('click', function (e) {
+  try { if (e.target.closest && e.target.closest('.view-toggle, .view-btn, .tab, .tab-btn, [data-tab]')) setTimeout(function () { try { window.__btnFit && window.__btnFit(); } catch (err) {} }, 90); } catch (err) {}
+}, true);

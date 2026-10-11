@@ -1402,7 +1402,7 @@ refreshCatCnts();
 
       ordered.forEach(function (c, ci) {
         if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row cat-sub'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; // “全部”项不渲染选中框（固定项）
-          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19 */_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vmeta.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:var(--gray-mid);cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vmeta.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
+          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19 */_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vts=document.createElement('span'); _vts.style.cssText='width:20px;height:20px;margin-right:4px;flex-shrink:0;'; _vts.setAttribute('aria-hidden','true'); _vrow.appendChild(_vts); /* v368 条1d：与一级行展开箭头同宽占位，列对齐 */ var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:var(--gray-mid);cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
           _vrow.classList.add('stagger-in'); _vrow.style.animationDelay = Math.min(ci * 20, 180) + 'ms'; /* R230：错峰淡入（资源页同款） */
           if (__reuse && __skels[ci]) __skels[ci].parentNode.replaceChild(_vrow, __skels[ci]); else box.appendChild(_vrow);
           return; }
@@ -1512,13 +1512,14 @@ refreshCatCnts();
           catStatusBtn.className = 'row-btn status-btn ' + (c.is_hidden ? 'status-hidden' : 'status-online');
           catStatusBtn.textContent = c.is_hidden ? '隐藏' : '显示';
           catStatusBtn.title = '点击切换为' + (c.is_hidden ? '显示' : '隐藏（资源页不显示）');
+          if (window.__decorateBtn) window.__decorateBtn(catStatusBtn, c.is_hidden ? 'hide' : 'show', 2); /* v369 条1：空间不够收成图标（保底图标） */
           catStatusBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             if (catStatusBtn.disabled) return;
             var nowHidden = !c.is_hidden; var prev = !!c.is_hidden; if (prev === nowHidden) return;
             catStatusBtn.disabled = true;
             c.is_hidden = nowHidden;
-            this.textContent = nowHidden ? '隐藏' : '显示';
+            var _slab = this.querySelector('.btn-lab'); if (_slab) _slab.textContent = nowHidden ? '隐藏' : '显示'; else this.textContent = nowHidden ? '隐藏' : '显示'; /* v369 条1：只改文字层，不抹图标 */
             this.classList.remove('status-online', 'status-hidden'); this.classList.add(nowHidden ? 'status-hidden' : 'status-online');
             this.title = '点击切换为' + (nowHidden ? '显示' : '隐藏（资源页不显示）');
             api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ is_hidden: nowHidden }) }).then(function (res) {
@@ -1555,20 +1556,22 @@ refreshCatCnts();
           toast('已筛选分类：' + c.name, 'success');
         });
 
-        row.appendChild(name);
+        row.appendChild(name); /* v369 条2：分类行分组=拖拽柄+复选+名称+排序+资源数（一组）；状态+编辑+删除（一组，.c-meta） */
         // 级别标签放到最前（复选框之后、展开箭头之前），一眼看出层级
         row.insertBefore(levelBadge, (typeof toggleBtn !== 'undefined' && toggleBtn) || (row.firstChild && row.firstChild.nextSibling && row.firstChild.nextSibling.nextSibling) || null);
-        meta.appendChild(sort);
-        meta.appendChild(cnt);
+        row.appendChild(sort); /* v369 条2：排序/资源数从 c-meta 挪进名称组（跟在名称后面，定宽列对齐不变） */
+        row.appendChild(cnt);
 
         if (Number(c.id) !== 0) {
           var editBtn = document.createElement('button');
           editBtn.className = 'row-btn';
           editBtn.textContent = '编辑';
+          if (window.__decorateBtn) window.__decorateBtn(editBtn, 'edit', 1); /* v369 条1：空间不够收成图标 */
           editBtn.addEventListener('click', function () { openCatEdit(c); });
           var delBtn = document.createElement('button');
           delBtn.className = 'row-btn danger';
           delBtn.textContent = '删除';
+          if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v369 条1 */
           delBtn.addEventListener('click', function () {
             /* v330 条26：分类删除同样给 10 秒后悔时间——先本地移除，10 秒后才真提交，撤销=原样还原 */
             var _catSnap = state.categories.slice();

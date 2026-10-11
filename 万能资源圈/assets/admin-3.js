@@ -732,6 +732,7 @@
           bindSpan.type = 'button';
           bindSpan.className = 'row-btn bind-slot'; /* R154：绑定键固定槽位，跨行对齐 */
           bindSpan.textContent = '资源码'; /* R223：按键文案（老板定稿，纯文字不带数字） */
+          if (window.__decorateBtn) window.__decorateBtn(bindSpan, 'key', 4); /* v369 条1 */
           bindSpan.title = '查看该类型的资源码与绑定设备';
           bindSpan.addEventListener('click', function () { openBindings(v); });
           codeSpan.appendChild(bindSpan);
@@ -745,12 +746,14 @@
         /* R175：加稳定类名 v-edit-btn——手机档 grid area 用 */
         editBtn.className = 'row-btn v-edit-btn';
         editBtn.textContent = '编辑';
+        if (window.__decorateBtn) window.__decorateBtn(editBtn, 'edit', 1); /* v369 条1：空间不够收成图标（保底图标） */
         editBtn.addEventListener('click', function () { openVariantEdit(v); });
 
         var delBtn = document.createElement('button');
         /* R175：加稳定类名 v-del-btn——手机档 grid area 用 */
         delBtn.className = 'row-btn danger v-del-btn';
         delBtn.textContent = '删除';
+        if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v369 条1 */
         delBtn.addEventListener('click', function () { state._delVariantRef = v; delVariant(v.id); });
 
         // 拖拽事件

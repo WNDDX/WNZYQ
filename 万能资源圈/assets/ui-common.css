@@ -361,6 +361,9 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   .view-btn span { display: none; }
 }
 
+
+/* v368 条3：恢复弹窗边框（此前统一样式时丢失） */
+.modal-box, .ann-box, .kf-box, .preview-box, .share-box { border: 1px solid var(--border, #d0d0d0); }
 /* ===== 弹窗底部按键隐藏修复 =====
    上方 .modal-footer > button / .kf-actions > button 的 display:inline-flex !important
    会覆盖 JS 设置的内联 style.display='none'，导致本该隐藏的按键被强行渲染
@@ -929,3 +932,13 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 .admin-table td.td-title, .stat-table td:first-child, .bind-table td:first-child {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
 }
+
+/* v368 条10：左右切换方向性过渡——新画面从滑动方向滑入（不再瞬切） */
+@keyframes slNext { from { transform: translateX(46px); opacity: .35; } to { transform: none; opacity: 1; } }
+@keyframes slPrev { from { transform: translateX(-46px); opacity: .35; } to { transform: none; opacity: 1; } }
+.modal-box.sl-next { animation: slNext .24s var(--ease-out); }
+.modal-box.sl-prev { animation: slPrev .24s var(--ease-out); }
+.product-grid.swap-next { animation: slNext .22s var(--ease-out); }
+.product-grid.swap-prev { animation: slPrev .22s var(--ease-out); }
+.lightbox .lb-sl-next { animation: slNext .2s var(--ease-out); }
+.lightbox .lb-sl-prev { animation: slPrev .2s var(--ease-out); }
