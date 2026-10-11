@@ -887,6 +887,23 @@
     }
     window.__buildProductCard = buildProductCard; /* v369 条4：滑切跟手版借用同一卡片构造画邻居画面 */
     /* v368 条9：轮播跟手滑动——横滑切上/下一张（复用小圆点点击机制） */
+    /* v371 条9：分页条偶发消失兜底——数据就绪且该有分页（总页>1）却找不到 #pager 时自动重渲，不再等刷新 */
+    window.__shopEnsurePager = function () {
+      try {
+        if (window.__skelPhase || window.__loadFailed) return;
+        if ((DATA.totalPages || 1) > 1 && !document.getElementById('pager') && (getFilteredProducts() || []).length) renderProducts();
+      } catch (e) { if (window.__silent) window.__silent(e); }
+    };
+    window.addEventListener('pageshow', function () { setTimeout(window.__shopEnsurePager, 250); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(window.__shopEnsurePager, 250); });
+
+    /* v371 条10：首屏空白哨兵——数据就绪但画布还是空的（竞态漏渲染）就补一次渲染，不再等刷新 */
+    setTimeout(function () {
+      try {
+        if (!window.__shopPainted && (DATA.products || []).length && !window.__skelPhase && !document.querySelector('#productGrid .product-card')) renderAll();
+      } catch (e) { if (window.__silent) window.__silent(e); }
+    }, 2500);
+
     window.__bindCarouselSwipe = function (carEl, dotsEl) {
       if (!carEl || !dotsEl || carEl.__sw) return; carEl.__sw = 1;
       var sx = 0, sy = 0;
@@ -1325,14 +1342,16 @@
             variantTabs.querySelectorAll('.variant-tab').forEach(function (t, i) {
               t.classList.toggle('active', i === idx);
             });
-            variantDetail.classList.add('variant-fade-out'); /* R243（用户 09-22 23:18）：条6 旧内容淡出 */
+            var __dir = 'sl-next';
+            variantTabs.querySelectorAll('.variant-tab').forEach(function (t, i) { if (t.classList.contains('active') && i !== idx) __dir = idx > i ? 'sl-next' : 'sl-prev'; }); /* v371 条3：方向=目标在右往右滑入 */
             setTimeout(function () {
               renderVariantDetail();
               updatePrice();
               updateContactBtn();
               initResourceCodeSection(); // 切换类型时重置资源码区域
               __tryRefillCode(); // R112：切到草稿暂存的类型时回填资源码
-              variantDetail.classList.remove('variant-fade-out'); /* R243（用户 09-22 23:18）：条6 新内容淡入 */
+              variantDetail.classList.remove('sl-next', 'sl-prev'); void variantDetail.offsetHeight;
+              variantDetail.classList.add(__dir); /* v371 条3：新内容按左右方向滑入 */
               modalPrice.classList.add('price-flash'); /* R243（用户 09-22 23:18）：条6 价格闪一下 */
               modalPrice.offsetHeight; /* R243（用户 09-22 23:18）：条6 强制回流 */
               modalPrice.classList.remove('price-flash');
@@ -1770,16 +1789,18 @@
       if (!line || !line.parentNode) { line = document.createElement('div'); line.className = 'cat-line'; bar.appendChild(line); window.__fsCatLine = line; }
       if (!act) { line.style.opacity = '0'; return; }
       line.style.transition = anim ? 'left .2s var(--ease-out, ease), width .2s var(--ease-out, ease)' : 'none';
-      line.style.left = act.offsetLeft + 'px';
-      line.style.width = act.offsetWidth + 'px';
+      line.style.left = (act.offsetLeft + 12) + 'px'; /* v371 条2：与管理页白线同款规格（缩 12、2px 圆角） */
+      line.style.width = Math.max(0, act.offsetWidth - 24) + 'px';
       line.style.opacity = '1';
     };
     window.__fsCatLineTo = function (fromEl, toEl, p) {
       var line = window.__fsCatLine;
       if (!line || !fromEl || !toEl) return;
       line.style.transition = 'none';
-      line.style.left = (fromEl.offsetLeft + (toEl.offsetLeft - fromEl.offsetLeft) * p) + 'px';
-      line.style.width = (fromEl.offsetWidth + (toEl.offsetWidth - fromEl.offsetWidth) * p) + 'px';
+      var aL = fromEl.offsetLeft + 12, bL = toEl.offsetLeft + 12;
+      var aW = Math.max(0, fromEl.offsetWidth - 24), bW = Math.max(0, toEl.offsetWidth - 24);
+      line.style.left = (aL + (bL - aL) * p) + 'px';
+      line.style.width = (aW + (bW - aW) * p) + 'px';
       line.style.opacity = '1';
     };
     try {
@@ -2468,7 +2489,7 @@
           /* v363 条1：竞态防护——响应回来时若用户已切到别的分类/搜索/页码，这份数据就"过期"了。
              过期数据只写进对应缓存格（下次回到该筛选秒出），绝不覆盖 DATA、绝不渲染——
              否则慢的旧响应会把用户刚选的分类顶掉（实测：预加载慢响应让列表显示上一个分类的内容）。 */
-          var _stale = __cacheKey(currentPage, currentCat, currentSubCat, (searchInput.value || '').trim()) !== key;
+          var _stale = __cacheKey(currentPage, currentCat, currentSubCat, (searchInput.value || '').trim()) !== key && !!window.__shopPainted; /* v371 条10：首绘前响应永不判过期 */
           var _changed = false;
           if (_stale) {
             if (window.__skelPhase) { window.__skelPhase = false; }

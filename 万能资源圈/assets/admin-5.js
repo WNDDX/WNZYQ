@@ -392,8 +392,8 @@
       for (var g = 0; g <= 4; g++) {
         var gy = padT + (chartH / 4) * g;
         var gval = Math.round(maxVal - (maxVal / 4) * g);
-        html += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#e8e8e8" stroke-width="1"/>';
-        html += '<text x="' + (padL - 6) + '" y="' + (gy + 0.44 * _ax) + '" text-anchor="end" font-size="' + _ax + '" fill="#999">' + gval + '</text>'; /* R147（用户 00:59）：Y 轴数字与网格线的垂直关系向柱图看齐——数字顶恒在网格线上方 4.8px（柱图 .tg-num top:-5.8px 口径），原 gy+4 在不同缩放下忽近忽远 */
+        html += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="var(--border)" stroke-width="1"/>'; /* v371 条6：网格线与柱图同一根线 */
+        html += '<text x="' + (padL - 6) + '" y="' + (gy + 0.44 * _ax) + '" text-anchor="end" font-size="' + _ax + '" fill="var(--text-light)">' + gval + '</text>'; /* R147（用户 00:59）：Y 轴数字与网格线的垂直关系向柱图看齐——数字顶恒在网格线上方 4.8px（柱图 .tg-num top:-5.8px 口径），原 gy+4 在不同缩放下忽近忽远 */
       }
       // X轴标签
       trend.forEach(function (d, i) {

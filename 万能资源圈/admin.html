@@ -127,11 +127,14 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <!-- v330 条18：批量条按钮同款图标化（data-pri 越小越先保留文字） -->
         <div class="batch-bar btn-fit-group" id="batchBar">
           已选 <span class="batch-count" id="batchCount" aria-live="polite" aria-atomic="true">0</span> 项
+          <div class="batch-group"><!-- v371 条5：批量按键=同一组，组内不拆散 -->
           <button class="batch-btn" data-action="online" data-pri="3">批量显示</button>
           <button class="batch-btn" data-action="offline" data-pri="4">批量隐藏</button>
           <button class="batch-btn" data-action="changeCat" data-pri="2">改分类</button>
           <button class="batch-btn" data-action="changePrice" data-pri="5">改价格</button>
-          <button class="batch-btn danger" data-action="delete" data-pri="6">批量删除</button>          <button class="batch-btn" data-action="clearSel" data-pri="7">取消选中</button>
+          <button class="batch-btn danger" data-action="delete" data-pri="6">批量删除</button>
+          <button class="batch-btn" data-action="clearSel" data-pri="7">取消选中</button>
+          </div>
         </div>
         <div id="productList">
     <div class="product-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><div class="thumb sk-piece"></div><div class="info"><div class="p-title sk-piece"></div><div class="p-sub sk-piece"></div></div><div class="p-ops"><span class="row-btn sk-piece sk-code"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>
@@ -350,10 +353,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <!-- 分类批量操作栏 -->
         <div class="batch-bar" id="catBatchBar">
           <span style="font-size:13px;color:#666;">已选 <b id="catBatchCount" style="color:var(--blue1);" aria-live="polite" aria-atomic="true">0</b> 项</span>
-          <button class="batch-btn" id="catBatchShow">批量显示</button>
+          <div class="batch-group"><button class="batch-btn" id="catBatchShow">批量显示</button>
           <button class="batch-btn" id="catBatchHide">批量隐藏</button>
           <button class="batch-btn danger" id="catBatchDel">批量删除</button>
-          <button class="batch-btn" id="catBatchCancel">取消选中</button>
+          <button class="batch-btn" id="catBatchCancel">取消选中</button></div>
         </div>
         <div id="catList">
     <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>

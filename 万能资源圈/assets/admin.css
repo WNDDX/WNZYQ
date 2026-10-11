@@ -599,14 +599,14 @@
     .variant-item {
       background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px;
       padding: 8px 12px; margin-bottom: 8px;
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; /* v371 条4：组内不拆、组间可换 */
     }
     .variant-item .v-name { flex: 1; font-size: 14px; font-weight: 600 /* v336 条115 */; }
     .variant-item .v-price { color: var(--price-text, #C86800); font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .variant-item .v-sort { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
     .ann-list { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ border: 1px solid var(--border); border-radius: 8px; padding: 4px; margin-bottom: 4px; background: var(--bg-light); }
-    .ann-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 8px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .ann-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 8px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } /* v371 条4 */
     .ann-item:last-child { margin-bottom: 0; }
     .ann-item.ann-cur { border-color: var(--blue1); box-shadow: 0 0 0 1px var(--blue1) inset; }
     /* 一级默认公告（主公告）：标题固定、不可拖拽/隐藏/删除 */
@@ -736,7 +736,7 @@
     .rte-toolbar .select-picker .cat-picker-display { min-height: 28px; padding: 4px 8px; border-radius: 8px; font-size: 12px; }
     /* 资源管理筛选工具栏：分类筛选与状态筛选统一尺寸（R18：同一宽度，电脑手机都对齐） */
     .tb-row2 .cat-picker, .tb-row2 .select-picker { width: 138px; flex: 0 1 138px; min-width: 110px; /* v336 条84 */; flex-shrink: 0; }
-    .tb-row2 { flex-wrap: nowrap; }
+    .tb-row2 { flex-wrap: wrap; } /* v371 条4：只锁组内不拆，组间可换（不再硬挤一行） */
     .tb-row2 .admin-search { flex: 1 1 200px; max-width: none; }
     .tb-row2 .cat-picker-display {
       min-height: 36px; padding: 4px 8px; border-radius: 8px; font-size: 13px; width: auto; /* v369 条3：33→36 与同行按键统一高度 */
@@ -2066,7 +2066,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .cat-row .c-name { flex: 1 1 auto !important; width: auto !important; }
 /* v368 条4b：手机类型行统一为分组 flex（旧 grid 布局与 v357 分组是两套机制打架——价格槽/等分全乱） */
 @media (max-width: 600px) {
-  .variant-item { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
+  .variant-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .variant-item > * { grid-area: auto !important; }
   .variant-item .v-main-group { flex: 1 1 auto; display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
   .variant-item .v-main-group > * { flex: 0 0 auto; }
@@ -2096,3 +2096,9 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   .cat-row .c-meta .row-btn { visibility: visible; opacity: 1; transition: none; min-width: 0; padding: 4px 12px; font-size: 12px; }
   .cat-row .cat-fold { top: 11px; } /* 手机首行中心=23px（padding12+柄半高11） */
 }
+
+/* ===== v371 条5：批量按键=同一组（组内不拆散，可整组换行）===== */
+.batch-group { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex: 0 0 auto; }
+
+/* ===== v371 条7：资源键与复制/显示完全同度量——去下拉箭头（点击仍开下拉），文字优先不再提前图标化 ===== */
+.p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { display: none; }

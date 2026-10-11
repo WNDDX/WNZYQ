@@ -948,4 +948,4 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 
 /* ===== v370b 条3：切换指示线——管理页标签白线/资源页分类蓝线，都是"本来那根"，
    切换与跟手拖动时从当前位置滑向目标（JS 驱动 left/width）===== */
-.cat-line { position: absolute; bottom: 0; height: 3px; background: var(--link-blue, #1565c0); border-radius: 3px 3px 0 0; pointer-events: none; z-index: 95; opacity: 0; }
+.cat-line { position: absolute; bottom: 0; height: 2px; background: var(--link-blue, #1565c0); border-radius: 4px; pointer-events: none; z-index: 95; opacity: 0; }

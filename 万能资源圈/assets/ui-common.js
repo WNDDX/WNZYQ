@@ -1498,7 +1498,7 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
    } */
 window.__followSwipe = function (opts) {
   if (!opts || !opts.panel || !opts.commit) return;
-  var S = null, sx = 0, sy = 0, armed = false;
+  var S = null, sx = 0, sy = 0, armed = false, S_saved = null;
   /* v370 条7：拖过之后拦掉这一次"落点点击"——否则松手弹回时手指下的资源卡会被误打开 */
   document.addEventListener('click', function (e) {
     if (!window.__fsJustSwiped) return;
@@ -1517,7 +1517,13 @@ window.__followSwipe = function (opts) {
   function cleanup() {
     if (!S) return;
     try { if (opts.onEnd) opts.onEnd(); } catch (e) { if (window.__silent) window.__silent(e); }
-    try { S.panel.style.visibility = (S.panel.dataset && S.panel.dataset.__fsVis != null) ? S.panel.dataset.__fsVis : ''; if (S.panel.dataset) delete S.panel.dataset.__fsVis; } catch (e) {}
+    /* v371 条12：把真面板搬回原位（还原内联样式，内容/监听全在，无重挂载成本） */
+    try {
+      if (S.panel && S_saved) {
+        S.panel.style.cssText = S_saved.css;
+        S_saved.parent.insertBefore(S.panel, S_saved.next || null);
+      }
+    } catch (e) { if (window.__silent) window.__silent(e); }
     try { if (S.stage && S.stage.parentNode) S.stage.parentNode.removeChild(S.stage); } catch (e) {}
     S = null;
   }
@@ -1531,22 +1537,28 @@ window.__followSwipe = function (opts) {
     var stage = document.createElement('div');
     stage.className = '__fs-stage'; /* v369：测试与排错定位用 */
     stage.style.cssText = 'position:fixed;z-index:98000;overflow:hidden;pointer-events:none;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;background:' + bgOf(panel) + ';border-radius:' + cs.borderRadius + ';';
-    var pA = panel.cloneNode(true);
-    pA.style.cssText += ';position:absolute;left:0;top:0;width:100%;margin:0;box-shadow:none;';
-    stage.appendChild(pA);
+    /* v371 条12：真面板搬运（不 clone）——无克隆卡顿、无"第二画面插入感"，面板本身在舞台里跟手 */
+    S_saved = { parent: panel.parentNode, next: panel.nextSibling, css: panel.style.cssText };
+    panel.style.cssText += ';position:absolute;left:0;top:0;width:100%;margin:0;box-shadow:none;will-change:transform;';
+    var pA = panel;
+    stage.appendChild(panel);
     var pB = null;
     if (nb) {
       pB = document.createElement('div');
-      pB.style.cssText = 'position:absolute;left:0;top:0;width:100%;';
+      pB.style.cssText = 'position:absolute;left:0;top:0;width:100%;will-change:transform;';
       stage.appendChild(pB);
     }
     document.body.appendChild(stage);
-    if (panel.dataset) panel.dataset.__fsVis = panel.style.visibility || '';
-    panel.style.visibility = 'hidden';
     window.__fsJustSwiped = true; /* v370 条7：拖过就拦本次误点击 */
     clearTimeout(window.__fsSwipeClr); window.__fsSwipeClr = setTimeout(function () { window.__fsJustSwiped = false; }, 450);
     S = { dir: dir, panel: panel, stage: stage, pA: pA, pB: pB, w: r.width, nb: nb, off: 0, vx: 0, lx: 0, lt: 0 };
-    if (nb && opts.fill) { try { opts.fill(nb, dir, pB); } catch (e) { if (window.__silent) window.__silent(e); } }
+    if (nb && opts.fill) {
+      /* v371：邻居画面延后一帧再填——首帧先保证当前画面跟手零卡顿 */
+      requestAnimationFrame(function () {
+        if (!S) return;
+        try { opts.fill(nb, dir, pB); } catch (e) { if (window.__silent) window.__silent(e); }
+      });
+    }
   }
   function apply(raw) {
     if (!S) return;
@@ -1555,7 +1567,7 @@ window.__followSwipe = function (opts) {
     S.pA.style.transform = 'translateX(' + off + 'px)';
     if (S.pB) S.pB.style.transform = 'translateX(' + (S.dir * S.w + off) + 'px)';
     if (opts.onProgress && S.nb) { /* v370 条11：下划线跟随拖动进度 */
-      var prog = Math.max(0, Math.min(1, Math.abs(off) / (S.w * 0.25)));
+      var prog = Math.max(0, Math.min(1, Math.abs(raw) / S.w)); /* v371 条11：线与手指同比例（全长归一） */
       try { opts.onProgress(prog, S.dir, S.nb); } catch (e) { if (window.__silent) window.__silent(e); }
     }
   }
