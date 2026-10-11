@@ -889,7 +889,7 @@
       if (window.__skelPhase && !list.length) { emptyTip.classList.remove('show'); return; }
       var __skels = productGrid.querySelectorAll('.card-skeleton');
       var __reuse = __skels.length > 0; /* 数据首达：骨架逐条渐变成真卡（同位置替换+错峰淡入） */
-      var __frag = null; if (!__reuse) { productGrid.innerHTML = ''; __frag = document.createDocumentFragment(); }
+      var __frag = document.createDocumentFragment(); /* v361 条1：不再先清空再插入（两步会渲染出一帧空白，视口顶部第一张占位卡就"闪"）——最后一次性原子替换 */
       emptyTip.classList.toggle('show', list.length === 0);
 
       // 移除旧分页
@@ -1034,7 +1034,7 @@
         if (__reuse && __skels[i]) __skels[i].parentNode.replaceChild(card, __skels[i]);
         else frag.appendChild(card);
       });
-      productGrid.appendChild(frag);
+      productGrid.replaceChildren(frag); /* v361 条1：原子替换，无中间空白帧 */
       window.__shopPainted = true; /* v357：首次绘制完成标记（其后切分类/筛选不再重播错峰动画） */
       /* 真实条数少于骨架数：多余骨架收尾移除（真条数>骨架数时新增卡已在上方 append） */
       if (__reuse) { for (var j = pageList.length; j < __skels.length; j++) { if (__skels[j].parentNode) __skels[j].parentNode.removeChild(__skels[j]); } }
@@ -1206,19 +1206,7 @@
         var _mi = _ids.indexOf(Number(p.id));
         window.__modalSeq = { ids: _ids, i: _mi };
         var _mm = document.getElementById('modalMask');
-        if (_mm && !_mm.querySelector('.modal-nav-arrow')) {
-          ['modalPrev', 'modalNext'].forEach(function (aid, k) {
-            var ab = document.createElement('button');
-            ab.type = 'button'; ab.id = aid; ab.className = 'modal-nav-arrow';
-            ab.textContent = k === 0 ? '‹' : '›';
-            ab.setAttribute('aria-label', k === 0 ? '上一个资源' : '下一个资源');
-            ab.addEventListener('click', function (e) { e.stopPropagation(); window.__modalGo(k === 0 ? -1 : 1); });
-            _mm.appendChild(ab);
-          });
-        }
-        var _pv = document.getElementById('modalPrev'), _nx = document.getElementById('modalNext');
-        if (_pv) _pv.style.visibility = _mi > 0 ? 'visible' : 'hidden';
-        if (_nx) _nx.style.visibility = (_mi > -1 && _mi < _ids.length - 1) ? 'visible' : 'hidden';
+        /* v360 条3：箭头按键已按老板要求移除——上/下一条只保留滑动 */
       } catch (e0) { if (window.__silent) window.__silent(e0); }
 
       // R256：清除详情弹窗骨架
@@ -1677,23 +1665,50 @@
       var ni = s.i + d;
       if (ni < 0 || ni >= s.ids.length) return; /* 到头：不动 */
       var np = (DATA.products || []).find(function (x) { return Number(x.id) === Number(s.ids[ni]); });
-      if (np) { s.i = ni; openModal(np); }
+      if (np) {
+        s.i = ni;
+        var _mb = document.getElementById('modalBox');
+        if (_mb) { _mb.classList.remove('modal-swap'); void _mb.offsetWidth; _mb.classList.add('modal-swap'); } /* v360 条7：切换平滑动画 */
+        openModal(np);
+      }
     };
     /* S3：详情弹窗左右滑切上/下一条 */
     (function () {
       var _mm = document.getElementById('modalMask');
       if (_mm) window.__bindSwipeSwitch(_mm, function (d) { window.__modalGo(d); });
     })();
-    /* S1：列表横滑切分类（弹窗开着时不响应；img 上滑动排除已由统一排除表承担，滑动超阈值浏览器不会误触点击） */
-    window.__bindSwipeSwitch(document, function (d) {
-      var tags = Array.prototype.slice.call(document.querySelectorAll('.category-tag'));
-      if (!tags.length) return;
+    /* S1：列表横滑切分类——v360 条8：按层级顺序（本大类下的低级分类滑完才接下一个大类） */
+    window.__swipeCatGo = function (d) {
+      var cats = (DATA.categories || []).filter(function (c) { return Number(c.parent_id) === 0 || c.parent_id === 0; });
+      var tops = cats.slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
+      var seq = [];
+      tops.forEach(function (top) {
+        seq.push({ type: 'top', id: Number(top.id) });
+        (DATA.categories || []).filter(function (c) { return Number(c.parent_id) === Number(top.id); }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).forEach(function (sub) { seq.push({ type: 'sub', id: Number(sub.id), parent: Number(top.id) }); });
+      });
+      var curTop = Number(currentCat || 0), curSub = Number(currentSubCat || 0);
       var cur = -1;
-      tags.forEach(function (t, i2) { if (t.classList.contains('active')) cur = i2; });
+      seq.forEach(function (s, i) { if (s.type === 'sub' ? (s.id === curSub && s.parent === curTop) : (s.type === 'top' && s.id === curTop && !curSub)) cur = i; });
       var ni = cur + d;
-      if (ni < 0 || ni >= tags.length) return; /* 到头：不动即自然弹回 */
-      tags[ni].click();
-    }, function () {
+      if (cur === -1) ni = (d > 0 ? 0 : seq.length - 1);
+      if (ni < 0 || ni >= seq.length) return; /* 到头：不动即自然弹回 */
+      var tgt = seq[ni];
+      var grid = document.getElementById('productGrid');
+      if (grid) { grid.classList.remove('list-swap'); void grid.offsetWidth; grid.classList.add('list-swap'); } /* v360 条7：切换平滑动画 */
+      if (tgt.type === 'top') {
+        var tg = Array.prototype.find.call(document.querySelectorAll('.category-tag'), function (t) { return (t.textContent || '').trim() === (DATA.categories.find(function (c) { return Number(c.id) === tgt.id; }) || {}).name; });
+        if (tg) tg.click();
+      } else {
+        var topName = (DATA.categories.find(function (c) { return Number(c.id) === tgt.parent; }) || {}).name;
+        var topTag = Array.prototype.find.call(document.querySelectorAll('.category-tag'), function (t) { return (t.textContent || '').trim() === topName; });
+        var doSub = function () {
+          var st = Array.prototype.find.call(document.querySelectorAll('.sub-category-tag'), function (t) { var cn = (DATA.categories.find(function (c) { return Number(c.id) === tgt.id; }) || {}).name; return (t.textContent || '').trim() === cn; });
+          if (st) st.click(); else { var all = document.querySelector('.sub-category-tag'); if (all) all.click(); }
+        };
+        if (topTag && !topTag.classList.contains('active')) { topTag.click(); setTimeout(doSub, 320); } else doSub();
+      }
+    };
+    window.__bindSwipeSwitch(document, function (d) { window.__swipeCatGo(d); }, function () {
       var m = document.getElementById('modalMask');
       return !(m && m.classList.contains('open')); /* 弹窗开着=归详情手势 */
     });
@@ -2652,7 +2667,7 @@
     }, { passive: true });
     checkScroll(); // 初始检查
     backTopBtn.addEventListener('click', function () {
-      window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */;
+      window.scrollTo({ top: 0, behavior: 'smooth' }); /* v360 条7：恢复平滑滚顶交互 */
     });
 
     // ---------- 分类栏展开/收起 ----------

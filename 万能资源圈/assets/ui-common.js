@@ -1458,7 +1458,7 @@ window.formatPrice = function (price) {
    onSwipe(dir)：dir=1 左滑（下一个）、-1 右滑（上一个）。
    isActive()：可选，返回 false 时本次手势不响应（如弹窗开着时不响应页面级手势）。
    排除区（统一）：输入框/下拉/按钮/链接/视频/富文本/统计图表/轮播/文件卡——这些区域有自己的交互。 */
-window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-chart, .modal-nav-arrow, .cat-picker-panel, .modal-carousel, .file-folder-wrap, .lightbox';
+window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-chart, .modal-nav-arrow, .cat-picker-panel, .modal-carousel, .file-folder-wrap, .lightbox, .category-bar, .sub-category-bar, .tabs, .batch-bar, .tb-row2, .upman-host'; /* v360 条9：横滚条自身滚动不触发切换 */
 window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
   if (!el || !onSwipe) return;
   var sx = 0, sy = 0, on = false;
@@ -1468,6 +1468,12 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     var t = e.target;
     if (window.__swipeExclude && t.closest && t.closest(window.__swipeExclude)) { on = false; return; }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY; on = true;
+  }, { passive: true });
+  el.addEventListener('touchmove', function (e) {
+    /* v360 条9：中途竖向主导（在上下滚页面）即取消本次手势 */
+    if (!on || !e.touches.length) return;
+    var mx = e.touches[0].clientX - sx, my = e.touches[0].clientY - sy;
+    if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) on = false;
   }, { passive: true });
   el.addEventListener('touchend', function (e) {
     if (!on) return; on = false;

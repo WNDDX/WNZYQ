@@ -214,6 +214,9 @@
     .container { max-width: 1200px; margin: 0 auto; padding: 16px 16px var(--page-bottom-gap, 24px); } /* R229（用户 09-21 19:44）：底部留白全站统一（原底 16→24） */
     .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-bottom: 12px; }
     .tb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    /* v360 条6：同一行其他组件优先占位，搜索框吃剩余宽度伸缩 */
+    .tb-row .admin-search { flex: 1 1 200px; min-width: 140px; margin-left: auto; }
+    .tb-row > *:not(.admin-search) { flex-shrink: 0; }
     .tb-row2 select { padding: 8px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--card-bg); color: var(--text); }
     /* .view-btn 按钮本体已抽入 ui-common.css 全站公共组件（与资源页同一份，零复制），
        公共样式已按"融入背景"参数化：管理页白底直接透明融入+激活蓝底白字，资源页由 .on-blue 切白系。 */
@@ -1499,23 +1502,18 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    - 手机：.cat-row 改两行网格——第一行[拖拽柄|复选框|展开箭头|名称(省略号)]，第二行 .c-meta 横排
      [排序|资源数|显示|编辑|删除]。一级/二级/根"全部"/虚拟"全部"行同构，列坐标逐像素对齐；
      一级名称不再换行（grid 1fr + ellipsis），排序/资源数所有行同一行同一起点。 */
-.cat-row .c-meta { display: contents; }
-
-@media (max-width: 600px) {
-  /* v357 条4：分类行改单行——名称+排序+资源数+蓝三角一行；操作按键默认收起，点三角展开（同绑定组整行走） */
-  .cat-row {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  }
-  .cat-row .c-name { flex: 0 1 auto; min-width: 0; }
-  .cat-row .c-meta {
-    display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    flex: 1 1 auto; min-width: 0;
-  }
-  .cat-row .c-meta .row-btn { display: none; } /* 默认收起：编辑/删除不占行 */
+.cat-row .c-meta { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1 1 auto; min-width: 0; } /* v361 条2：全设备统一折叠行（不再区分手机/电脑） */
+  .cat-row .c-meta .row-btn { display: none; } /* 默认收起按键（全设备） */
   .cat-row.cat-open .c-meta .row-btn { display: inline-flex; }
   .cat-fold { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: auto; }
   .cat-fold .toggle-arrow { transform: rotate(-90deg); transition: transform var(--dur-mid) var(--ease-out); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); }
   .cat-row.cat-open .cat-fold .toggle-arrow { transform: rotate(0deg); }
+  .cat-row .c-meta .row-btn { animation: catBtnIn var(--dur-fast) var(--ease-out); } /* v361 条3：展开淡入 */
+  @keyframes catBtnIn { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 600px) {
+  /* v361 条2：折叠规则已上移为全设备统一（此段原手机专属 grid 两行布局废弃） */
+  .cat-row { gap: 8px; }
 }
 
 /* R137（用户 18:14）：后台视频加载失败兜底卡——与前台 shop.css 同款逐参数照抄（复用，不搞差异化），

@@ -584,19 +584,7 @@
       letter-spacing: 1px; /* v356 条8：弹窗标题字距统一 1px（原 1.2px 是按钮档） */
       padding-right: 36px;
     }
-    /* v358 S3：详情弹窗上/下一条箭头（左右居中半透明圆钮；到头自动隐藏） */
-    .modal-nav-arrow {
-      position: fixed; top: 50%; transform: translateY(-50%);
-      width: 40px; height: 40px; border-radius: 50%;
-      border: none; background: rgba(0,0,0,0.35); color: #fff;
-      font-size: 22px; line-height: 1; cursor: pointer; z-index: 60;
-      display: flex; align-items: center; justify-content: center;
-      transition: background var(--dur-fast) ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .modal-nav-arrow:hover { background: rgba(0,0,0,0.55); }
-    .modal-nav-arrow#modalPrev { left: 6px; }
-    .modal-nav-arrow#modalNext { right: 6px; }
+    /* v360 条3：上/下一条箭头按键已移除（只保留滑动） */
     .modal-price {
       color: var(--price-text, #C86800);
       font-size: 24px;
@@ -1048,9 +1036,17 @@
       .shop-logo { width: 30px; height: 30px; }
       .shop-brand { flex: 0 1 auto; min-width: 0; }
       .shop-name { font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .topbar-actions { order: 1; margin-left: 0; gap: 4px; } /* R9：咨询客服/分享紧跟 logo 名称（左侧） */
+      .topbar-actions { order: 1; margin-left: 0; gap: 3px; } /* R9：咨询客服/分享紧跟 logo 名称（左侧） | v360 条7：减压让视图键文字放得下 */
+    /* v360 条5：分享/客服键双端同款=浅蓝底蓝图标、按下蓝底白图标（与详情弹窗分享键同一套参数） */
+    .topbar-actions .tab#topShare, .topbar-actions .tab#topContact { background: #e8f2fd !important; color: var(--blue1) !important; }
+    .topbar-actions .tab#topShare:active, .topbar-actions .tab#topContact:active { background: var(--blue1) !important; color: #fff !important; }
       /* v352 条P8：手机端搜索框不再独占一整行——搜索+列表/网格一起靠右（搜索吃满中间空隙，视图切换贴最右） */
-      .search-box { order: 2; flex: 1 1 auto; min-width: 0; margin-top: 0; }
+      .search-box { order: 2; flex: 1 1 auto; min-width: 0; margin-top: 0; } /* v360 条6：吃剩余宽度伸缩 */
+      /* v360 条5：名称缩一档、给列表/网格文字腾位；视图切换文字始终显示（顶栏其余键已图标化，空间足够） */
+      .topbar-brand span { font-size: 13px !important; }
+      .topbar-inner .view-toggle { flex-shrink: 0 !important; }
+      .view-btn { padding: 6px 9px !important; }
+      .view-btn .btn-lab { display: inline !important; }
       .view-toggle { order: 3; flex-shrink: 0; margin-left: 0; }
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
@@ -1469,3 +1465,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* v346 条41：删除与上文（1205-1213）重复且互相打架的第二套骨架规则——
    上一套（1205-1213）已覆盖图比例/标题槽/描述槽/内边距/手机档，本处再写会冲突（sk-img 圆角 10 vs 8、
    sk-line 高度 21/18 vs 14），且 sk-sub/sk-price 两个类 JS 从未生成。骨架口径统一保留单一来源。 */
+
+/* ===== v360 条7：滑动切换平滑动画 ===== */
+.product-grid.list-swap { animation: listSwap var(--dur-mid) var(--ease-out); }
+@keyframes listSwap { from { opacity: 0.35; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.modal-box.modal-swap { animation: modalSwap var(--dur-mid) var(--ease-out); }
+@keyframes modalSwap { from { opacity: 0.4; transform: translateX(16px); } to { opacity: 1; transform: none; } }

@@ -210,7 +210,10 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   background: var(--overlay-lightbox); touch-action: none;
   cursor: zoom-out;
 }
-.lightbox.open { display: flex; }
+.lightbox.open { display: flex; animation: lbIn var(--dur-mid) var(--ease-out); } /* v361 条3：灯箱打开淡入+微缩放，不再生硬瞬现 */
+@keyframes lbIn { from { opacity: 0; } to { opacity: 1; } }
+.lightbox.open img, .lightbox.open video { animation: lbMediaIn var(--dur-mid) var(--ease-out); }
+@keyframes lbMediaIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
 
 /* ===== 全站弹窗层级规范（强制，后开永远在上层，杜绝倒挂/被媒体内容遮挡） =====
    业务弹窗遮罩 2000 → 分享/确认 3000 → 编辑器放大 6000/6001 →
