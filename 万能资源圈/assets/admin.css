@@ -1413,7 +1413,7 @@
     .topbar-brand span { line-height: 1; display: flex; align-items: center; }
     /* 原生状态 select 在转换为自制选择框前不可见，避免闪现绿色默认样式（分类/公告/资源） */
         /* 弹窗底部按钮宽度统一：2 个等宽、3 个等分 */
-    .modal-footer button { flex: 1 1 0; min-width: 0; }
+    .modal-footer button { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* v371b 条8：与导航页弹窗同标准——键内文字不换行 */
     .modal-footer .preview-btn { flex-basis: auto; }
     /* 列表/网格按键：完全复用 ui-common.css 公共 .view-btn（与资源页同一份，零复制）。
        公共样式按"融入背景"参数化设计：未激活透明底+浅描边融入管理页白底，激活蓝底白字
@@ -1527,7 +1527,20 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .ann-item .ann-act-group { margin-left: auto; gap: 8px; flex-shrink: 0; }
     /* v368 条4：类型行信息等分铺满一行 */
     .variant-item { gap: 8px; }
-    .variant-item .v-main-group { justify-content: space-between; } /* v368：等分铺满一行 */
+    /* v371b 条1：类型行各列固定宽——名称列吃剩余宽度，金额/排序/码/绑定/编辑/删除列起点行行一致
+       （缺金额/缺码行已有空占位槽，宽度相同即天然对齐；"缺的信息为空"） */
+    .variant-item .v-main-group { gap: 0; justify-content: flex-start; } /* 撤 space-between（会随名称长度漂移） */
+    .variant-item .v-name { padding-right: 8px; }
+    .variant-item .v-price { flex: 0 0 72px; width: 72px; min-width: 0; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+    .variant-item .price-slot-ph { flex: 0 0 72px; width: 72px; }
+    .variant-item .v-sort { flex: 0 0 56px; width: 56px; min-width: 0; max-width: 56px; overflow: hidden; white-space: nowrap; margin-left: 10px; } /* v372b 条1：与金额列拉开 10px（列宽仍固定，跨行对齐不变） */
+    .variant-item .v-code-group { gap: 6px; }
+    .variant-item .code-slot { flex: 0 0 112px; width: 112px; min-width: 0; max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .variant-item .bind-slot { flex: 0 0 76px; width: 76px; min-width: 0; max-width: 76px; overflow: hidden; white-space: nowrap; justify-content: center; }
+    .variant-item .bind-slot-ph { flex: 0 0 76px; width: 76px; }
+    .variant-item .v-edit-btn { flex: 0 0 64px; width: 64px; justify-content: center; }
+    .variant-item .v-del-btn { flex: 0 0 64px; width: 64px; justify-content: center; }
+    .variant-item .v-act-group { margin-left: 0; gap: 8px; flex-shrink: 0; } /* 左距由名称列吃满承担，列位恒定 */
     /* v370 条5：撤「资源键图标常显」——恢复全站口径：优先显示文字，空间不够才收成图标（__btnFit 机制） */
     /* v370 条1：折叠改 visibility+opacity（原 display:none）——展开与否不再改变列宽，
        排序/资源数/状态/编辑/删除在任何状态、任何行都纵向对齐（一级对一级、二级对二级） */
@@ -2102,3 +2115,8 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 
 /* ===== v371 条7：资源键与复制/显示完全同度量——去下拉箭头（点击仍开下拉），文字优先不再提前图标化 ===== */
 .p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { display: none; }
+
+/* ===== v371b 条1：公告项列对齐（同类型行逻辑：名称吃满，其余列固定宽）===== */
+.ann-item .ann-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ann-item .ann-sort, .ann-item .a-sort { flex: 0 0 56px; width: 56px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.ann-item .row-btn { flex: 0 0 64px; width: 64px; min-width: 0; justify-content: center; overflow: hidden; white-space: nowrap; }

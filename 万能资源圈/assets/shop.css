@@ -1094,7 +1094,7 @@
     .shop-logo { width: 36px !important; height: 36px !important; align-self: center; display: block; } /* R140：回退 R138 调大到原 36px */
     .shop-name { line-height: 1; display: flex; align-items: center; }
     /* 弹窗底部按钮宽度统一：2 个等宽 */
-    .modal-footer button { flex: 1; min-width: 0; }
+    .modal-footer button { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* v371b 条8：与导航页弹窗同标准——键内文字不换行 */
     @keyframes cardIn { from { opacity: 0.9; } to { opacity: 1; } }
     .product-card { animation: cardIn var(--dur-mid) cubic-bezier(0.2, 0.9, 0.25, 1); } /* R231 条20：入场节奏前快后缓（前段快起、尾段缓收） */
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
@@ -1307,8 +1307,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     /* 激活分类底部滑动指示条：JS 按激活标签实测位置设 width/transform，切换时平滑滑过去（一次一帧，非逐帧） */
     /* 注意：这里不要给 .category-bar 补 position:relative——主规则已是 sticky（定位元素，absolute 照样以它为基准）；
        relative 会覆盖 sticky，且残留的 top:var(--topbar-h) 会把整条栏往下位移 64px 压住产品网格（R231 收尾实测回归） */
-    .cat-slide-ind { position: absolute; left: 0; top: 0; height: 2px; background: var(--blue1); border-radius: 4px; z-index: 1; transition: transform var(--dur-switch) var(--ease-out); width: 0; } /* R246（用户 09-23 12:33）：改 top:0 为基准，JS 用 transform: translateX/translateY 精确定位到激活标签底缘下方 2px，width 直设分数值（弃 scaleX） */
-    .cat-slide-ind.hidden { display: none; } /* 无激活标签（异常兜底）时藏 */
+    /* v372b：cat-slide-ind 旧线样式已删（与 cat-line 双线并存，只留一根） */
     /* 子分类切换淡入：容器重建内容后挂 re-in 触发一次淡入 */
     @keyframes subCatIn { from { opacity: 0.35; } to { opacity: 1; } }
     .sub-category-bar.re-in { animation: subCatIn var(--dur-fast) ease; } /* v297（用户 10-04 02:14）：C-043 动画时长统一→0.15s收归fast档 */

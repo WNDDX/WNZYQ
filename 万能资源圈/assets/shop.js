@@ -53,17 +53,6 @@
       return (cid || 0) + ':' + (subCid || 0) + ':' + (kw || '') + ':' + (page || 1);
     }
 
-    // R246（用户 09-23 12:33）：分类指示条精确定位——用 getBoundingClientRect 取分数值，
-    // width 直设 + transform: translateX/translateY 定位，动画仍走 transform 过渡（合成层不回流）。
-    function updateCatIndicator(bar) {
-      var ind = bar.querySelector('.cat-slide-ind');
-      var act = bar.querySelector('.category-tag.active');
-      if (!ind || !act) return;
-      var barRect = bar.getBoundingClientRect();
-      var actRect = act.getBoundingClientRect();
-      ind.style.width = actRect.width + 'px';
-      ind.style.transform = 'translateX(' + (actRect.left - barRect.left) + 'px) translateY(' + (actRect.bottom - barRect.top + 2) + 'px)';
-    }
 
     // 弹窗滚动锁（计数器管理，多弹窗叠加时全部关闭才恢复，避免滚轮/滚动失效）
     var __bodyLockCount = 0;
@@ -352,6 +341,15 @@
 
     function loadImg(img, src, fallbackSrc) {
       img.dataset.lf = '1'; /* v345 条3：标记为“由 loadImg 接管”，全局兜底不再抢先换成占位符（避免闪一下） */ /* R304 P18：fallbackSrc=小图加载失败先回退的原图；不传（详情弹窗/轮播走原图）行为与原先完全一致 */
+      /* v371c 条14：无封面资源不再走加载链路——不注册 onload/onerror、不播入场动画，
+         立即定型占位（重渲染/切分类回来都零闪烁）。“闪几次”根源=占位图每次重渲染重播 img-in 入场动画 */
+      if (!src) {
+        try { img.onerror = null; img.onload = null; } catch (e0) { if (window.__silent) window.__silent(e0); }
+        img.src = IMG_PLACEHOLDER;
+        if (img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading', 'img-in'); }
+        img.style.display = 'block'; img.style.opacity = '1';
+        return;
+      }
       if (img.getAttribute('src') === src && img.src && img.complete) { img.style.display = 'block'; img.style.opacity = '1'; return; }
       img.decoding = 'async'; img.loading = 'lazy'; /* v336 条48 */ /* R193c ⑩：异步解码——解码不占主线程，列表图多时滑动更跟手 */
       /* R304 P14（用户 09-30 02:00 拍板「按我的思路做，应用到全系统页面，只有翻页才加载翻页后的内容数据」）：
@@ -559,28 +557,14 @@
         categoryBar.appendChild(tag);
       });
 
-      // R246（用户 09-23 12:33）：滑动指示条精确定位——紧贴激活按键底缘正下方 2px，
-      // 宽度严格一致；用 getBoundingClientRect 取分数值，transform 过渡定位（合成层不回流）。
-      var ind = categoryBar.querySelector('.cat-slide-ind');
+      /* v372b：旧滑线 cat-slide-ind 已撤（与新 cat-line 双线并存错位 6px，用户实拍两根线）——
+         只留一根：cat-line（与管理页白线同规格、蓝色、宽=键宽，跟手/点按/缩放全驱动）。 */
       var act = categoryBar.querySelector('.category-tag.active');
-      if (!ind) {
-        ind = document.createElement('div');
-        ind.className = 'cat-slide-ind';
-        ind.style.transition = 'none';
-        categoryBar.appendChild(ind);
-      }
       if (act) {
-        ind.classList.remove('hidden');
-        updateCatIndicator(categoryBar);
-        if (ind.style.transition === 'none') {
-          requestAnimationFrame(function () { ind.style.transition = ''; });
-        }
         /* v330 条13：分类多到要横滑时，把当前分类自动滑到看得见的位置（不再藏在后面） */
         try {
           if (act.scrollIntoView) act.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
         } catch (e0) { if (window.__silent) window.__silent(e0); }
-      } else {
-        ind.classList.add('hidden');
       }
 
       // 渲染二级分类栏（选中一级分类且有子分类时显示）
@@ -588,7 +572,7 @@
 
       // 判断分类是否超出一行（只判断一次，保存状态，避免展开后判断错误导致收不回来）
       setTimeout(function () {
-        catIsOverflow = categoryBar.scrollWidth > categoryBar.clientWidth + 5; if (!catIsOverflow) { catExpanded = false; categoryBar.classList.remove('expanded'); catToggle.classList.remove('open'); var ar = catToggle.querySelector('.toggle-arrow'); if (ar) ar.style.transform = 'rotate(-90deg)'; updateCatIndicator(categoryBar); return; }
+        catIsOverflow = categoryBar.scrollWidth > categoryBar.clientWidth + 5; if (!catIsOverflow) { catExpanded = false; categoryBar.classList.remove('expanded'); catToggle.classList.remove('open'); var ar = catToggle.querySelector('.toggle-arrow'); if (ar) ar.style.transform = 'rotate(-90deg)'; if (window.__fsCatLineUpdate) window.__fsCatLineUpdate(false); return; } /* v372b：旧指示条撤，改驱动 cat-line */
         // 恢复之前的展开状态
         if (catExpanded) {
           categoryBar.classList.add('expanded');
@@ -601,8 +585,8 @@
           var arrow2 = catToggle.querySelector('.toggle-arrow');
           if (arrow2) arrow2.style.transform = 'rotate(-90deg)';
         }
-        // R246（用户 09-23 12:33）：展开/收起状态恢复后指示条重新精确定位（可能换行）
-        updateCatIndicator(categoryBar);
+        // v372b：展开/收起状态恢复后重定位指示线（旧 updateCatIndicator 撤，cat-line 接管）
+        if (window.__fsCatLineUpdate) window.__fsCatLineUpdate(false);
       }, 50);
     }
 
@@ -1789,16 +1773,16 @@
       if (!line || !line.parentNode) { line = document.createElement('div'); line.className = 'cat-line'; bar.appendChild(line); window.__fsCatLine = line; }
       if (!act) { line.style.opacity = '0'; return; }
       line.style.transition = anim ? 'left .2s var(--ease-out, ease), width .2s var(--ease-out, ease)' : 'none';
-      line.style.left = (act.offsetLeft + 12) + 'px'; /* v371 条2：与管理页白线同款规格（缩 12、2px 圆角） */
-      line.style.width = Math.max(0, act.offsetWidth - 24) + 'px';
+      line.style.left = act.offsetLeft + 'px'; /* v371b：线宽=按键宽（不再内缩） */
+      line.style.width = act.offsetWidth + 'px';
       line.style.opacity = '1';
     };
     window.__fsCatLineTo = function (fromEl, toEl, p) {
       var line = window.__fsCatLine;
       if (!line || !fromEl || !toEl) return;
       line.style.transition = 'none';
-      var aL = fromEl.offsetLeft + 12, bL = toEl.offsetLeft + 12;
-      var aW = Math.max(0, fromEl.offsetWidth - 24), bW = Math.max(0, toEl.offsetWidth - 24);
+      var aL = fromEl.offsetLeft, bL = toEl.offsetLeft;
+      var aW = fromEl.offsetWidth, bW = toEl.offsetWidth;
       line.style.left = (aL + (bL - aL) * p) + 'px';
       line.style.width = (aW + (bW - aW) * p) + 'px';
       line.style.opacity = '1';
@@ -2683,9 +2667,8 @@
     }
     window.addEventListener('resize', updateTopbarHeight);
     window.addEventListener('resize', function () {
-      // R246（用户 09-23 12:33）：窗口变化后指示条重新精确定位（getBoundingClientRect + transform 过渡）
-      var bar = document.getElementById('categoryBar');
-      if (bar) updateCatIndicator(bar);
+      // v372b：窗口变化后重定位指示线（cat-line 接管，__fsCatLineUpdate 内部已注册同名监听，此处留空防重复）
+      /* 原逻辑由 shop.js 尾部 resize 钩子统一驱动 __fsCatLineUpdate */
     });
     // R292（用户 09-29）：一分钟是唯一同步节点，切回不触发检查
 
@@ -2826,8 +2809,8 @@
       if (arrow) {
         arrow.style.transform = (!_overflow && !catExpanded) ? 'rotate(0deg)' : (catExpanded ? 'rotate(0deg)' : 'rotate(-90deg)');
       }
-      // R246（用户 09-23 12:33）：展开/收起后指示条重新精确定位（布局变化后可能换行）
-      setTimeout(function () { updateCatIndicator(categoryBar); }, 50);
+      // v372b：展开/收起后重定位指示线（布局变化后可能换行）
+      setTimeout(function () { if (window.__fsCatLineUpdate) window.__fsCatLineUpdate(false); }, 50);
     });
 
     // 二级分类展开/收起

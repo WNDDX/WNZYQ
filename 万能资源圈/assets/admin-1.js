@@ -946,16 +946,16 @@
       if (!line || !line.parentNode) { line = document.createElement('div'); line.className = 'tabs-line'; tabs.appendChild(line); window.__fsTabLine = line; }
       if (!act) { line.style.opacity = '0'; return; }
       line.style.transition = anim ? 'left .2s var(--ease-out, ease), width .2s var(--ease-out, ease)' : 'none';
-      line.style.left = (act.offsetLeft + 12) + 'px';
-      line.style.width = Math.max(0, act.offsetWidth - 24) + 'px';
+      line.style.left = act.offsetLeft + 'px'; /* v371b：线宽=按键宽（不再内缩） */
+      line.style.width = act.offsetWidth + 'px';
       line.style.opacity = '1';
     };
     window.__fsTabLineTo = function (fromEl, toEl, p) {
       var line = window.__fsTabLine;
       if (!line || !fromEl || !toEl) return;
       line.style.transition = 'none';
-      line.style.left = (fromEl.offsetLeft + 12 + ((toEl.offsetLeft + 12) - (fromEl.offsetLeft + 12)) * p) + 'px';
-      line.style.width = Math.max(0, fromEl.offsetWidth - 24 + ((toEl.offsetWidth - 24) - (fromEl.offsetWidth - 24)) * p) + 'px';
+      line.style.left = (fromEl.offsetLeft + (toEl.offsetLeft - fromEl.offsetLeft) * p) + 'px';
+      line.style.width = (fromEl.offsetWidth + (toEl.offsetWidth - fromEl.offsetWidth) * p) + 'px';
       line.style.opacity = '1';
     };
     try {
