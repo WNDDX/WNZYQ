@@ -61,7 +61,8 @@
       box-shadow: none;
     }
     .topbar-inner {
-      max-width: none; /* v345 条8：顶栏内容左右撑开——logo/名称靠左，搜索与列表网格靠右 */
+      max-width: 1200px; /* v370 条4：顶栏与内容容器同宽——logo/名称靠左对齐分类栏白框左缘，搜索与列表网格靠右对齐右缘（≥1600 跟随 ui-common 升 1500） */
+      width: 100%; box-sizing: border-box; /* 父 .topbar 是 flex，子项须显式铺满再由 max-width 收窄居中 */
       margin: 0 auto;
       padding: 8px 16px;
       display: flex;
@@ -207,6 +208,7 @@
       background: var(--card-bg);
       box-shadow: var(--shadow-pop);
       overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
+      display: flex; align-items: center; /* v370 条3：标签在白框内垂直居中（原 min-height 撑高后标签贴顶） */
       white-space: nowrap;
       padding: 8px 16px;
       border-bottom-left-radius: 14px;
@@ -919,8 +921,8 @@
     .cat-toggle {
       position: absolute;
       right: 26px;
-      top: 50%;
-      transform: translateY(-50%);
+      top: 14px; /* v370c：=第一行竖直中心（栏 padding 8 + 标签半高 18.5）；top:50% 在展开多行后会漂到整行中间 */
+      transform: none;
       width: 28px;
       height: 28px;
       border: none;
@@ -960,10 +962,11 @@
     /* 二级分类栏 */
     .sub-category-bar {
       display: flex;
+      align-items: center; /* v370 条3：二级标签在栏内垂直居中（原上下 padding 4/8 不对称导致偏上） */
       overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
       scrollbar-width: none;
       
-      padding: 4px 24px 8px;
+      padding: 5px 24px;
       gap: 4px;
       /* R231 条3：删布局属性过渡（同分类栏口径） */
     }
@@ -972,8 +975,8 @@
     .sub-cat-toggle {
       position: absolute;
       right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
+      top: 9px; /* v370c：=二级栏第一行竖直中心（padding 5 + 标签半高 13.5） */
+      transform: none;
       width: 20px;
       height: 20px;
       border: none;
@@ -1479,3 +1482,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 @keyframes listSwap { from { opacity: 0; } to { opacity: 1; } } /* v362 条5：纯淡入（原位移产生小抖动观感） */
 .modal-box.modal-swap { animation: modalSwap var(--dur-mid) var(--ease-out); }
 @keyframes modalSwap { from { opacity: 0.4; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+/* ===== v370 条4：≥1600 大屏——顶栏/分类栏/最近浏览/网格统一 1500 同宽对齐（原 shop 局部 1200 压过 ui-common 的 1500，三边各对各的）===== */
+@media (min-width: 1600px) {
+  .topbar-inner, .category-bar-wrap, .sub-category-bar-wrap, .recent-bar-wrap, .product-grid { max-width: 1500px; }
+}

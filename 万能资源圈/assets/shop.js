@@ -1090,7 +1090,7 @@
         pager.appendChild(next);
       }
       if (window.__btnFit) { window.__btnFit(); setTimeout(function () { try { window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); } }, 130); } /* v330 条18 + v369 条1：布局晚定后补跑一次（同管理页口径） */
-      try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); } /* v346 条60：渲染后刷新「最近看过」一行 */
+      try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); } /* v346 条60：渲染后刷新「最近浏览」一行 */
     }
 
     // R269（用户 09-27 15:14）：根因→R268 修复在 v265 打包时回退丢失，补 renderCarousel + coverImages 字段修正重做
@@ -1143,7 +1143,7 @@
         if (!items.length) return;
         var wrap = document.createElement('div'); wrap.id = 'recentBarWrap'; wrap.className = 'recent-bar-wrap';
         var bar = document.createElement('div'); bar.id = 'recentBar'; bar.className = 'recent-bar';
-        var t = document.createElement('span'); t.className = 'recent-title'; t.textContent = '最近看过'; bar.appendChild(t);
+        var t = document.createElement('span'); t.className = 'recent-title'; t.textContent = '最近浏览'; bar.appendChild(t);
         items.forEach(function (p) {
           var b = document.createElement('button'); b.type = 'button'; b.className = 'recent-chip';
           b.textContent = p.title || p.name || '资源'; b.title = p.title || '';
@@ -1151,7 +1151,7 @@
           bar.appendChild(b);
         });
         var tg = document.createElement('button'); tg.type = 'button'; tg.className = 'recent-toggle'; tg.id = 'recentToggle';
-        tg.title = '展开/收起'; tg.setAttribute('aria-label', '展开或收起最近看过');
+        tg.title = '展开/收起'; tg.setAttribute('aria-label', '展开或收起最近浏览');
         tg.innerHTML = '<svg aria-hidden="true" class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>';
         wrap.appendChild(bar); wrap.appendChild(tg);
         grid.parentNode.insertBefore(wrap, grid);
@@ -1701,27 +1701,33 @@
     window.__catSeqTarget = function (d) {
       var cats = (DATA.categories || []).filter(function (c) { return Number(c.parent_id) === 0 || c.parent_id === 0; });
       var tops = cats.slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
-      var seq = [];
+      var seq = [{ type: 'all' }]; /* v370 条7：「全部」纳入滑切序列——第一分类右滑能回全部，全部左右都能滑 */
       tops.forEach(function (top) {
         seq.push({ type: 'top', id: Number(top.id) });
         (DATA.categories || []).filter(function (c) { return Number(c.parent_id) === Number(top.id); }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).forEach(function (sub) { seq.push({ type: 'sub', id: Number(sub.id), parent: Number(top.id) }); });
       });
       var curTop = Number(currentCat || 0), curSub = Number(currentSubCat || 0);
       var cur = -1;
-      seq.forEach(function (s, i) { if (s.type === 'sub' ? (s.id === curSub && s.parent === curTop) : (s.type === 'top' && s.id === curTop && !curSub)) cur = i; });
+      seq.forEach(function (s, i) {
+        if (s.type === 'all') { if (curTop === 0 && !curSub) cur = i; }
+        else if (s.type === 'sub' ? (s.id === curSub && s.parent === curTop) : (s.type === 'top' && s.id === curTop && !curSub)) cur = i;
+      });
       var ni = cur + d;
       if (cur === -1) ni = (d > 0 ? 0 : seq.length - 1);
       if (ni < 0 || ni >= seq.length) return null; /* 到头：无邻居（跟手版走橡皮筋回弹） */
       var tgt = seq[ni];
       var _nameOf = function (id) { var c = (DATA.categories || []).find(function (x) { return Number(x.id) === Number(id); }); return c ? (c.name || '') : ''; };
-      return { type: tgt.type, id: tgt.id, parent: tgt.parent, name: tgt.type === 'sub' ? (_nameOf(tgt.parent) + '·' + _nameOf(tgt.id)) : _nameOf(tgt.id) };
+      return { type: tgt.type, id: tgt.id, parent: tgt.parent, name: tgt.type === 'all' ? '全部' : (tgt.type === 'sub' ? (_nameOf(tgt.parent) + '·' + _nameOf(tgt.id)) : _nameOf(tgt.id)) };
     };
     window.__swipeCatGo = function (d) {
       var tgt = window.__catSeqTarget(d);
       if (!tgt) return;
       var grid = document.getElementById('productGrid');
       if (grid) { grid.classList.remove('list-swap'); void grid.offsetWidth; grid.classList.add('list-swap'); } /* v360 条7：切换平滑动画 */
-      if (tgt.type === 'top') {
+      if (tgt.type === 'all') {
+        var allTag = Array.prototype.find.call(document.querySelectorAll('.category-tag'), function (t) { return (t.textContent || '').trim() === '全部'; });
+        if (allTag) allTag.click();
+      } else if (tgt.type === 'top') {
         var tg = Array.prototype.find.call(document.querySelectorAll('.category-tag'), function (t) { return (t.textContent || '').trim() === (DATA.categories.find(function (c) { return Number(c.id) === tgt.id; }) || {}).name; });
         if (tg) tg.click();
       } else {
@@ -1736,7 +1742,8 @@
     };
     /* v369 条4：滑切跟手版（双面板）——拖动时旧列表跟手、邻居分类画面从旁边跟进来；
        预取邻居第一页并写内存缓存（与 v363 竞态防护同口径：只写缓存格、不动当前画面数据），
-       提交切换时缓存秒出，不再白等 */
+       提交切换时缓存秒出，不再白等。
+       v370 条11：拖动时一级分类栏的蓝下划线跟着滑向目标分类；条7：最近浏览条不再触发滑切（已入排除表） */
     window.__peekCat = function (cid, subCid) {
       var key = __cacheKey(1, cid, subCid, '');
       if (__pageCache[key] && __pageCache[key].products) return Promise.resolve(__pageCache[key].products);
@@ -1753,16 +1760,54 @@
         return list;
       }).catch(function () { return []; });
     };
+    /* v370b 条3：分类指示线=常驻在活动分类下面的那根蓝线（不再另造幽灵线）——
+       点分类切换时它滑过去；跟手拖动时它从当前分类滑向目标分类，弹回则滑回来 */
+    window.__fsCatLineUpdate = function (anim) {
+      var bar = document.querySelector('.category-bar');
+      if (!bar) return;
+      var act = bar.querySelector('.category-tag.active');
+      var line = window.__fsCatLine;
+      if (!line || !line.parentNode) { line = document.createElement('div'); line.className = 'cat-line'; bar.appendChild(line); window.__fsCatLine = line; }
+      if (!act) { line.style.opacity = '0'; return; }
+      line.style.transition = anim ? 'left .2s var(--ease-out, ease), width .2s var(--ease-out, ease)' : 'none';
+      line.style.left = act.offsetLeft + 'px';
+      line.style.width = act.offsetWidth + 'px';
+      line.style.opacity = '1';
+    };
+    window.__fsCatLineTo = function (fromEl, toEl, p) {
+      var line = window.__fsCatLine;
+      if (!line || !fromEl || !toEl) return;
+      line.style.transition = 'none';
+      line.style.left = (fromEl.offsetLeft + (toEl.offsetLeft - fromEl.offsetLeft) * p) + 'px';
+      line.style.width = (fromEl.offsetWidth + (toEl.offsetWidth - fromEl.offsetWidth) * p) + 'px';
+      line.style.opacity = '1';
+    };
+    try {
+      var __catBar = document.querySelector('.category-bar');
+      if (__catBar && window.MutationObserver) new MutationObserver(function () { window.__fsCatLineUpdate(false); }).observe(__catBar, { childList: true, subtree: true });
+      __catBar.addEventListener('click', function () { setTimeout(function () { window.__fsCatLineUpdate(true); }, 60); });
+      window.addEventListener('resize', function () { window.__fsCatLineUpdate(false); });
+    } catch (e) { if (window.__silent) window.__silent(e); }
     window.__followSwipe({
       panel: function () { return document.getElementById('productGrid'); },
       neighbor: function (dir) { return window.__catSeqTarget(dir); },
       fill: function (nb, dir, panelB) {
         panelB.className = 'product-grid';
-        window.__peekCat(nb.type === 'top' ? nb.id : nb.parent, nb.type === 'sub' ? nb.id : 0).then(function (list) {
+        window.__peekCat(nb.type === 'top' ? nb.id : (nb.type === 'sub' ? nb.parent : 0), nb.type === 'sub' ? nb.id : 0).then(function (list) {
           if (!panelB.isConnected) return;
           list.slice(0, 8).forEach(function (p) { try { panelB.appendChild(window.__buildProductCard(p)); } catch (e) { if (window.__silent) window.__silent(e); } });
         });
       },
+      onProgress: function (p, dir, nb) {
+        var bar = document.querySelector('.category-bar');
+        var from = bar && bar.querySelector('.category-tag.active');
+        var to = null;
+        if (nb.type === 'all') to = bar && Array.prototype.find.call(bar.querySelectorAll('.category-tag'), function (t) { return (t.textContent || '').trim() === '全部'; });
+        else if (nb.type === 'top') { var c = (DATA.categories || []).find(function (x) { return Number(x.id) === Number(nb.id); }); to = bar && Array.prototype.find.call(bar.querySelectorAll('.category-tag'), function (t) { return c && (t.textContent || '').trim() === c.name; }); }
+        else if (nb.type === 'sub') { var pc = (DATA.categories || []).find(function (x) { return Number(x.id) === Number(nb.parent); }); to = bar && Array.prototype.find.call(bar.querySelectorAll('.category-tag'), function (t) { return pc && (t.textContent || '').trim() === pc.name; }); }
+        if (from && to && to !== from) window.__fsCatLineTo(from, to, p);
+      },
+      onEnd: function () { window.__fsCatLineUpdate(true); },
       commit: function (dir) { window.__swipeCatGo(dir); },
       isActive: function () {
         var m = document.getElementById('modalMask');

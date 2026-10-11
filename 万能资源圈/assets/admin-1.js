@@ -911,6 +911,7 @@
          R173 口径不变：只认 __plS 等单条件、不重新拉数据 */
       var __pv = document.getElementById('panel-' + name);
       if (__pv) { __pv.classList.remove('panel-in'); void __pv.offsetWidth; __pv.classList.add('panel-in'); }
+      try { if (window.__fsTabLineUpdate) window.__fsTabLineUpdate(true); } catch (e) {} /* v370b：点标签切换，白线滑到新标签下 */
       /* v358 S2：恢复该标签页离开时的滚动位置 */
       try { var __sv = (window.__tabScroll || {})[name]; if (typeof __sv === 'number' && __sv > 0) setTimeout(function () { try { window.scrollTo(0, __sv); } catch (e) {} }, 80); } catch (e) {}
       // v314（用户 10-05 15:59）：Tab切换立即出结果——首次加载数据，后续切回时已有数据秒显+后台静默刷新保最新。
@@ -935,6 +936,32 @@
     /* v369 条4：后台滑切标签页升级跟手版（双面板）——
        v359 起 bindSwipeSwitch 写在 switchTab 里，每切一次标签就重复绑一次监听（越切越多的隐患）；
        现改为初始化时只绑一次 __followSwipe：拖动时旧面板跟手、邻居标签面板从旁边跟进来，松手过半切换 */
+    /* v370b 条3：标签下划线=本来那根白线（原 ::before 静态线改为真实元素）——
+       点标签切换时滑过去；跟手拖动时从当前标签滑向目标，弹回滑回来 */
+    window.__fsTabLineUpdate = function (anim) {
+      var tabs = document.querySelector('.tabs');
+      if (!tabs) return;
+      var act = tabs.querySelector('.tab.active');
+      var line = window.__fsTabLine;
+      if (!line || !line.parentNode) { line = document.createElement('div'); line.className = 'tabs-line'; tabs.appendChild(line); window.__fsTabLine = line; }
+      if (!act) { line.style.opacity = '0'; return; }
+      line.style.transition = anim ? 'left .2s var(--ease-out, ease), width .2s var(--ease-out, ease)' : 'none';
+      line.style.left = (act.offsetLeft + 12) + 'px';
+      line.style.width = Math.max(0, act.offsetWidth - 24) + 'px';
+      line.style.opacity = '1';
+    };
+    window.__fsTabLineTo = function (fromEl, toEl, p) {
+      var line = window.__fsTabLine;
+      if (!line || !fromEl || !toEl) return;
+      line.style.transition = 'none';
+      line.style.left = (fromEl.offsetLeft + 12 + ((toEl.offsetLeft + 12) - (fromEl.offsetLeft + 12)) * p) + 'px';
+      line.style.width = Math.max(0, fromEl.offsetWidth - 24 + ((toEl.offsetWidth - 24) - (fromEl.offsetWidth - 24)) * p) + 'px';
+      line.style.opacity = '1';
+    };
+    try {
+      window.__fsTabLineUpdate(false);
+      window.addEventListener('resize', function () { window.__fsTabLineUpdate(false); });
+    } catch (e) { if (window.__silent) window.__silent(e); }
     window.__followSwipe({
       panel: function () {
         var t = document.querySelector('.tab.active');
@@ -957,6 +984,13 @@
         c.style.display = '';
         panelB.appendChild(c);
       },
+      onProgress: function (p, dir, nb) {
+        var tabs = document.querySelector('.tabs');
+        var from = tabs && tabs.querySelector('.tab.active');
+        var to = tabs && tabs.querySelector('.tab[data-tab="' + nb.name + '"]');
+        if (from && to && to !== from) window.__fsTabLineTo(from, to, p);
+      },
+      onEnd: function () { window.__fsTabLineUpdate(true); },
       commit: function (dir) {
         var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab[data-tab]'));
         var cur = -1;

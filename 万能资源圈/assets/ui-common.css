@@ -942,3 +942,10 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 .product-grid.swap-prev { animation: slPrev .22s var(--ease-out); }
 .lightbox .lb-sl-next { animation: slNext .2s var(--ease-out); }
 .lightbox .lb-sl-prev { animation: slPrev .2s var(--ease-out); }
+/* ===== v370 条9：内部滚动区滑到底不再带动外层（全系统补 contain）===== */
+.topbar-inner .tabs, .category-bar, .cat-bar, .sub-category-bar, .recent-bar, .stat-table-wrap, .bind-table-wrap, .table-scroll, .admin-table-wrap,
+.modal-mask, .share-mask, .kf-mask, .cp-mask, .modal-box, .form, .rte-editor, .preview-body, [id="bindingsScroll"], .ann-list, .cat-picker-panel, .upman-host { overscroll-behavior: contain; }
+
+/* ===== v370b 条3：切换指示线——管理页标签白线/资源页分类蓝线，都是"本来那根"，
+   切换与跟手拖动时从当前位置滑向目标（JS 驱动 left/width）===== */
+.cat-line { position: absolute; bottom: 0; height: 3px; background: var(--link-blue, #1565c0); border-radius: 3px 3px 0 0; pointer-events: none; z-index: 95; opacity: 0; }

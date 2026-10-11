@@ -767,9 +767,29 @@
       if (arr) arr.style.transform = open ? 'rotate(0deg)' : 'rotate(-90deg)';
     }
     function fcToggleKids(head, kids) {
+      /* v370b：展开/收起与批量条同款——缓缓下拉/收合，不再瞬切 */
       var show = kids.style.display === 'none';
-      kids.style.display = show ? 'block' : 'none';
       fcSetArrow(head, show);
+      if (show) {
+        kids.style.display = 'block';
+        kids.style.overflow = 'hidden';
+        kids.style.transition = 'none';
+        kids.style.maxHeight = '0px';
+        kids.style.opacity = '0';
+        void kids.offsetHeight;
+        kids.style.transition = 'max-height .22s var(--ease-out, ease), opacity .22s var(--ease-out, ease)';
+        kids.style.maxHeight = kids.scrollHeight + 'px';
+        kids.style.opacity = '1';
+        setTimeout(function () { kids.style.transition = ''; kids.style.maxHeight = 'none'; kids.style.overflow = ''; }, 240);
+      } else {
+        kids.style.overflow = 'hidden';
+        kids.style.maxHeight = kids.scrollHeight + 'px';
+        void kids.offsetHeight;
+        kids.style.transition = 'max-height .18s var(--ease-out, ease), opacity .18s var(--ease-out, ease)';
+        kids.style.maxHeight = '0px';
+        kids.style.opacity = '0';
+        setTimeout(function () { kids.style.display = 'none'; kids.style.transition = ''; kids.style.maxHeight = ''; kids.style.overflow = ''; kids.style.opacity = ''; }, 190);
+      }
     }
     /* 点名字 → 原地变输入框，回车/失焦保存（文件和文件夹通用） */
     function fcStartRename(nameEl) {

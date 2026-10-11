@@ -16,7 +16,7 @@
       if (__kw) return '该搜索暂无资源';
       if (__fc && __fc !== '0') return '该分类暂无资源';
       if (__fs) return '该状态暂无资源';
-      return '暂无资源';
+      return '该列表暂无资源';
     }
     function __adminCatSig(list) {
       return JSON.stringify((list || []).map(function (c) { var o = {}; for (var k in c) { if (k !== 'cnt' && k !== 'totalCnt') o[k] = c[k]; } return o; }));
@@ -671,7 +671,7 @@ function renderProducts() {
       function renderCodePanel(variants) {
         cpPanel.innerHTML = '';
         if (!variants || !variants.length) {
-          cpPanel.innerHTML = window.__adminEmpty('暂无类型', '先到「类型管理」新增类型'); /* v349 条9：统一空态 */
+          cpPanel.innerHTML = window.__adminEmpty('该资源暂无类型', '先到「类型管理」新增类型'); /* v349 条9：统一空态 */
           return;
         }
         variants.forEach(function (v) {
@@ -951,7 +951,7 @@ function renderProducts() {
       var countEl = document.getElementById('batchCount');
       var selectAll = document.getElementById('selectAll');
       countEl.textContent = count;
-      bar.classList.toggle('show', count > 0);
+      window.__setBatchBar(bar, count > 0); /* v370 条2：精确高度平滑展开，把下方列表缓缓推下 */
       try { window.__btnFit && window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); } /* v336 条145：批量条显示后补跑按钮瘦身（显示前宽度为 0 会跳过） */
       var allChecks = document.querySelectorAll('.row-check');
       selectAll.checked = allChecks.length > 0 && count === allChecks.length;

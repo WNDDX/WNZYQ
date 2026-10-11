@@ -123,7 +123,7 @@
       var pager = document.getElementById('bindingsPager');
 
       if (!total) {
-        tbody.innerHTML = '<tr><td colspan="7">' + window.__adminEmpty('暂无资源码与绑定设备', '访客输入正确资源码后将自动绑定其设备') + '</td></tr>'; /* v356 条11：统一空态 */
+        tbody.innerHTML = '<tr><td colspan="7">' + window.__adminEmpty('该类型暂无资源码与绑定设备', '访客输入正确资源码后将自动绑定其设备') + '</td></tr>'; /* v356 条11：统一空态 */
         if (pager) pager.innerHTML = '';
         return;
       }
@@ -1402,7 +1402,7 @@ refreshCatCnts();
 
       ordered.forEach(function (c, ci) {
         if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row cat-sub'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id; // “全部”项不渲染选中框（固定项）
-          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19 */_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vts=document.createElement('span'); _vts.style.cssText='width:20px;height:20px;margin-right:4px;flex-shrink:0;'; _vts.setAttribute('aria-hidden','true'); _vrow.appendChild(_vts); /* v368 条1d：与一级行展开箭头同宽占位，列对齐 */ var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:40px;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:var(--gray-mid);cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
+          var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; /* R285 条19 */_vrow.appendChild(_vh); var _vp=document.createElement('span'); _vp.style.cssText='width:20px;flex-shrink:0;'; _vp.setAttribute('aria-hidden','true'); _vrow.appendChild(_vp); var _vts=document.createElement('span'); _vts.style.cssText='width:20px;height:20px;margin-right:4px;flex-shrink:0;'; _vts.setAttribute('aria-hidden','true'); _vrow.appendChild(_vts); /* v368 条1d：与一级行展开箭头同宽占位，列对齐 */ var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:#333;flex:1;text-align:left;white-space:nowrap;min-width:0;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 件资源'; _vcnt.style.cssText = 'color:var(--gray-mid);cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
           _vrow.classList.add('stagger-in'); _vrow.style.animationDelay = Math.min(ci * 20, 180) + 'ms'; /* R230：错峰淡入（资源页同款） */
           if (__reuse && __skels[ci]) __skels[ci].parentNode.replaceChild(_vrow, __skels[ci]); else box.appendChild(_vrow);
           return; }
@@ -1471,7 +1471,7 @@ refreshCatCnts();
         // 一级分类展开/收起箭头
         if (isTop && c.id !== 0) {
           var toggleBtn = document.createElement('span');
-          toggleBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;cursor:pointer;margin-right:4px;color:var(--blue1);transition:transform 0.15s ease;user-select:none;filter:drop-shadow(0 1px 2px rgba(30,136,229,0.3));';
+          toggleBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;cursor:pointer;margin-right:4px;flex-shrink:0;color:var(--blue1);transition:transform 0.15s ease;user-select:none;filter:drop-shadow(0 1px 2px rgba(30,136,229,0.3));';
           var hasChildren = list.some(function (sub) { return sub.parent_id === c.id; }) || ordered.some(function (x) { return x.virtual && Number(x.parent_id) === Number(c.id); });
           if (hasChildren) {
             toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;display:block"><path d="M7 10l5 5 5-5z"/></svg>';
@@ -1497,6 +1497,13 @@ refreshCatCnts();
           if (!parentExpanded) {
             row.style.display = 'none';
           }
+          /* v370 条1：二级行补 24px 箭头占位（与一级行展开箭头同宽）——窄屏名称列没有富余时，
+             排序/资源数/状态/编辑/删除仍与一级行逐列对齐 */
+          var _subPh = document.createElement('span');
+          _subPh.className = 'cat-sub-ph'; /* v370：宽度走 CSS 分档——桌面 20px、窄屏 44px（24 箭头位+20 层级缩进），缩进从名称 padding 挪到占位符（padding 不可收缩，曾把窄屏整行顶出） */
+          _subPh.style.flexShrink = '0';
+          _subPh.setAttribute('aria-hidden', 'true');
+          row.appendChild(_subPh);
         }
 
         // 级别标签
@@ -1646,6 +1653,7 @@ refreshCatCnts();
       var bar = document.getElementById('catBatchBar');
       document.getElementById('catBatchCount').textContent = count;      var allBox = document.getElementById('catSelectAll'); if (allBox) allBox.checked = count > 0 && count === document.querySelectorAll('.cat-check').length;
       bar.classList.toggle('show', count > 0);
+      window.__setBatchBar(bar, count > 0); /* v370 条2：与资源批量条同款平滑展开 */
     }
     // 批量隐藏
     document.getElementById('catBatchHide').addEventListener('click', function () {
@@ -2099,7 +2107,7 @@ refreshCatCnts();
       detailEl.appendChild(header);
       var d = document.createElement('div');
       d.className = 'v-desc';
-      d.innerHTML = (v.desc && String(v.desc).trim()) ? v.desc : '暂无额外说明';
+      d.innerHTML = (v.desc && String(v.desc).trim()) ? v.desc : '该类型暂无额外说明';
       detailEl.appendChild(d);
       bindLightbox(detailEl);
       initPvResourceSection(v); // R158：预览同步资源页——类型内容区下方渲染资源码解锁区

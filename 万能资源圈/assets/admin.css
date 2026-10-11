@@ -144,7 +144,8 @@
       .topbar { height: auto !important; min-height: 0 !important; overflow: visible !important; } /* v293（用户 10-04 02:14）：033去掉max-height:97px→改自适应，防止390px手机截内容 | R275：移动端对齐资源页高度（差异来自 tabs 36px vs 搜索框 33px，截断 3px 来自 padding-bottom，视觉上不可见） */
     }
     .topbar-inner {
-      max-width: none; /* v345 条8：logo/名称靠左、退出靠右 */
+      max-width: 1200px; /* v370 条4：顶栏与 .container 同宽——logo/名称靠左对齐内容左缘，退出靠右对齐右缘（≥1600 跟随 ui-common 升 1500） */
+      width: 100%; box-sizing: border-box; /* 父 .topbar 是 flex，子项须显式铺满再由 max-width 收窄居中 */
       margin: 0 auto;
       padding: 8px 16px;
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
@@ -188,11 +189,12 @@
     .tabs .tab { background: transparent; border-radius: 8px; position: relative; }
     .tabs .tab:active { background: rgba(255,255,255,0.18); transform: none; }
     .tabs .tab.active { background: transparent; color: #fff; }
-    /* v345 条2：选中标签的下划线改用 ::before——::after 已被「44px 触摸热区」占用，
-       两者叠加会把热区撑成白色方块（手机端看到的白块就是这个）。 */
-    .tabs .tab.active::before {
-      content: ''; position: absolute; left: 12px; right: 12px; bottom: 3px;
-      height: 2px; border-radius: 4px; background: #fff; pointer-events: none;
+    /* v370b 条3：选中标签的下划线改为真实滑线（.tabs-line）——切换/跟手拖动时它从当前标签滑向目标，
+       原静态 ::before 删除（线还是那根白线，只是会动了） */
+    .tabs { position: relative; }
+    .tabs .tabs-line {
+      position: absolute; bottom: 3px; height: 2px; border-radius: 4px;
+      background: #fff; pointer-events: none; opacity: 0;
     }
     /* .tab 按钮样式已抽入 ui-common.css 全站公共组件（与资源页顶栏咨询客服/分享同一份，零复制） */
     .topbar-right { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; }
@@ -489,6 +491,7 @@
     .cat-row {
       background: var(--card-bg); border-radius: 12px; padding: 12px 16px;
       margin-bottom: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; max-width:100%; /* v368：禁止换行=列恒对齐 */
+      min-height: 54px; box-sizing: border-box; /* v370c：展开与否行高恒定（单行展开内容不再把行撑高） */
       box-shadow: var(--shadow-card); /* R184 条31 补归档：分类行卡片档 */
     }
     .cat-row .c-name { flex: 1 1 140px; font-size: 15px; min-width: 0; word-break: break-word; }
@@ -1082,7 +1085,7 @@
 
     /* 批量操作工具栏 */
     .batch-bar {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; opacity: 0; transition: opacity var(--dur-mid) var(--ease-out); /* R231 条3：max-height/padding 布局过渡删除（逐帧重排），高度瞬切+透明度渐显 */
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; opacity: 0; transition: opacity var(--dur-mid) var(--ease-out), max-height var(--dur-mid) var(--ease-out), margin-bottom var(--dur-mid) var(--ease-out); /* v370 条2：max-height/外边距入过渡——JS 给精确内容高度，展开=把下方列表缓缓推下 */
       background: var(--bg-light); border-radius: 8px; padding: 0 12px;
       margin-bottom: 0; font-size: 13px; color: var(--text-light);
     }
@@ -1369,8 +1372,8 @@
     .rte-expand {
       display: flex; margin-left: auto; flex-shrink: 0; align-self: center;
       width: 32px; height: 32px; padding: 0;
-      border: 1px solid var(--border); border-radius: 8px;
-      background: var(--card-bg); color: var(--blue1); cursor: pointer;
+      border: none; background: transparent; /* v370c：三角统一裸三角——全站三角只允许大小差异，不允许边框/底色 */
+      color: var(--blue1); cursor: pointer;
       align-items: center; justify-content: center;
     }
     .rte-expand .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid) var(--ease-out); transform: rotate(180deg); }
@@ -1511,9 +1514,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .cat-row .c-sort { min-width: 62px; flex: 0 0 auto; }
     .cat-row .c-count { min-width: 78px; flex: 0 0 auto; }
     .cat-row .c-meta .row-btn { min-width: 60px; flex: 0 0 auto; justify-content: center; }
-    /* v368 条8：展开/收起三角固定在行右缘（不随展开状态移动） */
+    /* v370c 条8b：三角绝对定位但 top 改"第一行竖直中心"实测值（原 top:50% 在多行时居中的是整行）——
+       桌面首行中心=27px（padding12+按键半高15）→ top 15px；保持 right:8 + 行 padding-right:36（列对齐依赖统一预留） */
     .cat-row { position: relative; padding-right: 36px; }
-    .cat-row .cat-fold { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); margin-left: 0; }
+    .cat-row .cat-fold { position: absolute; right: 8px; top: 15px; transform: none; margin-left: 0; }
     /* v368 条6：绑定一组不换行（类型行/公告项） */
     .v-group { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
     .variant-item .v-main-group { flex: 1 1 auto; gap: 10px; min-width: 0; }
@@ -1524,10 +1528,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     /* v368 条4：类型行信息等分铺满一行 */
     .variant-item { gap: 8px; }
     .variant-item .v-main-group { justify-content: space-between; } /* v368：等分铺满一行 */
-    /* v368 条2：资源码下拉图标常显（同「复制」图标+文字格式） */
-    .cat-picker-display.row-btn .btn-ico { display: block; } /* v368：资源键图标常显（同「复制」图标+文字格式） */ /* v361 条2：全设备统一折叠行（不再区分手机/电脑） */
-  .cat-row .c-meta .row-btn { display: none; } /* 默认收起按键（全设备） */
-  .cat-row.cat-open .c-meta .row-btn { display: inline-flex; }
+    /* v370 条5：撤「资源键图标常显」——恢复全站口径：优先显示文字，空间不够才收成图标（__btnFit 机制） */
+    /* v370 条1：折叠改 visibility+opacity（原 display:none）——展开与否不再改变列宽，
+       排序/资源数/状态/编辑/删除在任何状态、任何行都纵向对齐（一级对一级、二级对二级） */
+  .cat-row .c-meta .row-btn { visibility: hidden; opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); }
+  .cat-row.cat-open .c-meta .row-btn { visibility: visible; opacity: 1; }
   .cat-fold { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: auto; }
   .cat-fold .toggle-arrow { transform: rotate(-90deg); transition: transform var(--dur-mid) var(--ease-out); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); }
   .cat-row.cat-open .cat-fold .toggle-arrow { transform: rotate(0deg); }
@@ -2055,11 +2060,10 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   .stat-table-wrap table, .bind-table-wrap table, .table-scroll table, .admin-table-wrap table { min-width: 620px; }
 }
 
-/* v368 条1b：分类名称定宽——后续列（排序/资源数/状态/编辑/删除）跨行恒对齐（子类缩进收进名称格内） */
-.cat-row .c-name { flex: 0 0 auto !important; width: 300px !important; }
-@media (max-width: 600px) {
-  .cat-row .c-name { width: 34% !important; }
-}
+/* v370 条1：名称列改弹性填充（原 v368 300px/34% 定宽：一级行比二级行多一颗展开箭头，
+   会把后面所有列整体推 36px——一级对不齐二级）。现名称吃掉剩余宽度，
+   排序/资源数/状态/编辑/删除一律锚定行右缘，一级/二级/展开收起全部纵列对齐 */
+.cat-row .c-name { flex: 1 1 auto !important; width: auto !important; }
 /* v368 条4b：手机类型行统一为分组 flex（旧 grid 布局与 v357 分组是两套机制打架——价格槽/等分全乱） */
 @media (max-width: 600px) {
   .variant-item { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
@@ -2071,3 +2075,24 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 }
 /* v368 条1c：c-meta 首元素（状态框/“固定”占位）统一 72px——消除跨行首列宽度差，排序/资源数/编辑/删除全部对齐 */
 .cat-row .c-meta > *:first-child { min-width: 72px !important; box-sizing: border-box; flex: 0 0 auto !important; }
+/* ===== v370 条10：窄屏分类行收紧——展开后 显示/隐藏/编辑/删除 收进行内不出屏 ===== */
+.cat-sub-ph { display: inline-block; width: 20px; height: 20px; margin-right: 4px; flex-shrink: 0; }
+@media (max-width: 600px) {
+  /* v370b 条1：手机分类行=分组两行——第一行：拖拽柄+复选+名称+排序+资源数+三角；
+     点三角展开，第二组（状态+编辑+删除）整行像批量条那样缓缓下拉出现 */
+  .cat-row { flex-wrap: wrap; gap: 6px; }
+  .cat-row .drag-handle { width: 22px; height: 22px; }
+  .cat-row .c-name { flex: 1 1 0 !important; min-width: 0 !important; }
+  .cat-row.cat-sub .c-name { padding-left: 0 !important; } /* 缩进由 .cat-sub-ph 占位承担（44px=24 箭头位+20 层级） */
+  .cat-sub-ph { width: 44px; margin-right: 0; }
+  .cat-row .c-sort { flex: 0 0 56px; width: 56px; max-width: 56px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+  .cat-row .c-count { flex: 0 0 62px; width: 62px; max-width: 62px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+  /* 第二组：整行下拉展开（同批量条缓动） */
+  .cat-row .c-meta { flex: 1 1 100%; gap: 8px; justify-content: flex-start; padding: 0 0 0 28px; box-sizing: border-box;
+    max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
+    transition: max-height .22s var(--ease-out, ease), opacity .22s var(--ease-out, ease), margin-top .22s var(--ease-out, ease); }
+  .cat-row.cat-open .c-meta { max-height: 48px; opacity: 1; margin-top: 6px; }
+  .cat-row .c-meta > *:first-child { min-width: 0 !important; }
+  .cat-row .c-meta .row-btn { visibility: visible; opacity: 1; transition: none; min-width: 0; padding: 4px 12px; font-size: 12px; }
+  .cat-row .cat-fold { top: 11px; } /* 手机首行中心=23px（padding12+柄半高11） */
+}

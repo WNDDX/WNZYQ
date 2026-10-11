@@ -188,7 +188,7 @@
       if (!tops.length) {
         var empty = document.createElement('div');
         empty.className = 'cp-empty';
-        empty.innerHTML = window.__adminEmpty('暂无分类', '请先到「分类管理」添加分类'); /* v349 条9：统一空态 */
+        empty.innerHTML = window.__adminEmpty('该站点暂无分类', '请先到「分类管理」添加分类'); /* v349 条9：统一空态 */
         panelEl.appendChild(empty);
       }
       tops.forEach(function (top) {
@@ -639,7 +639,7 @@
     function renderVariants() {
       variantListEl.innerHTML = '';
       if (!state.variants.length) {
-        variantListEl.innerHTML = window.__adminEmpty('暂无类型', '点右上角「新增类型」添加，可拖拽排序'); /* v349 条9：统一空态 */
+        variantListEl.innerHTML = window.__adminEmpty('该资源暂无类型', '点右上角「新增类型」添加，可拖拽排序'); /* v349 条9：统一空态 */
         return;
       }
       state.variants.forEach(function (v, idx) {

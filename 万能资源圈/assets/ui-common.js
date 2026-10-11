@@ -1459,7 +1459,7 @@ window.formatPrice = function (price) {
    onSwipe(dir)：dir=1 左滑（下一个）、-1 右滑（上一个）。
    isActive()：可选，返回 false 时本次手势不响应（如弹窗开着时不响应页面级手势）。
    排除区（统一）：输入框/下拉/按钮/链接/视频/富文本/统计图表/轮播/文件卡——这些区域有自己的交互。 */
-window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-chart, .modal-nav-arrow, .cat-picker-panel, .file-folder-wrap, .lightbox, .category-bar, .sub-category-bar, .tabs, .batch-bar, .tb-row2, .upman-host' /* v368：分类栏有专属边缘切换手势，全局手势让位防双触发 */ /* v368 条9/11：分类栏/轮播移出排除——各自带专用滑动逻辑（边缘切换/跟手切换），全部参与滑动 */; /* v360 条9：横滚条自身滚动不触发切换 */
+window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-chart, .modal-nav-arrow, .cat-picker-panel, .file-folder-wrap, .lightbox, .category-bar, .sub-category-bar, .recent-bar, .recent-bar-wrap, .recent-title, .tabs, .batch-bar, .tb-row2, .upman-host, .pager, .pg-jump, .ctx-menu, .dt-pop, .stat-table-wrap, .bind-table-wrap, .table-scroll' /* v370 条7：最近看过（最近浏览）横滑条有自己滚动，排除出滑切区；翻页/长按菜单/日期弹层同理 */ /* v360 条9：横滚条自身滚动不触发切换 */;
 window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
   if (!el || !onSwipe) return;
   var sx = 0, sy = 0, on = false;
@@ -1499,6 +1499,12 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
 window.__followSwipe = function (opts) {
   if (!opts || !opts.panel || !opts.commit) return;
   var S = null, sx = 0, sy = 0, armed = false;
+  /* v370 条7：拖过之后拦掉这一次"落点点击"——否则松手弹回时手指下的资源卡会被误打开 */
+  document.addEventListener('click', function (e) {
+    if (!window.__fsJustSwiped) return;
+    e.preventDefault(); e.stopPropagation();
+    window.__fsJustSwiped = false;
+  }, true);
   function bgOf(el) {
     var n = el;
     while (n && n.nodeType === 1) {
@@ -1510,6 +1516,7 @@ window.__followSwipe = function (opts) {
   }
   function cleanup() {
     if (!S) return;
+    try { if (opts.onEnd) opts.onEnd(); } catch (e) { if (window.__silent) window.__silent(e); }
     try { S.panel.style.visibility = (S.panel.dataset && S.panel.dataset.__fsVis != null) ? S.panel.dataset.__fsVis : ''; if (S.panel.dataset) delete S.panel.dataset.__fsVis; } catch (e) {}
     try { if (S.stage && S.stage.parentNode) S.stage.parentNode.removeChild(S.stage); } catch (e) {}
     S = null;
@@ -1536,6 +1543,8 @@ window.__followSwipe = function (opts) {
     document.body.appendChild(stage);
     if (panel.dataset) panel.dataset.__fsVis = panel.style.visibility || '';
     panel.style.visibility = 'hidden';
+    window.__fsJustSwiped = true; /* v370 条7：拖过就拦本次误点击 */
+    clearTimeout(window.__fsSwipeClr); window.__fsSwipeClr = setTimeout(function () { window.__fsJustSwiped = false; }, 450);
     S = { dir: dir, panel: panel, stage: stage, pA: pA, pB: pB, w: r.width, nb: nb, off: 0, vx: 0, lx: 0, lt: 0 };
     if (nb && opts.fill) { try { opts.fill(nb, dir, pB); } catch (e) { if (window.__silent) window.__silent(e); } }
   }
@@ -1545,6 +1554,10 @@ window.__followSwipe = function (opts) {
     var off = S.nb ? raw : raw * 0.3; /* 到头：橡皮筋阻尼 */
     S.pA.style.transform = 'translateX(' + off + 'px)';
     if (S.pB) S.pB.style.transform = 'translateX(' + (S.dir * S.w + off) + 'px)';
+    if (opts.onProgress && S.nb) { /* v370 条11：下划线跟随拖动进度 */
+      var prog = Math.max(0, Math.min(1, Math.abs(off) / (S.w * 0.25)));
+      try { opts.onProgress(prog, S.dir, S.nb); } catch (e) { if (window.__silent) window.__silent(e); }
+    }
   }
   function settle(target, cb) {
     if (!S) return;
@@ -1552,7 +1565,7 @@ window.__followSwipe = function (opts) {
     S.pA.style.transition = t; if (S.pB) S.pB.style.transition = t;
     S.pA.style.transform = 'translateX(' + target + 'px)';
     if (S.pB) S.pB.style.transform = 'translateX(' + (target === 0 ? S.dir * S.w : 0) + 'px)';
-    setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) cb(d); }, 210);
+    setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 210); /* v370：提交前先解除点击拦截——切换自身的程序化点击不能被吞 */
   }
   document.addEventListener('touchstart', function (e) {
     if (S) return;
@@ -1569,7 +1582,7 @@ window.__followSwipe = function (opts) {
     var dx = x - sx, dy = y - sy;
     if (!S) {
       if (Math.abs(dy) > 24 && Math.abs(dy) > Math.abs(dx)) { armed = false; return; } /* 竖向主导=滚页面，退出 */
-      if (Math.abs(dx) >= 18 && Math.abs(dx) > Math.abs(dy) * 1.6) { armed = false; startDrag(dx < 0 ? 1 : -1); if (S) { S.lx = x; S.lt = Date.now(); apply(dx); } }
+      if (Math.abs(dx) >= 26 && Math.abs(dx) > Math.abs(dy) * 2) { armed = false; startDrag(dx < 0 ? 1 : -1); if (S) { S.lx = x; S.lt = Date.now(); apply(dx); } } /* v370 条7：26px/2 倍——原 18px 太敏感，轻扫就抽走画面还吞点击 */
       return;
     }
     var now = Date.now();
@@ -2211,12 +2224,78 @@ window.__btnIcon = function (name) {
     refresh: '<path d="M20 12a8 8 0 10-3 6.2"/><path d="M20 6v6h-6"/>',
     check: '<path d="M4 12l5 5L20 6"/>',
     up: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
-    stats: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>'
+    stats: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+    /* v370 条8：自动补图标新增——退出/搜索/下载/列表/设置 */
+    logout: '<path d="M9 4h7a2 2 0 012 2v12a2 2 0 01-2 2H9"/><path d="M13 12H3"/><path d="M6 9l-3 3 3 3"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+    down: '<path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M5 21h14"/>',
+    list: '<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>',
+    gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/>'
   };
   var d = P[name];
   if (!d) return '';
   return '<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
 };
+/* ===== v370 条8：全按键图标兜底——扫一遍页面按键，没图标的按文案配一个 =====
+   规矩不变：优先显示文字，空间不够才收成图标，图标/文字只显其一（__btnFit 机制）。
+   排除：已有图标(.btn-ico)、图形键(视图切换/编辑器/折叠三角/清除/关闭叉/翻页)、长按菜单。 */
+window.__autoDecorate = function (root) {
+  try {
+    var scope = root || document;
+    var MAP = [
+      [/确定|保存|提交/, 'save'], [/退出/, 'logout'], [/取消|关闭|返回/, 'close'], [/删除/, 'del'], [/编辑/, 'edit'],
+      [/复制/, 'copy'], [/显示|查看|预览/, 'show'], [/隐藏/, 'hide'], [/新增|添加/, 'add'],
+      [/重试|刷新|换一?张/, 'refresh'], [/导出/, 'export'], [/上传/, 'up'], [/下载/, 'down'],
+      [/搜索/, 'search'], [/分享|发送/, 'share'], [/客服|咨询/, 'service'], [/登录/, 'check'], [/全选/, 'check']
+    ];
+    var skip = '.btn-fit, .view-btn, .rte-btn, .rte-expand, .cat-fold, .search-clear, .modal-close-x, .fc-arrow, [data-noico]';
+    var btns = scope.querySelectorAll('button, .btn-blue, .batch-btn');
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      /* v370b：按钮里只要已有图形（svg）就一律不动——客服/分享等原本带图的键，绝不能被换成通用图标 */
+      if (b.querySelector('svg')) continue;
+      if (b.matches(skip) || b.closest('.ctx-menu, .rte-toolbar') || b.querySelector('.btn-ico')) continue;
+      var t = (b.textContent || '').trim();
+      if (!t) continue;
+      for (var k = 0; k < MAP.length; k++) {
+        if (MAP[k][0].test(t)) {
+          var pr = /确定|保存|编辑|显示/.test(t) ? 1 : (/删除|取消|关闭/.test(t) ? 6 : 3);
+          window.__decorateBtn(b, MAP[k][1], pr);
+          break;
+        }
+      }
+    }
+  } catch (e) { if (window.__silent) window.__silent(e); }
+};
+/* 管理页四个标签按页配图标（tab 是导航按键，也纳入"全部按键有图标"） */
+window.__autoDecorateTabs = function () {
+  try {
+    var M = { products: 'list', categories: 'cat', stats: 'stats', settings: 'gear' };
+    document.querySelectorAll('.tab[data-tab]').forEach(function (t) {
+      var ic = M[t.dataset.tab];
+      if (ic && window.__decorateBtn) window.__decorateBtn(t, ic, 2);
+    });
+  } catch (e) { if (window.__silent) window.__silent(e); }
+};
+window.addEventListener('DOMContentLoaded', function () {
+  setTimeout(function () { window.__autoDecorate(); window.__autoDecorateTabs(); if (window.__btnFit) window.__btnFit(); }, 60);
+});
+
+/* ===== v370 条2：批量条精确高度平滑展开——把下方列表"缓缓推下"，不再瞬跳 =====
+   用法：window.__setBatchBar(barEl, on)——on=true 展开（撑到内容真实高度），false 收起。 */
+window.__setBatchBar = function (bar, on) {
+  if (!bar) return;
+  if (on) {
+    bar.classList.add('show');
+    bar.style.maxHeight = bar.scrollHeight + 'px';
+    bar.style.marginBottom = '12px';
+  } else {
+    bar.style.maxHeight = '0px';
+    bar.style.marginBottom = '0px';
+    bar.classList.remove('show');
+  }
+};
+
 /* 给已有按钮补图标（保留原文字）：window.__decorateBtn(btn, iconName, pri) */
 window.__decorateBtn = function (btn, iconName, pri) {
   if (!btn || !window.__btnIcon) return btn;
@@ -2370,7 +2449,7 @@ window.WN_MEDIA_FALLBACK = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2
 window.__adminEmpty = function (title, hint) {
   return '<div style="text-align:center;padding:26px 12px;">'
     + '<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.45;margin-bottom:8px;color:var(--text-faint,#999);display:inline-block;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'
-    + '<div style="font-size:13px;font-weight:600;color:var(--text-light,#666);">' + String(title || '暂无内容') + '</div>'
+    + '<div style="font-size:13px;font-weight:600;color:var(--text-light,#666);">' + String(title || '该栏目暂无内容') + '</div>'
     + (hint ? '<div style="font-size:12px;color:var(--text-faint,#999);margin-top:4px;">' + String(hint) + '</div>' : '')
     + '</div>';
 };
