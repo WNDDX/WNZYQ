@@ -135,7 +135,7 @@
       background: var(--bg-light); border-radius: 8px;
       padding: 8px 12px; font-size: 14px; color: var(--blue1);
       word-break: break-all; margin-bottom: 16px; text-align: center;
-      user-select: all; line-height: 1.5; max-height: 100px; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
+      user-select: all; line-height: 1.5; max-height: 100px; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
     }
     .share-close {
       display: block; width: 100%; margin-top: 16px; height: 46px; /* R285 条1：弹窗底部按钮统一 46px 模子 */
@@ -207,7 +207,7 @@
       z-index: 90;
       background: var(--card-bg);
       box-shadow: var(--shadow-pop);
-      overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
+      overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
       display: flex; align-items: center; /* v370 条3：标签在白框内垂直居中（原 min-height 撑高后标签贴顶） */
       white-space: nowrap;
       padding: 8px 16px;
@@ -217,7 +217,8 @@
     }
     /* 滚动条隐藏由 ui-common.css 全局处理 */
     .category-tag {
-      display: inline-block;
+      display: inline-flex; /* v378：显式双向居中（文字在胶囊里上下左右都居中） */
+      align-items: center; justify-content: center;
       padding: 8px 20px;
       margin-right: 8px;
       border-radius: 999px;
@@ -473,18 +474,8 @@
     }
 
     /* ---------- 详情弹窗 ---------- */
-    .modal-mask {
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-      background: var(--overlay-modal);
-      display: none;
-      align-items: flex-start; /* R159：改用子元素 margin:auto 居中——弹窗超出可视高度时可滚动到顶部/底部，不再裁死 */
-      justify-content: center;
-      padding: 16px;
-      overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ /* R159：手机地址栏可见时 84vh(布局视口) 可超可视区，遮罩层必须可滚，否则底部（含最后输入框/按钮）永远看不到 */
-    }
-    .modal-mask.open { display: flex; animation: maskIn var(--dur-mid) var(--ease-out); } /* R231 条10：详情弹窗遮罩补淡入（keyframes 公共于 ui-common.css） */
+    /* v379：.modal-mask 骨架（position/inset/布局/内边距/可滚）已上移 ui-common.css 唯一源，本地逐字副本删除；
+       本页差异仅剩 .modal-wrap 宽度（680px）与 .modal-box 的 88vh/min-height 档位，保留在下方。 */
     .modal-wrap {
       position: relative;
       width: 100%;
@@ -497,30 +488,14 @@
       width: 100%;
       max-height: 88vh;
       max-height: 88dvh; /* R159：动态视口高度——手机地址栏收展时仍按可视区算，不认识 dvh 的老内核自动用上一行 */
-      overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
+      overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
       scrollbar-gutter: auto;
       min-height: 160px; /* R12 与管理页统一（详情内容多时自然撑高，此保底值几乎不生效，无观感差） */
       animation: modalIn var(--dur-mid) var(--ease-out);
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
     /* R231 条10：modalIn keyframes 已抽公共到 ui-common.css（与 maskIn 同址），本地副本删除 */
-    .modal-close-x { /* R186：× 回退标准口径——灰圆，hover 变红（弹窗右上角标准） */
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      z-index: 10;
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      border: none;
-      background: var(--bg-light);
-      color: var(--text-light);
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease ;
-    }
+    /* v379：.modal-close-x 本地副本已删——ui-common.css 全站统一规格以 !important 全覆盖（32px 圆/灰底/hover 红） */
 
     /* R10 资源弹窗左上角分享键：与右上角×成对角，规格（32px 圆形/12px 距角/过渡动效）完全复用×，
        但底色淡蓝、图标蓝色、悬停蓝底白图标，与×（灰底/悬停深灰）明确区分 */
@@ -877,7 +852,7 @@
     /* R80：旧 .toast 死样式已清——toast 由 shop.js showToast 内联统一规格渲染（与下拉刷新胶囊同款） */
 
     /* 平台公告 */
-    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 12px; width: 100%; max-width: 520px; max-height: 80vh; max-height: 80dvh; /* R159 */ overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 24px /* v336 条106 */; animation: modalIn var(--dur-mid) var(--ease-out); text-align: left; }
+    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: 12px; width: 100%; max-width: 520px; max-height: 80vh; max-height: 80dvh; /* R159 */ overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 24px /* v336 条106 */; animation: modalIn var(--dur-mid) var(--ease-out); text-align: left; }
     .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 12px; padding: 0 28px; letter-spacing: 1px; cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color var(--dur-mid) ease; }
 
     .ann-modal .ann-title.active { color: var(--blue1); }
@@ -886,7 +861,7 @@
     .ann-modal .ann-body a { color: #1e88e5; }
     /* R194 第一批：前台表格展示样式（详情弹窗/公告/变体简介/解锁内容统一，全灰系接变量，手机整表横滑） */
     .modal-detail table, .ann-body table, .variant-detail table, .resource-content table {
-      display: block; width: max-content; max-width: 100%; overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ 
+      display: block; width: max-content; max-width: 100%; overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ 
       border-collapse: collapse; margin: 8px 0; background: transparent;
     }
     .modal-detail th, .modal-detail td, .ann-body th, .ann-body td,
@@ -937,16 +912,9 @@
       transition: color var(--dur-mid) ease;
     }
 
-    .cat-toggle .toggle-arrow {
-      width: 20px;
-      height: 20px;
-      transition: transform var(--dur-mid) var(--ease-out);
-      transform: rotate(-90deg); /* 收起状态：箭头向左 */
-      filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3));
-    }
-    .cat-toggle.open .toggle-arrow {
-      transform: rotate(0deg); /* 展开状态：箭头向下 */
-    }
+    /* v376：一级栏三角并入全站同款（二级栏/最近浏览/文件卡共用一套：裸三角，仅大小差异；收起 -90° 朝右、展开 0° 朝下） */
+    .cat-toggle .toggle-arrow, .sub-cat-toggle .toggle-arrow, .recent-toggle .toggle-arrow, .fc-arrow .toggle-arrow { width: 18px; height: 18px; transition: transform var(--dur-mid) var(--ease-out); transform: rotate(-90deg); } /* 收起：朝右 */
+    .cat-toggle.open .toggle-arrow, .sub-cat-toggle.open .toggle-arrow, .recent-toggle.open .toggle-arrow, .fc-arrow.open .toggle-arrow { transform: rotate(0deg); } /* 展开：朝下 */
     .category-bar { /* R231 条3：删 min-height/padding 布局过渡——flex-wrap 展开是离散跳变，该过渡从未真正生效且逐帧重排；箭头旋转过渡保留 */ }
     .category-bar.expanded {
       flex-wrap: wrap;
@@ -963,10 +931,10 @@
     .sub-category-bar {
       display: flex;
       align-items: center; /* v370 条3：二级标签在栏内垂直居中（原上下 padding 4/8 不对称导致偏上） */
-      overflow-x: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
+      overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
       scrollbar-width: none;
       
-      padding: 5px 24px;
+      padding: 7px 24px 4px; /* v375（老板拍板）：上7/下4——对上一级分类栏边界=7px、对下=7px，上下对称 */
       gap: 4px;
       /* R231 条3：删布局属性过渡（同分类栏口径） */
     }
@@ -975,7 +943,7 @@
     .sub-cat-toggle {
       position: absolute;
       right: 10px;
-      top: 9px; /* v370c：=二级栏第一行竖直中心（padding 5 + 标签半高 13.5） */
+      top: 10.5px; /* v375：=二级栏第一行竖直中心（padding 7 + 标签半高 13.5 - 键半高 10） */
       transform: none;
       width: 20px;
       height: 20px;
@@ -991,16 +959,8 @@
       transition: color var(--dur-mid) ease;
     }
 
-    .sub-cat-toggle .toggle-arrow {
-      width: 15px;
-      height: 15px;
-      transition: transform var(--dur-mid) var(--ease-out);
-      transform: rotate(-90deg); /* 收起状态：向左 */
-    }
-    .sub-cat-toggle.open .toggle-arrow {
-      transform: rotate(0deg); /* 展开状态：向下 */
-    }
-    .sub-category-bar.expanded {
+    
+        .sub-category-bar.expanded {
       flex-wrap: wrap;
       overflow: visible;
       padding-bottom: 4px;
@@ -1106,7 +1066,7 @@
 .modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 1; color: #b9c6d4; } /* v356 条12：图标色对齐 */
 .modal-mask#annModal .ann-empty .ann-empty-icon > svg { display: block; margin: 0 auto; }
 .modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: #5b6b7b; font-weight: 600 /* v356 条12 */ /* v336 条115 */; }
-    .ann-modal .ann-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ overflow-x: hidden; min-height: 0; box-sizing: border-box; }
+    .ann-modal .ann-body { flex: 1; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ overflow-x: hidden; min-height: 0; box-sizing: border-box; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 1.2px; white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
     /* logo 与一级分类白色栏左边缘对齐：一级分类栏加与二级分类栏一致的左右内边距 */
@@ -1205,8 +1165,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .btn-contact, .btn-close-modal { height: 40px; font-size: 14px; }
 }
 /* v347：最近看过——形态与分类栏一致（左右滑动 + 右侧三角展开收起），位于两个分类栏之下、资源列表之上 */
-.recent-bar-wrap { position: relative; max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-.recent-bar { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 4px 28px 4px 0; }
+.recent-bar-wrap { position: relative; max-width: 1200px; margin: 0 auto 3px; padding: 0 16px; } /* v375：下距资源顶 3px（+栏 padding-bottom 4 = 7px，与上距 7px 对称） */
+.recent-bar { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; padding-top: 2px; /* v375：与二级分类按键边界空隙=4+3=7px 对称 */ overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; scrollbar-width: none; padding: 4px 28px 4px 0; }
 .recent-bar::-webkit-scrollbar { display: none; }
 .recent-bar.expanded { flex-wrap: wrap; overflow: visible; padding-bottom: 8px; }
 .recent-bar.expanded .recent-chip { margin-bottom: 4px; }
@@ -1214,8 +1174,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .recent-chip { flex: none; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); border-radius: 999px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
 .recent-chip:hover { border-color: var(--blue2); color: var(--blue1); }
 .recent-toggle { position: absolute; right: 22px; top: 4px; transform: none; /* v371 条1：钉第一行竖直中心 */ width: 28px; height: 28px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 95; padding: 0; transition: color var(--dur-mid) ease; }
-.recent-toggle .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid) var(--ease-out); transform: rotate(-90deg); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); }
-.recent-toggle.open .toggle-arrow { transform: rotate(0deg); }
+
 @media (max-width: 600px) { .recent-bar-wrap { padding: 0 12px; } .recent-toggle { right: 14px; } }
 @media (hover:hover) { .recent-toggle:hover { color: var(--blue1); } }
 
@@ -1393,6 +1352,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 .file-card-header svg { flex-shrink: 0; }
 .file-card-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* v378：文件夹标题行右侧「总大小＋下载」一组（与文件行同款靠右、间距 4px 绑定） */
+.fc-head-meta { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.fc-head-meta .fsize { font-size: 11px; color: var(--gray-mid, #8a97a5); }
 .file-card-size { font-size: 12px; color: var(--gray-mid); flex-shrink: 0; }
 .file-folder-list { border-top: 1px dashed var(--border, #e0e0e0); padding: 8px 12px; }
 .file-folder-item {
@@ -1413,9 +1375,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .file-folder-item .fc-row-head { display: flex; align-items: center; gap: 8px; }
 .file-folder-item .fmeta { font-size: 11px; color: var(--text-faint); flex-shrink: 0; }
 .file-folder-item .file-folder-list.fc-kids { margin: 4px 0 0 12px; padding-left: 10px; border-left: 2px solid var(--border-soft, #e8eef4); border-top: none; }
-.fc-arrow { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
-.fc-arrow .toggle-arrow { transform: rotate(-90deg); transition: transform var(--dur-mid) var(--ease-out); filter: drop-shadow(0 1px 2px rgba(30,136,229,0.3)); } /* 默认收起=三角朝右 */
-.fc-arrow.open .toggle-arrow, .fc-arrow[style*="rotate(0deg)"] .toggle-arrow { transform: rotate(0deg); }
+.fc-arrow { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; line-height: 0; } /* v378：line-height:0 消基线偏移 */
+/* v376：文件卡三角已并入全站同款（见 941 行统一规则） */
 .fc-dl { flex-shrink: 0; border: 1px solid var(--blue2); background: var(--card-bg); color: var(--blue1); border-radius: 999px; padding: 2px 10px; font-size: 12px; cursor: pointer; }
 .fc-dl:hover { background: var(--blue1); color: #fff; }
 .file-folder-bulk { padding: 8px 0 4px; text-align: center; }
@@ -1476,9 +1437,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    上一套（1205-1213）已覆盖图比例/标题槽/描述槽/内边距/手机档，本处再写会冲突（sk-img 圆角 10 vs 8、
    sk-line 高度 21/18 vs 14），且 sk-sub/sk-price 两个类 JS 从未生成。骨架口径统一保留单一来源。 */
 
-/* ===== v360 条7：滑动切换平滑动画 ===== */
-.product-grid.list-swap { animation: listSwap var(--dur-mid) var(--ease-out); pointer-events: none; }
-@keyframes listSwap { from { opacity: 0; } to { opacity: 1; } } /* v362 条5：纯淡入（原位移产生小抖动观感） */
+/* v376：v360 条7 的 listSwap 换场动画已随「滑切防闪动」退役（动画与关键帧一并删除，防死代码残留） */
 .modal-box.modal-swap { animation: modalSwap var(--dur-mid) var(--ease-out); }
 @keyframes modalSwap { from { opacity: 0.4; transform: translateX(16px); } to { opacity: 1; transform: none; } }
 

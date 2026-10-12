@@ -250,37 +250,51 @@
         var list = card.querySelector('[data-folder-list]');
         var header = card.querySelector('.file-card-header');
         if (list) {
-          // 上传型文件夹卡：整卡标题行点击展开/收起
+          /* v377 修（全系统统一）：客户详情里的文件夹卡此前「默认展开、三角朝下且用 180° 反向旋转」，
+             与后台编辑器内的文件卡（默认收起、三角朝右）以及分类栏/二级栏/最近浏览的三角口径全都不一样。
+             现在统一：默认收起（与后台同款）+ 三角语义同款（收起 -90° 朝右 / 展开 0° 朝下）。 */
+          if (list.style.display !== 'block') list.style.display = 'none';
           if (header) {
+            var __fcArrow = header.querySelector('.fc-arrow-svg, .toggle-arrow, svg');
+            if (__fcArrow) __fcArrow.style.transform = 'rotate(-90deg)'; /* 收起：朝右（全站同款） */
             header.style.cursor = 'pointer';
             header.addEventListener('click', function (e) {
               if (e.target.closest('button, a, input')) return; /* v336 条162：链接/输入也不冒泡 */
               var show = list.style.display === 'none';
               list.style.display = show ? 'block' : 'none';
-              var arrow = header.querySelector('svg[style*="transition"], .fc-arrow-svg');
-              if (arrow) arrow.style.transform = show ? 'rotate(180deg)' : '';
+              var arrow = header.querySelector('.fc-arrow-svg, .toggle-arrow, svg');
+              if (arrow) arrow.style.transform = show ? 'rotate(0deg)' : 'rotate(-90deg)'; /* 展开朝下 / 收起朝右 */
             });
           }
+          /* v378（老板拍板）：文件夹标题行与文件行同款——右侧「总大小＋下载」绑成一组；
+             原列表底部的「全部下载」整键并入标题行下载键（同一功能不再出现两份） */
           fcBindList(list);
-          // 全部下载按钮（不存在时才加）
-          if (!card.querySelector('.file-folder-bulk')) {
-            var bulk = document.createElement('div');
-            bulk.className = 'file-folder-bulk';
-            var bulkBtn = document.createElement('button');
-            bulkBtn.type = 'button';
-            bulkBtn.textContent = '全部下载';
-            bulkBtn.addEventListener('click', function () {
-              var keys = [];
+          if (header && !header.querySelector('.fc-head-meta')) {
+            var __fcKeys = function () {
+              var ks = [];
               list.querySelectorAll('.file-folder-item:not(.is-folder)').forEach(function (row) {
                 var k = row.getAttribute('data-key');
-                if (k) keys.push(k);
+                if (k) ks.push(k);
               });
-              keys.forEach(function (key, idx) {
-                setTimeout(function () { triggerDownload('/files/' + key); }, idx * 300);
-              });
+              return ks;
+            };
+            var __fcTotal = 0;
+            list.querySelectorAll('.file-folder-item:not(.is-folder)[data-size]').forEach(function (row) {
+              var n = Number(row.getAttribute('data-size')); if (n > 0) __fcTotal += n;
             });
-            bulk.appendChild(bulkBtn);
-            list.appendChild(bulk);
+            var __fmtSize = function (n) { if (!(n > 0)) return ''; if (n >= 1073741824) return (n / 1073741824).toFixed(1) + 'GB'; if (n >= 1048576) return (n / 1048576).toFixed(1) + 'MB'; if (n >= 1024) return Math.round(n / 1024) + 'KB'; return n + 'B'; };
+            var meta = document.createElement('span'); meta.className = 'fc-head-meta';
+            if (__fcTotal > 0) { var sz = document.createElement('span'); sz.className = 'fsize'; sz.textContent = __fmtSize(__fcTotal); meta.appendChild(sz); }
+            var dlAll = document.createElement('button'); dlAll.type = 'button'; dlAll.className = 'fc-dl'; dlAll.textContent = '下载';
+            dlAll.title = '下载本文件夹全部文件';
+            dlAll.addEventListener('click', function (e) {
+              e.stopPropagation();
+              var ks = __fcKeys();
+              ks.forEach(function (key, idx) { setTimeout(function () { triggerDownload('/files/' + key); }, idx * 300); });
+            });
+            meta.appendChild(dlAll);
+            var __arrowHolder = header.querySelector('.fc-arrow');
+            if (__arrowHolder) header.insertBefore(meta, __arrowHolder); else header.appendChild(meta);
           }
         } else {
           // 链接型文件夹卡：添加「打开」按钮
@@ -361,7 +375,7 @@
         this.src = IMG_PLACEHOLDER; if (this && this.classList) { this.classList.add('media-fail'); this.classList.remove('m-loading'); } this.style.opacity = '1';
         this.style.display = 'block';
       };
-      img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); this.classList.add('img-in'); }; /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
+      img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); if (!window.__swipeCommitting) this.classList.add('img-in'); }; /* v375：滑切提交期图片直接落定不播入场（防闪动） */ /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
       if (img.classList && img.classList.contains('modal-cover')) img.classList.add('m-loading'); /* R215 条9：封面加载期固定 16:9 居中槽，首帧不再靠左 */
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
       /* R280（老板 09-28 00:35 ①）：封面改固定展示框（CSS 定宽高 + contain）——框尺寸恒定，
@@ -808,7 +822,7 @@
     function hlTitle(text, kw) {
       var s = String(text || '');
       if (!kw) return s;
-      var esc = function (x) { return x.replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+      var esc = window.escapeHtml || function (x) { return String(x); }; /* v378：复用全站唯一转义（原内联第三份实现已删） */
       var lower = s.toLowerCase(), k = kw.toLowerCase(), out = '', i = 0, hit;
       if (!k) return s;
       while ((hit = lower.indexOf(k, i)) !== -1) {
@@ -1010,8 +1024,10 @@
             changed = true;
             if (card) { card.remove(); delete existing[p.id]; }
             card = buildProductCard(p);
-            card.classList.add('stagger-in');
-            card.style.animationDelay = Math.min(i * 20, 180) + 'ms';
+            if (!window.__swipeCommitting) { /* v375：滑切提交期不播入场动画（防闪动） */
+              card.classList.add('stagger-in');
+              card.style.animationDelay = Math.min(i * 20, 180) + 'ms';
+            }
             frag.appendChild(card);
           }
           card.__pData = p;
@@ -1046,7 +1062,7 @@
       var frag = document.createDocumentFragment();
       pageList.forEach(function (p, i) {
         var card = buildProductCard(p);
-        if (!window.__shopPainted) { /* v357 老问题1：错峰淡入只在首次进页播一次——切分类/筛选重播会让无封面卡的占位图跟着"闪几下" */
+        if (!window.__shopPainted && !window.__swipeCommitting) { /* v357：错峰只播一次；v375：滑切提交期也不播 */
           card.classList.add('stagger-in'); /* R192 二②；R211 二批（用户 09-20）：错峰 30ms 递升改 20ms/项、180ms 封顶（长列表尾部不再越等越久） */
           card.style.animationDelay = Math.min(i * 20, 180) + 'ms';
         }
@@ -1725,8 +1741,11 @@
     window.__swipeCatGo = function (d) {
       var tgt = window.__catSeqTarget(d);
       if (!tgt) return;
-      var grid = document.getElementById('productGrid');
-      if (grid) { grid.classList.remove('list-swap'); void grid.offsetWidth; grid.classList.add('list-swap'); } /* v360 条7：切换平滑动画 */
+      /* v375 修（老板反馈：左右切换后画面闪动几下）——提交期打标记：本次渲染跳过换场动画与
+         卡片错峰入场（跟手预览阶段画面已经展示过同样的内容，落定再播一遍动画就是"闪几下"）；600ms 后自动解除 */
+      window.__swipeCommitting = true;
+      clearTimeout(window.__swipeCommittingTimer);
+      window.__swipeCommittingTimer = setTimeout(function () { window.__swipeCommitting = false; }, 600);
       if (tgt.type === 'all') {
         var allTag = Array.prototype.find.call(document.querySelectorAll('.category-tag'), function (t) { return (t.textContent || '').trim() === '全部'; });
         if (allTag) allTag.click();
@@ -1894,8 +1913,8 @@
       e.stopPropagation();
       if (!currentProduct || !currentProduct.id) { showToast('该资源暂不能分享', 'info'); return; }
       var url = window.location.origin + window.location.pathname + '?pid=' + currentProduct.id;
-      if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (currentProduct.title || '') + ' · 资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
-      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } showToast('链接已复制到剪贴板', 'success'); }
+      if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (currentProduct.title || '') + ' · 资源链接已复制'); // R251：新标题+带资源名灰字
+      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } showToast('链接已复制', 'success'); }
     });
 
     // ---------- 资源码验证 ----------
@@ -2149,7 +2168,7 @@
         }
         // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
         if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch (e) { if (window.__silent) window.__silent(e); } }, 1500); } catch (e) { if (window.__silent) window.__silent(e); } }
-        showToast('链接已复制到剪贴板', 'success');
+        showToast('链接已复制', 'success');
         if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       } catch (e) {
 
@@ -2174,7 +2193,7 @@
         else { try { fallbackCopy(url); } catch (e) { if (window.__silent) window.__silent(e); } }
         // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
         if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch (e) { if (window.__silent) window.__silent(e); } }, 1500); } catch (e) { if (window.__silent) window.__silent(e); } }
-        showToast('链接已复制到剪贴板', 'success');
+        showToast('链接已复制', 'success');
       });
     }
 
@@ -2295,7 +2314,8 @@
         try { if (cached) { var _cs = JSON.parse(cached); if (_cs && _cs.__schema !== ((window.WN_CONST && window.WN_CONST.CACHE_SCHEMA) || 4)) cached = null; } } catch (e) { cached = null; }
         if (cached) {
           var c = JSON.parse(cached);
-          if (c.products && c.categories) {
+          if (c.products && c.products.length && c.categories) { /* v375 修（老板反馈：第一次进页面资源出不来）：空列表缓存一律当没缓存——
+             否则铺空列表 + 服务器版本号没变回"无变化"，首屏永远空白 */
             // R92：旧缓存可能存有资源码/专属内容明文（现在明文只走服务端解锁接口）——
             // 派生标志后删明文字段，并写回缓存，升级后老访客本地也立即干净
             DATA.products = (c.products || []).map(function (p) {
@@ -2372,6 +2392,10 @@
           if (!res) { __failFinish(); return; }
           if (res.unchanged === true) {
             window.__lastFetchTime = Date.now();
+            /* v375 修：版本没变≠画面没画——若首屏还没画出任何资源（缓存异常/被清），强制带时间戳重拉一次全量，不再空等 */
+            if (!window.__shopPainted && !(DATA.products || []).length && !opts.force) {
+              return loadShopHome({ force: true });
+            }
             return;
           }
           if (!res.ok) { __failFinish(); return; }
@@ -2893,8 +2917,8 @@
       function __shareProdFn(p) {
         return function () {
           var url = window.location.origin + window.location.pathname + '?pid=' + p.id;
-          if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (p.title || '') + ' · 资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
-          else __cp(url, '链接已复制到剪贴板');
+          if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (p.title || '') + ' · 资源链接已复制'); // R251：新标题+带资源名灰字
+          else __cp(url, '链接已复制');
         };
       }
       /* v347：存二维码——统一走公共层 window.__savePosterPng（生成带站名+资源名的图） */

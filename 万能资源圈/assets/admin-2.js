@@ -568,7 +568,7 @@ function renderProducts() {
       t.className = 'p-title';
       var __kw = ((document.getElementById('adminSearch') || {}).value || '').trim();
       if (__kw && p.title) { /* R192 二④：搜索命中高亮（安全转义后包 mark.hl，与前台同款） */
-        var __esc = function (x) { return String(x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+        var __esc = window.escapeHtml || function (x) { return String(x); }; /* v378：复用全站唯一转义（原内联第一份实现已删） */
         var __lo = String(p.title).toLowerCase(), __k = __kw.toLowerCase(), __o = '', __i = 0, __h;
         if (__k) { while ((__h = __lo.indexOf(__k, __i)) !== -1) { __o += __esc(p.title.slice(__i, __h)) + '<mark class="hl">' + __esc(p.title.slice(__h, __h + __k.length)) + '</mark>'; __i = __h + __k.length; } }
         t.innerHTML = __o + __esc(p.title.slice(__i));
@@ -992,7 +992,7 @@ function renderProducts() {
         var okBtn = document.getElementById('batchCatOk');
         okBtn.onclick = function () {
           var newCid = Number(select.value);
-          if (isNaN(newCid)) { toast('请选择分类', 'error'); return; }
+          if (isNaN(newCid)) { toast('请选择资源分类', 'error'); return; }
           document.getElementById('batchCatMask').classList.remove('open');
           var _catText = document.querySelector('#batchCatDisplay .cpd-text').textContent;
           showConfirm('批量改分类', '确定将选中的 ' + ids.length + ' 个资源分类改为「' + _catText + '」？', function (closeConfirm) {

@@ -82,11 +82,12 @@ window.WNApi = (function () {
   return { request: request };
 })();
 
-// R256：HTML 属性转义（全站共享）
+// R256：HTML 属性转义（全站共享，v378 起挂到 window 供各文件统一复用，杜绝内联重复实现）
 function escapeHtml(text) {
   if (!text) return '';
   return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+window.escapeHtml = escapeHtml;
 
 /**
  * 万能资源圈 公共 UI（加载标记 + 统一客服弹窗 + 统一提示弹窗）
@@ -532,7 +533,7 @@ if ('serviceWorker' in navigator) {
   // 站内 CSS 无该色变量定义，沿用同一硬编码值）、分隔「·」用黑色、其余文字保持灰 #888；tip 不含「 · 」时整体灰
   // （如无资源名的兜底纯灰字）。lastIndexOf 分割保证资源名内部即使含「 · 」也整段标蓝。
   function __renderShareTip(pEl, tip) {
-    var s = tip || '资源链接已复制到剪贴板';
+    var s = tip || '资源链接已复制';
     pEl.textContent = '';
     var i = s.lastIndexOf(' · ');
     if (i < 0) { pEl.appendChild(document.createTextNode(s)); return; }
@@ -549,7 +550,7 @@ if ('serviceWorker' in navigator) {
   window.showShareLinkModal = function (title, url, tip) {
     // R79+R138：分享按键点击那一刻统一复制链接（异步 clipboard.writeText，零主线程阻塞）+ 即时 toast
     // 与资源页顶栏分享、资源卡片分享、预览分享、弹窗链接点击全部同链路同提示
-    try { __shareCopy(url || ''); __shareToast('链接已复制到剪贴板'); } catch (e0) { if (window.__silent) window.__silent(e0); }
+    try { __shareCopy(url || ''); __shareToast('链接已复制'); } catch (e0) { if (window.__silent) window.__silent(e0); }
     try {
       var mask = document.createElement('div');
       mask.className = 'share-mask';
@@ -559,7 +560,7 @@ if ('serviceWorker' in navigator) {
         '<div class="share-box" style="background:#fff;border-radius:12px;position:relative;padding:24px 20px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-modal); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 10px 40px rgba(0,0,0,0.3)改var(--shadow-modal) */ animation:modalIn var(--dur-mid) var(--ease-out); /* v356 条2：12px/24px/统一时长缓动 */">' +
           '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:var(--danger-bg,#fdecea);color:var(--red-strong,#c62828);font-size:19px; /* v356 条4：×键纳入全站红系 */cursor:pointer;line-height:1;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
           '<div data-share-title style="font-size:20px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' + /* v356 条6：标题统一 20px */
-          '<div data-share-tip style="font-size:13px;color:var(--gray-mid);margin-bottom:10px;">资源链接已复制到剪贴板</div>' +
+          '<div data-share-tip style="font-size:13px;color:var(--gray-mid);margin-bottom:10px;">资源链接已复制</div>' +
           '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
           '<button data-share-ok type="button" class="share-ok">确定</button>' +
         '</div>';
@@ -576,7 +577,7 @@ if ('serviceWorker' in navigator) {
         uEl.addEventListener('click', function () {
           try { __shareCopy(uEl.textContent || ''); } catch (e) { if (window.__silent) window.__silent(e); }
           if (uEl.classList) { uEl.classList.add('copy-ok-text'); setTimeout(function () { try { uEl.classList.remove('copy-ok-text'); } catch (e) { if (window.__silent) window.__silent(e); } }, 1500); } /* R217 条1：复制成功=链接文字变绿 1.5s（全站统一口径，与资源页顶栏分享一致） */
-          __shareToast('链接已复制到剪贴板');
+          __shareToast('链接已复制');
         });
         /* R217 条1：弹窗打开那一刻的自动复制同样给绿字反馈（所有走本弹窗的分享入口统一） */
         uEl.classList.add('copy-ok-text');
@@ -828,27 +829,19 @@ var __BLOCK_TOUCH_SEL = '.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.
 })();
 
 
-// ---------- R233（用户 09-22 11:30 派单）：条13 补做——跨页跳转接入 View Transitions（全站四页） ----------
-// 跨文档转场本体由 ui-common.css 的 @view-transition { navigation: auto }（R211）接管，JS 侧不再手动淡出干扰它。
-// 三分支（渐进增强，老浏览器不坏）：
+// ---------- R233（用户 09-22 11:30 派单）：条13 跨页跳转过渡（全站四页） ----------
+// 跨文档转场本体由 ui-common.css 的 @view-transition { navigation: auto }（R211）接管。
+// v374 修复：旧代码把 location.href 包进 document.startViewTransition()——该 API 只管同文档更新，
+// 包跨文档导航必抛「Transition was aborted」未捕获错误（全站 logo/跳转键每次点击都报），已拆除该分支；
+// 转场由 CSS 接管，三分支收敛为两支：
 // 1) prefers-reduced-motion 用户 → 跳过动画直接跳（CSS 侧三伪元素动画也已关，R231 条13）；
-// 2) 支持 document.startViewTransition → 用它包裹跳转（当前页截图交叠新页，平滑过渡）；
-// 3) 老浏览器无该 API → 回退 R20 的 180ms 淡出方案（1.2s 兜底恢复 + bfcache pageshow 恢复，原逻辑保留）。
+// 2) 其余浏览器 → CSS @view-transition 自动交叠过渡；不支持的老浏览器由 CSS 规则自然忽略，无感回退。
 window.jumpTo = function (href) {
   if (!href) return;
   var reduced = false;
   try { reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { if (window.__silent) window.__silent(e); }
   if (reduced) { window.location.href = href; return; }
-  if (document.startViewTransition) {
-    document.startViewTransition(function () { window.location.href = href; });
-    return;
-  }
-  var b = document.body;
-  if (!b) { window.location.href = href; return; }
-  b.style.transition = 'opacity .18s ease';
-  b.style.opacity = '0';
-  setTimeout(function () { b.style.opacity = '1'; b.style.transition = ''; }, 1200);
-  setTimeout(function () { window.location.href = href; }, 180);
+  window.location.href = href;
 };
 window.addEventListener('pageshow', function (e) {
   if (e.persisted && document.body && document.body.style.opacity === '0') { document.body.style.opacity = '1'; document.body.style.transition = ''; }
@@ -1105,7 +1098,20 @@ window.bindSearchHist = function (wrap, input, key) {
   // R106 修复：只对「无子元素的文本叶子」弹小框——带子元素的容器（如限高滚动的 .form 表单）
   // 也会 scrollHeight 溢出被 clipped() 误判成"截断文本"，划过字段间隙就会把整个表单的文字全弹出来
   function leafText(el) { return el.children.length === 0 && (el.textContent || '').trim().length > 0; }
-  // R167 全站白名单（桌面悬停与手机点按同源）：后台 + 前台截断元素统一一份
+  // v375（老板反馈：省略号看全文又不管全了）——白名单改「就近截断元素」通用判定：
+  // 从命中点向上找最近一个「真截断」（水平省略或限高截断）的元素，白名单类名不再需要逐个补漏，保证每个省略号都管用。
+  function nearestClipped(el) {
+    for (var n = el, i = 0; n && n !== document.body && i < 5; n = n.parentElement, i++) {
+      if (!(n instanceof Element)) return null;
+      if (n.matches(SKIP)) return null;
+      var cs = getComputedStyle(n);
+      var isEllipsis = cs.textOverflow === 'ellipsis' || (cs.webkitLineClamp && cs.webkitLineClamp !== 'none');
+      if (!isEllipsis) continue;
+      if ((leafText(n) && clipped(n)) || clippedX(n)) return n;
+    }
+    return null;
+  }
+  // R167 全站白名单（桌面悬停与手机点按同源）：后台 + 前台截断元素统一一份（v375 起仅作兜底）
   // R179（用户 19:29）：补漏——.cpd-text（全站下拉选择框显示文本）、.cp-name（资源码下拉面板类型名，
   // R177 起截断省略号但不在名单点了没反应）、.v-price（类型行金额，R179 起手机档截断）之前点击不显示
   var PICKSEL = 'td, th, .c-name, .v-name, .p-title, .p-sub, .card-title, .card-desc, .shop-name, .variant-tab, .cpd-text, .cp-name, .v-price';
@@ -1117,8 +1123,9 @@ window.bindSearchHist = function (wrap, input, key) {
     if (!(el instanceof Element) || !el.closest) return;
     if (el.closest(SKIP)) return;
     if (leafText(el) && clipped(el)) { __rAFshow(el); return; }
-    var box = el.closest(PICKSEL); // R165：带子元素的单行截断容器（网格卡片副标题等）悬停看全文
+    var box = nearestClipped(el) || el.closest(PICKSEL); // v375：就近截断优先，白名单兜底
     if (box && clippedX(box)) { __rAFshow(box); return; }
+    if (box && clipped(box)) { __rAFshow(box); return; }
     if (cur && !cur.contains(el)) hide();
   });
   // R173（用户 00:32「显示一瞬间就消失，手机端特别明显」）：补 mouseout 的 __hoverDev 门控——
@@ -1136,7 +1143,7 @@ window.bindSearchHist = function (wrap, input, key) {
     var el = ev.target;
     if (!(el instanceof Element) || !el.closest) { hide(); return; }
     if (el.closest(SKIP)) { hide(); return; }
-    var hit = el.closest(PICKSEL);
+    var hit = nearestClipped(el) || el.closest(PICKSEL); // v375：就近截断优先，白名单兜底
     // R106：手机点按同样只认文本叶子（容器误弹同上）；R165：单行截断容器（.p-sub 等）命中 clippedX 也弹
     // R173：__rAFshow 延迟一帧弹出——点截断按键时按键动作先完成（不卡），小框下一帧再弹
     if (hit && ((leafText(hit) && clipped(hit)) || clippedX(hit))) { __rAFshow(hit); return; }
@@ -1160,6 +1167,17 @@ window.__haptic = function () {
 // 条4：按钮忙碌态（文字 + 转圈图标；不动 disabled 防重与全屏遮罩——用户拍板「防重复点击，也代替全屏遮罩」不做）
 window.__btnBusy = function (btn, text) {
   if (!btn) return;
+  /* v375 修（用户反馈：有的键转圈后再点还在转）——忙碌态加自愈保险：
+     ①进入忙碌时记录原文字；②12 秒后若按钮仍在转（调用方漏恢复/请求悬空），自动复原文字并摘掉转圈；
+     ③新增 window.__btnIdle(btn) 供调用方主动复原（保留图标，只还原文字份）。 */
+  if (!btn.querySelector('.btn-spin')) {
+    btn.__busyOrig = (btn.querySelector('.btn-lab') || {}).textContent != null ? btn.querySelector('.btn-lab').textContent : null;
+    if (btn.__busyTimer) { clearTimeout(btn.__busyTimer); btn.__busyTimer = null; }
+    btn.__busyTimer = setTimeout(function () {
+      btn.__busyTimer = null;
+      if (btn.querySelector('.btn-spin')) window.__btnIdle(btn);
+    }, 12000);
+  }
   /* v348 条15：只换「文字那一份」，不再整颗按钮清空——
      原写法 btn.textContent = text 会把按钮里的小图标一起抹掉，忙碌时按钮看着空一块。 */
   var lab = btn.querySelector('.btn-lab');
@@ -1177,6 +1195,27 @@ window.__btnBusy = function (btn, text) {
   var s = document.createElement('span');
   s.className = 'btn-spin';
   btn.appendChild(s);
+};
+/* v375：忙碌态复原——摘转圈、还原进入忙碌前的文字（图标不动） */
+window.__btnIdle = function (btn) {
+  if (!btn) return;
+  if (btn.__busyTimer) { clearTimeout(btn.__busyTimer); btn.__busyTimer = null; }
+  var sp = btn.querySelector('.btn-spin');
+  if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
+  if (btn.__busyOrig != null) {
+    var lab = btn.querySelector('.btn-lab');
+    if (lab) { lab.textContent = btn.__busyOrig; }
+    else {
+      var txt = null;
+      for (var i = 0; i < btn.childNodes.length; i++) {
+        var n = btn.childNodes[i];
+        if (n.nodeType === 3 && String(n.nodeValue || '').trim()) { if (!txt) txt = n; else n.nodeValue = ''; }
+      }
+      if (txt) txt.nodeValue = btn.__busyOrig;
+    }
+    btn.__busyOrig = null;
+  }
+  btn.disabled = false;
 };
 // 条11：复制成功反馈（键短暂变绿 1.2s + 手机轻震）
 window.__copyOk = function (el) {
@@ -1460,6 +1499,11 @@ window.formatPrice = function (price) {
    isActive()：可选，返回 false 时本次手势不响应（如弹窗开着时不响应页面级手势）。
    排除区（统一）：输入框/下拉/按钮/链接/视频/富文本/统计图表/轮播/文件卡——这些区域有自己的交互。 */
 window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-chart, .modal-nav-arrow, .cat-picker-panel, .file-folder-wrap, .lightbox, .category-bar, .sub-category-bar, .recent-bar, .recent-bar-wrap, .recent-title, .tabs, .batch-bar, .tb-row2, .upman-host, .pager, .pg-jump, .ctx-menu, .dt-pop, .stat-table-wrap, .bind-table-wrap, .table-scroll' /* v370 条7：最近看过（最近浏览）横滑条有自己滚动，排除出滑切区；翻页/长按菜单/日期弹层同理 */ /* v360 条9：横滚条自身滚动不触发切换 */;
+/* v375 修（老板反馈：一级分类左右滑不动）——排除区分两档：
+   ①硬排除（输入框/编辑器/视频/灯箱/文件卡/弹层）：始终独占手势；
+   ②横条区（分类栏/标签条/最近浏览/表格横滚…）：只有自己真放不下、能横向滚（scrollWidth>clientWidth）时才独占；
+     一行放得下时横条滑不动也没必要独占——把滑动还给「整页左右切换分类/标签」，不再出现"滑了没反应"。 */
+window.__swipeHardExclude = 'input, textarea, select, video, .rte-editor, .lightbox, .file-folder-wrap, .cat-picker-panel, .ctx-menu, .dt-pop, .pg-jump, .modal-nav-arrow';
 window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
   if (!el || !onSwipe) return;
   var sx = 0, sy = 0, on = false;
@@ -1467,7 +1511,13 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     if (e.touches.length !== 1) { on = false; return; }
     if (isActive && !isActive()) { on = false; return; }
     var t = e.target;
-    if (window.__swipeExclude && t.closest && t.closest(window.__swipeExclude)) { on = false; return; }
+    if (!t || !t.closest) return;
+    /* v375：硬排除区始终独占；横条区只在自身可横向滚动时才独占（放得下就还给整页滑切） */
+    if (window.__swipeHardExclude && t.closest(window.__swipeHardExclude)) { on = false; return; }
+    if (window.__swipeExclude) {
+      var sc = t.closest(window.__swipeExclude);
+      if (sc && sc.scrollWidth > sc.clientWidth + 1) { on = false; return; }
+    }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY; on = true;
   }, { passive: true });
   el.addEventListener('touchmove', function (e) {
@@ -1772,8 +1822,13 @@ window.uiToast = (function () {
     var txt = document.createElement('span'); txt.textContent = it.m;
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'undo-btn'; btn.textContent = '撤销（' + left + 's）';
+    /* v375 修（用户反馈：写着 10 秒实际 5 秒就没了）——改为「绝对截止时间」计时：
+       每秒按 deadline-now 重算剩余秒数，浏览器节流/休眠导致某次 tick 迟到也不会提前消失；
+       条到期那一刻才 cleanup，条的实际存活恒等于 UNDO_MS。 */
+    var __deadline = Date.now() + ((window.WN_CONST && window.WN_CONST.UNDO_MS) || 10000);
     var timer = setInterval(function () {
-      left--; if (left <= 0) { clearInterval(timer); btn.textContent = '撤销'; cleanup(); return; }
+      left = Math.ceil((__deadline - Date.now()) / 1000);
+      if (left <= 0) { clearInterval(timer); btn.textContent = '撤销'; cleanup(); return; }
       btn.textContent = '撤销（' + left + 's）';
     }, 1000);
     function cleanup() {
@@ -1831,7 +1886,7 @@ window.uiToast = (function () {
    调用：window.__btnFit()（页面渲染后 / 窗口 resize 时） */
 window.__btnFit = function () {
   try {
-    var groups = document.querySelectorAll('.btn-fit-group');
+    var groups = document.querySelectorAll('.btn-fit-group, .batch-group'); /* v375：批量条两组同享一套显示优先序 */
     for (var g = 0; g < groups.length; g++) {
       var grp = groups[g];
       /* v352 条10：先量宽度，量不到（面板隐藏/未布局=宽 0）就整组跳过、保持原状——
@@ -2237,6 +2292,8 @@ window.__btnIcon = function (name) {
     check: '<path d="M4 12l5 5L20 6"/>',
     up: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
     stats: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+    /* v375：改价格专用（¥ 形：圆内人字+两横+竖） */
+    price: '<circle cx="12" cy="12" r="9"/><path d="M8.5 7.5L12 12l3.5-4.5"/><path d="M12 12v5"/><path d="M9 13.5h6M9 16h6"/>',
     /* v370 条8：自动补图标新增——退出/搜索/下载/列表/设置 */
     logout: '<path d="M9 4h7a2 2 0 012 2v12a2 2 0 01-2 2H9"/><path d="M13 12H3"/><path d="M6 9l-3 3 3 3"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
@@ -2258,6 +2315,7 @@ window.__autoDecorate = function (root) {
       [/确定|保存|提交/, 'save'], [/退出/, 'logout'], [/取消|关闭|返回/, 'close'], [/删除/, 'del'], [/编辑/, 'edit'],
       [/复制/, 'copy'], [/显示|查看|预览/, 'show'], [/隐藏/, 'hide'], [/新增|添加/, 'add'],
       [/重试|刷新|换一?张/, 'refresh'], [/导出/, 'export'], [/上传/, 'up'], [/下载/, 'down'],
+      [/改分类|分类/, 'cat'], [/改价格|价格/, 'price'], /* v375：批量条改分类/改价格此前无图标可配，落不到 btn-fit 机制里 */
       [/搜索/, 'search'], [/分享|发送/, 'share'], [/客服|咨询/, 'service'], [/登录/, 'check'], [/全选/, 'check']
     ];
     var skip = '.btn-fit, .view-btn, .rte-btn, .rte-expand, .cat-fold, .search-clear, .modal-close-x, .fc-arrow, [data-noico]';
@@ -2325,7 +2383,9 @@ window.__decorateBtn = function (btn, iconName, pri) {
     }
     btn.insertAdjacentHTML('afterbegin', svg);
     btn.classList.add('btn-fit');
-    if (pri) btn.setAttribute('data-pri', String(pri));
+    /* v375 修：按钮自带 data-pri（如批量条的取消选中/批量删除等人工定的显示优先序）绝不覆盖——
+       原写法按文案匹配表强改优先级（取消选中 1→6、批量显示 5→1），显示优先序全乱 */
+    if (pri && !btn.hasAttribute('data-pri')) btn.setAttribute('data-pri', String(pri));
   } catch (e) { if (window.__silent) window.__silent(e); }
   return btn;
 };

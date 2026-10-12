@@ -128,12 +128,12 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <div class="batch-bar btn-fit-group" id="batchBar">
           已选 <span class="batch-count" id="batchCount" aria-live="polite" aria-atomic="true">0</span> 项
           <div class="batch-group"><!-- v371 条5：批量按键=同一组，组内不拆散；v371b：显示优先序=取消选中>批量删除>改分类>改价格>批量显示>批量隐藏（放不下先藏后面的） -->
-          <button class="batch-btn" data-action="clearSel" data-pri="1">取消选中</button>
-          <button class="batch-btn danger" data-action="delete" data-pri="2">批量删除</button>
-          <button class="batch-btn" data-action="changeCat" data-pri="3">改分类</button>
-          <button class="batch-btn" data-action="changePrice" data-pri="4">改价格</button>
           <button class="batch-btn" data-action="online" data-pri="5">批量显示</button>
           <button class="batch-btn" data-action="offline" data-pri="6">批量隐藏</button>
+          <button class="batch-btn" data-action="changeCat" data-pri="3">改分类</button>
+          <button class="batch-btn" data-action="changePrice" data-pri="4">改价格</button>
+          <button class="batch-btn danger" data-action="delete" data-pri="2">批量删除</button>
+          <button class="batch-btn" data-action="clearSel" data-pri="1">取消选中</button>
           </div>
         </div>
         <div id="productList">
@@ -353,10 +353,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <!-- 分类批量操作栏 -->
         <div class="batch-bar" id="catBatchBar">
           <span style="font-size:13px;color:#666;">已选 <b id="catBatchCount" style="color:var(--blue1);" aria-live="polite" aria-atomic="true">0</b> 项</span>
-          <div class="batch-group"><!-- v371b：显示优先序同资源批量组 --><button class="batch-btn" id="catBatchCancel">取消选中</button>
-          <button class="batch-btn danger" id="catBatchDel">批量删除</button>
-          <button class="batch-btn" id="catBatchShow">批量显示</button>
-          <button class="batch-btn" id="catBatchHide">批量隐藏</button></div>
+          <div class="batch-group"><!-- v371b：显示优先序同资源批量组 --><button class="batch-btn" id="catBatchShow" data-pri="3">批量显示</button>
+          <button class="batch-btn" id="catBatchHide" data-pri="4">批量隐藏</button>
+          <button class="batch-btn danger" id="catBatchDel" data-pri="2">批量删除</button>
+          <button class="batch-btn" id="catBatchCancel" data-pri="1">取消选中</button></div>
         </div>
         <div id="catList">
     <div class="cat-row skel admin-skel" aria-hidden="true"><span class="drag-handle sk-piece"></span><span class="row-check sk-piece"></span><span class="c-name sk-piece"></span><div class="c-meta"><span class="c-sort sk-piece"></span><span class="c-count sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span><span class="row-btn sk-piece"></span></div></div>

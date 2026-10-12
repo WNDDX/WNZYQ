@@ -759,11 +759,25 @@
         var r = field.getBoundingClientRect();
         pop.classList.add('open');
         var pw = 268, ph = pop.offsetHeight || 130;
-        var left = Math.min(r.left, window.innerWidth - pw - 8);
+        /* v375 修（老板反馈：点了日期组件时间弹层出格）——按「可视视口」双重钳制：
+           手机软键盘弹起时 visualViewport 缩小/上移，旧写法按整个布局视口算，弹层会被顶到键盘底下/屏幕外。
+           现在：①宽高取可视视口；②左右上下全部钳在可视区内；③弹层开着时视口变化（键盘弹/收、转屏、滚动）即时重定位。 */
+        function __vv() { var v = window.visualViewport; return v ? { w: Math.round(v.width), h: Math.round(v.height), t: Math.round(v.offsetTop), l: Math.round(v.offsetLeft) } : { w: window.innerWidth, h: window.innerHeight, t: 0, l: 0 }; }
+        var vv = __vv();
+        var left = Math.min(r.left, vv.l + vv.w - pw - 8);
         var top = r.bottom + 6;
-        if (top + ph > window.innerHeight) top = r.top - ph - 6; // 下方放不下则翻到上方
-        pop.style.left = Math.max(8, left) + 'px';
-        pop.style.top = Math.max(8, top) + 'px';
+        if (top + ph > vv.t + vv.h) top = r.top - ph - 6; // 下方（可视区内）放不下则翻到上方
+        left = Math.min(Math.max(left, vv.l + 8), vv.l + vv.w - pw - 8);
+        top = Math.min(Math.max(top, vv.t + 8), vv.t + vv.h - ph - 8);
+        pop.style.left = left + 'px';
+        pop.style.top = top + 'px';
+        if (!pop.__vvBound) {
+          pop.__vvBound = true;
+          var __re = function () { if (pop.classList.contains('open') && dtTarget && dtTarget.isConnected) openPicker(dtTarget); };
+          window.addEventListener('resize', __re);
+          if (window.visualViewport) window.visualViewport.addEventListener('resize', __re);
+          window.addEventListener('scroll', __re, true);
+        }
       }
       function closePicker() { pop.classList.remove('open'); dtTarget = null; }
       function commit() {

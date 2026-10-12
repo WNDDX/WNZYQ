@@ -8,54 +8,54 @@
 ::selection { background: rgba(30,136,229,0.25); color: inherit; }
 /* ===== CSS 变量（全站统一，页面样式也复用同一套语义变量） ===== */
 :root {
-  /* v336 条65：屏幕安全区（刘海/home条），悬浮件与弹窗自动避让 */
-  --safe-t: env(safe-area-inset-top, 0px);
+  /* v336 条65：屏幕安全区（刘海/home条），悬浮件与弹窗自动避让（--safe-t 顶部右侧未见引用，v378 删；左右下三向在用） */
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px); color-scheme: light; /* v336 条80：告知浏览器本站恒亮，系统下拉/日期控件不再用黑底 */
-  --blue1: #1E88E5;
-  --blue2: #64B5F6;
-  --blue3: #BBDEFB;  /* 门户渐变第三色（导航页/错误页/登录页共用），变量唯一源 */
-  --green: #01C000;
-  --red: #ff4444;
-  /* v348 条2/3/4：绿、红、灰收成明确色阶（原先 3 种绿 / 4 种红 / 4 种灰散落各处、各写各的） */
+  /* ===== 品牌色（唯一源） ===== */
+  --blue1: #1E88E5;   /* 品牌蓝·主 */
+  --blue2: #64B5F6;   /* 品牌蓝·浅 */
+  --blue3: #BBDEFB;   /* 品牌蓝·最浅（门户渐变第三色，导航页/错误页/登录页共用） */
+  --brand-orange: #F57C00; /* 门户橙（白字可读，原 #FF9900 对比度不达标） */
+  --brand-green: #00A828;  /* 门户绿（白字可读） */
+  --brand-cyan: #008C8C;   /* 门户青 */
+  /* ===== 语义色阶（唯一源：绿/红各一档，不再散写各值） ===== */
+  --green: #01C000;           /* 绿·主（在线态） */
   --green-strong: #2e7d32;    /* 绿·强调（按钮底色） */
-  --green-chart: #4CAF50;     /* 绿·图表（折线/柱系列） */
+  --red: #ff4444;             /* 红·主 */
   --red-strong: #c62828;      /* 红·危险（关闭键/删除/错误提示，唯一一档） */
-  --gray-mid: #888;           /* 灰·中（次要说明/图标） */
   --danger-bg: #fdecea;       /* 危险浅底（关闭键/错误底） */
-  --danger-border-strong: #f5c6c2; /* 危险描边 */
+  --danger-border: #ffc8c8;   /* 危险描边（常规） */
+  --danger-border-strong: #f5c6c2; /* 危险描边（强） */
   /* 注意：上面这几个变量的定义值必须是真实色号。v348 的批量替换脚本曾把这里的 #xxx 也一起
      替换成 var(...)（自己引用自己＝失效），导致全站引用处全部降级；定义行禁止参与批量替换。 */
-  --orange: #F57C00; /* 警示橙（门户壳留用） */
-  --brand-orange: #F57C00; /* v336 条197：白字可读（原 #FF9900 对比度 2.1 不达标） */  /* v336 条129：门户四色收变量（青色按老板要求保持原值 #008C8C） */
-  --brand-green: #00A828; /* v336 条197：白字可读 */
-  --brand-blue: #1E88E5;
-  --brand-cyan: #008C8C;
-  --gray-bg: #f0f2f5;
-  --gray-text: #666;
-  --border-soft: #eee;
-  --radius: 8px;      /* R285 条22：小件档（小按钮/标签/输入类） */
-  --radius-lg: 12px; /* v336 条101：四档=4/8/12/999+50% */  /* R285 条22：弹窗大件档 */
-  --radius-btn: 10px;    /* R285 条22：普通按钮/卡片/图框档（全站圆角阶梯=3微装饰/8小件/10普通/14弹窗大件/999胶囊/50%圆） */
-  --radius-micro: 4px;    /* R285 条22：微装饰档（图例点/骨架条/高亮块） */
-  --overlay-modal: rgba(0, 0, 0, 0.76);    /* R285 条43：全站遮罩归两档——普通弹窗档 */
-  --overlay-lightbox: rgba(0, 0, 0, 0.92); /* R285 条43：全屏灯箱档 */
-  --ls-tight: 0.5px;  /* R285 条14：字距三档——紧凑（辅助小字） */
-  --ls-normal: 1px;   /* R285 条14：正文/标题档 */
-  --ls-btn: 1.2px;    /* R285 条14：按钮/输入/标签档 */
-  /* R285 条50：全站叠放层级明账（低→高）：200详情遮罩 998分享遮罩 6000-6002富文本面板 6001拖拽幽灵
-     9999客服遮罩 10040右键菜单/表格操作条 10050命令面板遮罩 100000图片灯箱 100001提示胶囊
-     100002兜底toast 100100顶部进度条 100200部署警示横幅 10060JS提示弹窗（v356 条18 入账） */
+  --gray-mid: #888;   /* 灰·中（次要说明/图标） */
+  --gray-bg: #f0f2f5; /* 灰底 */
+  --gray-text: #666;  /* 灰字 */
+  /* ===== 圆角阶梯（唯一源：8 小件 / 10 普通 / 12 大件 / 999 胶囊 / 50% 圆） ===== */
+  --radius: 8px;         /* 小件档（小按钮/标签/输入类） */
+  --radius-btn: 10px;    /* 普通档（普通按钮/卡片/图框） */
+  --radius-lg: 12px;     /* 大件档（弹窗） */
+  /* ===== 遮罩两档 ===== */
+  --overlay-modal: rgba(0, 0, 0, 0.76);    /* 普通弹窗 */
+  --overlay-lightbox: rgba(0, 0, 0, 0.92); /* 全屏灯箱 */
+  /* ===== 字距（唯一源：正文/按钮两档） ===== */
+  --ls-btn: 1.2px;    /* 按钮/输入/标签 */
   --gap: 10px;
-  --price-orange: #C86800; /* v346 条32：价格文字加深（原 #F57C00 白底对比仅 2.7，达不到可读标准；改 #C86800 约 4.6） */
-  --price-text: #C86800; /* v346 条32：同上，价格文字统一深橙 */
+  --price-text: #C86800; /* 价格文字深橙（原 #F57C00 白底对比仅 2.7 不达标；改 #C86800 约 4.6） */
   --link-blue: #1565c0;
   --border-light: #c8e0f5;
-  --danger-border: #ffc8c8;
+  --border-soft: #eee;
   --text-primary: #333;
-  --text-dark: #1a1a1a;  /* R259：价格橙收变量 */
-  --avatar-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22);  /* R259：头像阴影收变量 */
+  --avatar-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 14px rgba(30,80,140,0.22);
+
+  /* ===== 阴影 5 档（唯一源，原散落的独立 :root 块已并入此处）=====
+     卡片微浮 / 悬浮面板 / 弹窗大影 / 品牌蓝晕 / 品牌强晕（focus 环、白高光环、方向性投影等语义阴影不归档） */
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.07);
+  --shadow-pop: 0 4px 16px rgba(0,0,0,0.14);
+  --shadow-modal: 0 10px 40px rgba(0,0,0,0.25);
+  --shadow-blue: 0 3px 10px rgba(30,136,229,0.3);
+  --shadow-blue-strong: 0 6px 20px rgba(30,136,229,0.4);
 
   /* ===== 语义底色/文字变量（亮色唯一源） ===== */
   --bg-page: #f2f7fd;    /* 页面底色 */
@@ -68,21 +68,25 @@
   --hover-bg: #f0f7ff;   /* 悬停浅蓝底 */
   --toast-bg: rgba(255, 255, 255, 0.92);
   /* v336 条94：中性色阶唯一源 */
-  --neutral-1: #f5f7fa;  /* 最浅填充（代码块/骨架底/浅底） */
-  --neutral-2: #eef1f4;  /* 浅填充（hover 底/次级底） */
-  --neutral-3: #e4e8ec;  /* 边框弱/分隔 */
+  --neutral-3: #e4e8ec;  /* 边框弱/分隔（原 --neutral-1/--neutral-2 全站零引用，v378 删，仅留在用的一档） */
   --border-strong: #9fb0c0; /* 表单/表格边框 */
-  /* v336 条95：层级表（低→高）内容200/遮罩998/浮层6000/客服9999/菜单10040/面板10050/灯箱100000/提示100001/兜底100002/进度100100/警示100200 */
-  --shadow-1: 0 1px 4px rgba(30,80,140,.10);   /* v336 条104：小件 */
-  --shadow-2: 0 4px 14px rgba(30,80,140,.14);  /* 卡片/悬浮 */
-  --shadow-3: 0 8px 30px rgba(0,0,0,.16);      /* 弹窗 */
-  --z-overlay: 998; --z-float: 6000; --z-kf: 9999; --z-menu: 10040; --z-cmdk: 10050; --z-lightbox: 100000; --z-toast: 100001; --z-toast2: 100002; --z-bar: 100100; --z-warn: 100200; /* R186 建议5：全站 toast/提示胶囊底色（暗色覆盖为深底） */
+  /* v378：全站叠放层级明账（低→高，代码内以字面量书写；原 --z-* 变量族零引用已删）：
+     2 卡内小标 / 10 卡内浮标 / 95 顶栏 / 200 详情遮罩 / 998 分享遮罩 / 6000-6002 富文本面板与拖拽幽灵 /
+     9999 客服遮罩 / 10040 右键菜单·表格操作条 / 10050 命令面板遮罩 / 100000 图片灯箱 /
+     100001 提示胶囊 / 100002 兜底 toast / 100100 顶部进度条 / 100200 部署警示横幅 */
 
   /* R211：缓动 Token 四档 */
   --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
-  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --ease-press: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===== 时长 Token（唯一源，原散落 4 处独立 :root 已并入）===== */
+  --dur-fast: 0.10s;      /* 快（按压/微反馈） */
+  --dur-mid: 0.18s;       /* 中（入场/常规过渡） */
+  --dur-close: 0.16s;     /* 关场（比开快） */
+  --dur-switch: 0.20s;    /* 切换（淡入上移） */
+  --dur-slow: 0.30s;      /* 慢（暗色切换/退场） */
+  --page-bottom-gap: 24px; /* 页面底部留白（滚动到底时最后内容到底边距离） */
 }
 
 /* ===== v336 条99/100：全站弹窗“关闭叉”唯一规格（用户拍板：关闭键统一用删除那种红色） =====
@@ -126,7 +130,7 @@
 @keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
 .kf-box {
   background: var(--card-bg); border-radius: var(--radius-lg); padding: 24px /* v336 条106 */; position: relative;
-  max-width: 480px; width: 100%; max-height: min(84vh, 84dvh); overflow-y: auto; /* v356 条5：dvh 兜底 */ overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
+  max-width: 480px; width: 100%; max-height: min(84vh, 84dvh); overflow-y: auto; /* v356 条5：dvh 兜底 */ overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
   animation: kfBoxIn var(--dur-mid) var(--ease-out);
 }
 @keyframes kfBoxIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：客服弹窗卡片入场加展开（与关闭收缩对称） */
@@ -221,7 +225,23 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
    放大预览 100000 → 轻提示 100001
    注：子弹窗统一取 6002，保证在"编辑器放大模式(6000/6001)"之上——放大态点插入图片/视频/链接
    的填写弹窗、时间选择等都不会被压住 */
-.modal-mask { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); /* v336 条123：遮罩毛玻璃 */ z-index: 2000 !important; }
+/* ===== v379：弹窗骨架（遮罩布局 + 标题排版）唯一源 =====
+   改前：导航页/资源页/管理页各自写一份 .modal-mask 布局与 .modal-title 排版（三份逐字相同）。
+   改后：基础骨架上移到此处一处定义，三页本地副本删除，只保留各自的宽度档位等真差异。
+   值取三页一致的公共口径：遮罩 flex 顶对齐+16px 内边距+可滚；标题 20px/字距 1px/左右 32px 留白。 */
+.modal-mask {
+  position: fixed; inset: 0; background: var(--overlay-modal);
+  display: none; align-items: flex-start; justify-content: center; padding: 16px;
+  overflow-y: auto; /* 子元素 margin:auto 居中，内容超高时遮罩可滚，底部按钮永远可达 */
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); /* v336 条123：遮罩毛玻璃 */
+  z-index: 2000 !important;
+}
+.modal-mask.open { display: flex; animation: maskIn var(--dur-mid) var(--ease-out); }
+.modal-title {
+  font-size: 20px; font-weight: 600; color: var(--text);
+  margin-bottom: 16px; letter-spacing: 1px; padding: 0 32px; text-align: center;
+}
+.modal-tip { font-size: 16px; color: var(--text-light); margin-bottom: 16px; letter-spacing: 1px; }
 #inputMask { z-index: 6002 !important; } /* R15：编辑器插入图片/视频等"弹窗里的输入弹窗"，必须高于业务弹窗与放大编辑器 */
 .share-mask { z-index: 3000 !important; }
 /* v356 条4：分享弹窗 × 键纳入全站红系（静态版底色 + 动态版 hover，与其他弹窗 × 同一套） */
@@ -364,6 +384,9 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 
 /* v368 条3：恢复弹窗边框（此前统一样式时丢失） */
 .modal-box, .ann-box, .kf-box, .preview-box, .share-box { border: 1px solid var(--border, #d0d0d0); }
+/* v375（老板要求：全系统弹窗底键统一"文字不换行"）——确认框/客服窗/分享窗/输入窗/各类确定·关闭键，
+   键内文字恒一行，放不下走省略号，绝不折行变两行（此前只有 .modal-footer button 有，确认框与客服窗漏了） */
+.modal-footer button, .modal-inner-btn, .modal-close, .kf-actions > button, .share-box .modal-footer button, .preview-box .modal-footer button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* ===== 弹窗底部按键隐藏修复 =====
    上方 .modal-footer > button / .kf-actions > button 的 display:inline-flex !important
    会覆盖 JS 设置的内联 style.display='none'，导致本该隐藏的按键被强行渲染
@@ -465,11 +488,8 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 }
 
 /* ===== R183（用户 09-17 终极清单拍板）：动效三档 Token / 图片入场 / 弹窗对称收缩 / 按钮转圈 / 复制反馈 / 焦点环 / 等宽数字 / 空态清除键 ===== */
-:root { --dur-fast: 0.10s; --dur-mid: 0.18s; --dur-slow: 0.30s; }
-/* R229（用户 09-21 19:44「全系统全页面底部留白统一，以大的为标准」）：页面底部留白全站统一标准值。
-   实测四页原有值：导航 body 底 24px（最大，即标准源）/ 商城 0px（翻页器贴底）/ 管理 .container 底 16px（390 档 12px）/ 错误 body 底 20px。
-   统一口径 = 滚动到底时最后内容到页面底边的距离；短内容居中页（导航/错误）的剩余视口空间是布局天性不计入。 */
-:root { --page-bottom-gap: 24px; }
+/* v378：--dur-fast/--dur-mid/--dur-slow、--page-bottom-gap 已并入文件头 :root 唯一源；
+   --page-bottom-gap 口径 = 滚动到底时最后内容到页面底边的距离（短内容居中页不计入）。 */
 /* 条2：图片入场（R183 同二维码 kfQrIn 口径）；R211 二批（用户 09-20）按 UI 设计师规格微调：scale 0.9→1 起跳改为 1.02→1 轻落位（渐入更含蓄，二维码 kfQrIn 保持原口径不动） */
 .img-in { animation: imgQrIn var(--dur-mid) var(--ease-out); }
 @keyframes imgQrIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
@@ -520,7 +540,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 /* 条27：价格/统计/表格数字等宽（跳动对齐） */
 .p-price, .v-price, .cp-price, .variant-price, .stat-card .num, .stat-card .delta, table td, table th { font-variant-numeric: tabular-nums; }
 /* R184 条27 延伸（全系统检查）：翻页数字、趋势图轴数字（柱图 .tg-num + 折线 SVG text）一并等宽——轴数字宽度一致后网格线间距视觉均等，翻页数字不再随位数抖动 */
-.uni-pager button.pg-btn, .tg-num, .trend-grid svg text { font-variant-numeric: tabular-nums; }
+.uni-pager button.pg-btn, .trend-grid-svg text, .line-chart svg text { font-variant-numeric: tabular-nums; } /* v376：旧 .tg-num 死规则已删，等宽改覆盖两图 SVG 轴数字 */
 /* 条8：全站弹窗关闭收缩——ui-common.js 观察者在 .open 被移除的当帧补挂 .mask-closing 维持可见并播 var(--dur-mid) 收缩
    （与入场对称：入场 box 展开 scale 0.92→1（modalIn），关闭 1→0.92（boxOut）；遮罩层双向 var(--dur-mid) 淡入淡出；
    关闭动画期间重新打开会自动撤掉收缩态、重放入场） */
@@ -535,9 +555,8 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 }
 @keyframes boxOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.92); } }
 
-/* ===== R184 条5：顶部网络进度条 + 条31：阴影 5 档 Token ===== */
+/* ===== R184 条5：顶部网络进度条 ===== */
 #fetch-bar { position: fixed; top: 0; left: 0; height: 2px; width: 100%; transform: scaleX(0); transform-origin: 0 50%; background: linear-gradient(90deg, #fff, rgba(255,255,255,0.85)); box-shadow: 0 0 6px rgba(255,255,255,0.85); z-index: 100100; pointer-events: none; opacity: 0; transition: transform .25s ease, opacity .2s ease; border-radius: 0 4px 4px 0; } /* R231 条2：width→scaleX——宽度动画每次步进都强制整页重排（恰逢骨架屏+图片入场最忙时），缩放在合成层完成，视觉完全一样 */ /* R184 补：白色高亮——四页顶栏/页面渐变均为品牌蓝，原蓝色条叠蓝底不可见；白条+微光晕在蓝底上恒清晰（GitHub 顶栏同款） */
-:root { --shadow-card: 0 1px 4px rgba(0,0,0,0.07); --shadow-pop: 0 4px 16px rgba(0,0,0,0.14); --shadow-modal: 0 10px 40px rgba(0,0,0,0.25); --shadow-blue: 0 3px 10px rgba(30,136,229,0.3); --shadow-blue-strong: 0 6px 20px rgba(30,136,229,0.4); } /* R184 条31：全站阴影归 5 档——卡片微浮/悬浮面板/弹窗大影/品牌蓝晕/品牌强晕（focus 环、白高光环、方向性投影等语义阴影不归档） */
 /* R187：手动主题钮已撤（用户拍板纯自动跟随系统），.theme-btn 全部移除 */
 
 /* ===== R186 建议1：搜索历史下拉（前后台搜索框共用）=====
@@ -655,8 +674,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 /* 条10：弹窗入场 keyframes 抽公共（原 admin.css / shop.css 各持一份重复定义，删本地留这一份） */
 @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modalIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：入场加展开（与关闭收缩对称） */
-/* 条10：关场时长变量（160ms）——与入场 var(--dur-mid) 区分，关比开快 */
-:root { --dur-close: 0.16s; }
+/* 条10：关场时长变量（160ms）——与入场 var(--dur-mid) 区分，关比开快（v378 已并入文件头 :root） */
 /* 条11：toast 公共样式（资源页 R192 定稿观感：白底0.92+蓝字+圆角20+语义色；下落入场 240ms） */
 .ui-toast {
   position: fixed; top: calc(80px + max(0px, (var(--topbar-h, 64px) - 64px))); left: 50%; transform: translateX(-50%); /* v340 条11：提示条统一到顶部，随顶栏实测高度下移（手机端顶栏两行时不被压住） */
@@ -676,8 +694,7 @@ body { transition: background-color var(--dur-slow) ease, color var(--dur-slow) 
    禁止常驻声明（本站唯一一处常驻 admin.css topbar 已在 R231 删除）。
    新增动画需要层的：JS 播放前 element.style.willChange='transform'，transitionend/animationend 后置 ''。 */
 
-/* 条15（老板修正 09-21）：切换淡入上移统一 0.20s（原 0.18s）——详情弹窗类型切换 / 管理页预览与码面板同类 */
-:root { --dur-switch: 0.20s; }
+/* 条15（老板修正 09-21）：切换淡入上移统一 0.20s（原 0.18s）——详情弹窗类型切换 / 管理页预览与码面板同类（v378 已并入文件头 :root） */
 /* 条22：视图切换/淡入上移 keyframes 抽公共（原 shop.css、admin.css 三份重复，admin 用 fadeInUp 无定义属漏网） */
 @keyframes viewSwitch { from { opacity: 0.4; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -694,7 +711,7 @@ body { transition: background-color var(--dur-slow) ease, color var(--dur-slow) 
 .cp-mask .cp-input { width: 100%; height: 50px; border: none; outline: none; background: transparent; color: var(--text, #222); font-size: 16px; padding: 0 16px; letter-spacing: 1.2px; }
 /* R255（老板 17:55）：Ctrl+K 命令面板输入框聚焦态显式去 outline（同 shop/admin 搜索框口径） */
 .cp-mask .cp-input:focus, .cp-mask .cp-input:focus-visible { outline: none; outline-width: 0; box-shadow: 0 0 0 3px rgba(30,136,229,0.15); /* v293（用户 10-04 02:14）：058命令面板输入框获焦点→补淡蓝光晕，跟搜索框统一 */ }
-.cp-mask .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 4px; border-top: 1px solid var(--border); }
+.cp-mask .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 4px; border-top: 1px solid var(--border); }
 .cp-mask .cp-item { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text, #222); }
 .cp-mask .cp-item .cp-lab { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cp-mask .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: 10px; padding: 4px 8px; flex-shrink: 0; }
@@ -803,6 +820,8 @@ input::placeholder, textarea::placeholder { color: var(--text-light, #999); opac
 /* 条18：全系统按钮「图标 + 文字」——空间不够时按优先级收成纯图标（JS 侧 __btnFit 控制加 .ico-only） */
 /* v345 条4：图标默认不显示，只有文字放不下/被截断时才显示（显示图标即隐藏文字，二者只显其一） */
 .btn-ico { width: 16px; height: 16px; flex: none; display: none; }
+/* v378：全站展开/收起三角统一块级渲染——svg 默认 inline 会坐在文字基线上，部分容器里看起来偏上 1~2px（"三角不居中"的根因） */
+svg.toggle-arrow { display: block; }
 .ico-only .btn-ico { display: block; }
 .btn-lab { white-space: nowrap; }
 .ico-only .btn-lab { display: none; }
@@ -819,10 +838,11 @@ input::placeholder, textarea::placeholder { color: var(--text-light, #999); opac
   padding: 8px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
 
 /* 条26：撤销条（全系统统一 10 秒后悔时间） */
-.ui-toast .undo-btn { color: var(--blue1, #1E88E5); font-weight: 700; font-size: 13px; pointer-events: auto; /* v333 修：外层 .ui-toast 是 pointer-events:none，撤销按钮必须单独放开，否则"后悔 10 秒"的撤销点不动 */
+/* v375（老板拍板）：「撤销」两字改红色、去掉下划线（悬停也不出下划线） */
+.ui-toast .undo-btn { color: var(--red, #ff4444); font-weight: 700; font-size: 13px; pointer-events: auto; /* v333 修：外层 .ui-toast 是 pointer-events:none，撤销按钮必须单独放开，否则"后悔 10 秒"的撤销点不动 */
   background: none; border: none; cursor: pointer; padding: 4px 4px; margin-left: 4px;
-  font-variant-numeric: tabular-nums; }
-.ui-toast .undo-btn:hover { text-decoration: underline; }
+  font-variant-numeric: tabular-nums; text-decoration: none !important; }
+.ui-toast .undo-btn:hover { text-decoration: none; }
 
 /* ===== v336 条87：打印样式——打印报表/二维码不再白底白字、悬浮件不占页 ===== */
 @media print {
@@ -944,7 +964,7 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 .lightbox .lb-sl-prev { animation: slPrev .2s var(--ease-out); }
 /* ===== v370 条9：内部滚动区滑到底不再带动外层（全系统补 contain）===== */
 .topbar-inner .tabs, .category-bar, .cat-bar, .sub-category-bar, .recent-bar, .stat-table-wrap, .bind-table-wrap, .table-scroll, .admin-table-wrap,
-.modal-mask, .share-mask, .kf-mask, .cp-mask, .modal-box, .form, .rte-editor, .preview-body, [id="bindingsScroll"], .ann-list, .cat-picker-panel, .upman-host { overscroll-behavior: contain; }
+.modal-mask, .share-mask, .kf-mask, .cp-mask, .modal-box, .form, .rte-editor, .preview-body, [id="bindingsScroll"], .ann-list, .cat-picker-panel, .upman-host { overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; }
 
 /* ===== v370b 条3：切换指示线——管理页标签白线/资源页分类蓝线，都是"本来那根"，
    切换与跟手拖动时从当前位置滑向目标（JS 驱动 left/width）===== */

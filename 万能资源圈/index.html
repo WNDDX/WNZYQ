@@ -178,35 +178,14 @@ body{
     background-color: #1E88E5; /* v304（用户 10-05 02:21）：仅客服绿，通用弹窗按钮恢复 R145 标准蓝 */
     letter-spacing: 1px;
 }
-/* R231 条10：显示改由 .open 控制（keyframes 公共于 ui-common.css）——原 inline display 切换
-   会让 R184 全站关场收缩动画（mask-closing）在首页永远不播 */
-.modal-mask.open { display: flex; animation: maskIn var(--dur-mid) var(--ease-out); }
+/* v379：.modal-mask/.modal-mask.open/.modal-title/.modal-tip 骨架已上移 ui-common.css 唯一源，本地副本删除 */
 .modal-box { animation: modalIn var(--dur-mid) var(--ease-out); } /* R231 条10：二维码弹窗补入场 */
-.modal-mask{
-    position: fixed;
-    inset: 0;
-    background: var(--overlay-modal);
-    /* v346 条29：删本地 z-index:999（被公共层 .modal-mask{z-index:2000 !important} 覆盖，属死值） */
-    display: none;
-    align-items: flex-start; /* R285 条3：对齐 R159 口径——子元素 margin:auto 居中，内容超高时遮罩可滚，底部按钮永远可达 */
-    justify-content: center;
-    padding: 16px;
-    overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ /* R285 条3：遮罩可滚（手机地址栏遮挡根治） */
-}
 .modal-box{
     background: var(--card-bg);
     border-radius: 12px; /* v346 条41：与资源页/管理页弹窗圆角统一（原 14px） */
     padding: 26px 20px;
     position: relative; max-width: 480px; max-height: 84vh; max-height: 84dvh; /* R285 条3：dvh 可视视口口径（对齐 R159 ①） */ overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
     width: 100%;
-    text-align: center;
-}
-.modal-title{
-    font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 18px 保持） */
-    color: var(--text);
-    margin-bottom: 16px;
-    letter-spacing: 1px;
-    padding: 0 32px;
     text-align: center;
 }
 .qrcode-wrap{
@@ -237,12 +216,6 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
     align-items: center;
     justify-content: center;
     color: var(--text-faint);
-}
-.modal-tip{
-    font-size: 16px;
-    color: var(--text-light);
-    margin-bottom: 16px;
-    letter-spacing: 1px;
 }
 .modal-close{
     background-color: #ff4444;
@@ -284,10 +257,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 .prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius: 999px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow: var(--shadow-card); /* v293（用户 10-04 02:14）：044本地阴影收归5档→0 2px 8px rgba(0,0,0,.1)改var(--shadow-card) */ /*R170:胶囊默认藏在 top:80px 上方（占 32~64px 区），跟手滑到 translateY(0)=80px 位*/transform:translateY(-48px);opacity:0;transition:transform .25s ease,opacity .2s ease;}
 .prt-icon{display:inline-block;width:14px;height:14px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:btnSpin 0.6s linear infinite;}
 /* R285 条48：prtspin 已删——统一走 ui-common.css btnSpin */
-/* 弹窗右上角关闭按钮（与资源页/管理页一致） */
-.modal-close-x{position:absolute;top:12px;right:12px;z-index:10;width:32px;height:32px;border-radius:50%;border:none;background: var(--bg-light);color: var(--text-light);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.10s ease, opacity 0.10s ease, background 0.10s ease, color 0.10s ease; /* R231 条1：all 收窄为显式属性 */line-height:1;}
-.modal-close-x:hover{background:#ff4444;color:#fff;transform:scale(0.97);} /* v293（用户 10-04 02:14）：020去掉opacity:0.9→完全交给公共样式管，不本地覆盖 */
-.modal-close-x:active{transform:scale(0.94);opacity:0.8;filter:brightness(0.9);}
+/* v379：.modal-close-x 本地副本已删——ui-common.css 全站统一规格（32px 圆/灰底/hover 红）以 !important 全覆盖 */
 /* === 弹窗横向溢出防护：禁止底部滑轮 === */
 .modal-box, .modal-wrap { overflow-x: hidden; }
 .modal-tip, .modal-title { word-break: break-word; overflow-wrap: anywhere; }

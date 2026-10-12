@@ -641,17 +641,25 @@
       });
       // R66：maxVal 取整到 5 的倍数——与折线图同口径，两图网格刻度数值一致
       maxVal = Math.ceil(maxVal / 5) * 5 || 5;
-      // R66：灰色网格线 + 左侧数字刻度（折线图同款：#e8e8e8 横线、#999 数字、4 格 5 条）
-      var grid = document.createElement('div');
-      grid.className = 'trend-grid';
-      var gridHtml = '';
+      /* v375（老板拍板：两图背景必须一模一样）——柱图背景网格弃用 HTML 线，改用与折线图
+         完全同一份 SVG（同 viewBox 800×200、同 padL/padT/padB、同 var(--border) 1 线宽、同字号补偿）。
+         两图容器同宽同高（syncBarHeight 已同步），同一份 SVG 渲染结果逐像素一致，不再靠 CSS 变量近似。 */
+      var _bsvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      _bsvg.setAttribute('viewBox', '0 0 800 200');
+      _bsvg.setAttribute('class', 'trend-grid-svg');
+      _bsvg.setAttribute('aria-hidden', 'true');
+      var _bax = 10;
+      try { var _br = trendBox.getBoundingClientRect(); if (_br && _br.width) _bax = +(10 * 800 / _br.width).toFixed(2); } catch (e9) { if (window.__silent) window.__silent(e9); }
+      var _bpT = 20, _bpB = 30, _bchartH = 200 - _bpT - _bpB;
+      var _bhtml = '';
       for (var g = 0; g <= 4; g++) {
-        var gPct = (100 / 4) * g;
-        var gVal = Math.round((maxVal / 4) * g);
-        gridHtml += '<div class="tg-line" style="bottom:' + gPct + '%"><span class="tg-num">' + gVal + '</span></div>';
+        var _gy = _bpT + (_bchartH / 4) * g;
+        var _gv = Math.round(maxVal - (maxVal / 4) * g);
+        _bhtml += '<line x1="40" y1="' + _gy + '" x2="780" y2="' + _gy + '" stroke="var(--border)" stroke-width="1"/>';
+        _bhtml += '<text x="34" y="' + (_gy + 0.44 * _bax) + '" text-anchor="end" font-size="' + _bax + '" fill="var(--text-light)">' + _gv + '</text>';
       }
-      grid.innerHTML = gridHtml;
-      trendBox.appendChild(grid);
+      _bsvg.innerHTML = _bhtml;
+      trendBox.appendChild(_bsvg);
       var labelsEl = document.createElement('div');
       labelsEl.className = 'trend-labels'; // R162：X 标签独立层（bottom: var(--xLift)，与折线标签底同位）
       trendData.forEach(function (d, i) {
@@ -1038,7 +1046,7 @@
           return;
         }
         if (!res || !res.ok) {
-          if (!silent) toast('首页数据加载失败，请刷新重试', 'error');
+          if (!silent) toast('网络开小差了，请稍后再试', 'error');
           return;
         }
         // 解包产品
@@ -1125,7 +1133,7 @@
         if (_em) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = __getAdminEmptyText(); }
         var _hasCache = __getAdminCache()._cacheFormat === 'v317' && (__getAdminCache().products || []).length;
         if (!silent && !_hasCache && !(state.products || []).length) {
-          toast('网络不佳，请刷新重试', 'error');
+          toast('网络开小差了，请稍后再试', 'error');
         }
       });
     }
@@ -1177,11 +1185,8 @@
     function renderStatTables(onlyKey) {
       /* v348 条34：统计表里的资源名/分类名先转义再拼进表格——
          原写法直接拼 innerHTML，名字里若夹带标签会被当成页面内容执行。 */
-      function __escCell(v) {
-        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
-          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-        });
-      }
+      /* v378：复用全站唯一转义（原内联第二份实现已删）；保留本名以便下方调用处不动 */
+      function __escCell(v) { return window.escapeHtml ? window.escapeHtml(v) : String(v == null ? '' : v); }
       var defs = [
         {
           key: 'product', tbodyId: 'statRows', pagerId: 'statPagerProduct', wrapId: 'statWrapProduct',
@@ -1824,7 +1829,7 @@ refreshCatCnts();
         return;
       }
       if (isChild && !parentId) {
-        toast('请选择所属一级分类', 'error');
+        toast('请选择所属分类', 'error');
         catSaving = false;
         catOk.disabled = false;
         catOk.style.opacity = '';
@@ -2248,8 +2253,8 @@ refreshCatCnts();
       if (!state.editingId) { toast('新增资源请先保存后再分享', 'error'); return; }
       var url = window.location.origin + '/shop?pid=' + state.editingId;
       var _pn = ''; try { var _pp = (state.products || []).find(function (x) { return Number(x.id) === Number(state.editingId); }); _pn = (_pp && _pp.title) || ''; } catch (e) { if (window.__silent) window.__silent(e); }
-      if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
-      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } toast('链接已复制到剪贴板', 'success'); }
+      if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制'); // R251：新标题+带资源名灰字
+      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } toast('链接已复制', 'success'); }
     });
     // R285 item 7：兜底弹窗已统一到 ui-common.js（window.openContactFallback / window.__kfFbClose）
     document.getElementById('previewContactBtn').addEventListener('click', function () {
@@ -2443,8 +2448,8 @@ refreshCatCnts();
         return function () {
           var url = __makeAdminShareUrl(pid);
           var _pn = __adminProdTitle(pid);
-          if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制到剪贴板'); // R251：新标题+带资源名灰字
-          else __cp(url, '链接已复制到剪贴板');
+          if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制'); // R251：新标题+带资源名灰字
+          else __cp(url, '链接已复制');
         };
       }
       function __saveQrAdminFn(pid) {

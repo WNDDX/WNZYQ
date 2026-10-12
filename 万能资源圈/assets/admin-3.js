@@ -238,7 +238,7 @@
       var txtEl = displayEl.querySelector('.cpd-text');
       if (sel === 0 && (opts.showAll || opts.allowUncategorized)) { txtEl.textContent = opts.allLabel || '全部（未分类）'; txtEl.classList.add('placeholder'); }
       else if (found) { txtEl.textContent = found.name; txtEl.classList.remove('placeholder'); }
-      else { txtEl.textContent = opts.placeholder || '请选择分类'; txtEl.classList.add('placeholder'); }
+      else { txtEl.textContent = opts.placeholder || '请选择资源分类'; txtEl.classList.add('placeholder'); }
       hiddenInput.value = sel || 0;
     }
     function pickCatValue(pickerEl, hiddenInput, displayEl, id, name, grey) {
@@ -721,8 +721,7 @@
           codeSpan.appendChild(noCodeBtn);
           var _bph = document.createElement('span'); /* R154：无码行保留绑定键槽位（空占位），列对齐 */
           _bph.className = 'bind-slot-ph';
-          codeSpan.appendChild(_bph);
-        }
+        } /* v375：绑定占位改挂「绑定+编辑+删除」组 */
 
         // R92：绑定设备徽章（一机一码·宽松模式）——只有配了资源码的类型才统计绑定，
         // 点击打开绑定设备管理弹窗（查看清单 / 解绑）
@@ -735,8 +734,7 @@
           if (window.__decorateBtn) window.__decorateBtn(bindSpan, 'key', 4); /* v369 条1 */
           bindSpan.title = '查看该类型的资源码与绑定设备';
           bindSpan.addEventListener('click', function () { openBindings(v); });
-          codeSpan.appendChild(bindSpan);
-        }
+        } /* v375（老板定稿）：绑定键改挂「绑定+编辑+删除」组，资源码独自一组 */
 
         var sort = document.createElement('span');
         sort.className = 'v-sort';
@@ -785,10 +783,12 @@
           renderVariants();
         });
 
-        /* v357 条5：绑定分组——名称+金额+排序一组、码+绑定一组（原有）、编辑+删除一组；换行整组走不拆散 */
+        /* v375（老板定稿）：分组改三段——①名称+金额+排序一组；②资源码独自一组；③绑定+编辑+删除一组（无码行绑定放占位保列对齐）；换行整组走不拆散 */
         var _gMain = document.createElement('span'); _gMain.className = 'v-group v-main-group';
         _gMain.appendChild(name); if (_vipEl) _gMain.appendChild(_vipEl); _gMain.appendChild(sort);
         var _gAct = document.createElement('span'); _gAct.className = 'v-group v-act-group';
+        if (typeof bindSpan !== 'undefined' && bindSpan && bindSpan.parentNode == null) _gAct.appendChild(bindSpan);
+        else if (typeof _bph !== 'undefined' && _bph && !_bph.parentNode) _gAct.appendChild(_bph);
         _gAct.appendChild(editBtn); _gAct.appendChild(delBtn);
         item.appendChild(handle);
         item.appendChild(_gMain);
