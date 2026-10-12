@@ -208,31 +208,12 @@
     var catHidden = document.getElementById('catHidden');
     var catOk = document.getElementById('catOk');
     var catCancel = document.getElementById('catCancel');    var catDraftPending = false, catDraftFor = null;
-    // ===== 关键按钮事件委托兜底：确保「新增分类 / 设置客服」任何情况下都能打开对应弹窗 =====
-    function openContactSetting() {
-      // 首开修复（与公告弹窗同模式）：先立即打开弹窗；settings 已加载过则同步填值，
-      // 未加载过（登录后没进过"平台设置"就首次点开）则后台拉取 admin/settings 回填——
-      // 原先取值的 setContactUrl 只有切到设置页才会被 loadSettings 填充，导致首次进弹窗没链接
-      try { if (!contactDraftPending && window.__plSet) document.getElementById('contactUrlInput').value = document.getElementById('setContactUrl').value || ''; } catch (e) { if (window.__silent) window.__silent(e); }
-      try { contactDraftPending = false; } catch (e) { if (window.__silent) window.__silent(e); }
-      try { document.getElementById('contactMask').classList.add('open'); } catch (e) { if (window.__silent) window.__silent(e); }
-     if (!window.__plSet) {
-        api('admin/settings').then(function (res) {
-          try {
-            if (res && res.ok && document.getElementById('contactMask').classList.contains('open') && !contactDraftPending) {
-              var v = (res.settings || {}).contact_url || '';
-              document.getElementById('contactUrlInput').value = v;
-              document.getElementById('setContactUrl').value = v;
-            }
-          } catch (e) { if (window.__silent) window.__silent(e); }
-        }).catch(function () {});
-      }
-    }
+    // ===== 关键按钮事件委托兜底：确保「新增分类」任何情况下都能打开对应弹窗 =====
+    // v383：设置客服兜底（openContactSetting）随旧 contactMask 弹窗退役——设置信息三键在 admin-4 自带监听
     document.addEventListener('click', function (e) {
-      var btn = e.target.closest ? e.target.closest('#openContactBtn, #addCatBtn, #addAnnBtn') : null;
+      var btn = e.target.closest ? e.target.closest('#addCatBtn, #addAnnBtn') : null;
       if (!btn) return;
-      if (btn.id === 'openContactBtn') { try { if (!document.getElementById('contactMask').classList.contains('open')) openContactSetting(); } catch (e) { try { document.getElementById('contactMask').classList.add('open'); } catch (e2) { if (window.__silent) window.__silent(e2); } } }
-      else if (btn.id === 'addCatBtn') { try { if (!document.getElementById('catMask').classList.contains('open')) openCatEdit(null); } catch (e) { try { document.getElementById('catMask').classList.add('open'); } catch (e2) { if (window.__silent) window.__silent(e2); } } }
+      if (btn.id === 'addCatBtn') { try { if (!document.getElementById('catMask').classList.contains('open')) openCatEdit(null); } catch (e) { try { document.getElementById('catMask').classList.add('open'); } catch (e2) { if (window.__silent) window.__silent(e2); } } }
       else if (btn.id === 'addAnnBtn') { try { addNewAnnouncement(); } catch (e) { if (window.__silent) window.__silent(e); } }
     });
 
@@ -507,7 +488,7 @@
     // 滚动锁已取消（用户要求恢复自由滚动）：不再锁定页面滚动，弹窗/编辑器放大时页面仍可自由滚动
     (function () { window.__syncBodyLock = function () {}; window.__syncBodyLock(); })();
     (function () {
-  function _r(){ document.querySelectorAll('.rte-editor.rte-large').forEach(function(e){ e.classList.remove('rte-large'); e.style.top=''; e.style.height=''; }); document.querySelectorAll('.rte-toolbar-large').forEach(function(e){ e.classList.remove('rte-toolbar-large'); }); document.querySelectorAll('.rte-zoom-on').forEach(function(e){ e.classList.remove('rte-zoom-on'); e.innerHTML=RTE_SVG_MAX; }); if(window.__rteRO&&window.__rteRO.disconnect){ try{ window.__rteRO.disconnect(); }catch (e) { if (window.__silent) window.__silent(e); } } } // R231 条9：emoji→SVG
+  function _r(){ document.querySelectorAll('.rte-editor.rte-large').forEach(function(e){ e.classList.remove('rte-large'); e.style.top=''; e.style.height=''; }); document.querySelectorAll('.rte-toolbar-large').forEach(function(e){ e.classList.remove('rte-toolbar-large'); }); document.querySelectorAll('.rte-zoom-on').forEach(function(e){ e.classList.remove('rte-zoom-on'); e.innerHTML=RTE_SVG_MAX; }); document.body.classList.remove('rte-zooming'); /* v382 条5：同步撤遮罩 */ if(window.__rteRO&&window.__rteRO.disconnect){ try{ window.__rteRO.disconnect(); }catch (e) { if (window.__silent) window.__silent(e); } } } // R231 条9：emoji→SVG
   window.__resetRteAll=_r;
   // R144（用户 23:52）：放大态重置只挂在"编辑器宿主弹窗"关闭时——原实现对任意弹窗打开都重置，
   // 导致放大态下点插入图片/视频（inputMask 打开）编辑器就自动缩小；inputMask 层级本就高于放大态
@@ -525,7 +506,6 @@
         if (document.getElementById('editMask') && document.getElementById('editMask').classList.contains('open')) return true;
         if (document.getElementById('variantMask') && document.getElementById('variantMask').classList.contains('open')) return true;
         if (document.getElementById('annMask') && document.getElementById('annMask').classList.contains('open')) return true;
-        if (document.getElementById('contactMask') && document.getElementById('contactMask').classList.contains('open')) return true;
         return false;
       };
       // 保存所有编辑中内容到 localStorage（供刷新前调用）
@@ -550,10 +530,7 @@
             var _ve = document.getElementById('vDescEditor');
             drafts.push({ type: 'variant', id: (typeof state !== 'undefined' && state.editingVariantId) || null, name: document.getElementById('vName') ? document.getElementById('vName').value : '', title: document.getElementById('vTitle') ? document.getElementById('vTitle').value : '', desc: _ve ? _ve.innerHTML : '' });
           }
-          // 客服弹窗草稿
-          if (document.getElementById('contactMask') && document.getElementById('contactMask').classList.contains('open')) {
-            drafts.push({ type: 'contact', url: document.getElementById('contactUrlInput') ? document.getElementById('contactUrlInput').value : '' });
-          }
+          /* v383：客服弹窗草稿随 contactMask 退役（设置信息为面板直存） */
           if (drafts.length) localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), drafts: drafts }));
         } catch (e) { if (window.__silent) window.__silent(e); }
       };
@@ -585,10 +562,7 @@
               try { localStorage.setItem('wnzyq_variant_draft', JSON.stringify(d)); } catch (e) { if (window.__silent) window.__silent(e); }
               restored = true;
             }
-            if (d.type === 'contact' && document.getElementById('contactUrlInput')) {
-              document.getElementById('contactUrlInput').value = d.url || '';
-              restored = true;
-            }
+            /* v383：contact 草稿恢复随 contactMask 退役 */
           });
           if (restored) setTimeout(function () { try { toast('已恢复你编辑中的内容', 'info', 'info', 3000); } catch (e) { if (window.__silent) window.__silent(e); } }, 600);
           return restored;
@@ -608,7 +582,7 @@
         if (closeBtn.dataset.close === 'catMask') { catDraftPending = false; catDraftFor = null; } // ×=取消：丢弃分类草稿
         if (closeBtn.dataset.close === 'variantMask') { variantDraftPending = false; variantDraftFor = null; } // ×=取消：丢弃类型草稿
         if (closeBtn.dataset.close === 'annMask') { try { window.__annDiscard(); } catch (e) { if (window.__silent) window.__silent(e); } } // ×=取消：R145 全量恢复（数据+编辑器+频率+列表），见 annDiscard
-        if (closeBtn.dataset.close === 'contactMask') { contactDraftPending = false; var _cu=document.getElementById('contactUrlInput'); if(_cu)_cu.value=''; } // ×=取消：清空输入
+        /* v383：contactMask ×关闭分支随旧弹窗退役 */
         if (closeBtn.dataset.close === 'pwdMask') { var _o=document.getElementById('oldPwd'),_n=document.getElementById('newPwd'),_c=document.getElementById('confirmPwd'); if(_o)_o.value=''; if(_n)_n.value=''; if(_c)_c.value=''; } // ×=取消：清空密码框
         if (mask) {
           mask.classList.remove('open');
@@ -1021,7 +995,7 @@
       return api('admin/settings').then(function (res) {
         if (!res.ok) { toast(res.msg || '加载失败，网络开小差了', 'error'); return; }
         var s = res.settings || {};
-        window.__plSet = 1; document.getElementById('setContactUrl').value = s.contact_url || ''; if (document.getElementById('contactMask').classList.contains('open')) document.getElementById('contactUrlInput').value = s.contact_url || '';
+        window.__plSet = 1; if (window.__infoApply) window.__infoApply(s); /* v383：设置信息三面板+全局消费变量统一应用 */
         // 客服状态文字已按需求移除
         if (typeof stateAnn !== 'undefined' && stateAnn) {
           var _annMaskOpen = document.getElementById('annMask').classList.contains('open');

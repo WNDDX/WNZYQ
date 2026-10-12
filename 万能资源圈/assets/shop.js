@@ -539,6 +539,10 @@
       // 有数据：清除骨架，显示内容
       if (_annSkel) _annSkel.style.display = 'none';
       var mode = DATA.announcementMode || 'always';
+      /* v384 修复：mode=off 时任何阶段都必须关弹窗——此前 off 只在 547 行检查，而骨架期先把弹窗
+         打开并置 __annShown=true，数据到达后走下方早退分支（该分支不查 off），弹窗被填上内容永不关闭，
+         还会挡住搜索框聚焦/分页按钮/滑动起手 */
+      if (mode === 'off') { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
       if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) { if (window.__silent) window.__silent(e); } } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) { if (window.__silent) window.__silent(e); } }
         // 修复（首次开屏）：弹窗已打开但此前数据未到（首访无缓存先弹空窗），接口返回后在此用最新数据刷新 tabs/默认选中/默认内容
         if (mask.classList.contains('open')) renderAnnContent();
@@ -564,6 +568,10 @@
     }
     function renderCategories() {
       var cats = DATA.categories.slice();
+      /* v384 修复：数据未就绪时保留 shop.html 内嵌的 4 个骨架胶囊占位（v380 条12 设计意图）。
+         此前 init 的 renderAll() 会无条件跑 renderCategories，把占位整体清掉只剩一个「全部」，
+         首屏加载期分类栏失去占位效果。首包数据到达（__shopEntryDone）后才允许真实渲染。 */
+      if (!cats.length && !window.__shopEntryDone && !window.__loadFailed && window.location.protocol !== 'file:') return;
       // 确保"全部"在最前面
       if (!cats.find(function (c) { return Number(c.id) === 0; })) {
         cats.unshift({ id: 0, name: '全部', parent_id: 0 });
@@ -989,17 +997,8 @@
           __tip2.textContent = '没找到？换个关键词，或浏览全部资源';
           emptyTip.appendChild(__tip2);
         }
-        /* v343 条44：非搜索的“空分类”也给一个下一步按钮——一键回到全部资源 */
-        if (!kw && (currentCat || currentSubCat)) {
-          var __all2 = document.createElement('button');
-          __all2.type = 'button'; __all2.className = 'empty-clear-btn'; __all2.textContent = '查看全部资源';
-          __all2.addEventListener('click', function () {
-            currentCat = 0; currentSubCat = 0; currentPage = 1;
-            renderCategories();
-            fetchRemote({ page: 1, cid: 0, subCid: 0, kw: '' }).then(function () { renderAll(); }).catch(function () {});
-          });
-          emptyTip.appendChild(__all2);
-        }
+        /* v382 条1：删除 v343 条44 的重复「查看全部资源」——上方 v336 条168 已在所有非搜索空态
+           （含空分类）输出同名按键，此处再输出一次导致空分类出现两个相同按钮。 */
         return;
       }
 
@@ -2419,6 +2418,7 @@
             DATA.announcements = window.parseAnnouncements(res.settings, { filterHidden: true });
             if (res.settings.shop_name) DATA.shopName = res.settings.shop_name;
             window._globalContact = res.settings.contact_url || getDefaultContact();
+            window.__contactQr = res.settings.contact_qr || ''; window.__groupQr = res.settings.group_qr || ''; window.__gzhQr = res.settings.gzh_qr || ''; /* v383：三张二维码全局化（全站客服弹窗统一消费） */
             if (window.__kfPreconnect) window.__kfPreconnect(window._globalContact);
           }
           // 更新缓存（带版本号）
@@ -2429,6 +2429,7 @@
             announcement_mode: DATA.announcementMode,
             announcements: DATA.announcements,
             shop_name: DATA.shopName,
+            _contactQr: window.__contactQr || '', _groupQr: window.__groupQr || '', _gzhQr: window.__gzhQr || '', /* v383：二维码随缓存恢复 */
             _homeVersion: res.version || ''
           });
           usingRemote = true;
@@ -2540,6 +2541,7 @@
             try { __mc.sets = res[2].settings || {}; __mc.t = Date.now(); } catch (e) { if (window.__silent) window.__silent(e); }
             if ((res[2].settings || {}).shop_name) { DATA.shopName = res[2].settings.shop_name; }
             window._globalContact = (res[2].settings || {}).contact_url || getDefaultContact();
+            window.__contactQr = (res[2].settings || {}).contact_qr || ''; window.__groupQr = (res[2].settings || {}).group_qr || ''; window.__gzhQr = (res[2].settings || {}).gzh_qr || ''; /* v383 */
             if (window.__kfPreconnect) window.__kfPreconnect(window._globalContact);
             try {
               var cacheData = JSON.parse(localStorage.getItem('wnzyq_shop_data') || '{}');
@@ -2591,6 +2593,7 @@
         DATA.announcements = cached.announcements;
         if (cached.shopName) DATA.shopName = cached.shopName;
         if (cached._globalContact) window._globalContact = cached._globalContact;
+        if (cached._contactQr !== undefined) { window.__contactQr = cached._contactQr || ''; window.__groupQr = cached._groupQr || ''; window.__gzhQr = cached._gzhQr || ''; } /* v383 */
         usingRemote = true;
         // 后台静默刷新：回来后如果当前显示的还是同一个 key，且数据有变，才重渲染
         doRealFetch().then(function (res) {
@@ -3005,6 +3008,7 @@
           .then(function (res) {
             if (res && res.settings && res.settings.contact_url !== undefined) {
               window._globalContact = res.settings.contact_url || getDefaultContact();
+              window.__contactQr = res.settings.contact_qr || ''; window.__groupQr = res.settings.group_qr || ''; window.__gzhQr = res.settings.gzh_qr || ''; /* v383：后台改了立即同步 */
               if (window.__kfPreconnect) window.__kfPreconnect(window._globalContact);
               updateContactBtn();
             }

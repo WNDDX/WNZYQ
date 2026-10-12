@@ -344,7 +344,11 @@
        R134 把下三角换成饱满 path 是对「图标调大」的误解（用户指的实为浏览器 favicon，见 R140）；
        下方 space-between（R134 ②两端对齐）与 1.2em 容器等高（R131 补）均保留 */
     .p-ops .select-picker.code-picker .cp-item { justify-content: space-between; }
-    #productList.card-view .product-row .p-ops .select-picker.code-picker { margin: 0; flex: 1 1 auto; min-width: 88px; align-self: auto; } // v325：网格卡片资源码键最小宽度保底 88px（"资源码"三字+箭头完整可见），flex-wrap 配合自动换行
+    /* v382 条4：网格卡五键与列表行键完全同度量——min-width 88 保底废除（破坏 grid 等分，
+       资源码键比旁边四键宽=「跟其他按键有区别」的根因之一）；等分交 grid，文字由 btnFit 收放 */
+    #productList.card-view .product-row .p-ops .select-picker.code-picker { margin: 0; flex: 1 1 auto; min-width: 0; align-self: auto; }
+    #productList.card-view .product-row .p-ops .row-btn { text-align: center; padding: 4px 4px; font-size: 12px; }
+    #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display { padding: 4px 4px; font-size: 12px; justify-content: center; height: 30px; min-height: 30px; box-sizing: border-box; } /* 与 row-btn 同高同字号同内距 */
     @media (max-width: 600px) {
       /* 手机窄列：旁边按键为等分平铺（两行文字 ~48px 宽）；资源码带箭头+三字，
          等分宽会挤掉文字——改为内容自适应宽（white-space nowrap 同 card-view 下拉口径），高度仍 stretch 等高 */
@@ -858,8 +862,8 @@
       .tbl-custom-btn { padding: 0 8px; font-size: 12px; }
       /* R285：手机端 390px 网格模式资源码选择框修复——height:100% 在父无显式高度时循环引用导致高度坍缩，字不显示 */
       #productList.card-view .product-row .p-ops .select-picker.code-picker { min-width: 0; } /* v369 条3：grid 等分，不再保底宽破坏等分 */
-      #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display { height: auto; min-height: 28px; padding: 4px 4px; font-size: 11px; gap: 4px; justify-content: center; }
-      #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display .cpd-text { font-size: 11px; }
+      #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display { height: 30px; min-height: 30px; padding: 4px 4px; font-size: 12px; gap: 4px; justify-content: center; } /* v382 条4：与 row-btn(12px/30px) 同度量，原 11px/28px 不一致 */
+      #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display .cpd-text { font-size: 12px; }
       #productList.card-view .product-row .p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { width: 12px; height: 12px; }
     
       /* R286-60：390px管理页适配再优化 */
@@ -1128,46 +1132,7 @@
     /* R272：stats-loading / sl-spin 已删除，相关 CSS 清理完毕 */
     .stats-fade-in { animation: statFade var(--dur-mid) ease; }
     @keyframes statFade { from { opacity:.2; } to { opacity:1; } }
-    /* R70：柱图容器改为白底卡片（与折线图灰底区分），保持同构尺寸 */
-    .chart-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow: hidden; } /* v381 条8：与折线图背景完全一致（白卡+细边框），唯一差异=内容（条形） */
-    .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding: 0 2.5% 0 5%; position: relative; background: transparent; border-radius: 10px; } /* v381 条8：撤浅蓝灰底——两图容器背景统一，绘图区不再自带第二层底色 */
     #lineSvg { overflow: visible; } /* R145：折线悬浮框去 viewBox 封顶后，超出部分照常渲染，两框全视口恒等 */
-    /* R66：柱状图网格层——对齐柱状区（bottom 24px 高 100px），折线图同款灰线 #e8e8e8 与左侧数字 #999；
-       grid 先插 DOM、柱列（relative）靠后绘制，网格线在柱子后面 */
-    /* R68：网格对齐柱状绘图区（left 与 .trend-bars 的 padding-left 5% 一致），数字紧贴柱区左缘——与折线图数字贴折线区同理；R70 高度跟随 --barZone */
-    .trend-bars::-webkit-scrollbar { display: none; }
-    .trend-col { flex: 1 1 0; min-width: 0; position: relative; height: 100%; }
-    .trend-bar-wrap { position: absolute; left: 2px; right: 2px; bottom: var(--bLift, 30px); display: flex; flex-direction: row; justify-content: flex-end; height: var(--barZone, 100px); gap: 4px; } /* R162：柱底=折线网格底线（距 trend-bars 底 30k，随视口同步） */
-    /* R57：每列两组并排——左本期实色、右上期浅色半透明；组内仍是浏览/咨询客服纵向堆叠 */
-    .trend-bar-group { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 4px; animation: tbgIn var(--dur-mid) ease; } /* R231 条3：切档重建时组级淡入（合成层），柱高瞬切不再逐帧重排 */
-    @keyframes tbgIn { from { opacity: 0.35; } to { opacity: 1; } }
-    .trend-bar.ghost { opacity: 0.32; }
-    /* R58：箭头不再是列顶固定定位，而是放进本期组内（浏览柱上方）——组是 column 底对齐，箭头 DOM 在柱前面即贴柱顶、跟随柱高度 */
-    .trend-arrow { text-align: center; font-size: 10px; line-height: 1; margin-bottom: 4px; }
-    .trend-arrow.up { color: var(--brand-green); }
-    .trend-arrow.down { color: var(--red-strong); } /* v352 遗留7：涨跌颜色统一走手册（#d43c3c 是账外新色） */
-    .trend-arrow.flat { color: #9aa4b2; }
-    .trend-bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 2px; /* R231 条3：height 过渡删除——每次切档逐帧重排整页；改组级淡入（见 .trend-bar-group） */ }
-    .trend-bar.view { background: var(--blue1); }
-    .trend-bar.contact { background: var(--brand-orange); }
-    /* R78：资源码解锁柱（与折线图系列色一致 var(--green)，ghost 由统一 opacity .32 处理） */
-    .trend-bar.resource { background: var(--green); }
-    /* R76：柱状图悬浮层——竖参考线+数值框，与折线图悬浮一模一样（同色同虚线同框样式同两列布局） */
-    .bar-hover-line { position: absolute; top: var(--gridTop, 20px); bottom: var(--bLift, 30px); width: 0; border-left: 1px dashed #c3ccd9; pointer-events: none; z-index: 5; } /* R162：竖线范围=网格范围（折线 SVG y 20..170 同口径） */
-    /* R115：柱状悬浮框与折线 SVG 悬浮框同步——折线框随 viewBox 缩放（外框 150×84、字号 11、行距 16，均乘渲染缩放比）；
-       柱状框经 --bhs（JS 每次绘制时写入折线当前缩放比）跟随缩放，两框在任何宽度下外框尺寸/字号一致 */
-    .bar-hover-box { position: absolute; background: rgba(255,255,255,0.96); border: 1px solid var(--neutral-3, #e4e8ec); border-radius: calc(4px * var(--bhs, 1)); width: calc(150px * var(--bhs, 1)); height: calc(84px * var(--bhs, 1)); box-sizing: border-box; pointer-events: none; z-index: 6; padding: 0; }
-    /* R117：行位置逐行对齐折线 SVG 框——折线侧文字基线=18/34/50/66（框顶起、基准单位），柱侧各行改绝对定位，
-       行中心落在 14.14/30.14/46.14/62.14（=折线同字体的字形中心，实测校准），1px 为盒边框偏移 */
-    .bar-hover-box .bhb-time { position: absolute; left: 0; right: 0; top: calc(4.14px * var(--bhs, 1) - 1px); height: calc(20px * var(--bhs, 1)); line-height: calc(20px * var(--bhs, 1)); font-size: calc(11px * var(--bhs, 1)); font-weight: 600; color: #555; text-align: center; }
-    .bar-hover-box .bhb-row { position: absolute; left: 0; right: 0; height: calc(16px * var(--bhs, 1)); line-height: calc(16px * var(--bhs, 1)); font-size: calc(11px * var(--bhs, 1)); display: flex; justify-content: space-between; padding: 0 calc(8px * var(--bhs, 1)); }
-    .bar-hover-box .bhb-row:nth-child(2) { top: calc(22.14px * var(--bhs, 1) - 1px); }
-    .bar-hover-box .bhb-row:nth-child(3) { top: calc(38.14px * var(--bhs, 1) - 1px); }
-    .bar-hover-box .bhb-row:nth-child(4) { top: calc(54.14px * var(--bhs, 1) - 1px); }
-    .bar-hover-box .bhb-cur { flex: 1 1 auto; }
-    .bar-hover-box .bhb-prev { flex: 0 0 auto; text-align: right; }
-.trend-labels { position: absolute; left: 0; right: 0; bottom: var(--xLift, 8px); height: 12px; pointer-events: none; } /* R162：X 标签独立层（底距=折线标签 baseline 距底 8k） */
-.trend-label { position: absolute; bottom: 0; left: 0; transform: translateX(-50%); text-align: center; font-size: 10px; color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ white-space: nowrap; line-height: 1.16; } /* R162：left 按 SVG 点坐标换百分比（与折线 X 标签同 x 同间隔，点对齐） */
     .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; line-height: 1.16; color: var(--text-light); justify-content: center; } /* R145：图例与轴数字统一 13px/1.16 同高 */
     .trend-legend span:not(.lg-group)::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 4px; margin-right: 4px; vertical-align: middle; }
     .trend-legend .lg-view::before { background: var(--blue1); }
@@ -1340,8 +1305,6 @@
       /* 数据统计：1/7/30天一行、日期筛选一行，均分不超框 */
       .trend-chart .time-filter { flex-basis: 100%; max-width: 100%; }
       .trend-chart .time-filter + div { flex-basis: 100%; max-width: 100%; }
-      .trend-chart .stat-date-input { flex: 1; min-width: 0 !important; }
-      .trend-bars { gap: 4px; }
       /* 批量栏按钮紧凑换行，不超出画面 */
       .batch-bar { gap: 4px; padding: 8px 8px; }
       .batch-btn { padding: 4px 8px; font-size: 12px; }
@@ -1349,9 +1312,13 @@
     }
 
     /* R176：编辑器工具栏展开键——v375 统一：与分类行 .cat-fold 完全同一套三角
-       （裸三角无底色无边框无阴影，仅大小差异；旋转语义同款：收起=-90°朝右、展开=0°朝下） */
-    .rte-expand {
-      display: flex; margin-left: auto; flex-shrink: 0; align-self: center;
+       （裸三角无底色无边框无阴影，仅大小差异；旋转语义同款：收起=-90°朝右、展开=0°朝下）
+       v382 条3/条5：展开键改绝对定位钉第一行右缘（同 cat-fold 口径）——原 margin-left:auto
+       在 flex-wrap 工具栏里会被挤到第二行（三角掉行）；工具栏右侧留 40px 防重叠 */
+    .rte-toolbar { position: relative; padding-right: 44px; }
+    .rte-toolbar .rte-expand {
+      position: absolute; right: 6px; top: 8px; margin-left: 0;
+      display: flex; flex-shrink: 0; align-self: auto;
       width: 32px; height: 32px; padding: 0;
       border: none; background: transparent; /* v370c：三角统一裸三角——全站三角只允许大小差异，不允许边框/底色 */
       color: var(--blue1); cursor: pointer;
@@ -1477,6 +1444,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   border-bottom: 1px solid var(--border);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* v382 条14：末行去底线——表格底线止于最后一行数据（对齐资源明细口径），
+   分类统计/浏览记录表下不再多出一根悬空线 */
+.stat-table tr:last-child td { border-bottom: none; }
 /* 分类名/类型名单行截断，配小框看全文 */
 .cat-row .c-name { flex: 1 1 140px; font-size: 15px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .variant-item .v-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 600 /* v336 条115 */; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1998,9 +1968,12 @@ button, [role="button"], .row-btn, .batch-btn, .rte-btn, [onclick] { -webkit-tap
 .stat-table td:nth-child(1), .stat-table th:nth-child(1) { text-align: left !important; }
 .stat-table td { font-variant-numeric: tabular-nums; }
 
-/* v336 条122：放大编辑背景用真遮罩（fixed 伪元素），不再靠 100 万像素宽阴影 */
+/* v336 条122：放大编辑背景用真遮罩——v382 条5 重做：原遮罩挂 .rte-editor.rte-large::before，
+   但编辑器自身 contain:paint（创建堆叠上下文+裁剪后代）把伪元素裁进编辑器盒内，
+   且按堆叠序画在编辑器白底之上、文字之下 → 放大态编辑器内部整体发黑（老板截图实锤）。
+   改挂 body::after（根堆叠上下文，z 5999 < 编辑器 6000 < 工具栏 6001），JS 开关 body.rte-zooming */
 .rte-editor.rte-large { box-shadow: 0 12px 40px rgba(0,0,0,0.25) !important; }
-.rte-editor.rte-large::before { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: -1; }
+body.rte-zooming::after { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 5999; pointer-events: none; }
 
 /* v336 条111：后台输入框基础 16px（iOS 不缩放）、图表轴 11px */
 .input, .form input, .form select, .form textarea { font-size: 16px; }
@@ -2086,13 +2059,20 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   .cat-sub-ph { width: 44px; margin-right: 0; }
   .cat-row .c-sort { flex: 0 0 56px; width: 56px; max-width: 56px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
   .cat-row .c-count { flex: 0 0 62px; width: 62px; max-width: 62px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
-  /* 第二组：整行下拉展开（同批量条缓动）——v381 条1：公告项操作组同款 */
-  .cat-row .c-meta, .ann-item .c-meta { flex: 1 1 100%; gap: 8px; justify-content: flex-start; padding: 0 0 0 28px; box-sizing: border-box;
+  /* 第二组：整行下拉展开（同批量条缓动）——v382 条12：公告项退出此规则。
+     用户原话「组内不换行啊之前说的」：公告项与分类行不同，两组必须同一行内
+     （组内不拆、组间同行=绑定组铁律），折叠沿用全设备基础 visibility 口径（1485-1490），
+     不再整行下拉。分类行保持两行网格（v370b 已确认口径）。 */
+  .cat-row .c-meta { flex: 1 1 100%; gap: 8px; justify-content: flex-start; padding: 0 0 0 28px; box-sizing: border-box;
     max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
     transition: max-height .22s var(--ease-out, ease), opacity .22s var(--ease-out, ease), margin-top .22s var(--ease-out, ease); }
-  .cat-row.cat-open .c-meta, .ann-item.cat-open .c-meta { max-height: 48px; opacity: 1; margin-top: 6px; }
-  .cat-row .c-meta > *:first-child, .ann-item .c-meta > *:first-child { min-width: 0 !important; }
-  .cat-row .c-meta .row-btn, .ann-item .c-meta .row-btn { visibility: visible; opacity: 1; transition: none; min-width: 0; padding: 4px 12px; font-size: 12px; }
+  .cat-row.cat-open .c-meta { max-height: 48px; opacity: 1; margin-top: 6px; }
+  .cat-row .c-meta > *:first-child { min-width: 0 !important; }
+  .cat-row .c-meta .row-btn { visibility: visible; opacity: 1; transition: none; min-width: 0; padding: 4px 12px; font-size: 12px; }
+  /* v382 条12：手机公告项=单行（主组吃满、操作组 margin-left:auto 靠右、三角恒第一行右缘） */
+  .ann-item { flex-wrap: nowrap; }
+  .ann-item .ann-name { flex: 1 1 0; }
+  .ann-item .row-btn { flex: 0 0 52px; width: 52px; padding: 4px 6px; font-size: 12px; }
   .cat-row .cat-fold, .ann-item .cat-fold { top: 11px; } /* 手机首行中心=23px（padding12+柄半高11） */
 }
 
@@ -2129,3 +2109,42 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .ann-item .ann-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ann-item .ann-sort, .ann-item .a-sort { flex: 0 0 56px; width: 56px; min-width: 0; overflow: hidden; white-space: nowrap; }
 .ann-item .row-btn { flex: 0 0 64px; width: 64px; min-width: 0; justify-content: center; overflow: hidden; white-space: nowrap; }
+
+/* ===== v383：设置信息（咨询客服/交流群聊/公众号讯三键 + 右缘三角展开面板 + 导航页同款预览弹窗）===== */
+/* 三键色 = 导航页按键一致色（绿/蓝/青）；admin 原先只有 btn-blue，补齐另两色 */
+.info-setting-row .btn-green { background: var(--brand-green, #00A828); }
+.info-setting-row .btn-cyan { background: var(--brand-cyan, #008C8C); }
+.info-setting-row .info-rows { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.info-item { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--card-bg, #fff); }
+.info-row-bar { display: flex; align-items: center; gap: 8px; }
+.info-row-bar .btn-green, .info-row-bar .btn-blue, .info-row-bar .btn-cyan { margin-bottom: 0; flex: 1 1 auto; min-width: 0; }
+/* 右缘三角：与分类行 .cat-fold 同款（默认收起=朝下，展开=转 180°，统一过渡时长/曲线） */
+.info-fold { width: 32px; height: 32px; flex: 0 0 32px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+.info-fold .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid, .28s) var(--ease-out, ease); transform: rotate(0deg); }
+.info-item.open .info-fold .toggle-arrow { transform: rotate(180deg); }
+/* 展开面板：统一 max-height 过渡（与系统折叠同口径） */
+.info-panel { overflow: hidden; max-height: 0; opacity: 0; transition: max-height var(--dur-mid, .28s) var(--ease-out, ease), opacity var(--dur-mid, .28s) var(--ease-out, ease), margin var(--dur-mid, .28s) var(--ease-out, ease); margin-top: 0; }
+.info-item.open .info-panel { max-height: 560px; opacity: 1; margin-top: 10px; }
+.info-panel label { display: block; font-size: 13px; color: #666; margin: 10px 0 6px; }
+.info-panel .info-save { margin-top: 10px; margin-bottom: 0; }
+/* 二维码区：有图=图+右上角统一×删除；无图=封面式虚线点击添加 */
+.info-qr-area { display: flex; align-items: flex-start; gap: 12px; }
+.info-qr-box { position: relative; width: 132px; height: 132px; flex: 0 0 132px; border-radius: 10px; overflow: hidden; background: #f5f7fa; }
+.info-qr-box img { width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; }
+.info-qr-del { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; z-index: 2; }
+.info-qr-del:hover { background: rgba(0,0,0,0.75); }
+.info-qr-add { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 1.5px dashed var(--blue1); border-radius: 10px; color: var(--blue1); font-size: 13px; cursor: pointer; background: var(--hover-bg, #f0f7ff); transition: background .2s ease; }
+.info-qr-add:hover { background: #e3eefc; }
+.info-qr-add-plus { font-size: 26px; line-height: 1; font-weight: 600; }
+.info-qr-note { font-size: 12px; color: var(--text-faint, #9aa7b5); line-height: 1.6; padding-top: 4px; }
+/* 预览弹窗（导航页三弹窗同款观感） */
+.info-preview { text-align: center; padding: 4px 0 8px; }
+.info-preview .qrcode-wrap { display: flex; justify-content: center; }
+.info-preview .qrcode-wrap img { width: 200px; height: 200px; object-fit: contain; border-radius: 8px; background: #fff; }
+.info-preview .info-tip { margin: 10px 0 0; font-size: 13px; color: var(--text-secondary, #667); }
+@media (max-width: 600px) {
+  .info-item { padding: 8px 10px; }
+  .info-row-bar .btn-green, .info-row-bar .btn-blue, .info-row-bar .btn-cyan { height: 36px; font-size: 14px; }
+  .info-qr-box { width: 108px; height: 108px; flex-basis: 108px; }
+  .info-preview .qrcode-wrap img { width: 160px; height: 160px; }
+}

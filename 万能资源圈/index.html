@@ -367,9 +367,11 @@ const CONFIG = {
     serviceWeixinUrl: "https://work.weixin.qq.com/kfid/kfc39748ad948e8b691",
     groupWeixinUrl: "https://work.weixin.qq.com/gm/8036a2badd7daab25b1764b62c3bff9a",
     logoImg: "/assets/images/logo.png?v=330",
-    serviceQrImg: "/assets/images/kefu.png?v=330",
-    groupQrImg: "/assets/images/qun.png?v=330",
-    gzhImg: "/assets/images/gzh.png?v=330",
+    /* v383：三张二维码（kefu/qun/gzh.png 静态文件已删）+ 两条跳转链接全量改走后台「设置信息」——
+       启动时 fetch /api/settings 覆盖下面的值；这里的链接仅为拉取失败时的出厂兜底 */
+    serviceQrImg: "",
+    groupQrImg: "",
+    gzhImg: "",
     tipService: "长按图片识别-添加人工客服",
     tipGroup: "长按图片识别-加入交流群聊",
     tipGzh: "长按图片识别-关注公众号讯",
@@ -422,6 +424,20 @@ function loadImg(imgDom, src, retryCount = 0) {
 }
 loadImg(dom.logoImage, CONFIG.logoImg);
 
+// v383：启动拉公开设置，覆盖客服/群聊链接与三张二维码（后台「设置信息」改完全站统一生效）
+try {
+  fetch('/api/settings', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (res) {
+    if (!res || !res.ok || !res.settings) return;
+    var s = res.settings;
+    if (s.contact_url) CONFIG.serviceWeixinUrl = s.contact_url;
+    if (s.group_url) CONFIG.groupWeixinUrl = s.group_url;
+    CONFIG.serviceQrImg = s.contact_qr || '';
+    CONFIG.groupQrImg = s.group_qr || '';
+    CONFIG.gzhImg = s.gzh_qr || '';
+    window.__contactQr = CONFIG.serviceQrImg; window.__groupQr = CONFIG.groupQrImg; window.__gzhQr = CONFIG.gzhImg;
+  }).catch(function () {});
+} catch (e) {}
+
 // 全局补漏：任何 img/video 加载失败统一替换为感叹号占位（与管理页/资源页一致）
 document.addEventListener('error', function (e) {
   var t = e.target;
@@ -455,7 +471,15 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
     if (window.lockBodyScroll) window.lockBodyScroll(true);
     dom.modalImg.style.display = 'block';
     dom.qrFail.style.display = 'none';
-    loadImg(dom.modalImg, imgSrc, 0);
+    /* v383：二维码未配置（后台没传图）不再空转重试 3 秒，直接显示占位+提示 */
+    if (imgSrc) { loadImg(dom.modalImg, imgSrc, 0); }
+    else {
+      dom.modalImg.onerror = null;
+      dom.modalImg.src = EXC_PH; if (dom.modalImg.classList) dom.modalImg.classList.add('media-fail');
+      dom.modalImg.style.objectFit = 'contain';
+      dom.modalImg.style.opacity = '1';
+      dom.modalTip.textContent = tipText + '（管理员还未设置二维码）';
+    }
 
     if(jumpUrl && btnText){
         dom.modalJumpBtn.style.display = 'flex';

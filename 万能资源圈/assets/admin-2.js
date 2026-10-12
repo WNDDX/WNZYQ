@@ -114,7 +114,8 @@
             // v315（用户 10-05 17:33）：进度条全删
             var _em = document.getElementById('productEmpty');
             // v326（用户 10-06 15:18）：接口异常收骨架走空态时也按当前筛选条件出对应文案。
-            if (_em) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = __getAdminEmptyText(); }
+            // v382 条10：只在列表真没数据时才出空态——旧数据仍显示时空盒+空态文案叠在列表下方（老板截图实锤）
+            if (_em && !(state.products || []).length) { _em.classList.add('show'); document.getElementById('productEmptyTitle').textContent = __getAdminEmptyText(); }
             /* v330 条21：真失败且列表空 → 就地给「重试」（不用手动刷新页面；旧数据还在时保持显示，不打扰） */
             try {
               var _plb = document.getElementById('productList');
@@ -181,7 +182,7 @@
             if (!silent) {
               window.__adminSkelP = false; __clearAdminSkel(document.getElementById('productList'));
               var _em = document.getElementById('productEmpty');
-              if (_em) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = __getAdminEmptyText(); }
+              if (_em && !(state.products || []).length) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = __getAdminEmptyText(); } /* v382 条10：同上——有旧数据不出空态 */
               var _plb = document.getElementById('productList');
               if (_plb && !(state.products || []).length) {
                 window.__showLoadRetry(_plb.parentNode || _plb, function () { __adminProductCache = {}; loadProducts(); });

@@ -5,7 +5,8 @@
  */
 import { json } from '../_utils.js';
 
-const PUBLIC_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'];
+/* v383：+ group_url（群聊跳转链接）+ contact_qr/group_qr/gzh_qr（三张二维码）——导航页三弹窗全量走设置值 */
+const PUBLIC_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'group_url', 'contact_qr', 'group_qr', 'gzh_qr', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'];
 
 export async function onRequestGet(context) {
   const { env } = context;

@@ -6,7 +6,8 @@
 import { json, requireAuth, readJSON, sweepDroppedKeys } from '../../_utils.js';
 
 // 允许设置的 key 白名单
-const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'] /* R54：r2_public_base 已废弃删除（图片走 /img/ 路由，无需直连地址） */
+/* v383：新增 group_url（交流群聊跳转链接）+ contact_qr/group_qr/gzh_qr（三张二维码图片），链接/图片全部后台可改 */
+const ALLOWED_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'group_url', 'contact_qr', 'group_qr', 'gzh_qr', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'] /* R54：r2_public_base 已废弃删除（图片走 /img/ 路由，无需直连地址） */
 
 export async function onRequestGet(context) {
   const { env, request } = context;

@@ -123,7 +123,7 @@ if ('serviceWorker' in navigator) {
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页，一处定义全站生效） =====
  * window.openContactModal(url, qrImg, tip, btnText)
  *  - url:     客服跳转链接（优先类型→资源→全局默认，由各页面传入）
- *  - qrImg:   客服二维码图片，默认 assets/images/kefu.png
+ *  - qrImg:   客服二维码图片，v383 起走后台「设置信息」的 contact_qr（未配置=失败占位）
  *  - tip:     提示文字，默认「长按图片识别-添加人工客服」
  *  - btnText: 跳转按钮文字，默认「跳转-咨询在线客服」
  */
@@ -227,11 +227,16 @@ if ('serviceWorker' in navigator) {
         img.style.opacity = '';
       };
       img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-      img.src = qrImg || window.__kefuQrSrc();
-      if (img.complete) {
-        if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
-        else { img.onerror(); }
-      }
+      /* v383：二维码全量走后台「设置信息」（window.__contactQr 由 shop/admin 设置加载点写入）——
+         没配置时不再回退到已删除的 kefu.png，直接走 KF_QR_FAIL 失败占位 */
+      var _qrSrc = qrImg || window.__kefuQrSrc();
+      if (_qrSrc) {
+        img.src = _qrSrc;
+        if (img.complete) {
+          if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
+          else { img.onerror(); }
+        }
+      } else { img.onerror(); }
       // R45：客服二维码单击放大（真实图才可点，失败占位符不放大）
       if (window.__bindQrLightbox) window.__bindQrLightbox(img);
     }
@@ -284,7 +289,7 @@ if ('serviceWorker' in navigator) {
     var jb = m.querySelector('button[data-u]');
     if (jb) jb.setAttribute('data-u', url || '');
     var im = document.getElementById('kfFallbackImg');
-    if (im) { im.src = window.__kefuQrSrc(); }
+    if (im) { im.src = window.__kefuQrSrc() || KF_QR_FAIL; } /* v383：未配置二维码直接失败占位（kefu.png 已删） */
     try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) { if (window.__silent) window.__silent(e); } v.style.visibility = 'hidden'; } }); } catch (e) { if (window.__silent) window.__silent(e); }
     m.style.display = 'flex';
     if (window.lockBodyScroll) window.lockBodyScroll(true);
@@ -896,6 +901,16 @@ window.__modalKit = (function () {
     var idx = stack.indexOf(m);
     if (open && idx < 0) stack.push(m);
     else if (!open && idx >= 0) stack.splice(idx, 1);
+    /* v382 条8：弹窗任何通道关闭（×/确定/Esc/返回键/遮罩）时，统一复位弹窗内所有忙碌键——
+       此前成功路径只还原文字没摘 .btn-spin，重开弹窗圈圈还在转（靠 12s 自愈兜底太慢） */
+    if (!open && window.__btnIdle) {
+      try {
+        m.querySelectorAll('.btn-spin').forEach(function (sp) {
+          var b = sp.closest && sp.closest('button');
+          if (b) window.__btnIdle(b);
+        });
+      } catch (e2) { if (window.__silent) window.__silent(e2); }
+    }
     clearTimeout(__navT); __navT = setTimeout(__navTick, 60); /* R186 建议3：开/关变化 → 防抖协调历史栈 */
   }
   function register(mask, handlers) {
@@ -1899,9 +1914,29 @@ window.__btnFit = function () {
          原写法先把全部按钮恢复成文字、再发现量不到直接 continue，
          结果隐藏过的组一被扫到就全变文字且不再收回去（图标⇄文字来回跳、文字显示不全的根因） */
       var avail = grp.clientWidth;
-      if (!avail) continue;
+      /* v382 条13：宽 0（面板隐藏）跳过的组挂 ResizeObserver——面板重新显示（0→有宽）或宽度
+         任何变化时自动重跑，不再「切尺寸时面板藏着 → 恢复显示后卡在图标态等刷新」 */
+      if (!avail) {
+        if (!grp.__btnFitRO && window.ResizeObserver) {
+          grp.__btnFitRO = new ResizeObserver(function () {
+            clearTimeout(window.__btnFitTimer);
+            window.__btnFitTimer = setTimeout(function () { window.__btnFit(); }, 120);
+          });
+          grp.__btnFitRO.observe(grp);
+        }
+        continue;
+      }
       var btns = Array.prototype.slice.call(grp.querySelectorAll('.btn-fit[data-pri]'));
       if (!btns.length) continue;
+      /* v382 条13：可见组也挂 RO（幂等）——容器宽度因视图切换/侧栏/软键盘等变化时自觉重跑，
+         与 window.resize 互为补充（RO 防抖复用同一计时器） */
+      if (!grp.__btnFitRO && window.ResizeObserver) {
+        grp.__btnFitRO = new ResizeObserver(function () {
+          clearTimeout(window.__btnFitTimer);
+          window.__btnFitTimer = setTimeout(function () { window.__btnFit(); }, 120);
+        });
+        grp.__btnFitRO.observe(grp);
+      }
       btns.sort(function (a, b) { return (Number(a.dataset.pri) || 99) - (Number(b.dataset.pri) || 99); });
       /* 先全部恢复文字，再按优先级从低到高逐个收起，直到不溢出 */
       for (var i = 0; i < btns.length; i++) btns[i].classList.remove('ico-only');
@@ -2092,7 +2127,9 @@ window.__cpPanel = function (opts) {
 window.__imgVer = function () {
   try { return String(window.IMG_VERSION || '330').replace(/^v/, ''); } catch (e) { return '330'; }
 };
-window.__kefuQrSrc = function () { return '/assets/images/kefu.png?v=' + window.__imgVer(); };
+/* v383：客服二维码改走后台「设置信息」的 contact_qr（window.__contactQr 由各页 settings 加载点写入）——
+   kefu.png 静态文件已删除，未配置时返回空串，调用方走 KF_QR_FAIL 失败占位 */
+window.__kefuQrSrc = function () { return window.__contactQr || ''; };
 
 /* v293（用户 10-04 02:14）：063Logo错误处理统一→提取公共函数，四页共用 */
 /* v330 条29：图片版本号集中生效——扫描站内 /assets/images/ 图片，

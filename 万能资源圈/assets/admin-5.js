@@ -585,223 +585,6 @@
 
     // R57：柱状图公共渲染——每列左右两组：本期实色柱 + 上期浅色半透明柱；列顶涨跌箭头（以浏览为主指标），
     // 悬浮显示本期/上期具体数字。loadStats 与 applyStatsDays 共用，避免两处分叉
-    function renderTrendBars(trendData, prevData) {
-      // v302（用户 10-05 00:09）：趋势图去骨架，无需清理
-      var trendBox = document.getElementById('trendBars');
-      trendBox.innerHTML = '';
-      // R70：柱状图高度与折线图统一（以折线为准）——读折线 svg 实际渲染高同步容器与柱区（--barZone）
-      // 初次渲染时统计面板可能尚未显示（svg 布局为瞬时小值），用 ResizeObserver 监听 svg 尺寸稳定/变化时再同步（含窗口缩放）
-      var lineSvgEl = document.getElementById('lineSvg');
-      var syncBarHeight = function (el, box) {
-        var h2 = el ? el.getBoundingClientRect().height : 0;
-        if (h2 >= 60) { /* R153：门槛 100→60——窄屏 SVG 渲染高 ~85px 被 100 拦住导致 barZone 不同步；隐藏面板时 SVG 高 0 仍被 60 拦住 */
-          box.style.height = h2 + 'px';
-          // R153（用户 19:00）：柱状图网格顶线距灰盒顶与折线图逐像素统一——
-          // 折线网格顶线渲染位置 = line-chart 顶 + (padding-top 12) + padT*k（k=SVG渲染高/200，随视口变）；
-          // 柱状 chart-box 上 padding 0、grid bottom:24 + height:barZone，网格顶距 trend-bars 顶 = h2-24-barZone，
-          // 令其等于折线的 d → barZone = h2-24-d。量不到折线时兜底原 12px 口径
-          var d = 12;
-          try {
-            var r2 = el.getBoundingClientRect();
-            var lc = document.getElementById('lineChart');
-            if (lc && r2.height) {
-              var pt = parseFloat(el.dataset.padT); if (!(pt >= 0)) pt = 20;
-              d = Math.max(0, (r2.top + pt * (r2.height / 200)) - lc.getBoundingClientRect().top);
-            }
-          } catch (e3) { if (window.__silent) window.__silent(e3); }
-          // R162（用户 00:08）：柱图网格/柱底/X标签/Y数字全部按折线几何公式同步（k=SVG渲染高/200）——
-          // 网格顶距 trend-bars 顶 = 20k（=量测 d 减 chart-box 上 padding 12）、网格跨度 = 150k（间距 37.5k 与折线逐像素一致）、
-          // 柱底距底 = 30k、X 标签底距底 = 8k、Y 数字右缘距网格左缘 = 6k
-          var k2 = h2 / 200;
-          box.style.setProperty('--gridTop', Math.max(0, Math.round(d) - 12) + 'px');
-          box.style.setProperty('--barZone', Math.max(30, Math.round(150 * k2)) + 'px');
-          box.style.setProperty('--bLift', Math.max(6, Math.round(30 * k2)) + 'px');
-          box.style.setProperty('--xLift', Math.max(2, Math.round(8 * k2)) + 'px');
-          box.style.setProperty('--numGap', Math.max(2, Math.round(6 * k2)) + 'px');
-          return true;
-        }
-        return false;
-      };
-      syncBarHeight(lineSvgEl, trendBox);
-      if (lineSvgEl && !lineSvgEl.__barHObserved) {
-        lineSvgEl.__barHObserved = true;
-        if (window.ResizeObserver) {
-          new ResizeObserver(function () {
-            syncBarHeight(document.getElementById('lineSvg'), document.getElementById('trendBars'));
-          }).observe(lineSvgEl);
-        }
-      }
-      var hasPrev = !!(prevData && prevData.length === trendData.length);
-      var maxVal = 1;
-      trendData.forEach(function (d, i) {
-        // R66：与折线图严格同口径——量纲同时计入 resource_unlocks 与上期数据，
-        // 保证两图左侧网格刻度数值完全一致（用户要求严谨同步）
-        maxVal = Math.max(maxVal, d.views || 0, d.contacts || 0, d.resource_unlocks || 0);
-        if (hasPrev) { var p = prevData[i] || {}; maxVal = Math.max(maxVal, p.views || 0, p.contacts || 0, p.resource_unlocks || 0); }
-      });
-      // R66：maxVal 取整到 5 的倍数——与折线图同口径，两图网格刻度数值一致
-      maxVal = Math.ceil(maxVal / 5) * 5 || 5;
-      /* v375（老板拍板：两图背景必须一模一样）——柱图背景网格弃用 HTML 线，改用与折线图
-         完全同一份 SVG（同 viewBox 800×200、同 padL/padT/padB、同 var(--border) 1 线宽、同字号补偿）。
-         两图容器同宽同高（syncBarHeight 已同步），同一份 SVG 渲染结果逐像素一致，不再靠 CSS 变量近似。 */
-      var _bsvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      _bsvg.setAttribute('viewBox', '0 0 800 200');
-      _bsvg.setAttribute('class', 'trend-grid-svg');
-      _bsvg.setAttribute('aria-hidden', 'true');
-      var _bax = 10;
-      try { var _br = trendBox.getBoundingClientRect(); if (_br && _br.width) _bax = +(10 * 800 / _br.width).toFixed(2); } catch (e9) { if (window.__silent) window.__silent(e9); }
-      var _bpT = 20, _bpB = 30, _bchartH = 200 - _bpT - _bpB;
-      var _bhtml = '';
-      for (var g = 0; g <= 4; g++) {
-        var _gy = _bpT + (_bchartH / 4) * g;
-        var _gv = Math.round(maxVal - (maxVal / 4) * g);
-        _bhtml += '<line x1="40" y1="' + _gy + '" x2="780" y2="' + _gy + '" stroke="var(--border)" stroke-width="1"/>';
-        _bhtml += '<text x="34" y="' + (_gy + 0.44 * _bax) + '" text-anchor="end" font-size="' + _bax + '" fill="var(--text-light)">' + _gv + '</text>';
-      }
-      _bsvg.innerHTML = _bhtml;
-      trendBox.appendChild(_bsvg);
-      var labelsEl = document.createElement('div');
-      labelsEl.className = 'trend-labels'; // R162：X 标签独立层（bottom: var(--xLift)，与折线标签底同位）
-      trendData.forEach(function (d, i) {
-        var col = document.createElement('div');
-        col.className = 'trend-col';
-        var wrap = document.createElement('div');
-        wrap.className = 'trend-bar-wrap';
-        // R59：悬浮 title 同时给本期与上期的具体数（悬浮任一根柱都能看到对比）
-        // R62：title 首行加时间——小时数据（1天档）「N时」、日期数据「几月几日」
-        function mkGroup(data, ghost, other, timeLabel) {
-          var g = document.createElement('div');
-          g.className = 'trend-bar-group';
-          var tHead = timeLabel ? (timeLabel + '\n') : '';
-          // R65：对比上期关闭时 other 为 null——先安全取值再拼（原来 other.views 在判空前求值会崩）
-          function tag(x) { var v = x || 0; return other ? ((ghost ? '（本期 ' : '（上期 ') + v + '）') : ''; }
-          var barV = document.createElement('div');
-          barV.className = 'trend-bar view' + (ghost ? ' ghost' : '');
-          barV.style.height = ((data.views || 0) / maxVal * 100) + '%';
-          barV.title = tHead + '浏览' + (ghost ? '(上期)' : '') + ': ' + (data.views || 0) + tag(other && other.views);
-          var barC = document.createElement('div');
-          barC.className = 'trend-bar contact' + (ghost ? ' ghost' : '');
-          barC.style.height = ((data.contacts || 0) / maxVal * 100) + '%';
-          barC.title = tHead + '咨询客服' + (ghost ? '(上期)' : '') + ': ' + (data.contacts || 0) + tag(other && other.contacts);
-          // R78：柱状图补资源码解锁系列（跟折线图一样三系列）——绿色 #4CAF50，ghost 沿用 opacity .32
-          var barR = document.createElement('div');
-          barR.className = 'trend-bar resource' + (ghost ? ' ghost' : '');
-          barR.style.height = ((data.resource_unlocks || 0) / maxVal * 100) + '%';
-          barR.title = tHead + '资源码解锁' + (ghost ? '(上期)' : '') + ': ' + (data.resource_unlocks || 0) + tag(other && other.resource_unlocks);
-          g.appendChild(barV);
-          g.appendChild(barC);
-          g.appendChild(barR);
-          return g;
-        }
-        // R58：箭头放进本期组内第一个位置（浏览柱上方）——组是 column 底对齐，箭头自然贴柱顶、跟随柱高
-        var timeLabel = fmtPointLabel(d.day);
-        var curGroup = mkGroup(d, false, hasPrev ? (prevData[i] || null) : null, timeLabel);
-        if (hasPrev) {
-          // 涨跌箭头：以浏览为主指标，悬浮给出浏览/咨询客服两行的上期→本期
-          var pv = prevData[i] || {};
-          var dv = (d.views || 0) - (pv.views || 0);
-          var dc = (d.contacts || 0) - (pv.contacts || 0);
-          var ar = document.createElement('div');
-          ar.className = 'trend-arrow ' + (dv > 0 ? 'up' : dv < 0 ? 'down' : 'flat');
-          ar.textContent = dv > 0 ? '▲' : dv < 0 ? '▼' : '▬';
-          ar.title = timeLabel + '\n浏览: ' + (pv.views || 0) + ' → ' + (d.views || 0) + '；咨询客服: ' + (pv.contacts || 0) + ' → ' + (d.contacts || 0) + (dc > 0 ? '（涨）' : dc < 0 ? '（降）' : '') + '；资源码解锁: ' + (pv.resource_unlocks || 0) + ' → ' + (d.resource_unlocks || 0);
-          curGroup.insertBefore(ar, curGroup.firstChild);
-        }
-        wrap.appendChild(curGroup);
-        if (hasPrev) wrap.appendChild(mkGroup(prevData[i] || {}, true, d, timeLabel));
-        col.appendChild(wrap);
-        trendBox.appendChild(col);
-        // R162（用户 00:08）：X 标签移出列、进独立标签层——与折线 X 标签同 x（点对齐：padL+i*stepX 换百分比）、
-        // 同间隔（折线 stepX 口径），不再按列中心分布导致两图数字间隔不一致
-        var label = document.createElement('div');
-        label.className = 'trend-label';
-        label.textContent = (trendData.length <= 10 || i % Math.ceil(trendData.length / 8) === 0) ? (d.day ? fmtDay(d.day) : '') : '';
-        var nD = trendData.length, stepXr = nD > 1 ? 740 / (nD - 1) : 0;
-        label.style.left = ((40 + i * stepXr) / 800 * 100).toFixed(3) + '%';
-        labelsEl.appendChild(label);
-      });
-      trendBox.appendChild(labelsEl);
-      // R76：柱状图悬浮与折线图一模一样——竖虚线+数值框（时间居中+三指标行、本期左/（上期 N）右）
-      ensureBarHover(trendBox, trendData, hasPrev ? prevData : null);
-    }
-
-    // ---------- 柱状图悬浮（R76：复刻折线图 drawLineHover 的交互与样式） ----------
-    var barHover = { box: null, data: null, prev: null, attached: false };
-    function clearBarHover() {
-      var box = barHover.box;
-      if (!box) return;
-      var l = box.querySelector('.bar-hover-line'); if (l) l.remove();
-      var b = box.querySelector('.bar-hover-box'); if (b) b.remove();
-    }
-    function drawBarHover(i) {
-      var box = barHover.box; if (!box || !barHover.data || !barHover.data[i]) return;
-      clearBarHover();
-      var d = barHover.data[i]; var p = barHover.prev;
-      // 列中心横坐标（等宽列，用各列实际 rect 取第 i 列）
-      var cols = box.querySelectorAll('.trend-col');
-      var col = cols[i]; if (!col) return;
-      var br = box.getBoundingClientRect(), cr = col.getBoundingClientRect();
-      var px = cr.left - br.left + cr.width / 2;
-      // 竖参考线（折线图同款 #c3ccd9 虚线）
-      var ln = document.createElement('div');
-      ln.className = 'bar-hover-line';
-      ln.style.left = px + 'px';
-      box.appendChild(ln);
-      // 数值框内容：时间行（R62 格式、居中）+ 三指标行（系列色、本期左/（上期 N）右——与折线悬浮完全一致）
-      var series = [
-        { name: '浏览', key: 'views', color: '#1E88E5' },
-        { name: '咨询客服', key: 'contacts', color: '#ff9900' },
-        { name: '解锁', key: 'resource_unlocks', color: '#4CAF50' }
-      ];
-      var html = '<div class="bhb-time">' + fmtPointLabel(d.day) + '</div>';
-      series.forEach(function (s) {
-        var prevTxt = (p && p[i]) ? '（上期 ' + (p[i][s.key] || 0) + '）' : '';
-        html += '<div class="bhb-row"><span class="bhb-cur" style="color:' + s.color + '">' + s.name + ': ' + (d[s.key] || 0) + '</span>' +
-                (prevTxt ? '<span class="bhb-prev" style="color:' + s.color + '">' + prevTxt + '</span>' : '') + '</div>';
-      });
-      var hb = document.createElement('div');
-      hb.className = 'bar-hover-box';
-      hb.innerHTML = html;
-      // R115：两图悬浮框同步——折线 SVG 框随 viewBox 缩放（渲染尺寸 = 150×84 × scale、字号 11 × scale），
-      // 柱状框读取折线 SVG 当前缩放比（--bhs）跟随缩放，两框在任何宽度下外框尺寸/字号完全一致
-      var _ls = document.getElementById('lineSvg');
-      var _sc = 1;
-      if (_ls) { var _lw = _ls.getBoundingClientRect().width; if (_lw) _sc = _lw / 800; }
-      // R135：悬浮框不随窄屏缩小——渲染尺寸最小保持基准 150×84/字号11（「取大的那个」口径，恢复之前的大框观感）
-      if (_sc < 1) _sc = 1;
-      try { hb.style.setProperty('--bhs', _sc); } catch (e) { if (window.__silent) window.__silent(e); }
-      // 框位置：参考线右侧 8px，右侧放不下翻到左侧（折线悬浮同逻辑），并钳制在容器内
-      var boxW = 150 * _sc;
-      var bx = px + 8;
-      if (bx + boxW > br.width - 2) bx = px - 8 - boxW;
-      if (bx < 2) bx = 2;
-      hb.style.left = bx + 'px';
-      hb.style.top = 'calc(var(--gridTop, 20px) + 2px)'; // R162：与折线悬浮框顶同位（折线 by=yTop+2*_k 渲染 20k+2）
-      box.appendChild(hb);
-    }
-    function ensureBarHover(box, data, prev) {
-      barHover.box = box; barHover.data = data; barHover.prev = prev;
-      if (barHover.attached) return;
-      barHover.attached = true;
-      box.addEventListener('mousemove', function (evt) {
-        if (!barHover.data || !barHover.data.length) return;
-        // 最近列：按鼠标 x 找最近的 .trend-col 中心
-        var cols = box.querySelectorAll('.trend-col');
-        if (!cols.length) return;
-        var br = box.getBoundingClientRect();
-        var mx = evt.clientX - br.left;
-        var best = 0, bestD = Infinity;
-        for (var k = 0; k < cols.length; k++) {
-          var cr = cols[k].getBoundingClientRect();
-          var c = cr.left - br.left + cr.width / 2;
-          var dd = Math.abs(mx - c);
-          if (dd < bestD) { bestD = dd; best = k; }
-        }
-        drawBarHover(best);
-      });
-      box.addEventListener('mouseleave', function () { clearBarHover(); });
-    }
-
     // R65：统计卡片渲染（拆成函数，供 loadStats 与「对比上期」开关切换重渲染共用）
     function renderStatCards(ov, ovp) {
       // v302（用户 10-05 00:09）：每日数据去骨架，无需清理
@@ -979,7 +762,7 @@
         // 折线图（R58：上期虚线；R65：仅开关开启时显示）
         renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
         // 柱状图（R57：上期浅色对比柱与涨跌箭头；R65：仅开关开启时显示）
-        renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
+
 
         // 三个统计表：全量数据（后端仅按 30 天范围过滤，不再截断条数）+ 前端分页（一页 20 条，全系统统一）
         state.statByProduct = res.byProduct || [];
@@ -1023,7 +806,7 @@
       state.statsTrendPrev = trendPrev || null;
       state.statsByProduct = res.byProduct || [];
       renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
-      renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
+
       __saveAdminState();
       // R272：加载圈已删除，无需再隐藏。
     }
@@ -1096,7 +879,7 @@
             state.statsByProduct = sr.byProduct || [];
             renderStatCards(state.statsOverview, state.statsCmpPrev ? state.statsOverviewPrev : null);
             renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
-            renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
+
             renderStatTables();
           } else {
             // v313：轻量 dashboard 只渲染六卡概览，图表/三表等用户切到 stats tab 再拉
@@ -1111,11 +894,7 @@
         renderCategories();
         refreshCatCnts();
         if (state.settings) {
-          _safe(function () {
-            document.getElementById('setContactUrl').value = state.settings.contact_url || '';
-            document.getElementById('annMode').value = state.settings.announcement_mode || 'always';
-            syncSelectDisplay(document.getElementById('annMode'));
-          });
+          _safe(function () { if (window.__infoApply) window.__infoApply(state.settings); document.getElementById('annMode').value = state.settings.announcement_mode || 'always'; syncSelectDisplay(document.getElementById('annMode')); });
         }
         window.__lastFetchTime = Date.now();
         // v319（用户 10-05 22:15）：根因→首屏只拿「全部」第一页，切分类/筛选时现场拉取老板看到「点进去才加载」；
@@ -1130,7 +909,8 @@
         __clearAdminSkel(document.getElementById('catList'));
         var _em = document.getElementById('productEmpty');
         // v326（用户 10-06 15:18）：失败收骨架走空态时也按当前筛选条件出对应文案。
-        if (_em) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = __getAdminEmptyText(); }
+        // v382 条10：有旧数据/缓存时不出空态（空盒叠在列表下方的根因）
+        if (_em && !(state.products || []).length) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = __getAdminEmptyText(); }
         var _hasCache = __getAdminCache()._cacheFormat === 'v317' && (__getAdminCache().products || []).length;
         if (!silent && !_hasCache && !(state.products || []).length) {
           toast('网络开小差了，请稍后再试', 'error');
@@ -1300,7 +1080,7 @@
       state.statsTrend = trendData;
       state.statsTrendPrev = trendPrev || null;
       renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
-      renderTrendBars(trendData, state.statsCmpPrev ? trendPrev : null);
+
       /* R173（用户 00:28）：删掉切日期档时对 panel-stats 的 stats-fade-in 重触发（remove+强制回流+add）
          ——正是"切换日期全页面都闪一次"的直接根因（fade 动画整页重放）；切日期只重画图表，不再全页淡入 */
     }
@@ -2016,7 +1796,7 @@ refreshCatCnts();
       // 折线/柱状（数据已存 state，直接重渲染）
       if (state.statsTrend && state.statsTrend.length) {
         renderLineChart(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null);
-        renderTrendBars(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null);
+
       }
     });
     document.querySelectorAll('.time-btn[data-days]').forEach(function (btn) {
@@ -2263,8 +2043,7 @@ refreshCatCnts();
       var cv = variants[previewCurVariant];
       if (cv && cv.contactUrl) url = cv.contactUrl;
       if (!url) url = fContactUrl.value.trim();
-      var g = document.getElementById('setContactUrl');
-      if (!url && g) url = g.value.trim();
+      if (!url && window.__infoContactUrl) url = window.__infoContactUrl; /* v383：全局客服链接改走「设置信息」 */
       if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
@@ -2305,7 +2084,7 @@ refreshCatCnts();
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         /* R183 条22：Ctrl+S 覆盖全部保存弹窗——哪个弹窗开着就保存哪个（确认删除类不绑，防 Ctrl+S 误触危险操作） */
-        var __csMap = [['editMask','saveProductBtn'],['annMask','saveAnnBtn'],['contactMask','saveContactBtn'],['catMask','catOk'],['batchCatMask','batchCatOk'],['variantMask','variantOk'],['inputMask','inputOk']];
+        var __csMap = [['editMask','saveProductBtn'],['annMask','saveAnnBtn'],['catMask','catOk'],['batchCatMask','batchCatOk'],['variantMask','variantOk'],['inputMask','inputOk']]; /* v383：contactMask 退役（设置信息为面板直存，无确定键） */
         for (var ci = 0; ci < __csMap.length; ci++) {
           var __mk = document.getElementById(__csMap[ci][0]);
           if (__mk && __mk.classList.contains('open')) {
@@ -2353,7 +2132,7 @@ refreshCatCnts();
             { lab: '平台设置', tag: '页面', kw: '平台设置 设置 settings', run: function () { switchTab('settings'); } },
             { lab: '新增资源', tag: '操作', kw: '新增资源 新建 添加资源 add', run: function () { switchTab('products'); document.getElementById('addProductBtn').click(); } },
             { lab: '新增分类', tag: '操作', kw: '新增分类 新建分类 add', run: function () { switchTab('categories'); document.getElementById('addCatBtn').click(); } },
-            { lab: '设置客服', tag: '操作', kw: '设置客服 客服 联系 contact', run: function () { switchTab('settings'); document.getElementById('openContactBtn').click(); } },
+            { lab: '设置信息', tag: '操作', kw: '设置信息 客服 群聊 公众号 二维码 链接 contact', run: function () { switchTab('settings'); var it = document.getElementById('infoItemContact'); var f = document.getElementById('infoFoldContact'); if (it && f && !it.classList.contains('open')) f.click(); } },
             { lab: '设置公告', tag: '操作', kw: '设置公告 公告 ann', run: function () { switchTab('settings'); document.getElementById('openAnnBtn').click(); } },
             { lab: '新增公告项', tag: '操作', kw: '新增公告项 公告 add', run: function () { switchTab('settings'); document.getElementById('addAnnBtn').click(); } },
             { lab: '修改密码', tag: '操作', kw: '修改密码 密码 pwd', run: function () { switchTab('settings'); document.getElementById('showPwdFormBtn').click(); } }
@@ -2391,10 +2170,10 @@ refreshCatCnts();
         discard: function () { try { window.__annDiscard(); } catch (e) { if (window.__silent) window.__silent(e); } },
         stash: function () { try { window.__annStash(); } catch (e) { if (window.__silent) window.__silent(e); } } // R257（老板 09-23 19:08）：Esc=暂存（选中项+内容+频率保留，重开恢复）——R145 丢弃口径废除
       });
-      // 设置客服：丢弃=清输入；暂存=保留
-      kit.register(el('contactMask'), {
-        discard: function () { contactDraftPending = false; var _cu = el('contactUrlInput'); if (_cu) _cu.value = ''; el('contactMask').classList.remove('open'); },
-        stash: function () { contactDraftPending = true; el('contactMask').classList.remove('open'); } // R257：Esc=暂存输入（不清，重开保留）
+      // 设置信息预览弹窗（v383）：纯展示，Esc/点外=直接关（丢弃/暂存同通道）
+      kit.register(el('infoMask'), {
+        discard: function () { var _im = el('infoMask'); if (_im) _im.classList.remove('open'); },
+        stash: function () { var _im = el('infoMask'); if (_im) _im.classList.remove('open'); }
       });
       // 修改密码：统一三模式——丢弃=清三框；暂存=保留（刷新即清）
       kit.register(el('pwdMask'), {
@@ -2601,7 +2380,7 @@ window.toggleModalPwdVisibility = typeof toggleModalPwdVisibility !== 'undefined
 (function() {
   var limits = {
     'fTitle': 100, 'fDesc': 200, 'fImg': 500, 'fContactUrl': 500,
-    'catName': 50, 'setContactUrl': 500, 'contactUrlInput': 500,
+    'catName': 50, 'infoUrlContact': 500, 'infoUrlGroup': 500, /* v383：设置信息链接输入框（setContactUrl/contactUrlInput 随旧弹窗退役） */
     'loginUser': 50, 'loginPass': 50, 'adminSearch': 50,
     'oldPwd': 50, 'newPwd': 50, 'confirmPwd': 50
   };
@@ -2702,8 +2481,8 @@ function boot() {
         // 有缓存：秒显上一次内容
         _safe(function () { renderProducts(); });
         _safe(function () { renderCategories(state.categories); });
-        _safe(function () { if (state.statsOverview) { __updateStatTitles(); renderStatCards(state.statsOverview, state.statsOverviewPrev); renderLineChart(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null); renderTrendBars(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null); renderStatTables(); } });
-        _safe(function () { if (state.settings) { document.getElementById('setContactUrl').value = state.settings.contact_url || ''; document.getElementById('annMode').value = state.settings.announcement_mode || 'always'; syncSelectDisplay(document.getElementById('annMode')); } });
+        _safe(function () { if (state.statsOverview) { __updateStatTitles(); renderStatCards(state.statsOverview, state.statsOverviewPrev); renderLineChart(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null);renderStatTables(); } });
+        _safe(function () { if (state.settings) { if (window.__infoApply) window.__infoApply(state.settings); document.getElementById('annMode').value = state.settings.announcement_mode || 'always'; syncSelectDisplay(document.getElementById('annMode')); } });
       }
       // R308：进页请求合一——只发一次 /api/admin/home，带版本号缓存
       window.__adminEntryDone = false;

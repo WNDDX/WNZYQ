@@ -139,6 +139,7 @@ const DEFAULT_SETTINGS = [
   { key: 'shop_name', value: '万能资源圈' },
   { key: 'shop_logo', value: '/assets/images/logo.png' },
   { key: 'contact_url', value: 'https://work.weixin.qq.com/kfid/kfc39748ad948e8b691' },
+  { key: 'group_url', value: 'https://work.weixin.qq.com/gm/8036a2badd7daab25b1764b62c3bff9a' }, // v383：群聊跳转链接（二维码三键 contact_qr/group_qr/gzh_qr 默认空，后台「设置信息」上传）
   { key: 'resource_bind_limit', value: '1' }, // R92→R94：一码允绑设备上限，默认 1 台（后台可调，无上限）
 ];
 

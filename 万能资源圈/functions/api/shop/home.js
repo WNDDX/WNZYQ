@@ -6,7 +6,8 @@
 import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns, ensureProductColumns } from '../../_utils.js'; // v299（用户 10-04 23:11）：修复引用层级错误致 Cloudflare 构建失败
 
 // v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v315全量返回需改回首屏只拿第一页，翻页/切分类/搜索点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置，其余前端按需拉取。
-const PUBLIC_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'];
+/* v383：+ group_url/contact_qr/group_qr/gzh_qr——客服/群聊链接与三张二维码全量走设置值 */
+const PUBLIC_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'group_url', 'contact_qr', 'group_qr', 'gzh_qr', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'];
 const HOME_PAGE_SIZE = 20;
 
 // 计算数据版本（ Beijing 时间口径，与 U8 统一 ）

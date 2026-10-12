@@ -1164,6 +1164,8 @@ document.addEventListener('click', function (e) {
       if (!big) { ed.style.top = ''; ed.style.height = ''; } /* R176（用户 10:11）：还原时清放大态内联 top/height——旧版残留 top:115px 在 relative 态把编辑器视觉下移盖住下方类型区（盖住/挤到其他东西的根因） */
       z.classList.toggle('rte-zoom-on', big);
       z.innerHTML = big ? RTE_SVG_MIN : RTE_SVG_MAX; window.__syncBodyLock && window.__syncBodyLock(); // R231 条9：emoji→SVG
+      /* v382 条5：遮罩改挂 body::after（原编辑器 ::before 被 contain:paint 罩黑编辑器内部）——开关 body 类 */
+      document.body.classList.toggle('rte-zooming', ed.classList.contains('rte-large'));
       if (big) {
         try { ed.focus({ preventScroll: true }); } catch (e1) { ed.focus(); } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
@@ -1201,6 +1203,7 @@ document.addEventListener('click', function (e) {
           bigEd.classList.remove('rte-large'); bigEd.style.top = ''; bigEd.style.height = ''; var _tb = bigEd.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar-large')) _tb.classList.remove('rte-toolbar-large');
           document.querySelectorAll('.rte-zoom.rte-zoom-on').forEach(function (b) { b.classList.remove('rte-zoom-on'); b.innerHTML = RTE_SVG_MAX; }); window.__syncBodyLock && window.__syncBodyLock(); // R231 条9：emoji→SVG
           var _ex = document.getElementById('rteExitZoom'); if (_ex) _ex.style.display = 'none';
+          document.body.classList.remove('rte-zooming'); /* v382 条5：同步撤遮罩 */
         }
       }
     });
