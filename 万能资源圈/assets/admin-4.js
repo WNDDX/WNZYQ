@@ -799,7 +799,7 @@
       inp.className = 'file-card-rename';
       nameEl.innerHTML = '';
       nameEl.appendChild(inp);
-      inp.focus(); inp.select();
+      try { inp.focus({ preventScroll: true }); } catch (e1) { inp.focus(); } inp.select(); /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
       var save = function () { nameEl.textContent = inp.value.trim() || oldName; };
       inp.addEventListener('blur', save);
       inp.addEventListener('keydown', function (ev) {
@@ -1350,7 +1350,7 @@
       coverImages.push('');
       renderCoverGallery();
       updateFImgInput();
-      fImgInput.focus();
+      try { fImgInput.focus({ preventScroll: true }); } catch (e1) { fImgInput.focus(); } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
     });
     coverGallery.appendChild(addBtn);
   }
@@ -1634,9 +1634,16 @@
         /* v357 条6：绑定分组——公告名+排序一组；显示/隐藏+删除一组 */
         var _agMain = document.createElement('span'); _agMain.className = 'ann-group ann-main-group';
         _agMain.appendChild(txt); _agMain.appendChild(sortEl);
-        var _agAct = document.createElement('span'); _agAct.className = 'ann-group ann-act-group';
+        /* v381 条1：操作组复用分类行 .c-meta 折叠机制（显示/隐藏+删除默认收起，点右侧三角展开） */
+        var _agAct = document.createElement('span'); _agAct.className = 'ann-group ann-act-group c-meta';
         _agAct.appendChild(annStatusBtn); _agAct.appendChild(delBtn);
         item.appendChild(handle); item.appendChild(_agMain); item.appendChild(_agAct);
+        /* v381 条1：行尾注入与分类行完全同款的展开/收起蓝三角 */
+        var fold = document.createElement('button');
+        fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '展开/收起操作'; fold.setAttribute('aria-label', '展开/收起操作');
+        fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
+        fold.addEventListener('click', function (e) { e.stopPropagation(); item.classList.toggle('cat-open'); });
+        item.appendChild(fold);
         annListEl.appendChild(item);
       });
     }

@@ -610,16 +610,16 @@
       background: #000;
     }
 
-    /* 弹窗内富文本图片/视频自适应（不超模、居中；R36 加高度上限——竖长图不再把弹窗撑爆） */
+    /* 弹窗内富文本图片/视频自适应（不超模；v380：图片与文字统一左对齐，不再居中） */
     .modal-detail img, .modal-detail video {
       max-width: 100%;
       max-height: 60vh;
       max-height: 60dvh; /* R159 */
       height: auto;
       display: block;
-      margin: 8px auto;
+      margin: 8px 0; /* v380：与文字左对齐，不再 auto 居中 */
       border-radius: 8px;
-      min-height: 80px; /* v309:加载前最小高度占位，防止塌陷跳动*/
+      min-height: 80px; /* v309：加载前最小高度占位，防止塌陷跳动*/
     }
     .modal-detail img { background: var(--bg-light); } /* v309:图片加载前灰底占位*/
 
@@ -1353,7 +1353,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .file-card-header svg { flex-shrink: 0; }
 .file-card-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* v378：文件夹标题行右侧「总大小＋下载」一组（与文件行同款靠右、间距 4px 绑定） */
-.fc-head-meta { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.fc-head-meta, .fc-row-meta { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: auto; }
 .fc-head-meta .fsize { font-size: 11px; color: var(--gray-mid, #8a97a5); }
 .file-card-size { font-size: 12px; color: var(--gray-mid); flex-shrink: 0; }
 .file-folder-list { border-top: 1px dashed var(--border, #e0e0e0); padding: 8px 12px; }

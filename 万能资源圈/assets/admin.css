@@ -737,7 +737,7 @@
     /* ===== 统一时间选择弹窗（点击输入框弹出，含 今天/清除） ===== */
     .dt-field { cursor: pointer; background: var(--card-bg) !important; }
     .dt-pop {
-      display: none; position: fixed; z-index: 6002; width: 268px;
+      display: none; position: fixed; z-index: 6002; width: 300px; /* v381 条6：268→300，给中文 12 小时制「下午5:35」留足宽度 */
       background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
       box-shadow: 0 12px 32px rgba(20,60,110,0.20); padding: 12px;
     }
@@ -749,7 +749,7 @@
       flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 8px;
       padding: 8px 8px; font-size: 14px; outline: none;
     }
-    .dt-pop input[type="time"] { flex: 0 0 96px; }
+    .dt-pop input[type="time"] { flex: 0 0 118px; } /* v381 条6：96→118，中文 12 小时制（下午5:35）不再出格截断 */
     .dt-pop .dt-btns { display: flex; gap: 8px; }
     .dt-pop .dt-btns button {
       flex: 1; height: 32px; border-radius: 8px; font-size: 13px; cursor: pointer;
@@ -1128,9 +1128,9 @@
     /* R272：stats-loading / sl-spin 已删除，相关 CSS 清理完毕 */
     .stats-fade-in { animation: statFade var(--dur-mid) ease; }
     @keyframes statFade { from { opacity:.2; } to { opacity:1; } }
-    /* R70：灰底/圆角上收到 chart-box 外层容器（与 line-chart 同构：灰盒装图表+图例）；柱区高度由 JS 按折线图实际高同步写入 --barZone */
-    .chart-box { background: var(--bg-light); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow: hidden; } /* R162：与 line-chart 灰盒同构（上下 12px padding，两图灰盒总高一致） */
-    .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding: 0 2.5% 0 5%; position: relative; } /* R162：顶部 padding 清零（柱/标签/网格全 absolute，不参与流；灰盒顶部呼吸位由 chart-box padding 12 提供） */
+    /* R70：柱图容器改为白底卡片（与折线图灰底区分），保持同构尺寸 */
+    .chart-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow: hidden; } /* v381 条8：与折线图背景完全一致（白卡+细边框），唯一差异=内容（条形） */
+    .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding: 0 2.5% 0 5%; position: relative; background: transparent; border-radius: 10px; } /* v381 条8：撤浅蓝灰底——两图容器背景统一，绘图区不再自带第二层底色 */
     #lineSvg { overflow: visible; } /* R145：折线悬浮框去 viewBox 封顶后，超出部分照常渲染，两框全视口恒等 */
     /* R66：柱状图网格层——对齐柱状区（bottom 24px 高 100px），折线图同款灰线 #e8e8e8 与左侧数字 #999；
        grid 先插 DOM、柱列（relative）靠后绘制，网格线在柱子后面 */
@@ -1210,7 +1210,7 @@
     #panel-stats .trend-chart > div:first-child > div { flex: 1 1 100% !important; order: 1; }
 
     /* 折线图 */
-    .line-chart { position: relative; background: var(--bg-light); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; overscroll-behavior: auto; touch-action: pan-y pinch-zoom; /* v340 条10：滚动手势照常传给页面——此前 contain 把滚动圈死，指到图上滚不动 */  scrollbar-width: none; } /* R285 条42：能滑不露条 */
+    .line-chart { position: relative; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 0; margin-bottom: 8px; overflow-x: auto; overscroll-behavior: auto; touch-action: pan-y pinch-zoom; /* v381 条8：按老板拍板全部删掉重加——与柱图容器背景完全一致（白卡+细边框），唯一差异=内容（趋势线） */  scrollbar-width: none; } /* R285 条42：能滑不露条 */
     .line-chart::-webkit-scrollbar { display: none; } /* R285 条42 */
     .line-chart svg { display: block; }
     .line-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; line-height: 1.16; color: var(--text-light); justify-content: center; }
@@ -1488,15 +1488,15 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    - 手机：.cat-row 改两行网格——第一行[拖拽柄|复选框|展开箭头|名称(省略号)]，第二行 .c-meta 横排
      [排序|资源数|显示|编辑|删除]。一级/二级/根"全部"/虚拟"全部"行同构，列坐标逐像素对齐；
      一级名称不再换行（grid 1fr + ellipsis），排序/资源数所有行同一行同一起点。 */
-.cat-row .c-meta { display: inline-flex; flex-wrap: nowrap; gap: 8px; align-items: center; flex: 0 0 auto; min-width: 0; } /* v369 条2：只装「状态+编辑+删除」组，组内不拆行；排序/资源数已挪名称组 */
+.cat-row .c-meta, .ann-item .c-meta { display: inline-flex; flex-wrap: nowrap; gap: 8px; align-items: center; flex: 0 0 auto; min-width: 0; } /* v369 条2：只装「状态+编辑+删除」组，组内不拆行；排序/资源数已挪名称组；v381 条1：公告项操作组同构复用 */
     /* v368 条1：分类列对齐——排序/资源数/状态/编辑/删除全部定宽，任何行都纵向对齐 */
     .cat-row .c-sort { min-width: 62px; flex: 0 0 auto; }
     .cat-row .c-count { min-width: 78px; flex: 0 0 auto; }
-    .cat-row .c-meta .row-btn { min-width: 60px; flex: 0 0 auto; justify-content: center; }
+    .cat-row .c-meta .row-btn, .ann-item .c-meta .row-btn { min-width: 60px; flex: 0 0 auto; justify-content: center; }
     /* v370c 条8b：三角绝对定位但 top 改"第一行竖直中心"实测值（原 top:50% 在多行时居中的是整行）——
        桌面首行中心=27px（padding12+按键半高15）→ top 15px；保持 right:8 + 行 padding-right:36（列对齐依赖统一预留） */
-    .cat-row { position: relative; padding-right: 36px; }
-    .cat-row .cat-fold { position: absolute; right: 8px; top: 15px; transform: none; margin-left: 0; }
+    .cat-row, .ann-item { position: relative; padding-right: 36px; } /* v381 条1：公告项同款右缘三角位 */
+    .cat-row .cat-fold, .ann-item .cat-fold { position: absolute; right: 8px; top: 15px; transform: none; margin-left: 0; }
     /* v368 条6：绑定一组不换行（类型行/公告项） */
     .v-group { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
     .variant-item .v-main-group { flex: 1 1 auto; gap: 10px; min-width: 0; }
@@ -1523,12 +1523,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     /* v370 条5：撤「资源键图标常显」——恢复全站口径：优先显示文字，空间不够才收成图标（__btnFit 机制） */
     /* v370 条1：折叠改 visibility+opacity（原 display:none）——展开与否不再改变列宽，
        排序/资源数/状态/编辑/删除在任何状态、任何行都纵向对齐（一级对一级、二级对二级） */
-  .cat-row .c-meta .row-btn { visibility: hidden; opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); }
-  .cat-row.cat-open .c-meta .row-btn { visibility: visible; opacity: 1; }
+  .cat-row .c-meta .row-btn, .ann-item .c-meta .row-btn { visibility: hidden; opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); }
+  .cat-row.cat-open .c-meta .row-btn, .ann-item.cat-open .c-meta .row-btn { visibility: visible; opacity: 1; }
   .cat-fold { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: auto; }
   .cat-fold .toggle-arrow { transform: rotate(-90deg); transition: transform var(--dur-mid) var(--ease-out);  }
-  .cat-row.cat-open .cat-fold .toggle-arrow { transform: rotate(0deg); }
-  .cat-row .c-meta .row-btn { animation: catBtnIn var(--dur-fast) var(--ease-out); } /* v361 条3：展开淡入 */
+  .cat-row.cat-open .cat-fold .toggle-arrow, .ann-item.cat-open .cat-fold .toggle-arrow { transform: rotate(0deg); }
+  .cat-row .c-meta .row-btn, .ann-item .c-meta .row-btn { animation: catBtnIn var(--dur-fast) var(--ease-out); } /* v361 条3：展开淡入 */
   @keyframes catBtnIn { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 600px) {
@@ -2008,12 +2008,13 @@ button, [role="button"], .row-btn, .batch-btn, .rte-btn, [onclick] { -webkit-tap
 /* v336 条86：原生下拉外观统一（保留原生行为，去系统箭头/主题色） */
 select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
 
-/* v338 条69：平板档（601~1024px）保护——卡片网格降列、工具栏允许换行、表格容器横向可滑 */
+/* v338 条69：平板档（601~1024px）保护——卡片网格降列、工具栏允许换行、表格容器横向可滑
+   v381 条5：统计页表格退出横滑名单（全宽直显），绑定/滚动表格保留 */
 @media (min-width: 601px) and (max-width: 1024px) {
   #productList.card-view { grid-template-columns: repeat(3, 1fr); }
   .toolbar, .filter-bar { flex-wrap: wrap; row-gap: 8px; }
-  .stat-table-wrap, .bind-table-wrap, .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .stat-table-wrap table, .bind-table-wrap table, .table-scroll table { min-width: 640px; }
+  .bind-table-wrap, .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .bind-table-wrap table, .table-scroll table { min-width: 640px; }
   .modal-box, .edit-mask .modal-box { max-width: 92vw; }
 }
 
@@ -2039,18 +2040,23 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .rte-zoom-ico { width: 16px !important; height: 16px !important; display: block; }
 .rte-zoom { display: inline-flex; align-items: center; justify-content: center; }
 
-/* v343 条27：窄屏下表格容器可左右滑动，并在顶部给明显提示；操作按钮窄屏自动显示为图标 */
+/* v343 条27 → v381 条5（老板反馈：统计页不要左右滑动，全部直接看完）
+   统计页三个表格（资源明细/分类统计/浏览记录）改全宽自适应直显；绑定设备等其它表格保留横滑 */
 @media (max-width: 600px) {
-  .stat-table-wrap, .bind-table-wrap, .table-scroll, .admin-table-wrap {
+  .bind-table-wrap, .table-scroll, .admin-table-wrap {
     overflow-x: auto !important; -webkit-overflow-scrolling: touch;
     position: relative; padding-top: 24px;
   }
-  .stat-table-wrap::before, .bind-table-wrap::before, .table-scroll::before, .admin-table-wrap::before {
+  .bind-table-wrap::before, .table-scroll::before, .admin-table-wrap::before {
     content: "← 左右滑动查看更多 →"; position: absolute; top: 2px; left: 0; right: 0;
     text-align: center; font-size: 11px; color: #5b78a0; background: #f2f7fd;
     border-radius: 8px; padding: 4px 0;
   }
-  .stat-table-wrap table, .bind-table-wrap table, .table-scroll table, .admin-table-wrap table { min-width: 620px; }
+  .bind-table-wrap table, .table-scroll table, .admin-table-wrap table { min-width: 620px; }
+  /* v381 条5：统计页表格全宽直显，不再横滑 */
+  .stat-table-wrap { overflow-x: visible; }
+  .stat-table-wrap table { min-width: 0 !important; width: 100%; }
+  .stat-table th, .stat-table td { padding: 6px 3px; font-size: 12px; }
 }
 
 /* v370 条1：名称列改弹性填充（原 v368 300px/34% 定宽：一级行比二级行多一颗展开箭头，
@@ -2080,14 +2086,14 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   .cat-sub-ph { width: 44px; margin-right: 0; }
   .cat-row .c-sort { flex: 0 0 56px; width: 56px; max-width: 56px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
   .cat-row .c-count { flex: 0 0 62px; width: 62px; max-width: 62px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
-  /* 第二组：整行下拉展开（同批量条缓动） */
-  .cat-row .c-meta { flex: 1 1 100%; gap: 8px; justify-content: flex-start; padding: 0 0 0 28px; box-sizing: border-box;
+  /* 第二组：整行下拉展开（同批量条缓动）——v381 条1：公告项操作组同款 */
+  .cat-row .c-meta, .ann-item .c-meta { flex: 1 1 100%; gap: 8px; justify-content: flex-start; padding: 0 0 0 28px; box-sizing: border-box;
     max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
     transition: max-height .22s var(--ease-out, ease), opacity .22s var(--ease-out, ease), margin-top .22s var(--ease-out, ease); }
-  .cat-row.cat-open .c-meta { max-height: 48px; opacity: 1; margin-top: 6px; }
-  .cat-row .c-meta > *:first-child { min-width: 0 !important; }
-  .cat-row .c-meta .row-btn { visibility: visible; opacity: 1; transition: none; min-width: 0; padding: 4px 12px; font-size: 12px; }
-  .cat-row .cat-fold { top: 11px; } /* 手机首行中心=23px（padding12+柄半高11） */
+  .cat-row.cat-open .c-meta, .ann-item.cat-open .c-meta { max-height: 48px; opacity: 1; margin-top: 6px; }
+  .cat-row .c-meta > *:first-child, .ann-item .c-meta > *:first-child { min-width: 0 !important; }
+  .cat-row .c-meta .row-btn, .ann-item .c-meta .row-btn { visibility: visible; opacity: 1; transition: none; min-width: 0; padding: 4px 12px; font-size: 12px; }
+  .cat-row .cat-fold, .ann-item .cat-fold { top: 11px; } /* 手机首行中心=23px（padding12+柄半高11） */
 }
 
 /* ===== v371 条5：批量按键=同一组（组内不拆散，可整组换行）===== */

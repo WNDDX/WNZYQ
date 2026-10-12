@@ -758,7 +758,7 @@
         }
         var r = field.getBoundingClientRect();
         pop.classList.add('open');
-        var pw = 268, ph = pop.offsetHeight || 130;
+        var pw = pop.offsetWidth || 300, ph = pop.offsetHeight || 130; /* v381 条6：宽度动态读取（CSS 268→300），钳制不再用过时定值 */
         /* v375 修（老板反馈：点了日期组件时间弹层出格）——按「可视视口」双重钳制：
            手机软键盘弹起时 visualViewport 缩小/上移，旧写法按整个布局视口算，弹层会被顶到键盘底下/屏幕外。
            现在：①宽高取可视视口；②左右上下全部钳在可视区内；③弹层开着时视口变化（键盘弹/收、转屏、滚动）即时重定位。 */

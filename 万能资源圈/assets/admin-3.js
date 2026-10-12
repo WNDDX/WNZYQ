@@ -440,7 +440,7 @@
         input.style.borderColor = '#ff4444';
         input.style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)';
         toast(msg || '请填写必填项', 'error');
-        input.focus();
+        try { input.focus({ preventScroll: true }); } catch (e1) { input.focus(); } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
         return false;
       }
       input.style.borderColor = '';
@@ -1165,7 +1165,7 @@ document.addEventListener('click', function (e) {
       z.classList.toggle('rte-zoom-on', big);
       z.innerHTML = big ? RTE_SVG_MIN : RTE_SVG_MAX; window.__syncBodyLock && window.__syncBodyLock(); // R231 条9：emoji→SVG
       if (big) {
-        ed.focus();
+        try { ed.focus({ preventScroll: true }); } catch (e1) { ed.focus(); } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
         // 正文起点跟随工具栏底部，避免工具栏换行时遮挡内容开头
         (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 0; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; ed.style.height = 'calc(100dvh - ' + (_b + 12) + 'px)'; }; /* R176：二段赋值 dvh 优先（手机地址栏/软键盘收窄可视区），不支持的内核第二句被忽略自动回退 100vh */ _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) { if (window.__silent) window.__silent(e); } } })();
         // 放大态正文起点跟随工具栏底部（退出放大用工具栏"还原"或 Esc）

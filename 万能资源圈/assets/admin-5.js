@@ -1908,7 +1908,7 @@ refreshCatCnts();
       var confirmPwd = document.getElementById('confirmPwd').value;
       var __pwErr = function (id, msg) { /* v336 条153：错误写在出错框下方红字 1.5 秒+红框+聚焦 */
         var el = document.getElementById(id); if (!el) { toast(msg, 'error'); return; }
-        el.style.borderColor = 'var(--red-strong)'; el.focus();
+        el.style.borderColor = 'var(--red-strong)'; try { el.focus({ preventScroll: true }); } catch (e1) { el.focus(); } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
         var tip = document.createElement('div'); tip.textContent = msg; tip.style.cssText = 'color:var(--red-strong);font-size:12px;margin:4px 0 0;';
         el.parentNode.appendChild(tip);
         setTimeout(function () { tip.remove(); el.style.borderColor = ''; }, 1500);
@@ -1974,7 +1974,7 @@ refreshCatCnts();
       this.classList.remove('show');
       adminPage = 1;
       renderProducts();
-      inp.focus();
+      try { inp.focus({ preventScroll: true }); } catch (e1) { inp.focus(); } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
     });
 
     // ---------- 表单字段清除红色边框 ----------
@@ -2654,7 +2654,7 @@ function boot() {
       // R243 条39：自动回填上次成功登录的用户名
       try {
         var lastUser = localStorage.getItem('wnzyq_last_user');
-        if (lastUser && loginUser && !loginUser.value) { loginUser.value = lastUser; if (loginPass) loginPass.focus(); }
+        if (lastUser && loginUser && !loginUser.value) { loginUser.value = lastUser; if (loginPass) { try { loginPass.focus({ preventScroll: true }); } catch (e1) { loginPass.focus(); } } } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
       } catch (e) { if (window.__silent) window.__silent(e); }
     }
 

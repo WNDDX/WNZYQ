@@ -109,7 +109,14 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 
   <!-- ============ 分类栏（一级） ============ -->
   <div class="category-bar-wrap">
-    <nav class="category-bar" id="categoryBar" aria-label="资源分类"></nav>
+    <nav class="category-bar" id="categoryBar" aria-label="资源分类">
+      <!-- v380 条12：首屏占位——JS 数据未就绪时先铺 4 个分类胶囊占位，
+           数据到达后由 renderCategories() 整体替换（与骨架卡同款思路，不再是空白一条） -->
+      <div class="category-tag cat-ph" aria-hidden="true"></div>
+      <div class="category-tag cat-ph cat-ph-w2" aria-hidden="true"></div>
+      <div class="category-tag cat-ph cat-ph-w3" aria-hidden="true"></div>
+      <div class="category-tag cat-ph cat-ph-w2" aria-hidden="true"></div>
+    </nav>
     <button class="cat-toggle" id="catToggle" title="展开/收起分类" aria-label="展开或收起分类">
       <svg aria-hidden="true" class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
     </button>

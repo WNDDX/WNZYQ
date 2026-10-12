@@ -1503,7 +1503,7 @@ window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-char
    ①硬排除（输入框/编辑器/视频/灯箱/文件卡/弹层）：始终独占手势；
    ②横条区（分类栏/标签条/最近浏览/表格横滚…）：只有自己真放不下、能横向滚（scrollWidth>clientWidth）时才独占；
      一行放得下时横条滑不动也没必要独占——把滑动还给「整页左右切换分类/标签」，不再出现"滑了没反应"。 */
-window.__swipeHardExclude = 'input, textarea, select, video, .rte-editor, .lightbox, .file-folder-wrap, .cat-picker-panel, .ctx-menu, .dt-pop, .pg-jump, .modal-nav-arrow';
+window.__swipeHardExclude = 'input, textarea, select, video, .rte-editor, .lightbox, .file-folder-wrap, .cat-picker-panel, .ctx-menu, .dt-pop, .pg-jump, .modal-nav-arrow, .cover-carousel'; /* v381 条3：轮播有自己的跟手拖动，整弹窗滑切此前会抢先触发 __modalGo 重建弹窗，导致轮播永远切不了第二张——硬排除 */
 window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
   if (!el || !onSwipe) return;
   var sx = 0, sy = 0, on = false;
@@ -1525,8 +1525,10 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     if (!on || !e.touches.length) return;
     var mx = e.touches[0].clientX - sx, my = e.touches[0].clientY - sy;
     if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) { on = false; return; }
+    /* v381 条4：同 __followSwipe——真机 touchmove 不 preventDefault 会被浏览器滚动接管并 touchcancel 夭折 */
+    if (Math.abs(mx) >= 10 && Math.abs(mx) >= Math.abs(my) * 1.5) e.preventDefault();
     if (Math.abs(mx) >= 60 && Math.abs(mx) > Math.abs(my) * 2) { on = false; onSwipe(mx < 0 ? 1 : -1); }
-  }, { passive: true });
+  }, { passive: false });
   el.addEventListener('touchend', function (e) {
     if (!on) return; on = false;
     var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
@@ -1644,14 +1646,18 @@ window.__followSwipe = function (opts) {
     var dx = x - sx, dy = y - sy;
     if (!S) {
       if (Math.abs(dy) > 24 && Math.abs(dy) > Math.abs(dx)) { armed = false; return; } /* 竖向主导=滚页面，退出 */
+      /* v381 条4：真机上 touchmove 若不 preventDefault，手指稍有纵向漂移浏览器就接管滚动并 fire touchcancel，
+         手势当场夭折（表现=「滑不动/画面不变化」）。横向意图明确（≥10px 且横向≥纵向1.5倍）即锁定滚动。 */
+      if (Math.abs(dx) >= 10 && Math.abs(dx) >= Math.abs(dy) * 1.5) e.preventDefault();
       if (Math.abs(dx) >= 26 && Math.abs(dx) > Math.abs(dy) * 2) { armed = false; startDrag(dx < 0 ? 1 : -1); if (S) { S.lx = x; S.lt = Date.now(); apply(dx); } } /* v370 条7：26px/2 倍——原 18px 太敏感，轻扫就抽走画面还吞点击 */
       return;
     }
+    e.preventDefault(); /* v381 条4：拖动中锁滚动，防浏览器接管后 touchcancel 打断跟手 */
     var now = Date.now();
     if (now - S.lt > 0) S.vx = (x - S.lx) / (now - S.lt);
     S.lx = x; S.lt = now;
     apply(dx);
-  }, { passive: true });
+  }, { passive: false });
   document.addEventListener('touchend', function () {
     if (!S) { armed = false; return; }
     /* 快速一甩=沿滑动方向位移（dir=1 左滑时 off 为负）→ off*dir<0 才算同向 */
@@ -2066,7 +2072,7 @@ window.__cpPanel = function (opts) {
       e.preventDefault();
       if (mask.classList.contains('open')) { cpClose(); return; }
       if (busySel && document.querySelector(busySel)) return; /* 任一编辑类弹窗开着时不抢键 */
-      active = 0; cpRender(); mask.classList.add('open'); setTimeout(function () { input.focus(); }, 0);
+      active = 0; cpRender(); mask.classList.add('open'); setTimeout(function () { try { input.focus({ preventScroll: true }); } catch (e1) { input.focus(); } }, 0); /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
     }
   });
   var tryReg = function () {
@@ -2508,7 +2514,7 @@ window.__fmtDateTime = function (input, kind) {
     if (!open) return;
     if (!open.contains(e.target)) {
       var f = open.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-      if (f) { try { f.focus(); } catch (err) { if (window.__silent) window.__silent(err); } }
+      if (f) { try { f.focus({ preventScroll: true }); } catch (err) { try { f.focus(); } catch (err2) { if (window.__silent) window.__silent(err2); } } } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
     }
   }, true);
 })();
@@ -2562,8 +2568,8 @@ document.addEventListener('keydown', function (e) {
   f = Array.prototype.filter.call(f, function (el) { return el.offsetParent !== null; });
   if (!f.length) return;
   var first = f[0], last = f[f.length - 1];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); try { last.focus({ preventScroll: true }); } catch (e1) { last.focus(); } } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); try { first.focus({ preventScroll: true }); } catch (e1) { first.focus(); } } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
 });
 
 /* v347：二维码生成——全站共享一份（资源页 + 管理页长按菜单统一「存二维码」） */

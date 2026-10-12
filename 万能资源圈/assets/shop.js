@@ -200,11 +200,22 @@
           if (e.target.closest('button, a, input')) return; /* v336 条162 */
           triggerDownload('/files/' + key);
         });
-        if (!row.querySelector('.fc-dl')) {
-          var dl = document.createElement('button');
-          dl.type = 'button'; dl.className = 'fc-dl'; dl.textContent = '下载';
-          dl.addEventListener('click', function (e) { e.stopPropagation(); triggerDownload('/files/' + key); });
-          row.appendChild(dl);
+        /* v380：把文件行的大小与下载键包成一组靠右，与文件夹标题行 .fc-head-meta 视觉统一 */
+        var __existingDl = row.querySelector('.fc-dl');
+        var __existingSize = row.querySelector('.fsize');
+        if (!row.querySelector('.fc-row-meta')) {
+          var meta = document.createElement('span');
+          meta.className = 'fc-row-meta';
+          if (__existingSize) meta.appendChild(__existingSize);
+          if (!__existingDl) {
+            var dl = document.createElement('button');
+            dl.type = 'button'; dl.className = 'fc-dl'; dl.textContent = '下载';
+            dl.addEventListener('click', function (e) { e.stopPropagation(); triggerDownload('/files/' + key); });
+            meta.appendChild(dl);
+          } else {
+            meta.appendChild(__existingDl);
+          }
+          row.appendChild(meta);
         }
       }
       /* 递归绑定一个文件夹列表里的所有层级 */
@@ -255,6 +266,12 @@
              现在统一：默认收起（与后台同款）+ 三角语义同款（收起 -90° 朝右 / 展开 0° 朝下）。 */
           if (list.style.display !== 'block') list.style.display = 'none';
           if (header) {
+            /* v380 条14：顶层 folder header 里的静态三角（.fc-arrow-static）可能只是空占位 span，
+               统一注入 SVG，确保客户页折叠箭头可见且与后台/分类栏同款。 */
+            var __fcArrowHolder = header.querySelector('.fc-arrow, .fc-arrow-static');
+            if (__fcArrowHolder && !__fcArrowHolder.querySelector('svg')) {
+              __fcArrowHolder.innerHTML = '<svg class="fc-arrow-svg toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
+            }
             var __fcArrow = header.querySelector('.fc-arrow-svg, .toggle-arrow, svg');
             if (__fcArrow) __fcArrow.style.transform = 'rotate(-90deg)'; /* 收起：朝右（全站同款） */
             header.style.cursor = 'pointer';
@@ -902,27 +919,13 @@
       } catch (e) { if (window.__silent) window.__silent(e); }
     }, 2500);
 
-    window.__bindCarouselSwipe = function (carEl, dotsEl) {
-      if (!carEl || !dotsEl || carEl.__sw) return; carEl.__sw = 1;
-      var sx = 0, sy = 0;
-      carEl.addEventListener('touchstart', function (e) { if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } }, { passive: true });
-      carEl.addEventListener('touchend', function (e) {
-        var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-        if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 2) return;
-        var dots = Array.prototype.slice.call(dotsEl.children); if (!dots.length) return;
-        var i = 0; dots.forEach(function (d, k) { if (d.classList.contains('active')) i = k; });
-        var ni = (i + (dx < 0 ? 1 : -1) + dots.length) % dots.length;
-        dots[ni].click();
-      }, { passive: true });
-    };
+    /* v381 条3：删除重复的轮播滑动层 __bindCarouselSwipe——ui-common __renderCarousel 的 track 自带拖动+圆点切换，
+       此前两层 touchend 叠加：track 先 goToSlide(1)，冒泡到 carEl 又读"新 active"切回 0，净效果=永远切不动且来回闪。 */
     function renderProducts() {
       var list = getFilteredProducts();
       window.__visibleIds = list.map(function (p) { return p.id; }); /* v358 S3：详情弹窗上/下一条按此顺序切换 */
       /* R193 二① 方案A：骨架期（数据在路上）列表不动——骨架已铺满一页，空态不该抢跑 */
       if (window.__skelPhase && !list.length) { emptyTip.classList.remove('show'); return; }
-      var __skels = productGrid.querySelectorAll('.card-skeleton');
-      var __reuse = __skels.length > 0; /* 数据首达：骨架逐条渐变成真卡（同位置替换+错峰淡入） */
-      var __frag = document.createDocumentFragment(); /* v361 条1：不再先清空再插入（两步会渲染出一帧空白，视口顶部第一张占位卡就"闪"）——最后一次性原子替换 */
       emptyTip.classList.toggle('show', list.length === 0);
 
       // 移除旧分页
@@ -933,15 +936,18 @@
       // 空状态（R124 用户定稿 15:06）：三分支统一只显示标题、副文案全删——
       // 搜索=「该搜索暂无资源」；分类/全部=「该分类暂无资源」
       if (list.length === 0) {
-        if (__reuse) productGrid.innerHTML = ''; /* R193 方案A：骨架期结束无数据，清骨架走空态 */
+        /* v380 条2：切换到无资源分类时，无论是否复用骨架，都必须先清空旧卡片，
+           否则会出现“旧卡片残留 + 空态提示同时显示”的叠加 bug。 */
+        productGrid.innerHTML = '';
         var emptyTitle = document.getElementById('emptyTitle');
         var kw = searchInput.value.trim();
+        /* v380 条1：每次渲染空态前先把旧的清除/重试/查看全部/清除搜索按钮清掉，
+           防止重复 append 导致空态下堆出多个一模一样的按钮。 */
+        emptyTip.querySelectorAll('.empty-clear-btn, .empty-desc').forEach(function (n) { n.parentNode.removeChild(n); });
         /* v335：加载失败时不再假装“没有资源”——直接说明是加载失败，并给一个大大的重试按钮，
            提示出现在屏幕正中（第一眼就能看到），点一下就重新加载。 */
         if (window.__loadFailed && !kw) {
           emptyTitle.textContent = '加载失败，网络开小差了';
-          var __rb = emptyTip.querySelector('.empty-clear-btn');
-          if (__rb) __rb.parentNode.removeChild(__rb);
           var __retry = document.createElement('button');
           __retry.type = 'button'; __retry.className = 'empty-clear-btn'; __retry.textContent = '重试';
           __retry.addEventListener('click', function () {
@@ -967,8 +973,6 @@
           emptyTip.appendChild(__all);
         }
         /* R183 条17：搜索空态提供「清除搜索」按钮（清词重看全部分类；非搜索空态不显示） */
-        var __ob = emptyTip.querySelector('.empty-clear-btn');
-        if (__ob) __ob.parentNode.removeChild(__ob);
         if (kw) {
           var __clr = document.createElement('button');
           __clr.type = 'button'; __clr.className = 'empty-clear-btn'; __clr.textContent = '清除搜索';
@@ -1066,13 +1070,10 @@
           card.classList.add('stagger-in'); /* R192 二②；R211 二批（用户 09-20）：错峰 30ms 递升改 20ms/项、180ms 封顶（长列表尾部不再越等越久） */
           card.style.animationDelay = Math.min(i * 20, 180) + 'ms';
         }
-        if (__reuse && __skels[i]) __skels[i].parentNode.replaceChild(card, __skels[i]);
-        else frag.appendChild(card);
+        frag.appendChild(card);
       });
-      productGrid.replaceChildren(frag); /* v361 条1：原子替换，无中间空白帧 */
-      window.__shopPainted = true; /* v357：首次绘制完成标记（其后切分类/筛选不再重播错峰动画） */
-      /* 真实条数少于骨架数：多余骨架收尾移除（真条数>骨架数时新增卡已在上方 append） */
-      if (__reuse) { for (var j = pageList.length; j < __skels.length; j++) { if (__skels[j].parentNode) __skels[j].parentNode.removeChild(__skels[j]); } }
+      productGrid.replaceChildren(frag); /* v361 条1 + v380 条15：全部卡片先收进 DocumentFragment，再一次性原子替换，避免先 replaceChild 进 grid 的卡片被最后一步清掉 */
+      window.__shopPainted = true; /* v357：首次绘制完成标记（其后切分类/筛选不再重播错峰动画；v380 补回：条15 重写时误删，导致 _stale 判定失效→滑切分类丢缓存） */
 
       // 分页控件（R14：改用全站统一 .uni-pager 公共组件——与数据统计翻页同款胶囊样式 + 跳页输入；
       // 翻页后回顶改瞬时滚动，原先平滑滚动叠加图片加载会显得"卡一下"）
@@ -1249,7 +1250,6 @@
       // R256：详情弹窗封面轮播
       var _covArr = Array.isArray(p.coverImages) ? p.coverImages : (p.img ? [p.img] : []);
       renderCarousel(document.getElementById('modalCarousel'), document.getElementById('modalCcTrack'), document.getElementById('modalCcDots'), modalCover, _covArr);
-      if (window.__bindCarouselSwipe) window.__bindCarouselSwipe(document.getElementById('modalCarousel'), document.getElementById('modalCcDots')); /* v368 条9：轮播跟手滑动 */
       // R273：单图回退条件化——多图时 modalCover 由 renderCarousel 隐藏，不再被 loadImg 翻回来
       var _mainImg = _covArr[0] || p.img || '';
       if (_covArr.length <= 1) {
@@ -2052,7 +2052,7 @@
       searchInput.value = '';
       this.classList.remove('show');
       __fadeRenderProducts(); /* R243（用户 09-22 23:18）：条15 搜索清空统一翻页同款过渡 */
-      searchInput.focus();
+      try { searchInput.focus({ preventScroll: true }); } catch (e1) { searchInput.focus(); } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
     });
     /* R186 建议1：搜索历史下拉（值为空 focus 时显示，复用 tab 胶囊 + 灰圆小 ×）；
        本脚本先于 ui-common.js 加载，同步阶段组件未定义 → load 后兜底绑定 */
@@ -2095,7 +2095,7 @@
         if (__anyOpen) return;
         if (window.matchMedia && !window.matchMedia('(pointer: fine)').matches) return; /* 仅桌面（细指针） */
         e.preventDefault();
-        searchInput.focus();
+        try { searchInput.focus({ preventScroll: true }); } catch (e1) { searchInput.focus(); } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */
       } else if (e.key === 'Escape' && !__anyOpen) {
         if (document.activeElement === searchInput) {
           if (searchInput.value) {

@@ -633,11 +633,16 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
        不贴右缘，扫过全程无残影 */
     .skel .sk-piece, .skel .sk-piece.sk-piece,
     .skel .sk-img, .skel .sk-line,
-    .card-skeleton .sk-img, .card-skeleton .sk-line {
+    .card-skeleton .sk-img, .card-skeleton .sk-line,
+    .category-tag.cat-ph { /* v380 条12：分类栏首屏占位（数据未到时撑胶囊轮廓）纳入骨架唯一源 */
       background: linear-gradient(90deg, var(--bg-light, #f0f2f5) 55%, var(--sk-hi, #e8eaef) 75%, var(--bg-light, #f0f2f5) 95%);
       background-size: 200% 100%;
       animation: skShimmer 1.6s linear infinite;
     }
+    /* v380 条12：分类占位胶囊形状——与真分类键同高（14px 内容高）、去内边距、禁点击 */
+    .category-tag.cat-ph { width: 52px; height: 14px; border-radius: 999px; padding: 0; pointer-events: none; }
+    .category-tag.cat-ph.cat-ph-w2 { width: 64px; }
+    .category-tag.cat-ph.cat-ph-w3 { width: 76px; }
     .skel .sk-line, .card-skeleton .sk-line { height: 13px; border-radius: 4px; margin-top: 8px; }
     .skel .sk-line.w70, .card-skeleton .sk-line.w70 { width: 70%; }
     .skel .sk-line.w95, .card-skeleton .sk-line.w95 { width: 95%; }
@@ -646,7 +651,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
     @keyframes skShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     /* 系统「减少动态效果」：恢复原呼吸式脉冲、禁用背景位移（微光位移感更强） */
     @media (prefers-reduced-motion: reduce) {
-      .skel .sk-piece, .skel .sk-piece.sk-piece, .skel .sk-img, .skel .sk-line, .card-skeleton .sk-img, .card-skeleton .sk-line {
+      .skel .sk-piece, .skel .sk-piece.sk-piece, .skel .sk-img, .skel .sk-line, .card-skeleton .sk-img, .card-skeleton .sk-line, .category-tag.cat-ph {
         animation: skPulse 1.2s ease-in-out infinite; background: var(--bg-light, #f0f2f5); background-size: auto;
       }
     }
