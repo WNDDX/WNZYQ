@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS products (
   detail_images TEXT    NOT NULL DEFAULT '[]',
   detail_videos TEXT    NOT NULL DEFAULT '[]',
   contact_url   TEXT    NOT NULL DEFAULT '',
+  contact_qr    TEXT    NOT NULL DEFAULT '', -- v385 条11：该资源专属咨询客服二维码（空=回退平台设置）
   price         REAL    NOT NULL DEFAULT 0,
   is_online     INTEGER NOT NULL DEFAULT 1,
   is_hidden     INTEGER NOT NULL DEFAULT 0,
@@ -199,6 +200,9 @@ export async function onRequestPost(context) {
       }
       if (!colNames.includes('schedule_off')) {
         await env.DB.exec("ALTER TABLE products ADD COLUMN schedule_off TEXT");
+      }
+      if (!colNames.includes('contact_qr')) { /* v385 条11：专属客服二维码列 */
+        await env.DB.exec("ALTER TABLE products ADD COLUMN contact_qr TEXT NOT NULL DEFAULT ''");
       }
     } catch (e) { /* 忽略迁移错误 */ }
 

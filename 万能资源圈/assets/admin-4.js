@@ -1833,7 +1833,57 @@
       if (del) del.style.display = qr ? '' : 'none';   /* ×只在有图时出现 */
       if (add) add.style.display = qr ? 'none' : '';
     }
+    /* v385 条1：实时预览导航页弹窗——标题/提示语/跳转键文案与导航页 showModal 逐字一致（openService/openGroup/openGzh），
+       二维码取「暂存||已保存」（改了没保存也能预览到），跳转链接取输入框当前值||已保存||出厂默认，所见即所得 */
+    function __infoPreview(k) {
+      var c = __infoCfg[k], C = __infoCap(k);
+      var meta = {
+        contact: { title: '咨询客服', tip: '长按图片识别-添加人工客服', btn: '跳转-咨询在线客服', green: true },
+        group:   { title: '交流群聊', tip: '长按图片识别-加入交流群聊', btn: '跳转-加入交流群聊', green: false },
+        gzh:     { title: '公众号讯', tip: '长按图片识别-关注公众号讯', btn: '', green: false }
+      }[k];
+      var mask = document.getElementById('infoPvMask');
+      if (!mask) return;
+      var title = document.getElementById('infoPvTitle');
+      var tip = document.getElementById('infoPvTip');
+      var img = document.getElementById('infoPvImg');
+      var fail = document.getElementById('infoPvFail');
+      var jump = document.getElementById('infoPvJump');
+      var close = document.getElementById('infoPvClose');
+      title.textContent = meta.title;
+      tip.textContent = meta.tip;
+      var qr = __infoPending[k] || (window.__infoSettings[c.qrKey] || '');
+      if (qr) {
+        img.onerror = function () { img.style.display = 'none'; fail.style.display = 'flex'; };
+        img.onload = function () { img.style.display = 'block'; fail.style.display = 'none'; };
+        img.src = qr; img.style.display = 'block'; fail.style.display = 'none';
+      } else {
+        img.style.display = 'none'; img.removeAttribute('src'); fail.style.display = 'flex';
+      }
+      var jumpUrl = '';
+      if (c.urlKey) {
+        var inp = document.getElementById('infoUrl' + C);
+        jumpUrl = ((inp && inp.value) || '').trim() || (window.__infoSettings[c.urlKey] || '') || c.defUrl;
+      }
+      if (jumpUrl && meta.btn) {
+        jump.style.display = 'flex'; close.style.display = 'flex'; close.classList.remove('solo');
+        jump.textContent = meta.btn;
+        jump.onclick = function () { window.open(jumpUrl, '_blank'); };
+        jump.style.backgroundColor = meta.green ? 'var(--brand-green, #00A828)' : '';
+        jump.style.borderColor = meta.green ? 'var(--brand-green, #00A828)' : '';
+      } else {
+        jump.style.display = 'none'; close.style.display = 'flex'; close.classList.add('solo');
+      }
+      mask.classList.add('open');
+      if (window.__haptic) window.__haptic();
+    }
     (function __infoInit() {
+      var pvMask = document.getElementById('infoPvMask');
+      if (pvMask) {
+        pvMask.addEventListener('click', function (e) { if (e.target === pvMask) pvMask.classList.remove('open'); });
+        var pvClose = document.getElementById('infoPvClose');
+        if (pvClose) pvClose.addEventListener('click', function () { pvMask.classList.remove('open'); });
+      }
       var open = document.getElementById('openInfoBtn');
       if (open) open.addEventListener('click', function () {
         var mk = document.getElementById('infoMask');
@@ -1849,6 +1899,10 @@
           var fold = document.getElementById('infoFold' + C);
           if (fold) fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
           if (willOpen) __infoRefreshPanel(k); /* 展开时以当前暂存值渲染 */
+          if (willOpen) { /* v385 条3：展开时回填网络地址输入框（暂存优先，无则已保存值） */
+            var ni = document.getElementById('infoNet' + C);
+            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.qrKey] || '');
+          }
           if (window.__haptic) window.__haptic();
         };
         var fold = document.getElementById('infoFold' + C);
@@ -1877,6 +1931,20 @@
           __infoPending[k] = ''; /* 只到页面，保存才入库 */
           __infoRefreshPanel(k);
         });
+        /* v385 条3：图片网络地址——change 校验后写入 pending（同上传只到页面，保存才入库） */
+        var net = document.getElementById('infoNet' + C);
+        if (net) {
+          net.addEventListener('change', function () {
+            var v = (net.value || '').trim();
+            if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
+            __infoPending[k] = v;
+            __infoRefreshPanel(k);
+            if (v) { toast('网络图已就绪，点「保存」后生效', 'info'); if (window.__haptic) window.__haptic(); }
+          });
+        }
+        /* v385 条1：点行首三键=实时预览导航页对应弹窗（值取 pending||已保存，所见即所得） */
+        var pvBtn = document.getElementById('infoBtn' + C);
+        if (pvBtn) pvBtn.addEventListener('click', function () { __infoPreview(k); });
         var sv = document.getElementById('infoSave' + C);
         if (sv) sv.addEventListener('click', function () {
           var b = this, _t = b.textContent;

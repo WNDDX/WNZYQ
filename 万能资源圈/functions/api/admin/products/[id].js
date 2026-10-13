@@ -36,6 +36,14 @@ export async function onRequestPut(context) {
 
   const b = await readJSON(request);
 
+  // v385 条11：部分更新模式——编辑弹窗内「专属咨询客服」行内保存只更新这两列（下方全量 UPDATE 会把缺失字段清空）
+  if (b.partial === 'contact') {
+    await env.DB.prepare("UPDATE products SET contact_url=?, contact_qr=?, updated_at=datetime('now') WHERE id=?")
+      .bind(String(b.contactUrl || ''), String(b.contactQr || ''), id).run();
+    await clearPublicCache(request);
+    return json({ ok: true });
+  }
+
   // v294（用户 10-04 02:14）：211 并发编辑乐观锁——读取当前 updated_at，与前端传来的比对
   const currentRow = await env.DB.prepare('SELECT updated_at FROM products WHERE id = ?').bind(id).first();
   if (!currentRow) return json({ ok: false, msg: '资源不存在' }, 404);
@@ -58,7 +66,7 @@ export async function onRequestPut(context) {
 
   await env.DB.prepare(
     `UPDATE products SET cid=?, title=?, "desc"=?, detail=?, img=?,
-       cover_images=?, detail_images=?, detail_videos=?, contact_url=?, price=?, is_online=?, is_hidden=?,
+       cover_images=?, detail_images=?, detail_videos=?, contact_url=?, contact_qr=?, price=?, is_online=?, is_hidden=?,
        schedule_on=?, schedule_off=?, sort=?,
        updated_at=datetime('now') WHERE id=?`
   )
@@ -72,6 +80,7 @@ export async function onRequestPut(context) {
       detailImages,
       detailVideos,
       String(b.contactUrl || ''),
+      String(b.contactQr || ''), /* v385 条11：专属客服二维码 */
       Number(b.price) || 0,
       b.is_online ? 1 : 0,
       b.is_hidden ? 1 : 0,

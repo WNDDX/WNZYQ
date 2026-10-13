@@ -526,6 +526,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <input type="file" id="infoQrFileContact" accept="image/*" style="display:none" />
             </div>
             <div class="info-url-row">
+              <label for="infoNetContact">图片网络地址</label>
+              <input class="input" id="infoNetContact" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...（二维码网络图）" />
+            </div>
+            <div class="info-url-row">
               <label for="infoUrlContact">跳转链接</label>
               <input class="input" id="infoUrlContact" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
             </div>
@@ -546,6 +550,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <button type="button" class="info-qr-del" id="infoQrDelGroup" style="display:none" aria-label="删除二维码"><svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
               <div class="cg-add" id="infoQrAddGroup" title="点击添加二维码">+</div>
               <input type="file" id="infoQrFileGroup" accept="image/*" style="display:none" />
+            </div>
+            <div class="info-url-row">
+              <label for="infoNetGroup">图片网络地址</label>
+              <input class="input" id="infoNetGroup" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...（二维码网络图）" />
             </div>
             <div class="info-url-row">
               <label for="infoUrlGroup">跳转链接</label>
@@ -569,12 +577,36 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <div class="cg-add" id="infoQrAddGzh" title="点击添加二维码">+</div>
               <input type="file" id="infoQrFileGzh" accept="image/*" style="display:none" />
             </div>
+            <div class="info-url-row">
+              <label for="infoNetGzh">图片网络地址</label>
+              <input class="input" id="infoNetGzh" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...（二维码网络图）" />
+            </div>
             <div class="info-panel-btns">
               <button type="button" class="modal-inner-btn info-save-cyan" id="infoSaveGzh">保存</button>
               <button type="button" class="modal-close" id="infoCollapseGzh">收起</button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  <!-- ============ 设置信息实时预览弹窗（v385 条1：点咨询客服/交流群聊/公众号讯三键，实时看到导航页对应弹窗效果） ============ -->
+  <div class="modal-mask" id="infoPvMask">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button aria-label="关闭" class="modal-close-x" data-close="infoPvMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
+      <div class="modal-title" id="infoPvTitle"></div>
+      <div class="qrcode-wrap">
+        <img class="modal-qrcode" id="infoPvImg" alt="二维码预览" decoding="async" style="display:none" />
+        <div class="qrcode-fail-icon" id="infoPvFail" style="display:none">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="modal-tip" id="infoPvTip"></div>
+      <div class="modal-footer">
+        <button type="button" class="modal-inner-btn" id="infoPvJump" style="display:none;"></button>
+        <button type="button" class="modal-close" id="infoPvClose" style="display:none;">关闭</button>
       </div>
     </div>
   </div>
@@ -664,8 +696,34 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         </div>
         <label>价格 </label>
         <input id="fPrice" type="number" step="0.01" min="0" inputmode="decimal" />
-        <label>咨询客服链接 </label>
-        <input id="fContactUrl" maxlength="500" />
+        <!-- v385 条11：专属咨询客服——整套 UI 搬运设置信息行（绿键+三角+二维码上传/网络图/跳转链接/保存/收起），未设置默认用平台设置 -->
+        <div class="info-item ed-contact" id="edContactItem">
+          <div class="info-row-bar">
+            <button type="button" class="btn-green" id="edContactBtn">咨询客服</button>
+            <button type="button" class="info-fold" id="edContactFold" aria-label="展开专属客服设置" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
+          </div>
+          <div class="info-panel" id="edContactPanel">
+            <div class="info-qr-box">
+              <img id="edContactQrImg" alt="专属客服二维码" style="display:none" />
+              <button type="button" class="info-qr-del" id="edContactQrDel" style="display:none" aria-label="删除二维码"><svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
+              <div class="cg-add" id="edContactQrAdd" title="点击添加二维码">+</div>
+              <input type="file" id="edContactQrFile" accept="image/*" style="display:none" />
+            </div>
+            <div class="info-url-row">
+              <label for="edContactNet">图片网络地址</label>
+              <input class="input" id="edContactNet" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...（二维码网络图）" />
+            </div>
+            <div class="info-url-row">
+              <label for="fContactUrl">跳转链接</label>
+              <input class="input" id="fContactUrl" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...（留空用平台设置）" />
+            </div>
+            <div class="info-panel-btns">
+              <button type="button" class="modal-inner-btn info-save-green" id="edContactSave">保存</button>
+              <button type="button" class="modal-close" id="edContactCollapse">收起</button>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="fContactQr" />
         <label>排序 </label><input id="fSort" type="number" step="any" value="0" inputmode="numeric" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 显示（勾选后资源页可见，取消则隐藏）</label>
         <div class="sch-row">
@@ -765,6 +823,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           <tbody id="bindingsRows"></tbody>
         </table>
       </div>
+      </div> <!-- v385 条10：bindingsScroll 补闭合——原漏写致 bindingsMask 吞掉 variantMask/confirmMask（新增类型/确认弹窗隐形=页面卡死假象） -->
       <!-- R223：分页（复用全站 buildUniPager，每页 20 条） -->
       <div id="bindingsPager" style="margin-top:8px;"></div>
       <div class="modal-footer">
@@ -925,7 +984,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       </div>
     </div>
   </div>
-  </div> <!-- v341 修复：bindingsMask 此前漏写闭合标签，把预览弹窗及后续内容都吞进隐藏的绑定弹窗里（预览打开看不见的真因） -->
+  <!-- v385 条10：原 v341 错位闭合已删——bindingsMask 已在其自身块内正确闭合（bindingsScroll 补齐），confirmMask/variantMask/previewMask 全部回到顶层 -->
   <!-- ============ 资源预览弹窗（资源页效果） ============ -->
   
   <script src="/assets/ui-common.js" defer></script>

@@ -645,6 +645,28 @@
     /* 按内容量分配档位：大(编辑资源/公告/绑定设备清单 R94) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
     .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box, .modal-mask#bindingsMask > .modal-box { max-width: 680px; }
     .modal-mask#infoMask > .modal-box { max-width: 480px; } /* v384：设置信息弹窗宽度对齐导航页弹窗（480px） */
+    /* ---------- v385 条1：设置信息实时预览弹窗——逐条复刻导航页 modal（index.html 同名类样式，scoped 隔离不污染管理页） ---------- */
+    .modal-mask#infoPvMask > .modal-box { max-width: 480px; text-align: center; padding: 26px 20px; }
+    #infoPvMask .qrcode-wrap {
+      width: 250px; height: 250px;
+      border: 1px solid var(--border);
+      margin: 0 auto 14px; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 12px; overflow: hidden; background: var(--bg-light);
+    }
+    #infoPvMask .modal-qrcode { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+    #infoPvMask .qrcode-fail-icon { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--text-faint); }
+    #infoPvMask .modal-tip { text-align: center; }
+    #infoPvMask .modal-footer { display: flex; gap: 10px; align-items: center; justify-content: center; position: relative; margin-top: 4px; }
+    #infoPvMask .modal-footer .modal-inner-btn, #infoPvMask .modal-footer .modal-close {
+      flex: 1 1 0; max-width: calc(50% - 7px); min-width: 0; width: auto; margin: 0; height: 46px; padding: 0 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 10px;
+    }
+    #infoPvMask .modal-footer .modal-inner-btn { background-color: #1E88E5; color: #fff; border: none; font-weight: 600; }
+    #infoPvMask .modal-footer .modal-close { background: var(--danger-bg); color: var(--red-strong); border: 1px solid var(--danger-border-strong); font-weight: 600; }
+    #infoPvMask .modal-footer .modal-close:hover { background: var(--red-strong); color: #fff; border-color: var(--red-strong); }
+    #infoPvMask .modal-footer .modal-close.solo { max-width: 100%; flex: 1 1 100%; }
+    @media (max-width: 600px) { #infoPvMask .qrcode-wrap { width: 200px; height: 200px; } #infoPvMask .modal-footer .modal-inner-btn, #infoPvMask .modal-footer .modal-close { font-size: 16px; padding: 10px 24px; } }
     /* R223：资源码详情合并表 8 列——弹窗加宽（后写的规则生效） */
     .modal-mask#bindingsMask > .modal-box { max-width: 880px; }
     /* R225：窄屏（≤600px）合并表操作列「解绑」按钮完整显示——.stat-table 为 table-layout:fixed + td overflow:hidden，
@@ -1341,7 +1363,9 @@
     /* 收起态：单行横滚，左右滑动查看全部。R193b：回退 R193 的「彻底收纳」——保留一行显示+横滑+三角展开键切多行全显；
        展开键 sticky 钉右缘常显；v375：收起态投影已删（全站三角不允许任何边框/底色/阴影差异） */
     .rte-toolbar.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ }
-    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 0; margin-left: 0; z-index: 2; }
+    /* v385 条8：收起态三角坐标与展开态对齐（top:8/right:6 同值）——原 sticky 默认 top 归行内流位，
+       状态切换瞬间三角位置跳动（老板反馈「状态变化后还是会动」），现两态同位仅剩旋转过渡 */
+    .rte-toolbar.rte-collapsed .rte-expand { position: absolute; right: 6px; top: 8px; margin-left: 0; z-index: 2; } /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
     .rte-toolbar.rte-collapsed .rte-expand .toggle-arrow { transform: rotate(-90deg); }
 
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
@@ -1483,7 +1507,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .variant-item .v-act-group { margin-left: auto; gap: 8px; flex-shrink: 0; }
     .ann-item .ann-main-group, .ann-item .ann-act-group { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
     .ann-item .ann-main-group { flex: 1 1 auto; gap: 10px; min-width: 0; }
-    .ann-item .ann-act-group { margin-left: auto; gap: 8px; flex-shrink: 0; }
+    /* v385 条7：公告项操作组改「整行下拉展开」（同分类行 max-height 过渡，过渡全站统一 .22s）——
+       原同行 visibility 机制展开后把名称框挤到 60px（重叠）。收起态 max-height:0 不占行高（单行观感不变），
+       展开态独占第二行、组内两键等分。visibility 机制保留（展开淡入 catBtnIn 不受影响）。 */
+    .ann-item { flex-wrap: wrap; } /* 允许操作组下拉成第二行（组内仍 nowrap 铁律不拆） */
+    .ann-item .ann-act-group.c-meta { flex: 1 1 100%; gap: 8px; justify-content: flex-start; padding: 0 0 0 28px; box-sizing: border-box; margin-left: 0;
+      max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; visibility: hidden; /* v385：收起态不可命中（同 info-panel 口径） */
+      transition: max-height .22s var(--ease-out, ease), opacity .22s var(--ease-out, ease), margin-top .22s var(--ease-out, ease), visibility 0s .22s; }
+    .ann-item.cat-open .ann-act-group.c-meta { max-height: 48px; opacity: 1; margin-top: 6px; visibility: visible; transition: max-height .22s var(--ease-out, ease), opacity .22s var(--ease-out, ease), margin-top .22s var(--ease-out, ease), visibility 0s; }
+    .ann-item .c-meta .row-btn { flex: 1 1 0; min-width: 0; justify-content: center; } /* 行内两键等分 */
+    .ann-item .ann-title-input { flex: 1 1 auto; min-width: 0; width: auto; } /* 名称框吃满首行剩余宽 */
     /* v368 条4：类型行信息等分铺满一行 */
     .variant-item { gap: 8px; }
     /* v371b 条1：类型行各列固定宽——名称列吃剩余宽度，金额/排序/码/绑定/编辑/删除列起点行行一致
@@ -1495,8 +1528,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .variant-item .v-sort { flex: 0 0 56px; width: 56px; min-width: 0; max-width: 56px; overflow: hidden; white-space: nowrap; margin-left: 10px; } /* v372b 条1：与金额列拉开 10px（列宽仍固定，跨行对齐不变） */
     .variant-item .v-code-group { gap: 6px; }
     .variant-item .code-slot { flex: 0 0 112px; width: 112px; min-width: 0; max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .variant-item .bind-slot { flex: 0 0 76px; width: 76px; min-width: 0; max-width: 76px; overflow: hidden; white-space: nowrap; justify-content: center; }
-    .variant-item .bind-slot-ph { flex: 0 0 76px; width: 76px; }
+    /* v385 条10：「资源码」键宽统一以「无资源码」为准（原 76px，两键并存跨行不齐） */
+    .variant-item .bind-slot { flex: 0 0 112px; width: 112px; min-width: 0; max-width: 112px; overflow: hidden; white-space: nowrap; justify-content: center; }
+    .variant-item .bind-slot-ph { flex: 0 0 112px; width: 112px; }
     .variant-item .v-edit-btn { flex: 0 0 64px; width: 64px; justify-content: center; }
     .variant-item .v-del-btn { flex: 0 0 64px; width: 64px; justify-content: center; }
     .variant-item .v-act-group { margin-left: 0; gap: 8px; flex-shrink: 0; } /* 左距由名称列吃满承担，列位恒定 */
@@ -1601,8 +1635,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .variant-item .v-price { min-width: 64px; text-align: right; }
     .variant-item .price-slot-ph { flex: 0 0 64px; }
     .variant-item .code-slot { min-width: 112px; }
-    .variant-item .bind-slot { min-width: 72px; }
-    .variant-item .bind-slot-ph { min-width: 72px; flex-shrink: 0; }
+    .variant-item .bind-slot { min-width: 112px; } /* v385 条10：与「无资源码」统一 */
+    .variant-item .bind-slot-ph { min-width: 112px; flex-shrink: 0; }
     .variant-item .v-sort { min-width: 50px; }
     .cp-item .cp-price { min-width: 60px; text-align: right; }
     .cp-item .price-slot-ph { flex: 0 0 60px; }
@@ -2079,10 +2113,8 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   .cat-row.cat-open .c-meta { max-height: 48px; opacity: 1; margin-top: 6px; }
   .cat-row .c-meta > *:first-child { min-width: 0 !important; }
   .cat-row .c-meta .row-btn { visibility: visible; opacity: 1; transition: none; min-width: 0; padding: 4px 12px; font-size: 12px; }
-  /* v382 条12：手机公告项=单行（主组吃满、操作组 margin-left:auto 靠右、三角恒第一行右缘） */
-  .ann-item { flex-wrap: nowrap; }
-  .ann-item .ann-name { flex: 1 1 0; }
-  .ann-item .row-btn { flex: 0 0 52px; width: 52px; padding: 4px 6px; font-size: 12px; }
+  /* v385 条7：手机档沿用基础区公告项下拉机制（见 1471 区），此处只收紧尺寸 */
+  .ann-item .row-btn { padding: 4px 6px; font-size: 12px; }
   .cat-row .cat-fold, .ann-item .cat-fold { top: 11px; } /* 手机首行中心=23px（padding12+柄半高11） */
 }
 
@@ -2134,10 +2166,12 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .info-fold .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid, .28s) var(--ease-out, ease); transform: rotate(0deg); }
 .info-item.open .info-fold .toggle-arrow { transform: rotate(180deg); }
 /* 展开面板：统一 max-height 过渡 */
-.info-panel { overflow: hidden; max-height: 0; opacity: 0; transition: max-height var(--dur-mid, .28s) var(--ease-out, ease), opacity var(--dur-mid, .28s) var(--ease-out, ease), margin var(--dur-mid, .28s) var(--ease-out, ease); margin-top: 0; }
-.info-item.open .info-panel { max-height: 560px; opacity: 1; margin-top: 10px; }
+.info-panel { overflow: hidden; max-height: 0; opacity: 0; visibility: hidden; /* v385：收起态不可命中（A6b 死键扫描：max-height:0 裁剪下子键仍占布局 rect 被 elementFromPoint 误判） */ transition: max-height var(--dur-mid, .28s) var(--ease-out, ease), opacity var(--dur-mid, .28s) var(--ease-out, ease), margin var(--dur-mid, .28s) var(--ease-out, ease), visibility 0s var(--dur-mid, .28s); margin-top: 0; }
+.info-item.open .info-panel { max-height: 560px; opacity: 1; visibility: visible; transition: max-height var(--dur-mid, .28s) var(--ease-out, ease), opacity var(--dur-mid, .28s) var(--ease-out, ease), margin var(--dur-mid, .28s) var(--ease-out, ease), visibility 0s; }
 /* 二维码区：132px 方框；有图=图+右上角×；无图=复用 .cg-add（只有＋号） */
 .info-qr-box { position: relative; width: 132px; height: 132px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: var(--bg-light, #f5f7fa); }
+/* v385 条11：编辑资源弹窗内复用 info 行结构——块级独占一行（表单是纵向流，无需 grid 修正），宽度吃满 */
+.ed-contact { width: 100%; box-sizing: border-box; margin: 10px 0 4px; }
 .info-qr-box img { width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; }
 .info-qr-del { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; z-index: 2; }
 .info-qr-del:hover { background: rgba(0,0,0,0.75); }
@@ -2147,7 +2181,8 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .info-url-row { margin-top: 12px; }
 .info-url-row label { display: block; font-size: 13px; color: #666; margin: 0 0 6px; }
 .info-panel-btns { display: flex; gap: 8px; margin-top: 12px; }
-.info-panel-btns .modal-inner-btn, .info-panel-btns .modal-close { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
+/* v385 条2：保存/收起严格等分（原 .modal-close 自带 padding 0 24px 参与布局致两键不等宽） */
+.info-panel-btns > button { flex: 0 0 calc(50% - 4px) !important; min-width: 0 !important; width: calc(50% - 4px) !important; padding-left: 8px !important; padding-right: 8px !important; box-sizing: border-box; margin: 0 !important; } /* v385 条2：对半公式严格等分（原 .modal-close 自带 padding 参与 flex 致不等宽）；v385 条6：margin-bottom 归零 */
 @media (max-width: 600px) {
   .info-item { padding: 8px 10px; }
   .info-row-bar .btn-green, .info-row-bar .btn-blue, .info-row-bar .btn-cyan { height: 36px; font-size: 14px; }

@@ -209,6 +209,7 @@ export function cleanProduct(p) {
     detailImages: detailImages,   // 详情多图（网络 URL 数组）
     detailVideos: detailVideos,   // 详情多视频（网络 URL 数组）
     contactUrl: p.contact_url,    // 咨询客服链接
+    contactQr: p.contact_qr || '', // v385 条11：专属客服二维码（空=前台回退平台设置）
     price: p.price || 0,           // 价格（0=免费不显示）
     is_online: p.is_online,
     is_hidden: p.is_hidden || 0,   // 1=隐藏（前台不显示）

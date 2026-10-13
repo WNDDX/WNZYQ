@@ -123,8 +123,8 @@ export async function onRequestPost(context) {
   const detailVideos = JSON.stringify(Array.isArray(b.detailVideos) ? b.detailVideos : []);
 
   const r = await env.DB.prepare(
-    `INSERT INTO products (cid, title, "desc", detail, img, cover_images, detail_images, detail_videos, contact_url, price, is_online, is_hidden, schedule_on, schedule_off, sort)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO products (cid, title, "desc", detail, img, cover_images, detail_images, detail_videos, contact_url, contact_qr, price, is_online, is_hidden, schedule_on, schedule_off, sort)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   )
     .bind(
       Number(b.cid) || 0,
@@ -136,6 +136,7 @@ export async function onRequestPost(context) {
       detailImages,
       detailVideos,
       String(b.contactUrl || ''),
+      String(b.contactQr || ''), /* v385 条11：专属客服二维码 */
       Number(b.price) || 0,
       b.is_online ? 1 : 0,
       b.is_hidden ? 1 : 0,

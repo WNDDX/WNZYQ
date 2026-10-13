@@ -1666,7 +1666,9 @@
         btnContact.onclick = function () {
           track(currentProduct ? currentProduct.id : null, 'contact');
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
-          if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
+          // v385 条11：专属客服二维码优先（类型→资源→平台设置），没有则回退平台设置信息
+          var _qr = (currentVariant && currentVariant.contactQr) || (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
+          if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1717,7 +1719,9 @@
     /* S1：列表横滑切分类——v360 条8：按层级顺序（本大类下的低级分类滑完才接下一个大类）
        v369 条4：抽出 __catSeqTarget（算出滑动方向上的邻居分类），__swipeCatGo 与跟手版共用一份顺序逻辑 */
     window.__catSeqTarget = function (d) {
-      var cats = (DATA.categories || []).filter(function (c) { return Number(c.parent_id) === 0 || c.parent_id === 0; });
+      /* v385 条5：一级判定改宽容口径（同 renderCategories 580 行）——旧数据无 parent_id 字段的
+         一级分类此前被严格过滤漏掉，滑切序列只剩「全部」，全部左右滑都没有邻居（表现=滑不动） */
+      var cats = (DATA.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
       var tops = cats.slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
       var seq = [{ type: 'all' }]; /* v370 条7：「全部」纳入滑切序列——第一分类右滑能回全部，全部左右都能滑 */
       tops.forEach(function (top) {

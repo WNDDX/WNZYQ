@@ -478,7 +478,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
       dom.modalImg.src = EXC_PH; if (dom.modalImg.classList) dom.modalImg.classList.add('media-fail');
       dom.modalImg.style.objectFit = 'contain';
       dom.modalImg.style.opacity = '1';
-      dom.modalTip.textContent = tipText + '（管理员还未设置二维码）';
+      /* v385 条4：括号说明「（管理员还未设置二维码）」按老板要求删除——占位图即示意，不再加文案 */
     }
 
     if(jumpUrl && btnText){

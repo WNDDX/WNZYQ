@@ -45,6 +45,8 @@
       if (window.__setCoverImages) window.__setCoverImages(_covArr);
       else { fImg.value = p ? (p.img || '') : ''; }
       fContactUrl.value = p ? (p.contactUrl || '') : '';
+      fContactQr.value = p ? (p.contactQr || '') : ''; /* v385 条11：专属客服二维码回填 */
+      __edContactRefresh(); /* 面板显示同步（收起状态复位，避免上次编辑残留展开） */
       fPrice.value = p ? (p.price || '') : '';
       fSort.value = p ? (p.sort || 0) : 0;
       fOnline.checked = p ? !!(p.is_online && !p.is_hidden) : true;
@@ -71,6 +73,7 @@
         img: (window.__coverMainImage ? window.__coverMainImage() : fImg.value),
         cover_images: JSON.stringify(window.__coverImages ? window.__coverImages() : (fImg.value ? [fImg.value] : [])),
         contactUrl: fContactUrl.value,
+        contactQr: fContactQr.value, /* v385 条11 */
         price: fPrice.value,
         sort: fSort.value,
         online: fOnline.checked,
@@ -528,6 +531,7 @@
         detailImages: [],
         detailVideos: [],
         contactUrl: fContactUrl.value.trim(),
+        contactQr: fContactQr.value.trim(), /* v385 条11：专属客服二维码随表单保存 */
         price: Number(fPrice.value) || 0,
         sort: Number(fSort.value) || 0,
         is_online: fOnline.checked,
@@ -572,7 +576,7 @@
           var _sp = (state.products || []).find(function (x) { return x.id === state.editingId; });
           if (_sp) {
             _sp.cid = data.cid; _sp.title = data.title; _sp.desc = data.desc; _sp.detail = data.detail;
-            _sp.img = data.img; _sp.contactUrl = data.contactUrl; _sp.price = data.price;
+            _sp.img = data.img; _sp.contactUrl = data.contactUrl; _sp.contactQr = data.contactQr || ''; _sp.price = data.price;
             _sp.is_online = data.is_online ? 1 : 0; _sp.is_hidden = data.is_hidden ? 1 : 0;
             _sp.schedule_on = data.schedule_on || ''; _sp.schedule_off = data.schedule_off || ''; _sp.sort = data.sort;
             _sp.variants = (state.variants || []).slice(); // 类型本地已是最新（新增类型已串行提交）
@@ -580,7 +584,7 @@
             try { _sp.coverImages = JSON.parse(data.cover_images || '[]'); } catch(e) { _sp.coverImages = []; }
           } else if (res.id) {
             state.products.push({ id: res.id, cid: data.cid, title: data.title, desc: data.desc, detail: data.detail,
-              img: data.img, detailImages: [], detailVideos: [], contactUrl: data.contactUrl, price: data.price,
+              img: data.img, detailImages: [], detailVideos: [], contactUrl: data.contactUrl, contactQr: data.contactQr || '', price: data.price,
               is_online: data.is_online ? 1 : 0, is_hidden: data.is_hidden ? 1 : 0,
               schedule_on: data.schedule_on || '', schedule_off: data.schedule_off || '', sort: data.sort,
               coverImages: (function(){ try { return JSON.parse(data.cover_images || '[]'); } catch(e){ return []; } })(),
@@ -1975,3 +1979,85 @@ document.addEventListener('click', function (e) {
         brushBtn.classList.remove('active');
       }
     });
+
+/* ---------- v385 条11：编辑资源·专属咨询客服行（UI 全套搬运设置信息行：绿键+三角+二维码上传/网络图/跳转链接/保存/收起） ---------- */
+(function () {
+  var item = document.getElementById('edContactItem');
+  if (!item) return;
+  var fold = document.getElementById('edContactFold');
+  var col = document.getElementById('edContactCollapse');
+  var add = document.getElementById('edContactQrAdd');
+  var fi = document.getElementById('edContactQrFile');
+  var del = document.getElementById('edContactQrDel');
+  var net = document.getElementById('edContactNet');
+  var sv = document.getElementById('edContactSave');
+  function __edContactRefresh() {
+    var qr = (document.getElementById('fContactQr').value || '').trim();
+    var img = document.getElementById('edContactQrImg');
+    var d = document.getElementById('edContactQrDel');
+    var a = document.getElementById('edContactQrAdd');
+    if (qr) { img.src = qr; img.style.display = ''; } else { img.removeAttribute('src'); img.style.display = 'none'; }
+    if (d) d.style.display = qr ? '' : 'none';
+    if (a) a.style.display = qr ? 'none' : '';
+  }
+  window.__edContactRefresh = __edContactRefresh;
+  var toggle = function () {
+    var willOpen = !item.classList.contains('open');
+    item.classList.toggle('open', willOpen);
+    fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    if (willOpen) {
+      __edContactRefresh();
+      if (document.activeElement !== net) net.value = (document.getElementById('fContactQr').value || '').trim();
+    }
+    if (window.__haptic) window.__haptic();
+  };
+  if (fold) fold.addEventListener('click', toggle);
+  if (col) col.addEventListener('click', toggle);
+  if (add && fi) {
+    add.addEventListener('click', function () { fi.click(); });
+    fi.addEventListener('change', function () {
+      var f = this.files && this.files[0]; this.value = '';
+      if (!f) return;
+      toast('正在上传二维码…', 'info');
+      uploadToBucket(f, function (url) {
+        if (!url) return;
+        document.getElementById('fContactQr').value = url;
+        __edContactRefresh();
+        toast('二维码已就绪，点「保存」后生效', 'info');
+        if (window.__haptic) window.__haptic();
+      });
+    });
+  }
+  if (del) del.addEventListener('click', function () {
+    document.getElementById('fContactQr').value = '';
+    __edContactRefresh();
+  });
+  if (net) net.addEventListener('change', function () {
+    var v = (net.value || '').trim();
+    if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
+    document.getElementById('fContactQr').value = v;
+    __edContactRefresh();
+    if (v) { toast('网络图已就绪，点「保存」后生效', 'info'); if (window.__haptic) window.__haptic(); }
+  });
+  /* 行内保存=部分更新（只动专属客服两列，不碰表单其余字段；新增未入库资源提示先点确定） */
+  if (sv) sv.addEventListener('click', function () {
+    var pid = window.state && window.state.editingId;
+    if (!pid) { toast('请先点「确定」保存资源，再单独更新客服信息', 'info'); return; }
+    var b = this, _t = b.textContent;
+    b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '保存中');
+    api('admin/products/' + pid, { method: 'PUT', body: JSON.stringify({
+      partial: 'contact',
+      contactQr: (document.getElementById('fContactQr').value || '').trim(),
+      contactUrl: (document.getElementById('fContactUrl').value || '').trim()
+    }) }).then(function (res) {
+      b.disabled = false;
+      if (res && res.ok) {
+        try { b.textContent = '✓ 已保存'; setTimeout(function () { b.textContent = _t; }, 400); } catch (e0) { if (window.__silent) window.__silent(e0); }
+        var _sp = (state.products || []).find(function (x) { return x.id === pid; });
+        if (_sp) { _sp.contactQr = (document.getElementById('fContactQr').value || '').trim(); _sp.contactUrl = (document.getElementById('fContactUrl').value || '').trim(); }
+        if (window.__haptic) window.__haptic();
+      }
+      else { b.textContent = _t; toast((res && res.msg) || '保存失败', 'error'); }
+    }).catch(function () { b.disabled = false; b.textContent = _t; toast('网络开小差了，请稍后再试', 'error'); });
+  });
+})();
