@@ -1788,23 +1788,21 @@
       if (e.target === document.getElementById('annMask')) { window.__annStash(); }
     });
 
-    // ---------- v383 设置信息（咨询客服/交流群聊/公众号讯） ----------
-    // 旧「设置客服」单链接弹窗（contactMask/contactUrlInput/saveContactBtn/setContactUrl）整体退役：
-    // 三键（色同导航页）点击=打开导航页同款预览弹窗（infoMask：标题/二维码/提示语/绿色跳转键）；
-    // 键右侧三角=展开编辑面板（二维码图：右上角统一×删除、无图时封面式点击添加；图下=跳转链接输入框+保存）。
-    // 数据层 settings 新键：contact_qr/group_qr/gzh_qr（二维码）+ group_url（群聊链接；contact_url 沿用）。
+    // ---------- v384 设置信息（单入口键→弹窗内三行：绿/蓝/青键+右缘三角，各行独立保存/收起） ----------
+    // 上传二维码/点×删除只改页面显示（pending），点该行「保存」才入库生效；数据层键：contact_qr/group_qr/gzh_qr + contact_url/group_url。
     var __infoCfg = {
-      contact: { qrKey: 'contact_qr', urlKey: 'contact_url', tip: '长按图片识别-添加人工客服', title: '咨询客服', btnText: '跳转-咨询在线客服', defUrl: 'https://work.weixin.qq.com/kfid/kfc39748ad948e8b691' },
-      group:   { qrKey: 'group_qr',   urlKey: 'group_url',   tip: '长按图片识别-加入交流群聊', title: '交流群聊', btnText: '跳转-加入交流群聊', defUrl: 'https://work.weixin.qq.com/gm/8036a2badd7daab25b1764b62c3bff9a' },
-      gzh:     { qrKey: 'gzh_qr',     urlKey: null,          tip: '长按图片识别-关注公众号讯', title: '公众号讯', btnText: null, defUrl: '' }
+      contact: { qrKey: 'contact_qr', urlKey: 'contact_url', defUrl: 'https://work.weixin.qq.com/kfid/kfc39748ad948e8b691' },
+      group:   { qrKey: 'group_qr',   urlKey: 'group_url',   defUrl: 'https://work.weixin.qq.com/gm/8036a2badd7daab25b1764b62c3bff9a' },
+      gzh:     { qrKey: 'gzh_qr',     urlKey: null,          defUrl: '' }
     };
     window.__infoSettings = { contact_qr: '', group_qr: '', gzh_qr: '', contact_url: '', group_url: '' };
     var __infoCap = function (k) { return k === 'gzh' ? 'Gzh' : k.charAt(0).toUpperCase() + k.slice(1); };
-    // 应用设置到三块编辑面板 + 写全局消费变量（全站客服/导航弹窗的二维码与链接统一从这里生效）
+    var __infoPending = { contact: '', group: '', gzh: '' }; /* 各行未保存的二维码（上传/删除后暂存于此，保存才生效） */
+    // 写全局消费变量（全站客服/导航弹窗的二维码与链接统一从这里生效）+ 刷新各行面板
     window.__infoApply = function (s) {
       s = s || {};
       Object.keys(__infoCfg).forEach(function (k) {
-        var c = __infoCfg[k], C = __infoCap(k);
+        var c = __infoCfg[k];
         var qr = s[c.qrKey] !== undefined ? (s[c.qrKey] || '') : (window.__infoSettings[c.qrKey] || '');
         window.__infoSettings[c.qrKey] = qr;
         if (k === 'contact') window.__contactQr = qr;   /* ui-common 全站客服弹窗二维码（__kefuQrSrc） */
@@ -1813,56 +1811,50 @@
         if (c.urlKey) {
           var uv = s[c.urlKey] !== undefined ? (s[c.urlKey] || '') : (window.__infoSettings[c.urlKey] || '');
           window.__infoSettings[c.urlKey] = uv;
-          if (k === 'contact') window.__infoContactUrl = uv || c.defUrl; /* admin 预览兜底（空=出厂链接） */
-          var inp = document.getElementById('infoUrl' + C);
-          if (inp && document.activeElement !== inp) inp.value = uv; /* 正在输入时不覆盖 */
+          if (k === 'contact') window.__infoContactUrl = uv || c.defUrl; /* 空链接兜底出厂值 */
+          var it = document.getElementById('infoItem' + __infoCap(k));
+          if (!it || !it.classList.contains('open')) { /* 面板没在编辑才回填输入框（输入中不覆盖） */
+            var inp = document.getElementById('infoUrl' + __infoCap(k));
+            if (inp && document.activeElement !== inp) inp.value = uv;
+          }
         }
-        var img = document.getElementById('infoQrImg' + C);
-        var del = document.getElementById('infoQrDel' + C);
-        var add = document.getElementById('infoQrAdd' + C);
-        if (img) { if (qr) { img.src = qr; img.style.display = ''; } else { img.removeAttribute('src'); img.style.display = 'none'; } }
-        if (del) del.style.display = qr ? '' : 'none';
-        if (add) add.style.display = qr ? 'none' : '';
+        var it2 = document.getElementById('infoItem' + __infoCap(k));
+        if (!it2 || !it2.classList.contains('open')) __infoPending[k] = qr; /* 没在编辑才重置暂存 */
+        __infoRefreshPanel(k);
       });
     };
-    // 预览弹窗（导航页同款）：标题/二维码/提示语/绿色跳转键（公众号讯无跳转键）
-    var __openInfoPreview = function (k) {
-      var c = __infoCfg[k];
-      var t = document.getElementById('infoMaskTitle'); if (t) t.textContent = c.title;
-      var img = document.getElementById('infoMaskImg');
-      var qr = window.__infoSettings[c.qrKey] || '';
-      if (img) {
-        if (qr) { img.style.display = ''; img.onerror = function () { this.onerror = null; this.style.display = 'none'; }; img.src = qr; }
-        else { img.style.display = 'none'; img.removeAttribute('src'); }
-      }
-      var tp = document.getElementById('infoMaskTip');
-      if (tp) tp.textContent = qr ? c.tip : (c.tip + '（后台还未设置二维码）');
-      var jb = document.getElementById('infoMaskJumpBtn');
-      if (jb) {
-        if (c.btnText) {
-          jb.style.display = ''; jb.textContent = c.btnText;
-          var u = (c.urlKey ? (window.__infoSettings[c.urlKey] || '') : '') || c.defUrl;
-          jb.setAttribute('data-url', u);
-          if (window.__kfPreconnect) window.__kfPreconnect(u); /* 与前台同口径：开弹窗即对跳转域提前建连 */
-        } else jb.style.display = 'none';
-      }
-      var mk = document.getElementById('infoMask');
-      if (mk && !mk.classList.contains('open')) mk.classList.add('open');
-    };
+    function __infoRefreshPanel(k) {
+      var C = __infoCap(k);
+      var qr = __infoPending[k] || '';
+      var img = document.getElementById('infoQrImg' + C);
+      var del = document.getElementById('infoQrDel' + C);
+      var add = document.getElementById('infoQrAdd' + C);
+      if (img) { if (qr) { img.src = qr; img.style.display = ''; } else { img.removeAttribute('src'); img.style.display = 'none'; } }
+      if (del) del.style.display = qr ? '' : 'none';   /* ×只在有图时出现 */
+      if (add) add.style.display = qr ? 'none' : '';
+    }
     (function __infoInit() {
-      var jb = document.getElementById('infoMaskJumpBtn');
-      if (jb) jb.addEventListener('click', function () { var u = this.getAttribute('data-url') || ''; if (u) { try { window.open(u, '_blank'); } catch (e) { if (window.__silent) window.__silent(e); } } });
+      var open = document.getElementById('openInfoBtn');
+      if (open) open.addEventListener('click', function () {
+        var mk = document.getElementById('infoMask');
+        if (mk && !mk.classList.contains('open')) mk.classList.add('open');
+        if (window.__haptic) window.__haptic();
+      });
       ['contact', 'group', 'gzh'].forEach(function (k) {
         var c = __infoCfg[k], C = __infoCap(k);
-        var fold = document.getElementById('infoFold' + C);
-        if (fold) fold.addEventListener('click', function () {
+        var toggle = function () {
           var it = document.getElementById('infoItem' + C);
-          var open = it ? it.classList.toggle('open') : false;
-          this.setAttribute('aria-expanded', open ? 'true' : 'false');
-          if (open && window.__haptic) window.__haptic();
-        });
-        var pb = document.getElementById('infoBtn' + C);
-        if (pb) pb.addEventListener('click', function () { __openInfoPreview(k); });
+          var willOpen = it ? !it.classList.contains('open') : false;
+          if (it) it.classList.toggle('open', willOpen);
+          var fold = document.getElementById('infoFold' + C);
+          if (fold) fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+          if (willOpen) __infoRefreshPanel(k); /* 展开时以当前暂存值渲染 */
+          if (window.__haptic) window.__haptic();
+        };
+        var fold = document.getElementById('infoFold' + C);
+        if (fold) fold.addEventListener('click', toggle);
+        var col = document.getElementById('infoCollapse' + C);
+        if (col) col.addEventListener('click', toggle); /* 收起=同三角（只收面板，不动其他） */
         var add = document.getElementById('infoQrAdd' + C);
         var fi = document.getElementById('infoQrFile' + C);
         if (add && fi) {
@@ -1873,37 +1865,39 @@
             toast('正在上传二维码…', 'info');
             uploadToBucket(f, function (url) {
               if (!url) return;
-              var body = {}; body[c.qrKey] = url;
-              api('admin/settings', { method: 'PUT', body: JSON.stringify(body) }).then(function (res) {
-                if (res && res.ok) { var s = {}; s[c.qrKey] = url; window.__infoApply(s); toast('二维码已上传并生效', 'success'); if (window.__haptic) window.__haptic(); }
-                else toast((res && res.msg) || '保存失败', 'error');
-              }).catch(function () { toast('网络开小差了，请稍后再试', 'error'); });
+              __infoPending[k] = url; /* 只到页面，保存才入库 */
+              __infoRefreshPanel(k);
+              toast('二维码已就绪，点「保存」后生效', 'info');
+              if (window.__haptic) window.__haptic();
             });
           });
         }
         var del = document.getElementById('infoQrDel' + C);
         if (del) del.addEventListener('click', function () {
-          var body = {}; body[c.qrKey] = '';
-          api('admin/settings', { method: 'PUT', body: JSON.stringify(body) }).then(function (res) {
-            if (res && res.ok) { var s = {}; s[c.qrKey] = ''; window.__infoApply(s); toast('二维码已删除', 'success'); }
-            else toast((res && res.msg) || '删除失败', 'error');
-          }).catch(function () { toast('网络开小差了，请稍后再试', 'error'); });
+          __infoPending[k] = ''; /* 只到页面，保存才入库 */
+          __infoRefreshPanel(k);
         });
         var sv = document.getElementById('infoSave' + C);
-        if (sv && c.urlKey) sv.addEventListener('click', function () {
+        if (sv) sv.addEventListener('click', function () {
           var b = this, _t = b.textContent;
-          var inp = document.getElementById('infoUrl' + C);
-          var v = (inp ? inp.value : '').trim();
+          var body = {}; body[c.qrKey] = __infoPending[k] || '';
+          if (c.urlKey) {
+            var inp = document.getElementById('infoUrl' + C);
+            body[c.urlKey] = (inp ? inp.value : '').trim();
+          }
           b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '保存中');
-          var body = {}; body[c.urlKey] = v;
           api('admin/settings', { method: 'PUT', body: JSON.stringify(body) }).then(function (res) {
+            b.disabled = false;
             if (res && res.ok) {
-              try { b.textContent = '✓ 已保存'; b.style.background = 'var(--green, #2e7d32)'; b.style.borderColor = 'var(--green, #2e7d32)'; b.style.color = '#fff'; setTimeout(function () { b.textContent = _t; b.style.background = ''; b.style.borderColor = ''; b.style.color = ''; }, 400); } catch (e0) { if (window.__silent) window.__silent(e0); }
-              var s = {}; s[c.urlKey] = v; window.__infoApply(s);
-              try { localStorage.setItem('wnzyq_kf_url_updated', Date.now().toString()); } catch (e) { if (window.__silent) window.__silent(e); } /* v294：广播通知其他标签页 */
+              try { b.textContent = '✓ 已保存'; setTimeout(function () { b.textContent = _t; }, 400); } catch (e0) { if (window.__silent) window.__silent(e0); }
+              var s2 = {}; Object.keys(body).forEach(function (kk) { s2[kk] = body[kk]; });
+              window.__infoSettings[c.qrKey] = body[c.qrKey]; __infoPending[k] = body[c.qrKey];
+              if (c.urlKey) window.__infoSettings[c.urlKey] = body[c.urlKey];
+              window.__infoApply(s2); /* 面板开着不覆盖 pending，已手动同步 */
+              try { localStorage.setItem('wnzyq_kf_url_updated', Date.now().toString()); } catch (e) { if (window.__silent) window.__silent(e); }
               if (window.__haptic) window.__haptic();
             }
-            else { b.disabled = false; b.textContent = _t; toast((res && res.msg) || '保存失败', 'error'); }
+            else { b.textContent = _t; toast((res && res.msg) || '保存失败', 'error'); }
           }).catch(function () { b.disabled = false; b.textContent = _t; toast('网络开小差了，请稍后再试', 'error'); });
         });
       });

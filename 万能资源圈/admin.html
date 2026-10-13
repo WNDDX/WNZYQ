@@ -365,69 +365,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <!-- R54：图片存储（图仓直连地址）整组已删——图片实际走 /img/ 自家路由，该配置仅兼容早期 R2 直链，确认无旧直链后删除；图仓本体（IMAGE_BUCKET 绑定）不受影响 -->
         <div class="setting-group">
           <h3>基本设置</h3>
-          <!-- v383：「设置客服」升级为「设置信息」——咨询客服/交流群聊/公众号讯三键（色同导航页），
-               按键点击=打开导航页同款弹窗（所见即所得预览）；右侧三角展开编辑面板（二维码图+跳转链接），全系统统一生效 -->
+          <!-- v384：「设置信息」单入口键（与「设置公告」同款）——点击打开弹窗，弹窗内三行（绿/蓝/青键+右缘三角），展开配置二维码+链接，各行独立保存 -->
           <div class="setting-row info-setting-row">
-            <label>设置信息（咨询客服 / 交流群聊 / 公众号讯——改完全系统统一生效）</label>
-            <div class="info-rows">
-              <div class="info-item" data-info="contact" id="infoItemContact">
-                <div class="info-row-bar">
-                  <button type="button" class="btn-green" id="infoBtnContact" style="width:auto;padding:0 24px;">咨询客服设置</button>
-                  <button type="button" class="info-fold" id="infoFoldContact" aria-label="展开设置面板" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
-                </div>
-                <div class="info-panel" id="infoPanelContact">
-                  <div class="info-qr-area">
-                    <div class="info-qr-box" id="infoQrBoxContact">
-                      <img id="infoQrImgContact" alt="咨询客服二维码" style="display:none" />
-                      <button type="button" class="modal-close-x info-qr-del" id="infoQrDelContact" style="display:none" aria-label="删除二维码"><svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
-                      <div class="info-qr-add" id="infoQrAddContact"><span class="info-qr-add-plus">＋</span><span>点击添加二维码</span></div>
-                      <input type="file" id="infoQrFileContact" accept="image/*" style="display:none" />
-                    </div>
-                    <span class="info-qr-note">即导航页/全站客服弹窗显示的二维码</span>
-                  </div>
-                  <label for="infoUrlContact">跳转链接（资源没填专属链接时用这个）</label>
-                  <input class="input" id="infoUrlContact" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
-                  <button type="button" class="btn-blue info-save" id="infoSaveContact" style="width:auto;padding:0 24px;">保存</button>
-                </div>
-              </div>
-              <div class="info-item" data-info="group" id="infoItemGroup">
-                <div class="info-row-bar">
-                  <button type="button" class="btn-blue" id="infoBtnGroup" style="width:auto;padding:0 24px;">交流群聊设置</button>
-                  <button type="button" class="info-fold" id="infoFoldGroup" aria-label="展开设置面板" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
-                </div>
-                <div class="info-panel" id="infoPanelGroup">
-                  <div class="info-qr-area">
-                    <div class="info-qr-box" id="infoQrBoxGroup">
-                      <img id="infoQrImgGroup" alt="交流群聊二维码" style="display:none" />
-                      <button type="button" class="modal-close-x info-qr-del" id="infoQrDelGroup" style="display:none" aria-label="删除二维码"><svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
-                      <div class="info-qr-add" id="infoQrAddGroup"><span class="info-qr-add-plus">＋</span><span>点击添加二维码</span></div>
-                      <input type="file" id="infoQrFileGroup" accept="image/*" style="display:none" />
-                    </div>
-                    <span class="info-qr-note">即导航页交流群聊弹窗显示的二维码</span>
-                  </div>
-                  <label for="infoUrlGroup">跳转链接（弹窗「跳转」键用这个）</label>
-                  <input class="input" id="infoUrlGroup" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
-                  <button type="button" class="btn-blue info-save" id="infoSaveGroup" style="width:auto;padding:0 24px;">保存</button>
-                </div>
-              </div>
-              <div class="info-item" data-info="gzh" id="infoItemGzh">
-                <div class="info-row-bar">
-                  <button type="button" class="btn-cyan" id="infoBtnGzh" style="width:auto;padding:0 24px;">公众号讯设置</button>
-                  <button type="button" class="info-fold" id="infoFoldGzh" aria-label="展开设置面板" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
-                </div>
-                <div class="info-panel" id="infoPanelGzh">
-                  <div class="info-qr-area">
-                    <div class="info-qr-box" id="infoQrBoxGzh">
-                      <img id="infoQrImgGzh" alt="公众号讯二维码" style="display:none" />
-                      <button type="button" class="modal-close-x info-qr-del" id="infoQrDelGzh" style="display:none" aria-label="删除二维码"><svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
-                      <div class="info-qr-add" id="infoQrAddGzh"><span class="info-qr-add-plus">＋</span><span>点击添加二维码</span></div>
-                      <input type="file" id="infoQrFileGzh" accept="image/*" style="display:none" />
-                    </div>
-                    <span class="info-qr-note">即导航页公众号讯弹窗显示的二维码（无跳转链接）</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <label>设置信息</label>
+            <button type="button" class="btn-blue" id="openInfoBtn" style="width:auto;padding:0 24px;">设置信息</button>
           </div>
           <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
           <div class="setting-row">
@@ -566,18 +507,74 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       </div>
     </div>
   </div>
-  <!-- ============ 设置信息预览弹窗（v383：导航页三弹窗同款——标题/二维码/提示语/绿色跳转键） ============ -->
+  <!-- ============ 设置信息弹窗（v384：三行=绿/蓝/青键+右缘三角，展开配二维码+链接，各行独立保存/收起） ============ -->
   <div class="modal-mask" id="infoMask">
     <div class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="infoMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
-      <h2 class="modal-title" id="infoMaskTitle">咨询客服</h2>
-      <div class="info-preview">
-        <div class="qrcode-wrap"><img id="infoMaskImg" alt="二维码" /></div>
-        <p class="info-tip" id="infoMaskTip"></p>
-      </div>
-      <div class="modal-footer">
-        <button class="modal-inner-btn" id="infoMaskJumpBtn" style="background:var(--brand-green,#00A828);">跳转-咨询在线客服</button>
-        <button class="modal-close" data-close="infoMask">关闭</button>
+      <h2 class="modal-title">设置信息</h2>
+      <div class="info-items">
+        <div class="info-item" id="infoItemContact">
+          <div class="info-row-bar">
+            <button type="button" class="btn-green" id="infoBtnContact">咨询客服</button>
+            <button type="button" class="info-fold" id="infoFoldContact" aria-label="展开设置" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
+          </div>
+          <div class="info-panel" id="infoPanelContact">
+            <div class="info-qr-box">
+              <img id="infoQrImgContact" alt="咨询客服二维码" style="display:none" />
+              <button type="button" class="info-qr-del" id="infoQrDelContact" style="display:none" aria-label="删除二维码"><svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
+              <div class="cg-add" id="infoQrAddContact" title="点击添加二维码">+</div>
+              <input type="file" id="infoQrFileContact" accept="image/*" style="display:none" />
+            </div>
+            <div class="info-url-row">
+              <label for="infoUrlContact">跳转链接</label>
+              <input class="input" id="infoUrlContact" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
+            </div>
+            <div class="info-panel-btns">
+              <button type="button" class="modal-inner-btn info-save-green" id="infoSaveContact">保存</button>
+              <button type="button" class="modal-close" id="infoCollapseContact">收起</button>
+            </div>
+          </div>
+        </div>
+        <div class="info-item" id="infoItemGroup">
+          <div class="info-row-bar">
+            <button type="button" class="btn-blue" id="infoBtnGroup">交流群聊</button>
+            <button type="button" class="info-fold" id="infoFoldGroup" aria-label="展开设置" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
+          </div>
+          <div class="info-panel" id="infoPanelGroup">
+            <div class="info-qr-box">
+              <img id="infoQrImgGroup" alt="交流群聊二维码" style="display:none" />
+              <button type="button" class="info-qr-del" id="infoQrDelGroup" style="display:none" aria-label="删除二维码"><svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
+              <div class="cg-add" id="infoQrAddGroup" title="点击添加二维码">+</div>
+              <input type="file" id="infoQrFileGroup" accept="image/*" style="display:none" />
+            </div>
+            <div class="info-url-row">
+              <label for="infoUrlGroup">跳转链接</label>
+              <input class="input" id="infoUrlGroup" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
+            </div>
+            <div class="info-panel-btns">
+              <button type="button" class="modal-inner-btn info-save-blue" id="infoSaveGroup">保存</button>
+              <button type="button" class="modal-close" id="infoCollapseGroup">收起</button>
+            </div>
+          </div>
+        </div>
+        <div class="info-item" id="infoItemGzh">
+          <div class="info-row-bar">
+            <button type="button" class="btn-cyan" id="infoBtnGzh">公众号讯</button>
+            <button type="button" class="info-fold" id="infoFoldGzh" aria-label="展开设置" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
+          </div>
+          <div class="info-panel" id="infoPanelGzh">
+            <div class="info-qr-box">
+              <img id="infoQrImgGzh" alt="公众号讯二维码" style="display:none" />
+              <button type="button" class="info-qr-del" id="infoQrDelGzh" style="display:none" aria-label="删除二维码"><svg class="wn-ico" width="14" height="14" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
+              <div class="cg-add" id="infoQrAddGzh" title="点击添加二维码">+</div>
+              <input type="file" id="infoQrFileGzh" accept="image/*" style="display:none" />
+            </div>
+            <div class="info-panel-btns">
+              <button type="button" class="modal-inner-btn info-save-cyan" id="infoSaveGzh">保存</button>
+              <button type="button" class="modal-close" id="infoCollapseGzh">收起</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

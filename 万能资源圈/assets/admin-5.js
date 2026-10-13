@@ -2132,7 +2132,7 @@ refreshCatCnts();
             { lab: '平台设置', tag: '页面', kw: '平台设置 设置 settings', run: function () { switchTab('settings'); } },
             { lab: '新增资源', tag: '操作', kw: '新增资源 新建 添加资源 add', run: function () { switchTab('products'); document.getElementById('addProductBtn').click(); } },
             { lab: '新增分类', tag: '操作', kw: '新增分类 新建分类 add', run: function () { switchTab('categories'); document.getElementById('addCatBtn').click(); } },
-            { lab: '设置信息', tag: '操作', kw: '设置信息 客服 群聊 公众号 二维码 链接 contact', run: function () { switchTab('settings'); var it = document.getElementById('infoItemContact'); var f = document.getElementById('infoFoldContact'); if (it && f && !it.classList.contains('open')) f.click(); } },
+            { lab: '设置信息', tag: '操作', kw: '设置信息 客服 群聊 公众号 二维码 链接 contact', run: function () { switchTab('settings'); var b = document.getElementById('openInfoBtn'); if (b) b.click(); } },
             { lab: '设置公告', tag: '操作', kw: '设置公告 公告 ann', run: function () { switchTab('settings'); document.getElementById('openAnnBtn').click(); } },
             { lab: '新增公告项', tag: '操作', kw: '新增公告项 公告 add', run: function () { switchTab('settings'); document.getElementById('addAnnBtn').click(); } },
             { lab: '修改密码', tag: '操作', kw: '修改密码 密码 pwd', run: function () { switchTab('settings'); document.getElementById('showPwdFormBtn').click(); } }
@@ -2380,7 +2380,7 @@ window.toggleModalPwdVisibility = typeof toggleModalPwdVisibility !== 'undefined
 (function() {
   var limits = {
     'fTitle': 100, 'fDesc': 200, 'fImg': 500, 'fContactUrl': 500,
-    'catName': 50, 'infoUrlContact': 500, 'infoUrlGroup': 500, /* v383：设置信息链接输入框（setContactUrl/contactUrlInput 随旧弹窗退役） */
+    'catName': 50, 'infoUrlContact': 500, 'infoUrlGroup': 500, /* v384：设置信息弹窗各行链接输入框 */
     'loginUser': 50, 'loginPass': 50, 'adminSearch': 50,
     'oldPwd': 50, 'newPwd': 50, 'confirmPwd': 50
   };
