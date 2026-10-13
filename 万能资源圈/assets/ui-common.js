@@ -24,6 +24,7 @@ window.WN_CONST = window.WN_CONST || { TIMEOUT: 10000, UNDO_MS: 10000, PAGE_SIZE
     box.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
     box.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">'
       + '<symbol id="wn-ico-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>'
+      + '<symbol id="wn-ico-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>' /* v386：公告/信息共用喇叭——资源页与管理页同一枚图标同一组键规格 */
       + '</svg>';
     host.insertBefore(box, host.firstChild);
   } catch (e) {}
@@ -1433,7 +1434,22 @@ window.__ctxMenu = (function () {
     window.addEventListener('resize', hide, { passive: true });
     return menuEl;
   }
-  function hide() { if (menuEl) menuEl.style.display = 'none'; }
+  var dimEl = null;
+  function dimOf() {
+    if (dimEl) return dimEl;
+    dimEl = document.createElement('div');
+    dimEl.className = 'wn-ctx-dim';
+    document.body.appendChild(dimEl);
+    return dimEl;
+  }
+  function srcOf() { return window.__ctxMenuLastHit && window.__ctxMenuLastHit.nodeType === 1 ? window.__ctxMenuLastHit : null; }
+  function hide() {
+    if (menuEl) menuEl.style.display = 'none';
+    /* v387 C1：收起时撤掉背景压暗与源卡抬起 */
+    if (dimEl) dimEl.classList.remove('show');
+    var s = srcOf();
+    if (s) { s.classList.remove('lift', 'pressed', 'wn-ctx-src'); }
+  }
   function show(x, y, items) {
     if (!items || !items.length) return;
     var m = ensure();
@@ -1459,6 +1475,15 @@ window.__ctxMenu = (function () {
       m.style.setProperty('--ctx-origin', (x > window.innerWidth - r.width - 40 ? 'right top' : 'left top'));
       m.classList.remove('ctx-anim'); void m.offsetWidth; m.classList.add('ctx-anim');
     } catch (e0) { if (window.__silent) window.__silent(e0); }
+    /* v387 C1 升级（只改动画，文案/结构/坐标一字不动）：背景高斯压暗 + 源卡先微缩再抬起 */
+    try {
+      dimOf().classList.add('show');
+      var s = srcOf();
+      if (s) {
+        s.classList.add('wn-ctx-src', 'pressed');
+        setTimeout(function () { s.classList.remove('pressed'); s.classList.add('lift'); }, 90);
+      }
+    } catch (e1) { if (window.__silent) window.__silent(e1); }
   }
   function bind(root, selector, getItems) {
     if (!root) return;
@@ -1640,11 +1665,26 @@ window.__followSwipe = function (opts) {
   }
   function settle(target, cb) {
     if (!S) return;
-    var t = 'transform .2s var(--ease-out, ease)';
-    S.pA.style.transition = t; if (S.pB) S.pB.style.transition = t;
-    S.pA.style.transform = 'translateX(' + target + 'px)';
-    if (S.pB) S.pB.style.transform = 'translateX(' + (target === 0 ? S.dir * S.w : 0) + 'px)';
-    setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 210); /* v370：提交前先解除点击拦截——切换自身的程序化点击不能被吞 */
+    var commiting = target !== 0;
+    if (!commiting) {
+      /* 弹回：两侧弹簧回位（v387 S4 体系：回程也带过冲，不再硬停） */
+      var t = 'transform .26s cubic-bezier(.34,1.3,.64,1)';
+      S.pA.style.transition = t; if (S.pB) S.pB.style.transition = t;
+      S.pA.style.transform = 'translateX(0)';
+      if (S.pB) S.pB.style.transform = 'translateX(' + (target === 0 ? S.dir * S.w : 0) + 'px)';
+      setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 270);
+      return;
+    }
+    /* v387 S4 边缘揭示（全站统一）：新面板从滑动方向继续弹簧盖入 320ms；
+       旧面板原地停住+压暗+微缩 2%（dim 层挂在旧面板上），盖满后 cleanup+commit */
+    S.pA.style.transition = 'transform .32s cubic-bezier(.3,0,.2,1), filter .3s ease';
+    S.pA.style.transform = 'translateX(' + S.off + 'px) scale(.98)';
+    S.pA.style.filter = 'brightness(.55)';
+    if (S.pB) {
+      S.pB.style.transition = 'transform .32s cubic-bezier(.34,1.56,.64,1)';
+      S.pB.style.transform = 'translateX(0)';
+    }
+    setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 335);
   }
   document.addEventListener('touchstart', function (e) {
     if (S) return;
@@ -2262,7 +2302,11 @@ window.__renderCarousel = function (carouselEl, trackEl, dotsEl, fallbackImgEl, 
   }
   function goToSlide(idx) {
     st.idx = (idx + st.len) % st.len;
+    /* v387 S4/H20：轮播落位换弹簧盖入（新图从滑动方向滑入+末端过冲），替代瞬移对齐 */
+    trackEl.style.transition = 'transform .32s cubic-bezier(.34,1.3,.64,1)';
     trackEl.style.transform = 'translateX(-' + (st.idx * 100) + '%)';
+    clearTimeout(trackEl.__ccTrT);
+    trackEl.__ccTrT = setTimeout(function () { trackEl.style.transition = ''; }, 340);
     if (dotsEl) dotsEl.querySelectorAll('.cc-dot').forEach(function (d, i) { d.classList.toggle('active', i === st.idx); });
     restartTimer();
   }

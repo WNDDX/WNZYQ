@@ -1,0 +1,329 @@
+/* ============================================================
+   motion.css — v387 全站高级动效基建（唯一源）
+   范围：D1按压/D7涟漪/D2打勾/D5红点/C7抖动/A1骨架流光/A4级联/
+        A6统一转圈/A8不定进度条/A10时间线/H15波形/C5撤销条/E3图标微动/
+        C1长按菜单升级/骨架交接/深色模式变量映射（E5）
+   铁律：只用 transform/opacity/filter；prefers-reduced-motion 全降级
+   ============================================================ */
+
+/* ===== 动效 Token（唯一源） ===== */
+:root {
+  --spring: cubic-bezier(.34, 1.56, .64, 1);          /* 弹簧回弹 */
+  --spring-soft: cubic-bezier(.34, 1.3, .64, 1);      /* 轻弹簧 */
+  --dur-press: 0.12s;   /* 微反馈 */
+  --dur-fx: 0.24s;      /* 常规动效 */
+  --dur-fx-big: 0.32s;  /* 强调（滑切提交等） */
+  --wn-skel-hi: rgba(255, 255, 255, 0.55);
+}
+html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
+
+/* ===== D1 触感按压（全站可按元素统一手感） ===== */
+/* 规则：只对「非禁用」的按键类元素生效；transform 不碰布局 */
+.wn-press, .row-btn, .batch-btn, .tab:not(.info-ct-btn), .view-btn, .btn-fit,
+.cat-tag, .p-ops .row-btn, .modal-footer button, .pager button, .undo-btn {
+  transition: transform var(--dur-press) var(--ease-press), box-shadow var(--dur-press) var(--ease-press);
+}
+.wn-press:active, .row-btn:active, .batch-btn:active, .tab:active:not(.info-ct-btn),
+.view-btn:active, .btn-fit:active, .cat-tag:active, .modal-footer button:active,
+.pager button:active, .undo-btn:active {
+  transform: scale(0.95);
+}
+/* 有图标的主键按压时图标微转（E3 姊妹效果） */
+.tab:active .wn-ico { transform: rotate(-4deg) scale(0.92); }
+.wn-ico { transition: transform var(--dur-press) var(--ease-press); }
+
+/* ===== E3 图标微动（hover/active 图标小动作） ===== */
+@media (hover: hover) {
+  #topAnn:hover .wn-ico, .info-ct-btn:hover .wn-ico { animation: wnRing 0.9s var(--ease-press); }
+  .topShareBtn:hover .wn-ico, [title*="分享"]:hover .wn-ico { animation: wnNudge 0.7s var(--ease-press); }
+  .row-btn[title*="编辑"]:hover .wn-ico, .row-btn[title*="排序"]:hover .wn-ico { animation: wnTilt 0.7s var(--ease-press); }
+}
+@keyframes wnRing { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-12deg)} 40%{transform:rotate(11deg)} 60%{transform:rotate(-7deg)} 80%{transform:rotate(5deg)} }
+@keyframes wnNudge { 0%,100%{transform:none} 45%{transform:translateX(3px)} 70%{transform:translateX(-2px)} }
+@keyframes wnTilt { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-10deg)} }
+
+/* ===== D7 水波涟漪（motion.js 委托注入 .wn-ripple-ink） ===== */
+.wn-ripple-host { position: relative; overflow: hidden; }
+.wn-ripple-ink {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(30,136,229,.28) 0%, rgba(30,136,229,.12) 55%, transparent 72%);
+  transform: translate(-50%,-50%) scale(0); will-change: transform, opacity;
+}
+.wn-ripple-ink.go { animation: wnRipple .55s var(--ease-out) forwards; }
+.wn-ripple-ink.dark-ink { background: radial-gradient(circle, rgba(0,0,0,.14) 0%, rgba(0,0,0,.06) 55%, transparent 72%); }
+@keyframes wnRipple { to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
+
+/* ===== C1 长按菜单升级：卡片微缩抬起 + 背景压暗模糊 + 菜单弹簧弹出 =====
+   只改动画，不动 __ctxMenu 的结构/文案/坐标逻辑 */
+.wn-ctx-dim {
+  position: fixed; inset: 0; z-index: 10039; pointer-events: none;
+  background: rgba(10, 22, 38, 0.42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  opacity: 0; transition: opacity .18s ease;
+}
+.wn-ctx-dim.show { opacity: 1; }
+.ctx-menu { transform-origin: var(--ctx-origin, left top); }
+.ctx-menu.ctx-anim {
+  animation: wnCtxPop .3s var(--spring) both;
+}
+@keyframes wnCtxPop {
+  from { opacity: 0; transform: scale(.8) translateY(6px); }
+  60%  { opacity: 1; transform: scale(1.04) translateY(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+/* 菜单源元素（长按的那张卡）：motion.js 加 .wn-ctx-src */
+.wn-ctx-src {
+  transition: transform .16s var(--ease-press), box-shadow .16s var(--ease-press), filter .18s ease;
+  will-change: transform;
+}
+.wn-ctx-src.lift { transform: scale(1.025); box-shadow: 0 16px 34px rgba(10,30,60,.28); z-index: 10041; position: relative; }
+.wn-ctx-src.pressed { transform: scale(.975); }
+
+/* ===== D2 成功/失败 toast 图标描画（motion.js 给 .ui-toast 注入） ===== */
+.ui-toast { display: flex; align-items: center; gap: 7px; }
+.ui-toast .wn-tico { flex: none; width: 15px; height: 15px; }
+.ui-toast .wn-tico circle, .ui-toast .wn-tico path {
+  fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 48; stroke-dashoffset: 48; animation: wnDraw .34s var(--ease-out) forwards;
+}
+.ui-toast .wn-tico path { stroke-dasharray: 26; stroke-dashoffset: 26; animation-delay: .12s; }
+.ui-toast .wn-tico.ok circle, .ui-toast .wn-tico.ok path { stroke: var(--green-strong, #2e7d32); }
+.ui-toast .wn-tico.err circle, .ui-toast .wn-tico.err path { stroke: var(--red-strong, #c62828); animation-name: wnDrawX; }
+@keyframes wnDraw { to { stroke-dashoffset: 0; } }
+@keyframes wnDrawX { 0% { stroke-dashoffset: 26; } 60% { stroke-dashoffset: 0; } 70% { transform: translateX(1px); } 85% { transform: translateX(-1px); } 100% { stroke-dashoffset: 0; transform: none; } }
+
+/* ===== D5 红点弹出/缩没（作用于 .dot-badge 显隐瞬间） ===== */
+.dot-badge { transform-origin: center; }
+.dot-badge.wn-pop-in { animation: wnDotPop .38s var(--spring) both; }
+.dot-badge.wn-pop-out { animation: wnDotOut .2s ease both; }
+@keyframes wnDotPop { 0% { transform: scale(0); } 60% { transform: scale(1.45); } 100% { transform: scale(1); } }
+@keyframes wnDotOut { to { transform: scale(0); opacity: 0; } }
+
+/* ===== C7 错误抖动 ===== */
+.wn-shake { animation: wnShakeX .42s var(--ease-press); }
+@keyframes wnShakeX {
+  0%,100% { transform: none; }
+  15% { transform: translateX(-8px); } 30% { transform: translateX(7px); }
+  45% { transform: translateX(-5px); } 60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+/* ===== A1 骨架流光（叠加在现有骨架元素上） =====
+   兼容管理页 .product-row.skel 系与资源页 .card-skeleton 系 */
+.product-row.skel .row-check, .product-row.skel .p-title, .product-row.skel .p-sub,
+.product-row.skel .row-btn, .product-row.skel .thumb,
+.card-skeleton .sk-img, .card-skeleton .sk-line,
+.skel-block {
+  position: relative; overflow: hidden;
+}
+.product-row.skel .row-check::after, .product-row.skel .p-title::after, .product-row.skel .p-sub::after,
+.product-row.skel .row-btn::after, .product-row.skel .thumb::after,
+.card-skeleton .sk-img::after, .card-skeleton .sk-line::after, .skel-block::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(100deg, transparent 30%, var(--wn-skel-hi) 50%, transparent 70%);
+  animation: wnShimmer 1.5s infinite;
+}
+@keyframes wnShimmer { to { transform: translateX(100%); } }
+/* 骨架→真内容交接：真内容容器加 .wn-reveal 淡入（motion.js 或调用方加） */
+.wn-reveal { animation: wnReveal .34s var(--ease-out) both; }
+@keyframes wnReveal { from { opacity: 0; filter: blur(5px); } to { opacity: 1; filter: blur(0); } }
+
+/* ===== A4 级联入场（motion.js 给子项加 .wn-casc + 递增 delay） ===== */
+.wn-casc { animation: wnCasc .34s var(--ease-out) both; animation-delay: var(--casc-d, 0s); }
+@keyframes wnCasc { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ===== A6 统一转圈（全站唯一规格） ===== */
+.wn-spin {
+  display: inline-block; width: 18px; height: 18px; border-radius: 50%;
+  border: 2.5px solid rgba(30,136,229,.22); border-top-color: var(--blue1, #1E88E5);
+  animation: wnSpin .8s linear infinite; vertical-align: -4px;
+}
+.wn-spin.white { border-color: rgba(255,255,255,.35); border-top-color: #fff; }
+@keyframes wnSpin { to { transform: rotate(360deg); } }
+
+/* ===== A8 不定进度条（不知道多久的等待） ===== */
+.wn-indet { position: relative; height: 4px; border-radius: 2px; background: rgba(30,136,229,.15); overflow: hidden; }
+.wn-indet > i { position: absolute; top: 0; bottom: 0; left: 0; width: 34%; border-radius: 2px; background: var(--blue1, #1E88E5); animation: wnIndet 1.3s var(--ease-press) infinite; }
+@keyframes wnIndet { 0% { left: -34%; } 100% { left: 100%; } }
+
+/* ===== A10 时间线圆点弹出（信息中心细项行 stagger） ===== */
+.ct-row.wn-tl { animation: wnCasc .3s var(--ease-out) both; animation-delay: var(--casc-d, 0s); }
+
+/* ===== H15 语音波形组件（预留；有语音功能处挂 .wn-wave 即用） ===== */
+.wn-wave { display: inline-flex; align-items: center; gap: 3px; height: 26px; }
+.wn-wave i { width: 3.5px; border-radius: 2px; background: var(--blue1, #1E88E5); animation: wnWave 1s ease-in-out infinite; }
+.wn-wave i:nth-child(1) { height: 9px; } .wn-wave i:nth-child(2) { height: 19px; animation-delay: .1s; }
+.wn-wave i:nth-child(3) { height: 26px; animation-delay: .2s; } .wn-wave i:nth-child(4) { height: 15px; animation-delay: .3s; }
+.wn-wave i:nth-child(5) { height: 22px; animation-delay: .4s; }
+@keyframes wnWave { 0%,100% { transform: scaleY(.45); } 50% { transform: scaleY(1.2); } }
+
+/* ===== C5 撤销条弹簧 + 倒计时环（结构由 motion.js 注入；配色=系统白胶囊+蓝） ===== */
+.ui-toast.wn-undo {
+  animation: wnUndoIn .38s var(--spring) both;
+}
+@keyframes wnUndoIn { from { opacity: 0; transform: translateY(-14px) scale(.94); } to { opacity: 1; transform: none; } }
+.ui-toast.wn-undo.leaving { animation: wnUndoOut .22s ease both; }
+@keyframes wnUndoOut { to { opacity: 0; transform: translateY(-10px) scale(.96); } }
+.ui-toast.wn-undo .undo-btn { position: relative; padding-left: 20px; }
+.ui-toast.wn-undo .undo-btn svg.wn-ring {
+  position: absolute; left: 2px; top: 50%; width: 13px; height: 13px; margin-top: -6.5px;
+  transform: rotate(-90deg);
+}
+.ui-toast.wn-undo .undo-btn svg.wn-ring circle {
+  fill: none; stroke: var(--blue1, #1E88E5); stroke-width: 2.4;
+  stroke-dasharray: 31.4; stroke-dashoffset: 0;
+  animation: wnRingDrain linear forwards; animation-duration: var(--undo-ms, 10s);
+}
+@keyframes wnRingDrain { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 31.4; } }
+.ui-toast.wn-undo.wn-undo-last { animation: wnUndoNudge .5s ease-in-out infinite; }
+@keyframes wnUndoNudge { 0%,100% { transform: none; } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+
+/* ===== H16 彩带（motion.js 动态生成 .wn-cfp） ===== */
+.wn-cfp { position: fixed; z-index: 100300; pointer-events: none; width: 8px; height: 13px; border-radius: 2px; will-change: transform, opacity; }
+
+/* ===== H4 分格资源码输入（shop 接入用） ===== */
+.otp-row { display: flex; gap: 6px; justify-content: center; direction: ltr; }
+.otp-row input {
+  width: 34px; height: 44px; text-align: center; font-size: 18px; font-weight: 700;
+  font-variant-numeric: tabular-nums; text-transform: uppercase;
+  border: 1.5px solid var(--border, #d0d0d0); border-radius: 9px; background: var(--card-bg, #fff);
+  color: var(--text, #222); padding: 0; outline: none; caret-color: var(--blue1);
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s var(--spring);
+}
+.otp-row input:focus { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,.15); transform: translateY(-1px); }
+.otp-row input.filled { border-color: var(--blue2, #64B5F6); }
+
+/* ===== H18 搜索联想下拉 ===== */
+.sugg-pop {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 96000;
+  background: var(--card-bg, #fff); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow-pop); overflow: hidden; max-height: 264px; overflow-y: auto;
+  overscroll-behavior: contain; animation: wnSuggIn .18s var(--ease-out) both;
+}
+@keyframes wnSuggIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.sugg-pop .sugg-it { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 13.5px; color: var(--text); cursor: pointer; }
+.sugg-pop .sugg-it i { flex: none; width: 16px; height: 16px; border-radius: 5px; background: var(--bg-light); }
+.sugg-pop .sugg-it:hover, .sugg-pop .sugg-it.hot { background: var(--hover-bg, #f0f7ff); }
+.sugg-pop .sugg-cat { padding: 5px 12px 3px; font-size: 11px; color: var(--text-faint); }
+
+/* ===== S4 边缘揭示滑切（__followSwipe 提交段使用；dim 层由 JS 挂在旧面板上） ===== */
+.__fs-stage .wn-s4-dim {
+  position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  background: rgba(10, 22, 38, .5); opacity: 0; transition: opacity var(--dur-fx-big) ease;
+}
+.__fs-stage .wn-s4-dim.show { opacity: 1; }
+
+/* ===== 全站 overscroll 修复（v387 用户最新指令，覆盖 v370 条9 的 auto 口径）=====
+   问题：弹窗内嵌上下滚动窗口滑到头/底，回弹传给外层=像卡住。
+   修复范围只限「弹窗/浮层内的滚动容器」；页面级横向滚动条（category-bar 等）保持 auto 不动 */
+.modal-box, .modal-box .resource-content, .ct-list, .modal-mask .modal-scroll,
+[id="bindingsScroll"], .ann-list, .rte-editor, .preview-body,
+.sugg-pop, .ctx-menu, .dt-pop, .cat-picker-panel, .lightbox .lb-stage, .lightbox {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== S4 落法（阈值切换面）：新画面从滑动方向弹簧盖入（幅度加大+过冲），替代生硬淡入 ===== */
+@keyframes slNext { from { transform: translateX(72px); opacity: .3; } 62% { transform: translateX(-3px); opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes slPrev { from { transform: translateX(-72px); opacity: .3; } 62% { transform: translateX(3px); opacity: 1; } to { transform: none; opacity: 1; } }
+.modal-box.sl-next, .product-grid.swap-next, .lightbox .lb-sl-next { animation: slNext .34s cubic-bezier(.3,0,.2,1) both; }
+.modal-box.sl-prev, .product-grid.swap-prev, .lightbox .lb-sl-prev { animation: slPrev .34s cubic-bezier(.3,0,.2,1) both; }
+/* variant-detail 需 !important：renderVariantDetail 会内联写 fadeInUp（R231），类规则被内联压制——
+   滑入类在场时用 !important 接管，离场时内联 fadeInUp 照常回放 */
+.variant-detail.sl-next { animation: slNext .34s cubic-bezier(.3,0,.2,1) both !important; }
+.variant-detail.sl-prev { animation: slPrev .34s cubic-bezier(.3,0,.2,1) both !important; }
+
+/* ===== A6 骨架交接：加载完成容器统一由 motion.js 加 .wn-reveal（见上） ===== */
+
+/* ===== B3 磁性指示器落位：切换/松手时指示线下划线弹簧滑入 =====
+   跟手阶段由 JS 逐帧驱动（不加 transition），松手后 motion.js 加 .wn-settle 弹簧过渡
+   （真实类名：管理页 .tabs-line / 资源页 .cat-line，v370b 条3） */
+.tabs-line, .cat-line { transition: none; }
+.tabs-line.wn-settle, .cat-line.wn-settle {
+  /* !important：压过 JS 在元素上留的内联 transition（__fsTabLineUpdate/To 写 inline） */
+  transition: left .32s cubic-bezier(.34, 1.56, .64, 1), width .32s cubic-bezier(.34, 1.56, .64, 1), opacity .2s ease !important;
+}
+
+/* ===== F1 折线图描画（motion.js 给数据线打 pathLength=1） ===== */
+#lineSvg path:not([stroke-dasharray]) {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: wnLineDraw .85s var(--ease-out) forwards;
+}
+@keyframes wnLineDraw { to { stroke-dashoffset: 0; } }
+#lineSvg circle {
+  transform-box: fill-box; transform-origin: center;
+  animation: wnChartDot .3s var(--spring) .5s both;
+}
+@keyframes wnChartDot { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* ===== C2 底部抽屉（手机端弹窗统一改抽屉；桌面不变） ===== */
+@keyframes wnSheetUp { from { transform: translateY(46%); opacity: .55; } to { transform: none; opacity: 1; } }
+@media (max-width: 600px) {
+  .modal-mask { align-items: flex-end !important; justify-content: flex-end !important; padding: 0 !important; }
+  /* 中间包装层（.modal-wrap）若带 margin:auto / align-self:center 会让抽屉悬在半空——一并压平 */
+  .modal-mask .modal-wrap { margin: 0 !important; align-self: flex-end !important; width: 100% !important; }
+  .modal-mask .modal-box {
+    width: 100% !important; max-width: 100% !important;
+    max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain;
+    border-radius: 18px 18px 0 0 !important;
+    margin: 0 !important; position: relative !important; left: auto !important; top: auto !important;
+    animation: wnSheetUp .34s var(--spring) both !important;
+    padding-bottom: calc(16px + var(--safe-b));
+  }
+  /* 抽屉抓手（纯装饰） */
+  .modal-mask .modal-box::before {
+    content: ""; position: sticky; top: 6px; z-index: 6;
+    display: block; width: 38px; height: 4.5px; border-radius: 3px;
+    background: var(--neutral-3, #e4e8ec); margin: 0 auto 6px;
+  }
+}
+
+/* ===== E5 深色模式（唯一映射源；其他页禁止再写暗色块） =====
+   原则：只覆盖 ui-common.css 既有语义变量 + 个别硬编码白底的定点覆写 */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-page: #0e1621;
+  --bg-light: #16202c;
+  --card-bg: #1b2735;
+  --border: #2b3a4c;
+  --border-soft: #24313f;
+  --border-light: #274257;
+  --border-strong: #43586d;
+  --text: #e6edf5;
+  --text-light: #9db0c3;
+  --text-faint: #69809a;
+  --text-primary: #e6edf5;
+  --gray-mid: #8296ab;
+  --gray-bg: #16202c;
+  --gray-text: #9db0c3;
+  --hover-bg: #22334a;
+  --toast-bg: rgba(27, 39, 53, 0.95);
+  --neutral-3: #243240;
+  --danger-bg: rgba(198, 40, 40, 0.16);
+  --danger-border: #6b3038;
+  --danger-border-strong: #7d3a3f;
+  --overlay-modal: rgba(2, 8, 16, 0.68);
+  --overlay-lightbox: rgba(2, 8, 16, 0.9);
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.4);
+  --shadow-pop: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-modal: 0 10px 40px rgba(0,0,0,0.6);
+  --avatar-shadow: 0 0 0 2px rgba(20,30,44,0.6), 0 4px 14px rgba(0,0,0,0.45);
+  --price-text: #f0a24e;
+  --link-blue: #64b5f6;
+  --blue-tint: rgba(30, 136, 229, 0.22);
+  --blue3: #10304c;
+}
+/* 深色下个别硬编码白底的定点覆写（仅覆盖高流量表面） */
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .topbar-right .info-ct-btn { background-color: #14202e; }
+html[data-theme="dark"] .wn-divider, html[data-theme="dark"] hr { border-color: #2b3a4c; }
+/* 主题切换辉光（View Transition 降级为 fade） */
+html.wn-theme-anim, html.wn-theme-anim * { transition: background-color .28s ease, border-color .28s ease, color .18s ease !important; }
+
+/* ===== 全局降级 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .wn-ripple-ink, .product-row.skel .row-check::after, .product-row.skel .p-title::after,
+  .product-row.skel .p-sub::after, .product-row.skel .row-btn::after, .product-row.skel .thumb::after,
+  .card-skeleton .sk-img::after, .card-skeleton .sk-line::after, .skel-block::after { animation: none !important; }
+  .wn-casc, .ct-row.wn-tl, .wn-reveal, .ui-toast.wn-undo, .ctx-menu.ctx-anim { animation-duration: .01s !important; }
+  .wn-press:active, .row-btn:active, .tab:active, .cat-tag:active { transform: none !important; }
+}

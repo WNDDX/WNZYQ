@@ -1,7 +1,7 @@
 /**
  * GET /api/admin/bindings?variant_id=xxx   绑定设备清单（需登录）
  * 响应: { ok, limit, count, list: [{ id, device, ua, created_at, last_access }] }
- *   device 显示为 token 前 12 位 + …（完整 token 不下发，避免被拿到后伪造设备）
+ *   device 显示为「设备 + token 前 6 位」（v386 与信息中心统一口径；完整 token 不下发，避免被拿到后伪造设备）
  * R303（09-30）：支持分页按页拉取（page + page_size）
  */
 import { json, requireAuth, ensureBindingsTable, ensureVariantColumns, ensureCodeIssuesTable, getSetting } from '../../_utils.js';
@@ -79,7 +79,7 @@ export async function onRequestGet(context) {
       if (!byV[r.variant_id]) byV[r.variant_id] = [];
       byV[r.variant_id].push({
         id: r.id,
-        device: String(r.device_token || '').slice(0, 12) + '…',
+        device: '设备 ' + String(r.device_token || '').slice(0, 6), /* v386 统一：与信息中心同款「设备+前6位」 */
         ua: r.ua || '',
         code: r.code || '',
         created_at: r.created_at,
@@ -187,7 +187,7 @@ export async function onRequestGet(context) {
     count: total,
     list: results.map((r) => ({
       id: r.id,
-      device: String(r.device_token || '').slice(0, 12) + '…',
+      device: '设备 ' + String(r.device_token || '').slice(0, 6), /* v386 统一：与信息中心同款「设备+前6位」 */
       ua: r.ua || '',
       code: r.code || '',
       created_at: r.created_at,

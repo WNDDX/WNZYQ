@@ -780,11 +780,15 @@
           var fromIdx = Number(e.dataTransfer.getData('text/plain'));
           var toIdx = idx;
           if (fromIdx === toIdx || isNaN(fromIdx)) return;
+          /* v387 A2：FLIP 弹簧让位（重排前记位，渲染后滑到位） */
+          var _vl = document.getElementById('variantList') || item.parentNode;
+          var _flip = (window.__motion && __motion.flipSnap) ? __motion.flipSnap(_vl, '.variant-item') : null;
           var moved = state.variants.splice(fromIdx, 1)[0];
           state.variants.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, moved);
           // 重新分配 sort
           state.variants.forEach(function (v2, i) { v2.sort = i + 1; });
           renderVariants();
+          try { if (_flip) _flip(); } catch (e2) { if (window.__silent) window.__silent(e2); }
         });
 
         /* v375（老板定稿）：分组改三段——①名称+金额+排序一组；②资源码独自一组；③绑定+编辑+删除一组（无码行绑定放占位保列对齐）；换行整组走不拆散 */

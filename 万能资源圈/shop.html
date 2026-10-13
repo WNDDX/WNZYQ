@@ -30,6 +30,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 @keyframes skShimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 </style>
 <link rel="stylesheet" href="/assets/ui-common.css">
+  <script>/* v387 E5：深色模式首帧防闪（localStorage wn_theme，默认跟随系统） */(function(){try{var t=localStorage.getItem("wn_theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+<link rel="stylesheet" href="/assets/motion.css">
   <link rel="canonical" href="https://wnzyq.pages.dev/shop"> <!-- v338 条212 -->
 <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
@@ -85,6 +87,11 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
           </svg>
           <span>分享</span>
+        </button>
+        <!-- v386：公告键——与管理页「信息」同图标（wn-ico-bell）同组键规格（.tab），点击打开平台公告弹窗 -->
+        <button class="tab" id="topAnn" title="平台公告">
+          <svg class="wn-ico" width="15" height="15" aria-hidden="true"><use href="#wn-ico-bell"/></svg>
+          <span>公告</span>
         </button>
       </div>
       <div class="search-box">
@@ -266,6 +273,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <script src="/config.js"></script> <!-- v336 条32：改为同步加载，配置永不错位 -->
   <!-- R193：ui-common.js 必须先于 shop.js 加载（长按菜单组件 __ctxMenu 在 shop.js 解析时就要用） -->
   <script src="/assets/ui-common.js" defer></script>
+  <script src="/assets/motion.js" defer></script>
   <script src="/assets/qrcode.min.js" defer></script><!-- v349：二维码库只在"长按存二维码"时才用得到，原来同步加载卡在所有访客的首屏渲染上；改 defer 后不挡首屏 -->
   <script src="/assets/shop.js" defer></script>
   <!-- 图片/视频放大查看器 -->

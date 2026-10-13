@@ -1626,10 +1626,14 @@
           var fromIdx = Number(e.dataTransfer.getData('text/plain'));
           var toIdx = idx;
           if (fromIdx === toIdx || isNaN(fromIdx)) return;
-          if (toIdx === 0) toIdx = 1; var moved = stateAnn.list.splice(fromIdx, 1)[0];
+          if (toIdx === 0) toIdx = 1; /* v387 A2：FLIP 弹簧让位 */
+          var _al = document.getElementById('annList') || item.parentNode;
+          var _flip = (window.__motion && __motion.flipSnap) ? __motion.flipSnap(_al, '.ann-item') : null;
+          var moved = stateAnn.list.splice(fromIdx, 1)[0];
           stateAnn.list.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, moved);
           stateAnn.list.forEach(function (v2, i) { v2.sort = i + 1; });
           renderAnnList();
+          try { if (_flip) _flip(); } catch (e3) { if (window.__silent) window.__silent(e3); }
         });
         /* v357 条6：绑定分组——公告名+排序一组；显示/隐藏+删除一组 */
         var _agMain = document.createElement('span'); _agMain.className = 'ann-group ann-main-group';
@@ -2332,3 +2336,107 @@
         toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
       });
     });
+
+/* ---------- v386：管理页「信息」中心（顶栏信息键→总统计+三角细项；红点=距上次有新绑定/咨询） ---------- */
+(function () {
+  var LS_KEY = 'admin_last_seen';
+  var mask = document.getElementById('infoCtMask');
+  if (!mask) return;
+  var btn = document.getElementById('topInfoBtn');
+  var dot = document.getElementById('infoDot');
+  var fmtTime = function (utc) {
+    try {
+      var d = new Date(String(utc).replace(' ', 'T').replace(/(\.\d+)?$/, '') + (String(utc).indexOf('Z') === -1 && String(utc).indexOf('+') === -1 ? 'Z' : ''));
+      if (isNaN(d.getTime())) return String(utc).slice(5, 16);
+      var p = function (n) { return n < 10 ? '0' + n : n; };
+      return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    } catch (e) { return String(utc).slice(5, 16); }
+  };
+  var maskIP = function (ip) {
+    var s = String(ip || '');
+    if (s.indexOf('设备') === 0) return s;
+    var m = s.split('.');
+    return m.length === 4 ? m[0] + '.' + m[1] + '.*.*' : s;
+  };
+  /* v386 规整：CF region 英文 → 中文省份（未收录/为空时隐藏地区前缀） */
+  var REGION_CN = { Beijing: '北京', Tianjin: '天津', Hebei: '河北', Shanxi: '山西', 'Inner Mongolia': '内蒙古', Liaoning: '辽宁', Jilin: '吉林', Heilongjiang: '黑龙江', Shanghai: '上海', Jiangsu: '江苏', Zhejiang: '浙江', Anhui: '安徽', Fujian: '福建', Jiangxi: '江西', Shandong: '山东', Henan: '河南', Hubei: '湖北', Hunan: '湖南', Guangdong: '广东', Guangxi: '广西', Hainan: '海南', Chongqing: '重庆', Sichuan: '四川', Guizhou: '贵州', Yunnan: '云南', Tibet: '西藏', Shaanxi: '陕西', Gansu: '甘肃', Qinghai: '青海', Ningxia: '宁夏', Xinjiang: '新疆', 'Hong Kong': '中国香港', Macau: '中国澳门', Taiwan: '中国台湾' };
+  var regionLabel = function (r) { return REGION_CN[r] || ''; };
+  var WHAT = { view: '浏览资源', contact: '咨询客服', resource_unlock: '查看内容', bind: '资源解锁' };
+  function fmtNum(n) { return n > 999 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n); }
+  function render(d) {
+    /* v387 A7：四格增量数字滚动（超 1k 仍用 k 缩写直显） */
+    var _m = window.__motion;
+    function setDelta(id, n) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (_m && n <= 999) _m.countUp(el, n, { prefix: '+', dur: 700 });
+      else el.textContent = '+' + fmtNum(n);
+    }
+    setDelta('ctDBind', d.delta.bind);
+    setDelta('ctDContact', d.delta.contact);
+    setDelta('ctDUnlock', d.delta.unlock);
+    setDelta('ctDView', d.delta.view);
+    document.getElementById('ctSince').textContent = '自 ' + fmtTime(d.lastSeen) + ' 以来';
+    document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
+    var list = document.getElementById('ctList');
+    if (!(d.recent || []).length) {
+      list.innerHTML = '<div class="ann-empty" style="padding:18px 0"><div class="ann-empty-title">该时段暂无新动态</div></div>';
+      return;
+    }
+    var html = d.recent.map(function (r, ri) {
+      var tp = fmtTime(r.at).split(' '); /* v386 规整：时间两行 MM-DD 换行 HH:MM */
+      var rl = regionLabel(r.region); /* v386 规整：省份前缀（能取到才显示） */
+      var who = maskIP(r.who);
+      var target = r.title + (r.extra ? ' · ' + r.extra : ''); /* extra 仅资源解锁（含类型名）才带 */
+      /* v387 A10：时间线圆点逐条弹出（stagger 40ms，cap 12 条） */
+      var _d = ' style="--casc-d:' + (Math.min(ri, 12) * 40) + 'ms"';
+      return '<div class="ct-row wn-tl"' + _d + '><span class="ct-time"><i>' + tp[0] + '</i><i>' + (tp[1] || '') + '</i></span><span class="ct-who">' +
+        (rl ? rl + ' ' : '') + String(who).replace(/</g, '&lt;') + '</span><span class="ct-what">' + (WHAT[r.type] || r.type) +
+        '</span><span class="ct-target">' + String(target).replace(/</g, '&lt;') + '</span></div>';
+    }).join('');
+    list.innerHTML = html;
+  }
+  function fetchInfo(cb) {
+    var last = '';
+    try { last = localStorage.getItem(LS_KEY) || ''; } catch (e) { if (window.__silent) window.__silent(e); }
+    api('admin/info' + (last ? '?last=' + encodeURIComponent(last) : ''), { method: 'GET' }).then(function (res) {
+      if (res && res.ok) cb(res);
+    }).catch(function () { if (window.__silent) window.__silent(new Error('info')); });
+  }
+  function markSeen() {
+    try { localStorage.setItem(LS_KEY, new Date().toISOString()); } catch (e) { if (window.__silent) window.__silent(e); }
+    if (dot) dot.hidden = true;
+  }
+  /* 红点：主视图可见后静默查一次——窗口内绑定/咨询任一 >0 才亮（访问量再大不打扰） */
+  function checkDot() {
+    var mv = document.getElementById('mainView');
+    if (!mv || getComputedStyle(mv).display === 'none') { setTimeout(checkDot, 1200); return; }
+    fetchInfo(function (d) {
+      if (dot) dot.hidden = !(d.delta.bind > 0 || d.delta.contact > 0);
+    });
+  }
+  setTimeout(checkDot, 1500);
+  if (btn) btn.addEventListener('click', function () {
+    mask.classList.add('open');
+    if (window.__haptic) window.__haptic();
+    fetchInfo(function (d) { render(d); });
+  });
+  var fold = document.getElementById('ctFold');
+  var item = document.getElementById('ctDetailItem');
+  if (fold && item) fold.addEventListener('click', function () {
+    var willOpen = !item.classList.contains('open');
+    item.classList.toggle('open', willOpen);
+    fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    if (window.__haptic) window.__haptic();
+  });
+  var go = document.getElementById('ctGoStats');
+  if (go) go.addEventListener('click', function () {
+    markSeen();
+    mask.classList.remove('open');
+    var t = document.querySelector('.tab[data-tab="stats"]');
+    if (t) t.click();
+  });
+  var close = document.getElementById('ctClose');
+  if (close) close.addEventListener('click', function () { markSeen(); mask.classList.remove('open'); });
+  mask.addEventListener('click', function (e) { if (e.target === mask) { markSeen(); mask.classList.remove('open'); } });
+})();

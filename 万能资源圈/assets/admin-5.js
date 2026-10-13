@@ -515,7 +515,13 @@
       if (btn) { btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '导出中'); else btn.textContent = '导出中'; }
       // v294（用户 10-04 02:14）：267 导出数据加进度提示
       toast('正在准备导出，请稍候…', 'info');
-      var done = function () { if (btn) { btn.disabled = false; btn.textContent = btnOld || '导出数据统计'; } };
+      /* v388 改动6（A8 落地）：导出期间按钮下方挂不定进度条（来回光条），完成/失败统一移除 */
+      var _indet = document.createElement('div');
+      _indet.className = 'wn-indet';
+      _indet.style.cssText = 'margin-top:6px;max-width:300px;';
+      _indet.innerHTML = '<i></i>';
+      if (btn && btn.parentNode) btn.parentNode.appendChild(_indet);
+      var done = function () { if (btn) { btn.disabled = false; btn.textContent = btnOld || '导出数据统计'; } try { if (_indet.parentNode) _indet.parentNode.removeChild(_indet); } catch (e) { if (window.__silent) window.__silent(e); } };
       api('admin/export').then(function (res) {
         if (!res || !res.ok) { toast((res && res.msg) || '导出失败：数据加载失败', 'error'); done(); return; }
         try {
@@ -1570,6 +1576,9 @@ refreshCatCnts();
       var changed = []; sameLevel.forEach(function (c, i) { if (Number(c.sort) !== i) { c.sort = i; changed.push(c); } });
       if (!changed.length) return;
       __reorderBusy = true;
+      /* v387 A2：FLIP 弹簧让位（本地顺序已变，重渲染后所有行滑到位） */
+      var _clEl = document.getElementById('catList');
+      var _cflip = (window.__motion && __motion.flipSnap && _clEl) ? __motion.flipSnap(_clEl, '.cat-row') : null;
       var seq = changed.map(function (c) { return api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ sort: c.sort }) }); });
       Promise.all(seq).then(function (reses) {
         __reorderBusy = false;
@@ -1578,6 +1587,7 @@ refreshCatCnts();
           // R178：拖拽后本地已是目标顺序，静默同步替代 loadCategories() 全量重拉
           state.categories = orderCats(state.categories);
           renderCategories(state.categories);
+          try { if (_cflip) _cflip(); } catch (e4) { if (window.__silent) window.__silent(e4); }
           silentSyncCategories();
         }
         else toast('排序保存失败', 'error');

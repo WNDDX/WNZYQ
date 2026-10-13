@@ -918,6 +918,9 @@ function renderProducts() {
       var fromIdx = state.products.findIndex(function (p) { return p.id === draggedId; });
       var toIdx = state.products.findIndex(function (p) { return p.id === targetId; });
       if (fromIdx === -1 || toIdx === -1) return;
+      /* v387 A2：重排前先记各行旧位置，渲染后让所有行弹簧滑到新位（其余行让位不再瞬跳） */
+      var _listEl = document.getElementById('productList');
+      var _flip = (window.__motion && __motion.flipSnap && _listEl) ? __motion.flipSnap(_listEl, '.product-row') : null;
       var item = state.products.splice(fromIdx, 1)[0];
       state.products.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, item);
       // v294（用户 10-04 02:14）：117 拖拽排序加保存中提示
@@ -941,6 +944,7 @@ function renderProducts() {
         if (hasErr) { toast('排序保存失败，请重试', 'error'); } // v294：088 拖拽排序失败提示
         else { /* v330 条8：排序已就地生效（列表即刻为新顺序），不再弹成功提示条 */ }
         renderProducts();
+        try { if (_flip) _flip(); } catch (e) { if (window.__silent) window.__silent(e); } /* v387 A2：FLIP 弹簧让位 */
       });
     }
 

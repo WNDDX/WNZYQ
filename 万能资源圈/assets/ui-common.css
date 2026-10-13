@@ -89,6 +89,11 @@
   --page-bottom-gap: 24px; /* 页面底部留白（滚动到底时最后内容到底边距离） */
 }
 
+/* ===== v388 改动2：页面入场/Logo 入场动画唯一源（原 shop.css 与 admin.css 各存一份同名副本，已删） ===== */
+@keyframes pageFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes logoFadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+.logo-enter { animation: logoFadeIn 0.8s var(--ease-out) forwards; }
+
 /* ===== v336 条99/100：全站弹窗“关闭叉”唯一规格（用户拍板：关闭键统一用删除那种红色） =====
    ★ v339 修复（用户反馈“组件畸形/位置偏移”的根因）：原实现一刀切把「确定/关闭」等文字按钮
    也压成 32px 红色小圆，且 position:relative 覆盖了各弹窗关闭叉的绝对定位（关闭叉被挤进
@@ -958,15 +963,7 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
 }
 
-/* v368 条10：左右切换方向性过渡——新画面从滑动方向滑入（不再瞬切） */
-@keyframes slNext { from { transform: translateX(46px); opacity: .35; } to { transform: none; opacity: 1; } }
-@keyframes slPrev { from { transform: translateX(-46px); opacity: .35; } to { transform: none; opacity: 1; } }
-.modal-box.sl-next { animation: slNext .24s var(--ease-out); }
-.modal-box.sl-prev { animation: slPrev .24s var(--ease-out); }
-.product-grid.swap-next { animation: slNext .22s var(--ease-out); }
-.product-grid.swap-prev { animation: slPrev .22s var(--ease-out); }
-.lightbox .lb-sl-next { animation: slNext .2s var(--ease-out); }
-.lightbox .lb-sl-prev { animation: slPrev .2s var(--ease-out); }
+/* v368 条10 → v388 改动1：slNext/slPrev 定义与全部使用规则已收归 motion.css 唯一源（弹簧盖入版，并补齐 variant-detail 失效规则） */
 /* ===== v370 条9：内部滚动区滑到底不再带动外层（全系统补 contain）===== */
 .topbar-inner .tabs, .category-bar, .cat-bar, .sub-category-bar, .recent-bar, .stat-table-wrap, .bind-table-wrap, .table-scroll, .admin-table-wrap,
 .modal-mask, .share-mask, .kf-mask, .cp-mask, .modal-box, .form, .rte-editor, .preview-body, [id="bindingsScroll"], .ann-list, .cat-picker-panel, .upman-host { overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; }

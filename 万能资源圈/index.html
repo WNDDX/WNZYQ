@@ -17,6 +17,8 @@
 <meta name="twitter:description" content="优质资源聚合平台"> <!-- v295（用户 10-04 02:52）：分享描述统一→优质资源聚合平台 -->
 <meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
   <link rel="stylesheet" href="/assets/ui-common.css">
+  <script>/* v387 E5：深色模式首帧防闪（localStorage wn_theme，默认跟随系统） */(function(){try{var t=localStorage.getItem("wn_theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+<link rel="stylesheet" href="/assets/motion.css">
   <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
   <link rel="preload" href="/assets/ui-common.js" as="script">
 <!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
@@ -606,6 +608,7 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 })();
 </script>
   <script src="/assets/ui-common.js" defer></script>
+  <script src="/assets/motion.js" defer></script>
   <script>
   (function () {
     window.addEventListener('load', function () {
@@ -619,14 +622,13 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
   </script>
 
   <!-- v331 条30（用户 10-09 05:11 拍板）：只有「获取资源」保留副标题，咨询客服/交流群聊/公众号讯
-       三键下不放副标题（已撤）。「获取资源」副标题拉总数：成功→「共 N 个资源」；
-       失败/超时→「优质资源聚合平台」；加 6 秒超时，接口卡住不再一直空等 -->
+       三键下不放副标题（已撤）。「获取资源」副标题拉总数：成功→「共 N 个资源」数字滚动上涨（v387 A7）；
+       失败/超时→留空（v387 用户指令：去掉「优质资源聚合平台」加载文案）；6 秒超时兜底保留 -->
   <script>
   (function () {
-    var FALLBACK = '优质资源聚合平台';
-    function setSub(t) {
+    function setSubHtml(html) {
       var el = document.getElementById('subRes');
-      if (el) el.textContent = t;
+      if (el) el.innerHTML = html;
     }
     function fetchTotal() {
       try {
@@ -636,11 +638,16 @@ function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (res) {
             if (timer) clearTimeout(timer);
-            if (res && res.ok && typeof res.total === 'number' && res.total >= 0) setSub('共 ' + res.total + ' 个资源');
-            else setSub(FALLBACK);
+            if (res && res.ok && typeof res.total === 'number' && res.total >= 0) {
+              setSubHtml('共 <span id="resTotal">0</span> 个资源');
+              var nEl = document.getElementById('resTotal');
+              if (window.__motion) __motion.countUp(nEl, res.total, { dur: 1100 });
+              else if (nEl) nEl.textContent = res.total;
+            }
+            /* 失败/超时：留空（不显示兜底文案） */
           })
-          .catch(function () { if (timer) clearTimeout(timer); setSub(FALLBACK); });
-      } catch (e) { setSub(FALLBACK); }
+          .catch(function () { if (timer) clearTimeout(timer); });
+      } catch (e) { /* 留空 */ }
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fetchTotal);
     else fetchTotal();

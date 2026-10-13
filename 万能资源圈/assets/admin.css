@@ -13,15 +13,7 @@
       --blue-tint: rgba(30, 136, 229, 0.12); /* v346 条22：本页专用；--blue1/--blue2/--red/--green 已删（归 ui-common.css 统一源） */
     }
     /* R49：暗色变量块为死代码（0 处引用），已删，勿再空挂 */
-    @keyframes pageFadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .logo-enter { animation: logoFadeIn 0.8s var(--ease-out) forwards; }
-    @keyframes logoFadeIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
-    }
+    /* v388 改动2：pageFadeIn/logoFadeIn/.logo-enter 已收归 ui-common.css 唯一源 */
 
     html, body { background: var(--bg-page); color: var(--text); max-width: 100%; overflow-x: hidden; overflow-y: scroll; }
     *, *::before, *::after { min-width: 0; }
@@ -207,6 +199,33 @@
     }
     /* .tab 按钮样式已抽入 ui-common.css 全站公共组件（与资源页顶栏咨询客服/分享同一份，零复制） */
     .topbar-right { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; }
+    /* ---------- v386 信息中心 ---------- */
+    .modal-mask#infoCtMask > .modal-box { max-width: 520px; } /* v386 规整：宽度对齐资源页公告弹窗（520px） */
+    /* 顶栏信息键：复用 .tab 键规格（与资源页公告键同一组），深色顶栏适配同 tabs 配色 */
+    .topbar-right .info-ct-btn { background: transparent; border-radius: 8px; position: relative; color: #fff; display: flex; align-items: center; gap: 6px; padding: 6px 12px; cursor: pointer; border: none; font-size: 14px; }
+    .topbar-right .info-ct-btn:active { background: rgba(255,255,255,0.18); transform: none; }
+    @media (hover:hover) { .topbar-right .info-ct-btn:hover { background: rgba(255,255,255,0.12); transform: none; filter: none; } }
+    .dot-badge { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: #ff4444; border: 1.5px solid #fff; box-sizing: content-box; }
+    /* 总统计四格 */
+    .ct-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .ct-cell { background: var(--bg-light); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+    .ct-cell b { font-size: 20px; color: var(--blue-strong, #1E88E5); line-height: 1; }
+    .ct-cell span { font-size: 12px; color: var(--text-light); }
+    .ct-since { margin-top: 8px; font-size: 12px; color: var(--text-light); text-align: center; }
+    .ct-detail-cap { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text); text-align: left; }
+    .ct-list { display: flex; flex-direction: column; max-height: 320px; overflow-y: auto; overscroll-behavior: auto; }
+    .ct-row { display: grid; grid-template-columns: 52px minmax(0, 1.4fr) auto minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--border); font-size: 13px; } /* v386 规整：grid 固定轨道——四列跨行对齐 + 轨道间距天然等分（gap 8px） */
+    .ct-row:last-child { border-bottom: none; }
+    .ct-row .ct-time { color: var(--text-light); display: flex; flex-direction: column; line-height: 1.3; } /* v386 规整：时间两行 MM-DD / HH:MM */
+    .ct-row .ct-time i { font-style: normal; font-variant-numeric: tabular-nums; }
+    .ct-row .ct-who { color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ct-row .ct-what { color: var(--blue1); white-space: nowrap; }
+    .ct-row .ct-target { min-width: 0; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+    .ct-today { margin-top: 10px; font-size: 12px; color: var(--text-light); text-align: center; }
+    @media (max-width: 600px) {
+      .ct-row { grid-template-columns: 52px minmax(0, 1.3fr) auto minmax(0, 1fr); } /* v386 规整：窄屏压缩「谁」列占比，留省份前缀宽度 */
+      .ct-cell b { font-size: 17px; }
+    }
     /* R36：退出按钮专用类——之前误用 .tab（无 data-tab），点击触发 switchTab(undefined) 把主内容切成空白。
        样式与顶栏 tab 同观感（半透明白胶囊），但语义独立：只弹退出确认框，不参与 tab 切换 */
     .logout-btn {
@@ -1768,7 +1787,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .cp-mask { position: fixed; inset: 0; z-index: 10050; background: var(--overlay-modal); display: none; align-items: flex-start; justify-content: center; padding: 12vh 16px 0; }
     .cp-mask.open { display: flex; }
     .cp-box { width: min(560px, 100%); background: var(--card-bg, #fff); border-radius: 10px; box-shadow: var(--shadow-modal); /* R285 条20：命令面板归弹窗大影档 */ overflow: hidden; animation: cpIn var(--dur-mid) var(--ease-out); /* R285 条30：走全站标准速度+动感 */ }
-    @keyframes cpIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
+    /* v388 改动3：cpIn 副本已删（ui-common.css 唯一源） */
     .cp-input { width: 100%; height: 48px; border: none; outline: none; background: transparent; color: var(--text); font-size: 16px; padding: 0 16px; letter-spacing: 1.2px; }
     .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 4px; border-top: 1px solid var(--border); } /* R285 条44：边框灰收敛——写死 #e8e8e8 归档 var(--border) */
     .cp-item { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text); }

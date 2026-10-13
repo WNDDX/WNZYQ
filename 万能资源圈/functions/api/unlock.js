@@ -180,8 +180,8 @@ export async function onRequestPost(context) {
   let bound = true;
   try {
     await env.DB.prepare(
-      'INSERT INTO resource_bindings (variant_id, product_id, device_token, ua, code) VALUES (?, ?, ?, ?, ?)'
-    ).bind(variantId, productId, device, ua, bindCode).run();
+      'INSERT INTO resource_bindings (variant_id, product_id, device_token, ua, code, region) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(variantId, productId, device, ua, bindCode, (request.cf && request.cf.region) || '').run();
   } catch (e) {
     const msg = String(e && e.message || '');
     if (msg.includes('UNIQUE constraint failed')) {

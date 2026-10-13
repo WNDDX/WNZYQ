@@ -459,6 +459,19 @@
       var _annSkel = document.getElementById('annSkeleton'); if (_annSkel) _annSkel.style.display = '';
       try { document.querySelectorAll('#annModal video').forEach(function (v) { v.pause(); }); } catch (e) { if (window.__silent) window.__silent(e); }
     }
+    /* v386：手动打开公告弹窗（顶栏「公告」键）——复用现有渲染链；数据未就绪时走骨架窗（同自动弹出口径），
+       mode=off / 空公告时 renderAnnContent 会自动关掉不空弹 */
+    window.openAnnModal = function () {
+      var m = document.getElementById('annModal'); if (!m) return;
+      try {
+        m.classList.add('open');
+        if (window.setBodyLock) setBodyLock(true);
+        window.__annShown = true;
+        renderAnnContent();
+        showAnnDefault();
+      } catch (e) { if (window.__silent) window.__silent(e); }
+      if (window.__haptic) window.__haptic();
+    };
     // 默认公告（一级公告）展示：选中"公告"标题，内容渲染到正文区
     function showAnnDefault() {
       var l = DATA.announcements || []; /* v352 修：原读 window.DATA（从未赋值，恒 undefined）→ 点大标题永远静默返回；改用本模块的 DATA */
@@ -2129,6 +2142,9 @@
 
     // ---------- 顶栏：分享本页（点击即复制链接 + 弹窗提示） ----------
     topShareBtn.addEventListener('click', openShare);
+    /* v386：顶栏「公告」键——与管理页「信息」同图标同键规格 */
+    var topAnnBtn = document.getElementById('topAnn');
+    if (topAnnBtn) topAnnBtn.addEventListener('click', function () { if (window.openAnnModal) window.openAnnModal(); });
 
     // R20：客服/分享弹窗全部关闭后，移除顶栏两键的激活白底（与弹窗开合状态同步）
     (function () {
@@ -3088,6 +3104,7 @@ window.closeShare = typeof closeShare !== 'undefined' ? closeShare : window.clos
 window.closeAnnModal = typeof closeAnnModal !== 'undefined' ? closeAnnModal : window.closeAnnModal;
 window.showAnnDefault = typeof showAnnDefault !== 'undefined' ? showAnnDefault : window.showAnnDefault;
 window.loadImg = typeof loadImg !== 'undefined' ? loadImg : window.loadImg;
+window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; } : null; /* v387 H18：搜索联想读取已加载商品 */
 })();
 /* v368 条11：分类栏全员参与滑动——栏内横滑=滚动标签；滚到头继续滑=切上/下一个分类（弹回自然）；二级栏同理 */
 (function () {
@@ -3115,4 +3132,151 @@ window.loadImg = typeof loadImg !== 'undefined' ? loadImg : window.loadImg;
     var sub = document.querySelector('.sub-category-bar'); if (sub) bindBar(sub, function () { return [...document.querySelectorAll('.sub-category-bar .sub-category-tag')]; });
   }
   if (document.readyState !== 'loading') bind(); else document.addEventListener('DOMContentLoaded', bind);
+})();
+/* ==================== v387 高级动效接入（motion.js 消费端） ====================
+   A4 级联 / H4 分格资源码 / H18 搜索联想 / B4 共享元素（卡片头图飞入弹窗）/ C7 抖动
+   ——全部非侵入：监听/委托/镜像同步，不改上方任何既有逻辑 */
+(function () {
+  var M = window.__motion;
+  if (!M) return;
+
+  /* ---- A4 级联入场：商品网格每次渲染子项依次浮起 ---- */
+  function bootCasc() {
+    var g = document.getElementById('productGrid');
+    if (g && !g.__wnCasc) {
+      g.__wnCasc = 1;
+      var mo = new MutationObserver(function () {
+        clearTimeout(g.__wnCascT);
+        g.__wnCascT = setTimeout(function () { M.cascade(document.getElementById('productGrid'), { step: 26, cap: 12 }); }, 60);
+      });
+      mo.observe(g, { childList: true });
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootCasc); else bootCasc();
+
+  /* ---- H4 分格资源码：8 格自动跳格/粘贴整串，值镜像进原 input，下游（自动解锁/草稿）零改动 ---- */
+  (function () {
+    var input = document.getElementById('resourceCodeInput');
+    var row = document.getElementById('resourceCodeInputRow');
+    if (!input || !row || row.__wnOtp) return;
+    row.__wnOtp = 1;
+    var box = document.createElement('div');
+    box.id = 'resourceCodeOtp';
+    input.parentNode.insertBefore(box, input);
+    input.style.display = 'none';
+    M.otp(box, 8);
+    var boxes = box.__otpInputs || [];
+    function pushToInput(src) {
+      var v = (src === 'otp') ? (box.dataset.otpValue || '') : (input.value || '');
+      if (src === 'otp') {
+        if (input.value !== v) {
+          input.value = v;
+          try { input.dispatchEvent(new Event('input', { bubbles: false })); } catch (e) {}
+        }
+      } else if (v && v !== box.dataset.otpValue) {
+        /* 草稿回填等旁路写入原 input → 反向铺进分格 */
+        for (var i = 0; i < boxes.length; i++) boxes[i].value = v[i] || '';
+        box.dataset.otpValue = v;
+        boxes.forEach(function (b) { b.classList.toggle('filled', !!b.value); });
+      }
+    }
+    boxes.forEach(function (b) { b.addEventListener('input', function () { pushToInput('otp'); }); });
+    /* 弹窗开着时低频巡查原 input 旁路写入（草稿回填） */
+    setInterval(function () {
+      var mask = document.getElementById('modalMask');
+      if (mask && mask.classList.contains('open')) pushToInput('input');
+    }, 400);
+    /* C7 抖动：错误行出现 / 错误 toast（含“资源码”）时抖分格行 */
+    var errEl = document.getElementById('resourceCodeError');
+    function doShake() { M.shake(box); }
+    if (errEl) {
+      var eo = new MutationObserver(function () { if (errEl.style.display !== 'none' && errEl.style.display !== '') doShake(); });
+      eo.observe(errEl, { attributes: true, attributeFilter: ['style'] });
+    }
+    document.addEventListener('pointerdown', function () {}, true);
+    var toastMo = new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        Array.prototype.forEach.call(m.addedNodes, function (n) {
+          if (n.nodeType === 1 && n.classList && n.classList.contains('ui-toast') && /资源码/.test(n.textContent || '')) doShake();
+        });
+      });
+    });
+    toastMo.observe(document.body, { childList: true });
+  })();
+
+  /* ---- H18 搜索联想（输入即下拉；数据来自已加载商品，回车原逻辑不变） ---- */
+  (function () {
+    var si = document.getElementById('searchInput');
+    if (!si || si.__wnSugg) return;
+    si.__wnSugg = 1;
+    function getData(kw) {
+      kw = kw.toLowerCase();
+      var out = [];
+      try {
+        var src = window.__shopGetData ? (__shopGetData().products || []) : [];
+        src.forEach(function (p) {
+          var t = p.title || '';
+          if (out.length >= 6) return;
+          if (t.toLowerCase().indexOf(kw) > -1) {
+            var price = window.formatPrice ? formatPrice(p.price) : '';
+            out.push({ label: t, sub: price || (p.desc || '').slice(0, 18) });
+          }
+        });
+      } catch (e) {}
+      return out;
+    }
+    M.suggest(si, getData, function (it) {
+      si.value = it.label;
+      try { si.dispatchEvent(new Event('input', { bubbles: false })); } catch (e) {}
+    });
+    /* 暴露全量商品给联想（渲染处已有 DATA；这里兜底读过滤前集合） */
+    try { Object.defineProperty(window, '__shopAllProducts', { get: function () { return (typeof DATA !== 'undefined' && DATA.products) || []; }, configurable: true }); } catch (e) {}
+  })();
+
+  /* ---- B4 共享元素：卡片封面飞成弹窗头图（多图轮播时飞第一张） ---- */
+  (function () {
+    var lastFrom = null;
+    document.addEventListener('click', function (e) {
+      var card = e.target.closest ? e.target.closest('.product-card, #productList .product-row') : null;
+      if (!card) { lastFrom = null; return; }
+      var img = card.querySelector('img');
+      if (!img) { lastFrom = null; return; }
+      var r = img.getBoundingClientRect();
+      if (r.width < 10) { lastFrom = null; return; }
+      lastFrom = { x: r.left, y: r.top, w: r.width, h: r.height };
+    }, true);
+    var mask = document.getElementById('modalMask');
+    if (!mask || mask.__wnFlip) return;
+    mask.__wnFlip = 1;
+    var mo = new MutationObserver(function () {
+      if (!mask.classList.contains('open') || !lastFrom) return;
+      var from = lastFrom; lastFrom = null;
+      var tries = 0;
+      (function tryFlip() {
+        var cover = document.getElementById('modalCover');
+        var car = document.getElementById('modalCarousel');
+        var target = (cover && cover.style.display !== 'none' && cover.offsetWidth > 20) ? cover
+          : (car && car.style.display !== 'none' ? car.querySelector('img') : null);
+        if (!target && tries++ < 12) { setTimeout(tryFlip, 50); return; }
+        if (!target) return;
+        var tr = target.getBoundingClientRect();
+        if (tr.width < 10) return;
+        var sx = from.w / tr.width, sy = from.h / tr.height;
+        var dx = (from.x + from.w / 2) - (tr.left + tr.width / 2);
+        var dy = (from.y + from.h / 2) - (tr.top + tr.height / 2);
+        if (Math.abs(dx) > window.innerWidth * 2 || !isFinite(dx)) return;
+        target.style.transition = 'none';
+        target.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')';
+        target.style.opacity = '0.6';
+        target.style.zIndex = '3';
+        requestAnimationFrame(function () {
+          target.style.transition = 'transform .36s cubic-bezier(.34,1.2,.64,1), opacity .3s ease';
+          target.style.transform = 'none';
+          target.style.opacity = '';
+          setTimeout(function () { target.style.transition = ''; target.style.zIndex = ''; }, 400);
+        });
+      })();
+    });
+    mo.observe(mask, { attributes: true, attributeFilter: ['class'] });
+  })();
 })();

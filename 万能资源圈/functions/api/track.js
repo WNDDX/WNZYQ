@@ -72,8 +72,8 @@ export async function onRequestPost(context) {
     if (dup) return json({ ok: true, deduped: true });
   } catch (e) { console.error('埋点去重查询失败(降级为记录):', e); }
 
-  await env.DB.prepare('INSERT INTO stats (product_id, type, ip) VALUES (?, ?, ?)')
-    .bind(pid, type, ip)
+  await env.DB.prepare('INSERT INTO stats (product_id, type, ip, region) VALUES (?, ?, ?, ?)')
+    .bind(pid, type, ip, (request.cf && request.cf.region) || '')
     .run();
 
   return json({ ok: true });

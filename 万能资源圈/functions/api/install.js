@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS stats (
   product_id INTEGER NOT NULL,
   type       TEXT NOT NULL,
   ip         TEXT NOT NULL DEFAULT '',
+  region     TEXT NOT NULL DEFAULT '', -- v386：访客省份（CF request.cf.region，如 Zhejiang）
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_stats_product ON stats(product_id);
@@ -192,6 +193,17 @@ export async function onRequestPost(context) {
     try {
       const cols = await env.DB.prepare("PRAGMA table_info(products)").all();
       const colNames = cols.results.map(c => c.name);
+      // v386：stats / resource_bindings 补 region 列（访客省份，CF request.cf.region）
+      try {
+        const sCols = await env.DB.prepare("PRAGMA table_info(stats)").all();
+        if (!(sCols.results || []).some(c => c.name === 'region')) {
+          await env.DB.exec("ALTER TABLE stats ADD COLUMN region TEXT NOT NULL DEFAULT ''");
+        }
+        const bCols = await env.DB.prepare("PRAGMA table_info(resource_bindings)").all();
+        if (!(bCols.results || []).some(c => c.name === 'region')) {
+          await env.DB.exec("ALTER TABLE resource_bindings ADD COLUMN region TEXT NOT NULL DEFAULT ''");
+        }
+      } catch (e2) { /* 忽略迁移错误（调用方按空 region 兜底） */ }
       if (!colNames.includes('cover_images')) {
         await env.DB.exec("ALTER TABLE products ADD COLUMN cover_images TEXT NOT NULL DEFAULT '[]'");
       }

@@ -31,6 +31,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 @keyframes skShimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 </style>
 <link rel="stylesheet" href="/assets/ui-common.css">
+  <script>/* v387 E5：深色模式首帧防闪（localStorage wn_theme，默认跟随系统） */(function(){try{var t=localStorage.getItem("wn_theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+<link rel="stylesheet" href="/assets/motion.css">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <meta name="theme-color" content="#1E88E5">
@@ -84,6 +86,12 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         </div>
         <div class="topbar-right">
           <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
+          <!-- v386：信息键——与资源页「公告」同图标（wn-ico-bell）同组键规格（.tab）；红点=距上次查看有新绑定/咨询 -->
+          <button class="tab info-ct-btn" id="topInfoBtn" title="信息" aria-label="信息">
+            <svg class="wn-ico" width="15" height="15" aria-hidden="true"><use href="#wn-ico-bell"/></svg>
+            <span>信息</span>
+            <i class="dot-badge" id="infoDot" hidden></i>
+          </button>
           <button class="logout-btn" id="logoutBtn">退出</button>
         </div>
       </div>
@@ -370,6 +378,11 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
             <label>设置信息</label>
             <button type="button" class="btn-blue" id="openInfoBtn" style="width:auto;padding:0 24px;">设置信息</button>
           </div>
+          <!-- v387 E5：全站深色模式开关（存 localStorage wn_theme，资源页/导航页跟随同一设置；首次默认跟随系统） -->
+          <div class="setting-row">
+            <label>深色模式（全站统一）</label>
+            <button type="button" class="btn-blue" id="themeToggleBtn" style="width:auto;padding:0 24px;">开启</button>
+          </div>
           <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
@@ -607,6 +620,36 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <div class="modal-footer">
         <button type="button" class="modal-inner-btn" id="infoPvJump" style="display:none;"></button>
         <button type="button" class="modal-close" id="infoPvClose" style="display:none;">关闭</button>
+      </div>
+    </div>
+  </div>
+  <!-- ============ 信息中心弹窗（v386：总统计+三角展开细项列表；红点=距上次有新绑定/咨询） ============ -->
+  <div class="modal-mask" id="infoCtMask">
+    <div class="modal-box">
+      <button aria-label="关闭" class="modal-close-x" data-close="infoCtMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
+      <h2 class="modal-title">信息</h2>
+      <div class="ct-summary" id="ctSummary">
+        <div class="ct-cells">
+          <div class="ct-cell"><b id="ctDBind">0</b><span>新增绑定</span></div>
+          <div class="ct-cell"><b id="ctDContact">0</b><span>咨询点击</span></div>
+          <div class="ct-cell"><b id="ctDUnlock">0</b><span>内容查看</span></div>
+          <div class="ct-cell"><b id="ctDView">0</b><span>资源访问</span></div>
+        </div>
+        <div class="ct-since" id="ctSince"></div>
+      </div>
+      <div class="info-item" id="ctDetailItem">
+        <div class="info-row-bar">
+          <span class="ct-detail-cap">细项动态</span>
+          <button type="button" class="info-fold" id="ctFold" aria-label="展开细项动态" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
+        </div>
+        <div class="info-panel" id="ctDetailPanel">
+          <div class="ct-list" id="ctList"></div>
+        </div>
+      </div>
+      <div class="ct-today" id="ctToday"></div>
+      <div class="modal-footer">
+        <button type="button" class="modal-inner-btn" id="ctGoStats">查看数据统计</button>
+        <button type="button" class="modal-close" id="ctClose">关闭</button>
       </div>
     </div>
   </div>
@@ -988,6 +1031,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <!-- ============ 资源预览弹窗（资源页效果） ============ -->
   
   <script src="/assets/ui-common.js" defer></script>
+  <script src="/assets/motion.js" defer></script>
   <script src="/assets/qrcode.min.js" defer></script><!-- v349：同上，改 defer 不挡首屏 -->
   <script src="/assets/admin-1.js" defer></script>
   <script src="/assets/admin-2.js" defer></script>

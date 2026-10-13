@@ -18,17 +18,10 @@
        --topbar-h 由公共兜底 + JS 实测回写，本页无需再定义）。 */
     /* R265（用户 09-27 15:04）：根因→R259 误删 shop.css 本地 :root 变量块，恢复 v256 原文；暗色变量不恢复（R50 已移至公共块，值一致） */
     /* R49：暗色变量块为死代码（0 处引用），已删，勿再空挂 */
-    @keyframes pageFadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    /* v388 改动2：pageFadeIn 已收归 ui-common.css 唯一源 */
     /* R231 条22：fadeInUp keyframes 抽公共到 ui-common.css（本处删除） */
 
-    .logo-enter { animation: logoFadeIn 0.8s var(--ease-out) forwards; }
-    @keyframes logoFadeIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
-    }
+    /* v388 改动2：logoFadeIn/.logo-enter 已收归 ui-common.css 唯一源 */
     html {
       background: var(--bg-page);
       max-width: 100%; overflow-x: hidden; overflow-y: scroll; /* 阻止移动端整页橡皮筋下拉，避免露出蓝色底，自定义下拉刷新不受影响 */

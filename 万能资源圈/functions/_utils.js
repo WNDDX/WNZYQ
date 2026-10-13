@@ -315,6 +315,7 @@ export async function ensureBindingsTable(env) {
       device_token TEXT NOT NULL,
       ua           TEXT NOT NULL DEFAULT '',
       code         TEXT NOT NULL DEFAULT '',
+      region       TEXT NOT NULL DEFAULT '', -- v386：访客省份（CF request.cf.region）
       created_at   TEXT NOT NULL DEFAULT (datetime('now')),
       last_access  TEXT NOT NULL DEFAULT (datetime('now'))
     )`).run();
