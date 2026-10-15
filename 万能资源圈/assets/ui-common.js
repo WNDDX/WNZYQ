@@ -6,6 +6,8 @@
    把历史上"被悄悄吞掉"的错误留出线索（此前大量 catch (e) { if (window.__silent) window.__silent(e); } 完全无声）。 */
 window.__silent = window.__silent || function (e, tag) {
   try { if (/(?:^|[?&])debug=1/.test(location.search)) console.warn('[silent]' + (tag ? ' ' + tag : ''), e); } catch (x) {} /* 自身不再递归留痕 */
+  /* v394-51：入错误账本（最近 20 条，__errLog 可查） */
+  try { window.__errLog = window.__errLog || []; window.__errLog.push({ t: Date.now(), kind: 'silent', msg: String((e && e.message) || e).slice(0, 300) }); if (window.__errLog.length > 20) window.__errLog.shift(); } catch (x2) {}
 };
 
 /* v346 条8：全站常量兜底——config.js 仅在 shop/index 引入，admin.html 不引 config.js；
@@ -335,6 +337,7 @@ if ('serviceWorker' in navigator) {
       });
     }
     window.__lbGroup = (group && group.list && group.list.length > 1) ? { list: group.list.slice(), idx: Math.max(0, group.list.indexOf(src)) } : null;
+    window.__lbFlipFrom = (group && group.from && group.from.getBoundingClientRect) ? group.from : null; /* v389-6b */
     window.__lbShow = function (s) {
       __lbMask.querySelectorAll('img, video').forEach(function (n) { n.remove(); });
       var isVideo = /\.(mp4|webm|ogv|m3u8)(\?|#|$)/i.test(s) || /video|\.m3u8/i.test(s);
@@ -353,6 +356,28 @@ if ('serviceWorker' in navigator) {
         };
       }
       im.src = s;
+      /* v389-6b：共享元素飞入——从点击的那张图 FLIP 到灯箱大图（全站生效：内容图/轮播图/管理页预览图） */
+      if (window.__lbFlipFrom) {
+        try {
+          var fr = window.__lbFlipFrom.getBoundingClientRect();
+          window.__lbFlipFrom = null;
+          if (fr.width > 10) {
+            requestAnimationFrame(function () {
+              var tr = im.getBoundingClientRect();
+              if (tr.width < 10) return;
+              im.style.transition = 'none';
+              im.style.transform = 'translate(' + (fr.left + fr.width / 2 - tr.left - tr.width / 2) + 'px,' + (fr.top + fr.height / 2 - tr.top - tr.height / 2) + 'px) scale(' + (fr.width / tr.width) + ',' + (fr.height / tr.height) + ')';
+              im.style.opacity = '0.6';
+              requestAnimationFrame(function () {
+                im.style.transition = 'transform .36s cubic-bezier(.34,1.2,.64,1), opacity .3s ease';
+                im.style.transform = 'none';
+                im.style.opacity = '';
+                setTimeout(function () { im.style.transition = ''; }, 420);
+              });
+            });
+          }
+        } catch (eFlip) { if (window.__silent) window.__silent(eFlip); }
+      }
       if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
       im.style.cssText = 'object-fit:contain;border-radius:8px;max-width:92vw;max-height:88vh;transition:transform .05s linear;' + (isVideo ? 'width:min(92vw,1200px);aspect-ratio:16/9;background:#000;' : '');
       __lbMask.appendChild(im);
@@ -466,15 +491,10 @@ if ('serviceWorker' in navigator) {
     }, { duration: 300, stagger: 20, maxStagger: 180 });
     if (!animated && opts.triggerAnim) opts.triggerAnim(container);
   };
-  // ===== 主题策略（方案A定稿 2026-10-09）：全站恒定亮色，不再跟随系统深色 =====
-  // 原 R50/R187 自动深色逻辑已按用户拍板移除（对应暗色 CSS 变量块同步清理）。
-  // 只保留 theme-color 同步：地址栏/状态栏恒为主蓝 #1E88E5，与页面观感一致。
-  window.__applyTheme = function () {
-    document.documentElement.removeAttribute('data-theme');
-    var metas = document.querySelectorAll('meta[name="theme-color"]');
-    for (var k = 0; k < metas.length; k++) metas[k].setAttribute('content', '#1E88E5');
-  };
-  window.__applyTheme();
+  // ===== 主题策略（v394fix-1：v389 起深色纯跟随系统，此处不再强制亮色） =====
+  // 旧「恒定亮色」时代的 __applyTheme 会无条件删 data-theme，把各页 boot（v389-1）
+  // 按系统设好的深色抹掉——系统深色用户打开页面先亮、切一次系统主题才恢复。已整段移除。
+  // 现口径：各页 boot 防闪设深色 + motion.js bindTheme（change 监听 + theme-color 同步）全权负责。
 
   // 公共媒体占位：加载前预留 16:9 高度防止弹窗先小后大；加载完成同一帧用真实宽高比接管（图片已在缓存，无等待撑开感）；失败交给感叹号兜底
   window.mediaStable = function (el, isVideo, keepRatio) {
@@ -1675,11 +1695,12 @@ window.__followSwipe = function (opts) {
       setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 270);
       return;
     }
-    /* v387 S4 边缘揭示（全站统一）：新面板从滑动方向继续弹簧盖入 320ms；
-       旧面板原地停住+压暗+微缩 2%（dim 层挂在旧面板上），盖满后 cleanup+commit */
-    S.pA.style.transition = 'transform .32s cubic-bezier(.3,0,.2,1), filter .3s ease';
-    S.pA.style.transform = 'translateX(' + S.off + 'px) scale(.98)';
-    S.pA.style.filter = 'brightness(.55)';
+    /* v387 S4 → v389-11：旧面板只位移停住，压暗改用纯色 dim 覆盖层（filter:brightness 整面板
+       是「滑切巨卡」的根因，GPU 上 filter 大面积实时计算太贵）；新面板照旧弹簧盖入 */
+    S.pA.style.transition = 'transform .32s cubic-bezier(.3,0,.2,1)';
+    S.pA.style.transform = 'translateX(' + S.off + 'px)';
+    if (!S.dim) { S.dim = document.createElement('div'); S.dim.className = 'wn-s4-dim'; S.stage.appendChild(S.dim); }
+    requestAnimationFrame(function () { if (S && S.dim) S.dim.classList.add('show'); });
     if (S.pB) {
       S.pB.style.transition = 'transform .32s cubic-bezier(.34,1.56,.64,1)';
       S.pB.style.transform = 'translateX(0)';
@@ -1732,7 +1753,7 @@ window.bindLightbox = function (root) {
       ev.stopPropagation();
       /* v358 S3：把同容器内所有图收集成一组——灯箱内左右滑可切本组图/视频 */
       var srcs = Array.prototype.map.call(root.querySelectorAll('img'), function (x2) { return x2.currentSrc || x2.src; });
-      window.openLightbox(im.currentSrc || im.src, { list: srcs });
+      window.openLightbox(im.currentSrc || im.src, { list: srcs, from: im }); /* v389-6：飞图起点 */
     });
   });
   root.querySelectorAll('video').forEach(function (v) {
@@ -1893,7 +1914,9 @@ window.uiToast = (function () {
       btn.textContent = '撤销（' + left + 's）';
     }, 1000);
     function cleanup() {
-      if (done) return; done = true;
+      /* v389-7 修：原首行「if (done) return」在点击撤销（done 先置 true）时把删除整个跳过——
+         撤销条永不消失（老板抓的 bug）。改为幂等式：done 仅作标志，删除/清栈天然可重入 */
+      done = true;
       clearInterval(timer);
       try { if (t.parentNode) t.parentNode.removeChild(t); } catch (e) { if (window.__silent) window.__silent(e); }
       var ix = __undoStack.indexOf(t); if (ix > -1) __undoStack.splice(ix, 1);
@@ -2179,7 +2202,7 @@ window.__kefuQrSrc = function () { return window.__contactQr || ''; };
     try {
       var v = window.IMG_VERSION;
       if (!v) return;
-      v = String(v).replace(/^v/, ''); /* v333 修：config.js 里写成 'v330'，拼接会得到 ?v=v330（与页面写的 ?v=330 不一致，同一个图被缓存成两份、换图不生效）→ 统一按纯数字拼接 */
+      v = String(v).replace(/^v/, ''); /* v333 修：config.js 里写成 'v330'，拼接会得到 ?v=v330（与页面写的  不一致，同一个图被缓存成两份、换图不生效）→ 统一按纯数字拼接 */
       var imgs = document.querySelectorAll('img[src*="/assets/images/"]');
       for (var i = 0; i < imgs.length; i++) {
         var im = imgs[i];
@@ -2285,7 +2308,8 @@ window.__renderCarousel = function (carouselEl, trackEl, dotsEl, fallbackImgEl, 
     img.onerror = function () { img.style.opacity = '1'; img.classList.add('media-fail'); img.src = ph || window.__IMG_PLACEHOLDER || ''; };
     img.addEventListener('click', function () {
       if (trackEl.__ccDragged) { trackEl.__ccDragged = false; return; }
-      if (window.openLightbox) window.openLightbox(url);
+      /* v389-10：带整组图开灯箱（放大后可左右滑切）+ 共享元素飞图起点 */
+      if (window.openLightbox) window.openLightbox(url, { list: images.slice(), from: img });
     });
     slide.appendChild(img);
     img.src = url; /* v333 修：不能用 escapeHtml —— & 会被转义导致带参数的封面图加载失败 */

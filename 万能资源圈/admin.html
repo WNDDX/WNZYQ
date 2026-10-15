@@ -11,11 +11,11 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="万能资源圈">
   <meta property="og:locale" content="zh_CN">
-  <meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
+  <meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="万能资源圈・管理">
   <meta name="twitter:description" content="优质资源聚合平台">
-  <meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
+  <meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
   <meta name="robots" content="noindex,nofollow">
   <!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
 <!-- R228（用户 09-21 19:42）：浏览器对 favicon 有独立硬缓存、刷新先闪旧图标 → 图标内联 data URI，HTML 一解析即在，零请求零缓存依赖 -->
@@ -31,7 +31,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 @keyframes skShimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 </style>
 <link rel="stylesheet" href="/assets/ui-common.css">
-  <script>/* v387 E5：深色模式首帧防闪（localStorage wn_theme，默认跟随系统） */(function(){try{var t=localStorage.getItem("wn_theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+  <script>/* v389-1：深色模式纯跟随设备系统（不再读取/存储手动偏好） */(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
 <link rel="stylesheet" href="/assets/motion.css">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
@@ -39,7 +39,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="万能资源圈">
-  <link rel="preload" href="/assets/images/logo.png?v=330" as="image">
+  <link rel="preload" href="/assets/images/logo.png" as="image">
   <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
   <link rel="preload" href="/assets/ui-common.js" as="script">
   <link rel="preload" href="/assets/admin-1.js" as="script">
@@ -52,7 +52,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
         <div class="login-logo">
-          <img src="/assets/images/logo.png?v=330" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          <img src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
         </div>
       </a>
       <h1>万能资源圈・管理</h1>
@@ -74,15 +74,15 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
-            <img class="topbar-logo" src="/assets/images/logo.png?v=330" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+            <img class="topbar-logo" src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
           </a>
           <span>万能资源圈・管理</span>
         </div>
-        <div class="tabs">
-          <button class="tab active" data-tab="products">资源管理</button>
-          <button class="tab" data-tab="categories">分类管理</button>
-          <button class="tab" data-tab="stats">数据统计</button>
-          <button class="tab" data-tab="settings">平台设置</button>
+        <div class="tabs" role="tablist" aria-label="管理页功能区">
+          <button class="tab active" data-tab="products" role="tab" aria-selected="true"资源管理</button>
+          <button class="tab" data-tab="categories" role="tab" aria-selected="false"分类管理</button>
+          <button class="tab" data-tab="stats" role="tab" aria-selected="false"数据统计</button>
+          <button class="tab" data-tab="settings" role="tab" aria-selected="false"平台设置</button>
         </div>
         <div class="topbar-right">
           <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
@@ -376,17 +376,12 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           <!-- v384：「设置信息」单入口键（与「设置公告」同款）——点击打开弹窗，弹窗内三行（绿/蓝/青键+右缘三角），展开配置二维码+链接，各行独立保存 -->
           <div class="setting-row info-setting-row">
             <label>设置信息</label>
-            <button type="button" class="btn-blue" id="openInfoBtn" style="width:auto;padding:0 24px;">设置信息</button>
-          </div>
-          <!-- v387 E5：全站深色模式开关（存 localStorage wn_theme，资源页/导航页跟随同一设置；首次默认跟随系统） -->
-          <div class="setting-row">
-            <label>深色模式（全站统一）</label>
-            <button type="button" class="btn-blue" id="themeToggleBtn" style="width:auto;padding:0 24px;">开启</button>
+            <button type="button" class="btn-blue" id="openInfoBtn" style="width:auto;padding:0 16px;">设置信息</button>
           </div>
           <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
-            <button type="button" class="btn-blue" id="openAnnBtn" style="width:auto;padding:0 24px;">设置公告</button>
+            <button type="button" class="btn-blue" id="openAnnBtn" style="width:auto;padding:0 16px;">设置公告</button>
             <div class="rte-toolbar rte-collapsed" id="announcementRteToolbar" data-editor="setAnnouncement" style="border-radius:8px 8px 0 0;"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement" title="字体">
             <option value="">字体</option>
@@ -449,7 +444,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         </div>
         <div class="setting-group">
           <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">修改密码</label>
-          <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 24px;">修改密码</button>
+          <button class="btn-blue" id="showPwdFormBtn" style="width:auto;padding:0 16px;">修改密码</button>
         </div>
       </section>
     </main>
@@ -461,9 +456,9 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <h2 class="modal-title">修改密码</h2>
       <div class="form">
         <label>原密码</label>
-        <div style="position:relative;"><input class="input" id="oldPwd" type="password" maxlength="50" style="width:100%;padding-right:44px;" /><button type="button" id="oldPwdEye" onclick="if(typeof toggleModalPwdVisibility==='function')toggleModalPwdVisibility('oldPwd','oldPwdEye');" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg aria-hidden="true" class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button></div>
+        <div style="position:relative;"><input class="input" id="oldPwd" type="password" autocomplete="current-password" maxlength="50" style="width:100%;padding-right:44px;" /><button type="button" id="oldPwdEye" onclick="if(typeof toggleModalPwdVisibility==='function')toggleModalPwdVisibility('oldPwd','oldPwdEye');" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg aria-hidden="true" class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button></div>
         <label>新密码</label>
-        <div style="position:relative;"><input class="input" id="newPwd" type="password" maxlength="50" style="width:100%;padding-right:44px;" /><button type="button" id="newPwdEye" onclick="if(typeof toggleModalPwdVisibility==='function')toggleModalPwdVisibility('newPwd','newPwdEye');" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg aria-hidden="true" class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button></div>
+        <div style="position:relative;"><input class="input" id="newPwd" type="password" autocomplete="new-password" maxlength="50" style="width:100%;padding-right:44px;" /><button type="button" id="newPwdEye" onclick="if(typeof toggleModalPwdVisibility==='function')toggleModalPwdVisibility('newPwd','newPwdEye');" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg aria-hidden="true" class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button></div>
         <label>确认新密码</label>
         <div style="position:relative;"><input class="input" id="confirmPwd" type="password" maxlength="50" style="width:100%;padding-right:44px;" /><button type="button" id="confirmPwdEye" onclick="if(typeof toggleModalPwdVisibility==='function')toggleModalPwdVisibility('confirmPwd','confirmPwdEye');" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;" aria-label="显示密码"><svg aria-hidden="true" class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button></div>
       </div>

@@ -148,7 +148,18 @@
     var mo = new MutationObserver(function (muts) {
       muts.forEach(function (m) {
         Array.prototype.forEach.call(m.addedNodes, function (n) {
-          if (n.nodeType === 1 && n.classList && n.classList.contains('ui-toast')) dressToast(n);
+          if (n.nodeType === 1 && n.classList && n.classList.contains('ui-toast')) {
+            dressToast(n);
+            /* v394-21：错误提示 → 抖最近聚焦过的输入框（全表单统一反馈） */
+            try {
+              if (n.classList.contains('error') && window.__wnLastField) {
+                var f = window.__wnLastField;
+                var g = f.closest('.setting-row,.edit-row,.modal-section,.info-item,.form-row,form') || f;
+                g.classList.remove('wn-shake'); void g.offsetWidth; g.classList.add('wn-shake');
+                setTimeout(function () { g.classList.remove('wn-shake'); }, 500);
+              }
+            } catch (e) {}
+          }
         });
       });
     });
@@ -234,6 +245,9 @@
     for (var i = 0; i < n; i++) {
       var inp = document.createElement('input');
       inp.type = 'text'; inp.maxLength = 1; inp.inputMode = 'text';
+      /* v394-46：资源码=大写字母+数字（含英文），自动大写+关纠正；不设数字键盘 */
+      inp.autocapitalize = 'characters'; inp.autocomplete = 'off'; inp.spellcheck = false;
+      inp.setAttribute('aria-label', '资源码第' + (i + 1) + '位');
       inp.autocomplete = 'off'; inp.setAttribute('aria-label', '资源码第' + (i + 1) + '位');
       container.appendChild(inp); inputs.push(inp);
     }
@@ -248,8 +262,19 @@
         sync();
         if (inp.value && i < n - 1) inputs[i + 1].focus();
       });
+      /* v395-3：聚焦即全选——maxLength=1 下点已填格再打字会被浏览器静默拒绝（错码重输必踩），
+         全选后键入=直接替换（标准 OTP 手感），input 事件照常走上方现有处理，零新增分支 */
+      inp.addEventListener('focus', function () {
+        setTimeout(function () { try { inp.select(); } catch (e) {} }, 0);
+      });
       inp.addEventListener('keydown', function (e) {
-        if (e.key === 'Backspace' && !inp.value && i > 0) { inputs[i - 1].focus(); inputs[i - 1].value = ''; sync(); e.preventDefault(); }
+        if (e.key === 'Backspace' && !inp.value && i > 0) {
+          inputs[i - 1].focus(); inputs[i - 1].value = ''; sync();
+          /* v395-3：退格清格必须补派 input 事件——原路径只改值+sync，镜像 input 与 400ms 巡查
+             都不感知，巡查反把旧值铺回分格（清格被撤销、两侧打架）。补派后走既有 pushToInput('otp') 同步链 */
+          try { inputs[i - 1].dispatchEvent(new Event('input', { bubbles: false })); } catch (e1) {}
+          e.preventDefault();
+        }
         else if (e.key === 'ArrowLeft' && i > 0) inputs[i - 1].focus();
         else if (e.key === 'ArrowRight' && i < n - 1) inputs[i + 1].focus();
       });
@@ -308,6 +333,63 @@
     document.addEventListener('pointerdown', function (e) {
       if (pop && !pop.contains(e.target) && e.target !== inputEl) close();
     }, true);
+  }
+
+  /* ---------- I6 图片模糊渐显（全站所有 <img>）----------
+     机制：①插入/首扫时给未加载完的图打 .wn-lqip（模糊）；
+          ②document 捕获阶段接 load/error——加载完成转清晰，加载失败摘模糊防永久糊；
+          ③已加载完（缓存命中）的图不打标，零开销 */
+  function initLqip() {
+    if (REDUCED || window.__wnLqip) return;
+    window.__wnLqip = 1;
+    var mark = function (img) {
+      if (!img || img.tagName !== 'IMG' || img.__wnLqip) return;
+      img.__wnLqip = 1;
+      /* v394-42：全站图片懒加载 */
+      try {
+        if (!img.complete && !img.getAttribute('loading') && !/^data:/.test(img.getAttribute('src') || '')) {
+          img.loading = 'lazy'; img.decoding = 'async';
+        }
+      } catch (e) {}
+      try { if (img.complete && img.naturalWidth) return; } catch (e) {}
+      img.classList.add('wn-lqip');
+    };
+    document.addEventListener('load', function (e) {
+      var t = e.target;
+      if (t && t.tagName === 'IMG' && t.classList.contains('wn-lqip')) {
+        t.classList.add('wn-lqip-in');
+        setTimeout(function () { t.classList.remove('wn-lqip', 'wn-lqip-in'); }, 450);
+      }
+    }, true);
+    document.addEventListener('error', function (e) {
+      var t = e.target;
+      if (t && t.tagName === 'IMG') t.classList.remove('wn-lqip', 'wn-lqip-in');
+    }, true);
+    var scan = function (root) {
+      if (root.tagName === 'IMG') mark(root);
+      else if (root.querySelectorAll) Array.prototype.forEach.call(root.querySelectorAll('img'), mark);
+    };
+    scan(document);
+    var mo = new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        Array.prototype.forEach.call(m.addedNodes, function (n) {
+          if (n.nodeType === 1) scan(n);
+        });
+      });
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+    /* v391 补：src 换图场景（占位图→真图，loadImg 主流程）——src 一变即重新计模糊 */
+    var smo = new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        var t = m.target;
+        if (!t || t.tagName !== 'IMG') return;
+        t.__wnLqip = 0;
+        try { if (t.complete && t.naturalWidth) return; } catch (e) {}
+        t.classList.remove('wn-lqip-in');
+        t.classList.add('wn-lqip');
+      });
+    });
+    smo.observe(document.documentElement, { attributes: true, attributeFilter: ['src'], subtree: true });
   }
 
   /* ---------- F1 折线图描画（给 #lineSvg 新数据线打 pathLength=1，CSS 负责动画） ---------- */
@@ -369,23 +451,106 @@
     window.__btnSuccess = wrapped;
   }
 
-  /* ---------- E5 深色模式开关（设置面板按钮 + 全站持久化） ---------- */
+  /* ---------- E5 深色模式（v389-1：纯跟随设备系统，无开关无存储；系统切换时全站即时换装） ---------- */
   function bindTheme() {
-    var btn = document.getElementById('themeToggleBtn');
-    function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
-    function label() { if (btn) btn.textContent = isDark() ? '关闭' : '开启'; }
-    label();
-    if (!btn || btn.__wnTheme) return;
-    btn.__wnTheme = 1;
-    btn.addEventListener('click', function () {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    /* v392-3：浏览器地址栏/状态栏主题色跟随深浅色（四页唯一源，motion.js 全页加载） */
+    function syncMeta() {
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', document.documentElement.getAttribute('data-theme') === 'dark' ? '#0d1420' : '#1E88E5');
+    }
+    var apply = function () {
       var root = document.documentElement;
       root.classList.add('wn-theme-anim');
-      if (isDark()) { root.removeAttribute('data-theme'); try { localStorage.setItem('wn_theme', 'light'); } catch (e) {} }
-      else { root.setAttribute('data-theme', 'dark'); try { localStorage.setItem('wn_theme', 'dark'); } catch (e) {} }
+      if (mq.matches) root.setAttribute('data-theme', 'dark');
+      else root.removeAttribute('data-theme');
       setTimeout(function () { root.classList.remove('wn-theme-anim'); }, 420);
-      label();
-    });
+      syncMeta();
+    };
+    if (!mq.__wnTheme) {
+      mq.__wnTheme = 1;
+      if (mq.addEventListener) mq.addEventListener('change', apply);
+      else if (mq.addListener) mq.addListener(apply);
+    }
+    syncMeta();
   }
+
+  /* ---------- v392-4：下拉刷新四页唯一源（手势+胶囊 UI 收归 motion.js） ----------
+     各页只留配置：window.__pullRefresh = { guard?, refresh?(done) }，缺省整页重载。
+     覆盖原 index/error 内联、shop DOM+静默刷新、admin 另一套类名——三套实现归一 */
+  function bindPullRefresh(opts) {
+    if (window.__wnPull) return;
+    window.__wnPull = 1;
+    opts = opts || {};
+    var TH = 60;
+    var tip = document.createElement('div');
+    tip.className = 'pull-refresh';
+    tip.innerHTML = '<span class="prt-text"><span class="prt-icon"></span><span class="prt-label">下拉刷新</span></span>';
+    document.body.appendChild(tip);
+    var sy = 0, sx = 0, pulling = false, dist = 0;
+    function label(t) { var l = tip.querySelector('.prt-label'); if (l) l.textContent = t; }
+    function blocked() {
+      /* v319 口径统一：任一弹窗/灯箱打开时不触发（防滚动穿透） */
+      return document.querySelector('.modal-mask.open, .ann-modal.open, .share-mask.open, .kf-mask.open, .lightbox.open') !== null;
+    }
+    document.addEventListener('touchstart', function (e) {
+      if (opts.guard && opts.guard()) return;
+      if ((window.scrollY || 0) <= 0 && !blocked()) { sy = e.touches[0].clientY; sx = e.touches[0].clientX; pulling = true; dist = 0; }
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (!pulling) return;
+      var dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
+      if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
+        dist = Math.min(dy * 0.5, 80); /* R170：阻尼 0.5，上限 80 */
+        var pill = tip.firstElementChild;
+        pill.style.transition = 'none';
+        pill.style.transform = 'translateY(' + (-48 + dist * 0.6) + 'px)';
+        pill.style.opacity = dist > 0 ? String(Math.min(1, dist / 20)) : '0';
+        label(dist > TH ? '释放立即刷新' : '下拉刷新');
+      }
+    }, { passive: true });
+    document.addEventListener('touchend', function () {
+      if (!pulling) return;
+      pulling = false;
+      var pill = tip.firstElementChild;
+      pill.style.transition = ''; /* R170：恢复 CSS 回弹 */
+      if (dist > TH) {
+        pill.style.transform = 'translateY(0px)';
+        label('正在刷新…');
+        setTimeout(function () {
+          function done() { pill.style.transform = 'translateY(-48px)'; pill.style.opacity = '0'; label('下拉刷新'); }
+          if (typeof opts.refresh === 'function') { try { opts.refresh(done); return; } catch (e) { if (window.__silent) window.__silent(e); } }
+          location.reload();
+        }, 400);
+      } else {
+        pill.style.transform = 'translateY(-48px)'; pill.style.opacity = '0';
+      }
+      dist = 0;
+    }, { passive: true });
+  }
+
+  /* ---------- v394-22：弹窗背景滚动锁（资源页有自带锁，这里兜管理/导航/错误三页） ---------- */
+  function bindGlobalScrollLock() {
+    if (window.__wnLockInit) return; window.__wnLockInit = 1;
+    if (document.querySelector('script[src*="shop.js"]')) return; /* 资源页自带，避免双锁打架 */
+    var n = 0;
+    var apply = function () { document.body.style.overflow = n > 0 ? 'hidden' : ''; };
+    var mo = new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        var t = m.target, open = t.classList && t.classList.contains('open');
+        if (m.oldValue === null && open) n++;
+        else if (m.oldValue !== null && !open && n > 0) n--;
+      });
+      apply();
+    });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'], subtree: true, attributeOldValue: true });
+  }
+
+  /* ---------- v394-51：全局兜底网（漏网失败入账本 __errLog，最近 20 条） ---------- */
+  window.__errLog = window.__errLog || [];
+  window.addEventListener('unhandledrejection', function (e) {
+    try { window.__errLog.push({ t: Date.now(), kind: 'promise', msg: String((e.reason && (e.reason.message || e.reason)) || 'unknown').slice(0, 300) }); if (window.__errLog.length > 20) window.__errLog.shift(); } catch (x) {}
+  });
 
   /* ---------- 启动 ---------- */
   function boot() {
@@ -396,9 +561,17 @@
     try { observeIndic(); } catch (e) {}
     try { wrapBtnSuccess(); } catch (e) {}
     try { bindTheme(); } catch (e) {}
+    try { initLqip(); } catch (e) {}
     document.addEventListener('DOMContentLoaded', function () {
       try { observeLineSvg(); } catch (e) {}
       try { bindTheme(); } catch (e) {}
+      try { initLqip(); } catch (e) {}
+      try { if (window.__pullRefresh && !window.__wnPull) bindPullRefresh(window.__pullRefresh); } catch (e) {} /* v392-4：四页统一下拉刷新 */
+      try { bindGlobalScrollLock(); } catch (e) {} /* v394-22 */
+      document.addEventListener('focusin', function (e) {
+        var t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) window.__wnLastField = t;
+      }, true); /* v394-21 */
     });
   }
 

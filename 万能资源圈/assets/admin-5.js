@@ -589,8 +589,7 @@
       return { text: (pct > 0 ? '↑' : '↓') + Math.abs(pct) + '%', cls: pct > 0 ? 'up' : 'down' };
     }
 
-    // R57：柱状图公共渲染——每列左右两组：本期实色柱 + 上期浅色半透明柱；列顶涨跌箭头（以浏览为主指标），
-    // 悬浮显示本期/上期具体数字。loadStats 与 applyStatsDays 共用，避免两处分叉
+    /* R57 柱状图已退役（v388 核实无渲染调用），原公共渲染注释一并清理（v390-2） */
     // R65：统计卡片渲染（拆成函数，供 loadStats 与「对比上期」开关切换重渲染共用）
     function renderStatCards(ov, ovp) {
       // v302（用户 10-05 00:09）：每日数据去骨架，无需清理
@@ -767,7 +766,7 @@
         state.statsByProduct = res.byProduct || [];
         // 折线图（R58：上期虚线；R65：仅开关开启时显示）
         renderLineChart(trendData, state.statsCmpPrev ? trendPrev : null);
-        // 柱状图（R57：上期浅色对比柱与涨跌箭头；R65：仅开关开启时显示）
+        /* R57 柱状图已退役（v390-2 清理死注释） */
 
 
         // 三个统计表：全量数据（后端仅按 30 天范围过滤，不再截断条数）+ 前端分页（一页 20 条，全系统统一）
@@ -930,7 +929,7 @@
       var cats = (state.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
       var totalItems = (state.products || []).length + cats.length;
       if (totalItems > 500) {
-        try { console.log('[v319] admin 预加载跳过：产品+分类=' + totalItems + ' > 500 安全线'); } catch (e) { if (window.__silent) window.__silent(e); }
+        /* v319：超 500 条安全线跳过预加载（v390-1：调试 console.log 移除） */
         return;
       }
       // 预加载各分类第一页（直接走 api，不动 DOM，避免触发 change 事件）
@@ -1364,11 +1363,13 @@ refreshCatCnts();
           var editBtn = document.createElement('button');
           editBtn.className = 'row-btn';
           editBtn.textContent = '编辑';
+          editBtn.title = '编辑'; /* v395-5：补 title（同资源行口径），纯图标态有名字 */
           if (window.__decorateBtn) window.__decorateBtn(editBtn, 'edit', 1); /* v369 条1：空间不够收成图标 */
           editBtn.addEventListener('click', function () { openCatEdit(c); });
           var delBtn = document.createElement('button');
           delBtn.className = 'row-btn danger';
           delBtn.textContent = '删除';
+          delBtn.title = '删除'; /* v395-5：补 title（同资源行口径），纯图标态有名字 */
           if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v369 条1 */
           delBtn.addEventListener('click', function () {
             /* v330 条26：分类删除同样给 10 秒后悔时间——先本地移除，10 秒后才真提交，撤销=原样还原 */
@@ -1747,7 +1748,7 @@ refreshCatCnts();
       var mo = new MutationObserver(sync);
       var cm = document.getElementById('confirmMask');
       if (cm) mo.observe(cm, { attributes: true, attributeFilter: ['class'] });
-      setInterval(sync, 800); // 兜底轮询：observer 意外失效时也能恢复
+      /* v394-23：兜底轮询已删——observer 精准触发（原 800ms 永续心跳） */
     })();
 
     // ---------- 资源搜索 ----------

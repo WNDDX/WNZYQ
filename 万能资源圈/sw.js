@@ -17,7 +17,7 @@
 // P16+P5：60 天清理统一每天一次——纯代码实现，不碰后台定时配置；跨天首访触发，先检查真有旧数据才删。
 // P15：缓存优先——JS/CSS/图片一律缓存优先+后台更新，文件没变不重复下载。
 // R303（用户 09-30）：P1/P7/P11 翻页按页拉取 + P13 列表 diff 更新 + U3 解锁超时（v288→v289）。
-const CACHE_NAME = 'wnzyq-v388'; /* v388：缓存号升版；v387 动效系统（motion.css/js）入列；v384 前 changelog 已归档至 .workbuddy 对账文档 */
+const CACHE_NAME = 'wnzyq-v399'; /* v395-6：@view-transition opt-in 下沉 motion.css（error 页跳转 aborted 报错+过渡失效根修）；v395-5：admin 行内键补 title×5；v395-4：删 ?pid= pushState（历史双写致 Esc 后地址栏残留、刷新自动弹窗）；v395-3：OTP 分格四项根修；v395-1/2：删永续心跳 + 聚合失败误显空态 */
 // v321 及更早版本改动记录已归档 .workbuddy/交互方案/ 与历次对账文档（本文件只保留运行所需代码）
 
 /* v336 条8：预缓存只留访客必需——admin.js/admin.css/qrcode 改为运行时按需入缓存（普通访客省约 700KB） */

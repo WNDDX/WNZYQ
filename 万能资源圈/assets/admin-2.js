@@ -626,6 +626,7 @@ function renderProducts() {
       var editBtn = document.createElement('button');
       editBtn.className = 'row-btn';
       editBtn.textContent = '编辑';
+      editBtn.title = '编辑'; /* v395-5：补 title——原创建处遗漏，纯图标态（窄屏 ico-only）下既无文字也无 title/aria-label，悬停无提示、读屏念不出（复制/显示键都有，唯独编辑/删除/资源码漏） */
       if (window.__decorateBtn) window.__decorateBtn(editBtn, 'edit', 1); /* v330 条18：编辑优先级最高，空间不够也优先留文字 */
       editBtn.addEventListener('click', function () { openEdit(p); });
       var copyBtn = document.createElement('button');
@@ -637,6 +638,7 @@ function renderProducts() {
       var delBtn = document.createElement('button');
       delBtn.className = 'row-btn danger';
       delBtn.textContent = '删除';
+      delBtn.title = '删除'; /* v395-5：同 editBtn——补 title 供纯图标态悬停/读屏 */
       if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v330 条18：删除优先级最低，先收成纯图标 */
       delBtn.addEventListener('click', function () { delProduct(p.id); });
       // R126（用户定稿 15:21）：资源码改为下拉选项查看框（复用全站 select-picker 下拉组件，
@@ -663,6 +665,7 @@ function renderProducts() {
       cpArrow.className = 'cpd-arrow';
       cpArrow.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>';
       cpDisp.appendChild(cpTxt); cpDisp.appendChild(cpArrow);
+      cpDisp.title = '资源码'; /* v395-5：补 title——收成纯钥匙图标态（v341 条5）时悬停有提示、读屏有名字 */
       var cpPanel = document.createElement('div');
       cpPanel.className = 'cat-picker-panel';
       cpPanel.dataset.pickerId = __cpid; /* R255：挂同一 id——positionCatPanel/文档点击关闭链按 data-picker-id 找到已移入 body 的本面板 */

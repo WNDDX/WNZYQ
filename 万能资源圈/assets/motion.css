@@ -15,7 +15,7 @@
   --dur-fx-big: 0.32s;  /* 强调（滑切提交等） */
   --wn-skel-hi: rgba(255, 255, 255, 0.55);
 }
-html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
+html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop: 0 6px 20px rgba(0,0,0,.55); --shadow-card: 0 2px 10px rgba(0,0,0,.4); --avatar-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 4px 14px rgba(0,0,0,.5);}
 
 /* ===== D1 触感按压（全站可按元素统一手感） ===== */
 /* 规则：只对「非禁用」的按键类元素生效；transform 不碰布局 */
@@ -33,11 +33,11 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
 .wn-ico { transition: transform var(--dur-press) var(--ease-press); }
 
 /* ===== E3 图标微动（hover/active 图标小动作） ===== */
-@media (hover: hover) {
+
   #topAnn:hover .wn-ico, .info-ct-btn:hover .wn-ico { animation: wnRing 0.9s var(--ease-press); }
   .topShareBtn:hover .wn-ico, [title*="分享"]:hover .wn-ico { animation: wnNudge 0.7s var(--ease-press); }
   .row-btn[title*="编辑"]:hover .wn-ico, .row-btn[title*="排序"]:hover .wn-ico { animation: wnTilt 0.7s var(--ease-press); }
-}
+
 @keyframes wnRing { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-12deg)} 40%{transform:rotate(11deg)} 60%{transform:rotate(-7deg)} 80%{transform:rotate(5deg)} }
 @keyframes wnNudge { 0%,100%{transform:none} 45%{transform:translateX(3px)} 70%{transform:translateX(-2px)} }
 @keyframes wnTilt { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-10deg)} }
@@ -61,7 +61,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
   opacity: 0; transition: opacity .18s ease;
 }
 .wn-ctx-dim.show { opacity: 1; }
-.ctx-menu { transform-origin: var(--ctx-origin, left top); }
+.ctx-menu { transform-origin: var(--ctx-origin, left top); z-index: 10042; } /* v389-3：高于抬起的源卡 */
 .ctx-menu.ctx-anim {
   animation: wnCtxPop .3s var(--spring) both;
 }
@@ -72,14 +72,14 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
 }
 /* 菜单源元素（长按的那张卡）：motion.js 加 .wn-ctx-src */
 .wn-ctx-src {
-  transition: transform .16s var(--ease-press), box-shadow .16s var(--ease-press), filter .18s ease;
+  transition: transform var(--dur-fast) var(--ease-press), box-shadow var(--dur-fast) var(--ease-press), filter .18s ease;
   will-change: transform;
 }
-.wn-ctx-src.lift { transform: scale(1.025); box-shadow: 0 16px 34px rgba(10,30,60,.28); z-index: 10041; position: relative; }
+.wn-ctx-src.lift { transform: scale(1.025); box-shadow: 0 16px 34px rgba(10,30,60,.28); z-index: 10040; position: relative; } /* v389-3：低于菜单 10042，不再挡四个选项 */
 .wn-ctx-src.pressed { transform: scale(.975); }
 
 /* ===== D2 成功/失败 toast 图标描画（motion.js 给 .ui-toast 注入） ===== */
-.ui-toast { display: flex; align-items: center; gap: 7px; }
+.ui-toast { display: flex; align-items: center; gap:8px; }
 .ui-toast .wn-tico { flex: none; width: 15px; height: 15px; }
 .ui-toast .wn-tico circle, .ui-toast .wn-tico path {
   fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
@@ -94,7 +94,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
 /* ===== D5 红点弹出/缩没（作用于 .dot-badge 显隐瞬间） ===== */
 .dot-badge { transform-origin: center; }
 .dot-badge.wn-pop-in { animation: wnDotPop .38s var(--spring) both; }
-.dot-badge.wn-pop-out { animation: wnDotOut .2s ease both; }
+.dot-badge.wn-pop-out { animation: wnDotOut var(--dur-mid) ease both; }
 @keyframes wnDotPop { 0% { transform: scale(0); } 60% { transform: scale(1.45); } 100% { transform: scale(1); } }
 @keyframes wnDotOut { to { transform: scale(0); opacity: 0; } }
 
@@ -134,26 +134,19 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
 /* ===== A6 统一转圈（全站唯一规格） ===== */
 .wn-spin {
   display: inline-block; width: 18px; height: 18px; border-radius: 50%;
-  border: 2.5px solid rgba(30,136,229,.22); border-top-color: var(--blue1, #1E88E5);
+  border:2px solid rgba(30,136,229,.22); border-top-color: var(--blue1, #1E88E5);
   animation: wnSpin .8s linear infinite; vertical-align: -4px;
 }
 .wn-spin.white { border-color: rgba(255,255,255,.35); border-top-color: #fff; }
 @keyframes wnSpin { to { transform: rotate(360deg); } }
 
 /* ===== A8 不定进度条（不知道多久的等待） ===== */
-.wn-indet { position: relative; height: 4px; border-radius: 2px; background: rgba(30,136,229,.15); overflow: hidden; }
+.wn-indet { position: relative; height: 4px; border-radius: 2px; background: rgba(30,136,229,.25); overflow: hidden; }
 .wn-indet > i { position: absolute; top: 0; bottom: 0; left: 0; width: 34%; border-radius: 2px; background: var(--blue1, #1E88E5); animation: wnIndet 1.3s var(--ease-press) infinite; }
 @keyframes wnIndet { 0% { left: -34%; } 100% { left: 100%; } }
 
 /* ===== A10 时间线圆点弹出（信息中心细项行 stagger） ===== */
 .ct-row.wn-tl { animation: wnCasc .3s var(--ease-out) both; animation-delay: var(--casc-d, 0s); }
-
-/* ===== H15 语音波形组件（预留；有语音功能处挂 .wn-wave 即用） ===== */
-.wn-wave { display: inline-flex; align-items: center; gap: 3px; height: 26px; }
-.wn-wave i { width: 3.5px; border-radius: 2px; background: var(--blue1, #1E88E5); animation: wnWave 1s ease-in-out infinite; }
-.wn-wave i:nth-child(1) { height: 9px; } .wn-wave i:nth-child(2) { height: 19px; animation-delay: .1s; }
-.wn-wave i:nth-child(3) { height: 26px; animation-delay: .2s; } .wn-wave i:nth-child(4) { height: 15px; animation-delay: .3s; }
-.wn-wave i:nth-child(5) { height: 22px; animation-delay: .4s; }
 @keyframes wnWave { 0%,100% { transform: scaleY(.45); } 50% { transform: scaleY(1.2); } }
 
 /* ===== C5 撤销条弹簧 + 倒计时环（结构由 motion.js 注入；配色=系统白胶囊+蓝） ===== */
@@ -161,7 +154,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
   animation: wnUndoIn .38s var(--spring) both;
 }
 @keyframes wnUndoIn { from { opacity: 0; transform: translateY(-14px) scale(.94); } to { opacity: 1; transform: none; } }
-.ui-toast.wn-undo.leaving { animation: wnUndoOut .22s ease both; }
+.ui-toast.wn-undo.leaving { animation: wnUndoOut var(--dur-mid) ease both; }
 @keyframes wnUndoOut { to { opacity: 0; transform: translateY(-10px) scale(.96); } }
 .ui-toast.wn-undo .undo-btn { position: relative; padding-left: 20px; }
 .ui-toast.wn-undo .undo-btn svg.wn-ring {
@@ -185,17 +178,17 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
 .otp-row input {
   width: 34px; height: 44px; text-align: center; font-size: 18px; font-weight: 700;
   font-variant-numeric: tabular-nums; text-transform: uppercase;
-  border: 1.5px solid var(--border, #d0d0d0); border-radius: 9px; background: var(--card-bg, #fff);
+  border:2px solid var(--border, #d0d0d0); border-radius: 9px; background: var(--card-bg, #fff);
   color: var(--text, #222); padding: 0; outline: none; caret-color: var(--blue1);
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s var(--spring);
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) var(--spring);
 }
-.otp-row input:focus { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,.15); transform: translateY(-1px); }
+.otp-row input:focus { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,.25); transform: translateY(-1px); }
 .otp-row input.filled { border-color: var(--blue2, #64B5F6); }
 
 /* ===== H18 搜索联想下拉 ===== */
 .sugg-pop {
   position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 96000;
-  background: var(--card-bg, #fff); border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card-bg, #fff); border: 1px solid var(--border); border-radius: var(--r-l);
   box-shadow: var(--shadow-pop); overflow: hidden; max-height: 264px; overflow-y: auto;
   overscroll-behavior: contain; animation: wnSuggIn .18s var(--ease-out) both;
 }
@@ -203,7 +196,47 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
 .sugg-pop .sugg-it { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 13.5px; color: var(--text); cursor: pointer; }
 .sugg-pop .sugg-it i { flex: none; width: 16px; height: 16px; border-radius: 5px; background: var(--bg-light); }
 .sugg-pop .sugg-it:hover, .sugg-pop .sugg-it.hot { background: var(--hover-bg, #f0f7ff); }
-.sugg-pop .sugg-cat { padding: 5px 12px 3px; font-size: 11px; color: var(--text-faint); }
+.sugg-pop .sugg-cat { padding: 5px 12px 3px; font-size:12px; color: var(--text-faint); }
+
+/* ===== v394-16/17/18：空态模板 / 下拉浮层 / 公共表格（统一组件底座） ===== */
+.wn-empty { padding: 20px 0; text-align: center; }
+.wn-empty .wn-empty-ico { font-size: 30px; opacity: .5; display: block; margin-bottom: 8px; }
+.wn-empty .wn-empty-t { font-size: 13px; color: var(--text-light, #666); }
+.wn-pop { background: var(--card-bg, #fff); border: 1px solid var(--border, #d0d0d0); border-radius: var(--r-l, 12px); box-shadow: var(--shadow-pop, 0 4px 16px rgba(0,0,0,.14)); }
+.tbl th, .tbl td { padding: 8px 10px; border-bottom: 1px solid var(--border, #d0d0d0); text-align: left; font-size: 13px; }
+.tbl th { color: var(--text-light, #666); font-weight: 600; background: var(--bg-light, #f5f7fa); }
+
+
+/* ===== v394-48：文字选区统一 ===== */
+::selection { background: rgba(30,136,229,.28); color: inherit; }
+html[data-theme="dark"] ::selection { background: rgba(100,181,246,.4); }
+/* ===== v394-37：Logo 入场动画唯一源 ===== */
+@keyframes logoFadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+.logo-enter { animation: logoFadeIn 0.8s var(--ease-out, ease) forwards; }
+
+/* ===== v392-4：下拉刷新胶囊四页唯一源（原 index/error 内联 + shop/admin 各一套类名，已归一） ===== */
+@keyframes wnPullSpin { to { transform: rotate(360deg); } }
+.pull-refresh { position: fixed; top: 80px; left: 0; right: 0; height: 0; overflow: visible; display: flex; align-items: flex-start; justify-content: center; z-index: 998; pointer-events: none; background: transparent; }
+.prt-text { font-size: 12px; line-height: 18px; color: var(--blue1, #1E88E5); background: rgba(255,255,255,.92); border: 1px solid var(--blue2, #64B5F6); border-radius: var(--r-pill); padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-card, 0 1px 4px rgba(0,0,0,.07)); transform: translateY(-48px); opacity: 0; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease; }
+.prt-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2, #64B5F6); border-top-color: var(--blue1, #1E88E5); border-radius: 50%; animation: wnPullSpin 0.6s linear infinite; }
+
+/* ===== v392-2：错误页深色（此前四页唯一没接入深色的页面；走 data-page 作用域防跨页类名冲突） ===== */
+html[data-page="error"][data-theme="dark"] { --card-bg: #16324e; } /* logo 描边环用 --card-bg，随深色换装 */
+html[data-page="error"][data-theme="dark"] body { background: linear-gradient(180deg, #0d1626 0%, #13293f 48%, #1b3a5c 100%); }
+html[data-page="error"][data-theme="dark"] .btn { background: #16324e; color: #9ECAFF; }
+
+/* ===== 深色下拉胶囊（白胶囊在暗底刺眼） ===== */
+html[data-theme="dark"] .prt-text { background: #1b2735; color: #64B5F6; border-color: #2b3a4c; }
+
+/* ===== v391：I6 图片模糊渐显（全站所有 <img>）——插入时模糊占位，加载完成转清晰 ===== */
+img.wn-lqip { filter: blur(10px); }
+img.wn-lqip.wn-lqip-in { filter: blur(0); transition: filter .38s var(--ease-out, ease); }
+
+/* ===== v390-5：数字等宽全站统一（toast/统计卡/信息四格/撤销秒数——跳动不再抖宽） ===== */
+.ui-toast, .stat-card .num, .ct-cell b, .undo-btn, .num { font-variant-numeric: tabular-nums; }
+
+/* ===== v389-7：弹窗顶角关闭叉/分享键恒在封面媒体之上（封面 z1 曾盖住两键） ===== */
+.modal-box .modal-close-x, .modal-box .top-share-btn, .modal-box .share-btn { z-index: 30; }
 
 /* ===== S4 边缘揭示滑切（__followSwipe 提交段使用；dim 层由 JS 挂在旧面板上） ===== */
 .__fs-stage .wn-s4-dim {
@@ -240,7 +273,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
 .tabs-line, .cat-line { transition: none; }
 .tabs-line.wn-settle, .cat-line.wn-settle {
   /* !important：压过 JS 在元素上留的内联 transition（__fsTabLineUpdate/To 写 inline） */
-  transition: left .32s cubic-bezier(.34, 1.56, .64, 1), width .32s cubic-bezier(.34, 1.56, .64, 1), opacity .2s ease !important;
+  transition: left .32s cubic-bezier(.34, 1.56, .64, 1), width .32s cubic-bezier(.34, 1.56, .64, 1), opacity var(--dur-mid) ease !important;
 }
 
 /* ===== F1 折线图描画（motion.js 给数据线打 pathLength=1） ===== */
@@ -255,27 +288,8 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09); }
 }
 @keyframes wnChartDot { from { transform: scale(0); } to { transform: scale(1); } }
 
-/* ===== C2 底部抽屉（手机端弹窗统一改抽屉；桌面不变） ===== */
-@keyframes wnSheetUp { from { transform: translateY(46%); opacity: .55; } to { transform: none; opacity: 1; } }
-@media (max-width: 600px) {
-  .modal-mask { align-items: flex-end !important; justify-content: flex-end !important; padding: 0 !important; }
-  /* 中间包装层（.modal-wrap）若带 margin:auto / align-self:center 会让抽屉悬在半空——一并压平 */
-  .modal-mask .modal-wrap { margin: 0 !important; align-self: flex-end !important; width: 100% !important; }
-  .modal-mask .modal-box {
-    width: 100% !important; max-width: 100% !important;
-    max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain;
-    border-radius: 18px 18px 0 0 !important;
-    margin: 0 !important; position: relative !important; left: auto !important; top: auto !important;
-    animation: wnSheetUp .34s var(--spring) both !important;
-    padding-bottom: calc(16px + var(--safe-b));
-  }
-  /* 抽屉抓手（纯装饰） */
-  .modal-mask .modal-box::before {
-    content: ""; position: sticky; top: 6px; z-index: 6;
-    display: block; width: 38px; height: 4.5px; border-radius: 3px;
-    background: var(--neutral-3, #e4e8ec); margin: 0 auto 6px;
-  }
-}
+/* v389-2：C2 底部抽屉已按老板指令取消（弹窗恢复居中弹式，overscroll contain 保留在上方统一块） */
+
 
 /* ===== E5 深色模式（唯一映射源；其他页禁止再写暗色块） =====
    原则：只覆盖 ui-common.css 既有语义变量 + 个别硬编码白底的定点覆写 */
@@ -313,11 +327,18 @@ html[data-theme="dark"] {
   --blue3: #10304c;
 }
 /* 深色下个别硬编码白底的定点覆写（仅覆盖高流量表面） */
-html[data-theme="dark"] .topbar,
-html[data-theme="dark"] .topbar-right .info-ct-btn { background-color: #14202e; }
+html[data-theme="dark"] .topbar { background-color: #14202e; } /* v394-fix：顶栏深色底保留 */
+html[data-theme="dark"] .topbar-right .info-ct-btn { background: rgba(255,255,255,.14); } /* v394-fix：信息键深色=按键底色（与浅色同逻辑），不再没入顶栏 */
 html[data-theme="dark"] .wn-divider, html[data-theme="dark"] hr { border-color: #2b3a4c; }
 /* 主题切换辉光（View Transition 降级为 fade） */
-html.wn-theme-anim, html.wn-theme-anim * { transition: background-color .28s ease, border-color .28s ease, color .18s ease !important; }
+html.wn-theme-anim, html.wn-theme-anim * { transition: background-color var(--dur-slow,.28s) ease, border-color var(--dur-slow,.28s) ease, color .18s ease !important; }
+
+/* ===== v395-6：跨页跳转过渡 opt-in（与 ui-common.css 同款声明） =====
+   @view-transition 原只写在 ui-common.css——error 页按 v336/v392 精简决策只载 motion.css，
+   造成 error→其它页跳转时对侧已 opt-in、本侧没有，浏览器抛
+   「Transition was aborted... ViewTransition opt-in disabled」且过渡失效。
+   motion.css 四页全载，在此声明即四页全覆盖（与 ui-common 重复声明幂等无害）。 */
+@view-transition { navigation: auto; }
 
 /* ===== 全局降级 ===== */
 @media (prefers-reduced-motion: reduce) {

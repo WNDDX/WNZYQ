@@ -2339,7 +2339,15 @@
 
 /* ---------- v386：管理页「信息」中心（顶栏信息键→总统计+三角细项；红点=距上次有新绑定/咨询） ---------- */
 (function () {
-  var LS_KEY = 'admin_last_seen';
+  /* v394-32：键名统一 wnzyq_ 姓氏（旧键读一次迁移后清除） */
+  var LS_KEY = 'wnzyq_admin_last_seen';
+  function lsGet() {
+    try { var v = localStorage.getItem(LS_KEY); if (v) return v;
+      var oldV = lsGet();
+      if (oldV) { localStorage.setItem(LS_KEY, oldV); localStorage.removeItem('admin_last_seen'); }
+      return oldV;
+    } catch (e) { if (window.__silent) window.__silent(e); return null; }
+  }
   var mask = document.getElementById('infoCtMask');
   if (!mask) return;
   var btn = document.getElementById('topInfoBtn');
@@ -2362,6 +2370,7 @@
   var REGION_CN = { Beijing: '北京', Tianjin: '天津', Hebei: '河北', Shanxi: '山西', 'Inner Mongolia': '内蒙古', Liaoning: '辽宁', Jilin: '吉林', Heilongjiang: '黑龙江', Shanghai: '上海', Jiangsu: '江苏', Zhejiang: '浙江', Anhui: '安徽', Fujian: '福建', Jiangxi: '江西', Shandong: '山东', Henan: '河南', Hubei: '湖北', Hunan: '湖南', Guangdong: '广东', Guangxi: '广西', Hainan: '海南', Chongqing: '重庆', Sichuan: '四川', Guizhou: '贵州', Yunnan: '云南', Tibet: '西藏', Shaanxi: '陕西', Gansu: '甘肃', Qinghai: '青海', Ningxia: '宁夏', Xinjiang: '新疆', 'Hong Kong': '中国香港', Macau: '中国澳门', Taiwan: '中国台湾' };
   var regionLabel = function (r) { return REGION_CN[r] || ''; };
   var WHAT = { view: '浏览资源', contact: '咨询客服', resource_unlock: '查看内容', bind: '资源解锁' };
+  /* v394-29 数字规范：增量>999 用 k 缩写；总量永远全量（统计卡/首页走 countUp 全量） */
   function fmtNum(n) { return n > 999 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n); }
   function render(d) {
     /* v387 A7：四格增量数字滚动（超 1k 仍用 k 缩写直显） */
@@ -2380,7 +2389,7 @@
     document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
     var list = document.getElementById('ctList');
     if (!(d.recent || []).length) {
-      list.innerHTML = '<div class="ann-empty" style="padding:18px 0"><div class="ann-empty-title">该时段暂无新动态</div></div>';
+      list.innerHTML = '<div class="wn-empty"><span class="wn-empty-ico" aria-hidden="true">📭</span><div class="wn-empty-t">该时段暂无新动态</div></div>'; /* v394-16：空态模板（图标+主句） */
       return;
     }
     var html = d.recent.map(function (r, ri) {

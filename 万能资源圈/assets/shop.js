@@ -527,6 +527,8 @@
     function renderAnnouncement() {
       try { var mask = document.getElementById('annModal');
       if (!mask) return;
+      /* v389-9：内容一旦渲染过（__annReady），后续静默刷新不得再回骨架/重开弹窗——骨架只属首次加载期 */
+      if (window.__annReady && mask.classList.contains('open')) return;
       // R256：公告弹窗口径变更——老板 09-26 22:57 拍板：从"没加载好就不弹"改成"先弹骨架窗再填内容"；
       // 加载完发现完全没公告就自动关掉不弹（骨架窗只出现在加载期间）。覆盖 R108 口径。
       var _annSkel = document.getElementById('annSkeleton');
@@ -551,6 +553,7 @@
       }
       // 有数据：清除骨架，显示内容
       if (_annSkel) _annSkel.style.display = 'none';
+      window.__annReady = true; /* v389-9 */
       var mode = DATA.announcementMode || 'always';
       /* v384 修复：mode=off 时任何阶段都必须关弹窗——此前 off 只在 547 行检查，而骨架期先把弹窗
          打开并置 __annShown=true，数据到达后走下方早退分支（该分支不查 off），弹窗被填上内容永不关闭，
@@ -1240,8 +1243,12 @@
           .catch(function () {});
         return;
       }
-      // v294（用户 10-04 02:14）：207 弹窗打开时pushState，后退先关弹窗
-      try { if (!window.location.search.includes('pid=')) history.pushState({modal:true}, '', window.location.pathname + '?pid=' + p.id); } catch (e) { if (window.__silent) window.__silent(e); }
+      // v294：弹窗打开时 pushState，后退先关弹窗。
+      // v395-4 根修：原 1247 行自行 pushState('?pid='+id) 与 __modalKit 的哨兵 push 重复入账——
+      // 历史栈多两条、kit 实账只记一条，Esc 关窗只 back 一次 → 地址栏残留 ?pid=1，
+      // 用户刷新时 checkSharePid 又自动弹窗（实测复现「明明关了，刷新自己弹开」）。
+      // 现整段删除，历史写入收口 __modalKit 唯一源（其哨兵 URL 与当前页一致、关窗如数 back）；
+      // ?pid= 分享直达通道不受影响（ui-common.js:2688 生成的分享链接 + checkSharePid 落地照常）。
       currentProduct = p;
       try { __pushRecent(p.id); } catch (e) { if (window.__silent) window.__silent(e); }
       try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); }
@@ -1836,6 +1843,15 @@
         window.__peekCat(nb.type === 'top' ? nb.id : (nb.type === 'sub' ? nb.parent : 0), nb.type === 'sub' ? nb.id : 0).then(function (list) {
           if (!panelB.isConnected) return;
           list.slice(0, 8).forEach(function (p) { try { panelB.appendChild(window.__buildProductCard(p)); } catch (e) { if (window.__silent) window.__silent(e); } });
+          /* v389-11b：空分类/未加载也即时铺骨架（滑过去不再是一块白板像没切换） */
+          if (!panelB.children.length) {
+            for (var _si = 0; _si < 4; _si++) {
+              var _sc = document.createElement('div');
+              _sc.className = 'card-skeleton';
+              _sc.innerHTML = '<div class="card-body"><div class="sk-img"></div><div class="sk-line w70"></div><div class="sk-line w95"></div></div>';
+              panelB.appendChild(_sc);
+            }
+          }
         });
       },
       onProgress: function (p, dir, nb) {
@@ -1975,8 +1991,17 @@
           // v294（用户 10-04 02:14）：081 输错码统一弹胶囊提示（老板批注：统一用弹胶囊）
           resourceCodeError.style.display = 'none';
           if (window.showToast) window.showToast((res && res.msg) || '资源码错误，请重试', 'error');
+          /* v395-3：红边反馈跟到可见分格——H4 分格接管视觉后，镜像 input 已 display:none，
+             原先只给它加红边用户完全看不见（v294 的红边+胶囊双反馈死了一半）。
+             红边改铺到全部分格（与胶囊提示同窗出现，1.5s 自动清，节奏不变） */
+          var __otpBox = document.getElementById('resourceCodeOtp');
+          var __otpCells = __otpBox ? __otpBox.querySelectorAll('input') : [];
+          Array.prototype.forEach.call(__otpCells, function (b) { b.style.borderColor = '#ff4444'; });
           resourceCodeInput.style.borderColor = '#ff4444';
-          setTimeout(function () { resourceCodeInput.style.borderColor = ''; }, 1500);
+          setTimeout(function () {
+            resourceCodeInput.style.borderColor = '';
+            Array.prototype.forEach.call(__otpCells, function (b) { b.style.borderColor = ''; });
+          }, 1500);
         }
       });
     }
@@ -2170,7 +2195,11 @@
         var _orig = window.openContactModal;
         window.openContactModal = function (a, b, c, d) { var r = _orig.call(this, a, b, c, d); observe(); return r; };
       }
-      setInterval(sync, 800) /* v336 条60：保留兜底但由 observer 触发后自停——见下方清除 */; // 兜底轮询：observer 意外失效时也能恢复
+      /* v395-1 根修：原 setInterval(sync, 800) 号称「observer 失效兜底、触发后自停」，
+         但自停清除从未实现——一颗每 800ms 永续空转的心跳（违背 v394 心跳事件化口径）。
+         根因＝注释承诺的逻辑从未落地。现直接删除轮询：MutationObserver 已覆盖全部开合路径
+         （mask class 变化必触发 sync；客服弹窗动态创建后 openContactModal 包装器会重新 observe），
+         class 属性变化是同步可靠的，无需兜底轮询。 */
     })();
 
     function openShare() {
@@ -2460,8 +2489,12 @@
           renderAll();
           checkSharePid(true);
         }).catch(function () {
+          /* v395-2 根修：网络断开/响应解析失败原本落到这里——只收骨架+renderAll，没有立失败标记，
+             首进无数据时会误显示「该分类暂无资源」（v335 建好的失败态 UI 完整存在却走不到）。
+             现与 __failFinish 同口径：本地没有任何数据可显示时立失败标记走「加载失败+重试」；
+             已有数据（强制刷新失败等场景）则维持原渲染不误报。 */
           if (window.__skelPhase) { window.__skelPhase = false; if (!DATA.products.length) loadFallback(); }
-          renderAll();
+          if (!(DATA.products || []).length) __failFinish(); else renderAll();
           checkSharePid(false);
         });
     }
@@ -2661,7 +2694,7 @@
       var cats = (DATA.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
       var totalItems = (DATA.products || []).length + cats.length;
       if (totalItems > 500) {
-        try { console.log('[v319] 预加载跳过：产品+分类=' + totalItems + ' > 500 安全线'); } catch (e) { if (window.__silent) window.__silent(e); }
+        /* v319：超 500 条安全线跳过预加载（v390-1：调试 console.log 移除） */
         return;
       }
       cats.forEach(function (c) {
@@ -2719,84 +2752,21 @@
     });
     // R292（用户 09-29）：一分钟是唯一同步节点，切回不触发检查
 
-    // ---------- 下拉刷新（手机端页面顶部下拉刷新数据） ----------
-    var pullRefreshEl = document.getElementById('pullRefresh');
-    var topbarEl = document.querySelector('.topbar'); // 提前定义，供下拉刷新使用
-    var pullStartY = 0;
-    var pullStartX = 0;
-    var isPulling = false;
-    var pullDistance = 0;
-    var PULL_THRESHOLD = 60; // 下拉超过60px触发刷新
-    // v319（用户 10-05 22:15）：根因→弹窗内下拉滚动穿透到 body 触发整页下拉刷新；
-    // 修法→下拉刷新前检查所有弹窗类型，任一弹窗打开时不触发。
-    function __anyModalOpen() {
-      return document.querySelector('.modal-mask.open, .ann-modal.open, .share-mask.open, .kf-mask.open, .lightbox.open') !== null;
-    }
-    document.addEventListener('touchstart', function (e) {
-      if (window.__flipAnimating) return; /* R211 二批：FLIP 飞位期间不判定下拉刷新（手势隔离） */
-      if (window.scrollY <= 0 && !__anyModalOpen()) {
-        pullStartY = e.touches[0].clientY;
-        pullStartX = e.touches[0].clientX;
-        isPulling = true;
-        pullDistance = 0;
-        // 下拉开始时隐藏顶部栏，避免蓝色背景重叠遮挡
-        // 顶栏改在 touchmove 确认是下拉动作后才隐藏，避免轻点即隐藏导致点不中 logo/搜索
-      }
-    }, { passive: true });
-    document.addEventListener('touchmove', function (e) {
-      if (!isPulling) return;
-      var deltaY = e.touches[0].clientY - pullStartY;
-      var deltaX = e.touches[0].clientX - pullStartX;
-      // 只响应垂直下拉（垂直位移大于水平位移）
-      if (deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
-        pullDistance = Math.min(deltaY * 0.5, 80); // 阻尼效果，最大80px
-        // 顶栏常驻：下拉刷新不再隐藏顶栏
-        // R170（用户 22:52）：胶囊完整平移跟手（关 transition 防滞后），从 -48px 随手指滑到 0px（=top:80px 位），
-        // 替代原"容器高度裁切展开"——划回时胶囊会从下往上被裁掉（残缺消失），平移永不残缺
-        var pill = pullRefreshEl.firstElementChild;
-        pill.style.transition = 'none';
-        pill.style.transform = 'translateY(' + (-48 + pullDistance * 0.6) + 'px)';
-        pill.style.opacity = pullDistance > 0 ? String(Math.min(1, pullDistance / 20)) : '0';
-        document.getElementById('pullRefreshText').textContent = pullDistance > PULL_THRESHOLD ? '释放立即刷新' : '下拉刷新';
-      }
-    }, { passive: true });
-    document.addEventListener('touchend', function () {
-      if (!isPulling) return;
-      isPulling = false;
-      var pill = pullRefreshEl.firstElementChild;
-      pill.style.transition = ''; // R170：恢复 CSS 回弹动画
-      if (pullDistance > PULL_THRESHOLD) {
-        // 触发刷新
-        pill.style.transform = 'translateY(0px)'; // R170：停在 80px 位显示「正在刷新」
-        document.getElementById('pullRefreshText').textContent = '正在刷新…';
+    // ---------- 下拉刷新 → v392-4 统一：手势与胶囊 UI 收归 motion.js（四页唯一源），本页只留刷新动作 ----------
+    var topbarEl = document.querySelector('.topbar'); // 顶栏自动隐藏（下方滚动段）仍在使用
+    window.__pullRefresh = {
+      guard: function () { return !!window.__flipAnimating; }, /* R211：FLIP 飞位期间不判定下拉（手势隔离） */
+      refresh: function (done) {
         window.__annShown = false; window.__annDismissed = false;
-        // 清除缓存，重新加载数据
         try { localStorage.removeItem('wnzyq_shop_data'); } catch (e) { if (window.__silent) window.__silent(e); }
-        // v312（用户 10-05 15:21）：下拉刷新同时清除内存缓存，确保强制重新拉取
+        /* v312：下拉刷新同时清内存缓存，强制重拉 */
         __pageCache = {}; __pageCacheLoading = {};
-        setTimeout(function () {
-          if (window.location.protocol === 'file:') {
-            loadFallback();
-          } else {
-            // R308：手动下拉刷新 = 绕过缓存强制重拉，走聚合端点
-            loadShopHome({ force: true });
-          }
-          renderAll();
-          pill.style.transform = 'translateY(-48px)'; // R170：完整滑回上方淡出
-          pill.style.opacity = '0';
-          document.getElementById('pullRefreshText').textContent = '下拉刷新'; // R170：文案复位，避免下次下拉闪现「正在刷新」
-          // 刷新结束后显示顶部栏
-          if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
-        }, 400);
-      } else {
-        // 未达到阈值，收回——R170：整体滑回上方淡出（完整收回，不再裁切残缺）
-        pill.style.transform = 'translateY(-48px)';
-        pill.style.opacity = '0';
-        // 收回后显示顶部栏
-        if (topbarEl) { topbarEl.style.transition = ''; topbarEl.classList.remove('hidden'); }
+        if (window.location.protocol === 'file:') loadFallback();
+        else loadShopHome({ force: true }); /* R308：手动下拉=绕缓存走聚合端点 */
+        renderAll();
+        if (done) done();
       }
-      pullDistance = 0;
-    }, { passive: true });
+    };
 
     // ---------- 回到顶部按钮 + 顶栏自动隐藏（向下滑动隐藏，向上滑动显示，停止滑动保持状态） ----------
     var backTopBtn = document.getElementById('backTop');
@@ -3173,19 +3143,28 @@ window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; 
           input.value = v;
           try { input.dispatchEvent(new Event('input', { bubbles: false })); } catch (e) {}
         }
-      } else if (v && v !== box.dataset.otpValue) {
-        /* 草稿回填等旁路写入原 input → 反向铺进分格 */
+      } else if (v !== box.dataset.otpValue) {
+        /* 草稿回填等旁路写入原 input → 反向铺进分格
+           v395-3：原条件 `v &&` 导致空值不同步——弹窗重开时 initResourceCodeSection 把
+           原 input 重置为 ''，分格却残留上次的码（视觉有值、镜像为空），直接点解锁发空码。
+           改为全量比较后，空值也会清铺分格，两侧恒一致 */
         for (var i = 0; i < boxes.length; i++) boxes[i].value = v[i] || '';
         box.dataset.otpValue = v;
         boxes.forEach(function (b) { b.classList.toggle('filled', !!b.value); });
       }
     }
     boxes.forEach(function (b) { b.addEventListener('input', function () { pushToInput('otp'); }); });
-    /* 弹窗开着时低频巡查原 input 旁路写入（草稿回填） */
-    setInterval(function () {
+    /* v394-23：弹窗开才巡查原 input 旁路写入（原 400ms 永续心跳改事件驱动） */
+    (function () {
       var mask = document.getElementById('modalMask');
-      if (mask && mask.classList.contains('open')) pushToInput('input');
-    }, 400);
+      if (!mask) return;
+      var t = null;
+      new MutationObserver(function () {
+        var open = mask.classList.contains('open');
+        if (open && !t) { pushToInput('input'); t = setInterval(function () { pushToInput('input'); }, 400); }
+        else if (!open && t) { clearInterval(t); t = null; }
+      }).observe(mask, { attributes: true, attributeFilter: ['class'] });
+    })();
     /* C7 抖动：错误行出现 / 错误 toast（含“资源码”）时抖分格行 */
     var errEl = document.getElementById('resourceCodeError');
     function doShake() { M.shake(box); }

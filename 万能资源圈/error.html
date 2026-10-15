@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-page="error">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -11,11 +11,11 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="万能资源圈">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
+<meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="万能资源圈・错误">
 <meta name="twitter:description" content="优质资源聚合平台">
-<meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png?v=330">
+<meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
 <meta name="robots" content="noindex,nofollow">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
@@ -26,23 +26,27 @@
 <!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
 <!-- R228（用户 09-21 19:42）：浏览器对 favicon 有独立硬缓存、刷新先闪旧图标 → 图标内联 data URI，HTML 一解析即在，零请求零缓存依赖 -->
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
+<script>/* v392-1：深色模式纯跟随设备系统（四页统一口径，与 index/shop/admin 同款） */(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+<link rel="preload" href="/assets/motion.css" as="style">
+<link rel="preload" href="/assets/motion.js" as="script">
+<link rel="stylesheet" href="/assets/motion.css"> <!-- v392-1：错误页接入全站动效/深色轻量层（41KB，仍不加载 ui-common 170KB，v336 精简决策保留） -->
 <style>/* v336 条43：错误页精简（原引用 ui-common.js/css 已移除）（不再下载 170KB 公共层）
    v350 条7：本页用了 --card-bg/--avatar-shadow/--shadow-pop/--shadow-card 四个变量但本页从未定义（此前不引公共层）→ 整条声明失效，logo 白描边和悬停阴影一直没生效；现补上 */
-:root{--card-bg:#fff;--avatar-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);--shadow-pop:0 4px 16px rgba(0,0,0,0.14);--shadow-card:0 1px 4px rgba(0,0,0,0.07)}
+:root{--r-s:4px;--r-m:8px;--r-l:12px;--r-pill:999px;--ls-head:1.2px;--card-bg:#fff;--avatar-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);--shadow-pop:0 4px 16px rgba(0,0,0,0.14);--shadow-card:0 1px 4px rgba(0,0,0,0.07)}
 body{margin:0;font-family:Microsoft YaHei,sans-serif;background:#f2f7fd;color:#222}
 /* v350 条7：删除此处第一份 .btn（下面 40 行还有一份更全的会整体覆盖它，这份是死代码，改样式容易改错地方） */
-.err-reasons{list-style:none;padding:0;margin:6px 0}.err-reasons li{margin:2px 0}.skip-link{position:absolute;left:-9999px}.skip-link:focus{left:0}/* v349 条6：补全站同款键盘焦点光晕（此前 Tab 键看不出选中在哪） */a:focus-visible,button:focus-visible{outline:3px solid #7fb2e8;outline-offset:2px;border-radius:4px}</style>
+.err-reasons{list-style:none;padding:0;margin:6px 0}.err-reasons li{margin:2px 0}.skip-link{position:absolute;left:-9999px}.skip-link:focus{left:0}/* v349 条6：补全站同款键盘焦点光晕（此前 Tab 键看不出选中在哪） */a:focus-visible,button:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(30,136,229,.25);border-radius:4px} /* v394-1：与全站聚焦圈统一 */</style>
 <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
 <style>
 /* v356 条20：本页不加载公共样式，--blue1/2/3 在此自定义（原注释称由公共层提供是错的，导致后续新增无 fallback 的变量直接失效） */
-:root{--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;}
+:root{--text:#222;--text-light:#666;--text-faint:#767676;--bg-light:#f5f7fa;--border:#d0d0d0;--dur-fast:.1s;--dur-mid:.18s;--dur-slow:.28s;--ease-out:cubic-bezier(.25,1,.5,1);--ease-press:cubic-bezier(.4,0,.2,1);--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;--red-strong:#c62828;--green-strong:#2e7d32;--grad-brand:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%);}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;}
 *,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
-body{background:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 20px var(--page-bottom-gap,24px); /* v293（用户 10-04 02:14）：070顶部留白20→24px→跟导航页统一 *//*R229(用户 09-21 19:44):底部留白全站统一,原20→24*/}
+body{background:var(--grad-brand);min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 20px var(--page-bottom-gap,24px); /* v293（用户 10-04 02:14）：070顶部留白20→24px→跟导航页统一 *//*R229(用户 09-21 19:44):底部留白全站统一,原20→24*/}
 .box{text-align:center;color:#fff;max-width:400px;}
-.code{font-size:36px;font-weight:600;letter-spacing: 1.2px;opacity:0.95;margin:0 0 24px;line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中 */}
+.code{font-size:36px;font-weight:600;letter-spacing:var(--ls-head,1.2px);opacity:0.95;margin:0 0 24px;line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中 */}
 .title{font-size:24px;font-weight:600;margin-bottom:12px;}
-.desc{font-size:15px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
+.desc{font-size:14px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius: 10px; text-decoration:none;font-size:16px; /* v293（用户 10-04 02:14）：017错误页按钮圆角999→10px→跟全站普通按钮统一 */font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow: var(--shadow-pop);} /* R231 条7：放大式并入微亮+浮起 */
 .btn:active{transform:scale(0.94);} /* R231 条7：按下缩下去（全站统一） */
@@ -56,9 +60,7 @@ img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:c
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
 /* R148（用户 01:29）：下拉刷新与全站同步（与 index/shop/admin 同款帘式展开 + 32px 胶囊，逐字对齐 index.html 口径） */
-.pull-refresh{position:fixed;/*R170(用户22:52):位置回到 top:80px——与之前弹窗/toast 同位；胶囊改完整平移（translateY）根治"滑回去中间消失"（旧高度裁切会把胶囊从下往上裁残）*/top:80px;left:0;right:0;height:0;overflow:visible;display:flex;align-items:flex-start;justify-content:center;z-index:998;pointer-events:none;background:transparent;}
-.prt-text{font-size:12px;line-height:18px;color:var(--blue1,#1E88E5);background:rgba(255,255,255,.92);border:1px solid var(--blue2,#64B5F6);border-radius: 999px;padding:6px 16px;display:flex;align-items:center;gap:6px;box-shadow: var(--shadow-card); /* v293（用户 10-04 02:14）：044本地阴影收归5档→0 2px 8px rgba(0,0,0,.1)改var(--shadow-card) */ /*R170:默认藏在 80px 线上方，跟手平移到位*/transform:translateY(-48px);opacity:0;transition:transform .25s ease,opacity .2s ease;}
-.prt-icon{display:inline-block;width:12px;height:12px;border:2px solid var(--blue2,#64B5F6);border-top-color:var(--blue1,#1E88E5);border-radius:50%;animation:btnSpin 0.6s linear infinite;}
+/* v392-4：下拉刷新胶囊 CSS 已收归 motion.css 四页唯一源 */
 /* R285 条48：prtspin 已删——统一走 ui-common.css btnSpin */
 /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
 @media (max-width: 600px) {
@@ -68,10 +70,9 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   /* v350 条8：原同一规则写了两遍（前一份少 margin-bottom），合并为一条 */
   .code { font-size: 26px; padding-left: 2.4px; margin-bottom: 20px; } /* R33：移动端同步对称 */
   .box { max-width: 100%; }
-  .btn { padding: 10px 26px; font-size: 15px; }
+  .btn { padding: 10px 26px; font-size:14px; }
 }
-    .logo-enter{animation:logoFadeIn 0.8s ease forwards;}
-    @keyframes logoFadeIn{from{opacity:0;transform:scale(0.8);}to{opacity:1;transform:scale(1);}}
+    /* v394-37：logoFadeIn 已迁 motion.css 唯一源 */
 </style>
 </head>
 <body><a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -144,7 +145,7 @@ document.addEventListener('error', function (e) {
 (function () {
   var logo = document.getElementById('errLogo');
   if (logo) {
-    logo.src = '/assets/images/logo.png?v=330'; // 绝对路径，加载失败自动显示感叹号占位
+    logo.src = '/assets/images/logo.png'; // 绝对路径，加载失败自动显示感叹号占位
     logo.onerror = function () { // 加载失败显示统一感叹号占位
       var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
       this.onerror = null;
@@ -177,15 +178,8 @@ document.addEventListener('error', function (e) {
     probe(shopBtn, ['/shop', '/万能资源圈/shop']);
   }
 })();
-// 下拉刷新（与其它三页统一，静默刷新，不阻塞操作）
-(function(){
-  var tip=document.createElement('div');tip.className='pull-refresh';
-  tip.innerHTML='<span class="prt-text"><span class="prt-icon"></span><span class="prt-label">下拉刷新</span></span>';document.body.appendChild(tip);
-  var sy=0,sx=0,pulling=false,dist=0,TH=60;
-  document.addEventListener('touchstart',function(e){if((window.scrollY||0)<=0){sy=e.touches[0].clientY;sx=e.touches[0].clientX;pulling=true;dist=0;}},{passive:true});
-  document.addEventListener('touchmove',function(e){if(!pulling)return;var dy=e.touches[0].clientY-sy,dx=e.touches[0].clientX-sx;if(dy>0&&Math.abs(dy)>Math.abs(dx)){dist=Math.min(dy*.5,80);var pill=tip.firstElementChild;pill.style.transition='none';pill.style.transform='translateY('+(-48+dist*0.6)+'px)';pill.style.opacity=dist>0?String(Math.min(1,dist/20)):'0';tip.querySelector('.prt-label').textContent=dist>TH?'释放立即刷新':'下拉刷新';/* R170：胶囊完整平移跟手，不再容器高度裁切 */}},{passive:true});
-  document.addEventListener('touchend',function(){if(!pulling)return;pulling=false;var pill=tip.firstElementChild;pill.style.transition='';if(dist>TH){tip.querySelector('.prt-label').textContent='正在刷新…';pill.style.transform='translateY(0px)';/* R170：停在 80px 位显示正在刷新 */setTimeout(function(){location.reload();},400);}else{pill.style.transform='translateY(-48px)';pill.style.opacity='0';/* R170：取消时完整滑回上方淡出 */}dist=0;},{passive:true});
-})();
+// v392-4：下拉刷新手势与胶囊 UI 收归 motion.js 四页唯一源，本页只留配置（缺省整页重载）
+window.__pullRefresh = {};
 </script>
 <script>
 (function () {
@@ -199,6 +193,7 @@ document.addEventListener('error', function (e) {
 })();
 </script>
 
+<script src="/assets/motion.js" defer></script> <!-- v392-1：深色跟随系统监听/按压/LQIP/统一下拉刷新（四页同款） -->
 <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 </body>
 </html>

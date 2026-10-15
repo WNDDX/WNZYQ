@@ -806,74 +806,31 @@
       document.body.appendChild(backBtn);
     })();
 
-    // ---------- 全页面下拉刷新（与资源页统一，仅手机触摸，顶部下拉，无蓝块） ----------
-    (function () {
-      var tip = document.createElement('div');
-      tip.className = 'pull-refresh';
-      tip.innerHTML = '<span class="pull-refresh-text"><span class="pull-refresh-icon"></span><span class="prt">下拉刷新</span></span>';
-      document.body.appendChild(tip);
-      var sy = 0, sx = 0, pulling = false, dist = 0, TH = 60;
-      function activeTab() { var t = document.querySelector('.tab.active'); return t ? t.dataset.tab : 'products'; }
-      // v319（用户 10-05 22:15）：根因→弹窗内下拉滚动穿透到 body 触发整页下拉刷新；修法→任一弹窗打开时不触发下拉刷新。
-      function __anyModalOpenAdmin() {
-        return document.querySelector('.modal-mask.open, .ann-modal.open, .share-mask.open, .kf-mask.open, .lightbox.open') !== null;
+    // ---------- 下拉刷新 → v392-4 统一：手势与胶囊 UI 收归 motion.js（四页唯一源），本页只留刷新动作 ----------
+    window.__pullRefresh = {
+      refresh: function (done) {
+        var loginVisible = document.getElementById('loginView') && document.getElementById('loginView').style.display !== 'none';
+        if (loginVisible) { /* R20：登录页下拉刷新=整页重载（未登录无数据面板可刷新） */
+          setTimeout(function () { location.reload(); }, 400); return;
+        }
+        try { if (typeof clearCache === 'function') clearCache(); } catch (e) { if (window.__silent) window.__silent(e); }
+        var t = (function () { var x = document.querySelector('.tab.active'); return x ? x.dataset.tab : 'products'; })();
+        /* R289：用户主动下拉刷新——进入页面刷新模式，进度条可见 */
+        if (window.__enterPageEntryMode) window.__enterPageEntryMode();
+        var _rp = [];
+        if (t === 'products' && typeof loadProducts === 'function') _rp.push(loadProducts().catch(function () {}));
+        else if (t === 'stats' && typeof loadStats === 'function') _rp.push(loadStats(undefined, undefined, 1).catch(function () {}));
+        else if (t === 'categories' && typeof loadCategories === 'function') _rp.push(loadCategories().catch(function () {}));
+        else if (t === 'settings' && typeof loadSettings === 'function') _rp.push(loadSettings().catch(function () {}));
+        Promise.all(_rp).then(function () {
+          if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+          if (done) done();
+        }).catch(function () {
+          if (window.__exitPageEntryMode) window.__exitPageEntryMode();
+          if (done) done();
+        });
       }
-      document.addEventListener('touchstart', function (e) {
-        // R20：登录页也允许下拉刷新（原来只在 mainView 可见时启用，登录页拉不动）；未登录时刷新动作走整页 reload
-        // v319：弹窗打开时禁止下拉刷新，防止滚动穿透。
-        if ((window.scrollY || 0) <= 0 && !__anyModalOpenAdmin()) {
-          sy = e.touches[0].clientY; sx = e.touches[0].clientX; pulling = true; dist = 0;
-        }
-      }, { passive: true });
-      document.addEventListener('touchmove', function (e) {
-        if (!pulling) return;
-        var dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
-        if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-          // R170（用户 22:52）：胶囊完整平移跟手（关 transition 防滞后），从 -48px 随手指滑到 0px（=top:80px 位），
-          // 替代原"容器高度裁切展开"——划回时胶囊会从下往上被裁掉（残缺消失），平移永不残缺
-          dist = Math.min(dy * 0.5, 80);
-          var pill = tip.firstElementChild;
-          pill.style.transition = 'none';
-          pill.style.transform = 'translateY(' + (-48 + dist * 0.6) + 'px)';
-          pill.style.opacity = dist > 0 ? String(Math.min(1, dist / 20)) : '0';
-          tip.querySelector('.prt').textContent = dist > TH ? '释放立即刷新' : '下拉刷新';
-        }
-      }, { passive: true });
-      document.addEventListener('touchend', function () {
-        if (!pulling) return; pulling = false;
-        var pill = tip.firstElementChild;
-        pill.style.transition = ''; // R170：恢复 CSS 回弹动画
-        if (dist > TH) {
-          pill.style.transform = 'translateY(0px)'; // R170：停在 80px 位显示「正在刷新」
-          tip.querySelector('.prt').textContent = '正在刷新…';
-          var loginVisible = document.getElementById('loginView') && document.getElementById('loginView').style.display !== 'none';
-          if (loginVisible) { /* R20：登录页下拉刷新=整页重载（未登录无数据面板可刷新） */
-            setTimeout(function () { location.reload(); }, 400);
-            return;
-          }
-          try { if (typeof clearCache === 'function') clearCache(); } catch (e) { if (window.__silent) window.__silent(e); }
-          var t = activeTab();
-          // R289：用户主动下拉刷新——进入页面刷新模式，进度条可见
-          if (window.__enterPageEntryMode) window.__enterPageEntryMode();
-          var _refreshPromises = [];
-          if (t === 'products' && typeof loadProducts === 'function') _refreshPromises.push(loadProducts().catch(function () {}));
-          else if (t === 'stats' && typeof loadStats === 'function') _refreshPromises.push(loadStats(undefined, undefined, 1).catch(function () {}));
-          else if (t === 'categories' && typeof loadCategories === 'function') _refreshPromises.push(loadCategories().catch(function () {}));
-          else if (t === 'settings' && typeof loadSettings === 'function') _refreshPromises.push(loadSettings().catch(function () {}));
-          Promise.all(_refreshPromises).then(function () {
-            if (window.__exitPageEntryMode) window.__exitPageEntryMode();
-          }).catch(function () {
-            if (window.__exitPageEntryMode) window.__exitPageEntryMode();
-          });
-          setTimeout(function () { pill.style.transform = 'translateY(-48px)'; pill.style.opacity = '0'; tip.querySelector('.prt').textContent = '下拉刷新'; }, 400); // R170：完整滑回上方淡出 + 文案复位（避免下次下拉闪现「正在刷新」）
-        } else {
-          // 未达阈值：整体滑回上方淡出——R170：完整收回，不再裁切残缺
-          pill.style.transform = 'translateY(-48px)';
-          pill.style.opacity = '0';
-        }
-        dist = 0;
-      }, { passive: true });
-    })();
+    };
 
     // ---------- Tab 切换 ----------
     document.querySelectorAll('.tab').forEach(function (tab) {
@@ -883,6 +840,8 @@
     });
 
     function switchTab(name) {
+    /* v394-45：同步标签页选中态给读屏 */
+    try { document.querySelectorAll('.tab[data-tab]').forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.tab === name)); }); } catch (e) { if (window.__silent) window.__silent(e); }
       /* v358 S2：离开当前标签页时存滚动位置，进入新标签页恢复（所有状态内容原样回来） */
       try {
         var __cur = document.querySelector('.tab.active');
