@@ -169,10 +169,10 @@ if ('serviceWorker' in navigator) {
     m.id = 'kfMask';
     m.setAttribute('role', 'dialog');
     m.innerHTML =
-      '<div class="kf-box">' +
+        '<div class="kf-box">' +
         '<button class="kf-x" id="kfCloseX" type="button" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
-        '<div class="kf-title">咨询客服</div>' +
-        '<div class="kf-qr"><img id="kfQrImg" alt="客服二维码" /></div>' +
+        '<div class="kf-title" id="kfTitle">咨询客服</div>' +
+        '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
         '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
         '<div class="kf-actions">' +
         '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
@@ -214,9 +214,15 @@ if ('serviceWorker' in navigator) {
       document.head.appendChild(lk);
     } catch (e) { if (window.__silent) window.__silent(e); }
   };
-  window.openContactModal = function (url, qrImg, tip, btnText) {
+  /* v402：全站统一二维码弹窗入口（B3/B7 归一）——index 三键弹窗、admin 设置信息实时预览、shop 客服弹窗共用此函数。
+     opts.title=弹窗标题（默认「咨询客服」）；opts.green=跳转键用品牌绿（咨询客服口径）；
+     qrImg 为空自动走失败占位符（占满方框）。历史行为全保留：preconnect/防旧图闪现/单击放大/点外与 Esc 关闭。 */
+  window.openContactModal = function (url, qrImg, tip, btnText, opts) {
+    opts = opts || {};
     window.__kfPreconnect(url); /* R189：弹窗打开即对目标域名提前建连，用户看二维码期间连接已就绪 */
     ensureKfModal();
+    var _tEl = document.getElementById('kfTitle');
+    if (_tEl) _tEl.textContent = opts.title || '咨询客服';
     var img = document.getElementById('kfQrImg');
     if (img) {
       // R208（用户 09-19 00:23）：客服二维码旧图闪现根治——设置 src 前先隐藏，加载完成后再显示，杜绝首帧残留
@@ -248,6 +254,7 @@ if ('serviceWorker' in navigator) {
     var btn = document.getElementById('kfJumpBtn');
     if (btn) {
       btn.style.display = btnText ? '' : 'none'; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
+      
     }
     var mask = document.getElementById('kfMask');
     if (!mask.classList.contains('open')) {
@@ -1563,7 +1570,7 @@ window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-char
    ①硬排除（输入框/编辑器/视频/灯箱/文件卡/弹层）：始终独占手势；
    ②横条区（分类栏/标签条/最近浏览/表格横滚…）：只有自己真放不下、能横向滚（scrollWidth>clientWidth）时才独占；
      一行放得下时横条滑不动也没必要独占——把滑动还给「整页左右切换分类/标签」，不再出现"滑了没反应"。 */
-window.__swipeHardExclude = 'input, textarea, select, video, .rte-editor, .lightbox, .file-folder-wrap, .cat-picker-panel, .ctx-menu, .dt-pop, .pg-jump, .modal-nav-arrow, .cover-carousel'; /* v381 条3：轮播有自己的跟手拖动，整弹窗滑切此前会抢先触发 __modalGo 重建弹窗，导致轮播永远切不了第二张——硬排除 */
+window.__swipeHardExclude = 'input, textarea, select, video, .rte-editor, .file-folder-wrap, .cat-picker-panel, .ctx-menu, .dt-pop, .pg-jump, .modal-nav-arrow, .cover-carousel'; /* v401 条9：.lightbox 移出硬排除——它把灯箱自己的滑动切图也一并杀死了（灯箱内的 touch 目标 closest 恒命中 .lightbox）。弹窗滑切不会误触：灯箱全屏置顶，事件目标在灯箱子树内不会进弹窗/页面手势的元素判定 */
 window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
   if (!el || !onSwipe) return;
   var sx = 0, sy = 0, on = false;
@@ -1643,7 +1650,7 @@ window.__followSwipe = function (opts) {
     var panel = opts.panel();
     if (!panel || !panel.parentNode) return;
     var r = panel.getBoundingClientRect();
-    if (r.width < 60 || r.height < 40) return;
+    if (r.width < 60 || r.height < 24) return; /* v401 条9：高度门槛 40→24——空分类/无货时网格只剩 24px 高，原门槛直接把滑切掐死（表现=「滑了但不切换」） */
     var nb = opts.neighbor ? opts.neighbor(dir) : null;
     var cs = getComputedStyle(panel);
     var stage = document.createElement('div');
@@ -2296,12 +2303,13 @@ window.__renderCarousel = function (carouselEl, trackEl, dotsEl, fallbackImgEl, 
   var st = carouselEl.__ccState || (carouselEl.__ccState = { idx: 0, len: images.length });
   st.idx = 0; st.len = images.length;
   trackEl.innerHTML = '';
-  images.forEach(function (url) {
+  images.forEach(function (url, i) {
     var slide = document.createElement('div');
     slide.className = 'cc-slide';
     var img = document.createElement('img');
     img.alt = '';
     img.decoding = 'async';
+    if (i === 0) img.className = 'cover-enter'; /* v401 条8：首图与单图封面统一弹簧滑入入场（后续轮播换图走 goToSlide 弹簧） */
     img.style.opacity = '0';
     img.style.cursor = 'zoom-in';
     img.onload = function () { img.style.opacity = '1'; };

@@ -197,7 +197,7 @@
     }
     /* 系统同款蓝色三角（与分类栏展开/收起同一颗） */
     function fcArrowSvg() {
-      return '<svg class="fc-arrow-svg toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" style="flex:none"><path d="M7 10l5 5 5-5z"/></svg>';
+      return '<svg class="fc-arrow-svg toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" style="flex:none"><path d="M7 10l5 5 5-5z"/></svg>';
     }
     /* 系统同款红色 ×（与关闭键同一颗） */
     function fcXSvg() {
@@ -1645,7 +1645,7 @@
         /* v381 条1：行尾注入与分类行完全同款的展开/收起蓝三角 */
         var fold = document.createElement('button');
         fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '展开/收起操作'; fold.setAttribute('aria-label', '展开/收起操作');
-        fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
+        fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
         fold.addEventListener('click', function (e) { e.stopPropagation(); item.classList.toggle('cat-open'); });
         item.appendChild(fold);
         annListEl.appendChild(item);
@@ -1837,57 +1837,28 @@
       if (del) del.style.display = qr ? '' : 'none';   /* ×只在有图时出现 */
       if (add) add.style.display = qr ? 'none' : '';
     }
-    /* v385 条1：实时预览导航页弹窗——标题/提示语/跳转键文案与导航页 showModal 逐字一致（openService/openGroup/openGzh），
-       二维码取「暂存||已保存」（改了没保存也能预览到），跳转链接取输入框当前值||已保存||出厂默认，所见即所得 */
+    /* v385 条1：实时预览导航页弹窗 → v402 条7 归一：直接走 ui-common kf-box 唯一源（openContactModal），
+       与导航页/资源页同一份弹窗；二维码取「暂存||已保存」（改了没保存也能预览到），跳转链接取输入框当前值||已保存||出厂默认，所见即所得 */
     function __infoPreview(k) {
       var c = __infoCfg[k], C = __infoCap(k);
       var meta = {
-        contact: { title: '咨询客服', tip: '长按图片识别-添加人工客服', btn: '跳转-咨询在线客服', green: true },
-        group:   { title: '交流群聊', tip: '长按图片识别-加入交流群聊', btn: '跳转-加入交流群聊', green: false },
-        gzh:     { title: '公众号讯', tip: '长按图片识别-关注公众号讯', btn: '', green: false }
+        contact: { title: '咨询客服', tip: '长按图片识别-添加人工客服', btn: '跳转-咨询在线客服' },
+        group:   { title: '交流群聊', tip: '长按图片识别-加入交流群聊', btn: '跳转-加入交流群聊' },
+        gzh:     { title: '公众号讯', tip: '长按图片识别-关注公众号讯', btn: '' }
       }[k];
-      var mask = document.getElementById('infoPvMask');
-      if (!mask) return;
-      var title = document.getElementById('infoPvTitle');
-      var tip = document.getElementById('infoPvTip');
-      var img = document.getElementById('infoPvImg');
-      var fail = document.getElementById('infoPvFail');
-      var jump = document.getElementById('infoPvJump');
-      var close = document.getElementById('infoPvClose');
-      title.textContent = meta.title;
-      tip.textContent = meta.tip;
       var qr = __infoPending[k] || (window.__infoSettings[c.qrKey] || '');
-      if (qr) {
-        img.onerror = function () { img.style.display = 'none'; fail.style.display = 'flex'; };
-        img.onload = function () { img.style.display = 'block'; fail.style.display = 'none'; };
-        img.src = qr; img.style.display = 'block'; fail.style.display = 'none';
-      } else {
-        img.style.display = 'none'; img.removeAttribute('src'); fail.style.display = 'flex';
-      }
       var jumpUrl = '';
       if (c.urlKey) {
         var inp = document.getElementById('infoUrl' + C);
         jumpUrl = ((inp && inp.value) || '').trim() || (window.__infoSettings[c.urlKey] || '') || c.defUrl;
       }
-      if (jumpUrl && meta.btn) {
-        jump.style.display = 'flex'; close.style.display = 'flex'; close.classList.remove('solo');
-        jump.textContent = meta.btn;
-        jump.onclick = function () { window.open(jumpUrl, '_blank'); };
-        jump.style.backgroundColor = meta.green ? 'var(--brand-green, #00A828)' : '';
-        jump.style.borderColor = meta.green ? 'var(--brand-green, #00A828)' : '';
-      } else {
-        jump.style.display = 'none'; close.style.display = 'flex'; close.classList.add('solo');
+      if (window.openContactModal) {
+        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title });
+        if (window.__haptic) window.__haptic();
       }
-      mask.classList.add('open');
-      if (window.__haptic) window.__haptic();
     }
     (function __infoInit() {
-      var pvMask = document.getElementById('infoPvMask');
-      if (pvMask) {
-        pvMask.addEventListener('click', function (e) { if (e.target === pvMask) pvMask.classList.remove('open'); });
-        var pvClose = document.getElementById('infoPvClose');
-        if (pvClose) pvClose.addEventListener('click', function () { pvMask.classList.remove('open'); });
-      }
+      /* v402 条7：原 infoPvMask 本地预览弹窗的关闭接线/遮罩点击随结构删除（kf-box 唯一源自带） */
       var open = document.getElementById('openInfoBtn');
       if (open) open.addEventListener('click', function () {
         var mk = document.getElementById('infoMask');

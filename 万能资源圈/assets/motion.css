@@ -12,7 +12,7 @@
   --spring-soft: cubic-bezier(.34, 1.3, .64, 1);      /* 轻弹簧 */
   --dur-press: 0.12s;   /* 微反馈 */
   --dur-fx: 0.24s;      /* 常规动效 */
-  --dur-fx-big: 0.32s;  /* 强调（滑切提交等） */
+  --dur-fx-big: 0.32s;  /* 强调档（滑切提交/图标描画/滑入滑出/封面入场）——v404 条5：原 0.34 秒三处已并入本档，强调动效全站统一 0.32 秒 */
   --wn-skel-hi: rgba(255, 255, 255, 0.55);
 }
 html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop: 0 6px 20px rgba(0,0,0,.55); --shadow-card: 0 2px 10px rgba(0,0,0,.4); --avatar-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 4px 14px rgba(0,0,0,.5);}
@@ -83,7 +83,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 .ui-toast .wn-tico { flex: none; width: 15px; height: 15px; }
 .ui-toast .wn-tico circle, .ui-toast .wn-tico path {
   fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
-  stroke-dasharray: 48; stroke-dashoffset: 48; animation: wnDraw .34s var(--ease-out) forwards;
+  stroke-dasharray: 48; stroke-dashoffset: 48; animation: wnDraw .32s var(--ease-out) forwards;
 }
 .ui-toast .wn-tico path { stroke-dasharray: 26; stroke-dashoffset: 26; animation-delay: .12s; }
 .ui-toast .wn-tico.ok circle, .ui-toast .wn-tico.ok path { stroke: var(--green-strong, #2e7d32); }
@@ -124,11 +124,11 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 }
 @keyframes wnShimmer { to { transform: translateX(100%); } }
 /* 骨架→真内容交接：真内容容器加 .wn-reveal 淡入（motion.js 或调用方加） */
-.wn-reveal { animation: wnReveal .34s var(--ease-out) both; }
+.wn-reveal { animation: wnReveal .32s var(--ease-out) both; }
 @keyframes wnReveal { from { opacity: 0; filter: blur(5px); } to { opacity: 1; filter: blur(0); } }
 
 /* ===== A4 级联入场（motion.js 给子项加 .wn-casc + 递增 delay） ===== */
-.wn-casc { animation: wnCasc .34s var(--ease-out) both; animation-delay: var(--casc-d, 0s); }
+.wn-casc { animation: wnCasc .32s var(--ease-out) both; animation-delay: var(--casc-d, 0s); }
 @keyframes wnCasc { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 /* ===== A6 统一转圈（全站唯一规格） ===== */
@@ -174,9 +174,9 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 .wn-cfp { position: fixed; z-index: 100300; pointer-events: none; width: 8px; height: 13px; border-radius: 2px; will-change: transform, opacity; }
 
 /* ===== H4 分格资源码输入（shop 接入用） ===== */
-.otp-row { display: flex; gap: 6px; justify-content: center; direction: ltr; }
+.otp-row { display: flex; gap: 6px; justify-content: center; direction: ltr; flex: 1 1 auto; min-width: 0; align-items: center; /* v401 条1：行占满解锁键左侧全部宽度（原无 flex 收缩靠左），格与键垂直居中 */ }
 .otp-row input {
-  width: 34px; height: 44px; text-align: center; font-size: 18px; font-weight: 700;
+  width: 34px; height: 42px; text-align: center; font-size: 18px; font-weight: 700; /* v401 条1：格高与解锁键一致；v404 条2：对齐后台输入框 42px 标准 */
   font-variant-numeric: tabular-nums; text-transform: uppercase;
   border:2px solid var(--border, #d0d0d0); border-radius: 9px; background: var(--card-bg, #fff);
   color: var(--text, #222); padding: 0; outline: none; caret-color: var(--blue1);
@@ -184,6 +184,11 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 }
 .otp-row input:focus { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,.25); transform: translateY(-1px); }
 .otp-row input.filled { border-color: var(--blue2, #64B5F6); }
+
+/* ===== v401 条8：详情封面统一入场（轮播首图与单图封面同一份：右滑入+弹簧，与轮播切图同曲线同时长） ===== */
+@keyframes coverEnter { from { opacity: 0; transform: translateX(10%); } to { opacity: 1; transform: none; } }
+.cover-enter { animation: coverEnter .32s cubic-bezier(.34,1.3,.64,1) both; }
+@media (prefers-reduced-motion: reduce) { .cover-enter { animation: none; } }
 
 /* ===== H18 搜索联想下拉 ===== */
 .sugg-pop {
@@ -258,12 +263,12 @@ img.wn-lqip.wn-lqip-in { filter: blur(0); transition: filter .38s var(--ease-out
 /* ===== S4 落法（阈值切换面）：新画面从滑动方向弹簧盖入（幅度加大+过冲），替代生硬淡入 ===== */
 @keyframes slNext { from { transform: translateX(72px); opacity: .3; } 62% { transform: translateX(-3px); opacity: 1; } to { transform: none; opacity: 1; } }
 @keyframes slPrev { from { transform: translateX(-72px); opacity: .3; } 62% { transform: translateX(3px); opacity: 1; } to { transform: none; opacity: 1; } }
-.modal-box.sl-next, .product-grid.swap-next, .lightbox .lb-sl-next { animation: slNext .34s cubic-bezier(.3,0,.2,1) both; }
-.modal-box.sl-prev, .product-grid.swap-prev, .lightbox .lb-sl-prev { animation: slPrev .34s cubic-bezier(.3,0,.2,1) both; }
+.modal-box.sl-next, .product-grid.swap-next, .lightbox .lb-sl-next { animation: slNext .32s cubic-bezier(.3,0,.2,1) both; }
+.modal-box.sl-prev, .product-grid.swap-prev, .lightbox .lb-sl-prev { animation: slPrev .32s cubic-bezier(.3,0,.2,1) both; }
 /* variant-detail 需 !important：renderVariantDetail 会内联写 fadeInUp（R231），类规则被内联压制——
    滑入类在场时用 !important 接管，离场时内联 fadeInUp 照常回放 */
-.variant-detail.sl-next { animation: slNext .34s cubic-bezier(.3,0,.2,1) both !important; }
-.variant-detail.sl-prev { animation: slPrev .34s cubic-bezier(.3,0,.2,1) both !important; }
+.variant-detail.sl-next { animation: slNext .32s cubic-bezier(.3,0,.2,1) both !important; }
+.variant-detail.sl-prev { animation: slPrev .32s cubic-bezier(.3,0,.2,1) both !important; }
 
 /* ===== A6 骨架交接：加载完成容器统一由 motion.js 加 .wn-reveal（见上） ===== */
 
@@ -325,6 +330,13 @@ html[data-theme="dark"] {
   --link-blue: #64b5f6;
   --blue-tint: rgba(30, 136, 229, 0.22);
   --blue3: #10304c;
+  /* v404 条6：深浅色配套面令牌（浅色定义在 ui-common :root，深色在此换装） */
+  --tint-blue: #1d3049;      /* 深色下淡蓝强调底→深海蓝 */
+  --img-bg: #16202c;         /* 深色图片底=--bg-light 同档（v394 口径：图片底不再刺眼） */
+  --panel-grad-a: #182636;   /* 资源码面板深色渐变 */
+  --panel-grad-b: #15222e;
+  --empty-text: #9db0c3;     /* 空态次级文字=--text-light 同档 */
+  --brand-cyan: #2eb3b3;     /* 品牌青绿深色提亮一档（原 #008C8C 深底上偏闷） */
 }
 /* 深色下个别硬编码白底的定点覆写（仅覆盖高流量表面） */
 html[data-theme="dark"] .topbar { background-color: #14202e; } /* v394-fix：顶栏深色底保留 */

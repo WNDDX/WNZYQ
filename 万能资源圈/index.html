@@ -32,14 +32,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="万能资源圈">
 <link rel="preload" href="/assets/images/logo.png" as="image">
-<style>.modal-mask{display:none}.modal-mask.open{display:flex} /* v367 条1：遮罩/空态/浮钮先藏——外部样式晚到窗口期不再裸奔（登录页"请输入"弹窗根因） */
+<style>/* v402 条7：原 .modal-mask 预藏规则随本地弹窗删除——三键弹窗统一走 ui-common kf-box 唯一源 */
 /* 变量唯一源：--blue1/2/3、--orange、--green、--red 等全部由 ui-common.css :root 提供，本页禁止再定义 */
 *{
     -webkit-tap-highlight-color: transparent;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
+    font-family: "Microsoft YaHei", system-ui, sans-serif; /* v404 条1：四页字体栈统一（原 system-ui 在前，与资源/管理页两种渲染） */
 }
 *, *::before, *::after { min-width: 0; }
 img, video, svg { max-width: 100%; }
@@ -51,28 +51,15 @@ body{
         radial-gradient(ellipse 55% 38% at 85% 88%, rgba(255,255,255,0.08), transparent 60%),
         linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 48%, var(--blue3) 100%);
     min-height: 100vh;
-    min-height: 100dvh;
-    min-height: 100dvh;
+    min-height: 100dvh; /* v400 条14：原第三行 100dvh 重复，删 */
     display: flex;
     flex-direction: column;
     justify-content: center;
     /* R229（用户 09-21 19:44）：底部留白改引全站统一变量（本页原 24px 即标准源，值不变） */
     padding: 24px 20px var(--page-bottom-gap, 24px); /* v293（用户 10-04 02:14）：009左右空白18→20px→跟错误页统一 */
-    animation: pageFadeIn 0.5s ease; /* R213 P2①（质检 R212）：R53 时代 logo 点击遗留的全页 cursor:pointer 已删，恢复默认箭头 */
+    animation: pageFadeIn var(--dur-slow) var(--ease-out); /* v400 条13：时长/缓动对齐公共链路（原本地 0.5s ease，位移 10px 副本已删走 ui-common 8px 唯一源） */
 }
-@keyframes pageFadeIn{
-    from{opacity:0;transform:translateY(10px);}
-    to{opacity:1;transform:translateY(0);}
-}
-.logo-enter{animation:logoFadeIn 0.8s ease forwards;}
-@keyframes logoFadeIn{
-    from{opacity:0;transform:scale(0.8);}
-    to{opacity:1;transform:scale(1);}
-}
-@keyframes breathe{
-    0%,100%{opacity:0.6;}
-    50%{opacity:1;}
-}
+/* v400 条13：本地 @keyframes pageFadeIn/logoFadeIn/breathe 三份副本已删——pageFadeIn/logoFadeIn 收归 ui-common/motion 唯一源（v388 改动2 收编 shop/admin 时漏了本页）；breathe 本页 0 引用=死代码（admin 的 breathe 是另一款且在用，不受影响） */
 .wrap{
     width: 100%;
     max-width: 520px;
@@ -96,7 +83,7 @@ body{
     /* v333 修：此处原本用 JS 的 // 注释，CSS 遇到 // 会一直丢弃到下一个分号，把下面那行 transition 一起吞掉（logo 按压/悬浮不再有过渡动画）。改成标准 CSS 注释后恢复正常 */
     /* v310（用户 10-05 14:25）：差异→统一口径。A1 logo 边框统一走 var(--card-bg) */
     border: 3px solid var(--card-bg); box-sizing: border-box; box-shadow: var(--avatar-shadow), 0 0 36px rgba(255,255,255,0.16);
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease; /* v400 条9：0.12s 散数改统一快档令牌 */
 }
 .logo-box:hover { box-shadow: 0 0 0 3px rgba(255,255,255,0.45); }
 .logo-box:active { transform: scale(0.94) !important; opacity: 0.8 !important; }  /* R163：!important 压过 logoFadeIn forwards 填充（动画优先级高于普通声明，按压反馈此前被钉死的 scale(1) 遮蔽） */
@@ -144,7 +131,7 @@ body{
     background: none;
     text-align: center;
     letter-spacing: 1px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease, filter var(--dur-fast) ease; /* v400 条9：0.15s 散数改统一快档令牌 */
 }
 /* 四色按钮（v327 用户拍板：导航页特殊页恢复原配色与字号，仅保留光斑背景等新增氛围效果） */
 .btn-orange{background-color: var(--brand-orange);}
@@ -161,99 +148,12 @@ body{
 /* v330 条30：按钮副标题——主标题下的一行浅色小字（信息量上去、视觉不吵；按钮颜色与大小保持原样） */
 .btn-item .btn-txt{ display: flex; flex-direction: column; align-items: flex-start; gap: 6px; } /* v335：主标题与副标题从贴在一起（3px）放宽到 6px，电脑端不再挤成一坨 */
 .btn-item .btn-sub{ font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.18); letter-spacing: 0.5px; line-height: 1.35; } /* v346 条34：副标题加深加粗（原半透明 400 偏淡，白字看不清） */
-.modal-inner-btn{
-    width: 80%; /* R192 用户拍板：门户弹窗按钮宽度保持不动 */
-    margin: 0 auto 14px;
-    border-radius: 10px; /* R192 一③：主按钮圆角对齐全站 10px */
-    height: 46px; /* R285 条1：弹窗底部按钮统一 46px 模子（宽度 80% 是 R192 用户拍板保持不动） */
-    padding: 0 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    border: none;
-    font-size: 16px; /* R285 条1：统一 16px */
-    color: #ffffff;
-    font-weight: 600;
-    letter-spacing: var(--ls-btn);
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-    background-color: #1E88E5; /* v304（用户 10-05 02:21）：仅客服绿，通用弹窗按钮恢复 R145 标准蓝 */
-    letter-spacing: 1px;
-}
+/* v402 条7：.modal-inner-btn 本地副本已删——弹窗按键统一走 ui-common kf-jump/kf-close（kf-box 唯一源） */
 /* v379：.modal-mask/.modal-mask.open/.modal-title/.modal-tip 骨架已上移 ui-common.css 唯一源，本地副本删除 */
-.modal-box { animation: modalIn var(--dur-mid) var(--ease-out); } /* R231 条10：二维码弹窗补入场 */
-.modal-box{
-    background: var(--card-bg);
-    border-radius: 12px; /* v346 条41：与资源页/管理页弹窗圆角统一（原 14px） */
-    padding: 26px 20px;
-    position: relative; max-width: 480px; max-height: 84vh; max-height: 84dvh; /* R285 条3：dvh 可视视口口径（对齐 R159 ①） */ overflow-y: auto; overscroll-behavior: contain; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
-    width: 100%;
-    text-align: center;
-}
-.qrcode-wrap{
-    width: 250px;
-    height: 250px;
-    border: 1px solid var(--border);
-    margin: 0 auto 14px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center; border-radius: 12px; overflow: hidden; /* R42：二维码容器圆角（v356 条15：值修正为 12px 与注释一致） */
-    background: var(--bg-light);
-}
-.modal-qrcode{
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain; border-radius: 8px; /* R42：二维码图圆角 */
-}
-img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;}
-/* 弹窗内占位符统一：16:9 自适应区域、左右对称、不撑破弹窗、不裁切 */
-.modal-box img[src^="data:image/svg+xml"] { height: auto !important; aspect-ratio: 16 / 9; min-height: 120px; max-width: 100%; margin: 8px auto; }
-/* R21：弹窗内视频固定 16:9 占位，加载前后尺寸一致，弹窗不跳动（与资源页/管理页统一） */
-.modal-box video { width: 100% !important; max-width: 100% !important; aspect-ratio: 16 / 9 !important; height: auto !important; object-fit: contain; background: #000; display: block; border-radius: 8px; }
-.qrcode-fail-icon{
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-faint);
-}
-.modal-close{
-    background-color: #ff4444;
-    color: #fff;
-    border: none;
-    height: 46px; /* R285 条1：弹窗底部按钮统一 46px 模子 */
-    padding: 0 32px;
-    border-radius: 10px; /* R192 一③④：危险红钮对齐全站 10px/16px */
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: 600;
-    letter-spacing: var(--ls-btn);
-    user-select: none;
-    -webkit-user-select: none;
-}
-/*按钮交互统一样式：按压效果复用 ui-common.css 全站统一弹窗按键规则（变暗+降透明、不缩放、字重恒定）*/
-/* v340 条2：门户弹窗底部按键统一规格——跳转键与关闭键同宽同高（此前一颗 80% 一颗自适应，
-   造成「同一套弹窗按键大小不一样」）。 */
-.modal-footer { display: flex; gap: 10px; align-items: center; justify-content: center; } /* v356 条17：间距对齐 var(--gap)=10px */
-.modal-footer .modal-inner-btn, .modal-footer .modal-close {
-  /* v340 条2：关闭键尺寸恒定——有跳转键时并排各占一半，没有时（公众号讯）保持同宽居中，
-     三个弹窗「同一套按钮、只差一颗跳转键」 */
-  flex: 1 1 0; max-width: calc(50% - 7px); min-width: 0; width: auto; margin: 0; height: 46px; padding: 0 12px;
-  display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 10px;
-}
-.modal-footer .modal-close { background: var(--danger-bg); color: var(--red-strong); border: 1px solid var(--danger-border-strong); }
-.modal-footer .modal-close:hover { background: var(--red-strong); color: #fff; border-color: var(--red-strong); }
-/* v340 条1：公众号讯弹窗只有一颗关闭键时，宽度恢复原样（不跟着减半） */
-.modal-footer { position: relative; }
-.modal-footer .modal-close:only-child { max-width: 100%; flex: 1 1 100%; }
-.modal-footer .modal-close.solo { max-width: 100%; flex: 1 1 100%; } /* v350 条3：真正的单键判定（跳转键 display:none 仍占名额，:only-child 永远不成立） */
-.btn-item,.modal-inner-btn,.modal-close{
-    -webkit-tap-highlight-color: transparent;
-}
+/* v402 条7：本页 .modal-box/.qrcode-wrap/.modal-qrcode/占位符/.qrcode-fail-icon/.modal-close/.modal-footer 等
+   本地弹窗样式整体删除（弹窗结构与样式统一走 ui-common kf-box 唯一源；空图占位符占满方框由 kf-qr 自带规则实现） */
+img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;} /* 全局兜底占位（logo 加载失败等）保留 */
+.btn-item{
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
 /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */
@@ -314,7 +214,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         <svg class="icon-svg" viewBox="0 0 24 24" fill="white" aria-hidden="true">
             <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
         </svg>
-        <span class="btn-txt">获取资源<span class="btn-sub" id="subRes">优质资源聚合平台</span></span>
+        <span class="btn-txt">获取资源<span class="btn-sub" id="subRes"></span></span><!-- v400 条11：HTML 初始文案清空（v387 只做了 JS 侧），网慢时不再闪现「优质资源聚合平台」；SEO 描述保留在 og/twitter meta -->
     </button>
 
     <button class="btn-item btn-green" onclick="openService()">
@@ -344,24 +244,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 </div>
 
-<div class="modal-mask" id="mask" onclick="closeModal()">
-    <div class="modal-box" onclick="event.stopPropagation()">
-        <button aria-label="关闭" class="modal-close-x" type="button" onclick="closeModal()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>        <div class="modal-title" id="modalTitle"></div>
-        <div class="qrcode-wrap">
-            <img class="modal-qrcode qph" id="modalImg" alt="二维码" decoding="async">
-            <div class="qrcode-fail-icon" id="qrFail">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                </svg>
-            </div>
-        </div>
-        <div class="modal-tip" id="modalTip"></div>
-        <div class="modal-footer">
-          <button class="modal-inner-btn" id="modalJumpBtn" style="display:none;"></button>
-          <button class="modal-close" id="modalCloseBtn" style="display:none;" onclick="closeModal()">关闭</button>
-        </div>
-    </div>
-</div>
+<!-- v402 条7：本页三键弹窗（咨询客服/交流群聊/公众号讯）已并入 ui-common kf-box 唯一源（openContactModal 三页共用），本地弹窗结构/样式/JS 整体删除 -->
+
 
 <script>
 const CONFIG = {
@@ -381,31 +265,22 @@ const CONFIG = {
     retryDelay: 1000
 };
 const dom = {
-    mask: document.getElementById('mask'),
-    modalTitle: document.getElementById('modalTitle'),
-    modalImg: document.getElementById('modalImg'),
-    modalTip: document.getElementById('modalTip'),
-    qrFail: document.getElementById('qrFail'),
     logoImage: document.getElementById('logoImage'),
-    logoFail: document.getElementById('logoFail'),
-    modalJumpBtn: document.getElementById('modalJumpBtn'),
-    modalCloseBtn: document.getElementById('modalCloseBtn')
-};
+    logoFail: document.getElementById('logoFail')
+}; /* v402 条7：弹窗相关引用随本地弹窗删除（kf-box 唯一源自带全套 dom） */
 
 // 全站统一：图片加载失败显示感叹号占位（与资源页/管理页/错误页一致）
 var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
 /**图片重试加载 */
 function loadImg(imgDom, src, retryCount = 0) {
     // 同一地址已加载完成：直接显示，避免 opacity 卡 0
-    if (imgDom.getAttribute('src') === src && imgDom.complete && imgDom.naturalWidth) { imgDom.style.display = 'block'; imgDom.style.opacity = '1'; if (imgDom === dom.modalImg) { imgDom.classList.remove('kf-qr-in'); void imgDom.offsetWidth; imgDom.classList.add('kf-qr-in'); } return; }
+    if (imgDom.getAttribute('src') === src && imgDom.complete && imgDom.naturalWidth) { imgDom.style.display = 'block'; imgDom.style.opacity = '1'; return; } /* v402：kf-qr-in 分支随本地弹窗删除 */
     imgDom.onload = imgDom.onerror = null;
     imgDom.style.opacity = '0'; // 加载完成前完全隐藏，杜绝破损图标/空白闪现
     imgDom.onload = () => {
         imgDom.style.display = 'block';
         imgDom.style.opacity = '1';
-        // 二维码统一出场动画（与客服二维码 kfQrIn 一致）：每次加载完成重放
-        if (imgDom === dom.modalImg) { imgDom.classList.remove('kf-qr-in'); void imgDom.offsetWidth; imgDom.classList.add('kf-qr-in'); }
-        if (imgDom === dom.logoImage) { dom.logoFail.style.display = 'none'; var p = imgDom.parentNode; if (p) { p.style.background = '#e2e5e9'; p.style.opacity = '1'; if (!p.classList.contains('logo-enter')) p.classList.add('logo-enter'); } } else { dom.qrFail.style.display = 'none'; }
+        if (imgDom === dom.logoImage) { dom.logoFail.style.display = 'none'; var p = imgDom.parentNode; if (p) { p.style.background = '#e2e5e9'; p.style.opacity = '1'; if (!p.classList.contains('logo-enter')) p.classList.add('logo-enter'); } } /* v402：modalImg/qrFail 分支随本地弹窗删除 */
     };
     imgDom.onerror = () => {
         const nextCount = retryCount + 1;
@@ -418,8 +293,7 @@ function loadImg(imgDom, src, retryCount = 0) {
             imgDom.style.objectFit = 'contain';
             imgDom.style.display = 'block';
             imgDom.style.opacity = '1';
-            if (imgDom === dom.modalImg) { imgDom.classList.remove('kf-qr-in'); void imgDom.offsetWidth; imgDom.classList.add('kf-qr-in'); }
-            var _pp = imgDom.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
+            var _pp = imgDom.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); } /* v402：modalImg 分支随本地弹窗删除 */
         }
     };
     imgDom.src = src;
@@ -464,80 +338,18 @@ document.querySelectorAll('img').forEach(function (im) {
 });
 
 /**弹窗打开 */
+/* v402 条7：三键弹窗已并入 ui-common kf-box（openContactModal 三页唯一源），本页本地弹窗实现整体删除 */
 function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
-    if (window.__kfPreconnect && jumpUrl) window.__kfPreconnect(jumpUrl); /* R189：打开弹窗即对跳转域提前建连（客服/群聊通用） */
-    dom.modalTitle.textContent = title;
-    dom.modalTip.textContent = tipText;
-    /* R231 条10：inline display 移除，显示由 .modal-mask.open 统一接管 */
-    dom.mask.classList.add('open'); // R114：同步 .open class 供 __modalKit 维护弹窗栈（Esc 逐层路由）
-    if (window.lockBodyScroll) window.lockBodyScroll(true);
-    dom.modalImg.style.display = 'block';
-    dom.qrFail.style.display = 'none';
-    /* v383：二维码未配置（后台没传图）不再空转重试 3 秒，直接显示占位+提示 */
-    if (imgSrc) { loadImg(dom.modalImg, imgSrc, 0); }
-    else {
-      dom.modalImg.onerror = null;
-      dom.modalImg.src = EXC_PH; if (dom.modalImg.classList) dom.modalImg.classList.add('media-fail');
-      dom.modalImg.style.objectFit = 'contain';
-      dom.modalImg.style.opacity = '1';
-      /* v385 条4：括号说明「（管理员还未设置二维码）」按老板要求删除——占位图即示意，不再加文案 */
-    }
-
-    if(jumpUrl && btnText){
-        dom.modalJumpBtn.style.display = 'flex';
-        dom.modalJumpBtn.textContent = btnText;
-        dom.modalJumpBtn.onclick = ()=>window.open(jumpUrl,"_blank");
-        dom.modalCloseBtn.style.display = 'flex';
-        dom.modalCloseBtn.classList.remove('solo');
-    }else{
-        dom.modalJumpBtn.style.display = 'none';
-        dom.modalCloseBtn.style.display = 'flex';
-        /* v350 条3：只有一颗关闭键时挂 solo（原 :only-child 判定永远不成立——
-           跳转键只是 display:none 仍占着名额，公众号讯弹窗的关闭键因此一直卡在半宽） */
-        dom.modalCloseBtn.classList.add('solo');
-    }
+    /* 与资源页/管理页同一份弹窗（ui-common.js openContactModal）：标题可配、空图占位符占满方框、
+       preconnect/防旧图闪现/点外与 Esc 关闭/弹窗栈注册全在唯一源内 */
+    window.openContactModal(jumpUrl || '', imgSrc || '', tipText, btnText, { title: title });
 }
-function closeModal() {
-    /* R231 条10：同上，隐藏由 .open 摘除 + 全站关场收缩接管 */
-    dom.mask.classList.remove('open'); // R114：与打开侧同步摘除
-    dom.modalJumpBtn.style.display = 'none';
-    dom.modalJumpBtn.style.backgroundColor = ''; /* v340 条4：跳转键统一主蓝，不再有绿色特例 */
-    if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
-    dom.modalJumpBtn.onclick = null;
-    dom.modalCloseBtn.style.display = 'none';
-}
-
-// R45：弹窗二维码单击放大（复用全站灯箱：右上角×/点遮罩关/双指缩放/ESC；真实 <img> 放大后长按识别二维码仍可用；失败占位符不放大）
-dom.modalImg.style.cursor = 'zoom-in';
-dom.modalImg.addEventListener('click', function () {
-    var s = dom.modalImg.currentSrc || dom.modalImg.src;
-    if (s && !s.startsWith('data:') && dom.modalImg.complete && dom.modalImg.naturalWidth && window.openLightbox) {
-        window.openLightbox(s);
-    }
-});
-
-// R114：本弹窗注册进 __modalKit 统一弹窗栈（三模式：纯展示弹窗，关闭即丢弃，无草稿可暂存）；
-// Esc 由 kit 逐层路由只关最上层——开着灯箱（二维码放大）时按 Esc 不再把底下弹窗一起关掉。
-// 本内联脚本先于 ui-common.js 执行，此时 kit 可能尚未定义，用短轮询等它就绪后注册（register 幂等）。
-(function () {
-  var tryReg = function () {
-    if (window.__modalKit && dom.mask) { window.__modalKit.register(dom.mask, { discard: closeModal, stash: closeModal }); return true; }
-    return false;
-  };
-  if (!tryReg()) {
-    var n = 0;
-    var t = setInterval(function () {
-      if (tryReg() || ++n > 40) clearInterval(t); // 最多重试 2 秒
-    }, 50);
-  }
-})();
-
 
 // PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34）
 
 //页面按钮事件
 function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
-function openService() { /* v340 条2：与其他两个按钮（群聊/公众号）统一走同一个弹窗组件 */ showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); /* v340 条1 + v350 条6：跳转键颜色=导航页「咨询客服」那颗绿，改走手册变量（原写死 #01C000，与按钮的 #00A828 同屏两种绿） */ try { var _j = document.getElementById("modalJumpBtn"); if (_j) { _j.style.backgroundColor = "var(--brand-green, #00A828)"; _j.style.borderColor = "var(--brand-green, #00A828)"; _j.style.color = "#fff"; } } catch (e) {} }
+function openService() { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); } /* v402：跳转键颜色走 kf-jump 全站唯一绿（原内联 #00A828 特例删除） */
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 // v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮

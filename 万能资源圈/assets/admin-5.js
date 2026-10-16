@@ -1427,7 +1427,7 @@ refreshCatCnts();
             if (row.querySelector('.cat-fold') || row.querySelector('.cat-check') === null) return;
             var fold = document.createElement('button');
             fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '展开/收起操作'; fold.setAttribute('aria-label', '展开/收起操作');
-            fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
+            fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
             fold.addEventListener('click', function (e) { e.stopPropagation(); row.classList.toggle('cat-open'); });
             row.appendChild(fold);
           });
@@ -1940,7 +1940,7 @@ refreshCatCnts();
       contentEl.innerHTML = '';
       inputEl.value = '';
       if (hasCode) {
-        titleEl.textContent = '输入资源码获取专属内容';
+        titleEl.textContent = '获取专属内容'; /* v400 条12：与资源页统一同一句（原「输入资源码获取专属内容」两种说法，输入框+placeholder 已自明动作） */
         inputRow.style.display = 'flex';
       } else {
         // 无码类型：资源页由服务端直接下发专属内容；预览本地直接展示（测试行为，零网络、不写统计）

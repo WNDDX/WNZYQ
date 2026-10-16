@@ -43,8 +43,7 @@
     @media (hover: hover) and (pointer: fine) { html, body { overscroll-behavior: auto; } }
     /* ---------- 顶部栏（固定） ---------- */
     .topbar {
-      position: fixed;
-      position: sticky; top: 0;
+      position: sticky; top: 0; /* v400 条15：原 fixed+sticky 两行连写（fixed 白写且无 top 兜底），只留生效的 sticky */
       z-index: 100;
       background: linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 100%);
       box-shadow: var(--shadow-blue);
@@ -119,7 +118,7 @@
     .share-mask.open { display: flex; }
     .share-box {
       background: var(--card-bg); border-radius: var(--r-l);
-      position: relative; padding: 24px /* v336 条106 */; /* R285 条26：弹窗留白电脑档统一 26px 20px（对齐 .kf-box/.modal-box） */ width: 100%; max-width: 400px;
+      position: relative; padding: 24px /* v336 条106 */; /* v400 条2：宽度对齐客服弹窗统一 480px（原 400px）。注：原 R285 条26 注释称留白统一 26px 20px 与实际不符——本处与 .kf-box 实际均为 24px，注释已修正 */ width: 100%; max-width: 480px;
       text-align: center; animation: modalIn var(--dur-mid) var(--ease-out);
       box-shadow: var(--shadow-modal);
     }
@@ -327,6 +326,7 @@
       box-shadow: var(--shadow-card);
       transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ;
     }
+    .product-grid.grid-empty { min-height: 42vh; } /* v401 条9：空分类网格保最小高度——原塌缩 24px 高，滑切门槛过不去且空态页是一条细缝 */
 
     .card-img {
       width: 100%;
@@ -339,10 +339,9 @@
       transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) ease, filter var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ;
     }
     .card-body {
-      padding: 12px 12px 8px;
+      padding: 12px 12px 12px; /* v400 条15：原两条 .card-body 重复（前 8px 底距被本值覆盖），合并为一条生效值 */
       transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) ease, filter var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ;
     }
-    .card-body { padding: 12px 12px 12px; }
     .card-title {
       font-size:14px;
       font-weight: 700;
@@ -451,7 +450,7 @@
       width: 32px; height: 32px;
       border-radius: 50%;
       border: none;
-      background: #e8f2fd; /* v340 条9：默认淡蓝底+蓝图标，悬停/按下实蓝底白图标（与关闭叉同一规则） */
+      background: var(--tint-blue); /* v404 条6：写死 #e8f2fd 入令牌（深色随主题换装） */
       color: var(--blue1); /* R141：材质蓝→站点蓝 */
       cursor: pointer;
       display: flex;
@@ -477,7 +476,7 @@
       object-fit: contain;
       display: block;
       margin: 16px auto 0;
-      background: #eef4fb;
+      background: var(--img-bg); /* v404 条6：写死 #eef4fb 入令牌 */
       border-radius: var(--r-m); /* v293（用户 10-04 02:14）：076图片圆角→跟全站其他图片统一8px */
       /* v327（用户 10-06 15:23）：根因→封面常驻边框导致暗色模式黑边/浅色模式灰边；修法→删 border（R186 建议5 封面边框作废） */
     }
@@ -656,7 +655,7 @@
     .resource-code-section {
       margin-top: 16px;
       padding: 16px;
-      background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
+      background: linear-gradient(135deg, var(--panel-grad-a) 0%, var(--panel-grad-b) 100%); /* v404 条6：写死渐变入令牌（深色换深色渐变） */
       border-radius: var(--radius-btn,10px);
       border: 1px solid var(--border);
     }
@@ -677,15 +676,16 @@
     .resource-code-input-row {
       display: flex;
       gap: 8px;
+      align-items: center; /* v401 条1：分格与解锁键垂直居中对齐 */
     }
     .resource-code-input {
       flex: 1;
       min-width: 0; /* 确保flex子元素可以正确收缩，避免溢出 */
-      height: 40px;
+      height: 42px; /* v404 条2：40→42 对齐后台输入框 42px 标准（R192 一⑦） */
       padding: 0 12px;
-      border: 1px solid var(--border-light, #c8e0f5); /* v293（用户 10-04 02:14）：072分隔线粗细统一→1.5px改1px归入1px/2px/3px三档 */
-      border-radius: var(--r-m);
-      font-size: 14px;
+      border: 1px solid var(--border); /* v404 条2：浅蓝边→全站统一灰边令牌 */
+      border-radius: var(--radius-btn,10px); /* v404 条2：8→10 对齐后台（R192 一⑦） */
+      font-size: 16px; /* v404 条2：14→16 对齐后台输入框字号 */
       color: var(--text);
       background: var(--card-bg);
       outline: none;
@@ -696,13 +696,13 @@
       border-color: var(--blue1);
     }
     .resource-code-btn {
-      height: 40px;
+      height: 42px; /* v404 条2：与输入框同高 42px（老板 v401 条1 铁律：框键同高） */
       padding: 0 20px;
       border: none;
-      border-radius: var(--r-m);
+      border-radius: var(--radius-btn,10px); /* v404 条2：8→10 对齐后台 */
       background: var(--blue1);
       color: #fff;
-      font-size: 14px;
+      font-size: 16px; /* v404 条3：14→16 主键字号统一 16px（R192 口径） */
       font-weight: 600;
       cursor: pointer;
       transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ;
@@ -715,7 +715,7 @@
     .resource-code-error {
       margin-top: 8px;
       font-size: 12px;
-      color: var(--red, #ff4444);
+      /* v400 条3：颜色/底色/圆角/感叹号改由 ui-common .alert-err 唯一源提供（原裸红字一行，与 admin 登录警告统一同款） */
     }
     /* R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行 */
     .resource-content {
@@ -822,7 +822,7 @@
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 8px auto; border-radius: var(--r-m); min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
     /* 交互动效复用 ui-common.css 全站统一弹窗按键规则（R17 统一标准：hover 缩小变淡、按压更小更暗） */
     .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: var(--radius-btn,10px); background: #1e88e5; color: #fff; font-size:14px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
-    .ann-modal .modal-close-x { top: 12px; right: 12px; width: 32px; height: 32px; }
+    /* v400 条4：.ann-modal .modal-close-x 布局副本已删——ui-common × 唯一源全覆盖（原值与唯一源逐字相同） */
     /* 分类栏 */
     .category-bar-wrap {
       position: relative;
@@ -857,7 +857,7 @@
     }
 
     /* v376：一级栏三角并入全站同款（二级栏/最近浏览/文件卡共用一套：裸三角，仅大小差异；收起 -90° 朝右、展开 0° 朝下） */
-    .cat-toggle .toggle-arrow, .sub-cat-toggle .toggle-arrow, .recent-toggle .toggle-arrow, .fc-arrow .toggle-arrow { width: 18px; height: 18px; transition: transform var(--dur-mid) var(--ease-out); transform: rotate(-90deg); } /* 收起：朝右 */
+    .cat-toggle .toggle-arrow, .sub-cat-toggle .toggle-arrow, .recent-toggle .toggle-arrow, .fc-arrow .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid) var(--ease-out); transform: rotate(-90deg); } /* 收起：朝右；v404 条7：18→20 全站三角统一 20px */
     .cat-toggle.open .toggle-arrow, .sub-cat-toggle.open .toggle-arrow, .recent-toggle.open .toggle-arrow, .fc-arrow.open .toggle-arrow { transform: rotate(0deg); } /* 展开：朝下 */
     .category-bar { /* R231 条3：删 min-height/padding 布局过渡——flex-wrap 展开是离散跳变，该过渡从未真正生效且逐帧重排；箭头旋转过渡保留 */ }
     .category-bar.expanded {
@@ -965,7 +965,7 @@
       .topbar-inner .topbar-brand { flex-shrink: 0; }
       .cat-toggle { right: 18px; width: 24px; height: 24px; }
       .modal-wrap { max-width: 100%; }
-      .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: var(--radius-btn,10px); }
+      .modal-box { max-width: 100%; max-height: 88vh; max-height: 88dvh; /* R159；v404 条14：92→88 三页统一 */ border-radius: var(--r-l); } /* v400 条7：手机端弹窗圆角对齐电脑端统一 12px（原 --radius-btn 10px） */
       img.modal-cover { width: calc(100% - 24px); margin: 12px auto 0; } /* R280 ①：移动端只调边距，框高沿用 min(48vh,400px) 定值 */
       .modal-content { padding: 12px 16px 16px; }
       /* R141：手机档 18px 删除，与管理端全档 20px 统一 */
@@ -973,9 +973,9 @@
       .modal-desc { font-size: 14px; }
       .modal-detail { font-size: 13px; padding: 8px 12px; }
       .modal-footer { padding: 0 16px 16px; gap: 8px; }
-      .btn-contact, .btn-close-modal { height: 42px; font-size:14px; }
       .btn-close-modal { padding: 0 20px; }
-      .modal-close-x { top: 12px; right: 12px; width: 32px; height: 32px; font-size: 18px; }
+      /* v400 条5：.btn-contact/.btn-close-modal 42px 死规则已删——同查询内被下方 40px 生效值覆盖（46 桌面/40 小屏两档为既有决策，保留） */
+      /* v400 条4：.modal-close-x 手机端布局副本已删——ui-common × 唯一源全覆盖 */
       .product-grid { padding: 12px; gap: 8px; }
       /* 手机端资源卡片更紧凑：图片改方形、标题单行，避免占屏过大 */
       .card-img { aspect-ratio: 1 / 1; }
@@ -1002,14 +1002,14 @@
     @keyframes cardIn { from { opacity: 0.9; } to { opacity: 1; } }
     .product-card { animation: cardIn var(--dur-mid) cubic-bezier(0.2, 0.9, 0.25, 1); } /* R231 条20：入场节奏前快后缓（前段快起、尾段缓收） */
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
-    .modal-mask #modalBox { max-height: 84vh; max-height: 84dvh; /* R159 */ }
+    .modal-mask #modalBox { max-height: 88vh; max-height: 88dvh; /* R159；v404 条14：84→88 三页统一 */ }
     .modal-mask#annModal > .ann-box { height: min(72vh, 600px) !important; height: min(72dvh, 600px) !important; /* R159 */ max-height: none !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
     .modal-mask#annModal > .ann-box > * { box-sizing: border-box; max-width: 100%; }
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
-    .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #5b6b7b; /* v356 条12：空态色对齐全站档 */ padding: 24px 0; box-sizing: border-box; text-align: center; }
+    .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--empty-text); /* v404 条6：写死 #5b6b7b 入令牌 */ padding: 24px 0; box-sizing: border-box; text-align: center; }
 .modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 1; color: #b9c6d4; } /* v356 条12：图标色对齐 */
 .modal-mask#annModal .ann-empty .ann-empty-icon > svg { display: block; margin: 0 auto; }
-.modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: #5b6b7b; font-weight: 600 /* v356 条12 */ /* v336 条115 */; }
+.modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: var(--empty-text); font-weight: 600 /* v356 条12 */ /* v336 条115 */; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ overflow-x: hidden; min-height: 0; box-sizing: border-box; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 18px; font-weight: 700; letter-spacing:var(--ls-head,1.2px); white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
@@ -1030,10 +1030,7 @@
       width: 100% !important; max-width: 100% !important; aspect-ratio: 16 / 9 !important; height: auto !important;
       object-fit: contain; background: #000; display: block; border-radius: var(--r-m);
     }
-    /* 弹窗关闭按钮 × 复用导航页样式：圆形、淡灰底、hover 变红 */
-    .modal-close-x { font-size: 18px; line-height: 1; border-radius: 50%; }
-
-    .modal-close-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+    /* v400 条4：.modal-close-x 字号/圆角/按压副本已删——ui-common × 唯一源全覆盖（按压态含 brightness(0.9)，全站统一） */
     /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
       /* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
     /* R159：全系统弹窗统一防裁剪——①高度改 dvh（可视视口）；②align-items 改 flex-start，配合子元素已有的 margin:auto：弹窗矮于遮罩时依旧垂直居中（观感不变），高于遮罩时贴顶且遮罩可滚到底，底部内容（最后输入框/按钮排）永远可达；③遮罩 overflow-y:auto */
@@ -1106,6 +1103,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .modal-detail, .media-list, .variant-detail, .resource-content, .ann-modal .ann-body { contain: paint; transform: translateZ(0); } /* R176（用户 10:12）：视频浮动双保险——translateZ(0) 强制容器建独立合成层，老内核对 video 硬件层不应用 contain 裁剪时，合成层树内照样被裁 */ /* R173（用户 00:38）：补 .resource-content（解锁内容区）——该区可含视频，之前不在裁剪列表，视频滚动时浮出弹窗即"还是浮动的" */
 @media (max-width: 600px) {
   .resource-code-btn { padding: 0 12px; font-size: 13px; height: 36px; }
+  .otp-row input { height: 36px; } /* v401 条1：手机档分格高同步解锁键 36px */
   .btn-contact, .btn-close-modal { height: 40px; font-size: 14px; }
 }
 /* v347：最近看过——形态与分类栏一致（左右滑动 + 右侧三角展开收起），位于两个分类栏之下、资源列表之上 */
@@ -1187,7 +1185,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         transform: translateY(-2px);
         box-shadow: var(--shadow-blue-strong);
       }
-  .modal-close-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--red-strong, #c62828); color: #fff; } /* R285 item 12 | v356 条4：红统一唯一档 */
+  /* v400 条4：两条被 ui-common !important 压死的 .modal-close-x:hover 旧规则（--red-strong 版 R285 item12 / --red 版 R231 条7）已删，悬停统一走 ui-common × 唯一源 */
   .modal-share-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--blue1); color: #fff; } /* R285 item 12 */
   .variant-tab:hover {
         border-color: var(--blue1);
@@ -1202,7 +1200,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         color: var(--blue1);
         background: var(--hover-bg);
       }
-  .modal-close-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--red, #ff4444); color: #fff; } /* R231 条7 */
+  /* v400 条4：--red 版 .modal-close-x:hover（R231 条7）已删——与上方 --red-strong 版重复且均被 ui-common 压死 */
   .video-fallback .vf-link:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
 
 
@@ -1223,32 +1221,14 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .modal-skeleton .md-skel-price { height:16px; width:30%; border-radius: var(--r-s); margin-bottom:8px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
 .modal-skeleton .md-skel-desc { height:12px; width:95%; border-radius: var(--r-s); margin-bottom:4px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
 .modal-skeleton .md-skel-desc.w80 { width:80%; }
-
-/* 减少动态效果 */
-@media (prefers-reduced-motion: reduce) {
-  .modal-skeleton .md-skel-title, .modal-skeleton .md-skel-price, .modal-skeleton .md-skel-desc {
-    animation:skPulse 1.2s ease-in-out infinite; background:var(--bg-light,#f5f7fa); background-size:auto;
-  }
-}
-
-
-/* v309:公告弹窗骨架屏样式（shop页缺失，从admin.css同步并适配）——确保骨架与真实内容同尺寸，切换零跳动 */
-.ann-skeleton { padding:16px 20px; pointer-events:none; }
-.ann-skeleton .ann-skel-tab { height:18px; width:50px; border-radius: var(--r-s); margin-bottom:12px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.ann-skeleton .ann-skel-body { display:flex; flex-direction:column; gap:8px; }
-.ann-skeleton .ann-skel-line { height:14px; border-radius: var(--r-s); background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.ann-skeleton .ann-skel-line.w80 { width:80%; }
-.ann-skeleton .ann-skel-line.w60 { width:60%; }
-@media (prefers-reduced-motion: reduce) {
-  .ann-skeleton .ann-skel-tab, .ann-skeleton .ann-skel-line { animation:skPulse 1.2s ease-in-out infinite; background:var(--bg-light,#f5f7fa); background-size:auto; }
-}
+/* v400 条6：modal/公告骨架（含容器）与减少动效副本已收归 ui-common.css 唯一源，本页不再重复 */
 
 /* R280（老板 09-28 00:35 ①②）：封面轮播改「固定展示框」——与单图封面同口径：
    框宽随弹窗内容宽（留 16px 边距）、框高定值 min(48vh,400px)，图 contain 不裁不变形，
    宽或高一维贴框、另一维按比例居中；切换小白点 absolute 镶进框内底部（半透明胶囊底衬，任何图上都看得清），
    不再单独占布局空间 */
 /* v327（用户 10-06 15:23）：根因→封面常驻边框导致暗色模式黑边/浅色模式灰边；修法→删 border */
-.cover-carousel { position:relative; width:calc(100% - 32px); margin:16px auto 0; height:min(48vh, 400px); overflow:hidden; box-sizing:border-box; background:#eef4fb; border-radius:var(--radius-btn,10px); }
+.cover-carousel { position:relative; width:calc(100% - 32px); margin:16px auto 0; height:min(48vh, 400px); overflow:hidden; box-sizing:border-box; background:var(--img-bg); /* v404 条6：写死 #eef4fb 入令牌 */ border-radius:var(--radius-btn,10px); }
 .cover-carousel .cc-track { display:flex; height:100%; transition:transform var(--dur-slow) ease; }
 .cover-carousel .cc-track.dragging { transition:none; }
 .cover-carousel .cc-slide { flex:0 0 100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }
@@ -1348,7 +1328,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    .sub-cat-toggle:hover{ color: var(--blue1); }  /* v336 条72 */
 
 /* v336 条148：分类/变体/公告/类型胶囊统一按压反馈 */
-.category-tag:active, .variant-tab:active, .ann-tab:active, .type-tag:active { transform: scale(0.94); opacity:.8; transition-duration: 80ms; }
+.category-tag:active, .variant-tab:active, .ann-tab:active, .type-tag:active { transform: scale(0.94); opacity:.8; transition-duration: var(--dur-fast); }
+    /* v404 条4：上行的孤儿 80ms 已并入全站快档 0.10s。v404 条16：这组是「缩小 0.94」按压族；弹窗底部键是「变暗不缩放」族——两种并存是 R17/R231 有意设计（弹窗键并排、缩放会挤到相邻键），勿互相「统一」。 */
 
 /* v336 条165：卡片悬停阴影预置，hover 只动透明度（一屏几十张不再掉帧） */
 .product-card { position: relative; }

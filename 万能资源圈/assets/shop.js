@@ -232,7 +232,7 @@
                 var ar = document.createElement('button');
                 ar.type = 'button'; ar.className = 'fc-arrow'; ar.title = '展开/收起';
                 ar.setAttribute('aria-label', '展开或收起此文件夹');
-                ar.innerHTML = '<svg class="fc-arrow-svg toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
+                ar.innerHTML = '<svg class="fc-arrow-svg toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
                 ar.addEventListener('click', function (e) {
                   e.stopPropagation();
                   var show = kids.style.display === 'none';
@@ -270,7 +270,7 @@
                统一注入 SVG，确保客户页折叠箭头可见且与后台/分类栏同款。 */
             var __fcArrowHolder = header.querySelector('.fc-arrow, .fc-arrow-static');
             if (__fcArrowHolder && !__fcArrowHolder.querySelector('svg')) {
-              __fcArrowHolder.innerHTML = '<svg class="fc-arrow-svg toggle-arrow" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
+              __fcArrowHolder.innerHTML = '<svg class="fc-arrow-svg toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
             }
             var __fcArrow = header.querySelector('.fc-arrow-svg, .toggle-arrow, svg');
             if (__fcArrow) __fcArrow.style.transform = 'rotate(-90deg)'; /* 收起：朝右（全站同款） */
@@ -951,6 +951,7 @@
       /* R193 二① 方案A：骨架期（数据在路上）列表不动——骨架已铺满一页，空态不该抢跑 */
       if (window.__skelPhase && !list.length) { emptyTip.classList.remove('show'); return; }
       emptyTip.classList.toggle('show', list.length === 0);
+      productGrid.classList.toggle('grid-empty', list.length === 0); /* v401 条9：空分类网格给最小高度——原塌缩到 24px，滑切高度门槛过不去=空分类永远滑不动，空态页也不再是一条细缝 */
 
       // 移除旧分页
       var oldPager = document.getElementById('pager');
@@ -1133,18 +1134,8 @@
        ui-common.js 的 window.__renderCarousel（以后只改那一处，前后台自动同步）。
        这里保留转发，公共层万一没加载也不会整页崩。 */
     function renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images) {
-      if (window.__renderCarousel) { window.__renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images, EXC_PLACEHOLDER); return; }
-      if (!carouselEl || !trackEl) return;
-      if (!images || images.length <= 1) {
-        carouselEl.style.display = 'none';
-        if (fallbackImgEl) { fallbackImgEl.style.display = ''; fallbackImgEl.src = images && images[0] ? images[0] : ''; }
-        return;
-      }
-      carouselEl.style.display = '';
-      if (fallbackImgEl) fallbackImgEl.style.display = 'none';
-      var _img0 = document.createElement('img');
-      _img0.src = images[0] || '';
-      if (fallbackImgEl) fallbackImgEl.src = images[0] || '';
+      /* v402 条7：旧本地壳（含与 ui-common 重复的单图分支）删除——ui-common __renderCarousel 恒在（shop 必载），直接唯一源 */
+      if (window.__renderCarousel) { window.__renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images, EXC_PLACEHOLDER); }
     }
 
     // ---------- 详情弹窗 ----------
@@ -1274,7 +1265,8 @@
       if (_covArr.length <= 1) {
         loadImg(modalCover, _mainImg);
         modalCover.style.cursor = 'zoom-in';
-        modalCover.onclick = function () { if (_mainImg) window.openLightbox(_mainImg); };
+        modalCover.classList.remove('cover-enter'); void modalCover.offsetWidth; modalCover.classList.add('cover-enter'); /* v401 条8：单图封面与轮播首图统一弹簧滑入入场 */
+        modalCover.onclick = function () { if (_mainImg) window.openLightbox(_mainImg, { list: _covArr.slice(), from: modalCover }); }; /* v401 条9：带组开灯箱（与轮播图同口径） */
       }
       modalTitle.textContent = p.title || '';
       modalTitle.title = p.title || ''; // v294：196 弹窗标题悬停显示完整内容
@@ -1839,7 +1831,8 @@
       panel: function () { return document.getElementById('productGrid'); },
       neighbor: function (dir) { return window.__catSeqTarget(dir); },
       fill: function (nb, dir, panelB) {
-        panelB.className = 'product-grid';
+        var _curGrid = document.getElementById('productGrid');
+        panelB.className = (_curGrid && _curGrid.className) || 'product-grid'; /* v401 条9：镜像当前视图模式（原写死 'product-grid'，列表视图下滑动预览是网格、落定变列表=「切换后显示模式不同」） */
         window.__peekCat(nb.type === 'top' ? nb.id : (nb.type === 'sub' ? nb.parent : 0), nb.type === 'sub' ? nb.id : 0).then(function (list) {
           if (!panelB.isConnected) return;
           list.slice(0, 8).forEach(function (p) { try { panelB.appendChild(window.__buildProductCard(p)); } catch (e) { if (window.__silent) window.__silent(e); } });

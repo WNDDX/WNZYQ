@@ -2,6 +2,9 @@
    万能资源圈 全站公共样式（唯一公共样式文件，全站引用）
    - 滚动条全部隐藏（用户要求取消滚动轮，滚动功能保留）
    - CSS 变量统一：颜色/圆角/间距一处定义全站生效
+   - v404 条32 家规：var() 兜底写法分工——公共层（本文件/motion.css）一律不带兜底值
+     （令牌必有定义，带兜底反而掩盖缺令牌事故）；页面级 CSS（index/shop/admin/error
+     内联样式）可带兜底值（防样式表加载失败裸奔）。
    ============================================ */
 
 /* v293（用户 10-04 02:14）：057文字选中颜色统一→亮色淡蓝底深字，深色深蓝底浅字 */
@@ -12,6 +15,12 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px); color-scheme: light; /* v336 条80：告知浏览器本站恒亮，系统下拉/日期控件不再用黑底 */
+  /* v404 条6：深浅色配套面令牌（原 shop.css 写死值收编——深色下随主题换装，整体调色调得动） */
+  --tint-blue: #e8f2fd;      /* 淡蓝强调底（弹窗内小圆键默认底等） */
+  --img-bg: #eef4fb;         /* 图片容器底（封面框/轮播框） */
+  --panel-grad-a: #f0f7ff;   /* 资源码面板渐变起点 */
+  --panel-grad-b: #e8f4fd;   /* 资源码面板渐变终点 */
+  --empty-text: #5b6b7b;     /* 空态次级文字（深色下换 --text-light 档） */
   /* ===== 品牌色（唯一源） ===== */
   --blue1: #1E88E5;   /* 品牌蓝·主 */
   --blue2: #64B5F6;   /* 品牌蓝·浅 */
@@ -101,17 +110,29 @@
    A组 = 真正的圆形 × 图标钮（红底白叉、热区 44px）
    B组 = 文字关闭/确定钮（保留各自原有形状，只换成红色系配色呼应“关闭=红”） */
 /* A组：圆形 × 图标钮 */
-.modal-mask .modal-close-x, .kf-mask .kf-x, .lightbox .lb-close, .lightbox .modal-close-x {
-  /* v340 条9：× 默认淡红底+红图标，鼠标指到/按下才实红底白图标（与分享键同一套规则） */
-  background: var(--danger-bg) !important; color: var(--red-strong) !important; border: none !important; /* v348 条5：与下方文字关闭键统一同一档红（原圆形叉用 var(--red-strong)、文字键用 var(--red-strong)，两种红） */
+/* ===== 全站统一关闭 ×（唯一源，v400 条4 合并定稿）=====
+   改前两套并存：v340「A组配色」(.modal-mask 前缀,0,2,0) 与 R186「定位布局」(裸类名,0,1,0)——
+   A组压住 R186 的配色却借用其定位/flex；shop.css:1190/1205、admin.css:1832 另有 3 条被 !important 压死的旧悬停规则。
+   现合并为一段唯一源（.lb-close 全站无元素使用，属死选择器，一并清除）：
+   32px 圆、默认淡红底红叉、hover 实红底白叉微收、按压缩小变暗 */
+.modal-close-x, .kf-x, .lightbox .modal-close-x {
+  position: absolute; top: 12px; right: 12px; z-index: 10;
+  background: var(--danger-bg) !important; color: var(--red-strong) !important; border: none !important; /* v340 条9/v348 条5：同一档红 */
   width: 32px !important; height: 32px !important; min-width: 32px !important; border-radius: 50% !important;
-  font-size: 16px !important; line-height: 1 !important; padding: 0 !important;
+  font-size: 16px !important; line-height: 1 !important; padding: 0 !important; margin: 0 !important;
+  display: flex !important; align-items: center; justify-content: center; cursor: pointer;
+  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease !important;
 }
-/* v359 条1：× 钮 44×44 扩大热区已按老板要求全面移除——可点范围=视觉大小，不再放大 */
-.modal-mask .modal-close-x:hover, .kf-mask .kf-x:hover, .lightbox .lb-close:hover, .lightbox .modal-close-x:hover,
-.modal-mask .modal-close-x:active, .kf-mask .kf-x:active, .lightbox .lb-close:active, .lightbox .modal-close-x:active {
-  background: var(--red-strong) !important; color: #fff !important; filter: none; /* v340 条9 / v348 条5：hover 实底也统一用同一档红 */
+.modal-close-x:hover, .kf-x:hover, .lightbox .modal-close-x:hover,
+.modal-close-x:active, .kf-x:active, .lightbox .modal-close-x:active {
+  background: var(--red-strong) !important; color: #fff !important; filter: none;
 }
+/* v404 条16：按压反馈全站「有意两种」，不是不一致——
+   ① 弹窗底部键/关闭叉=变暗+降透明、不缩放（R17/R231：弹窗键并排，缩放会挤到旁边的键）；
+   ② 标签/卡片/独立小件=缩到 0.94（R231 条7：无并排挤压风险，缩放反馈更跟手）。
+   新增按压效果时按归属选其一，勿「统一」掉另一种。 */
+.modal-close-x:hover, .kf-x:hover { transform: scale(0.97); opacity: 0.9; } /* R231 条7口径（原 R186 值原样保留） */
+.modal-close-x:active, .kf-x:active, .lightbox .modal-close-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
 /* B组：文字关闭/确定钮——形状、尺寸、圆角、内边距一概不碰，只换红色系皮肤 */
 .modal-mask .modal-close, .kf-mask .kf-close,
 .preview-close-btn, .btn-close-modal {
@@ -135,23 +156,22 @@
 @keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
 .kf-box {
   background: var(--card-bg); border-radius: var(--radius-lg); padding: 24px /* v336 条106 */; position: relative;
-  max-width: 480px; width: 100%; max-height: min(84vh, 84dvh); overflow-y: auto; /* v356 条5：dvh 兜底 */ overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
+  max-width: 480px; width: 100%; max-height: min(88vh, 88dvh); overflow-y: auto; /* v356 条5：dvh 兜底；v404 条14：弹窗最高高度三页统一 88% */ overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
   animation: kfBoxIn var(--dur-mid) var(--ease-out);
 }
 @keyframes kfBoxIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：客服弹窗卡片入场加展开（与关闭收缩对称） */
 .kf-title { font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 18px 保持） */ color: var(--text); margin-bottom: 16px; letter-spacing:var(--ls-btn,0.8px); padding: 0 32px; text-align: center; }
 .kf-qr {
-  width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border); background: var(--bg-light);
+  width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border);
   margin: 0 auto 12px; position: relative; display: flex; align-items: center;
-  justify-content: center; border-radius: var(--r-l); background: var(--bg-light,#f5f7fa); /* R192 一②：二维码图框圆角对齐全站 12px（v356 条15：原 10px 与注释不符已修） */
+  justify-content: center; border-radius: var(--r-l); background: var(--bg-light,#f5f7fa); /* R192 一②：二维码图框圆角对齐全站 12px（v356 条15：原 10px 与注释不符已修）；v400 深查：原块内 background 写了两遍（前一份无兜底被本份覆盖），留带兜底的一份 */
 }
 .kf-qr img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: var(--r-m); } /* R215 条7：圆角对齐交流群图片（.modal-qrcode 8px） */
 .kf-qr img[src^="data:image/svg+xml"] { width: 100%; height: 100%; object-fit: contain !important; }
 /* 二维码统一出场动画（每次打开客服弹窗由 ui-common.js 重放，全站时序/动效完全一致） */
 @keyframes kfQrIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 .kf-qr img.kf-qr-in { animation: kfQrIn var(--dur-mid) var(--ease-out); }
-/* 二维码统一出场动画（导航页公众号/群聊二维码与客服二维码同一套动效，全站复用） */
-#modalImg.kf-qr-in { animation: kfQrIn var(--dur-mid) var(--ease-out); }
+/* v402 条7：原 #modalImg.kf-qr-in 规则随导航页本地弹窗删除（导航页已并入 kf-box 唯一源） */
 .kf-tip { font-size: 16px; color: var(--text-light); margin-bottom: 16px; /* R186 建议5：gray-text 暗色下过暗，统一语义次级文字 */ letter-spacing:var(--ls-btn,0.8px); word-break: break-word; }
 .kf-jump {
   width: 80%; margin: 0 auto 12px; border: none; border-radius: var(--radius); height: 46px; padding: 0 32px;
@@ -176,7 +196,7 @@
 .alert-ok:active, .ann-ok:active, .btn-item:active, .modal-inner-btn:active, .modal-close:active, .kf-jump:active, .kf-close:active {
   transform: scale(0.94); opacity: 0.8; filter: brightness(0.9);
 }
-.kf-x { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-bg); color: var(--gray-text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease ; line-height: 1; } /* R186：× 回退标准口径——弹窗右上角同款灰圆，hover 变红 */
+/* v400 条4：原 R186 独立 × 规格（.kf-x 灰底副本 179 行 + 196-213 定位/悬停段）已并入上方唯一源块，此处不再重复 */
 @media (max-width: 600px) {
   .kf-box { padding: 20px 16px; }
   .kf-title { font-size: 18px; }
@@ -193,24 +213,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   /* v336 条81：加载指示类动画保留（转圈停了分不清加载还是卡死） */
   .sk-spin, .loading-spin, .btn-busy .spin, [class*="spin"] { animation-duration: 1.2s !important; animation-iteration-count: infinite !important; } .stagger-in { animation: none !important; } }
 
-/* ===== 全站统一关闭 ×（R186 回退标准）：32px 圆形淡灰底，hover 变红（弹窗/客服/放大预览通用） ===== */
-.modal-close-x,
-.kf-x {
-  position: absolute; top: 12px; right: 12px; z-index: 10;
-  width: 32px !important; height: 32px !important;
-  border-radius: 50% !important; border: none !important;
-  background: var(--gray-bg) !important; color: var(--gray-text) !important;
-  font-size: 18px !important; line-height: 1 !important; cursor: pointer !important;
-  display: flex !important; align-items: center !important; justify-content: center !important;
-  padding: 0 !important; margin: 0 !important;
-  transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease !important;
-}
-.modal-close-x:hover,
-.kf-x:hover { /* R231 条7：控件悬停统一微亮+浮起（缩放式退役） */
-  background: var(--red) !important; color: #fff !important; transform: scale(0.97); opacity: 0.9;
-}
-.modal-close-x:active,
-.kf-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+/* v400 条4：原「全站统一关闭 ×（R186 回退标准）」整段（.modal-close-x/.kf-x 基础+hover+active）已并入上方唯一源块，此处不再重复 */
 
 /* ===== 全站统一图片/视频放大查看器（lightbox） ===== */
 .lightbox {
@@ -661,6 +664,32 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
       }
     }
 
+    /* ===== v400 条6：弹窗/预览/公告骨架条唯一源 =====
+       改前：shop .md-skel-*、admin .pv-skel-*/.ann-skel-* 各自复制同一套渐变条（逐字同规格）。
+       改后：条形骨架收归此处一处定义；页面层只保留容器 padding 与个别 margin 差异（admin 预览 price/desc 下距 12/8px 原样保留）。 */
+    .modal-skeleton .md-skel-title, .preview-skeleton .pv-skel-title { height:20px; width:70%; border-radius: var(--r-s); margin-bottom:8px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+    .modal-skeleton .md-skel-price, .preview-skeleton .pv-skel-price { height:16px; width:30%; border-radius: var(--r-s); margin-bottom:8px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+    .modal-skeleton .md-skel-desc, .preview-skeleton .pv-skel-desc { height:12px; width:95%; border-radius: var(--r-s); margin-bottom:4px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+    .ann-skel-tab { height:18px; width:50px; border-radius: var(--r-s); margin-bottom:12px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+    .ann-skel-line { height:14px; border-radius: var(--r-s); background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+    .ann-skel-line.w80 { width:80%; }
+    .ann-skel-line.w60 { width:60%; }
+    .ann-skel-line.w30 { width:30%; }
+    .ann-skeleton { padding:16px 20px; pointer-events:none; } /* 公告骨架容器（shop/admin 同款，v400 条6 收编） */
+    .ann-skeleton .ann-skel-body { display:flex; flex-direction:column; gap:8px; }
+    @media (prefers-reduced-motion: reduce) {
+      .modal-skeleton .md-skel-title, .modal-skeleton .md-skel-price, .modal-skeleton .md-skel-desc,
+      .preview-skeleton .pv-skel-title, .preview-skeleton .pv-skel-price, .preview-skeleton .pv-skel-desc,
+      .ann-skel-tab, .ann-skel-line {
+        animation:skPulse 1.2s ease-in-out infinite; background:var(--bg-light,#f5f7fa); background-size:auto;
+      }
+    }
+
+    /* ===== v400 条3：全站统一错误提示——红底浅粉块+圆角+左侧感叹号 =====
+       （admin 登录警告原内联写死 #fdecea/#c62828/#f5c6c2=令牌同值；shop 资源码错误原为裸红字一行，两处统为此款） */
+    .alert-err { margin:0 0 10px; padding:8px 12px; background:var(--danger-bg); color:var(--red-strong); border:1px solid var(--danger-border-strong); border-radius:var(--r-m); font-size:13px; line-height:1.5; text-align:left; }
+    .alert-err::before { content:'!'; display:inline-block; width:15px; height:15px; border-radius:50%; background:var(--red-strong); color:#fff; font-weight:700; font-size:11px; line-height:15px; text-align:center; margin-right:6px; vertical-align:-2px; }
+
 /* ---------- R231（用户 09-21 23:38）条1：系统级减少动画全局兜底 ----------
    用户开省电模式/系统设置关动画时，全站动画与过渡自动归零（无障碍通行做法）。
    先于 42 处 transition 修复落地：无论后面动画怎么加，这张安全网都在。 */
@@ -930,7 +959,7 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 /* v348 条19：手机横屏（屏幕很矮）——四个页面统一照顾（此前只有资源页有） */
 @media (max-height: 480px) and (orientation: landscape) {
   .topbar { min-height: 44px !important; }
-  .modal-box, .ann-box { max-height: 92vh; max-height: 92dvh; }
+  .modal-box, .ann-box { max-height: 88vh; max-height: 88dvh; } /* v404 条14：92→88 三页统一 */
   .pull-refresh { display: none; }
 }
 

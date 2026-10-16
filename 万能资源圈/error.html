@@ -32,15 +32,16 @@
 <link rel="stylesheet" href="/assets/motion.css"> <!-- v392-1：错误页接入全站动效/深色轻量层（41KB，仍不加载 ui-common 170KB，v336 精简决策保留） -->
 <style>/* v336 条43：错误页精简（原引用 ui-common.js/css 已移除）（不再下载 170KB 公共层）
    v350 条7：本页用了 --card-bg/--avatar-shadow/--shadow-pop/--shadow-card 四个变量但本页从未定义（此前不引公共层）→ 整条声明失效，logo 白描边和悬停阴影一直没生效；现补上 */
-:root{--r-s:4px;--r-m:8px;--r-l:12px;--r-pill:999px;--ls-head:1.2px;--card-bg:#fff;--avatar-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);--shadow-pop:0 4px 16px rgba(0,0,0,0.14);--shadow-card:0 1px 4px rgba(0,0,0,0.07)}
-body{margin:0;font-family:Microsoft YaHei,sans-serif;background:#f2f7fd;color:#222}
+:root{--r-s:4px;--r-m:8px;--r-l:12px;--r-pill:999px;--ls-head:1.2px;--card-bg:#fff;--avatar-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);--shadow-pop:0 4px 16px rgba(0,0,0,0.14);--shadow-card:0 1px 4px rgba(0,0,0,0.07);--text:#222;--text-light:#666;--text-faint:#767676;--bg-light:#f5f7fa;--border:#d0d0d0;--dur-fast:.1s;--dur-mid:.18s;--dur-slow:.3s;--ease-out:cubic-bezier(.25,1,.5,1);--ease-press:cubic-bezier(.4,0,.2,1);--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;--red-strong:#c62828;--green-strong:#2e7d32;--grad-brand:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%)}
+/* v400 条19：原两个 :root 块合并为一块（变量本就零重叠，非重复定义）；v400 条8：--dur-slow 原 .28s 与公共层 0.30s 不一致，已对齐 */
+body{margin:0;font-family:"Microsoft YaHei",system-ui,sans-serif;background:#f2f7fd;color:#222} /* v404 条1：字体栈四页统一 */
 /* v350 条7：删除此处第一份 .btn（下面 40 行还有一份更全的会整体覆盖它，这份是死代码，改样式容易改错地方） */
 .err-reasons{list-style:none;padding:0;margin:6px 0}.err-reasons li{margin:2px 0}.skip-link{position:absolute;left:-9999px}.skip-link:focus{left:0}/* v349 条6：补全站同款键盘焦点光晕（此前 Tab 键看不出选中在哪） */a:focus-visible,button:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(30,136,229,.25);border-radius:4px} /* v394-1：与全站聚焦圈统一 */</style>
 <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
 <style>
 /* v356 条20：本页不加载公共样式，--blue1/2/3 在此自定义（原注释称由公共层提供是错的，导致后续新增无 fallback 的变量直接失效） */
-:root{--text:#222;--text-light:#666;--text-faint:#767676;--bg-light:#f5f7fa;--border:#d0d0d0;--dur-fast:.1s;--dur-mid:.18s;--dur-slow:.28s;--ease-out:cubic-bezier(.25,1,.5,1);--ease-press:cubic-bezier(.4,0,.2,1);--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;--red-strong:#c62828;--green-strong:#2e7d32;--grad-brand:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%);}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;}
+/* v400 条19：第二个 :root 块（本页颜色/时长系变量）已并入上方合并块，此处不再重复定义 */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:"Microsoft YaHei",system-ui,sans-serif;} /* v404 条1：四页字体栈统一 */
 *,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
 body{background:var(--grad-brand);min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 20px var(--page-bottom-gap,24px); /* v293（用户 10-04 02:14）：070顶部留白20→24px→跟导航页统一 *//*R229(用户 09-21 19:44):底部留白全站统一,原20→24*/}
 .box{text-align:center;color:#fff;max-width:400px;}
@@ -50,6 +51,7 @@ body{background:var(--grad-brand);min-height:100vh;min-height:100dvh;display:fle
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius: 10px; text-decoration:none;font-size:16px; /* v293（用户 10-04 02:14）：017错误页按钮圆角999→10px→跟全站普通按钮统一 */font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow: var(--shadow-pop);} /* R231 条7：放大式并入微亮+浮起 */
 .btn:active{transform:scale(0.94);} /* R231 条7：按下缩下去（全站统一） */
+.err-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;} /* v400 条10：底部跳转键弹性布局+统一间距（原各键内联 margin-left:14px） */
 /* v333 修：下面这条原本用 JS 的 // 注释，CSS 遇 // 会丢弃到下一个分号，连 text-decoration 一起吞掉（错误页 logo 少了这行样式） */
 /* v310（用户 10-05 14:25）：差异→统一口径。A1+A4 logo 边框+阴影统一 */
 .logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 24px;opacity:0;overflow:hidden; /* R33：logo下方24px与大标题下方24px对称 */background:transparent;box-sizing:border-box;border:3px solid var(--card-bg);box-shadow:var(--avatar-shadow);text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease,opacity 0.8s ease;} /* R53：logo 无链接但特效全保留（与导航页 logo 同款 hover/active） */
@@ -81,11 +83,13 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   <div class="code" id="errorCode" role="heading" aria-level="1">万能资源圈・错误</div>
   <div class="title" id="errorTitle">页面访问异常</div>
   <div class="desc" id="errorDesc">抱歉！你访问的页面出现了问题<br><ul class="err-reasons"><li>①地址有误</li><li>②页面已删除</li><li>③服务暂不可用</li></ul>可点击【导航页】或【资源页】继续浏览</div>
+<div class="err-actions"><!-- v400 条10：按钮间距由内联 margin-left:14px 改弹性布局统一 gap（窄窗口不挤压变形；隐藏键不留空隙，行为与原先一致） -->
   <a href="index" class="btn" id="errBack" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">导航页</a>
   <!-- R50：右按钮「资源页」样式完全复用左侧导航页按钮（白底蓝字+同款hover），仅保留间距 -->
-  <a href="shop" class="btn" id="errShop" style="margin-left:14px;" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">资源页</a>
-  <a href="javascript:;" class="btn" id="errReload" style="margin-left:14px;display:none;" onclick="location.reload()">重新加载</a>
-  <a href="admin" class="btn" id="errLogin" style="margin-left:14px;display:none;" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">去登录</a>
+  <a href="shop" class="btn" id="errShop" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">资源页</a>
+  <a href="javascript:;" class="btn" id="errReload" style="display:none;" onclick="location.reload()">重新加载</a>
+  <a href="admin" class="btn" id="errLogin" style="display:none;" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">去登录</a>
+</div>
   <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 </div>
 <script>

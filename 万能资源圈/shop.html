@@ -220,7 +220,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
-              <span id="resourceCodeTitle">输入资源码获取专属内容</span>
+              <span id="resourceCodeTitle">获取专属内容</span>
             </div>
             <!-- 有资源码时：输入框+解锁按钮 -->
             <!-- R243 条21：资源码固定 8 位（R96 生成口径），输入框限 8 位——maxlength 属性 + shop.js input 截断双保险（粘贴超长串只留前 8 位） -->
@@ -230,9 +230,9 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
             </div>
             <!-- 无资源码时：直接查看按钮 -->
             <div class="resource-direct-row" id="resourceDirectRow" style="display:none">
-              <button class="resource-code-btn" id="resourceDirectBtn" style="width:100%">立即获取专属内容</button>
+              <button class="resource-code-btn" id="resourceDirectBtn" style="width:100%">获取专属内容</button>
             </div>
-            <div class="resource-code-error" id="resourceCodeError" style="display:none">资源码错误，请重试</div>
+            <div class="resource-code-error alert-err" id="resourceCodeError" style="display:none">资源码错误，请重试</div>
             <!-- R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行 -->
             <div class="resource-content" id="resourceContent" style="display:none"></div>
           </div>

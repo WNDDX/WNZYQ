@@ -90,6 +90,28 @@
       padding: 0 12px; margin-bottom: 12px; outline: none;
     }
     .login-card .input:focus { border-color: var(--blue1); }
+    /* v404 条22 批次1：登录区静态内联样式迁入（display 切换类内联仍由 JS 管理保留） */
+    .login-pass-wrap { position: relative; width: 100%; margin-bottom: 12px; }
+    .login-card .input.input-pwd { width: 100%; padding-right: 44px; margin-bottom: 0; }
+    .pwd-wrap { position: relative; } /* 密码弹窗三格（v404 条22 批次1 追加迁移） */
+    .pwd-wrap .input.input-pwd { width: 100%; padding-right: 44px; }
+    .pwd-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border: none; background: transparent; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; color: var(--text-light); }
+    .pwd-toggle:hover { color: var(--blue1); }
+    /* v404 条22 批次1：工具栏/统计区静态内联样式迁入 */
+    .sel-all-lbl { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text, #333); cursor: pointer; white-space: nowrap; }
+    .stat-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .stat-head h3 { margin: 0; }
+    .stat-head-tools { display: flex; align-items: center; justify-content: flex-end; flex: 1; gap: 8px; flex-wrap: wrap; }
+    .btn-blue.btn-inline { width: auto; padding: 0 18px; height: 36px; margin: 0; flex-shrink: 0; white-space: nowrap; }
+    .stat-head-label { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-light, #666); }
+    .batch-count-label { font-size: 13px; color: var(--text-light, #666); }
+    #catBatchCount { color: var(--blue1); }
+    .btn-blue.btn-inline-pd { width: auto; padding: 0 16px; }
+    #lineSvg { display: block; width: 100%; aspect-ratio: 4/1; height: auto; }
+    #statWrapProduct, #statWrapCat { margin-bottom: 14px; }
+    #announcementRteToolbar { border-radius: 8px 8px 0 0; } /* 顶栏圆角与编辑器体衔接（原内联） */
+    #filterSearchBox { margin-left: auto; } /* 搜索组右靠（原内联；.tb-row 内的同款靠 .tb-row 规则，此处是 tb-group 场景） */
+    .cat-picker { flex-shrink: 0; } /* v404 条22：原内联 flex-shrink 并入（position:relative 本就有） */
     /* R118：登录卡内按钮去掉通用 10px 下边距，框内内容上下真正对称居中 */
     .login-card .btn-blue { margin-bottom: 0; }
 
@@ -203,9 +225,9 @@
     /* 顶栏信息键：复用 .tab 键规格（与资源页公告键同一组），深色顶栏适配同 tabs 配色 */
     /* v389-16：设置行两字/四字键宽度收紧（内联 24px 内距统一压到 16px） */
     .setting-row .btn-blue, .setting-row button[class*="btn"] { padding-left: 16px !important; padding-right: 16px !important; }
-        .topbar-right .info-ct-btn { background: rgba(255,255,255,0.12); border-radius: var(--r-m); position: relative; color: #fff; display: flex; align-items: center; gap: 6px; padding: 6px 12px; cursor: pointer; border: none; font-size: 14px; } /* v389-12：与资源页公告键同款按键底色（原透明=无按键感） */
-    .topbar-right .info-ct-btn:active { background: rgba(255,255,255,0.18); transform: none; }
-     .topbar-right .info-ct-btn:hover { background: rgba(255,255,255,0.12); transform: none; filter: none; } 
+        .topbar-right .info-ct-btn { background: rgba(255,255,255,0.12); border-radius: var(--r-pill); position: relative; color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 16px; cursor: pointer; border: none; font-size: 14px; box-sizing: border-box; } /* v401 条10：与退出键统一——胶囊圆角+36px 键高（原 8px 方角+6px 12px 内距） */
+    .topbar-right .info-ct-btn:active { background: var(--card-bg, #fff); color: var(--blue1); transform: scale(0.94); } /* v401 条10：按压缩小+变白蓝字（对齐退出键 :active 口径，原只加深底色） */
+     .topbar-right .info-ct-btn:hover { background: rgba(255,255,255,0.18); transform: none; filter: none; } /* v401 条10：悬停底色与退出键半透明白一致 */
     .dot-badge { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: #ff4444; border:2px solid #fff; box-sizing: content-box; }
     /* 总统计四格 */
     .ct-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -665,28 +687,7 @@
     /* 按内容量分配档位：大(编辑资源/公告/绑定设备清单 R94) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
     .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box, .modal-mask#bindingsMask > .modal-box { max-width: 680px; }
     .modal-mask#infoMask > .modal-box { max-width: 480px; } /* v384：设置信息弹窗宽度对齐导航页弹窗（480px） */
-    /* ---------- v385 条1：设置信息实时预览弹窗——逐条复刻导航页 modal（index.html 同名类样式，scoped 隔离不污染管理页） ---------- */
-    .modal-mask#infoPvMask > .modal-box { max-width: 480px; text-align: center; padding: 26px 20px; }
-    #infoPvMask .qrcode-wrap {
-      width: 250px; height: 250px;
-      border: 1px solid var(--border);
-      margin: 0 auto 14px; position: relative;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: var(--r-l); overflow: hidden; background: var(--bg-light);
-    }
-    #infoPvMask .modal-qrcode { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--r-m); }
-    #infoPvMask .qrcode-fail-icon { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--text-faint); }
-    #infoPvMask .modal-tip { text-align: center; }
-    #infoPvMask .modal-footer { display: flex; gap: 10px; align-items: center; justify-content: center; position: relative; margin-top: 4px; }
-    #infoPvMask .modal-footer .modal-inner-btn, #infoPvMask .modal-footer .modal-close {
-      flex: 1 1 0; max-width: calc(50% - 7px); min-width: 0; width: auto; margin: 0; height: 46px; padding: 0 12px;
-      display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: var(--radius-btn,10px);
-    }
-    #infoPvMask .modal-footer .modal-inner-btn { background-color: #1E88E5; color: #fff; border: none; font-weight: 600; }
-    #infoPvMask .modal-footer .modal-close { background: var(--danger-bg); color: var(--red-strong); border: 1px solid var(--danger-border-strong); font-weight: 600; }
-    #infoPvMask .modal-footer .modal-close:hover { background: var(--red-strong); color: #fff; border-color: var(--red-strong); }
-    #infoPvMask .modal-footer .modal-close.solo { max-width: 100%; flex: 1 1 100%; }
-    @media (max-width: 600px) { #infoPvMask .qrcode-wrap { width: 200px; height: 200px; } #infoPvMask .modal-footer .modal-inner-btn, #infoPvMask .modal-footer .modal-close { font-size: 16px; padding: 10px 24px; } }
+    /* v402 条7：原「设置信息实时预览弹窗」scoped 样式块（v385 条1，约 30 行）随结构删除——预览统一走 ui-common kf-box 唯一源 */
     /* R223：资源码详情合并表 8 列——弹窗加宽（后写的规则生效） */
     .modal-mask#bindingsMask > .modal-box { max-width: 880px; }
     /* R225：窄屏（≤600px）合并表操作列「解绑」按钮完整显示——.stat-table 为 table-layout:fixed + td overflow:hidden，
@@ -701,7 +702,7 @@
     /* v379：.modal-title 排版已上移 ui-common.css 唯一源（三页逐字相同的公共口径），本地副本删除 */
     /* v379：.modal-close-x 本地副本已删——ui-common.css 全站统一规格以 !important 全覆盖，含 :active */
 
-    .modal-close-x:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
+    /* v400 条4：.modal-close-x:active 副本已删——ui-common × 唯一源同值全覆盖（含 brightness(0.9)） */
     /* R10 预览弹窗左上角分享键：与×成对角、规格复用（32px 圆形/12px 距角/同动效），
        区分点：淡蓝底+蓝图标，悬停蓝底白图标（×是浅灰底、悬停红底白字） */
     .modal-share-x {
@@ -1072,7 +1073,7 @@
     }
     /* 移动端：与资源页 @media(max-width:600px) 弹窗适配逐项一致 */
     @media (max-width: 600px) {
-      #previewMask > .modal-box { max-width: 100%; max-height: 92vh; max-height: 92dvh; /* R159 */ border-radius: var(--radius-btn,10px); }
+      #previewMask > .modal-box { max-width: 100%; max-height: 88vh; max-height: 88dvh; /* R159；v404 条14：92→88 三页统一 */ border-radius: var(--radius-btn,10px); }
       #previewMask .preview-cover { width: calc(100% - 24px); margin: 12px auto 0; } /* R280 ①：移动端只调边距，框高沿用 min(48vh,400px) 定值 */
       #previewMask .preview-body { padding: 12px 16px 16px; }
       #previewMask .preview-title { font-size: 18px; }
@@ -1425,10 +1426,10 @@
     .cat-row .select-picker .cpd-arrow { width: 14px; height: 14px; }
     .ann-item .select-picker .cat-picker-display { width: auto; min-height: 0; border: 1px solid var(--border); border-radius: var(--r-m); padding: 4px 12px; font-size: 13px; color: var(--text-light); }
     .ann-item .select-picker .cpd-arrow { width: 14px; height: 14px; }
-    .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { max-height: 84vh; max-height: 84dvh; /* R159 */ display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
+    .modal-mask#annMask > .modal-box, .modal-mask#editMask > .modal-box, .modal-mask#variantMask > .modal-box { max-height: 88vh; max-height: 88dvh; /* R159；v404 条14：84→88 三页统一 */ display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
     .modal-mask#annMask > .modal-box .modal-title, .modal-mask#editMask > .modal-box .modal-title, .modal-mask#variantMask > .modal-box .modal-title, .modal-mask#annMask > .modal-box .modal-footer, .modal-mask#editMask > .modal-box .modal-footer, .modal-mask#variantMask > .modal-box .modal-footer { flex-shrink: 0; width: 100% !important; }
     .modal-mask#annMask > .modal-box .form, .modal-mask#editMask > .modal-box .form, .modal-mask#variantMask > .modal-box .form { flex: 1; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ min-height: 0; margin-right: -20px; padding-right: 20px; padding-bottom: 8px; /* R159：最后字段底部留呼吸空间，不再贴边像被裁 */ }
-    .modal-mask#catMask > .modal-box { max-height: 84vh; max-height: 84dvh; /* R159 */ display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
+    .modal-mask#catMask > .modal-box { max-height: 88vh; max-height: 88dvh; /* R159；v404 条14：84→88 三页统一 */ display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; }
     .modal-mask#catMask > .modal-box .form { flex: 1; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ min-height: 0; margin-right: -20px; padding-right: 20px; padding-bottom: 8px; /* R159 */ }
     .cat-row { animation: rowIn var(--dur-mid) ease; }
     #productList, #catList { transition: opacity var(--dur-fast) ease; }
@@ -1519,6 +1520,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
        桌面首行中心=27px（padding12+按键半高15）→ top 15px；保持 right:8 + 行 padding-right:36（列对齐依赖统一预留） */
     .cat-row, .ann-item { position: relative; padding-right: 36px; } /* v381 条1：公告项同款右缘三角位 */
     .cat-row .cat-fold, .ann-item .cat-fold { position: absolute; right: 8px; top: 15px; transform: none; margin-left: 0; }
+    /* v402 条9：cat-fold 桌面档补齐——原尺寸/居中/旋转三件套只写在 ≤600 媒体查询里，桌面三角零宽不可点且不转（老板实测命中）；
+       现提升为全宽规则（手机档继承，仅 top 偏移留在媒体查询） */
+    .cat-fold { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
+    .cat-fold .toggle-arrow { transform: rotate(-90deg); transition: transform var(--dur-mid) var(--ease-out); } /* 收起=朝右（全站约定） */
+    .cat-row.cat-open .cat-fold .toggle-arrow, .ann-item.cat-open .cat-fold .toggle-arrow { transform: rotate(0deg); } /* 展开=朝下 */
     /* v368 条6：绑定一组不换行（类型行/公告项） */
     .v-group { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
     .variant-item .v-main-group { flex: 1 1 auto; gap: 10px; min-width: 0; }
@@ -1531,8 +1537,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .ann-item { flex-wrap: wrap; } /* 允许操作组下拉成第二行（组内仍 nowrap 铁律不拆） */
     .ann-item .ann-act-group.c-meta { flex: 1 1 100%; gap: 8px; justify-content: flex-start; padding: 0 0 0 28px; box-sizing: border-box; margin-left: 0;
       max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; visibility: hidden; /* v385：收起态不可命中（同 info-panel 口径） */
-      transition: max-height var(--dur-mid) var(--ease-out, ease), opacity var(--dur-mid) var(--ease-out, ease), margin-top var(--dur-mid) var(--ease-out, ease), visibility 0s var(--dur-mid); }
-    .ann-item.cat-open .ann-act-group.c-meta { max-height: 48px; opacity: 1; margin-top: 6px; visibility: visible; transition: max-height var(--dur-mid) var(--ease-out, ease), opacity var(--dur-mid) var(--ease-out, ease), margin-top var(--dur-mid) var(--ease-out, ease), visibility 0s; }
+      transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), margin-top var(--dur-mid) var(--ease-out), visibility 0s var(--dur-mid); }
+    .ann-item.cat-open .ann-act-group.c-meta { max-height: 48px; opacity: 1; margin-top: 6px; visibility: visible; transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), margin-top var(--dur-mid) var(--ease-out), visibility 0s; }
     .ann-item .c-meta .row-btn { flex: 1 1 0; min-width: 0; justify-content: center; } /* 行内两键等分 */
     .ann-item .ann-title-input { flex: 1 1 auto; min-width: 0; width: auto; } /* 名称框吃满首行剩余宽 */
     /* v368 条4：类型行信息等分铺满一行 */
@@ -1557,9 +1563,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
        排序/资源数/状态/编辑/删除在任何状态、任何行都纵向对齐（一级对一级、二级对二级） */
   .cat-row .c-meta .row-btn, .ann-item .c-meta .row-btn { visibility: hidden; opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); }
   .cat-row.cat-open .c-meta .row-btn, .ann-item.cat-open .c-meta .row-btn { visibility: visible; opacity: 1; }
-  .cat-fold { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: auto; }
-  .cat-fold .toggle-arrow { transform: rotate(-90deg); transition: transform var(--dur-mid) var(--ease-out);  }
-  .cat-row.cat-open .cat-fold .toggle-arrow, .ann-item.cat-open .cat-fold .toggle-arrow { transform: rotate(0deg); }
+  /* v402 条9：此处的 .cat-fold 尺寸/居中/旋转三行已提升为桌面层全宽规则（本块只留手机档差异），避免双份漂移 */
   .cat-row .c-meta .row-btn, .ann-item .c-meta .row-btn { animation: catBtnIn var(--dur-fast) var(--ease-out); } /* v361 条3：展开淡入 */
   @keyframes catBtnIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -1829,7 +1833,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   /* R231 条14（老板修正 09-21）：缩略图/编辑预览 hover 1.05 微放大（与资源页商品卡同口径） */
   .product-row .thumb, .img-preview { transition: transform var(--dur-mid) var(--ease-out); }
   .stat-toggle:hover { color: var(--blue1); } /* R285 条49：悬停统一深蓝（与资源页一致） */
-  .modal-close-x:hover { background: var(--red, #ff4444); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
+  /* v400 条4：--red 版 .modal-close-x:hover（R231 条7）已删——被 ui-common × 唯一源 !important 压死的死代码 */
   .modal-share-x:hover { background: var(--blue1); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
   .dt-pop .dt-btns button:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
   .modal-footer .preview-btn:hover { background: var(--blue1); color: #fff; transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
@@ -1875,34 +1879,15 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* A2-①：公告列表骨架 */
 .ann-skel-item { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); pointer-events:none; }
 .ann-skel-item:last-child { border-bottom:none; }
-.ann-skel-line { height:14px; border-radius: var(--r-s); background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.ann-skel-line.w60 { width:60%; }
-.ann-skel-line.w30 { width:30%; }
+/* v400 条6：.ann-skel-line/.ann-skel-tab/.ann-skeleton 容器与减少动效副本已收归 ui-common.css 唯一源 */
 
 /* v302（用户 10-05 00:09）：统计卡片骨架与柱状图骨架已删除，样式一并清理 */
 
-/* A2-③：预览弹窗骨架 */
+/* A2-③：预览弹窗骨架（条形骨架走 ui-common 唯一源，此处只留本页 margin/宽度真差异） */
 .preview-skeleton { padding:16px 20px; pointer-events:none; }
-.preview-skeleton .pv-skel-title { height:20px; width:70%; border-radius: var(--r-s); margin-bottom:8px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.preview-skeleton .pv-skel-price { height:16px; width:30%; border-radius: var(--r-s); margin-bottom:12px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.preview-skeleton .pv-skel-desc { height:12px; width:95%; border-radius: var(--r-s); margin-bottom:8px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
+.preview-skeleton .pv-skel-price { margin-bottom:12px; } /* 原 12px（ui-common 基础 8px），原样保留 */
+.preview-skeleton .pv-skel-desc { margin-bottom:8px; } /* 原 8px（ui-common 基础 4px），原样保留 */
 .preview-skeleton .pv-skel-desc.w80 { width:80%; }
-
-/* A2-④：公告弹窗骨架 */
-.ann-skeleton { padding:16px 20px; pointer-events:none; }
-.ann-skeleton .ann-skel-tab { height:18px; width:50px; border-radius: var(--r-s); margin-bottom:12px; background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.ann-skeleton .ann-skel-body { display:flex; flex-direction:column; gap:8px; }
-.ann-skeleton .ann-skel-line { height:14px; border-radius: var(--r-s); background:linear-gradient(90deg, var(--bg-light,#f5f7fa) 55%, var(--sk-hi,#e8eaef) 75%, var(--bg-light,#f5f7fa) 95%); background-size:200% 100%; animation:skShimmer 1.6s linear infinite; }
-.ann-skeleton .ann-skel-line.w80 { width:80%; }
-.ann-skeleton .ann-skel-line.w60 { width:60%; }
-
-/* 减少动态效果 */
-@media (prefers-reduced-motion: reduce) {
-  .ann-skel-line, .preview-skeleton .pv-skel-title, .preview-skeleton .pv-skel-price,
-  .preview-skeleton .pv-skel-desc, .ann-skeleton .ann-skel-tab, .ann-skeleton .ann-skel-line {
-    animation:skPulse 1.2s ease-in-out infinite; background:var(--bg-light,#f5f7fa); background-size:auto;
-  }
-}
 
 /* ---------- R256：封面多图轮播样式 ---------- */
 
@@ -2126,7 +2111,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
      不再整行下拉。分类行保持两行网格（v370b 已确认口径）。 */
   .cat-row .c-meta { flex: 1 1 100%; gap: 8px; justify-content: flex-start; padding: 0 0 0 28px; box-sizing: border-box;
     max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
-    transition: max-height var(--dur-mid) var(--ease-out, ease), opacity var(--dur-mid) var(--ease-out, ease), margin-top var(--dur-mid) var(--ease-out, ease); }
+    transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), margin-top var(--dur-mid) var(--ease-out); }
   .cat-row.cat-open .c-meta { max-height: 48px; opacity: 1; margin-top: 6px; }
   .cat-row .c-meta > *:first-child { min-width: 0 !important; }
   .cat-row .c-meta .row-btn { visibility: visible; opacity: 1; transition: none; min-width: 0; padding: 4px 12px; font-size: 12px; }
@@ -2180,11 +2165,11 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .info-row-bar { display: flex; align-items: center; gap: 8px; }
 .info-row-bar .btn-green, .info-row-bar .btn-blue, .info-row-bar .btn-cyan { margin-bottom: 0; flex: 1 1 auto; min-width: 0; text-align: center; }
 .info-fold { width: 32px; height: 32px; flex: 0 0 32px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
-.info-fold .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid, var(--dur-slow,.28s)) var(--ease-out, ease); transform: rotate(-90deg); } /* v389-5：统一全站三角约定——收起朝右/展开朝下（原 180° 朝上违反统一款） */
+.info-fold .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid) var(--ease-out); transform: rotate(-90deg); } /* v389-5：统一全站三角约定——收起朝右/展开朝下（原 180° 朝上违反统一款） */
 .info-item.open .info-fold .toggle-arrow { transform: rotate(0deg); }
 /* 展开面板：统一 max-height 过渡 */
-.info-panel { overflow: hidden; max-height: 0; opacity: 0; visibility: hidden; /* v385：收起态不可命中（A6b 死键扫描：max-height:0 裁剪下子键仍占布局 rect 被 elementFromPoint 误判） */ transition: max-height var(--dur-mid, var(--dur-slow,.28s)) var(--ease-out, ease), opacity var(--dur-mid, var(--dur-slow,.28s)) var(--ease-out, ease), margin var(--dur-mid, var(--dur-slow,.28s)) var(--ease-out, ease), visibility 0s var(--dur-mid, var(--dur-slow,.28s)); margin-top: 0; }
-.info-item.open .info-panel { max-height: 560px; opacity: 1; visibility: visible; transition: max-height var(--dur-mid, var(--dur-slow,.28s)) var(--ease-out, ease), opacity var(--dur-mid, var(--dur-slow,.28s)) var(--ease-out, ease), margin var(--dur-mid, var(--dur-slow,.28s)) var(--ease-out, ease), visibility 0s; }
+.info-panel { overflow: hidden; max-height: 0; opacity: 0; visibility: hidden; /* v385：收起态不可命中（A6b 死键扫描：max-height:0 裁剪下子键仍占布局 rect 被 elementFromPoint 误判） */ transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), margin var(--dur-mid) var(--ease-out), visibility 0s var(--dur-mid); margin-top: 0; }
+.info-item.open .info-panel { max-height: 560px; opacity: 1; visibility: visible; transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), margin var(--dur-mid) var(--ease-out), visibility 0s; }
 /* 二维码区：132px 方框；有图=图+右上角×；无图=复用 .cg-add（只有＋号） */
 .info-qr-box { position: relative; width: 132px; height: 132px; margin: 12px auto 0; /* v389-8：与上方键行保持间距 */ border-radius: var(--r-m); overflow: hidden; background: var(--bg-light,#f5f7fa); }
 /* v385 条11：编辑资源弹窗内复用 info 行结构——块级独占一行（表单是纵向流，无需 grid 修正），宽度吃满 */
