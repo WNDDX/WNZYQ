@@ -1799,13 +1799,15 @@
         var tg = Array.prototype.find.call(document.querySelectorAll('.category-tag'), function (t) { return (t.textContent || '').trim() === (DATA.categories.find(function (c) { return Number(c.id) === tgt.id; }) || {}).name; });
         if (tg) tg.click();
       } else {
-        var topName = (DATA.categories.find(function (c) { return Number(c.id) === tgt.parent; }) || {}).name;
-        var topTag = Array.prototype.find.call(document.querySelectorAll('.category-tag'), function (t) { return (t.textContent || '').trim() === topName; });
-        var doSub = function () {
-          var st = Array.prototype.find.call(document.querySelectorAll('.sub-category-tag'), function (t) { var cn = (DATA.categories.find(function (c) { return Number(c.id) === tgt.id; }) || {}).name; return (t.textContent || '').trim() === cn; });
-          if (st) st.click(); else { var all = document.querySelector('.sub-category-tag'); if (all) all.click(); }
-        };
-        if (topTag && !topTag.classList.contains('active')) { topTag.click(); setTimeout(doSub, 320); } else doSub();
+        /* v406：滑切落子分类改「直达」——原实现先点一级分类（先落其「全部」视图）再延时 320ms 点最后一个子分类，
+           老板复检实拍「先闪全部、再跳到该一级分类下最后一个分类」就是这个两段式造成的 */
+        currentCat = Number(tgt.parent);
+        currentSubCat = Number(tgt.id);
+        currentPage = 1;
+        try { localStorage.setItem('wnzyq_shop_category', String(currentCat)); } catch (e) { if (window.__silent) window.__silent(e); }
+        renderCategories();
+        renderSubCategories();
+        __fadeRenderProducts();
       }
     };
     /* v369 条4：滑切跟手版（双面板）——拖动时旧列表跟手、邻居分类画面从旁边跟进来；

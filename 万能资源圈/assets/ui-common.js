@@ -1603,7 +1603,7 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) { on = false; return; }
     /* v381 条4：同 __followSwipe——真机 touchmove 不 preventDefault 会被浏览器滚动接管并 touchcancel 夭折 */
     if (Math.abs(mx) >= 10 && Math.abs(mx) >= Math.abs(my) * 1.5) e.preventDefault();
-    if (Math.abs(mx) >= 60 && Math.abs(mx) > Math.abs(my) * 2) { on = false; onSwipe(mx < 0 ? 1 : -1); }
+    if (Math.abs(mx) >= 48 && Math.abs(mx) > Math.abs(my) * 1.5) { on = false; onSwipe(mx < 0 ? 1 : -1); } /* v406：60px/2倍 → 48px/1.5倍（真机斜滑友好，与跟手滑切同口径） */
   }, { passive: false });
   el.addEventListener('touchend', function (e) {
     if (!on) return; on = false;
@@ -1669,7 +1669,10 @@ window.__followSwipe = function (opts) {
     try {
       if (S.panel && S_saved) {
         S.panel.style.cssText = S_saved.css;
-        S_saved.parent.insertBefore(S.panel, S_saved.next || null);
+        /* v408 修：cb 先行时 renderProducts 会删掉旧分页器（S_saved.next 可能已失联），
+           引用节点失效会让 insertBefore 抛异常、网格永远回不了家——引用不在原父容器里就改为直接 append */
+        var _sp = S_saved.parent, _sn = S_saved.next;
+        if (_sn && _sn.parentNode === _sp) _sp.insertBefore(S.panel, _sn); else _sp.appendChild(S.panel);
       }
     } catch (e) { if (window.__silent) window.__silent(e); }
     try { if (S.stage && S.stage.parentNode) S.stage.parentNode.removeChild(S.stage); } catch (e) {}
@@ -1701,7 +1704,7 @@ window.__followSwipe = function (opts) {
     document.body.appendChild(stage);
     window.__fsJustSwiped = true; /* v370 条7：拖过就拦本次误点击 */
     clearTimeout(window.__fsSwipeClr); window.__fsSwipeClr = setTimeout(function () { window.__fsJustSwiped = false; }, 450);
-    S = { dir: dir, panel: panel, stage: stage, pA: pA, pB: pB, w: r.width, nb: nb, off: 0, vx: 0, lx: 0, lt: 0 };
+    S = { dir: dir, panel: panel, stage: stage, pA: pA, pB: pB, w: r.width, nb: nb, off: 0, vx: 0, lx: 0, lt: 0, t0: Date.now() }; /* v406：记手势起点时刻——快甩事件稀疏时用全程速度兜底判定 */
     if (nb && opts.fill) {
       /* v371：邻居画面延后一帧再填——首帧先保证当前画面跟手零卡顿 */
       requestAnimationFrame(function () {
@@ -1744,7 +1747,13 @@ window.__followSwipe = function (opts) {
       S.pB.style.transition = _slide;
       S.pB.style.transform = 'translateX(0)';
     }
-    setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 335);
+    setTimeout(function () {
+      var d = S ? S.dir : 0;
+      /* v408 条10：先执行切换（真实面板在舞台里就地接收新内容），隔两帧再撤舞台——
+         原顺序是「先撤舞台再切换」，中间会漏出一帧旧画面（=「滑完还一瞬间存在上一个画面」） */
+      if (cb) { window.__fsJustSwiped = false; try { cb(d); } catch (e) { if (window.__silent) window.__silent(e); } }
+      requestAnimationFrame(function () { requestAnimationFrame(function () { cleanup(); }); });
+    }, 335);
   }
   document.addEventListener('touchstart', function (e) {
     if (S) return;
@@ -1764,7 +1773,10 @@ window.__followSwipe = function (opts) {
       /* v381 条4：真机上 touchmove 若不 preventDefault，手指稍有纵向漂移浏览器就接管滚动并 fire touchcancel，
          手势当场夭折（表现=「滑不动/画面不变化」）。横向意图明确（≥10px 且横向≥纵向1.5倍）即锁定滚动。 */
       if (Math.abs(dx) >= 10 && Math.abs(dx) >= Math.abs(dy) * 1.5) e.preventDefault();
-      if (Math.abs(dx) >= 26 && Math.abs(dx) > Math.abs(dy) * 2) { armed = false; startDrag(dx < 0 ? 1 : -1); if (S) { S.lx = x; S.lt = Date.now(); apply(dx); } } /* v370 条7：26px/2 倍——原 18px 太敏感，轻扫就抽走画面还吞点击 */
+      /* v370 条7：26px/2 倍——原 18px 太敏感，轻扫就抽走画面还吞点击。
+         v406：pan-y 收权后横向已归手势，起步门槛放宽（26px/2倍 → 20px/1.2倍）——
+         真机斜着滑一点不再被判成滚动而夭折（「全部滑不动」的帮凶之一） */
+      if (Math.abs(dx) >= 20 && Math.abs(dx) > Math.abs(dy) * 1.2) { armed = false; startDrag(dx < 0 ? 1 : -1); if (S) { S.lx = x; S.lt = Date.now(); apply(dx); } }
       return;
     }
     e.preventDefault(); /* v381 条4：拖动中锁滚动，防浏览器接管后 touchcancel 打断跟手 */
@@ -1775,8 +1787,11 @@ window.__followSwipe = function (opts) {
   }, { passive: false });
   document.addEventListener('touchend', function () {
     if (!S) { armed = false; return; }
-    /* 快速一甩=沿滑动方向位移（dir=1 左滑时 off 为负）→ off*dir<0 才算同向 */
-    var commit = S.nb && ((Math.abs(S.off) > S.w * 0.25) || (Math.abs(S.vx) > 0.5 && S.off * S.dir < 0 && Math.abs(S.off) > 8));
+    /* 快速一甩=沿滑动方向位移（dir=1 左滑时 off 为负）→ off*dir<0 才算同向。
+       v406：真机快甩的 touchmove 事件可能很稀疏（逐帧速度 S.vx 采不到），
+       补全程速度兜底（位移/总时长）——甩得够快就切，不再「甩了又弹回」。 */
+    var _vAll = Math.abs(S.off) / Math.max(1, Date.now() - S.t0);
+    var commit = S.nb && ((Math.abs(S.off) > S.w * 0.2) || (S.off * S.dir < 0 && Math.abs(S.off) > 8 && (Math.abs(S.vx) > 0.4 || _vAll > 0.25)));
     settle(commit ? -S.dir * S.w : 0, commit ? function (d) { opts.commit(d); } : null);
   }, { passive: true });
   document.addEventListener('touchcancel', function () {

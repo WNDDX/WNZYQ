@@ -208,7 +208,7 @@
     .tabs { display: flex; gap: 4px; flex: 1; }
     /* v326：管理页 Tab 改「下划线指示器」——后台专业语言（激活项白色下划线 + 半透明悬停底）。
        仅作用于 .tabs 导航组，不影响资源页顶栏的咨询客服/分享按钮（它们在 .topbar-actions 里）。 */
-    .tabs .tab { border-radius: var(--r-pill); position: relative; } /* v405 条5：页签恢复全站 .tab 胶囊（原透明底+8px 方角=「方的」，与资源页顶栏/退出键不一致）；底色走 ui-common .tab 基础 0.18 半透明白 */
+    .tabs .tab { background: transparent; border-radius: var(--r-m); position: relative; } /* v406 回退：v405 给页签套的半透明白胶囊在蓝底上像「每个字多了个框」（老板复检指出）——管理页页签恢复 v326 下划线指示器设计（透明底+白色滑线），「跟其他键一致」的诉求只针对信息键（已另修） */
     .tabs .tab:active { background: rgba(255,255,255,0.18); transform: none; }
     .tabs .tab.active { background: transparent; color: #fff; }
     /* v370b 条3：选中标签的下划线改为真实滑线（.tabs-line）——切换/跟手拖动时它从当前标签滑向目标，
@@ -390,8 +390,8 @@
     .p-ops .select-picker.code-picker { margin: 0; width: auto; align-self: auto; }
     .p-ops .select-picker.code-picker .cat-picker-display { height: 100%; box-sizing: border-box; }
     /* R131 补：cpd-arrow 原 16px 高 vs 文字行盒 15.6px(13px*1.2)，把按键撑高 0.4px——
-       改为随字号的行高 1.2em，使资源码按键内容高与纯文字 row-btn 完全一致（桌面实测 29.594=29.594） */
-    .p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { height: 1.2em; width: 1.2em; }
+       v407：老板复检「三角根本没统一」——此特批 1.2em(≈16px) 就是漏网那颗，撤特批回归全站 20px（flex 居中吸收高差） */
+    .p-ops .select-picker.code-picker .cat-picker-display .cpd-arrow { height: 20px; width: 20px; }
     /* R138（用户 18:15 回退 R134 ①）：箭头 path 已恢复原样（M7 10l5 5 5-5z）——
        R134 把下三角换成饱满 path 是对「图标调大」的误解（用户指的实为浏览器 favicon，见 R140）；
        下方 space-between（R134 ②两端对齐）与 1.2em 容器等高（R131 补）均保留 */
