@@ -1853,11 +1853,14 @@
         jumpUrl = ((inp && inp.value) || '').trim() || (window.__infoSettings[c.urlKey] || '') || c.defUrl;
       }
       if (window.openContactModal) {
-        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title });
+        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title, linkText: jumpUrl || '' }); /* v405 条13：实时显示当前跳转链接（无链接=显示空态行隐藏） */
         if (window.__haptic) window.__haptic();
       }
     }
     (function __infoInit() {
+      /* v405 条7：编辑资源弹窗里的「咨询客服」键此前无任何绑定=死键——接上与设置信息预览同一入口 */
+      var edContact = document.getElementById('edContactBtn');
+      if (edContact) edContact.addEventListener('click', function () { __infoPreview('contact'); });
       /* v402 条7：原 infoPvMask 本地预览弹窗的关闭接线/遮罩点击随结构删除（kf-box 唯一源自带） */
       var open = document.getElementById('openInfoBtn');
       if (open) open.addEventListener('click', function () {

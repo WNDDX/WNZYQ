@@ -505,6 +505,7 @@
       line-height: 1.4;
       letter-spacing:var(--ls-btn,0.8px); /* v356 条8：弹窗标题字距统一 1px（原 1.2px 是按钮档） */
       padding-right: 36px;
+      text-align: left; /* v405 条8b：资源详情标题靠左（原继承弹窗居中，换行后第二行也居中很难看） */
     }
     /* v360 条3：上/下一条箭头按键已移除（只保留滑动） */
     .modal-price {
@@ -1108,11 +1109,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 /* v347：最近看过——形态与分类栏一致（左右滑动 + 右侧三角展开收起），位于两个分类栏之下、资源列表之上 */
 .recent-bar-wrap { position: relative; max-width: 1200px; margin: 0 auto 3px; padding: 0 16px; } /* v375：下距资源顶 3px（+栏 padding-bottom 4 = 7px，与上距 7px 对称） */
-.recent-bar { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; padding-top: 2px; /* v375：与二级分类按键边界空隙=4+3=7px 对称 */ overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; scrollbar-width: none; padding: 4px 28px 4px 0; }
+.recent-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: nowrap; padding-top: 2px; /* v405 条11：align-items 改 flex-start——多行换行后「最近浏览」标签钉在第一行，不再垂直居中漂移 */ overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; scrollbar-width: none; padding: 4px 28px 4px 0; transition: max-height var(--dur-mid) var(--ease-out); overflow-y: hidden; } /* v405 条12：展开/收起走 max-height 过渡（JS 设定行高），与全站三角动画同一时长曲线 */
 .recent-bar::-webkit-scrollbar { display: none; }
 .recent-bar.expanded { flex-wrap: wrap; overflow: visible; padding-bottom: 8px; }
 .recent-bar.expanded .recent-chip { margin-bottom: 4px; }
-.recent-title { flex: none; font-size: 12px; color: var(--text-faint); }
+.recent-title { flex: none; font-size: 12px; color: var(--text-faint); line-height: 26px; } /* v405 条11：行高钉住芯片档，单行/多行都停在第一行 */
 .recent-chip { flex: none; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); border-radius: var(--r-pill); padding: 4px 12px; font-size: 12px; cursor: pointer; }
 .recent-chip:hover { border-color: var(--blue2); color: var(--blue1); }
 .recent-toggle { position: absolute; right: 22px; top: 4px; transform: none; /* v371 条1：钉第一行竖直中心 */ width: 28px; height: 28px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 95; padding: 0; transition: color var(--dur-mid) ease; }

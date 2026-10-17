@@ -392,7 +392,7 @@
         this.src = IMG_PLACEHOLDER; if (this && this.classList) { this.classList.add('media-fail'); this.classList.remove('m-loading'); } this.style.opacity = '1';
         this.style.display = 'block';
       };
-      img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); if (!window.__swipeCommitting) this.classList.add('img-in'); }; /* v375：滑切提交期图片直接落定不播入场（防闪动） */ /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
+      img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); if (!window.__swipeCommitting && !window.__fastNav) this.classList.add('img-in'); }; /* v405b 条14-C：秒出导航不播图片入场 */ /* v375：滑切提交期图片直接落定不播入场（防闪动） */ /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
       if (img.classList && img.classList.contains('modal-cover')) img.classList.add('m-loading'); /* R215 条9：封面加载期固定 16:9 居中槽，首帧不再靠左 */
       img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
       /* R280（老板 09-28 00:35 ①）：封面改固定展示框（CSS 定宽高 + contain）——框尺寸恒定，
@@ -800,12 +800,14 @@
           __flushPendingSearch();
         }).catch(function () {
           renderProducts();
+          setTimeout(function () { window.__fastNav = false; }, 800);
           __pageTurning = false;
           try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) { if (window.__silent) window.__silent(e2); } }
           __flushPendingSearch();
         });
       } else {
         renderProducts();
+        setTimeout(function () { window.__fastNav = false; }, 800);
         __pageTurning = false;
         try { window.scrollTo({ top: 0, behavior: 'auto' }) /* v336 条149：翻页瞬时回顶 */; } catch (e) { try { window.scrollTo(0, 0); } catch (e2) { if (window.__silent) window.__silent(e2); } }
         __flushPendingSearch();
@@ -822,12 +824,21 @@
       }
       __pageTurning = true;
       if (cb) cb();
+      /* v405b 条14-B：双缓冲判缓——目标筛选已有缓存（点选过的分类/翻页回访）时，
+         数据是即时就绪的，「压暗→骨架→填充」三段式纯属多余闪动：跳过压暗、跳过入场动画，
+         数据秒出直接原子替换。仅真网络等待时才播换场反馈。 */
+      var _hit = false;
+      try {
+        var _k0 = __cacheKey(currentPage, currentCat, currentSubCat, (searchInput.value || '').trim());
+        _hit = !!(__pageCache[_k0] && __pageCache[_k0].products);
+      } catch (e0) { if (window.__silent) window.__silent(e0); }
+      window.__fastNav = _hit; /* C：本次为「秒出导航」——图片/卡片入场动画一并静默（防闪动） */
       if (usingRemote && DATA._backendPaged) {
         /* v330 条20：换场反馈——旧内容降到 60% 透明且不可点，明确告诉用户"正在换"，不再像卡住 */
         var _grid = document.getElementById('productGrid');
         var _oldPager = document.getElementById('pager');
-        if (_grid) _grid.classList.add('is-switching');
-        if (_oldPager) _oldPager.classList.add('is-switching');
+        if (_grid && !_hit) _grid.classList.add('is-switching');
+        if (_oldPager && !_hit) _oldPager.classList.add('is-switching');
         var _clearSwitch = function () {
           if (_grid) _grid.classList.remove('is-switching');
           if (_oldPager) _oldPager.classList.remove('is-switching');
@@ -839,6 +850,7 @@
           kw: (searchInput.value || '').trim()
         }).then(function (res) {
           _clearSwitch();
+          setTimeout(function () { window.__fastNav = false; }, 800); /* v405b：宽限慢图 onload */
           if (!(res && res.stale)) renderProducts(); /* v363 条1：过期换场响应不渲染（用户已切到别的筛选） */
           var _pg = document.getElementById('productGrid');
           if (_pg && window.__barDir) { _pg.classList.remove('swap-next', 'swap-prev'); void _pg.offsetWidth; _pg.classList.add(window.__barDir < 0 ? 'swap-prev' : 'swap-next'); setTimeout(function () { _pg.classList.remove('swap-next', 'swap-prev'); }, 300); window.__barDir = 0; } /* v368 条10：列表方向滑入 */
@@ -1082,7 +1094,7 @@
       var frag = document.createDocumentFragment();
       pageList.forEach(function (p, i) {
         var card = buildProductCard(p);
-        if (!window.__shopPainted && !window.__swipeCommitting) { /* v357：错峰只播一次；v375：滑切提交期也不播 */
+        if (!window.__shopPainted && !window.__swipeCommitting && !window.__fastNav) { /* v357：错峰只播一次；v375：滑切提交期也不播 */
           card.classList.add('stagger-in'); /* R192 二②；R211 二批（用户 09-20）：错峰 30ms 递升改 20ms/项、180ms 封顶（长列表尾部不再越等越久） */
           card.style.animationDelay = Math.min(i * 20, 180) + 'ms';
         }
@@ -1090,6 +1102,16 @@
       });
       productGrid.replaceChildren(frag); /* v361 条1 + v380 条15：全部卡片先收进 DocumentFragment，再一次性原子替换，避免先 replaceChild 进 grid 的卡片被最后一步清掉 */
       window.__shopPainted = true; /* v357：首次绘制完成标记（其后切分类/筛选不再重播错峰动画；v380 补回：条15 重写时误删，导致 _stale 判定失效→滑切分类丢缓存） */
+      /* v405b 条14-A：每次落定后空闲预取左右邻居分类首屏数据（写缓存格不渲染）——点选/滑动到邻居都秒出，不再白等 */
+      clearTimeout(window.__idlePfT);
+      window.__idlePfT = setTimeout(function () {
+        try {
+          [1, -1].forEach(function (d) {
+            var nb = window.__catSeqTarget && window.__catSeqTarget(d);
+            if (nb && nb.type !== 'all') window.__peekCat(nb.type === 'top' ? nb.id : nb.parent, nb.type === 'sub' ? nb.id : 0);
+          });
+        } catch (e) { if (window.__silent) window.__silent(e); }
+      }, 1500);
 
       // 分页控件（R14：改用全站统一 .uni-pager 公共组件——与数据统计翻页同款胶囊样式 + 跳页输入；
       // 翻页后回顶改瞬时滚动，原先平滑滚动叠加图片加载会显得"卡一下"）
@@ -1185,6 +1207,15 @@
         tg.addEventListener('click', function () {
           var open = bar.classList.toggle('expanded');
           tg.classList.toggle('open', open);
+          /* v405 条11/12：展开/收起补高度动画（与全站三角 0.18s 同档）——「最近浏览」标签不再随换行跳动 */
+          try {
+            if (open) { bar.style.maxHeight = bar.scrollHeight + 'px'; setTimeout(function () { if (bar.classList.contains('expanded')) bar.style.maxHeight = 'none'; }, 200); }
+            else {
+              var _chip = bar.querySelector('.recent-chip, .recent-title');
+              var _line = (_chip ? _chip.offsetHeight : 26) + 8; /* 单行高=芯片高+上下 padding 4×2 */
+              bar.style.maxHeight = bar.scrollHeight + 'px'; void bar.offsetHeight; bar.style.maxHeight = _line + 'px';
+            }
+          } catch (e) { if (window.__silent) window.__silent(e); }
         });
       } catch (e) { if (window.__silent) window.__silent(e); }
     }

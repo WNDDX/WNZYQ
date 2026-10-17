@@ -208,7 +208,7 @@
     .tabs { display: flex; gap: 4px; flex: 1; }
     /* v326：管理页 Tab 改「下划线指示器」——后台专业语言（激活项白色下划线 + 半透明悬停底）。
        仅作用于 .tabs 导航组，不影响资源页顶栏的咨询客服/分享按钮（它们在 .topbar-actions 里）。 */
-    .tabs .tab { background: transparent; border-radius: var(--r-m); position: relative; }
+    .tabs .tab { border-radius: var(--r-pill); position: relative; } /* v405 条5：页签恢复全站 .tab 胶囊（原透明底+8px 方角=「方的」，与资源页顶栏/退出键不一致）；底色走 ui-common .tab 基础 0.18 半透明白 */
     .tabs .tab:active { background: rgba(255,255,255,0.18); transform: none; }
     .tabs .tab.active { background: transparent; color: #fff; }
     /* v370b 条3：选中标签的下划线改为真实滑线（.tabs-line）——切换/跟手拖动时它从当前标签滑向目标，
@@ -225,9 +225,9 @@
     /* 顶栏信息键：复用 .tab 键规格（与资源页公告键同一组），深色顶栏适配同 tabs 配色 */
     /* v389-16：设置行两字/四字键宽度收紧（内联 24px 内距统一压到 16px） */
     .setting-row .btn-blue, .setting-row button[class*="btn"] { padding-left: 16px !important; padding-right: 16px !important; }
-        .topbar-right .info-ct-btn { background: rgba(255,255,255,0.12); border-radius: var(--r-pill); position: relative; color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 16px; cursor: pointer; border: none; font-size: 14px; box-sizing: border-box; } /* v401 条10：与退出键统一——胶囊圆角+36px 键高（原 8px 方角+6px 12px 内距） */
+        .topbar-right .info-ct-btn { background: rgba(255,255,255,0.18); border-radius: var(--r-pill); position: relative; color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 16px; cursor: pointer; border: none; font-size: 14px; box-sizing: border-box; } /* v405 条5：底色 0.12→0.18 与 .tab/.logout-btn 完全同值（老板：其他键一直白、信息键偏灰） */
     .topbar-right .info-ct-btn:active { background: var(--card-bg, #fff); color: var(--blue1); transform: scale(0.94); } /* v401 条10：按压缩小+变白蓝字（对齐退出键 :active 口径，原只加深底色） */
-     .topbar-right .info-ct-btn:hover { background: rgba(255,255,255,0.18); transform: none; filter: none; } /* v401 条10：悬停底色与退出键半透明白一致 */
+     .topbar-right .info-ct-btn:hover { background: rgba(255,255,255,0.26); transform: none; filter: none; } /* v405 条5：悬停提亮一档（对齐 .tab:hover brightness 观感） */
     .dot-badge { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: #ff4444; border:2px solid #fff; box-sizing: content-box; }
     /* 总统计四格 */
     .ct-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -736,7 +736,7 @@
     .cat-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
     .cat-picker-display .cpd-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cat-picker-display .cpd-text.placeholder { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ }
-    .cat-picker-display .cpd-arrow { width: 16px; height: 16px; color: var(--blue1); transition: transform var(--dur-mid) var(--ease-out), color var(--dur-mid) ease; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transform: rotate(-90deg);  }
+    .cat-picker-display .cpd-arrow { width: 20px; height: 20px; color: var(--blue1); transition: transform var(--dur-mid) var(--ease-out), color var(--dur-mid) ease; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transform: rotate(-90deg);  } /* v405b 条8/12：16→20 全站三角最终统一（含下拉小件档） */
 
     .cat-picker-display .cpd-arrow svg { width: 100%; height: 100%; display: block; }
     .cat-picker.open .cpd-arrow { transform: rotate(0deg); }

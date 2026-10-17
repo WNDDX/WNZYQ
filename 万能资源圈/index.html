@@ -73,8 +73,8 @@ body{
 .logo-box{
     display: block;
     text-decoration: none;
-    width: 150px;
-    height: 150px;
+    width: 100px; /* v405 条2：150→100 对齐错误页小版（老板拍板按小的那版为主） */
+    height: 100px; /* v405 条2：同上 */
     border-radius: 50%;
     margin: 0 auto;
     position: relative;
@@ -181,9 +181,10 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   .modal-tip { font-size: 14px; }
 }
 @media (min-width: 601px) and (max-width: 900px) {
-  .page-title { font-size: 32px; }
+  .page-title { font-size: 26px; } /* v405 条2：平板档 32→26 按小版为主 */
   .btn-item { font-size: 24px; }
 }
+.page-title { font-size: 26px; } /* v405 条2：桌面档 36→26，与错误页标题观感一致（老板拍板按小的那版为主） */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 </style>
   <!-- R55：搜索引擎收录策略 -->

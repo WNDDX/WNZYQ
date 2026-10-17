@@ -174,6 +174,7 @@ if ('serviceWorker' in navigator) {
         '<div class="kf-title" id="kfTitle">咨询客服</div>' +
         '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
         '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
+        '<div class="kf-link-line" id="kfLinkLine" style="display:none"></div>' + /* v405 条13：当前跳转链接实时显示（仅管理端预览传入时出现） */
         '<div class="kf-actions">' +
         '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
         '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
@@ -254,7 +255,15 @@ if ('serviceWorker' in navigator) {
     var btn = document.getElementById('kfJumpBtn');
     if (btn) {
       btn.style.display = btnText ? '' : 'none'; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
-      
+
+    }
+    /* v405 条13：当前跳转链接实时显示行（管理端设置信息预览传 opts.linkText；客户页不传=不显示） */
+    var linkEl = document.getElementById('kfLinkLine');
+    if (linkEl) {
+      var _lt = opts.linkText || '';
+      linkEl.textContent = _lt ? '链接：' + _lt : '';
+      linkEl.style.display = _lt ? '' : 'none';
+      linkEl.setAttribute('data-url', _lt ? (url || _lt) : '');
     }
     var mask = document.getElementById('kfMask');
     if (!mask.classList.contains('open')) {
@@ -1602,6 +1611,25 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
     onSwipe(dx < 0 ? 1 : -1);
   }, { passive: true });
+  /* ===== v405 条9：电脑端鼠标拖拽切图（此前只监听触摸，电脑上灯箱拖图无响应） ===== */
+  var lsx = 0, lsy = 0, lon = false;
+  el.addEventListener('mousedown', function (e) {
+    if (e.button !== 0) { lon = false; return; }
+    if (isActive && !isActive()) { lon = false; return; }
+    var t = e.target;
+    if (!t || !t.closest) return;
+    if (window.__swipeHardExclude && t.closest(window.__swipeHardExclude)) { lon = false; return; }
+    lsx = e.clientX; lsy = e.clientY; lon = true;
+    try { document.body.style.userSelect = 'none'; } catch (e2) {}
+  }, { passive: true });
+  el.addEventListener('mousemove', function (e) {
+    if (!lon) return;
+    var mx = e.clientX - lsx, my = e.clientY - lsy;
+    if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) { lon = false; return; }
+    if (Math.abs(mx) >= 60 && Math.abs(mx) > Math.abs(my) * 2) { lon = false; onSwipe(mx < 0 ? 1 : -1); }
+  }, { passive: true });
+  el.addEventListener('mouseup', function () { if (lon) { lon = false; try { document.body.style.userSelect = ''; } catch (e3) {} } }, { passive: true });
+  el.addEventListener('dragstart', function (e) { if (lon) e.preventDefault(); }); /* 拖图手势优先于浏览器原生拖图 */
 };
 
 /* ===== v369 条4：左右切换跟手版（双面板拖拽）=====
@@ -1635,6 +1663,7 @@ window.__followSwipe = function (opts) {
   }
   function cleanup() {
     if (!S) return;
+    try { document.body.style.userSelect = ''; } catch (e3) {} /* v405 条4：恢复文本选择 */
     try { if (opts.onEnd) opts.onEnd(); } catch (e) { if (window.__silent) window.__silent(e); }
     /* v371 条12：把真面板搬回原位（还原内联样式，内容/监听全在，无重挂载成本） */
     try {
@@ -1651,6 +1680,7 @@ window.__followSwipe = function (opts) {
     if (!panel || !panel.parentNode) return;
     var r = panel.getBoundingClientRect();
     if (r.width < 60 || r.height < 24) return; /* v401 条9：高度门槛 40→24——空分类/无货时网格只剩 24px 高，原门槛直接把滑切掐死（表现=「滑了但不切换」） */
+    try { document.body.style.userSelect = 'none'; } catch (e2) {} /* v405 条4：拖拽期间禁选中文本（鼠标路径必需） */
     var nb = opts.neighbor ? opts.neighbor(dir) : null;
     var cs = getComputedStyle(panel);
     var stage = document.createElement('div');
@@ -1664,7 +1694,8 @@ window.__followSwipe = function (opts) {
     var pB = null;
     if (nb) {
       pB = document.createElement('div');
-      pB.style.cssText = 'position:absolute;left:0;top:0;width:100%;will-change:transform;';
+      /* v405 条10：邻居面板垫同款不透明底——此前透明，提交切换时旧画面从底下透出来（「滑完还残留上一画面」的根因之一） */
+      pB.style.cssText = 'position:absolute;left:0;top:0;width:100%;will-change:transform;background:' + bgOf(panel) + ';';
       stage.appendChild(pB);
     }
     document.body.appendChild(stage);
@@ -1691,7 +1722,8 @@ window.__followSwipe = function (opts) {
     }
   }
   function settle(target, cb) {
-    if (!S) return;
+    if (!S || S.settled) return;
+    S.settled = true; /* v405b：touchend/touchcancel 可能先后到达，只结算一次 */
     var commiting = target !== 0;
     if (!commiting) {
       /* 弹回：两侧弹簧回位（v387 S4 体系：回程也带过冲，不再硬停） */
@@ -1702,14 +1734,14 @@ window.__followSwipe = function (opts) {
       setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 270);
       return;
     }
-    /* v387 S4 → v389-11：旧面板只位移停住，压暗改用纯色 dim 覆盖层（filter:brightness 整面板
-       是「滑切巨卡」的根因，GPU 上 filter 大面积实时计算太贵）；新面板照旧弹簧盖入 */
-    S.pA.style.transition = 'transform .32s cubic-bezier(.3,0,.2,1)';
-    S.pA.style.transform = 'translateX(' + S.off + 'px)';
-    if (!S.dim) { S.dim = document.createElement('div'); S.dim.className = 'wn-s4-dim'; S.stage.appendChild(S.dim); }
-    requestAnimationFrame(function () { if (S && S.dim) S.dim.classList.add('show'); });
+    /* v405 条9/10：提交=双面板同步滑出滑入（像原生翻页）——旧面板继续滑到全出、新面板同曲线滑到 0，
+       不再用「旧面板停住+新面板弹簧盖入」（那是「滑完还残留上一画面/观感生硬」的根因）。
+       曲线与全站滑切动画 sl-next/sl-prev 完全同款（0.32s cubic-bezier(.3,0,.2,1)，条9 统一）。 */
+    var _slide = 'transform .32s cubic-bezier(.3,0,.2,1)';
+    S.pA.style.transition = _slide;
+    S.pA.style.transform = 'translateX(' + (-S.dir * S.w) + 'px)';
     if (S.pB) {
-      S.pB.style.transition = 'transform .32s cubic-bezier(.34,1.56,.64,1)';
+      S.pB.style.transition = _slide;
       S.pB.style.transform = 'translateX(0)';
     }
     setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 335);
@@ -1747,7 +1779,40 @@ window.__followSwipe = function (opts) {
     var commit = S.nb && ((Math.abs(S.off) > S.w * 0.25) || (Math.abs(S.vx) > 0.5 && S.off * S.dir < 0 && Math.abs(S.off) > 8));
     settle(commit ? -S.dir * S.w : 0, commit ? function (d) { opts.commit(d); } : null);
   }, { passive: true });
-  document.addEventListener('touchcancel', function () { if (S) cleanup(); armed = false; }, { passive: true });
+  document.addEventListener('touchcancel', function () {
+    /* v405b 条4：取消不再直接销毁（画面瞬间弹回原地很生硬）——按松手处理走 settle 动画 */
+    if (!S) { armed = false; return; }
+    var commit = S.nb && ((Math.abs(S.off) > S.w * 0.25) || (Math.abs(S.vx) > 0.5 && S.off * S.dir < 0 && Math.abs(S.off) > 8));
+    settle(commit ? -S.dir * S.w : 0, commit ? function (d) { opts.commit(d); } : null);
+    armed = false;
+  }, { passive: true });
+  /* ===== v405 条4：电脑端鼠标拖拽（此前只监听触摸，电脑上按住拖=完全无响应，是「全部滑动失效」在 PC 的根因） ===== */
+  var mx0 = 0, my0 = 0, marmed = false, mdragging = false;
+  document.addEventListener('mousedown', function (e) {
+    if (e.button !== 0 || S) { marmed = false; return; }
+    if (opts.isActive && !opts.isActive()) { marmed = false; return; }
+    var t = e.target;
+    if (window.__swipeExclude && t.closest && t.closest(window.__swipeExclude)) { marmed = false; return; }
+    mx0 = e.clientX; my0 = e.clientY; marmed = true; mdragging = false;
+  }, { passive: true });
+  document.addEventListener('mousemove', function (e) {
+    if (mdragging && S) { e.preventDefault(); apply(e.clientX - mx0); return; } /* 拖拽中持续跟手 */
+    if (!marmed) return;
+    var dx = e.clientX - mx0, dy = e.clientY - my0;
+    if (Math.abs(dy) > 24 && Math.abs(dy) > Math.abs(dx)) { marmed = false; return; } /* 竖向=滚动/选择，退出 */
+    if (Math.abs(dx) >= 26 && Math.abs(dx) > Math.abs(dy) * 2) {
+      marmed = false; mdragging = true;
+      startDrag(dx < 0 ? 1 : -1);
+      if (S) apply(dx);
+    }
+  }, { passive: false });
+  document.addEventListener('mouseup', function () {
+    if (!mdragging) { marmed = false; return; }
+    mdragging = false; marmed = false;
+    if (!S) return;
+    var commit = S.nb && (Math.abs(S.off) > S.w * 0.25 || Math.abs(S.off) > 40); /* 鼠标精准，过 1/4 宽或 40px 即提交 */
+    settle(commit ? -S.dir * S.w : 0, commit ? function (d) { opts.commit(d); } : null);
+  }, { passive: true });
 };
 
 window.bindLightbox = function (root) {

@@ -147,6 +147,12 @@
 *::-webkit-scrollbar { width: 0; height: 0; display: none; }
 * { scrollbar-width: none;  }
 
+/* ===== v405b 条4：滑动面板触摸收权（「全部/有货分类滑不动」的手机根因） =====
+   整页可滚动时，浏览器原生滚动会在 JS 锁定横向意图之前接管触摸并 fire touchcancel，
+   滑切当场夭折——空分类页面短不可滚所以没事，有货分类/全部就「滑了闪一下又弹回」。
+   pan-y=竖向滚动照旧归浏览器，横向手势归 JS（跟手滑切），两者不再打架。 */
+.product-grid, #productGrid, .product-card, .modal-box, .ann-box, .variant-detail { touch-action: pan-y; }
+
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页：结构/尺寸/样式/动画一处定义全站生效） ===== */
 .kf-mask {
   position: fixed; inset: 0; background: var(--overlay-modal); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px;
@@ -162,11 +168,11 @@
 @keyframes kfBoxIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：客服弹窗卡片入场加展开（与关闭收缩对称） */
 .kf-title { font-size: 20px; /* R192 一①：弹窗标题全站统一 20px（手机档 18px 保持） */ color: var(--text); margin-bottom: 16px; letter-spacing:var(--ls-btn,0.8px); padding: 0 32px; text-align: center; }
 .kf-qr {
-  width: 250px; height: 250px; max-width: 100%; border: 1px solid var(--border);
+  width: 250px; height: 250px; max-width: 100%; border: none; /* v405 条1：二维码框边框整条去掉（老板：占位符看着有边框） */
   margin: 0 auto 12px; position: relative; display: flex; align-items: center;
   justify-content: center; border-radius: var(--r-l); background: var(--bg-light,#f5f7fa); /* R192 一②：二维码图框圆角对齐全站 12px（v356 条15：原 10px 与注释不符已修）；v400 深查：原块内 background 写了两遍（前一份无兜底被本份覆盖），留带兜底的一份 */
 }
-.kf-qr img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: var(--r-m); } /* R215 条7：圆角对齐交流群图片（.modal-qrcode 8px） */
+.kf-qr img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: var(--r-m); border: none; } /* R215 条7：圆角对齐交流群图片（.modal-qrcode 8px）；v405 条1：占位图不带任何边框 */
 .kf-qr img[src^="data:image/svg+xml"] { width: 100%; height: 100%; object-fit: contain !important; }
 /* 二维码统一出场动画（每次打开客服弹窗由 ui-common.js 重放，全站时序/动效完全一致） */
 @keyframes kfQrIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
@@ -329,6 +335,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   letter-spacing: var(--ls-btn) !important;
 }
 .kf-jump { width: auto !important; margin: 0 !important; }
+.kf-link-line { font-size: 12px; color: var(--text-faint,#999); word-break: break-all; overflow-wrap: anywhere; margin: -6px 0 10px; padding: 0 8px; text-align: center; } /* v405 条13：预览弹窗实时显示当前跳转链接（客户页不传=隐藏） */
 
 /* ===== 全站统一顶栏 tab 按键（唯一实现）=====
    资源页顶栏「咨询客服/分享」、管理页「资源管理/分类管理/数据统计/平台设置/退出」
@@ -901,6 +908,21 @@ img.qph { background: var(--bg-light,#f5f7fa); min-height: 120px; }
 /* v336 条216：错误原因列表 */
 .err-reasons { list-style: none; padding: 0; margin: 4px 0; }
 .err-reasons li { margin: 4px 0; }
+
+/* ===== v405 条6：富文本列表统一——圆点/数字序号一律收在内容框内左对齐 =====
+   （此前各容器无缩进规则，浏览器默认 marker 悬在框外，看起来「出格」。
+     覆盖全站所有富文本渲染容器：资源详情/公告正文/类型详情/后台编辑器与预览。） */
+.modal-detail ul, .modal-detail ol,
+.ann-body ul, .ann-body ol,
+.variant-detail ul, .variant-detail ol,
+.resource-content ul, .resource-content ol,
+.rte-editor ul, .rte-editor ol,
+.rte-body ul, .rte-body ol,
+.rte-content ul, .rte-content ol {
+  padding-left: 1.6em; margin: 6px 0;
+}
+.modal-detail li, .ann-body li, .variant-detail li, .resource-content li,
+.rte-editor li, .rte-body li, .rte-content li { margin: 3px 0; }
 
 /* v336 条203：表单控件边框加深到 3:1 可辨（装饰性分隔线保持浅色） */
 input, select, textarea { border-color: #a9b8c6; }
