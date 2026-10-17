@@ -327,6 +327,8 @@
       transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ;
     }
     .product-grid.grid-empty { min-height: 42vh; } /* v401 条9：空分类网格保最小高度——原塌缩 24px 高，滑切门槛过不去且空态页是一条细缝 */
+    /* v409 条1：空态模块上下左右居中（老板实拍偏下）——原在文档流里吊在网格下面，改显示时固定居中于视口 */
+    .empty-tip.show { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; width: max-content; max-width: 92vw; padding: 24px; }
 
     .card-img {
       width: 100%;
@@ -1109,6 +1111,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 /* v347：最近看过——形态与分类栏一致（左右滑动 + 右侧三角展开收起），位于两个分类栏之下、资源列表之上 */
 .recent-bar-wrap { position: relative; max-width: 1200px; margin: 0 auto 3px; padding: 0 16px; } /* v375：下距资源顶 3px（+栏 padding-bottom 4 = 7px，与上距 7px 对称） */
+.sub-category-bar-wrap { animation: subWrapIn var(--dur-mid) var(--ease-out); } /* v409 条6：二级分类栏出现/收起补全站展开动画（0.18s 淡入下滑），与各折叠面板一致 */
+@keyframes subWrapIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 .recent-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: nowrap; padding-top: 2px; /* v405 条11：align-items 改 flex-start——多行换行后「最近浏览」标签钉在第一行，不再垂直居中漂移 */ overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; scrollbar-width: none; padding: 4px 28px 4px 0; transition: max-height var(--dur-mid) var(--ease-out); overflow-y: hidden; } /* v405 条12：展开/收起走 max-height 过渡（JS 设定行高），与全站三角动画同一时长曲线 */
 .recent-bar::-webkit-scrollbar { display: none; }
 .recent-bar.expanded { flex-wrap: wrap; overflow: visible; padding-bottom: 8px; }

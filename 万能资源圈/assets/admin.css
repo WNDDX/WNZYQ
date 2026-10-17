@@ -122,6 +122,8 @@
       color: #fff; font-size: 16px; font-weight: 600;
       letter-spacing:var(--ls-head,1.2px); margin-bottom: 8px;
     }
+    /* v409 条7：「开着就亮」——设置信息/设置公告弹窗开着期间触发键保持白底蓝字（页签激活态同观感） */
+    .btn-blue.active { background: var(--card-bg, #fff) !important; color: var(--blue1) !important; }
     /* v384：admin 端补 .btn-green/.btn-cyan（与 .btn-blue 同键型仅换色；导航页原已定义，admin 此前缺） */
     .btn-green, .btn-cyan {
       width: 100%; height: 46px;
@@ -538,7 +540,7 @@
       
     }
     .stat-toggle.open .toggle-arrow { transform: rotate(0deg); /* 展开状态：箭头向下 */ }
-    .stat-wrap-body { display: grid; grid-template-rows: 1fr; overflow: hidden; transition: grid-template-rows var(--dur-switch) ease, opacity var(--dur-switch) ease; } /* R231 条3：display:none→grid 轨道过渡（零重排口径） */
+    .stat-wrap-body { display: grid; grid-template-rows: 1fr; overflow: hidden; transition: grid-template-rows var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out); } /* R231 条3：display:none→grid 轨道过渡（零重排口径）；v409 条6：--dur-switch 0.20s/ease→全站展开档 0.18s/ease-out（与三角/信息折叠一致） */
     .stat-wrap-body > .stat-body-inner { min-height: 0; }
     .stat-wrap-body.collapsed { grid-template-rows: 0fr; opacity: 0; }
     /* R14：统计翻页样式已并入全站公共 .uni-pager（ui-common.css），此处旧 .stat-pager 样式移除 */

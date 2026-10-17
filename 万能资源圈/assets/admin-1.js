@@ -11,6 +11,15 @@
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { var ae = document.activeElement; if (ae && (ae.id === 'loginUser' || ae.id === 'loginPass') && !window.__loginDirect && typeof doLogin === 'function') { try { doLogin(); } catch (err) { if (window.__silent) window.__silent(err); } } }
+      /* v409 条4：管理页弹窗统一接 Esc——此前管理页弹窗按 Esc 完全无反应（前台弹窗都支持，行为不一致）。
+         关最上层打开的弹窗：模拟点它的 ×（走 data-close 委托，草稿丢弃等分支原样生效） */
+      if (e.key === 'Escape') {
+        var _open = document.querySelectorAll('.modal-mask.open');
+        if (!_open.length) return;
+        var _top = _open[_open.length - 1];
+        var _x = _top.querySelector('.modal-close-x[data-close], .modal-close[data-close]');
+        if (_x) { try { _x.click(); } catch (err) { if (window.__silent) window.__silent(err); } }
+      }
     });
 
     // R180（用户 09-16）：根因→密码输入框缺可见性切换；修法→追加眼睛图标按钮（R209 用户 09-19 00:34：登录框恢复 09-16 结构时一并恢复）

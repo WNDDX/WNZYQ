@@ -1853,11 +1853,22 @@
         jumpUrl = ((inp && inp.value) || '').trim() || (window.__infoSettings[c.urlKey] || '') || c.defUrl;
       }
       if (window.openContactModal) {
-        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title, linkText: jumpUrl || '' }); /* v405 条13：实时显示当前跳转链接（无链接=显示空态行隐藏） */
+        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title }); /* v409 条3：链接行已撤（老板否决） */
         if (window.__haptic) window.__haptic();
       }
     }
     (function __infoInit() {
+      /* v409 条7：按键「开着就亮」——弹窗开着期间触发键保持白底（老板拍板全站统一，与页签激活态同观感） */
+      try {
+        var __keyGlow = function (keyId, maskId) {
+          var k = document.getElementById(keyId), m = document.getElementById(maskId);
+          if (!k || !m) return;
+          new MutationObserver(function () { k.classList.toggle('active', m.classList.contains('open')); }).observe(m, { attributes: true, attributeFilter: ['class'] });
+        };
+        __keyGlow('topInfoBtn', 'infoCtMask');
+        __keyGlow('openInfoBtn', 'infoMask');
+        __keyGlow('openAnnBtn', 'annMask');
+      } catch (e) { if (window.__silent) window.__silent(e); }
       /* v405 条7：编辑资源弹窗里的「咨询客服」键此前无任何绑定=死键——接上与设置信息预览同一入口 */
       var edContact = document.getElementById('edContactBtn');
       if (edContact) edContact.addEventListener('click', function () { __infoPreview('contact'); });

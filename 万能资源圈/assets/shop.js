@@ -485,6 +485,9 @@
     }
     // 公告内容渲染（tabs + 默认选中 + 默认内容）：抽出为独立函数，弹窗已打开而数据后到（首次访问先弹窗后接口返回）时也可刷新
     function renderAnnContent() {
+      /* v409 条2：收骨架搬进本函数首行——原收骨架只在弹窗流程函数里，数据迟到走「直接刷新」路径时
+         内容填上了、骨架没人收（老板实拍：公告内容下面挂着骨架半天不消失） */
+      var _annSkel = document.getElementById('annSkeleton'); if (_annSkel) _annSkel.style.display = 'none';
       var list = DATA.announcements || [];
       if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
       // 渲染小项 tabs（仅多条时显示）
@@ -3122,6 +3125,16 @@ window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; 
       window.__barDir = dx < 0 ? 1 : -1; /* v368 条10：方向传给列表过渡 */
       tags[ni].click();
     }, { passive: true });
+    /* v409 条7：按键「开着就亮」——弹窗开着期间触发键保持白底蓝字（页签激活态同观感，老板拍板全站统一） */
+    try {
+      var __keyGlow = function (keyId, maskSel) {
+        var k = document.getElementById(keyId), m = document.querySelector(maskSel);
+        if (!k || !m) return;
+        new MutationObserver(function () { k.classList.toggle('active', m.classList.contains('open')); }).observe(m, { attributes: true, attributeFilter: ['class'] });
+      };
+      __keyGlow('topContact', '.kf-mask');
+      __keyGlow('topShare', '.share-mask');
+    } catch (e) { if (window.__silent) window.__silent(e); }
   }
   function bind() {
     var top = document.querySelector('.category-bar'); if (top) bindBar(top, function () { return [...document.querySelectorAll('.category-bar .category-tag')]; });

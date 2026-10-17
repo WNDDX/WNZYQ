@@ -174,7 +174,6 @@ if ('serviceWorker' in navigator) {
         '<div class="kf-title" id="kfTitle">咨询客服</div>' +
         '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
         '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
-        '<div class="kf-link-line" id="kfLinkLine" style="display:none"></div>' + /* v405 条13：当前跳转链接实时显示（仅管理端预览传入时出现） */
         '<div class="kf-actions">' +
         '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
         '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
@@ -257,14 +256,7 @@ if ('serviceWorker' in navigator) {
       btn.style.display = btnText ? '' : 'none'; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
 
     }
-    /* v405 条13：当前跳转链接实时显示行（管理端设置信息预览传 opts.linkText；客户页不传=不显示） */
-    var linkEl = document.getElementById('kfLinkLine');
-    if (linkEl) {
-      var _lt = opts.linkText || '';
-      linkEl.textContent = _lt ? '链接：' + _lt : '';
-      linkEl.style.display = _lt ? '' : 'none';
-      linkEl.setAttribute('data-url', _lt ? (url || _lt) : '');
-    }
+    /* v409 条3：灰色链接行整体撤除（老板否决该功能，恢复纯净弹窗） */
     var mask = document.getElementById('kfMask');
     if (!mask.classList.contains('open')) {
       mask.classList.add('open');
