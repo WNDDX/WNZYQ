@@ -153,7 +153,8 @@ body{
 /* v402 条7：本页 .modal-box/.qrcode-wrap/.modal-qrcode/占位符/.qrcode-fail-icon/.modal-close/.modal-footer 等
    本地弹窗样式整体删除（弹窗结构与样式统一走 ui-common kf-box 唯一源；空图占位符占满方框由 kf-qr 自带规则实现） */
 img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;} /* 全局兜底占位（logo 加载失败等）保留 */
-.btn-item{
+/* v409b 修复：此处原有一个悬空的 `.btn-item{`（v402 清理删规则体时漏删开头行）——未闭合括号把
+   后面整个 @media (max-width:600px) 手机档吞进无效嵌套，手机端导航页样式（标题 26px/按钮内距等）全线失效 */
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
 /* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */

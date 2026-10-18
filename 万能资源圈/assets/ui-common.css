@@ -151,7 +151,7 @@
    整页可滚动时，浏览器原生滚动会在 JS 锁定横向意图之前接管触摸并 fire touchcancel，
    滑切当场夭折——空分类页面短不可滚所以没事，有货分类/全部就「滑了闪一下又弹回」。
    pan-y=竖向滚动照旧归浏览器，横向手势归 JS（跟手滑切），两者不再打架。 */
-.product-grid, #productGrid, .product-card, .modal-box, .ann-box, .variant-detail { touch-action: pan-y; }
+.product-grid, #productGrid, .product-card, .modal-box, .ann-box, .variant-detail, .empty-tip { touch-action: pan-y; }
 
 /* ===== 全站统一「咨询客服」弹窗（对齐导航页：结构/尺寸/样式/动画一处定义全站生效） ===== */
 .kf-mask {

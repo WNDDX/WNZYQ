@@ -961,7 +961,7 @@
       border-radius: 0 0 var(--radius-btn,10px) var(--radius-btn,10px); box-shadow: 0 0 0 100vw var(--overlay-modal), 0 16px 48px rgba(0,0,0,0.35); /* R285 条43 遮罩归档 */
       overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
     }
-    .rte-editor.rte-large ~ * { }
+    /* v410b：原 .rte-editor.rte-large ~ * {} 空规则体删除（无任何声明，历史遗留） */
     .rte-zoom.rte-zoom-on { background: var(--blue1); color: #fff; border-color: var(--blue1); } .rte-toolbar.rte-toolbar-large { position: fixed; left: 0; right: 0; margin: 0 auto; top: 12px; width: 96vw; max-width: 1200px; z-index: 6001; background: var(--card-bg); border: 2px solid var(--blue1); border-bottom: none; border-radius: var(--radius-btn,10px) var(--radius-btn,10px) 0 0; padding: 8px 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; justify-content: flex-start; box-shadow: 0 -4px 16px rgba(0,0,0,0.12); } /* R240（老板 09-22 19:15）：放大态原用 left:50%+transform:translateX(-50%) 居中——transform 会让工具栏成为其内部 position:fixed 后代（字体/字号下拉面板）的包含块，面板的视口坐标被按工具栏盒子原点重新解释，出现"放大后字体和字号选择框偏移这么多"（实测横向偏 122px）。改 left:0/right:0+margin:0 auto 居中（绝对定位下 auto 边距均分剩余空间），不再产生包含块，面板回到视口坐标系，落点就在对应按键正下方 */ .rte-toolbar.rte-toolbar-large .rte-btn, .rte-toolbar.rte-toolbar-large .rte-select { font-size:14px; padding: 0 12px; height: 36px; }
     .rte-zoom { font-weight: 600; }
     .rte-zoom-ico { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; } /* R231 条9：SVG 线性图标（随按钮色，放大态白底反色由 currentColor 自动跟） */    .rte-toolbar .select-picker .cat-picker-display { min-height: 0; height: 32px; padding: 0 8px; align-self: center; border-radius: var(--r-m); font-size: 13px; }    .rte-toolbar.rte-toolbar-large .select-picker .cat-picker-display { height: 36px; font-size:14px; }
@@ -1332,7 +1332,7 @@
       /* R179b（用户 20:20）：工具栏默认收起态（单行横滚，HTML 初始挂 rte-collapsed），
          点击展开键挂/摘类切换多行 wrap 全显（基础规则见 1153 段，全端同款）；
        -webkit-overflow-scrolling 与 flex-shrink 保底保留，收起态横滚体验不变 */
-      .rte-toolbar {  }
+      /* v410b：原手机档 .rte-toolbar {} 空覆盖删除（桌面规则无需清零项） */
       .rte-toolbar .rte-btn, .rte-toolbar .rte-group, .rte-toolbar .select-picker, .rte-toolbar .rte-palette { flex-shrink: 0; }
       .rte-toolbar .rte-btn, .rte-toolbar .rte-select { font-size: 12px; padding: 0 4px; height: 32px; }
       .rte-toolbar .select-picker .cat-picker-display { padding: 0 4px; } /* R236：小屏下拉左 padding 与按钮同档 6px（桌面 0 10px 全局规则已与按钮一致） */
