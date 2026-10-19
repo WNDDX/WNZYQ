@@ -176,6 +176,9 @@
 .kf-qr img[src^="data:image/svg+xml"] { width: 100%; height: 100%; object-fit: contain !important; }
 /* 二维码统一出场动画（每次打开客服弹窗由 ui-common.js 重放，全站时序/动效完全一致） */
 @keyframes kfQrIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+/* v413 条1：灯箱切图方向滑入（与全站滑切同曲线 0.26s） */
+@keyframes lbSlideNext { from { opacity: 0; transform: translateX(14%); } to { opacity: 1; transform: none; } }
+@keyframes lbSlidePrev { from { opacity: 0; transform: translateX(-14%); } to { opacity: 1; transform: none; } }
 .kf-qr img.kf-qr-in { animation: kfQrIn var(--dur-mid) var(--ease-out); }
 /* v402 条7：原 #modalImg.kf-qr-in 规则随导航页本地弹窗删除（导航页已并入 kf-box 唯一源） */
 .kf-tip { font-size: 16px; color: var(--text-light); margin-bottom: 16px; /* R186 建议5：gray-text 暗色下过暗，统一语义次级文字 */ letter-spacing:var(--ls-btn,0.8px); word-break: break-word; }
@@ -335,6 +338,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   letter-spacing: var(--ls-btn) !important;
 }
 .kf-jump { width: auto !important; margin: 0 !important; }
+.kf-link-line { display: block; font-size: 12px; color: var(--text-faint,#767676); word-break: break-all; overflow-wrap: anywhere; margin: -4px auto 10px; padding: 0 8px; text-align: center; text-decoration: underline; } /* v413 条5：管理端预览实时显示当前跳转链接（客户页不传=隐藏） */
 
 /* ===== 全站统一顶栏 tab 按键（唯一实现）=====
    资源页顶栏「咨询客服/分享」、管理页「资源管理/分类管理/数据统计/平台设置/退出」

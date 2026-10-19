@@ -486,7 +486,9 @@
     // 公告内容渲染（tabs + 默认选中 + 默认内容）：抽出为独立函数，弹窗已打开而数据后到（首次访问先弹窗后接口返回）时也可刷新
     function renderAnnContent() {
       /* v409 条2：收骨架搬进本函数首行——原收骨架只在弹窗流程函数里，数据迟到走「直接刷新」路径时
-         内容填上了、骨架没人收（老板实拍：公告内容下面挂着骨架半天不消失） */
+         内容填上了、骨架没人收（老板实拍：公告内容下面挂着骨架半天不消失）
+         v413 条2：同时清掉延迟显示定时器——数据先到就永远不显示骨架 */
+      clearTimeout(window.__annSkelT);
       var _annSkel = document.getElementById('annSkeleton'); if (_annSkel) _annSkel.style.display = 'none';
       var list = DATA.announcements || [];
       if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
@@ -543,7 +545,13 @@
            加载一结束就自动走“没内容→关弹窗”，不再挂死。 */
         if (window.__skelPhase) {
           // 还在加载中：显示骨架弹窗
-          if (_annSkel) _annSkel.style.display = '';
+          /* v413 条2：骨架延迟 250ms 显示——数据快到时（多数情况）完全跳过骨架，不再「一瞬间闪出一列列骨架」；
+             renderAnnContent 首行会清掉这个定时器 */
+          if (_annSkel) {
+            _annSkel.style.display = 'none';
+            clearTimeout(window.__annSkelT);
+            window.__annSkelT = setTimeout(function () { if (window.__skelPhase && _annSkel.isConnected) _annSkel.style.display = ''; }, 250);
+          }
           mask.classList.add('open');
           if (window.setBodyLock) setBodyLock(true);
           window.__annShown = true;
@@ -1111,7 +1119,16 @@
         try {
           [1, -1].forEach(function (d) {
             var nb = window.__catSeqTarget && window.__catSeqTarget(d);
-            if (nb && nb.type !== 'all') window.__peekCat(nb.type === 'top' ? nb.id : nb.parent, nb.type === 'sub' ? nb.id : 0);
+            if (!nb || nb.type === 'all') return;
+            /* v412 条3：预热邻居首屏图片——轮播顺滑的本质是「图已在缓存里」。数据预取完成后把前 6 张封面
+               用 Image() 拉进 HTTP 缓存，拖拽滑过去时邻居卡片秒显成品图，不再白块闪现 */
+            window.__peekCat(nb.type === 'top' ? nb.id : nb.parent, nb.type === 'sub' ? nb.id : 0).then(function (list) {
+              (list || []).slice(0, 6).forEach(function (p2) {
+                var src = p2 && (p2.img || (p2.coverImages && p2.coverImages[0]));
+                if (!src || src.indexOf('data:') === 0) return;
+                var im = new Image(); im.src = src;
+              });
+            });
           });
         } catch (e) { if (window.__silent) window.__silent(e); }
       }, 1500);

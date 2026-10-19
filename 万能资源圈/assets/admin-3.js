@@ -249,7 +249,13 @@
       var txtEl = displayEl.querySelector('.cpd-text');
       txtEl.textContent = name;
       txtEl.classList.toggle('placeholder', !!grey); /* R215 条2：筛选「全部」=未筛选，统一灰占位 */
-      document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) { p.classList.remove('open'); });
+      document.querySelectorAll('.cat-picker.open, .select-picker.open').forEach(function (p) {
+        p.classList.remove('open');
+        /* v413 条8：选值收起时同步回收 body 面板（原只摘 picker 的 open，面板滞留 body 造成下次打不开） */
+        var pp = p.querySelector('.cat-picker-panel');
+        if (!pp && p.dataset.pickerId) pp = document.querySelector('.cat-picker-panel[data-picker-id="' + p.dataset.pickerId + '"]');
+        if (pp) { if (pp.parentNode !== p) p.appendChild(pp); pp.classList.remove('open'); }
+      });
       pickerEl.querySelectorAll('.cp-item.selected').forEach(function (el) { el.classList.remove('selected'); });
       if (!document.getElementById('batchCatMask').classList.contains('open') && !document.getElementById('catMask').classList.contains('open') && typeof onProductCidChange === 'function') onProductCidChange(id);
     }
@@ -266,9 +272,15 @@
         });
         if (!wasOpen) {
           picker.classList.add('open');
-          if (picker.classList.contains('select-picker')) {
-            var pp = picker.querySelector('.cat-picker-panel');
-            if (pp) { document.body.appendChild(pp); pp.classList.add('open'); }
+          /* v413 条8：面板归属防御——面板此前被移入 body 时，cat-picker 的后代选择器 CSS 会失效
+             =「偶尔点不开，刷新才行」。打开前无条件把面板找回来（data-picker-id 全局查）：
+             cat-picker 归位容器内、select-picker 保持 body 挂载 */
+          var pp = picker.querySelector('.cat-picker-panel');
+          if (!pp && picker.dataset.pickerId) pp = document.querySelector('.cat-picker-panel[data-picker-id="' + picker.dataset.pickerId + '"]');
+          if (pp) {
+            if (picker.classList.contains('select-picker')) { if (pp.parentNode !== document.body) document.body.appendChild(pp); }
+            else if (pp.parentNode !== picker) picker.appendChild(pp);
+            pp.classList.add('open');
           }
           positionCatPanel(picker);
         }

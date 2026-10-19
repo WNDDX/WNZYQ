@@ -777,7 +777,7 @@
         kids.style.maxHeight = '0px';
         kids.style.opacity = '0';
         void kids.offsetHeight;
-        kids.style.transition = 'max-height .22s var(--ease-out, ease), opacity .22s var(--ease-out, ease)';
+        kids.style.transition = 'max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out)'; /* v413 条4：展开时长归一全站 0.18s（原 0.22s 散数） */
         kids.style.maxHeight = kids.scrollHeight + 'px';
         kids.style.opacity = '1';
         setTimeout(function () { kids.style.transition = ''; kids.style.maxHeight = 'none'; kids.style.overflow = ''; }, 240);
@@ -785,7 +785,7 @@
         kids.style.overflow = 'hidden';
         kids.style.maxHeight = kids.scrollHeight + 'px';
         void kids.offsetHeight;
-        kids.style.transition = 'max-height .18s var(--ease-out, ease), opacity .18s var(--ease-out, ease)';
+        kids.style.transition = 'max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out)'; /* v413 条4：收起同全站 0.18s */
         kids.style.maxHeight = '0px';
         kids.style.opacity = '0';
         setTimeout(function () { kids.style.display = 'none'; kids.style.transition = ''; kids.style.maxHeight = ''; kids.style.overflow = ''; kids.style.opacity = ''; }, 190);
@@ -1853,7 +1853,7 @@
         jumpUrl = ((inp && inp.value) || '').trim() || (window.__infoSettings[c.urlKey] || '') || c.defUrl;
       }
       if (window.openContactModal) {
-        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title }); /* v409 条3：链接行已撤（老板否决） */
+        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title, linkText: jumpUrl || '' }); /* v413 条5：实时显示当前设置的链接（仅管理端预览） */ /* v409 条3：链接行已撤（老板否决） */
         if (window.__haptic) window.__haptic();
       }
     }

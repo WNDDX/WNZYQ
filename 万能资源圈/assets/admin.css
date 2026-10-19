@@ -229,6 +229,7 @@
     .setting-row .btn-blue, .setting-row button[class*="btn"] { padding-left: 16px !important; padding-right: 16px !important; }
         .topbar-right .info-ct-btn { background: rgba(255,255,255,0.18); border-radius: var(--r-pill); position: relative; color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 16px; cursor: pointer; border: none; font-size: 14px; box-sizing: border-box; } /* v405 条5：底色 0.12→0.18 与 .tab/.logout-btn 完全同值（老板：其他键一直白、信息键偏灰） */
     .topbar-right .info-ct-btn:active { background: var(--card-bg, #fff); color: var(--blue1); transform: scale(0.94); } /* v401 条10：按压缩小+变白蓝字（对齐退出键 :active 口径，原只加深底色） */
+    .topbar-right .info-ct-btn.active { background: var(--card-bg, #fff) !important; color: var(--blue1) !important; } /* v413 条3：弹窗开着期间常亮白底蓝字（对齐 .btn-blue.active；v409 的 MutationObserver 在加类但这里缺样式=「点了不长显白」的根因）。本键同时挂 .tab 类，须压过 .tab.active 蓝底 */
      .topbar-right .info-ct-btn:hover { background: rgba(255,255,255,0.26); transform: none; filter: none; } /* v405 条5：悬停提亮一档（对齐 .tab:hover brightness 观感） */
     .dot-badge { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: #ff4444; border:2px solid #fff; box-sizing: content-box; }
     /* 总统计四格 */
@@ -379,6 +380,7 @@
     /* v345 条1：行内所有按键统一高度与间距（资源码此前比其它键高 2px） */
     .p-ops .row-btn, .p-ops .select-picker.code-picker, .p-ops .select-picker.code-picker .cat-picker-display,
     .p-ops .status-btn, .p-ops .code-slot { height: 30px; min-height: 30px; box-sizing: border-box; }
+    .cp-item .code-slot { flex: 0 0 112px; width: 112px; min-width: 112px; max-width: 112px; box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* v413 条6：码面板「资源码/无资源码」同槽位等宽（此前宽度随内容浮动，两键一长一短） */
     .p-ops .select-picker.code-picker { display: flex; align-items: center; margin: 0; }
     .row-btn {
       border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light);

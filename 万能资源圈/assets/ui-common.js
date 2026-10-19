@@ -174,6 +174,7 @@ if ('serviceWorker' in navigator) {
         '<div class="kf-title" id="kfTitle">咨询客服</div>' +
         '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
         '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
+        '<a class="kf-link-line" id="kfLinkLine" target="_blank" rel="noopener" style="display:none"></a>' + /* v413 条5：仅管理端设置信息预览传 linkText 时显示（客户页从不传=永不出现） */
         '<div class="kf-actions">' +
         '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
         '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
@@ -256,7 +257,15 @@ if ('serviceWorker' in navigator) {
       btn.style.display = btnText ? '' : 'none'; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
 
     }
-    /* v409 条3：灰色链接行整体撤除（老板否决该功能，恢复纯净弹窗） */
+    /* v413 条5：链接实时显示行回归——但仅管理端「设置信息」预览传入 opts.linkText 时出现
+       （实时反映当前设置，老板原诉求）；客户页三键从不传该参数=永不显示（v409 否决的是客户页出现链接行） */
+    var linkEl = document.getElementById('kfLinkLine');
+    if (linkEl) {
+      var _lt = (opts && opts.linkText) || '';
+      linkEl.textContent = _lt ? '链接：' + _lt : '';
+      linkEl.href = _lt || 'javascript:;';
+      linkEl.style.display = _lt ? '' : 'none';
+    }
     var mask = document.getElementById('kfMask');
     if (!mask.classList.contains('open')) {
       mask.classList.add('open');
@@ -388,6 +397,8 @@ if ('serviceWorker' in navigator) {
       }
       if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
       im.style.cssText = 'object-fit:contain;border-radius:8px;max-width:92vw;max-height:88vh;transition:transform .05s linear;' + (isVideo ? 'width:min(92vw,1200px);aspect-ratio:16/9;background:#000;' : '');
+      /* v413 条1：切图方向滑入（v368 存的 __lbDir 此前从未被消费）；首次打开不播，保持原缩放入场。注意必须在 cssText 之后赋值否则被抹 */
+      if (window.__lbDir) { im.style.animation = (window.__lbDir > 0 ? 'lbSlideNext' : 'lbSlidePrev') + ' .26s cubic-bezier(.3,0,.2,1)'; window.__lbDir = 0; }
       __lbMask.appendChild(im);
       if (window.__lbDir) { im.classList.add(window.__lbDir < 0 ? 'lb-sl-prev' : 'lb-sl-next'); window.__lbDir = 0; } /* v368 条10b：滑入方向 */
       __lbScale = 1;
@@ -1685,19 +1696,30 @@ window.__followSwipe = function (opts) {
     S_saved = { parent: panel.parentNode, next: panel.nextSibling, css: panel.style.cssText };
     panel.style.cssText += ';position:absolute;left:0;top:0;width:100%;margin:0;box-shadow:none;will-change:transform;';
     var pA = panel;
-    stage.appendChild(panel);
     var pB = null;
+    /* v412 条1：单轨化——pA/pB 锁进同一条 track（pB 定位 left:100%），拖拽/提交/回弹只动 track 一个
+       transform，与封面轮播 cc-track 完全同构。原双面板各自 transform 同曲线但各起一趟过渡，
+       真机上样式重算时机差半帧就会出现中缝错动（老板实拍「总有一些不合理的东西显示」）。 */
+    var track = document.createElement('div');
+    track.className = '__fs-track';
+    track.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;will-change:transform;';
+    stage.appendChild(track);
     if (nb) {
       pB = document.createElement('div');
       /* v405 条10：邻居面板垫同款不透明底——此前透明，提交切换时旧画面从底下透出来（「滑完还残留上一画面」的根因之一） */
-      pB.style.cssText = 'position:absolute;left:0;top:0;width:100%;will-change:transform;background:' + bgOf(panel) + ';';
-      stage.appendChild(pB);
+      pB.style.cssText = 'position:absolute;left:100%;top:0;width:100%;height:100%;background:' + bgOf(panel) + ';overflow:hidden;';
+      track.appendChild(pB);
     }
+    track.appendChild(panel);
     document.body.appendChild(stage);
     window.__fsJustSwiped = true; /* v370 条7：拖过就拦本次误点击 */
     clearTimeout(window.__fsSwipeClr); window.__fsSwipeClr = setTimeout(function () { window.__fsJustSwiped = false; }, 450);
-    S = { dir: dir, panel: panel, stage: stage, pA: pA, pB: pB, w: r.width, nb: nb, off: 0, vx: 0, lx: 0, lt: 0, t0: Date.now() }; /* v406：记手势起点时刻——快甩事件稀疏时用全程速度兜底判定 */
+    S = { dir: dir, panel: panel, stage: stage, track: track, pA: pA, pB: pB, w: r.width, nb: nb, off: 0, vx: 0, lx: 0, lt: 0, t0: Date.now() }; /* v406：记手势起点时刻——快甩事件稀疏时用全程速度兜底判定 */
     if (nb && opts.fill) {
+      /* v412 条2：邻居面板静默填充——填充期置 __swipeCommitting，卡片图片 onload 直接落定不播
+         img-in 入场（shop.js:395 守卫），拖拽中不再闪现入场动画；提交路径由 shop commit 自己管理复位，
+         弹回路径在 settle 弹回分支复位 */
+      window.__swipeCommitting = true;
       /* v371：邻居画面延后一帧再填——首帧先保证当前画面跟手零卡顿 */
       requestAnimationFrame(function () {
         if (!S) return;
@@ -1709,8 +1731,8 @@ window.__followSwipe = function (opts) {
     if (!S) return;
     S.off = raw;
     var off = S.nb ? raw : raw * 0.3; /* 到头：橡皮筋阻尼 */
-    S.pA.style.transform = 'translateX(' + off + 'px)';
-    if (S.pB) S.pB.style.transform = 'translateX(' + (S.dir * S.w + off) + 'px)';
+    /* v412 条1：单轨——整条 track 一个 transform，双面板像素锁步（轮播同构） */
+    S.track.style.transform = 'translateX(' + off + 'px)';
     if (opts.onProgress && S.nb) { /* v370 条11：下划线跟随拖动进度 */
       var prog = Math.max(0, Math.min(1, Math.abs(raw) / S.w)); /* v371 条11：线与手指同比例（全长归一） */
       try { opts.onProgress(prog, S.dir, S.nb); } catch (e) { if (window.__silent) window.__silent(e); }
@@ -1721,24 +1743,18 @@ window.__followSwipe = function (opts) {
     S.settled = true; /* v405b：touchend/touchcancel 可能先后到达，只结算一次 */
     var commiting = target !== 0;
     if (!commiting) {
-      /* 弹回：两侧弹簧回位（v387 S4 体系：回程也带过冲，不再硬停） */
+      /* 弹回：整条 track 弹簧回位（v387 S4 体系：回程也带过冲，不再硬停）；v412：复位邻居填充静默标记 */
       var t = 'transform .26s cubic-bezier(.34,1.3,.64,1)';
-      S.pA.style.transition = t; if (S.pB) S.pB.style.transition = t;
-      S.pA.style.transform = 'translateX(0)';
-      if (S.pB) S.pB.style.transform = 'translateX(' + (target === 0 ? S.dir * S.w : 0) + 'px)';
-      setTimeout(function () { var d = S ? S.dir : 0; cleanup(); if (cb) { window.__fsJustSwiped = false; cb(d); } }, 270);
+      S.track.style.transition = t;
+      S.track.style.transform = 'translateX(0)';
+      setTimeout(function () { var d = S ? S.dir : 0; cleanup(); window.__swipeCommitting = false; if (cb) { window.__fsJustSwiped = false; cb(d); } }, 270);
       return;
     }
-    /* v405 条9/10：提交=双面板同步滑出滑入（像原生翻页）——旧面板继续滑到全出、新面板同曲线滑到 0，
-       不再用「旧面板停住+新面板弹簧盖入」（那是「滑完还残留上一画面/观感生硬」的根因）。
-       曲线与全站滑切动画 sl-next/sl-prev 完全同款（0.32s cubic-bezier(.3,0,.2,1)，条9 统一）。 */
+    /* v405 条9/10：提交=整条 track 滑到目标位（v412 单轨：pA 滑出与 pB 滑入是同一个 transform，
+       像素锁步=轮播顺滑的本质）；曲线与全站滑切动画 sl-next/sl-prev 完全同款（0.32s cubic-bezier(.3,0,.2,1)）。 */
     var _slide = 'transform .32s cubic-bezier(.3,0,.2,1)';
-    S.pA.style.transition = _slide;
-    S.pA.style.transform = 'translateX(' + (-S.dir * S.w) + 'px)';
-    if (S.pB) {
-      S.pB.style.transition = _slide;
-      S.pB.style.transform = 'translateX(0)';
-    }
+    S.track.style.transition = _slide;
+    S.track.style.transform = 'translateX(' + (-S.dir * S.w) + 'px)';
     setTimeout(function () {
       var d = S ? S.dir : 0;
       /* v408 条10：先执行切换（真实面板在舞台里就地接收新内容），隔两帧再撤舞台——

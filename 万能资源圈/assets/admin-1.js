@@ -866,7 +866,7 @@
       /* R231 条21（用户 09-21 23:38）：切 tab 面板 0.18s 淡入上移——纯视觉层，
          R173 口径不变：只认 __plS 等单条件、不重新拉数据 */
       var __pv = document.getElementById('panel-' + name);
-      if (__pv) { __pv.classList.remove('panel-in'); void __pv.offsetWidth; __pv.classList.add('panel-in'); }
+      /* v413 条7：页签切换的「从下滑入」出场动画已按老板要求移除（对齐资源页点分类=内容直接出现，无入场动画） */
       try { if (window.__fsTabLineUpdate) window.__fsTabLineUpdate(true); } catch (e) {} /* v370b：点标签切换，白线滑到新标签下 */
       /* v358 S2：恢复该标签页离开时的滚动位置 */
       try { var __sv = (window.__tabScroll || {})[name]; if (typeof __sv === 'number' && __sv > 0) setTimeout(function () { try { window.scrollTo(0, __sv); } catch (e) {} }, 80); } catch (e) {}
