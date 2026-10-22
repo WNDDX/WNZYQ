@@ -1131,7 +1131,7 @@
             });
           });
         } catch (e) { if (window.__silent) window.__silent(e); }
-      }, 1500);
+      }, 500); /* v415 条3：预取提前（原 1500ms）——第一次甩就有邻居缓存，不再「前几次滑不动」 */
 
       // 分页控件（R14：改用全站统一 .uni-pager 公共组件——与数据统计翻页同款胶囊样式 + 跳页输入；
       // 翻页后回顶改瞬时滚动，原先平滑滚动叠加图片加载会显得"卡一下"）
@@ -1731,7 +1731,7 @@
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
           // v385 条11：专属客服二维码优先（类型→资源→平台设置），没有则回退平台设置信息
           var _qr = (currentVariant && currentVariant.contactQr) || (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
-          if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1850,6 +1850,11 @@
         return list;
       }).catch(function () { return []; });
     };
+    /* v415 条2：公告键常亮——公告弹窗开着期间顶栏「公告」键保持白底蓝字，关窗熄灭（对齐管理页信息键 __keyGlow 口径） */
+    try {
+      var _ta = document.getElementById('topAnn'); var _am = document.getElementById('annModal');
+      if (_ta && _am && window.MutationObserver) new MutationObserver(function () { _ta.classList.toggle('active', _am.classList.contains('open')); }).observe(_am, { attributes: true, attributeFilter: ['class'] });
+    } catch (e) { if (window.__silent) window.__silent(e); }
     /* v370b 条3：分类指示线=常驻在活动分类下面的那根蓝线（不再另造幽灵线）——
        点分类切换时它滑过去；跟手拖动时它从当前分类滑向目标分类，弹回则滑回来 */
     window.__fsCatLineUpdate = function (anim) {
@@ -2207,7 +2212,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url); } }
       else showToast('暂未设置客服链接', 'info');
     });
 
@@ -2614,7 +2619,9 @@
           }
           if (res[0] && res[0].ok && res[1] && res[1].ok) {
             DATA.products = res[0].list || [];
-            DATA.categories = res[1].list || []; try { __mc.cats = DATA.categories; __mc.t = Date.now(); } catch (e) { if (window.__silent) window.__silent(e); }
+            /* v415 条3：分类表空响应防御——后端偶发空分类列表时不得清空现有分类（清空=滑切序列只剩「全部」，之后怎么滑都无效） */
+            var _cl = res[1].list || [];
+            if (_cl.length || !(DATA.categories || []).length) { DATA.categories = _cl; try { __mc.cats = DATA.categories; __mc.t = Date.now(); } catch (e) { if (window.__silent) window.__silent(e); } }
             usingRemote = true;
             // v317（用户 10-05 18:40）：恢复后端分页，fetchRemote 走真实网络请求，_backendPaged=true
             if (res[0].total_pages !== undefined) {

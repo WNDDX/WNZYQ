@@ -745,11 +745,16 @@
     .cat-picker-display .cpd-arrow svg { width: 100%; height: 100%; display: block; }
     .cat-picker.open .cpd-arrow { transform: rotate(0deg); }
     .cat-picker-panel {
-      display: none; position: fixed; z-index: 6002;
+      display: block; position: fixed; z-index: 6002;
+      opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
+      transition: opacity var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), visibility 0s var(--dur-mid); /* v415 条5：展开/收起双向滑动动画（参考分类管理 c-meta 口径），原 display 瞬切生硬 */
       max-height: 264px; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ background: var(--card-bg); border: 1px solid var(--border);
       border-radius: var(--radius-btn,10px); box-shadow: var(--shadow-pop); /* R285 条20：归悬浮面板档 */ padding: 4px;
     }
-    .cat-picker.open .cat-picker-panel { display: block; }
+    .cat-picker.open .cat-picker-panel, .select-picker.open .cat-picker-panel, .cat-picker-panel.open {
+      opacity: 1; visibility: visible; transform: none; pointer-events: auto;
+      transition: opacity var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), visibility 0s; /* v415 条5：显态 */
+    }
     .select-picker.open .cat-picker-panel { display: block; }
     .cat-picker-panel.open { display: block; } /* R247：select-picker 面板在 body 中时凭自身 .open 显示，脱离 toolbar overflow-x 裁剪 */
     .select-picker.open .cat-picker-display { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }

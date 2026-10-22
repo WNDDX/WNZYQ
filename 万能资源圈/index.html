@@ -341,17 +341,17 @@ document.querySelectorAll('img').forEach(function (im) {
 
 /**弹窗打开 */
 /* v402 条7：三键弹窗已并入 ui-common kf-box（openContactModal 三页唯一源），本页本地弹窗实现整体删除 */
-function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null) {
+function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null, green = false) {
     /* 与资源页/管理页同一份弹窗（ui-common.js openContactModal）：标题可配、空图占位符占满方框、
        preconnect/防旧图闪现/点外与 Esc 关闭/弹窗栈注册全在唯一源内 */
-    window.openContactModal(jumpUrl || '', imgSrc || '', tipText, btnText, { title: title });
+    window.openContactModal(jumpUrl || '', imgSrc || '', tipText, btnText, { title: title, green: !!green }); /* v415 条1：咨询客服绿、群聊/公众号蓝 */
 }
 
 // PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34）
 
 //页面按钮事件
 function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
-function openService() { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服"); } /* v402：跳转键颜色走 kf-jump 全站唯一绿（原内联 #00A828 特例删除） */
+function openService() { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服", true); } /* v415 条1：咨询客服跳转键绿（第 6 参 green）；v402 注释作废 */
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 // v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮

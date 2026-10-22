@@ -184,7 +184,7 @@
 .kf-tip { font-size: 16px; color: var(--text-light); margin-bottom: 16px; /* R186 建议5：gray-text 暗色下过暗，统一语义次级文字 */ letter-spacing:var(--ls-btn,0.8px); word-break: break-word; }
 .kf-jump {
   width: 80%; margin: 0 auto 12px; border: none; border-radius: var(--radius); height: 46px; padding: 0 32px;
-  background: var(--green); color: #fff; font-size: 16px; font-weight: 600; /* v293（用户 10-04 02:14）：006按钮字重统一→500改600跟全站按钮统一 | v356 条12：统一 46px/16px 模子 */ cursor: pointer;
+  background: var(--blue1); color: #fff; font-size: 16px; font-weight: 600; /* v415 条1：跳转键默认蓝（与「交流群聊/公众号讯」入口键一致）；仅咨询客服传 green 走下方绿变体 */ cursor: pointer;
   letter-spacing: var(--ls-btn, 1.2px); display: inline-flex; align-items: center; justify-content: center;
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
 }
@@ -198,6 +198,7 @@
    按压 active：更小 + 更淡 + 变暗（scale 0.94 / opacity 0.8 / brightness 0.9）
    过渡时长统一 var(--dur-fast) ease；文字、颜色、大小等外观各键保持自身样式不变。
    各页面禁止再为弹窗按键写本地 hover/active 缩放副本。 */
+.kf-jump.kf-jump-green { background: var(--brand-green, #00A828); } /* v415 条1：仅咨询客服跳转键绿（客户要求交流群聊回蓝） */
 .alert-ok, .ann-ok, .btn-item, .modal-inner-btn, .modal-close, .kf-jump, .kf-close {
   -webkit-tap-highlight-color: transparent;
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ;
@@ -338,7 +339,6 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   letter-spacing: var(--ls-btn) !important;
 }
 .kf-jump { width: auto !important; margin: 0 !important; }
-.kf-link-line { display: block; font-size: 12px; color: var(--text-faint,#767676); word-break: break-all; overflow-wrap: anywhere; margin: -4px auto 10px; padding: 0 8px; text-align: center; text-decoration: underline; } /* v413 条5：管理端预览实时显示当前跳转链接（客户页不传=隐藏） */
 
 /* ===== 全站统一顶栏 tab 按键（唯一实现）=====
    资源页顶栏「咨询客服/分享」、管理页「资源管理/分类管理/数据统计/平台设置/退出」
@@ -353,6 +353,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out) ; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .tab.active { background: #fff; color: var(--blue1); font-weight: 600; }
+#topAnn.active { background: var(--card-bg,#fff) !important; color: var(--blue1) !important; } /* v415 条2：资源页公告键弹窗开着常亮白底蓝字（对齐管理页信息键；压过 .tab.active 蓝底） */
 .tab:hover { transform: translateY(-1px); filter: brightness(1.06); } /* R231 条7 */
 /* 按下瞬间变白底蓝字：与管理页 tab 激活态同一观感（资源页咨询客服/分享按下也变白，两页统一） */
 .tab:active { background: #fff; color: var(--blue1); transform: scale(0.94); }

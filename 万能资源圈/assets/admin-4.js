@@ -1853,7 +1853,7 @@
         jumpUrl = ((inp && inp.value) || '').trim() || (window.__infoSettings[c.urlKey] || '') || c.defUrl;
       }
       if (window.openContactModal) {
-        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title, linkText: jumpUrl || '' }); /* v413 条5：实时显示当前设置的链接（仅管理端预览） */ /* v409 条3：链接行已撤（老板否决） */
+        window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : '', { title: meta.title, green: !!meta.green }); /* v415：contact 预览绿、group/gzh 蓝 */
         if (window.__haptic) window.__haptic();
       }
     }
@@ -1888,9 +1888,10 @@
           var fold = document.getElementById('infoFold' + C);
           if (fold) fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
           if (willOpen) __infoRefreshPanel(k); /* 展开时以当前暂存值渲染 */
-          if (willOpen) { /* v385 条3：展开时回填网络地址输入框（暂存优先，无则已保存值） */
+          if (willOpen) { /* v385 条3：展开时回填网络地址输入框（暂存优先，无则已保存值）
+             v415 条4：原读 c.qrKey（二维码图键）——键名写错，跳转链接输入框永远显示不了已保存的链接（老板实拍「链接不在输入框里」的根因）；改读 c.urlKey */
             var ni = document.getElementById('infoNet' + C);
-            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.qrKey] || '');
+            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.urlKey] || '');
           }
           if (window.__haptic) window.__haptic();
         };

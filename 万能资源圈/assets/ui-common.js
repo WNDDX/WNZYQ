@@ -174,7 +174,6 @@ if ('serviceWorker' in navigator) {
         '<div class="kf-title" id="kfTitle">咨询客服</div>' +
         '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
         '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
-        '<a class="kf-link-line" id="kfLinkLine" target="_blank" rel="noopener" style="display:none"></a>' + /* v413 条5：仅管理端设置信息预览传 linkText 时显示（客户页从不传=永不出现） */
         '<div class="kf-actions">' +
         '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
         '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
@@ -255,17 +254,10 @@ if ('serviceWorker' in navigator) {
     var btn = document.getElementById('kfJumpBtn');
     if (btn) {
       btn.style.display = btnText ? '' : 'none'; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
+      btn.classList.toggle('kf-jump-green', !!(opts && opts.green)); /* v415 条1：仅咨询客服传 green=true 走绿；交流群聊/公众号讯默认蓝 */
 
     }
-    /* v413 条5：链接实时显示行回归——但仅管理端「设置信息」预览传入 opts.linkText 时出现
-       （实时反映当前设置，老板原诉求）；客户页三键从不传该参数=永不显示（v409 否决的是客户页出现链接行） */
-    var linkEl = document.getElementById('kfLinkLine');
-    if (linkEl) {
-      var _lt = (opts && opts.linkText) || '';
-      linkEl.textContent = _lt ? '链接：' + _lt : '';
-      linkEl.href = _lt || 'javascript:;';
-      linkEl.style.display = _lt ? '' : 'none';
-    }
+/* v415 条4：kf 弹窗内的链接显示行已撤——老板澄清真实诉求是「设置信息的链接要在输入框里显示」（已修输入框回填键名错误），弹窗保持纯净 */
     var mask = document.getElementById('kfMask');
     if (!mask.classList.contains('open')) {
       mask.classList.add('open');

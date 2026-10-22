@@ -1202,6 +1202,23 @@ document.addEventListener('click', function (e) {
       var tb = x.closest('.rte-toolbar');
       if (!tb) return;
       var collapsed = tb.classList.toggle('rte-collapsed');
+      /* v415 条5：展开/收起补高度滑动动画（双向，与文件管理器/分类管理同款 0.18s） */
+      try {
+        tb.style.overflow = 'hidden';
+        if (!collapsed) {
+          tb.style.transition = 'none'; tb.style.maxHeight = '0px'; tb.style.opacity = '0';
+          void tb.offsetHeight;
+          tb.style.transition = 'max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out)';
+          tb.style.maxHeight = tb.scrollHeight + 8 + 'px'; tb.style.opacity = '1';
+          setTimeout(function () { tb.style.transition = ''; tb.style.maxHeight = ''; tb.style.overflow = ''; }, 220);
+        } else {
+          tb.style.maxHeight = tb.scrollHeight + 'px'; tb.style.opacity = '1';
+          void tb.offsetHeight;
+          tb.style.transition = 'max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out)';
+          tb.style.maxHeight = '0px'; tb.style.opacity = '0';
+          setTimeout(function () { tb.style.transition = ''; tb.style.maxHeight = ''; tb.style.overflow = ''; tb.style.opacity = ''; }, 220);
+        }
+      } catch (e0) { if (window.__silent) window.__silent(e0); }
       x.title = collapsed ? '展开工具栏' : '收起工具栏';
       // 放大态下展开/收起改变工具栏高度，编辑器 top 需跟随；ResizeObserver(_f) 会自动重算，这里兜底补一次
       setTimeout(function () {

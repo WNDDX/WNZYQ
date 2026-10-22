@@ -2055,7 +2055,7 @@ refreshCatCnts();
       if (cv && cv.contactUrl) url = cv.contactUrl;
       if (!url) url = fContactUrl.value.trim();
       if (!url && window.__infoContactUrl) url = window.__infoContactUrl; /* v383：全局客服链接改走「设置信息」 */
-      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服'); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); /* v415 条1：客服绿 */ } else { window.openContactFallback(url); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
