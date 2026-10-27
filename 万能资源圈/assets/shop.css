@@ -433,7 +433,7 @@
       width: 100%;
       max-height: 88vh;
       max-height: 88dvh; /* R159：动态视口高度——手机地址栏收展时仍按可视区算，不认识 dvh 的老内核自动用上一行 */
-      overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
+      overflow-y: auto; overscroll-behavior: contain /* v416 条4：弹窗内容滑到底不再链出（老板复检：弹窗整体被带出屏） */ /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */
       scrollbar-gutter: auto;
       min-height: 160px; /* R12 与管理页统一（详情内容多时自然撑高，此保底值几乎不生效，无观感差） */
       animation: modalIn var(--dur-mid) var(--ease-out);
@@ -799,7 +799,7 @@
     /* R80：旧 .toast 死样式已清——toast 由 shop.js showToast 内联统一规格渲染（与下拉刷新胶囊同款） */
 
     /* 平台公告 */
-    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: var(--r-l); width: 100%; max-width: 520px; max-height: 80vh; max-height: 80dvh; /* R159 */ overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 24px /* v336 条106 */; animation: modalIn var(--dur-mid) var(--ease-out); text-align: left; }
+    .ann-modal .ann-box { position: relative; background: var(--card-bg); border-radius: var(--r-l); width: 100%; max-width: 520px; max-height: 80vh; max-height: 80dvh; /* R159 */ overflow-y: auto; overscroll-behavior: contain /* v418 举一反三：公告弹窗也 contain（v416 条④漏网之鱼） */; padding: 24px /* v336 条106 */; animation: modalIn var(--dur-mid) var(--ease-out); text-align: left; }
     .ann-modal .ann-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 12px; padding: 0 28px; letter-spacing:var(--ls-btn,0.8px); cursor: pointer; border: none; background: transparent; display: block; text-align: center; line-height: 1.5; transition: color var(--dur-mid) ease; }
 
     .ann-modal .ann-title.active { color: var(--blue1); }
@@ -1013,7 +1013,7 @@
 .modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 1; color: #b9c6d4; } /* v356 条12：图标色对齐 */
 .modal-mask#annModal .ann-empty .ann-empty-icon > svg { display: block; margin: 0 auto; }
 .modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: var(--empty-text); font-weight: 600 /* v356 条12 */ /* v336 条115 */; }
-    .ann-modal .ann-body { flex: 1; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ overflow-x: hidden; min-height: 0; box-sizing: border-box; }
+    .ann-modal .ann-body { flex: 1; overflow-y: auto; overscroll-behavior: contain /* v418 举一反三：同上 */; overflow-x: hidden; min-height: 0; box-sizing: border-box; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
     .shop-brand { color: #fff; font-size: 18px; font-weight: 700; letter-spacing:var(--ls-head,1.2px); white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
     /* logo 与一级分类白色栏左边缘对齐：一级分类栏加与二级分类栏一致的左右内边距 */

@@ -162,7 +162,7 @@
 @keyframes kfMaskIn { from { opacity: 0; } to { opacity: 1; } }
 .kf-box {
   background: var(--card-bg); border-radius: var(--radius-lg); padding: 24px /* v336 条106 */; position: relative;
-  max-width: 480px; width: 100%; max-height: min(88vh, 88dvh); overflow-y: auto; /* v356 条5：dvh 兜底；v404 条14：弹窗最高高度三页统一 88% */ overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ text-align: center;
+  max-width: 480px; width: 100%; max-height: min(88vh, 88dvh); overflow-y: auto; /* v356 条5：dvh 兜底；v404 条14：弹窗最高高度三页统一 88% */ overscroll-behavior: contain; /* v416 条4：弹窗内滚动到底不再链到页面（老板复检：弹窗整体被滑出屏） */ text-align: center;
   animation: kfBoxIn var(--dur-mid) var(--ease-out);
 }
 @keyframes kfBoxIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } } /* R183 条8：客服弹窗卡片入场加展开（与关闭收缩对称） */
@@ -761,7 +761,7 @@ body { transition: background-color var(--dur-slow) ease, color var(--dur-slow) 
 .cp-mask .cp-input { width: 100%; height: 50px; border: none; outline: none; background: transparent; color: var(--text, #222); font-size: 16px; padding: 0 16px; letter-spacing:var(--ls-head,1.2px); }
 /* R255（老板 17:55）：Ctrl+K 命令面板输入框聚焦态显式去 outline（同 shop/admin 搜索框口径） */
 .cp-mask .cp-input:focus, .cp-mask .cp-input:focus-visible { outline: none; outline-width: 0; box-shadow: 0 0 0 3px rgba(30,136,229,.25); /* v293（用户 10-04 02:14）：058命令面板输入框获焦点→补淡蓝光晕，跟搜索框统一 */ }
-.cp-mask .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ padding: 4px; border-top: 1px solid var(--border); }
+.cp-mask .cp-list { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain /* v418 举一反三：命令面板弹窗内 contain */; padding: 4px; border-top: 1px solid var(--border); }
 .cp-mask .cp-item { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px; border-radius: var(--r-m); cursor: pointer; font-size:14px; color: var(--text, #222); }
 .cp-mask .cp-item .cp-lab { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cp-mask .cp-item .cp-tag { font-size: 12px; color: var(--blue1, #1E88E5); background: rgba(30, 136, 229, 0.12); border-radius: var(--radius-btn,10px); padding: 4px 8px; flex-shrink: 0; }
@@ -1015,7 +1015,9 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 /* v368 条10 → v388 改动1：slNext/slPrev 定义与全部使用规则已收归 motion.css 唯一源（弹簧盖入版，并补齐 variant-detail 失效规则） */
 /* ===== v370 条9：内部滚动区滑到底不再带动外层（全系统补 contain）===== */
 .topbar-inner .tabs, .category-bar, .cat-bar, .sub-category-bar, .recent-bar, .stat-table-wrap, .bind-table-wrap, .table-scroll, .admin-table-wrap,
-.modal-mask, .share-mask, .kf-mask, .cp-mask, .modal-box, .form, .rte-editor, .preview-body, [id="bindingsScroll"], .ann-list, .cat-picker-panel, .upman-host { overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; }
+/* v415 拆分：页面级容器保持 v375 auto（滑动到头带窗滚）；v416 条4：弹窗内容滚动区改 contain——弹窗内滑到底不再把整个弹窗带出屏（老板复检反馈） */
+.modal-mask, .share-mask, .kf-mask, .cp-mask, [id="bindingsScroll"], .upman-host { overscroll-behavior: auto; }
+.modal-box, .form, .rte-editor, .preview-body, .ann-list, .cat-picker-panel { overscroll-behavior: contain; }
 
 /* ===== v370b 条3：切换指示线——管理页标签白线/资源页分类蓝线，都是"本来那根"，
    切换与跟手拖动时从当前位置滑向目标（JS 驱动 left/width）===== */

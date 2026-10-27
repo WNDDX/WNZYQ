@@ -344,6 +344,14 @@ if ('serviceWorker' in navigator) {
         if (ni < 0 || ni >= g.list.length) return; /* 到头：不动即自然弹回 */
         g.idx = ni; window.__lbDir = dir; window.__lbShow(g.list[g.idx]); /* v368 条10：方向传递 */
       });
+      /* v416 条7：灯箱跟手——拖动中当前图跟手位移，松手未达阈值由组件回调 dx=0 弹回复位 */
+      __lbMask.__swipeOnMove = function (dx) {
+        var m = __lbMask.querySelector('img, video');
+        if (!m) return;
+        if (!dx) { m.style.transition = 'transform .18s var(--ease-out, ease)'; m.style.transform = ''; return; }
+        m.style.transition = 'none';
+        m.style.transform = 'translateX(' + dx + 'px)';
+      };
     }
     window.__lbGroup = (group && group.list && group.list.length > 1) ? { list: group.list.slice(), idx: Math.max(0, group.list.indexOf(src)) } : null;
     window.__lbFlipFrom = (group && group.from && group.from.getBoundingClientRect) ? group.from : null; /* v389-6b */
@@ -701,13 +709,20 @@ function __scrollableAncestor(el) {
 var __BLOCK_TOUCH_SEL = '.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.ann-box,.lightbox,.cp-box,.qr-preview-box,.stat-modal,.picker-panel,.cat-picker-panel';
   function __blockTouch(e) {
     if (!e.target || !e.target.closest) return;
-    var allow = e.target.closest(__BLOCK_TOUCH_SEL);
-    if (!allow) e.preventDefault();
+    /* v417 条5：白名单兜底之上补「能滚一律放行」——v336 条138 注释许诺的口径此前没真正落地：
+       白名单只认固定类名，动态弹窗/遮罩留白带/漏网容器里第一次上下滑全被 preventDefault 吞掉
+       （表现=第一次滑没反应第二次才生效）。改为：触点存在可滚祖先（auto/scroll 且真溢出）一律放行，
+       只有确实无任何可滚区域（防背景穿透）才拦 */
+    if (e.target.closest(__BLOCK_TOUCH_SEL)) return;
+    if (__scrollableAncestor(e.target)) return;
+    e.preventDefault();
   }
   function __blockWheel(e) {
     if (!e.target || !e.target.closest) return;
-    var allow = e.target.closest(__BLOCK_TOUCH_SEL);
-    if (!allow) e.preventDefault();
+    /* v417 条5：同 __blockTouch——滚轮也按「能滚放行」口径 */
+    if (e.target.closest(__BLOCK_TOUCH_SEL)) return;
+    if (__scrollableAncestor(e.target)) return;
+    e.preventDefault();
   }
   // v307：lockBodyScroll 保留引用计数，确保嵌套弹窗（弹窗里再开弹窗）全部关闭后才恢复背景滚动
   var __bodyLockCount = 0;
@@ -1598,10 +1613,13 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) { on = false; return; }
     /* v381 条4：同 __followSwipe——真机 touchmove 不 preventDefault 会被浏览器滚动接管并 touchcancel 夭折 */
     if (Math.abs(mx) >= 10 && Math.abs(mx) >= Math.abs(my) * 1.5) e.preventDefault();
+    /* v416 条7：跟手回调——横向意图锁定后把当前位移交给宿主做跟手位移（灯箱拖图等），未传=行为不变 */
+    if (el.__swipeOnMove && Math.abs(mx) >= 10 && Math.abs(mx) > Math.abs(my) * 1.5) { try { el.__swipeOnMove(mx); } catch (e0) { if (window.__silent) window.__silent(e0); } }
     if (Math.abs(mx) >= 48 && Math.abs(mx) > Math.abs(my) * 1.5) { on = false; onSwipe(mx < 0 ? 1 : -1); } /* v406：60px/2倍 → 48px/1.5倍（真机斜滑友好，与跟手滑切同口径） */
   }, { passive: false });
   el.addEventListener('touchend', function (e) {
     if (!on) return; on = false;
+    if (el.__swipeOnMove) { try { el.__swipeOnMove(0); } catch (e9) { if (window.__silent) window.__silent(e9); } } /* v416 条7：未达阈值松手=宿主复位 */
     var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
     onSwipe(dx < 0 ? 1 : -1);
@@ -1620,9 +1638,12 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
   el.addEventListener('mousemove', function (e) {
     if (!lon) return;
     var mx = e.clientX - lsx, my = e.clientY - lsy;
-    if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) { lon = false; return; }
+    if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) { lon = false; if (el.__swipeOnMove) { try { el.__swipeOnMove(0); } catch (e9) {} } return; }
+    /* v416 条7：鼠标横向意图锁定后跟手（dx=0 复位语义同触摸） */
+    if (el.__swipeOnMove && Math.abs(mx) >= 10 && Math.abs(mx) > Math.abs(my) * 1.5) { try { el.__swipeOnMove(mx); } catch (e9) {} }
     if (Math.abs(mx) >= 60 && Math.abs(mx) > Math.abs(my) * 2) { lon = false; onSwipe(mx < 0 ? 1 : -1); }
   }, { passive: true });
+  el.addEventListener('mouseup', function () { if (lon && el.__swipeOnMove) { try { el.__swipeOnMove(0); } catch (e9) {} } }, { passive: true });
   el.addEventListener('mouseup', function () { if (lon) { lon = false; try { document.body.style.userSelect = ''; } catch (e3) {} } }, { passive: true });
   el.addEventListener('dragstart', function (e) { if (lon) e.preventDefault(); }); /* 拖图手势优先于浏览器原生拖图 */
 };

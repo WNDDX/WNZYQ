@@ -86,7 +86,9 @@
         ? Promise.resolve()
         : (window.__catLoading || loadCategories()).then(function (res) {
             if (res && res.ok) {
-              state.categories = (res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }); /* R281：加工口径与 loadCategories 完全一致（is_hidden 不再 || 0——undefined 口径统一，否则静默 diff 永不相等导致每次重画） */
+              /* v416 条11：空响应防御——已有非空分类时，偶发空列表不清空（否则筛选面板/分类树全空=「点开是空的」） */
+              var _cl = (res.list || []);
+              if (_cl.length || !(state.categories || []).length) state.categories = _cl.map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }); /* R281：加工口径与 loadCategories 完全一致（is_hidden 不再 || 0——undefined 口径统一，否则静默 diff 永不相等导致每次重画） */
             }
           });
       // R303：分页与筛选参数

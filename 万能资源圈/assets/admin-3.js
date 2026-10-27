@@ -278,6 +278,8 @@
           var pp = picker.querySelector('.cat-picker-panel');
           if (!pp && picker.dataset.pickerId) pp = document.querySelector('.cat-picker-panel[data-picker-id="' + picker.dataset.pickerId + '"]');
           if (pp) {
+            /* v416 条3：空内容自动收起（对齐资源页分类三角逻辑）——面板没有任何可选项时不展开 */
+            if (!pp.querySelector('.cp-item')) { picker.classList.remove('open'); pp.classList.remove('open'); return; }
             if (picker.classList.contains('select-picker')) { if (pp.parentNode !== document.body) document.body.appendChild(pp); }
             else if (pp.parentNode !== picker) picker.appendChild(pp);
             pp.classList.add('open');
@@ -304,10 +306,26 @@
       var disp = picker.querySelector('.cat-picker-display');
       if (!panel || !disp) return;
       var r = disp.getBoundingClientRect();
-      var ph = Math.min(panel.scrollHeight || 240, 264);
-      var left = Math.max(8, r.left);
-      var top = r.bottom + 4;
-      if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 4);
+      /* v417 条7：面板钳制在所属弹窗盒内——原 max-height 264px 定值在弹窗下半部展开时，
+         面板整块冲出弹窗底缘悬在遮罩上（实测超出 45~53px，内容多时更甚）。
+         改：有弹窗祖先则以弹窗盒（上下各留 8px）为界，下方空间不足自动上翻，
+         高度按所选侧实际空间自适应（保底 96px）；页面级无弹窗则维持只钳视口 */
+      var mb = picker.closest ? picker.closest('.modal-box') : null;
+      var mbr = mb ? mb.getBoundingClientRect() : null;
+      var limTop = mbr ? Math.max(8, mbr.top + 8) : 8;
+      var limBot = mbr ? Math.min((window.innerHeight || 900) - 8, mbr.bottom - 8) : (window.innerHeight || 900) - 8;
+      var want = Math.min(panel.scrollHeight || 240, 264);
+      var spaceBelow = limBot - (r.bottom + 4);
+      var spaceAbove = (r.top - 4) - limTop;
+      var top, maxH;
+      if (spaceBelow >= want || spaceBelow >= spaceAbove) {
+        top = r.bottom + 4;
+        maxH = Math.max(96, Math.min(264, spaceBelow));
+      } else {
+        maxH = Math.max(96, Math.min(264, spaceAbove));
+        top = Math.max(limTop, r.top - 4 - maxH);
+      }
+      panel.style.maxHeight = maxH + 'px';
       panel.style.top = top + 'px';
       // R146（用户 00:34）：码面板项=类型名+金额+码键，180px 装不下会把类型名挤成竖排换行——
       // 先按内容自然宽度测量，再取 max(触发键宽, 自然宽)，上限视口-16px 防溢出
@@ -1201,23 +1219,20 @@ document.addEventListener('click', function (e) {
       if (!x) return;
       var tb = x.closest('.rte-toolbar');
       if (!tb) return;
-      var collapsed = tb.classList.toggle('rte-collapsed');
-      /* v415 条5：展开/收起补高度滑动动画（双向，与文件管理器/分类管理同款 0.18s） */
+      /* v416 条3：展开/收起动画重写——v415 版先切类再动画，collapsed 的 flex-wrap 布局瞬跳=「收起后闪动一下」。
+         v416b 终版：「前量后切」——toggle 前量起始自然高，toggle 一次到位（终态类不再中途回拨），
+         钉住起始高→reflow→过渡到终态高。双向同一套代码，无分支、零跳变。
+         （v416 首版 __collapsing 在 toggle 后取反且分支体各自回拨类，方向与终态双双互缠=点展不开点收不拢） */
       try {
+        var __h0 = tb.scrollHeight; /* 起始高：点击前的自然高度 */
+        var collapsed = tb.classList.toggle('rte-collapsed');
+        var __h1 = tb.scrollHeight; /* 终态高：切换后的自然高度 */
         tb.style.overflow = 'hidden';
-        if (!collapsed) {
-          tb.style.transition = 'none'; tb.style.maxHeight = '0px'; tb.style.opacity = '0';
-          void tb.offsetHeight;
-          tb.style.transition = 'max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out)';
-          tb.style.maxHeight = tb.scrollHeight + 8 + 'px'; tb.style.opacity = '1';
-          setTimeout(function () { tb.style.transition = ''; tb.style.maxHeight = ''; tb.style.overflow = ''; }, 220);
-        } else {
-          tb.style.maxHeight = tb.scrollHeight + 'px'; tb.style.opacity = '1';
-          void tb.offsetHeight;
-          tb.style.transition = 'max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out)';
-          tb.style.maxHeight = '0px'; tb.style.opacity = '0';
-          setTimeout(function () { tb.style.transition = ''; tb.style.maxHeight = ''; tb.style.overflow = ''; tb.style.opacity = ''; }, 220);
-        }
+        tb.style.maxHeight = __h0 + 'px'; tb.style.opacity = '1';
+        void tb.offsetHeight;
+        tb.style.transition = 'max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out)';
+        tb.style.maxHeight = __h1 + 'px';
+        setTimeout(function () { tb.style.transition = ''; tb.style.maxHeight = ''; tb.style.overflow = ''; }, 230);
       } catch (e0) { if (window.__silent) window.__silent(e0); }
       x.title = collapsed ? '展开工具栏' : '收起工具栏';
       // 放大态下展开/收起改变工具栏高度，编辑器 top 需跟随；ResizeObserver(_f) 会自动重算，这里兜底补一次
@@ -1863,7 +1878,9 @@ document.addEventListener('click', function (e) {
       tabs.className = 'emoji-tabs';
       var grid = document.createElement('div');
       grid.className = 'emoji-pop-grid';
-      function renderCat(cat) {
+      var curCat = cats[0]; /* v417 条3：当前类跟踪（滑动切换用） */
+      function renderCat(cat, animDir) {
+        curCat = cat;
         grid.innerHTML = '';
         RTE_EMOJIS[cat].forEach(function (em) {
           var cell = document.createElement('div');
@@ -1876,6 +1893,13 @@ document.addEventListener('click', function (e) {
           });
           grid.appendChild(cell);
         });
+        /* v417 条3：滑动/翻页切类带方向滑入（0.18s 系统标准时长，与筛选面板同款手感） */
+        if (animDir) { grid.classList.remove('emoji-slide-next', 'emoji-slide-prev'); void grid.offsetWidth; grid.classList.add(animDir > 0 ? 'emoji-slide-next' : 'emoji-slide-prev'); }
+      }
+      function switchTo(ni, animDir) {
+        if (ni < 0 || ni >= cats.length || cats[ni] === curCat) return;
+        tabs.querySelectorAll('.emoji-tab').forEach(function (t, i) { t.classList.toggle('active', i === ni); });
+        renderCat(cats[ni], animDir);
       }
       cats.forEach(function (cat, i) {
         var tab = document.createElement('button');
@@ -1883,15 +1907,26 @@ document.addEventListener('click', function (e) {
         tab.className = 'emoji-tab' + (i === 0 ? ' active' : '');
         tab.textContent = cat;
         tab.addEventListener('click', function () {
-          tabs.querySelectorAll('.emoji-tab').forEach(function (t) { t.classList.remove('active'); });
-          tab.classList.add('active');
-          renderCat(cat);
+          switchTo(i, i > cats.indexOf(curCat) ? 1 : -1); /* v417 条3：点页签同款方向动画（双向统一） */
         });
         tabs.appendChild(tab);
       });
       renderCat(cats[0]);
       pop.appendChild(tabs);
       pop.appendChild(grid);
+      /* v417 条3：表情面板左右滑动切类——接系统滑动标准 __bindSwipeSwitch（与灯箱/滑切同源）：
+         横滑 48px/1.5 倍竖向阈值切上/下一类；拖动中 grid 跟手位移（0.3 阻尼，松手复位）；
+         到头不切换不弹提示；滑动落点误点表情由 __emojiJustSwiped 捕获拦截 */
+      window.__bindSwipeSwitch(pop, function (dir) {
+        var idx = cats.indexOf(curCat);
+        var ni = idx + dir;
+        if (ni < 0 || ni >= cats.length) return;
+        window.__emojiJustSwiped = true;
+        setTimeout(function () { window.__emojiJustSwiped = false; }, 400);
+        switchTo(ni, dir);
+      });
+      pop.__swipeOnMove = function (dx) { try { grid.style.transform = dx ? 'translateX(' + Math.round(dx * 0.3) + 'px)' : ''; } catch (e0) { if (window.__silent) window.__silent(e0); } };
+      pop.addEventListener('click', function (e) { if (window.__emojiJustSwiped) { e.preventDefault(); e.stopPropagation(); } }, true);
       RTE_POP = pop;
       rtePlacePop(pop, btn);
       pop.offsetHeight; /* R243（用户 09-22 23:18）：条11 强制回流触发过渡 */

@@ -1580,7 +1580,11 @@
     function renderAnnList() {
       // R256：清除公告列表骨架
       var _alBox = document.getElementById('annList'); if (_alBox) { var _als = _alBox.querySelectorAll('.ann-skel-item'); for (var i=0;i<_als.length;i++) _als[i].parentNode.removeChild(_als[i]); }
-      var _ah = annListEl.offsetHeight; if (_ah > 0) annListEl.style.minHeight = _ah + 'px'; annListEl.innerHTML = ''; setTimeout(function () { if (annListEl) annListEl.style.minHeight = ''; }, 300);
+      /* v417 条1：高度平滑过渡——v416 的 minHeight 占位在 300ms 后释放=骨架→真实列表高度瞬跳
+         （实测 583→634px 闪一下）。改「前量后切」：渲染前量旧高、渲染完量新高、max-height 过渡，
+         弹窗开着才动画（后台重排不动）；全程零跳变 */
+      var __h0 = annListEl ? annListEl.offsetHeight : 0;
+      var _ah = __h0; if (_ah > 0) annListEl.style.minHeight = _ah + 'px'; annListEl.innerHTML = '';
       stateAnn.list.forEach(function (a, idx) {
         var item = document.createElement('div');
         item.className = 'ann-item' + (a.level === 1 ? ' primary' : '') + (a.id === stateAnn.curId ? ' ann-cur' : '');
@@ -1594,7 +1598,7 @@
         txt.addEventListener('input', function () { a.title = this.value; });
         txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '(未命名公告)'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
         // 公告隐藏状态由下方状态下拉框直接切换
-        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;min-width:56px;text-align:left;flex-shrink:0;'; sortEl.textContent = '排序:' + (idx + 1);
+        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;min-width:40px;text-align:left;flex-shrink:0;'; /* v416 条8：排序标签 56→40px，与名称框同主行 */ sortEl.textContent = '排序:' + (idx + 1);
         // R82：显示/隐藏切换改用与编辑同款的胶囊按钮（点击直接切换），不再用下拉框
         var annStatusBtn = document.createElement('button');
         annStatusBtn.className = 'row-btn status-btn ' + (a.hidden ? 'status-hidden' : 'status-online');
@@ -1650,6 +1654,19 @@
         item.appendChild(fold);
         annListEl.appendChild(item);
       });
+      /* v417 条1：渲染完量新高，与旧高做 max-height 过渡（骨架→列表/增删行零跳变） */
+      try {
+        var __h1 = annListEl.offsetHeight;
+        var __maskOpen = document.getElementById('annMask') && document.getElementById('annMask').classList.contains('open');
+        if (__maskOpen && __h1 !== __h0 && __h0 > 0) {
+          annListEl.style.overflow = 'hidden';
+          annListEl.style.maxHeight = __h0 + 'px';
+          void annListEl.offsetHeight;
+          annListEl.style.transition = 'max-height var(--dur-mid) var(--ease-out)';
+          annListEl.style.maxHeight = __h1 + 'px';
+          setTimeout(function () { annListEl.style.transition = ''; annListEl.style.maxHeight = ''; annListEl.style.overflow = ''; annListEl.style.minHeight = ''; }, 240);
+        } else if (annListEl) { annListEl.style.minHeight = ''; }
+      } catch (e9) { if (window.__silent) window.__silent(e9); }
     }
     // 选中并加载某条公告到编辑区
     function selectAnnItem(id) {
@@ -1786,6 +1803,10 @@
       annDiscard(); // R145：取消=全量恢复（数据+编辑器+频率+列表）；R257：×/取消=丢弃（点外/Esc=暂存）
     });
     // 遮罩关闭：暂存当前编辑状态，下次打开可继续编辑
+    /* v416 条2：设置信息弹窗点外关闭——此前无点外监听（其他弹窗都有=点框外逻辑不统一） */
+    document.getElementById('infoMask').addEventListener('click', function (e) {
+      if (e.target === document.getElementById('infoMask')) document.getElementById('infoMask').classList.remove('open');
+    });
     document.getElementById('annMask').addEventListener('click', function (e) {
       // R257（老板 09-23 19:08）：点外关闭=暂存当前编辑（选中项+内容+频率保留），重开自动恢复到离开时的样子；
       // ×/取消=丢弃（annDiscard 全量恢复）——老板原场景即「点弹窗外关闭暂存才对」
@@ -1819,7 +1840,8 @@
           var it = document.getElementById('infoItem' + __infoCap(k));
           if (!it || !it.classList.contains('open')) { /* 面板没在编辑才回填输入框（输入中不覆盖） */
             var inp = document.getElementById('infoUrl' + __infoCap(k));
-            if (inp && document.activeElement !== inp) inp.value = uv;
+            /* v416 条1：输入框显示「当前生效值」=保存值||出厂默认——此前只显保存值，空时导航页却按出厂默认跳转=「输入框空但能跳转」的对不上 */
+            if (inp && document.activeElement !== inp) inp.value = uv || c.defUrl;
           }
         }
         var it2 = document.getElementById('infoItem' + __infoCap(k));
@@ -1891,7 +1913,7 @@
           if (willOpen) { /* v385 条3：展开时回填网络地址输入框（暂存优先，无则已保存值）
              v415 条4：原读 c.qrKey（二维码图键）——键名写错，跳转链接输入框永远显示不了已保存的链接（老板实拍「链接不在输入框里」的根因）；改读 c.urlKey */
             var ni = document.getElementById('infoNet' + C);
-            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.urlKey] || '');
+            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.urlKey] || '') || c.defUrl; /* v416 条1：同生效值口径 */
           }
           if (window.__haptic) window.__haptic();
         };

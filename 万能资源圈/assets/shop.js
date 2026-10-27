@@ -2618,6 +2618,9 @@
             return { changed: false, wasSkel: false, stale: true };
           }
           if (res[0] && res[0].ok && res[1] && res[1].ok) {
+            /* v416 条11：可疑截断防御——首屏声称有总量却返回空列表（网络抖动/网关抽风），保留现有数据不渲染空白，避免「资源只剩两个/全空」的假象；用户手动刷新仍可强制更新 */
+            var _suspicious = currentPage === 1 && !(res[0].list || []).length && (res[0].total || 0) > 0 && (DATA.products || []).length > 0;
+            if (_suspicious) { if (window.showToast) window.showToast('数据加载异常，已保留当前内容', 'error'); return { changed: false, wasSkel: false }; } /* v416：shop 无全局 toast，用 showToast 守卫调用 */
             DATA.products = res[0].list || [];
             /* v415 条3：分类表空响应防御——后端偶发空分类列表时不得清空现有分类（清空=滑切序列只剩「全部」，之后怎么滑都无效） */
             var _cl = res[1].list || [];

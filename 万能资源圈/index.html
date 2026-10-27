@@ -147,7 +147,7 @@ body{
 }
 /* v330 条30：按钮副标题——主标题下的一行浅色小字（信息量上去、视觉不吵；按钮颜色与大小保持原样） */
 .btn-item .btn-txt{ display: flex; flex-direction: column; align-items: flex-start; gap: 6px; } /* v335：主标题与副标题从贴在一起（3px）放宽到 6px，电脑端不再挤成一坨 */
-.btn-item .btn-sub{ font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.18); letter-spacing: 0.5px; line-height: 1.35; } /* v346 条34：副标题加深加粗（原半透明 400 偏淡，白字看不清） */
+.btn-item .btn-sub{ font-size: 13px; display: inline-block; min-height: 1.35em; visibility: hidden; } /* v416 条5：副标题固定占位+填充前隐藏——数据到达填充时模块不再跳一下 */ font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.18); letter-spacing: 0.5px; line-height: 1.35; } /* v346 条34：副标题加深加粗（原半透明 400 偏淡，白字看不清） */
 /* v402 条7：.modal-inner-btn 本地副本已删——弹窗按键统一走 ui-common kf-jump/kf-close（kf-box 唯一源） */
 /* v379：.modal-mask/.modal-mask.open/.modal-title/.modal-tip 骨架已上移 ui-common.css 唯一源，本地副本删除 */
 /* v402 条7：本页 .modal-box/.qrcode-wrap/.modal-qrcode/占位符/.qrcode-fail-icon/.modal-close/.modal-footer 等
@@ -410,7 +410,7 @@ window.__pullRefresh = { refresh: function (done) { try { loadImg(dom.logoImage,
   (function () {
     function setSubHtml(html) {
       var el = document.getElementById('subRes');
-      if (el) el.innerHTML = html;
+      if (el) { el.innerHTML = html; el.style.visibility = 'visible'; } /* v416 条5：填充后显示 */
     }
     function fetchTotal() {
       try {
