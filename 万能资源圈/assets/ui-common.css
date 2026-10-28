@@ -566,6 +566,10 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 /* v336 条132：空态 fixed 旧层级死代码已删 */
 .empty-tip .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
 .empty-tip .empty-title { font-size: 16px; color: var(--text-light, #999); font-weight: 600 /* v336 条115 */; }
+/* v434 #32：空态单一来源——.wn-empty（列表内小空态）并入 .empty-tip 组件族同处定义，视觉令牌共享 */
+.wn-empty { padding: 20px 0; text-align: center; }
+.wn-empty .wn-empty-ico { font-size: 30px; opacity: .5; display: block; margin-bottom: 8px; }
+.wn-empty .wn-empty-t { font-size: 13px; color: var(--text-light, #666); }
 /* 条27：价格/统计/表格数字等宽（跳动对齐） */
 .p-price, .v-price, .cp-price, .variant-price, .stat-card .num, .stat-card .delta, table td, table th { font-variant-numeric: tabular-nums; }
 /* R184 条27 延伸（全系统检查）：翻页数字、趋势图轴数字（柱图 .tg-num + 折线 SVG text）一并等宽——轴数字宽度一致后网格线间距视觉均等，翻页数字不再随位数抖动 */

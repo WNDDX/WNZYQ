@@ -2357,11 +2357,15 @@
 
 /* ---------- v386：管理页「信息」中心（顶栏信息键→总统计+三角细项；红点=距上次有新绑定/咨询） ---------- */
 (function () {
-  /* v394-32：键名统一 wnzyq_ 姓氏（旧键读一次迁移后清除） */
+  /* v394-32：键名统一 wnzyq_ 姓氏（旧键读一次迁移后清除）
+     v434 修复：原 lsGet 在键不存在时无条件调用自身=无限递归→RangeError→迁移逻辑永不生效；
+     现改为普通一次性迁移（读旧键→写新键→删旧键） */
   var LS_KEY = 'wnzyq_admin_last_seen';
   function lsGet() {
-    try { var v = localStorage.getItem(LS_KEY); if (v) return v;
-      var oldV = lsGet();
+    try {
+      var v = localStorage.getItem(LS_KEY);
+      if (v) return v;
+      var oldV = localStorage.getItem('admin_last_seen');
       if (oldV) { localStorage.setItem(LS_KEY, oldV); localStorage.removeItem('admin_last_seen'); }
       return oldV;
     } catch (e) { if (window.__silent) window.__silent(e); return null; }
@@ -2407,7 +2411,10 @@
     document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
     var list = document.getElementById('ctList');
     if (!(d.recent || []).length) {
-      list.innerHTML = '<div class="wn-empty"><span class="wn-empty-ico" aria-hidden="true">📭</span><div class="wn-empty-t">该时段暂无新动态</div></div>'; /* v394-16：空态模板（图标+主句） */
+      /* v434：0 值可解释——管理员自己浏览前台不计入（R168-②拍板），全 0 时说明口径避免「跟实际对不上」的疑惑 */
+      var _allZero = !(d.delta && (d.delta.view || d.delta.contact || d.delta.unlock || d.delta.bind));
+      list.innerHTML = '<div class="wn-empty"><span class="wn-empty-ico" aria-hidden="true">📭</span><div class="wn-empty-t">该时段暂无新动态</div>' +
+        (_allZero ? '<div style="font-size:11px;color:#8a9aab;margin-top:6px;line-height:1.7">说明：您自己在前台资源页的浏览/解锁不计入统计（管理身份自动排除）；数字只来自真实访客。</div>' : '') + '</div>'; /* v394-16：空态模板（图标+主句） */
       return;
     }
     var html = d.recent.map(function (r, ri) {
@@ -2430,8 +2437,10 @@
       if (res && res.ok) cb(res);
     }).catch(function () { if (window.__silent) window.__silent(new Error('info')); });
   }
+  /* v434 修复：原存 toISOString() 带 Z 结尾——服务端正则不认，静默回退 24 小时窗，
+     「距上次查看」语义失效。现存服务端认的 'YYYY-MM-DD HH:MM:SS'（UTC，与 stats.created_at 同系） */
   function markSeen() {
-    try { localStorage.setItem(LS_KEY, new Date().toISOString()); } catch (e) { if (window.__silent) window.__silent(e); }
+    try { localStorage.setItem(LS_KEY, new Date().toISOString().slice(0, 19).replace('T', ' ')); } catch (e) { if (window.__silent) window.__silent(e); }
     if (dot) dot.hidden = true;
   }
   /* 红点：主视图可见后静默查一次——窗口内绑定/咨询任一 >0 才亮（访问量再大不打扰） */

@@ -14,14 +14,16 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   let last = url.searchParams.get('last') || '';
+  /* v434 修复：接受带 Z 结尾的 ISO（旧前端 markSeen 存的格式），归一化后使用 */
+  if (/Z$/.test(last)) last = last.slice(0, 19).replace('T', ' ');
   if (!/^\d{4}-\d{2}-\d{2}[T ][0-9:.]+$/.test(last)) {
     // 无有效上次时间：默认取 24 小时前（首次使用不亮红点只看概览）
     last = new Date(Date.now() - 86400000).toISOString().slice(0, 19).replace('T', ' ');
   }
   last = last.slice(0, 19).replace('T', ' ');
 
-  // 30 天封顶（防数字爆炸，与统计页最大范围同口径）
-  const floor = new Date(Date.now() + BJ - 30 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
+  // 30 天封顶（防数字爆炸，与统计页最大范围同口径）——v434 修复：原多加了 +8h 使下限前移 8 小时
+  const floor = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
   if (last < floor) last = floor;
 
   // 今日 0 点（北京口径，与统计页一致）

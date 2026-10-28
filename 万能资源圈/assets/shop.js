@@ -1580,35 +1580,26 @@
       resourceContent.style.display = 'none';
       resourceContent.innerHTML = '';
 
-      // R146（用户 00:25）：已解锁过（本地缓存命中）→ 立即显示专属内容，不等接口
+      // R146（用户 00:25）：已解锁过（本地缓存命中）→ 免输码（v434：但仍须点一次解锁，不再自动展开）
       var _cached = (currentProduct && currentVariant) ? __readUnlockCache(currentProduct.id, currentVariant.id) : null;
 
-      if (_cached) {
-        resourceTitle.textContent = '获取专属内容'; // v296（用户 10-04 02:14）：313 标题统一 // v296（用户 10-04 02:14）：313 资源码区域标题统一，不再随 hasCode 变化
-        resourceInputRow.style.display = 'none';
-        resourceDirectRow.style.display = 'none';
-        // v294（用户 10-04 02:14）：091 已绑定设备查看也加淡入动画
-        var rc = document.getElementById('resourceContent');
-        if (rc) { rc.style.opacity = '0'; rc.style.transition = 'opacity 0.3s ease'; }
-        unlockResourceContent(_cached, true); // true=缓存渲染不重复统计
-        if (rc) setTimeout(function(){ rc.style.opacity = '1'; }, 50);
-      } else if (hasCode) {
-        // 有资源码：显示输入框+解锁按钮
-        resourceTitle.textContent = '获取专属内容'; // v296（用户 10-04 02:14）：313 标题统一 // v296（用户 10-04 02:14）：313 标题统一
+      if (hasCode) {
+        // 有资源码：显示输入框+解锁按钮（v434：缓存命中过 = 占位提示免输码，点击后服务端按已绑定设备放行）
+        resourceTitle.textContent = '获取专属内容'; // v296（用户 10-04 02:14）：313 标题统一
         resourceInputRow.style.display = 'flex';
         resourceDirectRow.style.display = 'none';
         resourceInput.value = '';
+        if (_cached) resourceInput.placeholder = '本设备已解锁过，直接点解锁即可';
       } else {
-        // 无资源码：显示直接获取按钮
+        // 无资源码：显示直接获取按钮（v434：无论是否解锁过，都要点击后才展示内容）
         resourceTitle.textContent = '获取专属内容'; // v296（用户 10-04 02:14）：313 标题统一
         resourceInputRow.style.display = 'none';
         resourceDirectRow.style.display = 'block';
       }
 
-      // R92 宽松模式通行证体验：打开弹窗即静默检查一次——
-      // 已绑定设备（或无码类型）直接拿到内容并展示，老访客无需再输一遍码
-      // R146：缓存已命中时本次请求只作后台校验/刷新（内容已在展示，接口返回不重复渲染）
-      if (!_cached) requestResourceUnlock('');
+      /* v434（老板拍板）：撤除 R92 宽松模式「打开弹窗即静默解锁」+ 撤除缓存命中自动展开——
+         专属内容一律点击后才获取展示：有码=点解锁（已绑定设备免输码，服务端放行）；
+         无码=点「直接获取」按钮。免输码体验保留，点击动作不可省。 */
     }
 
     // 通用：显示专属内容并统计（服务端验证成功 / 已绑定设备 / 直接查看 都走这里）
@@ -2024,9 +2015,13 @@
       if (!variantHasCode()) return; // 当前类型没有配置资源码
       var input = resourceCodeInput.value.trim();
       if (!input) {
-        resourceCodeError.textContent = '请输入资源码';
-        resourceCodeError.style.display = 'block';
-        return; // R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行
+        /* v434：本设备已解锁过（缓存命中）→ 允许空码点击，服务端按「已绑定设备直接放行」返回内容 */
+        var _ck = __readUnlockCache(currentProduct.id, currentVariant.id);
+        if (!_ck) {
+          resourceCodeError.textContent = '请输入资源码';
+          resourceCodeError.style.display = 'block';
+          return; // R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行
+        }
       }
       // R92：验证移到服务端（大小写不敏感由服务端比对），前台不再持有明文码；
       // 码正确且未超绑定上限 → 绑定本设备并返回专属内容；已绑定设备直接放行
@@ -2231,18 +2226,6 @@
     // ---------- 顶栏：分享本页（点击即复制链接 + 弹窗提示） ----------
     topShareBtn.addEventListener('click', openShare);
 
-    // ---------- v432 #45：顶栏：大字模式（内容区放大 15%，记住选择） ----------
-    (function () {
-      var fatBtn = document.getElementById('topFat');
-      if (!fatBtn) return;
-      var apply = function (on) {
-        document.documentElement.classList.toggle('fat', on);
-        fatBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-        try { localStorage.setItem('wnzyq_fat', on ? '1' : '0'); } catch (e0) {}
-      };
-      try { if (localStorage.getItem('wnzyq_fat') === '1') apply(true); } catch (e1) {}
-      fatBtn.addEventListener('click', function () { apply(!document.documentElement.classList.contains('fat')); });
-    })();
     /* v386：顶栏「公告」键——与管理页「信息」同图标同键规格 */
     var topAnnBtn = document.getElementById('topAnn');
     if (topAnnBtn) topAnnBtn.addEventListener('click', function () { if (window.openAnnModal) window.openAnnModal(); });    /* v430 条48：公告未读红点（复用系统 dot-badge）——有未读公告显示红点，点开即记已读 */

@@ -1372,7 +1372,3 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* ===== v371 条14：无封面占位符根治——media-fail 图立即全显、不重播入场动画/淡入，重渲染零闪烁 ===== */
 .product-card .card-img.media-fail, .thumb.media-fail, img.media-fail { opacity: 1 !important; animation: none !important; transition: none !important; }
-
-/* v432 #45：大字模式——内容区整体放大 15%（顶栏保持原样不挤），激活键高亮 */
-html.fat #productGrid, html.fat .modal-box, html.fat .ann-box, html.fat .kf-box { zoom: 1.15; }
-html.fat #topFat { background: rgba(255,255,255,.28); }

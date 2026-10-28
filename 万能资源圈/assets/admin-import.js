@@ -124,8 +124,8 @@
     mask.innerHTML = '<div class="modal-box"><button class="modal-close-x" data-x="1"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
       '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">第 1 步：下载模板（分类列已带下拉，选就行）→ 填好 → 第 2 步上传 → 预览无误后导入。</p>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue" id="impTpl" style="flex:1">下载模板</button>' +
-      '<label class="btn-blue" style="flex:1;text-align:center;cursor:pointer">上传表格<input type="file" id="impFile" accept=".xls,.xml" style="display:none"></label></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
+      '<label class="btn-blue btn-inline" for="impFile" style="flex:1;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0">上传表格<input type="file" id="impFile" accept=".xls,.xml" style="display:none"></label></div>' +
       '<div id="impPrev" style="margin-top:10px"></div></div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); });
@@ -197,19 +197,21 @@
     });
   }
 
-  /* 平台设置页挂入口键 */
+  /* 平台设置页挂入口键（v434b：照「修改密码」组同款——独立白色卡片、各占一行、btn-inline-pd 自适应键宽，
+     不再 flex 拉满半屏、不再游离在卡片外） */
   (function wait() {
-    var row = document.querySelector('#panel-settings .setting-row');
-    if (row && !document.getElementById('batchImportBtn')) {
-      var btn = document.createElement('button');
-      btn.type = 'button'; btn.className = 'btn-blue btn-inline-pd'; btn.id = 'batchImportBtn'; btn.textContent = '批量导入';
-      btn.addEventListener('click', openWizard);
-      row.appendChild(btn);
-      /* v432 #40：图片体检键（同一行） */
-      var chk = document.createElement('button');
-      chk.type = 'button'; chk.className = 'btn-blue btn-inline-pd'; chk.id = 'imgCheckBtn'; chk.textContent = '图片体检';
-      chk.addEventListener('click', imgCheck);
-      row.appendChild(chk);
+    var panel = document.getElementById('panel-settings');
+    if (panel && !document.getElementById('batchImportBtn')) {
+      var grp = document.createElement('div');
+      grp.className = 'setting-group';
+      var lblSt = 'display:block;font-size:13px;color:#666;margin-bottom:6px;';
+      grp.innerHTML = '<label style="' + lblSt + '">批量导入</label>' +
+        '<button type="button" class="btn-blue btn-inline-pd" id="batchImportBtn">批量导入</button>' +
+        '<label style="' + lblSt + 'margin-top:14px;">图片体检</label>' +
+        '<button type="button" class="btn-blue btn-inline-pd" id="imgCheckBtn">图片体检</button>';
+      panel.appendChild(grp);
+      grp.querySelector('#batchImportBtn').addEventListener('click', openWizard);
+      grp.querySelector('#imgCheckBtn').addEventListener('click', imgCheck);
       return;
     }
     setTimeout(wait, 300);

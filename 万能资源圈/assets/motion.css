@@ -204,9 +204,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 .sugg-pop .sugg-cat { padding: 5px 12px 3px; font-size: 12px; color: var(--text-faint); }
 
 /* ===== v394-16/17/18：空态模板 / 下拉浮层 / 公共表格（统一组件底座） ===== */
-.wn-empty { padding: 20px 0; text-align: center; }
-.wn-empty .wn-empty-ico { font-size: 30px; opacity: .5; display: block; margin-bottom: 8px; }
-.wn-empty .wn-empty-t { font-size: 13px; color: var(--text-light, #666); }
+/* v434 #32：.wn-empty 空态已并入 ui-common.css 的空态组件族（此处副本移除，单一来源） */
 .wn-pop { background: var(--card-bg, #fff); border: 1px solid var(--border, #d0d0d0); border-radius: var(--r-l, 12px); box-shadow: var(--shadow-pop, 0 4px 16px rgba(0,0,0,.14)); }
 .tbl th, .tbl td { padding: 8px 10px; border-bottom: 1px solid var(--border, #d0d0d0); text-align: left; font-size: 13px; }
 .tbl th { color: var(--text-light, #666); font-weight: 600; background: var(--bg-light, #f5f7fa); }
