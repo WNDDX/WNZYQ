@@ -1017,7 +1017,8 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 .topbar-inner .tabs, .category-bar, .cat-bar, .sub-category-bar, .recent-bar, .stat-table-wrap, .bind-table-wrap, .table-scroll, .admin-table-wrap,
 /* v415 拆分：页面级容器保持 v375 auto（滑动到头带窗滚）；v416 条4：弹窗内容滚动区改 contain——弹窗内滑到底不再把整个弹窗带出屏（老板复检反馈） */
 .modal-mask, .share-mask, .kf-mask, .cp-mask, [id="bindingsScroll"], .upman-host { overscroll-behavior: auto; }
-.modal-box, .form, .rte-editor, .preview-body, .ann-list, .cat-picker-panel { overscroll-behavior: contain; }
+.modal-box, .form { overscroll-behavior: contain; } /* v421 分层：弹窗主滚区到头不带动整页 */
+.rte-editor, .preview-body, .ann-list, .cat-picker-panel { overscroll-behavior: auto; } /* v421 分层：内层到头→弹窗跟滚 */
 
 /* ===== v370b 条3：切换指示线——管理页标签白线/资源页分类蓝线，都是"本来那根"，
    切换与跟手拖动时从当前位置滑向目标（JS 驱动 left/width）===== */

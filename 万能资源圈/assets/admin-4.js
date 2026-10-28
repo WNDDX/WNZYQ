@@ -1841,7 +1841,7 @@
           if (!it || !it.classList.contains('open')) { /* 面板没在编辑才回填输入框（输入中不覆盖） */
             var inp = document.getElementById('infoUrl' + __infoCap(k));
             /* v416 条1：输入框显示「当前生效值」=保存值||出厂默认——此前只显保存值，空时导航页却按出厂默认跳转=「输入框空但能跳转」的对不上 */
-            if (inp && document.activeElement !== inp) inp.value = uv || c.defUrl;
+            if (inp && document.activeElement !== inp) inp.value = uv; /* v421：输入框只显保存值（老板复检：出厂默认链接回显=莫名其妙的链接）；跳转兜底 defUrl 保留在跳转逻辑里 */
           }
         }
         var it2 = document.getElementById('infoItem' + __infoCap(k));
@@ -1909,11 +1909,21 @@
           if (it) it.classList.toggle('open', willOpen);
           var fold = document.getElementById('infoFold' + C);
           if (fold) fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-          if (willOpen) __infoRefreshPanel(k); /* 展开时以当前暂存值渲染 */
+          if (willOpen) { __infoRefreshPanel(k); /* 展开时以当前暂存值渲染 */
+            /* v421：展开后内容为空自动收起（与资源页空分类同口径）——检测展开体可视高度，空=收起+提示 */
+            setTimeout(function () {
+              try {
+                var itc = document.getElementById('infoItem' + C);
+                if (!itc || !itc.classList.contains('open')) return;
+                var body = itc.querySelector('.info-cfg') || itc.lastElementChild;
+                if (body && body.offsetHeight < 28) { itc.classList.remove('open'); if (fold) fold.setAttribute('aria-expanded', 'false'); if (window.showToast) window.showToast('该行暂无可配置内容', 'info'); }
+              } catch (e2) { if (window.__silent) window.__silent(e2); }
+            }, 80);
+          }
           if (willOpen) { /* v385 条3：展开时回填网络地址输入框（暂存优先，无则已保存值）
              v415 条4：原读 c.qrKey（二维码图键）——键名写错，跳转链接输入框永远显示不了已保存的链接（老板实拍「链接不在输入框里」的根因）；改读 c.urlKey */
             var ni = document.getElementById('infoNet' + C);
-            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.urlKey] || '') || c.defUrl; /* v416 条1：同生效值口径 */
+            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.urlKey] || ''); /* v421：同上，只显保存值 */
           }
           if (window.__haptic) window.__haptic();
         };

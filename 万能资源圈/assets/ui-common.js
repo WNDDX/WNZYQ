@@ -1704,7 +1704,7 @@ window.__followSwipe = function (opts) {
     var cs = getComputedStyle(panel);
     var stage = document.createElement('div');
     stage.className = '__fs-stage'; /* v369：测试与排错定位用 */
-    stage.style.cssText = 'position:fixed;z-index:98000;overflow:hidden;pointer-events:none;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;background:' + bgOf(panel) + ';border-radius:' + cs.borderRadius + ';';
+    stage.style.cssText = 'position:fixed;z-index:98000;overflow:hidden;pointer-events:none;contain:layout paint;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;background:' + bgOf(panel) + ';border-radius:' + cs.borderRadius + ';';
     /* v371 条12：真面板搬运（不 clone）——无克隆卡顿、无"第二画面插入感"，面板本身在舞台里跟手 */
     S_saved = { parent: panel.parentNode, next: panel.nextSibling, css: panel.style.cssText };
     panel.style.cssText += ';position:absolute;left:0;top:0;width:100%;margin:0;box-shadow:none;will-change:transform;';
@@ -1715,12 +1715,12 @@ window.__followSwipe = function (opts) {
        真机上样式重算时机差半帧就会出现中缝错动（老板实拍「总有一些不合理的东西显示」）。 */
     var track = document.createElement('div');
     track.className = '__fs-track';
-    track.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;will-change:transform;';
+    track.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;will-change:transform;backface-visibility:hidden;contain:layout style;pointer-events:none;'; /* v422 滑动卡顿治理：轨道整层上合成器（独立图层+裁剪），拖拽中屏蔽子元素命中/悬停，杜绝拖拽帧内的布局抖动 */
     stage.appendChild(track);
     if (nb) {
       pB = document.createElement('div');
       /* v405 条10：邻居面板垫同款不透明底——此前透明，提交切换时旧画面从底下透出来（「滑完还残留上一画面」的根因之一） */
-      pB.style.cssText = 'position:absolute;left:100%;top:0;width:100%;height:100%;background:' + bgOf(panel) + ';overflow:hidden;';
+      pB.style.cssText = 'position:absolute;left:100%;top:0;width:100%;height:100%;background:' + bgOf(panel) + ';overflow:hidden;contain:paint;backface-visibility:hidden;'; /* v422：邻居面板独立合成层，填充不拖累拖拽帧 */
       track.appendChild(pB);
     }
     track.appendChild(panel);

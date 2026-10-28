@@ -664,13 +664,13 @@
     .variant-item .v-price { color: var(--price-text, #C86800); font-weight: 600; font-size: 14px; flex-shrink: 0; } /* R146：类型金额（橙，与资源页同色） */
     .variant-item .v-sort { color: var(--text-light); /* v293（用户 10-04 02:14）：028放大镜颜色→跟资源页搜索框统一为text-light */ font-size: 12px; }
     /* ---------- 公告项列表 ---------- */
-    .ann-list { max-height: 220px; overflow-y: auto; overscroll-behavior: contain /* v418 举一反三：弹窗内 contain（v416 条④口径） */; border: 1px solid var(--border); border-radius: var(--r-m); padding: 4px; margin-bottom: 4px; background: var(--bg-light); }
-    .ann-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--r-m); padding: 8px 8px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } /* v371 条4 */
+    .ann-list { max-height: 220px; overflow-y: auto; overscroll-behavior: auto /* v421 分层：内层到头→弹窗跟滚（v418 的 contain 挡死了弹窗内链） */; border: 1px solid var(--border); border-radius: var(--r-m); padding: 4px; margin-bottom: 4px; background: var(--bg-light); }
+    .ann-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--r-m); padding: 8px 8px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; } /* v421 复检：老板指『一组在一行看上去不是』——wrap 改 nowrap 强制一行 */
     .ann-item:last-child { margin-bottom: 0; }
     /* v416 条8：公告行一组一行——拖柄+名称+排序锁同一条主行（ann-group 原是裸 span，txt 的 flex:1 不生效、排序占 56px 过宽，窄屏被挤换行） */
     .ann-group { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-    .ann-main-group { flex: 1 1 auto; min-width: 0; }
-    .ann-main-group .ann-title-input { min-width: 0; } /* 名称框弹性收缩，窄屏出省略号不换行 */
+    .ann-main-group { flex: 0 1 auto; min-width: 0; } /* v421b 按老板口径：主组不再撑满整行 */
+    .ann-main-group .ann-title-input { min-width: 0; flex: 0 1 auto; width: clamp(120px, 40vw, 240px); } /* v421b 老板口径：名称框缩短，排序紧贴其后；主组=拖柄+名称+排序+三角 */
     .ann-item.ann-cur { border-color: var(--blue1); box-shadow: 0 0 0 1px var(--blue1) inset; }
     /* 一级默认公告（主公告）：标题固定、不可拖拽/隐藏/删除 */
     .ann-item.primary { background: var(--hover-bg); border-color: var(--blue1); }
@@ -752,7 +752,7 @@
       display: block; position: fixed; z-index: 6002;
       opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
       transition: opacity var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), visibility 0s var(--dur-mid); /* v415 条5：展开/收起双向滑动动画（参考分类管理 c-meta 口径），原 display 瞬切生硬 */
-      max-height: 264px; overflow-y: auto; overscroll-behavior: contain /* v418 举一反三：弹窗内面板 contain */; background: var(--card-bg); border: 1px solid var(--border);
+      max-height: 264px; overflow-y: auto; overscroll-behavior: auto /* v421 分层：面板到头→弹窗跟滚 */; background: var(--card-bg); border: 1px solid var(--border);
       border-radius: var(--radius-btn,10px); box-shadow: var(--shadow-pop); /* R285 条20：归悬浮面板档 */ padding: 4px;
     }
     .cat-picker.open .cat-picker-panel, .select-picker.open .cat-picker-panel, .cat-picker-panel.open {
@@ -948,7 +948,7 @@
     .rte-editor th, .rte-editor td { border: 1px solid var(--border-strong, #9fb0c0); padding: 4px 8px; min-width: 40px; font-size: 14px; line-height: 1.5; vertical-align: top; word-break: break-word; }
     .rte-editor th { background: var(--hover-bg); font-weight: 600; }
 /* v340 条8：编辑器滚动到头/到尾后，继续滑动应带动页面滚动（此前被 contain 圈死） */
-.rte-editor, .rte-body, .rte-content, .rte-scroll { overscroll-behavior: contain !important; touch-action: pan-y !important; } /* v418 举一反三：编辑器在弹窗内，滑到头不带动整页（v416 条④口径） */
+.rte-editor, .rte-body, .rte-content, .rte-scroll { overscroll-behavior: auto !important; touch-action: pan-y !important; } /* v421 分层：编辑器到头→弹窗跟滚；弹窗自身由 .modal-box/.form contain 挡页面 */
     .rte-editor td.tbl-cell-sel { background: rgba(30, 136, 229, 0.12) !important; }
     /* 列宽拖拽热区提示 */
     .rte-editor table.rte-col-resizing { cursor: col-resize; user-select: none; }
@@ -1239,6 +1239,7 @@
     #panel-stats .trend-chart > div:first-child > div { flex: 1 1 100% !important; order: 1; }
 
     /* 折线图 */
+    .line-chart svg polyline, .line-chart svg path, .line-chart svg circle, .line-chart svg line { vector-effect: non-scaling-stroke; } /* v421 复检：老板指拉高变形——描边/圆点锁物理尺寸，坐标仍随容器拉伸 */
     .line-chart { position: relative; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-btn,10px); padding: 12px 0; margin-bottom: 8px; overflow-x: auto; overscroll-behavior: auto; touch-action: pan-y pinch-zoom; /* v381 条8：按老板拍板全部删掉重加——与柱图容器背景完全一致（白卡+细边框），唯一差异=内容（趋势线） */  scrollbar-width: none; } /* R285 条42：能滑不露条 */
     .line-chart::-webkit-scrollbar { display: none; } /* R285 条42 */
     .line-chart svg { display: block; }
