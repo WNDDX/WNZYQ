@@ -84,11 +84,11 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
   <div class="title" id="errorTitle">页面访问异常</div>
   <div class="desc" id="errorDesc">抱歉！你访问的页面出现了问题<br><ul class="err-reasons"><li>①地址有误</li><li>②页面已删除</li><li>③服务暂不可用</li></ul>可点击【导航页】或【资源页】继续浏览</div>
 <div class="err-actions"><!-- v400 条10：按钮间距由内联 margin-left:14px 改弹性布局统一 gap（窄窗口不挤压变形；隐藏键不留空隙，行为与原先一致） -->
-  <a href="index" class="btn" id="errBack" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">导航页</a>
+  <a href="index" class="btn" id="errBack" aria-label="返回导航页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">导航页</a>
   <!-- R50：右按钮「资源页」样式完全复用左侧导航页按钮（白底蓝字+同款hover），仅保留间距 -->
-  <a href="shop" class="btn" id="errShop" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">资源页</a>
-  <a href="javascript:;" class="btn" id="errReload" style="display:none;" onclick="location.reload()">重新加载</a>
-  <a href="admin" class="btn" id="errLogin" style="display:none;" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">去登录</a>
+  <a href="shop" class="btn" id="errShop" aria-label="前往资源页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">资源页</a>
+  <a href="javascript:;" class="btn" id="errReload" aria-label="重新加载" style="display:none;" onclick="location.reload()">重新加载</a>
+  <a href="admin" class="btn" id="errLogin" aria-label="去登录" style="display:none;" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">去登录</a>
 </div>
   <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 </div>

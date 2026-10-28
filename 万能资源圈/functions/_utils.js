@@ -562,3 +562,40 @@ export async function sweepDroppedKeys(env, oldText, newText) {
     return n;
   } catch (e) { return 0; }
 }
+
+/* ===== v432（总账 #38/#39）：上传内容嗅探 + 接口防刷 ===== */
+
+/* #38 文件头校验：读真实字节比对魔数，防伪装成图片/视频的坏文件（仅校验，不改存储逻辑） */
+const MAGIC = {
+  'image/png':  [[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A]],
+  'image/jpeg': [[0xFF,0xD8,0xFF]],
+  'image/gif':  [[0x47,0x49,0x46,0x38]],
+  'image/webp': [[0x52,0x49,0x46,0x46]],
+  'video/mp4':  [[0x66,0x74,0x79,0x70]],   /* ftyp 盒（偏移 4 起四字节含 ftyp） */
+  'video/webm': [[0x1A,0x45,0xDF,0xA3]],
+};
+export async function sniffMatchesType(file, type) {
+  try {
+    const rules = MAGIC[type];
+    if (!rules) return true; /* 未登记的类型（如 mov）沿用原白名单口径，不加拦 */
+    const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    return rules.some(sig => sig.every((b, i) => head[i] === b));
+  } catch (e) { return true; } /* 嗅探失败不拦（保原逻辑可用性） */
+}
+
+/* #39 接口防刷：每实例内存滑动窗口（写接口 30 次/分钟/令牌），超限 429。
+   管理端点本身有登录门槛，这里只做高频滥用兜底；跨实例不强一致属可接受（防的是刷不是分布式攻击）。 */
+const __rate = new Map();
+export function rateLimit(request, tag, maxPerMin) {
+  try {
+    const key = tag + ':' + (getCookie(request, 'wnzyq_admin') || getCookie(request, 'wnzyq_session') || 'anon');
+    const now = Date.now();
+    let arr = __rate.get(key);
+    if (!arr) { arr = []; __rate.set(key, arr); }
+    while (arr.length && now - arr[0] > 60000) arr.shift();
+    if (arr.length >= (maxPerMin || 30)) return false;
+    arr.push(now);
+    if (__rate.size > 5000) __rate.clear(); /* 防内存膨胀 */
+    return true;
+  } catch (e) { return true; }
+}

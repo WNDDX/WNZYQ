@@ -1104,3 +1104,28 @@
           loginBtn.textContent = '登录';
         });
     }
+    /* v430 条56：管理页快捷键——N=新增资源、/ =聚焦搜索（输入框聚焦时不触发） */
+    document.addEventListener('keydown', function (e) {
+      try {
+        var tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        var onProducts = document.querySelector('.tab[data-tab="products"]') && document.querySelector('#panel-products') && document.getElementById('panel-products').style.display !== 'none';
+        if (!onProducts) return;
+        if (e.key === 'n' || e.key === 'N') { var ab = document.querySelector('.tb-row2 .g-add button, #addBtn'); if (ab) { ab.click(); e.preventDefault(); } }
+        if (e.key === '/') { var sb = document.getElementById('adminSearch'); if (sb) { sb.focus(); e.preventDefault(); } }
+      } catch (e6) { if (window.__silent) window.__silent(e6); }
+    });
+    /* v430 条53：资源标题同名提醒（失焦时查现有列表） */
+    (function () {
+      var ft = document.getElementById('fTitle');
+      if (!ft) return;
+      ft.addEventListener('change', function () {
+        try {
+          var v = (ft.value || '').trim();
+          if (!v || !window.state || !window.state.products) return;
+          var dup = window.state.products.some(function (x) { return x && (x.title || '').trim() === v; });
+          if (dup && window.showToast) window.showToast('已存在同名资源，请确认是否重复添加', 'info');
+        } catch (e0) { if (window.__silent) window.__silent(e0); }
+      });
+    })();

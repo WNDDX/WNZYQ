@@ -6,7 +6,7 @@
  * 需登录。图片通过本站路由 /img/<key> 访问（自家域名 + CDN 缓存，无需填任何公开地址）。
  * R32：改为免绑卡 KV 方案 + 自家路由直出，URL 为相对路径 /img/...
  */
-import { json, requireAuth , putToBucket, recordUpload } from '../../_utils.js';
+import { json, requireAuth , putToBucket, recordUpload, sniffMatchesType, rateLimit } from '../../_utils.js';
 
 const ALLOWED_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
 
@@ -17,6 +17,8 @@ export async function onRequestPost(context) {
   const { env, request } = context;
   const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
+  /* v432 #39：上传写接口防刷（30 次/分钟） */
+  if (!rateLimit(request, 'upload', 30)) return json({ ok: false, msg: '操作太频繁，请一分钟后再试' }, 429);
 
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) {
@@ -54,6 +56,8 @@ export async function onRequestPost(context) {
   const type = String(file.type || '').toLowerCase();
   const ext = ALLOWED_TYPES[type];
   if (!ext) return json({ ok: false, msg: '只支持 png / jpg / webp / gif 图片' }, 400);
+  /* v432 #38：文件头魔数校验——声明类型与真实内容不符即拒（防伪装） */
+  if (!(await sniffMatchesType(file, type))) return json({ ok: false, msg: '文件内容与图片格式不符，已被拒绝' }, 400);
   /* R307 U6/U7（用户 09-30 拍板「全系统图片和视频都不做这种限制，取消检查」）：
      后端图片 10MB 硬性拒绝已移除。图片「超 10MB 先压缩」由前端 canvas 链处理
      （admin.js needCompress：非 PNG >1.5MB / PNG >8MB 自动压缩后再传），后端不再拦截。

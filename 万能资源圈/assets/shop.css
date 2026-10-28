@@ -252,7 +252,7 @@
       .card-img { aspect-ratio: 16 / 10; }
       .card-body { padding: 8px 8px 8px; }
       .card-title { font-size: 13px; min-height: 36px; margin-bottom: 4px; line-height: 1.35; }
-      .card-desc { font-size:12px; line-height: 1.45; -webkit-line-clamp: 1; }
+      .card-desc { font-size: 12px; line-height: 1.45; -webkit-line-clamp: 1; }
       .product-grid.list-view .card-img { width: 108px; min-width: 108px; }
     }
 
@@ -345,7 +345,7 @@
       transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) ease, filter var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ;
     }
     .card-title {
-      font-size:14px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--text);
       margin-bottom: 4px; /* R159：与手机一致的紧凑间距 */
@@ -370,7 +370,7 @@
     /* v330 条14：卡片信息分层——标题（主）/ 描述（次、更淡）/ 价格（橙、突出、固定底部行）
        层级靠字号+字重+颜色三件事拉开，不加状态标签（用户明确不做"可绑定/已绑满"） */
     .card-price-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; min-height: 20px; }
-    .card-price { color: var(--price-text, #C86800); font-weight: 700; font-size:14px; font-variant-numeric: tabular-nums; letter-spacing: 0.2px; }
+    .card-price { color: var(--price-text, #C86800); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; letter-spacing: 0.2px; }
     .card-price.free { color: var(--green, #01C000); font-size: 13px; font-weight: 600; }
     @media (max-width: 600px) {
       .card-title { font-size: 14px; line-height: 1.4; } /* 手机档标题降一档，与描述拉开层级 */
@@ -518,7 +518,7 @@
       flex-shrink: 0;
     }
     .modal-desc {
-      font-size:14px;
+      font-size: 14px;
       color: var(--blue1);
       margin-bottom: 12px;
       font-weight: 600;
@@ -623,7 +623,7 @@
       border-bottom: 1px dashed var(--border);
     }
     .variant-name {
-      font-size:14px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text);
       flex: 1; /* R158（用户 22:48）：长名称在弹性行内收缩（自身可换行），不再把金额挤成竖排 */
@@ -743,7 +743,7 @@
     .resource-content h4 {
       color: var(--blue1);
       margin-bottom: 8px;
-      font-size:14px;
+      font-size: 14px;
     }
     .resource-content p {
       margin-bottom: 4px;
@@ -824,7 +824,7 @@
     .ann-modal .ann-body p { margin: 4px 0; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 8px auto; border-radius: var(--r-m); min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
     /* 交互动效复用 ui-common.css 全站统一弹窗按键规则（R17 统一标准：hover 缩小变淡、按压更小更暗） */
-    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: var(--radius-btn,10px); background: #1e88e5; color: #fff; font-size:14px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: var(--radius-btn,10px); background: #1e88e5; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
     /* v400 条4：.ann-modal .modal-close-x 布局副本已删——ui-common × 唯一源全覆盖（原值与唯一源逐字相同） */
     /* 分类栏 */
     .category-bar-wrap {
@@ -984,7 +984,7 @@
       .card-img { aspect-ratio: 1 / 1; }
       .card-body { padding: 8px 8px 8px; }
       .card-title { font-size: 14px; min-height: 20px; -webkit-line-clamp: 1; margin-bottom: 4px; }
-      .card-desc { font-size:12px; -webkit-line-clamp: 1; }
+      .card-desc { font-size: 12px; -webkit-line-clamp: 1; }
       .product-grid.list-view .card-img { width: 96px; min-width: 96px; aspect-ratio: 1 / 1; }
       .product-grid.list-view .card-body { padding: 8px; }
       .product-grid.list-view .card-title { -webkit-line-clamp: 2; min-height: 36px; }
@@ -1174,7 +1174,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .shop-logo-link:hover .shop-logo {
         box-shadow: 0 0 0 3px rgba(255,255,255,0.45);
       }
-  .search-clear:hover { background: var(--red, #ff4444); color: #fff; transform: translateY(calc(-50% - 1px)); filter: brightness(1.06); } /* R231 条7 */
+  .search-clear:hover { background: var(--red, #c62828); color: #fff; transform: translateY(calc(-50% - 1px)); filter: brightness(1.06); } /* R231 条7 */
   .category-tag:hover {
         border-color: var(--blue1);
         color: var(--blue1);
@@ -1233,16 +1233,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    宽或高一维贴框、另一维按比例居中；切换小白点 absolute 镶进框内底部（半透明胶囊底衬，任何图上都看得清），
    不再单独占布局空间 */
 /* v327（用户 10-06 15:23）：根因→封面常驻边框导致暗色模式黑边/浅色模式灰边；修法→删 border */
-.cover-carousel { position:relative; width:calc(100% - 32px); margin:16px auto 0; height:min(48vh, 400px); overflow:hidden; box-sizing:border-box; background:var(--img-bg); /* v404 条6：写死 #eef4fb 入令牌 */ border-radius:var(--radius-btn,10px); }
+.cover-carousel { position:relative; width:calc(100% - 32px); margin:16px auto 0; height:min(48vh, 400px); overflow:hidden; box-sizing:border-box; background:var(--img-bg); /* v404 条6：写死 #eef4fb 入令牌 */ border-radius: var(--radius-btn,10px); }
 .cover-carousel .cc-track { display:flex; height:100%; transition:transform var(--dur-slow) ease; }
 .cover-carousel .cc-track.dragging { transition:none; }
 .cover-carousel .cc-slide { flex:0 0 100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .cover-carousel .cc-slide img { width:100%; height:100%; object-fit:contain; display:block; }
 /* R280 ①：轮播内占位图也按固定框 contain（特异性 0,3,1 顶掉弹窗占位符 16:9 通配规则的 height:auto!important） */
 .modal-box .cover-carousel .cc-slide img[src^="data:image/svg+xml"] { height:100% !important; width:100%; aspect-ratio:auto !important; min-height:0 !important; margin:0 !important; object-fit:contain !important; }
-.cover-carousel .cc-dots { position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:flex; justify-content:center; gap:4px; padding:4px 8px; margin:0; background:rgba(0,0,0,.35); border-radius:var(--r-pill); z-index:2; }
+.cover-carousel .cc-dots { position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:flex; justify-content:center; gap:4px; padding:4px 8px; margin:0; background:rgba(0,0,0,.35); border-radius: var(--r-pill); z-index: 2; }
 .cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.55); cursor:pointer; }
-.cover-carousel .cc-dots .cc-dot.active { background:#fff; }
+.cover-carousel .cc-dots .cc-dot.active { background:var(--card-bg, #fff); }
 
 
 /* R285：手机端 390px 资源码选择框修复 */
@@ -1268,7 +1268,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   margin: 8px 0;
   border: 1px solid var(--border,#d0d0d0);
   border-radius: var(--r-m);
-  background: var(--card-bg, #fff);
+  background: var(--card-bg, var(--card-bg, #fff));
   overflow: hidden;
   user-select: none;
 }
@@ -1283,7 +1283,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .file-card-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* v378：文件夹标题行右侧「总大小＋下载」一组（与文件行同款靠右、间距 4px 绑定） */
 .fc-head-meta, .fc-row-meta { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: auto; }
-.fc-head-meta .fsize { font-size:12px; color: var(--gray-mid, #8a97a5); }
+.fc-head-meta .fsize { font-size: 12px; color: var(--gray-mid, #8a97a5); }
 .file-card-size { font-size: 12px; color: var(--gray-mid); flex-shrink: 0; }
 .file-folder-list { border-top: 1px dashed var(--border,#d0d0d0); padding: 8px 12px; }
 .file-folder-item {
@@ -1296,13 +1296,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 .file-folder-item:last-child { border-bottom: none; }
 .file-folder-item .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.file-folder-item .fsize { font-size:12px; color: var(--gray-mid); flex-shrink: 0; }
+.file-folder-item .fsize { font-size: 12px; color: var(--gray-mid); flex-shrink: 0; }
 .file-folder-item.oversize .fname { color: var(--red); }
 .file-folder-item.oversize .fsize { color: var(--red); font-weight: 600 /* v336 条115 */; }
 /* ===== v351：文件/文件夹卡升级（多级嵌套 · 默认收起 · 客户自选下载） ===== */
 .file-folder-item.is-folder { display: block; padding: 4px 0; }
 .file-folder-item .fc-row-head { display: flex; align-items: center; gap: 8px; }
-.file-folder-item .fmeta { font-size:12px; color: var(--text-faint); flex-shrink: 0; }
+.file-folder-item .fmeta { font-size: 12px; color: var(--text-faint); flex-shrink: 0; }
 .file-folder-item .file-folder-list.fc-kids { margin: 4px 0 0 12px; padding-left: 10px; border-left: 2px solid var(--border-soft,#d0d0d0); border-top: none; }
 .fc-arrow { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; line-height: 0; } /* v378：line-height:0 消基线偏移 */
 /* v376：文件卡三角已并入全站同款（见 941 行统一规则） */
@@ -1372,3 +1372,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* ===== v371 条14：无封面占位符根治——media-fail 图立即全显、不重播入场动画/淡入，重渲染零闪烁 ===== */
 .product-card .card-img.media-fail, .thumb.media-fail, img.media-fail { opacity: 1 !important; animation: none !important; transition: none !important; }
+
+/* v432 #45：大字模式——内容区整体放大 15%（顶栏保持原样不挤），激活键高亮 */
+html.fat #productGrid, html.fat .modal-box, html.fat .ann-box, html.fat .kf-box { zoom: 1.15; }
+html.fat #topFat { background: rgba(255,255,255,.28); }

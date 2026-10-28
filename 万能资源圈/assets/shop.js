@@ -1853,6 +1853,18 @@
     /* v415 条2：公告键常亮——公告弹窗开着期间顶栏「公告」键保持白底蓝字，关窗熄灭（对齐管理页信息键 __keyGlow 口径） */
     try {
       var _ta = document.getElementById('topAnn'); var _am = document.getElementById('annModal');
+      /* v430 条48：未读=公告最近更新时间 > 上次已读时间 */
+      try {
+        window.__annUnread = function () {
+          var btn = document.getElementById('topAnn');
+          if (!btn) return;
+          var upd = parseInt(btn.dataset.annUpd || '0', 10) || 0;
+          var seen = parseInt(localStorage.getItem('wnzyq_ann_seen') || '0', 10) || 0;
+          var badge = btn.querySelector('.dot-badge');
+          if (upd > seen) { if (!badge && window.__mkDot) { var d = document.createElement('span'); d.className = 'dot-badge'; btn.style.position = btn.style.position || 'relative'; btn.appendChild(d); } else if (badge) badge.style.display = ''; }
+          else if (badge) badge.style.display = 'none';
+        };
+      } catch (e5) { if (window.__silent) window.__silent(e5); }
       if (_ta && _am && window.MutationObserver) new MutationObserver(function () { _ta.classList.toggle('active', _am.classList.contains('open')); }).observe(_am, { attributes: true, attributeFilter: ['class'] });
     } catch (e) { if (window.__silent) window.__silent(e); }
     /* v370b 条3：分类指示线=常驻在活动分类下面的那根蓝线（不再另造幽灵线）——
@@ -2218,9 +2230,28 @@
 
     // ---------- 顶栏：分享本页（点击即复制链接 + 弹窗提示） ----------
     topShareBtn.addEventListener('click', openShare);
+
+    // ---------- v432 #45：顶栏：大字模式（内容区放大 15%，记住选择） ----------
+    (function () {
+      var fatBtn = document.getElementById('topFat');
+      if (!fatBtn) return;
+      var apply = function (on) {
+        document.documentElement.classList.toggle('fat', on);
+        fatBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        try { localStorage.setItem('wnzyq_fat', on ? '1' : '0'); } catch (e0) {}
+      };
+      try { if (localStorage.getItem('wnzyq_fat') === '1') apply(true); } catch (e1) {}
+      fatBtn.addEventListener('click', function () { apply(!document.documentElement.classList.contains('fat')); });
+    })();
     /* v386：顶栏「公告」键——与管理页「信息」同图标同键规格 */
     var topAnnBtn = document.getElementById('topAnn');
-    if (topAnnBtn) topAnnBtn.addEventListener('click', function () { if (window.openAnnModal) window.openAnnModal(); });
+    if (topAnnBtn) topAnnBtn.addEventListener('click', function () { if (window.openAnnModal) window.openAnnModal(); });    /* v430 条48：公告未读红点（复用系统 dot-badge）——有未读公告显示红点，点开即记已读 */
+    if (topAnnBtn && window.__annUnread) {
+      window.__annUnread();
+      document.addEventListener('click', function (e) {
+        if (e.target.closest && e.target.closest('#topAnn')) { try { localStorage.setItem('wnzyq_ann_seen', String(Date.now())); window.__annUnread(); } catch (e0) {} }
+      });
+    }
 
     // R20：客服/分享弹窗全部关闭后，移除顶栏两键的激活白底（与弹窗开合状态同步）
     (function () {
@@ -2241,7 +2272,6 @@
       }
       observe();
       // 客服弹窗是首次点击才动态创建的，创建后再挂一次监听
-      var _okf = document.getElementById('openContactModal');
       if (window.openContactModal) {
         var _orig = window.openContactModal;
         window.openContactModal = function (a, b, c, d) { var r = _orig.call(this, a, b, c, d); observe(); return r; };

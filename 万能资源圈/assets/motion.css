@@ -86,7 +86,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
   stroke-dasharray: 48; stroke-dashoffset: 48; animation: wnDraw .32s var(--ease-out) forwards;
 }
 .ui-toast .wn-tico path { stroke-dasharray: 26; stroke-dashoffset: 26; animation-delay: .12s; }
-.ui-toast .wn-tico.ok circle, .ui-toast .wn-tico.ok path { stroke: var(--green-strong, #2e7d32); }
+.ui-toast .wn-tico.ok circle, .ui-toast .wn-tico.ok path { stroke: var(--green-strong, #01c000); }
 .ui-toast .wn-tico.err circle, .ui-toast .wn-tico.err path { stroke: var(--red-strong, #c62828); animation-name: wnDrawX; }
 @keyframes wnDraw { to { stroke-dashoffset: 0; } }
 @keyframes wnDrawX { 0% { stroke-dashoffset: 26; } 60% { stroke-dashoffset: 0; } 70% { transform: translateX(1px); } 85% { transform: translateX(-1px); } 100% { stroke-dashoffset: 0; transform: none; } }
@@ -201,7 +201,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 .sugg-pop .sugg-it { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 13.5px; color: var(--text); cursor: pointer; }
 .sugg-pop .sugg-it i { flex: none; width: 16px; height: 16px; border-radius: 5px; background: var(--bg-light); }
 .sugg-pop .sugg-it:hover, .sugg-pop .sugg-it.hot { background: var(--hover-bg, #f0f7ff); }
-.sugg-pop .sugg-cat { padding: 5px 12px 3px; font-size:12px; color: var(--text-faint); }
+.sugg-pop .sugg-cat { padding: 5px 12px 3px; font-size: 12px; color: var(--text-faint); }
 
 /* ===== v394-16/17/18：空态模板 / 下拉浮层 / 公共表格（统一组件底座） ===== */
 .wn-empty { padding: 20px 0; text-align: center; }

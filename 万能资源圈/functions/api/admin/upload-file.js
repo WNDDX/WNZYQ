@@ -3,7 +3,7 @@
  * v320（用户 10-05 22:37）：文件与图片/视频共用同一存储体系（IMAGE_BUCKET），
  * 存到 files/ 目录，通过 /files/<key> 下载。单文件 25MB 前端已拦截，后端做兜底保险。
  */
-import { json, requireAuth , putToBucket } from '../../_utils.js';
+import { json, requireAuth , putToBucket, sniffMatchesType, rateLimit } from '../../_utils.js';
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
@@ -13,6 +13,8 @@ export async function onRequestPost(context) {
   const { env, request } = context;
   const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
+  /* v432 #39：上传写接口防刷（30 次/分钟） */
+  if (!rateLimit(request, 'upload', 30)) return json({ ok: false, msg: '操作太频繁，请一分钟后再试' }, 429);
 
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) {
