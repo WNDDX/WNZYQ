@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>万能资源圈・导航</title>
+<meta name="description" content="万能资源圈・导航，优质虚拟资源导航站，汇聚学习资源、软件工具、设计资源，一键获取。">
+<meta name="keywords" content="万能资源圈,资源导航,虚拟资源,学习资源,软件工具">
+<meta property="og:title" content="万能资源圈・导航">
+<meta property="og:description" content="优质资源聚合平台"> <!-- v295（用户 10-04 02:52）：分享描述统一→优质资源聚合平台 -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="万能资源圈">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="万能资源圈・导航">
+<meta name="twitter:description" content="优质资源聚合平台"> <!-- v295（用户 10-04 02:52）：分享描述统一→优质资源聚合平台 -->
+<meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
+  <link rel="stylesheet" href="/assets/ui-common.css">
+  <script>/* v389-1：深色模式纯跟随设备系统（不再读取/存储手动偏好） */(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+<style>/* v436：首屏画布保底——外层 CSS 到位前 html 画布即正确深浅色，杜绝首次加载闪深色/闪白（深色由头部主题脚本先行置 data-theme 联动） */html{color-scheme:light;background:#f2f7fd}html[data-theme="dark"]{color-scheme:dark;background:#0e1621}</style>
+<link rel="stylesheet" href="/assets/motion.css">
+  <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
+  <link rel="preload" href="/assets/ui-common.js" as="script">
+<!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
+<!-- R228（用户 09-21 19:42）：浏览器对 favicon 有独立硬缓存、刷新先闪旧图标 → 图标内联 data URI，HTML 一解析即在，零请求零缓存依赖 -->
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="canonical" href="https://wnzyq.pages.dev/"> <!-- v338 条212：网址规范化 -->
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#1E88E5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="万能资源圈">
+<link rel="preload" href="/assets/images/logo.png" as="image">
+<style>/* v402 条7：原 .modal-mask 预藏规则随本地弹窗删除——三键弹窗统一走 ui-common kf-box 唯一源 */
+/* 变量唯一源：--blue1/2/3、--orange、--green、--red 等全部由 ui-common.css :root 提供，本页禁止再定义 */
+*{
+    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft YaHei", system-ui, sans-serif; /* v404 条1：四页字体栈统一（原 system-ui 在前，与资源/管理页两种渲染） */
+}
+*, *::before, *::after { min-width: 0; }
+img, video, svg { max-width: 100%; }
+table { max-width: 100%; }
+body{
+    /* 渐变之上叠两个低透明度光斑，营造高级氛围感（变量唯一源不变） */
+    background:
+        radial-gradient(ellipse 60% 40% at 18% 8%, rgba(255,255,255,0.10), transparent 62%),
+        radial-gradient(ellipse 55% 38% at 85% 88%, rgba(255,255,255,0.08), transparent 60%),
+        linear-gradient(180deg, var(--blue1) 0%, var(--blue2) 48%, var(--blue3) 100%);
+    min-height: 100vh;
+    min-height: 100dvh; /* v400 条14：原第三行 100dvh 重复，删 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* R229（用户 09-21 19:44）：底部留白改引全站统一变量（本页原 24px 即标准源，值不变） */
+    padding: 24px 20px var(--page-bottom-gap, 24px); /* v293（用户 10-04 02:14）：009左右空白18→20px→跟错误页统一 */
+    animation: pageFadeIn var(--dur-slow) var(--ease-out); /* v400 条13：时长/缓动对齐公共链路（原本地 0.5s ease，位移 10px 副本已删走 ui-common 8px 唯一源） */
+}
+/* v400 条13：本地 @keyframes pageFadeIn/logoFadeIn/breathe 三份副本已删——pageFadeIn/logoFadeIn 收归 ui-common/motion 唯一源（v388 改动2 收编 shop/admin 时漏了本页）；breathe 本页 0 引用=死代码（admin 的 breathe 是另一款且在用，不受影响） */
+.wrap{
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+}
+.logo-wrap{
+    text-align: center;
+    margin-bottom: 32px; /* R33：与标题下方间距对称（原20/44不均，用户要求上下居中） */
+    position: relative;
+}
+.logo-box{
+    display: block;
+    text-decoration: none;
+    width: 100px; /* v405 条2：150→100 对齐错误页小版（老板拍板按小的那版为主） */
+    height: 100px; /* v405 条2：同上 */
+    border-radius: 50%;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    opacity: 0; /* 进场前整体隐藏：边框/背景/图片同步进场 */
+    /* v333 修：此处原本用 JS 的 // 注释，CSS 遇到 // 会一直丢弃到下一个分号，把下面那行 transition 一起吞掉（logo 按压/悬浮不再有过渡动画）。改成标准 CSS 注释后恢复正常 */
+    /* v310（用户 10-05 14:25）：差异→统一口径。A1 logo 边框统一走 var(--card-bg) */
+    border: 3px solid var(--card-bg); box-sizing: border-box; box-shadow: var(--avatar-shadow), 0 0 36px rgba(255,255,255,0.16);
+    transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease; /* v400 条9：0.12s 散数改统一快档令牌 */
+}
+.logo-box:hover { box-shadow: 0 0 0 3px rgba(255,255,255,0.45); }
+.logo-box:active { transform: scale(0.94) !important; opacity: 0.8 !important; }  /* R163：!important 压过 logoFadeIn forwards 填充（动画优先级高于普通声明，按压反馈此前被钉死的 scale(1) 遮蔽） */
+.logo-img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.logo-fail-icon{
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+}
+.page-title{
+    color: #ffffff;
+    font-size: 36px;
+    font-weight: 600 /* v336 条115 */;
+    text-align: center;
+    margin-bottom: 32px; /* R33：与标题上方间距对称（原44/20不均） */
+    opacity: 0.95;
+    letter-spacing: 1.2px;
+    /* R20：抵消字距尾随空隙使视觉居中（与错误页大字同款修法） */
+    display: flex; align-items: center; justify-content: center; text-indent: 0.6px /* v336 条127 */; box-sizing: border-box;
+}
+.btn-item{
+    width: 100%;
+    border-radius: 10px;
+    padding: 24px 26px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    border: none;
+    font-size: 30px;
+    line-height: 1;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    background: none;
+    text-align: center;
+    letter-spacing: 1px;
+    transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease, filter var(--dur-fast) ease; /* v400 条9：0.15s 散数改统一快档令牌 */
+}
+/* 四色按钮（v327 用户拍板：导航页特殊页恢复原配色与字号，仅保留光斑背景等新增氛围效果） */
+.btn-orange{background-color: var(--brand-orange);}
+.btn-green{background-color: var(--brand-green);}
+.btn-blue{background-color: #1E88E5;}
+.btn-cyan{background-color: var(--brand-cyan);}
+@media (hover:hover){ .btn-item:hover{ transform: translateY(-2px); filter: brightness(1.06); } }
+.btn-item:active{ transform: scale(0.94); filter: brightness(0.94); transition-duration: 80ms; } /* v336 条147：按压反馈 */ /* v336 条72：手机点完不粘住 */
+.icon-svg{
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+/* v330 条30：按钮副标题——主标题下的一行浅色小字（信息量上去、视觉不吵；按钮颜色与大小保持原样） */
+.btn-item .btn-txt{ display: flex; flex-direction: column; align-items: flex-start; gap: 6px; } /* v335：主标题与副标题从贴在一起（3px）放宽到 6px，电脑端不再挤成一坨 */
+.btn-item .btn-sub{ font-size: 13px; display: inline-block; min-height: 1.35em; visibility: hidden; } /* v416 条5：副标题固定占位+填充前隐藏——数据到达填充时模块不再跳一下 */ font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.18); letter-spacing: 0.5px; line-height: 1.35; } /* v346 条34：副标题加深加粗（原半透明 400 偏淡，白字看不清） */
+/* v402 条7：.modal-inner-btn 本地副本已删——弹窗按键统一走 ui-common kf-jump/kf-close（kf-box 唯一源） */
+/* v379：.modal-mask/.modal-mask.open/.modal-title/.modal-tip 骨架已上移 ui-common.css 唯一源，本地副本删除 */
+/* v402 条7：本页 .modal-box/.qrcode-wrap/.modal-qrcode/占位符/.qrcode-fail-icon/.modal-close/.modal-footer 等
+   本地弹窗样式整体删除（弹窗结构与样式统一走 ui-common kf-box 唯一源；空图占位符占满方框由 kf-qr 自带规则实现） */
+img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;} /* 全局兜底占位（logo 加载失败等）保留 */
+/* v409b 修复：此处原有一个悬空的 `.btn-item{`（v402 清理删规则体时漏删开头行）——未闭合括号把
+   后面整个 @media (max-width:600px) 手机档吞进无效嵌套，手机端导航页样式（标题 26px/按钮内距等）全线失效 */
+html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
+/* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
+/* R146（用户 00:36）：恢复 R135 之前的下拉展开动画（height 0→N + transition .2s，从上往下揭开） */
+/* v392-4：下拉刷新胶囊 CSS 已收归 motion.css 四页唯一源 */
+/* R285 条48：prtspin 已删——统一走 ui-common.css btnSpin */
+/* v379：.modal-close-x 本地副本已删——ui-common.css 全站统一规格（32px 圆/灰底/hover 红）以 !important 全覆盖 */
+/* === 弹窗横向溢出防护：禁止底部滑轮 === */
+.modal-box, .modal-wrap { overflow-x: hidden; }
+.modal-tip, .modal-title { word-break: break-word; overflow-wrap: anywhere; }
+/* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
+/* 全系统弹窗遮罩层强制统一：填满整个视口+居中显示，覆盖任何异常样式 */
+/* v336 条31：页面层弹窗遮罩覆盖已删——统一走 ui-common.css 唯一源（含 dvh/毛玻璃/安全区） */
+.modal-mask > *, .share-mask > *, .lightbox > * { margin: auto !important; float: none !important; }
+@media (max-width: 600px) {
+  .logo-box { width: 100px; height: 100px; }
+  .logo-wrap { margin-bottom: 28px; } /* R33：移动端同步上下间距对称 */
+  .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.2px; text-indent: 0.4px /* v336 条127 */; }
+  .btn-item { padding: 16px 18px; font-size: 20px; margin-bottom: 12px; border-radius: 10px; gap: 12px; }
+  .icon-svg { width: 32px; height: 32px; }
+  .btn-item .btn-sub { font-size: 12px; } /* v330 条30：手机档副标题同步降一档 */
+  .qrcode-wrap { width: 200px; height: 200px; }
+  .modal-box { padding: 20px 16px; }
+  .modal-title { font-size: 20px; } /* v356 条10：手机档不再降级，全档 20px */
+  .modal-inner-btn, .modal-close { font-size: 16px; padding: 10px 24px; }
+  .modal-tip { font-size: 14px; }
+}
+@media (min-width: 601px) and (max-width: 900px) {
+  .page-title { font-size: 26px; } /* v405 条2：平板档 32→26 按小版为主 */
+  .btn-item { font-size: 24px; }
+}
+.page-title { font-size: 26px; } /* v405 条2：桌面档 36→26，与错误页标题观感一致（老板拍板按小的那版为主） */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+</style>
+  <!-- R55：搜索引擎收录策略 -->
+  <meta name="robots" content="index,follow">
+  <!-- 首页：允许收录 -->
+  <link rel="preconnect" href="https://work.weixin.qq.com" crossorigin>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"万能资源圈","inLanguage":"zh-CN","potentialAction":{"@type":"SearchAction","target":"/shop.html?kw={search_term_string}","query-input":"required name=search_term_string"}},{"@type":"Organization","name":"万能资源圈","url":"https://wnzyq.pages.dev/","logo":"https://wnzyq.pages.dev/assets/images/logo.png"}]}
+</script>
+</head>
+<body><a class="skip-link" href="#mainContent">跳到主要内容</a>
+<div class="wrap" id="mainContent" role="main"><!-- v346 条70/67：skip-link 目标 + 主区语义 -->
+    <div class="logo-wrap">
+        <div class="logo-box"><!-- R53：logo 去链接（特效 hover/active/进场动画全保留） -->
+            <img class="logo-img" id="logoImage" src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');" onerror="this.style.opacity='1';var p=this.parentNode;if(p){p.style.opacity='1';if(!p.classList.contains('logo-enter'))p.classList.add('logo-enter');}this.onerror=null;this.classList&&this.classList.add('media-fail');this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';">
+            <div class="logo-fail-icon" id="logoFail">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <h1 class="page-title" style="margin-top:0;text-shadow:0 1px 6px rgba(21,80,150,0.45);">万能资源圈・导航</h1>
+
+    <button class="btn-item btn-orange" onclick="openResource()">
+        <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原）；v327 用户拍板：恢复原四色按钮 -->
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
+        </svg>
+        <span class="btn-txt">获取资源<span class="btn-sub" id="subRes"></span></span><!-- v400 条11：HTML 初始文案清空（v387 只做了 JS 侧），网慢时不再闪现「优质资源聚合平台」；SEO 描述保留在 og/twitter meta -->
+    </button>
+
+    <button class="btn-item btn-green" onclick="openService()">
+        <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.036 2.87c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.97-.983zm4.844 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.969-.983z" />
+        </svg>
+        <span class="btn-txt">咨询客服</span>
+    </button>
+
+    <button class="btn-item btn-blue" onclick="openGroup()">
+        <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+        </svg>
+        <span class="btn-txt">交流群聊</span>
+    </button>
+
+    <button class="btn-item btn-cyan" onclick="openGzh()">
+        <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原） -->
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M12 2A10 10 0 1 0 22 12 10 10 0 0 0 12 2zm0 18A8 8 0 1 1 20 12 8 8 0 0 1 12 20zm4.25-11.25a1 1 0 0 1-1.41 0l-1.84-1.84-1.84 1.84a1 1 0 0 1-1.41-1.41l1.84-1.84-1.84-1.84a1 1 0 0 1 1.41-1.41l1.84 1.84 1.84-1.84a1 1 0 0 1 1.41 1.41l-1.84 1.84 1.84 1.84a1 1 0 0 1 0 1.41z"/>
+        </svg>
+        <span class="btn-txt">公众号讯</span>
+    </button>
+
+    <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
+</div>
+
+<!-- v402 条7：本页三键弹窗（咨询客服/交流群聊/公众号讯）已并入 ui-common kf-box 唯一源（openContactModal 三页共用），本地弹窗结构/样式/JS 整体删除 -->
+
+
+<script>
+const CONFIG = {
+    resourceUrl: "shop",
+    serviceWeixinUrl: "https://work.weixin.qq.com/kfid/kfc39748ad948e8b691",
+    groupWeixinUrl: "https://work.weixin.qq.com/gm/8036a2badd7daab25b1764b62c3bff9a",
+    logoImg: "/assets/images/logo.png",
+    /* v383：三张二维码（kefu/qun/gzh.png 静态文件已删）+ 两条跳转链接全量改走后台「设置信息」——
+       启动时 fetch /api/settings 覆盖下面的值；这里的链接仅为拉取失败时的出厂兜底 */
+    serviceQrImg: "",
+    groupQrImg: "",
+    gzhImg: "",
+    tipService: "长按图片识别-添加人工客服",
+    tipGroup: "长按图片识别-加入交流群聊",
+    tipGzh: "长按图片识别-关注公众号讯",
+    maxRetry: 3,
+    retryDelay: 1000
+};
+const dom = {
+    logoImage: document.getElementById('logoImage'),
+    logoFail: document.getElementById('logoFail')
+}; /* v402 条7：弹窗相关引用随本地弹窗删除（kf-box 唯一源自带全套 dom） */
+
+// 全站统一：图片加载失败显示感叹号占位（与资源页/管理页/错误页一致）
+var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+/**图片重试加载 */
+function loadImg(imgDom, src, retryCount = 0) {
+    // 同一地址已加载完成：直接显示，避免 opacity 卡 0
+    if (imgDom.getAttribute('src') === src && imgDom.complete && imgDom.naturalWidth) { imgDom.style.display = 'block'; imgDom.style.opacity = '1'; return; } /* v402：kf-qr-in 分支随本地弹窗删除 */
+    imgDom.onload = imgDom.onerror = null;
+    imgDom.style.opacity = '0'; // 加载完成前完全隐藏，杜绝破损图标/空白闪现
+    imgDom.onload = () => {
+        imgDom.style.display = 'block';
+        imgDom.style.opacity = '1';
+        if (imgDom === dom.logoImage) { dom.logoFail.style.display = 'none'; var p = imgDom.parentNode; if (p) { p.style.background = '#e2e5e9'; p.style.opacity = '1'; if (!p.classList.contains('logo-enter')) p.classList.add('logo-enter'); } } /* v402：modalImg/qrFail 分支随本地弹窗删除 */
+    };
+    imgDom.onerror = () => {
+        const nextCount = retryCount + 1;
+        if(nextCount < CONFIG.maxRetry){
+            setTimeout(()=>loadImg(imgDom,src,nextCount),CONFIG.retryDelay);
+        }else{
+            imgDom.style.display = 'none';
+            imgDom.onerror = null;
+            imgDom.src = EXC_PH; if (imgDom.classList) imgDom.classList.add('media-fail');
+            imgDom.style.objectFit = 'contain';
+            imgDom.style.display = 'block';
+            imgDom.style.opacity = '1';
+            var _pp = imgDom.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); } /* v402：modalImg 分支随本地弹窗删除 */
+        }
+    };
+    imgDom.src = src;
+}
+loadImg(dom.logoImage, CONFIG.logoImg);
+
+// v383：启动拉公开设置，覆盖客服/群聊链接与三张二维码（后台「设置信息」改完全站统一生效）
+try {
+  fetch('/api/settings', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (res) {
+    if (!res || !res.ok || !res.settings) return;
+    var s = res.settings;
+    if (s.contact_url) CONFIG.serviceWeixinUrl = s.contact_url;
+    if (s.group_url) CONFIG.groupWeixinUrl = s.group_url;
+    CONFIG.serviceQrImg = s.contact_qr || '';
+    CONFIG.groupQrImg = s.group_qr || '';
+    CONFIG.gzhImg = s.gzh_qr || '';
+    window.__contactQr = CONFIG.serviceQrImg; window.__groupQr = CONFIG.groupQrImg; window.__gzhQr = CONFIG.gzhImg;
+  }).catch(function () {});
+} catch (e) {}
+
+// 全局补漏：任何 img/video 加载失败统一替换为感叹号占位（与管理页/资源页一致）
+document.addEventListener('error', function (e) {
+  var t = e.target;
+  if (!t || !t.tagName || t.dataset.fh) return;
+  if (t.tagName === 'IMG') {
+    t.dataset.fh = '1';
+    t.src = EXC_PH; if (t.classList) t.classList.add('media-fail');
+    t.style.objectFit = 'contain';
+    t.style.display = 'block';
+  } else if (t.tagName === 'VIDEO') {
+    t.dataset.fh = '1';
+    var ph = document.createElement('img');
+    ph.src = EXC_PH; ph.classList.add('media-fail');
+    ph.style.cssText = 'width:100%;height:auto;display:block;';
+    if (t.parentNode) t.parentNode.replaceChild(ph, t);
+  }
+}, true);
+document.querySelectorAll('img').forEach(function (im) {
+  if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) {
+    im.dataset.fh = '1'; im.src = EXC_PH; if (im.classList) im.classList.add('media-fail'); im.style.objectFit = 'contain'; im.style.display = 'block';
+  }
+});
+
+/**弹窗打开 */
+/* v402 条7：三键弹窗已并入 ui-common kf-box（openContactModal 三页唯一源），本页本地弹窗实现整体删除 */
+function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null, green = false) {
+    /* 与资源页/管理页同一份弹窗（ui-common.js openContactModal）：标题可配、空图占位符占满方框、
+       preconnect/防旧图闪现/点外与 Esc 关闭/弹窗栈注册全在唯一源内 */
+    window.openContactModal(jumpUrl || '', imgSrc || '', tipText, btnText, { title: title, green: !!green }); /* v415 条1：咨询客服绿、群聊/公众号蓝 */
+}
+
+// PWA Service Worker 注册：已收编至 ui-common.js 全站统一注册（R34）
+
+//页面按钮事件
+function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
+function openService() { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服", true); } /* v415 条1：咨询客服跳转键绿（第 6 参 green）；v402 注释作废 */
+function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
+function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
+// v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮
+// v392-4：下拉刷新手势与胶囊 UI 收归 motion.js 四页唯一源，本页只留刷新动作（重拉 logo 保鲜） 
+window.__pullRefresh = { refresh: function (done) { try { loadImg(dom.logoImage, CONFIG.logoImg); } catch (e) { if (window.__silent) window.__silent(e); } if (done) done(); } };
+
+// R193 二⑤⑦（用户 22:32 定稿）：长按小菜单同步门户页——长按任意图片（客服/群聊/公众号二维码等）：
+// 保存图片 / 复制链接 / 预览大图（组件 __ctxMenu 与样式在 ui-common，全站同一份）
+(function () {
+  function ready(fn) { if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  ready(function () {
+    var cm = window.__ctxMenu; if (!cm) return;
+    function tip(m) { if (typeof window.showToast === 'function') window.showToast(m); else if (window.__shareToast) { try { window.__shareToast(m); } catch (e) {} } }
+    function cp(t, m) { if (window.__shareCopyText) { try { window.__shareCopyText(t); } catch (e) {} } tip(m || '已复制到剪贴板'); }
+    function saveImg(src) {
+      try {
+        fetch(src).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) {
+          if (!b) { tip('图片保存失败'); return; }
+          var u = URL.createObjectURL(b); var a = document.createElement('a');
+          a.href = u; a.download = (String(src).split('/').pop() || 'image').split('?')[0] || 'image';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(u); }, 3000);
+        }).catch(function () { tip('图片保存失败'); });
+      } catch (e) { tip('图片保存失败'); }
+    }
+    cm.bind(document.body, 'img', function (img) {
+      var src = img.currentSrc || img.src || '';
+      if (!src) return [];
+      return [
+        { label: '保存图片', fn: function () { saveImg(src); } },
+        { label: '复制链接', fn: function () { cp(src, '图片链接已复制'); } },
+        { label: '预览大图', fn: function () { if (window.openLightbox) window.openLightbox(src); } }
+      ];
+    });
+  });
+})();
+</script>
+  <script src="/assets/ui-common.js" defer></script>
+  <script src="/assets/motion.js" defer></script>
+  <script>
+  (function () {
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (!window.__uiCommonLoaded) { if (window.warn) window.warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个“万能资源圈”文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML'); }
+        var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
+        if (!ok) { if (window.warn) window.warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）'); }
+      }, 800);
+    });
+  })();
+  </script>
+
+  <!-- v331 条30（用户 10-09 05:11 拍板）：只有「获取资源」保留副标题，咨询客服/交流群聊/公众号讯
+       三键下不放副标题（已撤）。「获取资源」副标题拉总数：成功→「共 N 个资源」数字滚动上涨（v387 A7）；
+       失败/超时→留空（v387 用户指令：去掉「优质资源聚合平台」加载文案）；6 秒超时兜底保留 -->
+  <script>
+  (function () {
+    function setSubHtml(html) {
+      var el = document.getElementById('subRes');
+      if (el) { el.innerHTML = html; el.style.visibility = 'visible'; } /* v416 条5：填充后显示 */
+    }
+    /* v436b（老板拍板）：「共 个资源」四字跟「获取资源」键文字同帧出现（数字留位），数字等接口回来再填——不再是接口回来才整句冒出 */
+    setSubHtml('共 <span id="resTotal"></span> 个资源');
+    function fetchTotal() {
+      try {
+        var ctrl = ('AbortController' in window) ? new AbortController() : null;
+        var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 6000) : null;
+        fetch('/api/products?page=1&page_size=1', { credentials: 'include', signal: ctrl ? ctrl.signal : undefined })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (res) {
+            if (timer) clearTimeout(timer);
+            if (res && res.ok && typeof res.total === 'number' && res.total >= 0) {
+              var nEl = document.getElementById('resTotal'); /* v436b：字已在（上面初始化），此处只填数字 */
+              if (window.__motion) __motion.countUp(nEl, res.total, { dur: 1100 });
+              else if (nEl) nEl.textContent = res.total;
+            }
+            /* 失败/超时：留空（不显示兜底文案） */
+          })
+          .catch(function () { if (timer) clearTimeout(timer); });
+      } catch (e) { /* 留空 */ }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fetchTotal);
+    else fetchTotal();
+  })();
+  </script>
+</body>
+</html>
