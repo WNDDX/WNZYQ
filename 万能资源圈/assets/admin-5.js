@@ -485,7 +485,8 @@
           });
           xml += '</Row>';
         });
-        xml += '</Table></Worksheet>';
+        /* v436b（老板拍板）：每张工作表首行冻结（表头滚动时恒可见） */
+        xml += '</Table><x:WorksheetOptions xmlns:x="urn:schemas-microsoft-com:office:excel"><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane><x:ActivePane>2</x:ActivePane><x:Panes><x:Pane><x:Number>3</x:Number></x:Pane><x:Pane><x:Number>2</x:Number></x:Pane></x:Panes></x:WorksheetOptions></Worksheet>';
       });
       xml += '</Workbook>';
       var blob = new Blob(['﻿', xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
@@ -500,8 +501,9 @@
     // R251（老板 09-23 15:20）：日期与时间分隔符改中文冒号「：」——「20260923：1520-数据统计.xls」（日期 8 位+时分 4 位），序号逻辑保留
     var __exportStampState = { min: '', seq: 0 };
     function __exportStamp() {
+      /* v436b（老板拍板）：文件名格式统一「年月日-时分」= YYYYMMDD-HHMM（冒号在 Windows 文件名非法，用 4 位时分），导出与批量模板同规格 */
       var d = new Date(); function pd(n) { return String(n).padStart(2, '0'); }
-      var min = window.__fmtDateTime(d, 'stamp').replace(/[-: ]/g, function (ch) { return ch === '：' ? '：' : (ch === '-' ? '' : ch === ' ' ? '：' : ch); }); /* v336 条16：消除全角冒号（Windows 非法文件名字符） */
+      var min = '' + d.getFullYear() + pd(d.getMonth() + 1) + pd(d.getDate()) + '-' + pd(d.getHours()) + pd(d.getMinutes());
       if (__exportStampState.min === min) { __exportStampState.seq++; } else { __exportStampState.min = min; __exportStampState.seq = 0; }
       return min + (__exportStampState.seq > 0 ? '(' + (__exportStampState.seq + 1) + ')' : '');
     }
@@ -635,6 +637,16 @@
         }
         cbox.appendChild(d);
       });
+        /* v439 #97：转化漏斗（浏览 → 解锁 → 绑定） */
+        try {
+          var _views = ov.views || 0, _unlocks = ov.resource_unlocks || 0, _binds = ov.bindings || 0;
+          var _fbox = document.createElement('div');
+          _fbox.style.cssText = 'margin:10px 0 0;padding:10px 12px;background:var(--bg-light,#f5f7fa);border-radius:10px;font-size:12px;color:var(--text-light,#666)';
+          var _pct = function (a, b) { return a > 0 && b > 0 ? Math.round(b / a * 100) + '%' : '—'; };
+          _fbox.innerHTML = '<b style="color:var(--text,#222)">转化漏斗</b>　浏览 ' + _views +
+            ' → 解锁 ' + _unlocks + '（' + _pct(_views, _unlocks) + '）→ 绑定 ' + _binds + '（' + _pct(_unlocks, _binds) + '）';
+          cbox.parentNode.insertBefore(_fbox, cbox.nextSibling);
+        } catch (eF) { if (window.__silent) window.__silent(eF); }
     }
 
     // R176（用户 10:16）：统计切档极致响应——日期全链北京时间口径（旧 toISOString 取 UTC 日，
@@ -2055,7 +2067,7 @@ refreshCatCnts();
       if (cv && cv.contactUrl) url = cv.contactUrl;
       if (!url) url = fContactUrl.value.trim();
       if (!url && window.__infoContactUrl) url = window.__infoContactUrl; /* v383：全局客服链接改走「设置信息」 */
-      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); /* v415 条1：客服绿 */ } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); /* v415 条1：客服绿 */ } else { window.openContactFallback(url, { green: true }); } }
       else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
     });
     document.querySelector('.preview-close-btn').addEventListener('click', function () {
@@ -2430,7 +2442,7 @@ function boot() {
       // R30-#4：登录态改由 HttpOnly Cookie 携带
       if (!isLocal) {
         api('admin/session').then(function (s) {
-          if (s.ok) showMain(s.username);
+          if (s.ok) { showMain(s.username); if (window.__applyMe) window.__applyMe(s.username); } /* v439 #116 */
           else { showLogin(); }
         });
       } else {

@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS categories (
   name       TEXT NOT NULL,
   sort       INTEGER NOT NULL DEFAULT 0,
   parent_id  INTEGER NOT NULL DEFAULT 0,
-  is_hidden  INTEGER NOT NULL DEFAULT 0
+  is_hidden  INTEGER NOT NULL DEFAULT 0,
+  deleted_at    TEXT
 );
 CREATE TABLE IF NOT EXISTS products (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,12 +35,14 @@ CREATE TABLE IF NOT EXISTS products (
   price         REAL    NOT NULL DEFAULT 0,
   is_online     INTEGER NOT NULL DEFAULT 1,
   is_hidden     INTEGER NOT NULL DEFAULT 0,
+  deleted_at    TEXT,                  -- v439 #68 回收站软删除标记
   schedule_on   TEXT,                          -- 定时显示时间（NULL=不定时）
   schedule_off  TEXT,                          -- 定时隐藏时间（NULL=不定时）
   sort          INTEGER NOT NULL DEFAULT 0,
   created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
-);
+,
+  created_by TEXT NOT NULL DEFAULT '';
 CREATE TABLE IF NOT EXISTS product_variants (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   product_id  INTEGER NOT NULL,
@@ -65,7 +68,20 @@ CREATE TABLE IF NOT EXISTS admins (
   salt          TEXT NOT NULL DEFAULT '',
   created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE TABLE IF NOT EXISTS sessions (
+CREATE TABLE IF NOT EXISTS admin_users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  pwd_hash TEXT NOT NULL,
+  salt TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'sub',
+  parent_id INTEGER NOT NULL DEFAULT 0,
+  perms TEXT NOT NULL DEFAULT '{}',
+  status INTEGER NOT NULL DEFAULT 1,
+  note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  last_seen TEXT
+);
+  CREATE TABLE IF NOT EXISTS sessions (
   token      TEXT PRIMARY KEY,
   admin_id   INTEGER NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),

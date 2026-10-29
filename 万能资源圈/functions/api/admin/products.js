@@ -4,7 +4,8 @@
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  * R303（09-30）：GET 支持分页按页拉取（page + page_size），支持筛选（kw / cid / status）
  */
-import { json, requireAuth, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable, ensureCodeIssuesTable, clearPublicCache } from '../../_utils.js';
+import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable, ensureCodeIssuesTable, clearPublicCache } from '../../_utils.js';
+import { catScopeSQL, catAllowed, visibleCode, parsePerms } from '../../_perms.js';
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
 async function attachVariants(env, list) {
@@ -36,7 +37,8 @@ async function attachVariants(env, list) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  await ensureAdminUsers(env);
+  const auth = await requirePerm(env, request, 'products.view');
   if (auth instanceof Response) return auth;
 
   const url = new URL(request.url);
@@ -50,6 +52,11 @@ export async function onRequestGet(context) {
   let where = 'WHERE 1=1';
   const params = [];
 
+  /* #116 范围锁：子账号只能看到授权分类的资源（列表/搜索一并过滤） */
+  const myPerms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+  const scope = catScopeSQL(auth.role, myPerms);
+  if (scope) { where += ' AND ' + scope.clause; params.push(...scope.ids); }
+
   if (kw) {
     where += ' AND (LOWER(title) LIKE ? OR LOWER("desc") LIKE ?)';
     params.push('%' + kw + '%', '%' + kw + '%');
@@ -58,7 +65,7 @@ export async function onRequestGet(context) {
   if (cid && cid !== '0') {
     const catVal = Number(cid);
     // 检查是否一级分类（含子分类）
-    const subRes = await env.DB.prepare('SELECT id FROM categories WHERE parent_id = ?').bind(catVal).all();
+    const subRes = await env.DB.prepare('SELECT id FROM categories WHERE parent_id = ? AND deleted_at IS NULL').bind(catVal).all();
     const subIds = (subRes.results || []).map((r) => r.id);
     if (subIds.length > 0) {
       where += ' AND (cid = ? OR cid IN (' + subIds.map(() => '?').join(',') + '))';
@@ -80,23 +87,23 @@ export async function onRequestGet(context) {
   // 不分页（page_size=0 或未传）：返回全部（兼容旧口径）
   if (pageSize === 0) {
     const { results } = await env.DB.prepare(
-      'SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC'
+      'SELECT * FROM products WHERE deleted_at IS NULL ' + where + ' ORDER BY sort ASC, id DESC'
     ).bind(...params).all();
-    const list = await attachVariants(env, results.map(cleanProduct));
+    const list = maskList(auth, await attachVariants(env, results.map(cleanProduct)));
     return json({ ok: true, list: list, total: list.length });
   }
 
   // 分页查询
   const offset = (page - 1) * pageSize;
-  const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products ' + where).bind(...params).first();
+  const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE deleted_at IS NULL ' + where).bind(...params).first();
   const total = countRes ? countRes.n : 0;
   const { results } = await env.DB.prepare(
-    'SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
+    'SELECT * FROM products WHERE deleted_at IS NULL ' + where + ' ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
   ).bind(...params, pageSize, offset).all();
 
   return json({
     ok: true,
-    list: await attachVariants(env, results.map(cleanProduct)),
+    list: maskList(auth, await attachVariants(env, results.map(cleanProduct))),
     total: total,
     page: page,
     page_size: pageSize,
@@ -104,14 +111,27 @@ export async function onRequestGet(context) {
   });
 }
 
+/* #116 信息锁：非本人资源的码打码（super 透传） */
+function maskList(auth, list) {
+  if (auth.role === 'super') return list;
+  const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+  return list.map(p => { p.code = visibleCode(p.code, auth.role, perms, p.created_by, auth.username, p.cid); return p; });
+}
+}
+
 export async function onRequestPost(context) {
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  await ensureAdminUsers(env);
+  const auth = await requirePerm(env, request, 'products.add');
   if (auth instanceof Response) return auth;
 
   await ensureProductColumns(env);
   const b = await readJSON(request);
   if (!String(b.title || '').trim()) return json({ ok: false, msg: '请填写资源标题' }, 400);
+  /* #116 范围锁：子账号只能新增到授权分类 */
+  if (auth.role !== 'super' && !catAllowed(Number(b.cid) || 0, auth.role, typeof auth.perms === 'string' ? parsePerms(auth.perms) : null)) {
+    return json({ ok: false, msg: '该功能未开放' }, 403);
+  }
 
   var ci = b.cover_images;
   if (typeof ci === 'string') { try { ci = JSON.parse(ci); } catch (e) { ci = []; } }
@@ -123,8 +143,8 @@ export async function onRequestPost(context) {
   const detailVideos = JSON.stringify(Array.isArray(b.detailVideos) ? b.detailVideos : []);
 
   const r = await env.DB.prepare(
-    `INSERT INTO products (cid, title, "desc", detail, img, cover_images, detail_images, detail_videos, contact_url, contact_qr, price, is_online, is_hidden, schedule_on, schedule_off, sort)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO products (cid, title, "desc", detail, img, cover_images, detail_images, detail_videos, contact_url, contact_qr, price, is_online, is_hidden, schedule_on, schedule_off, sort, created_by)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   )
     .bind(
       Number(b.cid) || 0,
@@ -142,7 +162,8 @@ export async function onRequestPost(context) {
       b.is_hidden ? 1 : 0,
       b.schedule_on ? String(b.schedule_on) : null,
       b.schedule_off ? String(b.schedule_off) : null,
-      Number(b.sort) || 0
+      Number(b.sort) || 0,
+      auth.username /* #116：创建者（资源码可见规则用） */
     )
     .run();
 

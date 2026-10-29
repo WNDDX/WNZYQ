@@ -14,7 +14,7 @@ export async function onRequestPost(context) {
   const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
   /* v432 #39：上传写接口防刷（30 次/分钟） */
-  if (!rateLimit(request, 'upload', 30)) return json({ ok: false, msg: '操作太频繁，请一分钟后再试' }, 429);
+  if (!rateLimit(request, 'upload', 60)) return json({ ok: false, msg: '操作太频繁，请一分钟后再试' }, 429);
 
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) {

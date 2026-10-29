@@ -3,7 +3,7 @@
  * 前台首页聚合接口（R308）：一次返回首屏全部数据
  * 带版本号：客户端传 ?v=lastVersion，没变则返回 { unchanged: true }
  */
-import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns, ensureProductColumns } from '../../_utils.js'; // v299（用户 10-04 23:11）：修复引用层级错误致 Cloudflare 构建失败
+import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns, ensureProductColumns, publicAnnouncements } from '../../_utils.js'; // v299（用户 10-04 23:11）：修复引用层级错误致 Cloudflare 构建失败
 
 // v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v315全量返回需改回首屏只拿第一页，翻页/切分类/搜索点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置，其余前端按需拉取。
 /* v383：+ group_url/contact_qr/group_qr/gzh_qr——客服/群聊链接与三张二维码全量走设置值 */
@@ -13,8 +13,8 @@ const HOME_PAGE_SIZE = 20;
 // 计算数据版本（ Beijing 时间口径，与 U8 统一 ）
 async function computeVersion(env) {
   const [pRow, cRow, setRow] = await Promise.all([
-    env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(MAX(updated_at),'') AS m FROM products").first(),
-    env.DB.prepare("SELECT COUNT(*) AS n FROM categories WHERE is_hidden = 0").first(),
+    env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(MAX(updated_at),'') AS m FROM products WHERE deleted_at IS NULL").first(),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM categories WHERE is_hidden = 0 AND deleted_at IS NULL").first(),
     env.DB.prepare("SELECT COUNT(*) AS n FROM settings").first(),
   ]);
   return `p${pRow.n}_${pRow.m}_c${cRow.n}_s${setRow.n}`;
@@ -30,11 +30,11 @@ export async function onRequestGet(context) {
     computeVersion(env),
     env.DB.prepare(
       `SELECT
-         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')) AS need_show,
-         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')) AS need_hide`
+         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours') AND deleted_at IS NULL) AS need_show,
+         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours') AND deleted_at IS NULL) AS need_hide`
     ).first().catch(() => null),
     (async () => { await ensureProductColumns(env); await ensureVariantColumns(env); })().catch(() => {}),
-    env.DB.prepare('SELECT id, name, sort, parent_id, is_hidden FROM categories WHERE is_hidden = 0 ORDER BY sort ASC, id ASC').all().catch(() => ({ results: [] })),
+    env.DB.prepare('SELECT id, name, sort, parent_id, is_hidden FROM categories WHERE is_hidden = 0 AND deleted_at IS NULL ORDER BY sort ASC, id ASC').all().catch(() => ({ results: [] })),
     env.DB.prepare('SELECT key, value FROM settings').all().catch(() => ({ results: [] })),
   ]);
 
@@ -62,9 +62,9 @@ export async function onRequestGet(context) {
 
   // 第 3 轮（并行）：总数 + 第一页资源
   const [countRes, prodRes] = await Promise.all([
-    env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0').first(),
+    env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL').first(),
     env.DB.prepare(
-      'SELECT * FROM products WHERE is_online = 1 AND is_hidden = 0 ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
+      'SELECT * FROM products WHERE is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?'
     ).bind(HOME_PAGE_SIZE, 0).all(),
   ]);
   const total = countRes ? countRes.n : 0;
@@ -93,7 +93,7 @@ export async function onRequestGet(context) {
   const categories = catRes.results || [];
   const settings = {};
   for (const r of (setRes.results || [])) {
-    if (PUBLIC_KEYS.indexOf(r.key) !== -1) settings[r.key] = r.value;
+    if (PUBLIC_KEYS.indexOf(r.key) !== -1) settings[r.key] = r.key === 'announcements' ? publicAnnouncements(r.value) : r.value; /* #68：软删公告不下发公开端 */
   }
 
   // v317（用户 10-05 18:40）：首屏返回第一页分页元数据，前端按后端分页口径渲染

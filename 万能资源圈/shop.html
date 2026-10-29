@@ -31,9 +31,11 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 </style>
 <link rel="stylesheet" href="/assets/ui-common.css">
   <script>/* v389-1：深色模式纯跟随设备系统（不再读取/存储手动偏好） */(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+<style>/* v436：首屏画布保底——外层 CSS 到位前 html 画布即正确深浅色，杜绝首次加载闪深色/闪白（深色由头部主题脚本先行置 data-theme 联动） */html{color-scheme:light;background:#f2f7fd}html[data-theme="dark"]{color-scheme:dark;background:#0e1621}</style>
 <link rel="stylesheet" href="/assets/motion.css">
   <link rel="canonical" href="https://wnzyq.pages.dev/shop"> <!-- v338 条212 -->
 <link rel="manifest" href="/manifest.json">
+  <link rel="alternate" type="application/rss+xml" title="最新资源订阅" href="/rss">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <meta name="theme-color" content="#1E88E5">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -85,6 +87,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <button class="tab" id="topAnn" title="平台公告">
           <svg class="wn-ico" width="15" height="15" aria-hidden="true"><use href="#wn-ico-bell"/></svg>
           <span>公告</span>
+          <i class="dot-badge" id="annDot" hidden></i>
         </button>
       </div>
       <div class="search-box">
@@ -134,7 +137,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <div class="modal-mask ann-modal" id="annModal">
     <div class="ann-box" onclick="event.stopPropagation()">
       <button aria-label="关闭" class="modal-close-x" id="annCloseX" type="button" onclick="closeAnnModal()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
-      <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="showAnnDefault()">公告</button>
+      <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="showAnnDefault()">公告<i class="dot-badge" hidden></i></button>
       <div class="ann-tabs" id="annTabs"></div>
       <div class="ann-body" id="annBody"></div>
       <div class="ann-skeleton" id="annSkeleton" aria-hidden="true">

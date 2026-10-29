@@ -32,6 +32,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 </style>
 <link rel="stylesheet" href="/assets/ui-common.css">
   <script>/* v389-1：深色模式纯跟随设备系统（不再读取/存储手动偏好） */(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+<style>/* v436：首屏画布保底——外层 CSS 到位前 html 画布即正确深浅色，杜绝首次加载闪深色/闪白（深色由头部主题脚本先行置 data-theme 联动） */html{color-scheme:light;background:#f2f7fd}html[data-theme="dark"]{color-scheme:dark;background:#0e1621}</style>
 <link rel="stylesheet" href="/assets/motion.css">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
@@ -103,7 +104,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <div class="toolbar">
           <div class="tb-row tb-row2">
             <div class="tb-group g-add">
-            <button class="btn-blue" id="addProductBtn" data-pri="1">新增资源</button>
+            <button class="btn-blue" id="addProductBtn" data-pri="1" data-perm="products.add">新增资源</button>
             <label class="sel-all-lbl">
               <input type="checkbox" id="selectAll" /> 全选
             </label>
@@ -193,7 +194,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
                 <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime"  />
                 <button class="btn-blue btn-inline" id="statCustomBtn">应用</button>
               </div>
-              <button class="export-btn" id="exportBtn">导出数据统计</button>
+              <button class="export-btn" id="exportBtn" data-perm="data.export">导出数据统计</button>
             </div>
           </div>
           <!-- 折线图 -->
@@ -334,7 +335,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <!-- 分类管理 -->
       <section id="panel-categories" style="display:none">
         <div class="toolbar">
-          <div class="tb-row"><button class="btn-blue" id="addCatBtn">新增分类</button><label class="sel-all-lbl"><input type="checkbox" id="catSelectAll" /> 全选</label></div>
+          <div class="tb-row"><button class="btn-blue" id="addCatBtn" data-perm="cats.add">新增分类</button><label class="sel-all-lbl"><input type="checkbox" id="catSelectAll" /> 全选</label></div>
           
         </div>
         <!-- 分类批量操作栏 -->
@@ -381,7 +382,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
           <div class="setting-row">
             <label>平台公告（显示在资源页顶部）</label>
-            <button type="button" class="btn-blue btn-inline-pd" id="openAnnBtn">设置公告</button>
+            <button type="button" class="btn-blue btn-inline-pd" id="openAnnBtn" data-perm="ann.edit">设置公告</button>
             <div class="rte-toolbar rte-collapsed" id="announcementRteToolbar" data-editor="setAnnouncement"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="setAnnouncement" title="字体">
             <option value="">字体</option>
@@ -482,7 +483,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           <option value="off">不弹出公告</option>
         </select>
         <label>公告项（拖拽 ⋮⋮ 调整顺序；点击某项即可编辑；隐藏的项不在资源页显示）</label>
-        <button type="button" class="btn-blue" id="addAnnBtn" style="width:auto;padding:0 20px;margin:2px 0 10px;">新增公告项</button>
+        <button type="button" class="btn-blue" id="addAnnBtn" data-perm="ann.add" style="width:auto;padding:0 20px;margin:2px 0 10px;">新增公告项</button>
         <div id="annList" class="ann-list">
     <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>
     <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>

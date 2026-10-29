@@ -5,7 +5,7 @@
  * body: { username, password }
  * 成功返回 { token, username }
  */
-import { json, readJSON, verifyPassword, upgradePasswordHash, randomToken } from '../../_utils.js';
+import { json, readJSON, verifyPassword, upgradePasswordHash, randomToken, ensureAdminUsers } from '../../_utils.js';
 
 // 获取客户端 IP
 function getClientIP(request) {
@@ -58,8 +58,17 @@ export async function onRequestPost(context) {
       }
     }
 
-    // 2. 查找管理员
-    const row = await env.DB.prepare('SELECT * FROM admins WHERE username = ?').bind(username).first();
+    // 2. 查找管理员：先查超管（admins），未命中再查子账号（admin_users，v439 #116）
+    let row = await env.DB.prepare('SELECT * FROM admins WHERE username = ?').bind(username).first();
+    let isSub = false;
+    if (!row) {
+      await ensureAdminUsers(env);
+      const sub = await env.DB.prepare('SELECT * FROM admin_users WHERE username = ?').bind(username).first();
+      if (sub) {
+        if (!sub.status) { await recordFailure(env, ip, username, attempt); return json({ ok: false, msg: '该账号已停用，请联系管理员' }, 403); }
+        row = sub; isSub = true;
+      }
+    }
     if (!row) {
       await recordFailure(env, ip, username, attempt);
       return json({ ok: false, msg: '账号或密码错误' }, 401);
@@ -71,7 +80,7 @@ export async function onRequestPost(context) {
       await recordFailure(env, ip, username, attempt);
       return json({ ok: false, msg: '账号或密码错误' }, 401);
     }
-    if (v.needUpgrade) {
+    if (v.needUpgrade && !isSub) {
       try { await upgradePasswordHash(env, row.id, password); } catch (e) { console.error('密码哈希升级失败(不影响登录):', e); }
     }
 
@@ -81,11 +90,11 @@ export async function onRequestPost(context) {
         .bind(ip, username).run();
     }
 
-    // 5. 签发新 token（24 小时过期，允许多设备同时登录）
+    // 5. 签发新 token（24 小时过期，允许多设备同时登录）；#116：子账号会话标 utype='u'
     const token = randomToken();
     await env.DB.prepare(
-      "INSERT INTO sessions (token, admin_id, expires_at) VALUES (?, ?, datetime('now', '+24 hours'))"
-    ).bind(token, row.id).run();
+      "INSERT INTO sessions (token, admin_id, utype, expires_at) VALUES (?, ?, ?, datetime('now', '+24 hours'))"
+    ).bind(token, row.id, isSub ? 'u' : 'a').run();
 
     // R30-#4：令牌只写进 HttpOnly Cookie（网页脚本读不到），不再随响应体下发
     // R298：60 天清理统一移到 track.js 每日清理，登录成功不再捎带删除
@@ -98,6 +107,12 @@ export async function onRequestPost(context) {
       'Path=/',
       'Max-Age=86400',
     ].join('; ');
+    /* v439 #63：新设备登录记录（详细设备信息）+ 审计 */
+    try {
+      const { recordAdminLogin, audit } = await import('../_utils.js');
+      await recordAdminLogin(env, request);
+      await audit(env, request, '登录', '管理后台');
+    } catch (e0) {}
     return json({ ok: true, username: row.username }, 200, { 'Set-Cookie': cookie });
   } catch (e) {
     // R27：错误细节只进服务端日志，对外返回通用提示（与 _middleware.js 全局错误策略对齐，避免泄露内部信息）

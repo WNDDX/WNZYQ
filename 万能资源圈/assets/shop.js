@@ -431,6 +431,95 @@
       } catch (e) { /* 忽略统计错误，不影响用户体验 */ }
     }
 
+
+    /* ===== v439 #72 分享卡片动态化 + #89 桌面引导 + #90 离线横幅 ===== */
+    (function () {
+      /* #72：详情数据到达后，og/twitter meta 换成该资源封面+标题 */
+      window.__ogDynamic = function (p) {
+        try {
+          if (!p) return;
+          var set = function (sel, val) { var m = document.querySelector(sel); if (m && val) m.setAttribute('content', val); };
+          set('meta[property="og:title"]', (p.title || '') + ' · 万能资源圈');
+          set('meta[name="description"]', p.desc || '');
+          set('meta[property="og:description"]', p.desc || '');
+          var cover = p.img || (p.coverImages && p.coverImages[0]) || '';
+          if (cover) { set('meta[property="og:image"]', cover); set('meta[name="twitter:image"]', cover); }
+        } catch (e0) { if (window.__silent) window.__silent(e0); }
+      };
+      /* #90：离线横幅 */
+      var ob = document.createElement('div');
+      ob.className = 'offline-banner';
+      ob.textContent = '当前离线，正在显示缓存内容';
+      ob.style.cssText = 'display:none;position:sticky;top:0;z-index:120;background:#c62828;color:#fff;text-align:center;font-size:12px;padding:5px 8px;';
+      document.body.insertBefore(ob, document.body.firstChild);
+      var syncNet = function () { ob.style.display = navigator.onLine ? 'none' : 'block'; };
+      window.addEventListener('online', syncNet); window.addEventListener('offline', syncNet); syncNet();
+      /* #89 C 方案（拍板版）：每 10 次访问提示一次「添加到桌面」，已安装不提示。
+         复用全站顶部提示条 .ui-toast 统一样式（顶部居中+下落入场），条本身可点=触发安装，6 秒自动消失 */
+      var __a2dPrompt = null;
+      var __a2dShownThisVisit = false;
+      var __a2dQualified = false; /* 本次访问是否到提示节点（每 10 次）——安装事件晚到时凭它补提示 */
+      function a2dInstalled() {
+        try { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch (e0) { return false; }
+      }
+      function tryA2D() {
+        if (!__a2dQualified || __a2dShownThisVisit || !__a2dPrompt || a2dInstalled() || document.getElementById('a2dToast')) return;
+        try { if (localStorage.getItem('wnzyq_a2d_ok') || localStorage.getItem('wnzyq_a2d_never')) return; } catch (eA) {}
+        __a2dShownThisVisit = true; /* 确认能显示才置位（安装事件晚到不丢提示） */
+        var t = document.createElement('div');
+        t.className = 'ui-toast'; t.id = 'a2dToast';
+        t.style.pointerEvents = 'auto'; /* 可点击（默认 none） */
+        t.style.cursor = 'pointer';
+        t.style.gap = '10px';
+        var main = document.createElement('span');
+        main.textContent = '添加到桌面-点击可直达';
+        var never = document.createElement('span');
+        never.textContent = '不再提示';
+        never.style.cssText = 'color:#8a9aab;font-size:11px;text-decoration:underline;flex:none';
+        t.appendChild(main); t.appendChild(never);
+        t.setAttribute('role', 'button'); t.setAttribute('tabindex', '0');
+        var gone = false;
+        var dismiss = function () {
+          if (gone) return; gone = true;
+          try { t.classList.add('leaving'); } catch (e1) {}
+          setTimeout(function () { try { t.parentNode.removeChild(t); } catch (e2) {} }, 300);
+        };
+        var go = function () {
+          dismiss();
+          try { __a2dPrompt.prompt(); } catch (e3) { if (window.__silent) window.__silent(e3); }
+          __a2dPrompt = null;
+        };
+        var neverFn = function (e) {
+          if (e) { e.stopPropagation(); e.preventDefault(); }
+          try { localStorage.setItem('wnzyq_a2d_never', '1'); } catch (e7) {}
+          dismiss(); /* 永久关闭：之后任何整十节点都不再弹 */
+        };
+        main.addEventListener('click', go); /* 点文字=安装 */
+        t.addEventListener('click', function (e) { if (e.target === t) go(); }); /* 点条空白处也=安装 */
+        never.addEventListener('click', neverFn); /* 点「不再提示」=永久关闭 */
+        t.addEventListener('keydown', function (e4) { if (e4.key === 'Enter' || e4.key === ' ') { e4.preventDefault(); go(); } });
+        document.body.appendChild(t);
+        if (window.__haptic) window.__haptic();
+        setTimeout(dismiss, 6000); /* 提示一下：6 秒自动走 */
+      }
+      window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); __a2dPrompt = e; tryA2D(); });
+      window.addEventListener('appinstalled', function () { __a2dPrompt = null; try { localStorage.setItem('wnzyq_a2d_ok', '1'); } catch (e5) {} }); /* 已安装后永不再提 */
+      (function a2dVisit() {
+        try {
+          if (a2dInstalled()) return; /* 已安装（从桌面图标打开）不提示也不计数 */
+          try { if (localStorage.getItem('wnzyq_a2d_never')) return; } catch (eN) {} /* 用户点过「不再提示」→ 永久静默 */
+          /* 卸载检测：曾标记「装过」但桌面图标已不在 → 清除永久标记，恢复每 10 次提醒循环 */
+          if (localStorage.getItem('wnzyq_a2d_ok') && !a2dInstalled()) localStorage.removeItem('wnzyq_a2d_ok');
+          if (localStorage.getItem('wnzyq_a2d_ok')) return; /* 装过的老用户永不再提 */
+          var v = parseInt(localStorage.getItem('wnzyq_visits') || '0', 10) || 0;
+          v += 1;
+          localStorage.setItem('wnzyq_visits', String(v));
+          if (v % 10 !== 0) return; /* 每 10 次访问提示一次（第 10/20/30…次） */
+          __a2dQualified = true;
+          tryA2D();
+        } catch (e6) { if (window.__silent) window.__silent(e6); }
+      })();
+    })();
     // ---------- 渲染平台信息 ----------
     // 纯渲染：店铺名优先用线上设置（DATA.shopName，由 fetchRemote 统一拉取），
     // 其次 config.js 兜底。（修复：原先这里单独再请求一次 /api/settings，与 fetchRemote
@@ -474,9 +563,12 @@
     };
     // 默认公告（一级公告）展示：选中"公告"标题，内容渲染到正文区
     function showAnnDefault() {
+      /* v438b：仅公告弹窗真的打开（用户在看）才记已读——页面加载时的静默渲染不算「看过」，否则顶栏红点永远不亮 */
+      try { var _amOpen = (document.getElementById('annModal') || {}).classList && document.getElementById('annModal').classList.contains('open'); var _def = (DATA.announcements || []).find(function (x) { return x.level === 1; }) || (DATA.announcements || [])[0]; if (_amOpen && _def && window.__annMarkRead) window.__annMarkRead(_def.id); } catch (e0) { if (window.__silent) window.__silent(e0); }
       var l = DATA.announcements || []; /* v352 修：原读 window.DATA（从未赋值，恒 undefined）→ 点大标题永远静默返回；改用本模块的 DATA */
       var d = l.find(function (x) { return x.level === 1; }) || l[0];
       if (!d) return;
+      try { var _tt = document.getElementById('annTitleTab'); if (_tt) { _tt.dataset.annId = String(d.id); if (window.__annUnread) window.__annUnread(); } } catch (e0) { if (window.__silent) window.__silent(e0); } /* v438：标题页签红点亮起依据 */
       var bd = document.getElementById('annBody');
       if (bd) { var _c3 = sanitizeHTML(d.content || ''); bd.innerHTML = _c3 || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(bd); bindLightbox(bd);
       bindQuoteCopyButtons(bd); bindFileCards(bd); } // v303 + v320
@@ -502,7 +594,10 @@
             t.type = 'button';
             t.className = 'ann-tab';
             t.textContent = a.title || '公告';
+            t.dataset.annId = String(a.id); /* v438：页签级未读红点 */
+            var _ad = document.createElement('i'); _ad.className = 'dot-badge'; _ad.hidden = true; t.appendChild(_ad);
             t.addEventListener('click', function () { try {
+              if (window.__annMarkRead) window.__annMarkRead(a.id); /* v438：看过该公告=红点消失 */
               if (__annTransitioning) return; /* R243（用户 09-22 23:18）：条37 淡出期间防重复 */
               __annTransitioning = true;
               var ts = document.querySelectorAll('#annTabs .ann-tab');
@@ -526,7 +621,9 @@
       }
       // 默认显示第一条（一级公告）并选中"公告"标题
       var body = document.getElementById('annBody');
-      var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab'); if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(body); bindLightbox(body);
+      var defAnn = list.find(function (x) { return x.level === 1; }) || list[0]; var tt = document.getElementById('annTitleTab');
+      if (tt && defAnn) { tt.dataset.annId = String(defAnn.id); if (window.__annUnread) window.__annUnread(); } /* v438：标题页签未读红点 */
+      if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(body); bindLightbox(body);
       bindQuoteCopyButtons(body); bindFileCards(body); } // v303 + v320
     }
     function renderAnnouncement() {
@@ -763,10 +860,54 @@
           }
         }
         // R49：搜索范围完善——标题 + 描述都匹配（原仅匹配标题）
-        if (kw && String(p.title || '').toLowerCase().indexOf(kw) === -1
-            && String(p.desc || '').toLowerCase().indexOf(kw) === -1) return false;
+        if (kw) {
+          var hit = String(p.title || '').toLowerCase().indexOf(kw) !== -1
+                 || String(p.desc || '').toLowerCase().indexOf(kw) !== -1;
+          /* v439 #106 智能搜索：拼音首字母（zy→资源）与容错子序列（错 1-2 字也能出） */
+          if (!hit) {
+            var t = String(p.title || '');
+            hit = __smartMatch(kw, t);
+            if (!hit) hit = __smartMatch(kw, String(p.desc || '').slice(0, 60));
+          }
+          if (!hit) return false;
+        }
         return true;
       });
+    }
+
+    /* v439 #106：拼音首字母工具——localeCompare 对锚点字分带二分，零词典实现；结果缓存 */
+    var __PY_ANCHORS = '阿八嚓搭蛾发噶哈击喀垃呣拿哦啪期然撒塌挖希压匝';
+    var __pyCache = {};
+    function __pyInitial(ch) {
+      if (!/[\u4e00-\u9fa5]/.test(ch)) return ch.toLowerCase();
+      if (__pyCache[ch]) return __pyCache[ch];
+      var lo = 0, hi = __PY_ANCHORS.length - 1, r = 'z';
+      while (lo <= hi) {
+        var mid = (lo + hi) >> 1;
+        if (ch.localeCompare(__PY_ANCHORS[mid], 'zh-CN') >= 0) { r = __PY_INITIALS[mid]; lo = mid + 1; }
+        else { hi = mid - 1; }
+      }
+      __pyCache[ch] = r;
+      return r;
+    }
+    var __PY_INITIALS = 'abcdefghjklmnopqrstwxyz';
+    function __titleInitials(t) {
+      var out = '';
+      for (var i = 0; i < t.length && out.length < 24; i++) out += __pyInitial(t[i]);
+      return out;
+    }
+    function __fuzzy(kw, text) { /* 子序列容错：允许 kw 字符在 text 拼音串中跳跃命中 */
+      var i = 0;
+      for (var j = 0; j < text.length && i < kw.length; j++) { if (text[j] === kw[i]) i++; }
+      return i >= kw.length;
+    }
+    function __smartMatch(kw, text) {
+      if (!text) return false;
+      var ini = __titleInitials(text);
+      if (ini.indexOf(kw) !== -1) return true;              /* 拼音首字母 */
+      if (text.toLowerCase().indexOf(kw) !== -1) return true; /* 原文包含 */
+      if (kw.length >= 2 && __fuzzy(kw, ini)) return true;  /* 首字母子序列容错 */
+      return false;
     }
 
     // ---------- 渲染资源网格 ----------
@@ -1272,6 +1413,7 @@
                 if (!url) return;
                 var im = document.createElement('img');
                 im.decoding = 'async'; im.alt = ''; im.style.cursor = 'zoom-in'; im.style.opacity = '0';
+                im.loading = 'lazy'; /* v439 #57 */
                 im.className = 'm-loading';
                 im.onload = function () { this.classList.remove('m-loading'); this.style.opacity = '1'; };
                 im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; };
@@ -1292,6 +1434,7 @@
       // 现整段删除，历史写入收口 __modalKit 唯一源（其哨兵 URL 与当前页一致、关窗如数 back）；
       // ?pid= 分享直达通道不受影响（ui-common.js:2688 生成的分享链接 + checkSharePid 落地照常）。
       currentProduct = p;
+      try { if (window.__ogDynamic) window.__ogDynamic(p); } catch (e) { if (window.__silent) window.__silent(e); } /* v439 #72：分享卡片动态化 */
       try { __pushRecent(p.id); } catch (e) { if (window.__silent) window.__silent(e); }
       try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); }
       currentVariant = null;
@@ -1345,7 +1488,8 @@
         im.alt = '';
         im.style.cursor = 'zoom-in';
         im.style.opacity = '0';
-        im.className = 'm-loading'; /* v309:加载前CSS占位，尺寸恒定*/
+        im.loading = 'lazy'; /* v439 #57 */
+                im.className = 'm-loading'; /* v309:加载前CSS占位，尺寸恒定*/
         im.onload = function () { this.classList.remove('m-loading'); this.style.opacity = '1'; };
         im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; this.style.display = 'block'; };
         im.src = url;
@@ -1722,7 +1866,7 @@
           // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
           // v385 条11：专属客服二维码优先（类型→资源→平台设置），没有则回退平台设置信息
           var _qr = (currentVariant && currentVariant.contactQr) || (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
-          if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url); }
+          if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); }
         };
       } else {
         btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -1846,14 +1990,38 @@
       var _ta = document.getElementById('topAnn'); var _am = document.getElementById('annModal');
       /* v430 条48：未读=公告最近更新时间 > 上次已读时间 */
       try {
+        /* v438（老板拍板）升级：已读集合口径——顶栏红点=存在未读公告；公告弹窗内每个未读页签也带红点，看过（点开该页签）即消。
+           全系统红点复用 .dot-badge 同一款（motion.css 唯一定义），不新建样式 */
+        window.__annReadList = function () { try { return JSON.parse(localStorage.getItem('wnzyq_ann_read') || '[]') || []; } catch (e0) { return []; } };
+        window.__annIsRead = function (id) {
+          var idS = String(id);
+          if (window.__annReadList().indexOf(idS) >= 0) return true;
+          /* 旧版兼容：wnzyq_ann_seen（数字版本）= 之前「全部已读」标记，小于等于它的旧 id 视为已读 */
+          var seen = parseInt(localStorage.getItem('wnzyq_ann_seen') || '0', 10) || 0;
+          var v = parseInt(idS) || 0;
+          return seen > 0 && v > 0 && v <= seen;
+        };
+        window.__annMarkRead = function (id) {
+          try { var idS = String(id); var rl = window.__annReadList(); if (rl.indexOf(idS) < 0) { rl.push(idS); localStorage.setItem('wnzyq_ann_read', JSON.stringify(rl)); } } catch (e0) { if (window.__silent) window.__silent(e0); }
+          /* v439 #118：公告阅读匿名上报（复用 track 通道，product_id=公告 id，信息中心可见「公告阅读」） */
+          try { var num = parseInt(idS) || 0; if (num > 0 && typeof track === 'function' && usingRemote) track(num, 'ann_read'); } catch (e1) { if (window.__silent) window.__silent(e1); }
+          if (window.__annUnread) window.__annUnread();
+        };
         window.__annUnread = function () {
           var btn = document.getElementById('topAnn');
-          if (!btn) return;
-          var upd = parseInt(btn.dataset.annUpd || '0', 10) || 0;
-          var seen = parseInt(localStorage.getItem('wnzyq_ann_seen') || '0', 10) || 0;
-          var badge = btn.querySelector('.dot-badge');
-          if (upd > seen) { if (!badge && window.__mkDot) { var d = document.createElement('span'); d.className = 'dot-badge'; btn.style.position = btn.style.position || 'relative'; btn.appendChild(d); } else if (badge) badge.style.display = ''; }
-          else if (badge) badge.style.display = 'none';
+          var list = DATA.announcements || [];
+          var anyUnread = list.some(function (a) { return a && !window.__annIsRead(a.id); });
+          if (btn) {
+            var badge = document.getElementById('annDot') || btn.querySelector('.dot-badge');
+            if (badge) { badge.hidden = !anyUnread; if (anyUnread) { badge.classList.remove('wn-pop-out'); badge.classList.add('wn-pop-in'); } }
+          }
+          /* 页签级红点刷新（弹窗开着时实时消点） */
+          document.querySelectorAll('#annTabs .ann-tab').forEach(function (t) {
+            var id = t.dataset && t.dataset.annId; var d = t.querySelector('.dot-badge');
+            if (d && id) d.hidden = window.__annIsRead(id);
+          });
+          var tt = document.getElementById('annTitleTab');
+          if (tt) { var tid = tt.dataset.annId; var td = tt.querySelector('.dot-badge'); if (td && tid) td.hidden = window.__annIsRead(tid); }
         };
       } catch (e5) { if (window.__silent) window.__silent(e5); }
       if (_ta && _am && window.MutationObserver) new MutationObserver(function () { _ta.classList.toggle('active', _am.classList.contains('open')); }).observe(_am, { attributes: true, attributeFilter: ['class'] });
@@ -2219,7 +2387,7 @@
       // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
       topContactBtn.classList.add('active');
       // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
-      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url); } }
+      if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); } }
       else showToast('暂未设置客服链接', 'info');
     });
 
@@ -2232,7 +2400,7 @@
     if (topAnnBtn && window.__annUnread) {
       window.__annUnread();
       document.addEventListener('click', function (e) {
-        if (e.target.closest && e.target.closest('#topAnn')) { try { localStorage.setItem('wnzyq_ann_seen', String(Date.now())); window.__annUnread(); } catch (e0) {} }
+        if (e.target.closest && e.target.closest('#topAnn')) { try { if (window.__annUnread) window.__annUnread(); } catch (e0) {} } /* v438：打开弹窗不一键全读——看过每个页签才逐个消 */
       });
     }
 
@@ -2443,7 +2611,9 @@
             DATA.categories = c.categories;
             if (c.announcement !== undefined) DATA.announcement = c.announcement;
             if (c.announcement_mode !== undefined) DATA.announcementMode = c.announcement_mode;
-            if (Array.isArray(c.announcements)) DATA.announcements = c.announcements;
+            if (Array.isArray(c.announcements)) { DATA.announcements = c.announcements;
+              try { var mx = 0; c.announcements.forEach(function (a) { var v = parseInt(a && a.id) || 0; if (v > mx) mx = v; }); window.__annMaxId = mx; if (window.__annUnread) window.__annUnread(); } catch (e9) { if (window.__silent) window.__silent(e9); }
+            }
             if (c.shop_name) DATA.shopName = c.shop_name;
             cachedVersion = c._homeVersion || '';
             usingRemote = true;
@@ -2529,6 +2699,7 @@
             DATA.announcement = res.settings.announcement || '';
             DATA.announcementMode = res.settings.announcement_mode || 'always';
             DATA.announcements = window.parseAnnouncements(res.settings, { filterHidden: true });
+            try { var mx = 0; (DATA.announcements || []).forEach(function (a) { var v = parseInt(a && a.id) || 0; if (v > mx) mx = v; }); window.__annMaxId = mx; if (window.__annUnread) window.__annUnread(); } catch (e9) { if (window.__silent) window.__silent(e9); } /* v436b：公告版本号+红点刷新（线上拉取路径） */
             if (res.settings.shop_name) DATA.shopName = res.settings.shop_name;
             window._globalContact = res.settings.contact_url || getDefaultContact();
             window.__contactQr = res.settings.contact_qr || ''; window.__groupQr = res.settings.group_qr || ''; window.__gzhQr = res.settings.gzh_qr || ''; /* v383：三张二维码全局化（全站客服弹窗统一消费） */
@@ -2660,6 +2831,7 @@
             DATA.announcement = _newAnn;
             DATA.announcementMode = _newAnnMode;
             DATA.announcements = window.parseAnnouncements(res[2].settings || {}, { filterHidden: true });
+            try { var mx = 0; (DATA.announcements || []).forEach(function (a) { var v = parseInt(a && a.id) || 0; if (v > mx) mx = v; }); window.__annMaxId = mx; if (window.__annUnread) window.__annUnread(); } catch (e9) { if (window.__silent) window.__silent(e9); } /* v436b：同上（批量拉取路径） */
             try { __mc.sets = res[2].settings || {}; __mc.t = Date.now(); } catch (e) { if (window.__silent) window.__silent(e); }
             if ((res[2].settings || {}).shop_name) { DATA.shopName = res[2].settings.shop_name; }
             window._globalContact = (res[2].settings || {}).contact_url || getDefaultContact();

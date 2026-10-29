@@ -5,15 +5,16 @@
  * 安全：①需登录；②key 白名单校验；③删前逐个核对该 key 是否仍被任何资源/类型引用，被引用的一律保留；
  *     ④单次最多 200 个 key。
  */
-import { json, requireAuth, readJSON, buildContentText } from '../../_utils.js';
+import { json, requirePerm, readJSON, buildContentText } from '../../_utils.js';
 
 const KEY_RE = /^(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+$/;
 const P_FIELDS = ['img', 'detail', 'detail_images', 'detail_videos', 'resource_content'];
 const V_FIELDS = ['desc', 'img', 'video', 'resource_content'];
 
 export async function onRequestPost(context) {
+  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  const auth = await requirePerm(env, request, 'sensitive.super');
   if (auth instanceof Response) return auth;
 
   const b = await readJSON(request);

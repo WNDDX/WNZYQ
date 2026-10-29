@@ -970,7 +970,9 @@
           if (!_annMaskOpen) document.getElementById('setAnnouncement').innerHTML = sanitizeHTML(s.announcement || ''); // v296（用户 10-04 02:44）：安全修复，过滤恶意代码
           // R248：公告弹窗打开时，保留当前编辑中的内容和选中项——禁止从服务器强制覆盖
           if (_annMaskOpen && typeof flushAnnEdit === 'function') flushAnnEdit();
-          stateAnn.list = window.parseAnnouncements(s, { sortLevel: true });
+          /* v439 #68：公告软删——raw 存全量（含 deleted，保存时写回），list 只留在编条目（与 admin-4 加载分支同口径） */
+          stateAnn.raw = window.parseAnnouncements(s, { sortLevel: true });
+          stateAnn.list = stateAnn.raw.filter(function (x) { return !x.deleted; });
           if (_annMaskOpen && stateAnn.curId) {
             // 若当前选中项仍存在于新列表，保持选中；否则回退到默认公告
             var _still = stateAnn.list.find(function (x) { return x.id === stateAnn.curId; });
@@ -1087,7 +1089,7 @@
             // 修复：showMain 内部已统一调用 loadSettings（连同 stats/products/categories），
             // 这里不再单独调一次，避免同一接口登录后被请求两次
             if (window.__haptic) window.__haptic(); /* R183 条12：登录成功 */
-            try { showMain(res.username); }
+            try { showMain(res.username); window.__applyMe(res.username); } /* v439 #116：身份与权限应用 */
             catch (e) { setTimeout(function () { location.reload(); }, 300); }
           } else {
             // 失败路径只弹一个弹窗（此前 toast+showAlert+分支内 showAlert 会叠出两个弹窗，已修复去重）
@@ -1104,6 +1106,55 @@
           loginBtn.textContent = '登录';
         });
     }
+    /* ===== v439 #116 多账号：身份/权限/统一未开放拦截 ===== */
+    window.__applyMe = function (username) {
+      try {
+        api('admin/session').then(function (s) {
+          if (!s || !s.ok) return;
+          window.__me = { username: s.username || username, role: s.role || 'super', perms: s.perms || {} };
+          try { window.__applyPermUI(); } catch (e2) { if (window.__silent) window.__silent(e2); }
+        }).catch(function () {});
+      } catch (e) { if (window.__silent) window.__silent(e); }
+    };
+    window.__permCan = function (action) {
+      var me = window.__me;
+      if (!me) return true; /* 身份未到先放行（后端仍拦截兜底） */
+      if (me.role === 'super') return true;
+      var p = me.perms || {};
+      if (action === 'users') return !!p.users;
+      var dot = String(action).indexOf('.');
+      if (dot < 0) return false;
+      var g = p[String(action).slice(0, dot)];
+      return !!(g && g[String(action).slice(dot + 1)]);
+    };
+    window.__denyMsg = '该功能未开放';
+    window.__applyPermUI = function () {
+      var me = window.__me; if (!me) return;
+      var tabs = document.querySelectorAll('.tab[data-tab]');
+      var map = { products: 'products.view', categories: 'cats.view', stats: 'data.stats' };
+      var hasSettings = me.role === 'super';
+      tabs.forEach(function (t) {
+        var name = t.getAttribute('data-tab');
+        if (name === 'settings') { t.style.display = hasSettings ? '' : 'none'; return; }
+        var act = map[name];
+        if (act) t.style.display = window.__permCan(act) ? '' : 'none';
+      });
+      /* 当前激活页签若被隐藏 → 切到第一个可见页签 */
+      var active = document.querySelector('.tab.active');
+      if (active && active.style.display === 'none') {
+        var first = document.querySelector('.tab[data-tab]:not([style*="none"])');
+        if (first) first.click();
+      }
+    };
+    /* 统一未开放拦截：带 data-perm 的按钮点击时校验 */
+    document.addEventListener('click', function (e) {
+      var el = e.target.closest && e.target.closest('[data-perm]');
+      if (!el) return;
+      if (window.__permCan(el.getAttribute('data-perm'))) return;
+      e.stopPropagation(); e.preventDefault();
+      if (window.showToast) window.showToast(window.__denyMsg || '该功能未开放', 'info');
+    }, true);
+
     /* v430 条56：管理页快捷键——N=新增资源、/ =聚焦搜索（输入框聚焦时不触发） */
     document.addEventListener('keydown', function (e) {
       try {

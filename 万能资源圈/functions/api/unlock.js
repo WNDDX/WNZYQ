@@ -25,10 +25,27 @@
  *
  * 统计：resource_unlock 埋点仍由前台在内容渲染成功后统一上报（口径不变），本接口不写 stats。
  */
-import { json, readJSON, corsHeaders, randomToken, ensureBindingsTable, ensureVariantColumns, ensureCodeIssuesTable, getSetting } from '../_utils.js';
+import { json, readJSON, corsHeaders, randomToken, ensureBindingsTable, ensureVariantColumns, ensureCodeIssuesTable, getSetting, getCookie } from '../_utils.js';
 
 // 设备 Cookie 名与有效期（10 年，等效永久设备标识）
 const DEVICE_COOKIE = 'wnzyq_device';
+
+/* v439 #98：资源码爆破防护——同设备连续输错 10 次 → 锁 15 分钟（输对立即清零；内存口径，重启清零可接受） */
+const __wrongStreak = new Map();
+function wrongGuard(device) {
+  const k = device || 'anon';
+  const rec = __wrongStreak.get(k);
+  if (rec && rec.lockedUntil > Date.now()) return Math.ceil((rec.lockedUntil - Date.now()) / 60000);
+  return 0;
+}
+function wrongHit(device) {
+  const k = device || 'anon';
+  const rec = __wrongStreak.get(k) || { n: 0, lockedUntil: 0 };
+  rec.n += 1;
+  if (rec.n >= 10) { rec.lockedUntil = Date.now() + 15 * 60000; rec.n = 0; }
+  __wrongStreak.set(k, rec);
+}
+function wrongClear(device) { __wrongStreak.delete(device || 'anon'); }
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -38,6 +55,13 @@ export async function onRequestPost(context) {
   const code = String(b.code || '').trim();
   if (!productId || !variantId) {
     return json({ ok: false, msg: '参数错误' }, 400);
+  }
+
+  /* v439 #98：爆破防护——锁定中直接拒绝 */
+  const __device = getCookie(request, DEVICE_COOKIE);
+  const __lockMin = wrongGuard(__device);
+  if (__lockMin > 0) {
+    return json({ ok: false, msg: '尝试次数过多，请 ' + __lockMin + ' 分钟后再试' }, 429);
   }
 
   await ensureBindingsTable(env);
@@ -87,6 +111,7 @@ export async function onRequestPost(context) {
   // 3. 无码类型：内容直接返回（前台"立即获取"键场景）
   if (!hasCode) {
     if (!content.trim()) return json({ ok: false, msg: '该资源未设置专属内容' }, 400);
+    wrongClear(getCookie(request, DEVICE_COOKIE)); /* v439 #98 */
     return json({ ok: true, content, bound: false }, 200, extraHeaders);
   }
 
@@ -104,6 +129,7 @@ export async function onRequestPost(context) {
     boundHit = !!(upd && upd.meta && upd.meta.changes);
   } catch (e) { console.error('R106 通行证查询失败（按未绑定降级）:', e && e.message); }
   if (boundHit) {
+    wrongClear(getCookie(request, DEVICE_COOKIE)); /* v439 #98 */
     return json({ ok: true, content, bound: true }, 200, extraHeaders);
   }
 
@@ -148,6 +174,7 @@ export async function onRequestPost(context) {
       } catch (e) { console.error('R221 迁移发码记录写入失败:', e && e.message); }
     }
     if (!issue) {
+      wrongHit(getCookie(request, DEVICE_COOKIE)); /* v439 #98：错码计数 */
       return json({ ok: false, msg: '资源码错误，请重试' }, 200, extraHeaders);
     }
   }

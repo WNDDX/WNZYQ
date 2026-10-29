@@ -18,6 +18,7 @@
 <meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
   <link rel="stylesheet" href="/assets/ui-common.css">
   <script>/* v389-1：深色模式纯跟随设备系统（不再读取/存储手动偏好） */(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+<style>/* v436：首屏画布保底——外层 CSS 到位前 html 画布即正确深浅色，杜绝首次加载闪深色/闪白（深色由头部主题脚本先行置 data-theme 联动） */html{color-scheme:light;background:#f2f7fd}html[data-theme="dark"]{color-scheme:dark;background:#0e1621}</style>
 <link rel="stylesheet" href="/assets/motion.css">
   <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
   <link rel="preload" href="/assets/ui-common.js" as="script">
@@ -412,6 +413,8 @@ window.__pullRefresh = { refresh: function (done) { try { loadImg(dom.logoImage,
       var el = document.getElementById('subRes');
       if (el) { el.innerHTML = html; el.style.visibility = 'visible'; } /* v416 条5：填充后显示 */
     }
+    /* v436b（老板拍板）：「共 个资源」四字跟「获取资源」键文字同帧出现（数字留位），数字等接口回来再填——不再是接口回来才整句冒出 */
+    setSubHtml('共 <span id="resTotal"></span> 个资源');
     function fetchTotal() {
       try {
         var ctrl = ('AbortController' in window) ? new AbortController() : null;
@@ -421,8 +424,7 @@ window.__pullRefresh = { refresh: function (done) { try { loadImg(dom.logoImage,
           .then(function (res) {
             if (timer) clearTimeout(timer);
             if (res && res.ok && typeof res.total === 'number' && res.total >= 0) {
-              setSubHtml('共 <span id="resTotal">0</span> 个资源');
-              var nEl = document.getElementById('resTotal');
+              var nEl = document.getElementById('resTotal'); /* v436b：字已在（上面初始化），此处只填数字 */
               if (window.__motion) __motion.countUp(nEl, res.total, { dur: 1100 });
               else if (nEl) nEl.textContent = res.total;
             }

@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
   const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
   /* v432 #39：上传写接口防刷（30 次/分钟） */
-  if (!rateLimit(request, 'upload', 30)) return json({ ok: false, msg: '操作太频繁，请一分钟后再试' }, 429);
+  if (!rateLimit(request, 'upload', 60)) return json({ ok: false, msg: '操作太频繁，请一分钟后再试' }, 429);
 
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) {
@@ -32,9 +32,9 @@ export async function onRequestPost(context) {
 
   const type = String(file.type || '').toLowerCase();
   const ext = ALLOWED_TYPES[type];
-  if (!ext) return json({ ok: false, msg: '只支持 mp4 / webm / mov 视频格式' }, 400);
+  if (!ext) return json({ ok: false, msg: '文件格式不支持，请上传网站支持的格式' }, 400);
   /* v432 #38：文件头魔数校验（防伪装） */
-  if (!(await sniffMatchesType(file, type))) return json({ ok: false, msg: '文件内容与视频格式不符，已被拒绝' }, 400);
+  if (!(await sniffMatchesType(file, type))) return json({ ok: false, msg: '文件内容与声明的格式不符，已被拒绝' }, 400);
 
   // R308：老板拍板视频硬限 25MB（KV 平台硬上限，前端已秒拒，后端双保险防绕过）
   const MAX_VIDEO_SIZE = 25 * 1024 * 1024;

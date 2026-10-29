@@ -24,6 +24,7 @@
         im.src = objUrl;
       } catch (e) { cb(null); }
     }
+    window.__uploadToBucket = function (file) { return new Promise(function (res) { uploadToBucket(file, function (url) { res(url); }); }); }; /* v439 #79：压缩替换用（Promise 化暴露） */
     function uploadToBucket(file, cb, onProgress, task) { /* v351：第4参 task=队列任务句柄（可取消） */
       if (!file) return;
       /* v349：图片上传原来没有大小上限（视频和文件都有 25MB 硬限），
@@ -1564,7 +1565,7 @@
     var annListEl = document.getElementById('annList');
     var annEditLabel = document.getElementById('annEditLabel');
     var annDraftPending = false;
-    var stateAnn = { list: [], curId: null, loaded: false };
+    var stateAnn = { list: [], raw: [], curId: null, loaded: false }; /* v439 #68：raw=全量（含软删），list=在编 */
     // 初始隐藏设置页中的公告编辑器（由"设置公告"弹窗承载）
     (function () { var _tb = document.getElementById('announcementRteToolbar'); if (_tb) _tb.style.display = 'none'; if (annEditor) annEditor.style.display = 'none'; var _ct0 = document.querySelector('.rte-count[data-for="setAnnouncement"]'); if (_ct0) _ct0.style.display = 'none'; })(); /* R215 条1：计数条同藏 */
     // R257：parseAnnouncements 已合并到 ui-common.js
@@ -1611,8 +1612,10 @@
         if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v369 条1 */
         delBtn.addEventListener('click', function (e) {
           e.stopPropagation();
-          showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？', function (closeConfirm) {
+          showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？删除后可在回收站保留 60 天，随时恢复。', function (closeConfirm) {
             closeConfirm();
+            /* v439 #68：软删——打标记（对象引用同时在 raw 里，保存时随 raw 写回），从编辑列表剔除 */
+            a.deleted = 1; a.deletedAt = new Date().toISOString();
             stateAnn.list = stateAnn.list.filter(function (x) { return x.id !== a.id; });
             if (stateAnn.curId === a.id) stateAnn.curId = null;
             if (!stateAnn.curId && stateAnn.list.length) { renderAnnList(); selectAnnItem(stateAnn.list[0].id); }
@@ -1744,7 +1747,10 @@
       if (!stateAnn.loaded) {
         api('admin/settings').then(function (res) {
           if (res && res.ok) {
-            stateAnn.list = window.parseAnnouncements(res.settings || {}, { sortLevel: true }); if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 }); stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
+            /* v439 #68：公告软删——raw 存全量（含 deleted，保存时写回），list 只留在编条目供编辑 */
+            stateAnn.raw = window.parseAnnouncements(res.settings || {}, { sortLevel: true });
+            stateAnn.list = stateAnn.raw.filter(function (x) { return !x.deleted; });
+            if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 }); stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
             stateAnn.loaded = true;
             document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
             syncSelectDisplay(document.getElementById('annMode')); // R166：同步自制下拉显示框
@@ -1771,10 +1777,12 @@
       annBtn.disabled = true;
       if (window.__btnBusy) window.__btnBusy(annBtn, '确定中');
       flushAnnEdit();
+      /* v439 #68：保存时把软删条目（raw 里带 deleted 的）合并写回——只存 list 会把回收站里的公告弄丢 */
+      var _annOut = (stateAnn.raw || []).filter(function (x) { return x.deleted; }).concat(stateAnn.list);
       var data = {
         announcement: '',
         announcement_mode: document.getElementById('annMode').value,
-        announcements: JSON.stringify(stateAnn.list)
+        announcements: JSON.stringify(_annOut)
       };
       api('admin/settings', { method: 'PUT', body: JSON.stringify(data) }).then(function (res) {
         if (res && res.ok) {
@@ -1788,6 +1796,7 @@
           stateAnn.loaded = true; annDraftPending = false;
           // R154: 保存成功后立即重建备份（原=null）——保存后再编辑、取消/×时 annDiscard 才有备份可恢复（重开瞬间及拉取失败时不再显示脏草稿）
           try { stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list)); } catch (e0) { stateAnn._backup = null; }
+          try { stateAnn.raw = JSON.parse(JSON.stringify(_annOut)); } catch (e0) {} /* v439 #68：raw 与落库对齐 */
           stateAnn._modeSaved = document.getElementById('annMode').value; // R135：保存成功后同步已保存频率
           stateAnn._stashed = false; // R257：已保存=干净状态，重开不再提示「已恢复」
           try { window.__clearEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); } // R248：保存成功后清除草稿
@@ -2391,7 +2400,30 @@
   /* v386 规整：CF region 英文 → 中文省份（未收录/为空时隐藏地区前缀） */
   var REGION_CN = { Beijing: '北京', Tianjin: '天津', Hebei: '河北', Shanxi: '山西', 'Inner Mongolia': '内蒙古', Liaoning: '辽宁', Jilin: '吉林', Heilongjiang: '黑龙江', Shanghai: '上海', Jiangsu: '江苏', Zhejiang: '浙江', Anhui: '安徽', Fujian: '福建', Jiangxi: '江西', Shandong: '山东', Henan: '河南', Hubei: '湖北', Hunan: '湖南', Guangdong: '广东', Guangxi: '广西', Hainan: '海南', Chongqing: '重庆', Sichuan: '四川', Guizhou: '贵州', Yunnan: '云南', Tibet: '西藏', Shaanxi: '陕西', Gansu: '甘肃', Qinghai: '青海', Ningxia: '宁夏', Xinjiang: '新疆', 'Hong Kong': '中国香港', Macau: '中国澳门', Taiwan: '中国台湾' };
   var regionLabel = function (r) { return REGION_CN[r] || ''; };
-  var WHAT = { view: '浏览资源', contact: '咨询客服', resource_unlock: '查看内容', bind: '资源解锁' };
+  var WHAT = { view: '浏览资源', contact: '咨询客服', resource_unlock: '查看内容', bind: '资源解锁', login: '设备登录', audit: '系统操作', ann_read: '公告阅读' }; /* v439 */
+  /* v439 #80（复检改版）：每日自动体检发现问题 → 信息中心置顶提醒条（带「去查看」键，点击直达体检详情），不再挂按钮红点 */
+  function sysAlertEntry() {
+    try {
+      var a = JSON.parse(localStorage.getItem('wnzyq_syscheck_alert') || 'null');
+      if (!a || !a.n) return '';
+      return '<div id="ctSysAlert" style="margin:0 0 10px;padding:9px 11px;background:#fff6e8;border:1px solid #f0c896;border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px">' +
+        '<span style="flex:1;color:#8a5a00;line-height:1.6"><b>⚠ 系统体检发现 ' + a.n + ' 个问题</b><br><span style="font-size:11px;color:#a07b2a">可能含失效图片 / 失效外链 / 超大图片 / 环境异常</span></span>' +
+        '<button type="button" class="btn-blue btn-inline-pd" id="ctSysAlertGo" style="flex:none">去查看</button></div>';
+    } catch (e) { return ''; }
+  }
+  function bindSysAlertGo() {
+    var go = document.getElementById('ctSysAlertGo');
+    if (!go || go.dataset.bound) return;
+    go.dataset.bound = '1';
+    go.addEventListener('click', function () {
+      try { localStorage.removeItem('wnzyq_syscheck_alert'); } catch (e) {}
+      mask.classList.remove('open');
+      if (dot) dot.hidden = true;
+      var tab = document.querySelector('.tab[data-tab="settings"]');
+      if (tab) tab.click();
+      setTimeout(function () { var icb = document.getElementById('imgCheckBtn'); if (icb) icb.click(); }, 600);
+    });
+  }
   /* v394-29 数字规范：增量>999 用 k 缩写；总量永远全量（统计卡/首页走 countUp 全量） */
   function fmtNum(n) { return n > 999 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n); }
   function render(d) {
@@ -2410,11 +2442,36 @@
     document.getElementById('ctSince').textContent = '自 ' + fmtTime(d.lastSeen) + ' 以来';
     document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
     var list = document.getElementById('ctList');
+    var _alert = sysAlertEntry();
+    /* v439 #116：按人筛选（超管查某个员工的账） */
+    if (window.__me && window.__me.role === 'super') {
+      var whoBox = document.getElementById('ctWhoFilter');
+      if (!whoBox) {
+        whoBox = document.createElement('div');
+        whoBox.id = 'ctWhoFilter';
+        whoBox.style.cssText = 'display:flex;align-items:center;gap:6px;margin:0 0 8px;font-size:12px;color:#66788a';
+        var whos = {};
+        (d.recent || []).forEach(function (r) { if (r.type === 'audit' && r.who && r.who !== 'admin') whos[r.who] = 1; });
+        var opts = Object.keys(whos);
+        whoBox.innerHTML = '只看：<select id="ctWhoSel" style="font-size:12px;padding:2px 6px;border:1px solid #dfe7ef;border-radius:6px"><option value="">全部动态</option>' +
+          opts.map(function (w) { return '<option value="' + w + '"' + (window.__ctWho === w ? ' selected' : '') + '>' + w + '</option>'; }).join('') + '</select>';
+        list.parentNode.insertBefore(whoBox, list);
+        var sel = whoBox.querySelector('#ctWhoSel');
+        sel.addEventListener('change', function () {
+          window.__ctWho = this.value;
+          fetchInfo(function (d2) { render(d2); }, window.__ctWho || undefined);
+        });
+      } else {
+        var _sel = whoBox.querySelector('#ctWhoSel');
+        if (_sel) _sel.value = window.__ctWho || '';
+      }
+    }
     if (!(d.recent || []).length) {
       /* v434：0 值可解释——管理员自己浏览前台不计入（R168-②拍板），全 0 时说明口径避免「跟实际对不上」的疑惑 */
       var _allZero = !(d.delta && (d.delta.view || d.delta.contact || d.delta.unlock || d.delta.bind));
-      list.innerHTML = '<div class="wn-empty"><span class="wn-empty-ico" aria-hidden="true">📭</span><div class="wn-empty-t">该时段暂无新动态</div>' +
+      list.innerHTML = _alert + '<div class="wn-empty"><span class="wn-empty-ico" aria-hidden="true">📭</span><div class="wn-empty-t">该时段暂无新动态</div>' +
         (_allZero ? '<div style="font-size:11px;color:#8a9aab;margin-top:6px;line-height:1.7">说明：您自己在前台资源页的浏览/解锁不计入统计（管理身份自动排除）；数字只来自真实访客。</div>' : '') + '</div>'; /* v394-16：空态模板（图标+主句） */
+      bindSysAlertGo();
       return;
     }
     var html = d.recent.map(function (r, ri) {
@@ -2428,12 +2485,16 @@
         (rl ? rl + ' ' : '') + String(who).replace(/</g, '&lt;') + '</span><span class="ct-what">' + (WHAT[r.type] || r.type) +
         '</span><span class="ct-target">' + String(target).replace(/</g, '&lt;') + '</span></div>';
     }).join('');
-    list.innerHTML = html;
+    list.innerHTML = _alert + html;
+    bindSysAlertGo();
   }
-  function fetchInfo(cb) {
+  function fetchInfo(cb, who) {
     var last = '';
     try { last = localStorage.getItem(LS_KEY) || ''; } catch (e) { if (window.__silent) window.__silent(e); }
-    api('admin/info' + (last ? '?last=' + encodeURIComponent(last) : ''), { method: 'GET' }).then(function (res) {
+    var qs = [];
+    if (last) qs.push('last=' + encodeURIComponent(last));
+    if (who) qs.push('who=' + encodeURIComponent(who)); /* v439 #116：按人筛选留痕 */
+    api('admin/info' + (qs.length ? '?' + qs.join('&') : ''), { method: 'GET' }).then(function (res) {
       if (res && res.ok) cb(res);
     }).catch(function () { if (window.__silent) window.__silent(new Error('info')); });
   }
@@ -2441,21 +2502,27 @@
      「距上次查看」语义失效。现存服务端认的 'YYYY-MM-DD HH:MM:SS'（UTC，与 stats.created_at 同系） */
   function markSeen() {
     try { localStorage.setItem(LS_KEY, new Date().toISOString().slice(0, 19).replace('T', ' ')); } catch (e) { if (window.__silent) window.__silent(e); }
-    if (dot) dot.hidden = true;
+    /* #80：体检提醒未处理（标记还在）时红点保持亮——看过信息中心也不算处理，点了「去查看」才清 */
+    var _al = false;
+    try { var a = JSON.parse(localStorage.getItem('wnzyq_syscheck_alert') || 'null'); _al = !!(a && a.n); } catch (e) {}
+    if (dot) dot.hidden = !_al;
   }
-  /* 红点：主视图可见后静默查一次——窗口内绑定/咨询任一 >0 才亮（访问量再大不打扰） */
+  /* 红点：主视图可见后静默查一次——窗口内绑定/咨询任一 >0 才亮（访问量再大不打扰）；#80：体检提醒也亮 */
   function checkDot() {
     var mv = document.getElementById('mainView');
     if (!mv || getComputedStyle(mv).display === 'none') { setTimeout(checkDot, 1200); return; }
     fetchInfo(function (d) {
-      if (dot) dot.hidden = !(d.delta.bind > 0 || d.delta.contact > 0);
+      var _al = false;
+      try { var a = JSON.parse(localStorage.getItem('wnzyq_syscheck_alert') || 'null'); _al = !!(a && a.n); } catch (e) {}
+      if (dot) dot.hidden = !((d.delta.bind > 0) || (d.delta.contact > 0) || (d.delta.login > 0) || (d.delta.audit > 0) || _al); /* v439：登录+下级动作+体检提醒都亮 */
     });
   }
+  window.__syscheckAlertChanged = function () { checkDot(); }; /* #80：自动体检写标记后即时刷新红点 */
   setTimeout(checkDot, 1500);
   if (btn) btn.addEventListener('click', function () {
     mask.classList.add('open');
     if (window.__haptic) window.__haptic();
-    fetchInfo(function (d) { render(d); });
+    fetchInfo(function (d) { render(d); }, window.__ctWho || undefined);
   });
   var fold = document.getElementById('ctFold');
   var item = document.getElementById('ctDetailItem');

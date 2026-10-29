@@ -4,17 +4,22 @@
  * POST /api/admin/variants                   → 新增类型
  * body: { productId, name, desc, img, video, contactUrl, sort, resourceCode, resourceContent, isHidden }
  */
-import { json, requireAuth, readJSON, cleanVariant, ensureVariantColumns, ensureBindingsTable, ensureCodeIssuesTable } from '../../_utils.js';
+import { json, requireAuth, requirePerm, productScopeOk, readJSON, cleanVariant, ensureVariantColumns, ensureBindingsTable, ensureCodeIssuesTable } from '../../_utils.js';
+import { visibleCode, parsePerms } from '../../_perms.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  const auth = await requirePerm(env, request, 'products.view');
   if (auth instanceof Response) return auth;
 
   const url = new URL(request.url);
   const productId = Number(url.searchParams.get('product_id') || 0);
   if (!productId) return json({ ok: false, msg: '缺少 product_id' }, 400);
   await ensureVariantColumns(env);
+
+  /* #116 范围锁 */
+  const sc = await productScopeOk(env, auth, productId);
+  if (!sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
 
   const { results } = await env.DB.prepare(
     'SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort ASC, id ASC'
@@ -34,18 +39,21 @@ export async function onRequestGet(context) {
   for (const r of bindRows) bindMap[r.variant_id] = r.n;
 
   await ensureCodeIssuesTable(env);
+  const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
   const list = [];
   for (const v of results) {
-    list.push(Object.assign(cleanVariant(v), {
+    const item = Object.assign(cleanVariant(v), {
       bindings: bindMap[v.id] || 0,
-    }));
+    });
+    item.resourceCode = visibleCode(item.resourceCode, auth.role, perms, sc.createdBy, auth.username, sc.cid); /* #116 信息锁 */
+    list.push(item);
   }
   return json({ ok: true, list });
 }
 
 export async function onRequestPost(context) {
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  const auth = await requirePerm(env, request, 'products.add');
   if (auth instanceof Response) return auth;
 
   const b = await readJSON(request);
@@ -54,6 +62,10 @@ export async function onRequestPost(context) {
   if (!productId) return json({ ok: false, msg: '缺少资源 id' }, 400);
   if (!name) return json({ ok: false, msg: '请填写类型名称' }, 400);
   await ensureVariantColumns(env);
+
+  /* #116 范围锁 */
+  const sc = await productScopeOk(env, auth, productId);
+  if (!sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
 
   // R106：绑定设备上限挪进类型表单（<1 或非法一律按 1）
   const bindLimit = Math.max(1, parseInt(b.bindLimit, 10) || 1);

@@ -2,11 +2,12 @@
  * GET /api/admin/stats
  * 数据统计（需登录）
  */
-import { json, requireAuth, ensureBindingsTable } from '../../_utils.js';
+import { json, requirePerm, ensureBindingsTable } from '../../_utils.js';
 
 export async function onRequestGet(context) {
+  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  const auth = await requirePerm(env, request, 'data.stats');
   if (auth instanceof Response) return auth;
 
   // R168-③：时区统一北京时间口径（全系统统一，一天为北京时间 0:00-24:00）——

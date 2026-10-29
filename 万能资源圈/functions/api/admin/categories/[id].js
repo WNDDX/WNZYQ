@@ -7,18 +7,33 @@
  *  - 单字段更新：{ is_hidden } 切换显示隐藏；{ sort } 拖拽排序保存
  *  - 完整保存：{ name, sort, parent_id, is_hidden }（编辑弹窗确定）
  */
-import { json, requireAuth, readJSON, clearPublicCache } from '../../../_utils.js';
+import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, clearPublicCache } from '../../../_utils.js';
+import { parsePerms, catAllowed } from '../../../_perms.js';
+
+/* #116：sub 只能改/删自己创建的分类（cats.edit/del），超管不限 */
+async function catScopeOk(env, auth, catId, needEdit) {
+  const row = await env.DB.prepare('SELECT id, created_by FROM categories WHERE id = ? AND deleted_at IS NULL').bind(Number(catId) || 0).first();
+  if (!row) return { ok: false, missing: true };
+  if (auth.role === 'super') return { ok: true, row };
+  const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+  if (!catAllowed(Number(catId) || 0, auth.role, perms)) return { ok: false };
+  if (row.created_by !== auth.username) return { ok: false }; /* 上级建的分类不能动 */
+  return { ok: true, row };
+}
 
 // 允许更新的字段白名单（防止请求体传入非法字段名）
 const ALLOWED_CAT_FIELDS = ['name', 'sort', 'parent_id', 'is_hidden'];
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
-  const auth = await requireAuth(env, request);
+  await ensureAdminUsers(env);
+  const auth = await requirePerm(env, request, 'cats.edit');
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);
   if (!id) return json({ ok: false, msg: '缺少分类 id' }, 400); // 「全部」(id=0) 不可改
+  const _sc = await catScopeOk(env, auth, id, true);
+  if (!_sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
 
   const b = await readJSON(request);
   const sets = [];
@@ -34,7 +49,7 @@ export async function onRequestPut(context) {
   if (b.parent_id !== undefined && ALLOWED_CAT_FIELDS.includes('parent_id')) {
     const parentId = Number(b.parent_id) || 0;
     if (parentId !== 0) {
-      const parent = await env.DB.prepare('SELECT id, parent_id FROM categories WHERE id = ?').bind(parentId).first();
+      const parent = await env.DB.prepare('SELECT id, parent_id FROM categories WHERE id = ? AND deleted_at IS NULL').bind(parentId).first();
       if (!parent) return json({ ok: false, msg: '所属一级分类不存在' }, 400);
       if (Number(parent.parent_id) !== 0) return json({ ok: false, msg: '仅支持两级分类' }, 400);
       if (Number(parent.id) === id) return json({ ok: false, msg: '不能挂在自己的下面' }, 400);
@@ -53,26 +68,29 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { env, request, params } = context;
-  const auth = await requireAuth(env, request);
+  await ensureAdminUsers(env);
+  const auth = await requirePerm(env, request, 'cats.del');
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);
   if (!id) return json({ ok: false, msg: '缺少分类 id' }, 400); // 「全部」(id=0) 不可删
+  const _sc = await catScopeOk(env, auth, id, false);
+  if (!_sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
 
   // 子分类 id 一并删除
   const { results: children } = await env.DB.prepare(
-    'SELECT id FROM categories WHERE parent_id = ?'
+    'SELECT id FROM categories WHERE parent_id = ? AND deleted_at IS NULL'
   ).bind(id).all();
   const ids = [id, ...(children || []).map((c) => Number(c.id))];
 
-  // 其下资源归入「全部」(cid=0)，与前端确认弹窗文案「其下资源将归入全部」一致
+  /* v439 #68：删除改软删除（进回收站保 60 天）——子分类一并进回收站；其下资源保持原分类归属（恢复即还原） */
+  const { ensureSoftDelete, audit } = await import('../../_utils.js');
+  await ensureSoftDelete(env);
   const placeholders = ids.map(() => '?').join(',');
   await env.DB.prepare(
-    `UPDATE products SET cid = 0 WHERE cid IN (${placeholders})`
+    `UPDATE categories SET deleted_at = datetime('now') WHERE id IN (${placeholders})`
   ).bind(...ids).run();
-  await env.DB.prepare(
-    `DELETE FROM categories WHERE id IN (${placeholders})`
-  ).bind(...ids).run();
+  await audit(env, request, '删除分类（进回收站）', ids.length + ' 个');
 
   await clearPublicCache(request);
   return json({ ok: true });

@@ -4,13 +4,14 @@
  * 保护：①上传台账——24 小时内的新文件可能是编辑中途的，不删；台账之前的历史遗留（如拖拽 bug 期的黑户）直接删。
  * 节流：30 分钟内重复调用直接跳过（settings 表记时间戳）。
  */
-import { json, requireAuth, buildContentText } from '../../_utils.js';
+import { json, requirePerm, buildContentText } from '../../_utils.js';
 
 const GRACE_HOURS = 24;
 
 export async function onRequestPost(context) {
+  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  const auth = await requirePerm(env, request, 'sensitive.super');
   if (auth instanceof Response) return auth;
 
   const bucket = env.IMAGE_BUCKET;

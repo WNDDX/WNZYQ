@@ -1372,3 +1372,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* ===== v371 条14：无封面占位符根治——media-fail 图立即全显、不重播入场动画/淡入，重渲染零闪烁 ===== */
 .product-card .card-img.media-fail, .thumb.media-fail, img.media-fail { opacity: 1 !important; animation: none !important; transition: none !important; }
+
+/* v438：红点宿主定位——.tab 公共样式无 position，红点 absolute 会飞到页面右上角（老板截图实锤）；公告页签同需 */
+.topbar-actions .tab, .ann-tab, .ann-title { position: relative; }

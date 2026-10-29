@@ -274,7 +274,7 @@ if ('serviceWorker' in navigator) {
     try { document.querySelectorAll('video').forEach(function (v) { if (v.dataset.__kfFbHid) { v.dataset.__kfFbHid = ''; v.style.visibility = ''; } }); } catch (e) { if (window.__silent) window.__silent(e); }
     if (window.syncBodyLock) window.syncBodyLock(); else if (window.lockBodyScroll) window.lockBodyScroll(false);
   };
-  window.openContactFallback = function (url) {
+  window.openContactFallback = function (url, opts) { /* v436b：兜底弹窗跳转键同样吃 green（与主弹窗一致，全系统统一绿） */
     window.__kfPreconnect(url);
     var m = document.getElementById('kfFallback');
     if (!m) {
@@ -295,6 +295,8 @@ if ('serviceWorker' in navigator) {
         '</div>';
       document.body.appendChild(m);
       m.addEventListener('click', function (e) { if (e.target === m) window.__kfFbClose(); });
+      var fbBtn = m.querySelector('.kf-jump');
+      if (fbBtn) fbBtn.classList.toggle('kf-jump-green', !!(opts && opts.green)); /* v436b */
       var im = document.getElementById('kfFallbackImg');
       if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = KF_QR_FAIL; };
     }
@@ -1760,7 +1762,7 @@ window.__followSwipe = function (opts) {
       var t = 'transform .26s cubic-bezier(.34,1.3,.64,1)';
       S.track.style.transition = t;
       S.track.style.transform = 'translateX(0)';
-      setTimeout(function () { var d = S ? S.dir : 0; cleanup(); window.__swipeCommitting = false; if (cb) { window.__fsJustSwiped = false; cb(d); } }, 270);
+      setTimeout(function () { var d = S ? S.dir : 0; cleanup(); window.__swipeCommitting = false; try { if (window.__haptic && d) window.__haptic(); } catch (eH) {} /* v439 #91：滑切成功触感 */ if (cb) { window.__fsJustSwiped = false; cb(d); } }, 270);
       return;
     }
     /* v405 条9/10：提交=整条 track 滑到目标位（v412 单轨：pA 滑出与 pB 滑入是同一个 transform，

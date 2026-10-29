@@ -224,6 +224,7 @@
     // v314（用户 10-05 15:59）：根因→管理页资源列表翻页/搜索/筛选每次走网络，旧内容淡出成空白等待；修法→内存缓存秒开+后台静默刷新（stale-while-revalidate）。看过的组合(page+kw+filterCat+filterStatus)存内存，再切回来立即渲染零等待。首次切到新组合不清空旧内容+轻量进度条，数据回来再替换。真失败toast提示+收骨架不留灰态。下拉刷新清缓存拿最新。
     // v315（用户 10-05 17:33）：进度条全删——老板不要进度条。
     var __adminProductCache = {};        // key='page:kw:filterCat:filterStatus'，value={products,total,totalPages,_backendPaged,timestamp}
+    window.__reloadAdminProducts = function () { __adminProductCache = {}; loadProducts(true); }; /* v439 #68：回收站恢复资源后重拉列表（清缓存防拿到旧软删态） */
     var __adminProductCacheLoading = {}; // key同上，value=Promise（防重复请求）
     function __adminProductCacheKey(page, kw, filterCat, filterStatus) {
       return (page || 1) + ':' + (kw || '') + ':' + (filterCat || '0') + ':' + (filterStatus || '');
@@ -1245,3 +1246,30 @@ function renderProducts() {
         toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
       });
     }
+
+    /* v439 #67：筛选条件记忆——变更即存会话，刷新/重登后恢复工作现场 */
+    (function () {
+      var ids = ['adminSearch', 'filterCat', 'filterStatus'];
+      var save = function () {
+        try {
+          var st = {};
+          ids.forEach(function (id) { var el = document.getElementById(id); if (el) st[id] = el.value; });
+          sessionStorage.setItem('wnzyq_filter_mem', JSON.stringify(st));
+        } catch (e0) { if (window.__silent) window.__silent(e0); }
+      };
+      ids.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', save);
+        if (id === 'adminSearch') el.addEventListener('input', save);
+      });
+      /* 恢复（首次进入资源页签时应用一次） */
+      try {
+        var st = JSON.parse(sessionStorage.getItem('wnzyq_filter_mem') || '{}');
+        var changed = false;
+        ids.forEach(function (id) { if (st[id] !== undefined && document.getElementById(id)) { document.getElementById(id).value = st[id]; changed = true; } });
+        if (changed && (st.filterCat || st.filterStatus || st.adminSearch)) {
+          try { if (document.getElementById('adminSearch')) document.getElementById('adminSearch').dispatchEvent(new Event('input', { bubbles: true })); } catch (e1) {}
+        }
+      } catch (e2) { if (window.__silent) window.__silent(e2); }
+    })();

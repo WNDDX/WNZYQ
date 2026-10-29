@@ -14,7 +14,7 @@
  *   recent    访问记录明细（stats 全量：时间/资源/类型/IP）
  * 纯技术表（admins / sessions / login_attempts）含敏感凭据，不导出。
  */
-import { json, requireAuth, ensureBindingsTable, ensureCodeIssuesTable, ensureVariantColumns, ensureProductColumns } from '../../_utils.js';
+import { json, requirePerm, ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensureVariantColumns, ensureProductColumns } from '../../_utils.js';
 
 /* R307（用户 09-30 拍板「不再做限制，没有封顶」）：访问记录明细不再封顶 10000 条——
    RECENT_LIMIT 人为上限已移除，改为 id 游标分批全量拉取（每批 5000 条拼接），
@@ -38,8 +38,9 @@ async function fetchAllRecent(DB) {
 }
 
 export async function onRequestGet(context) {
+  await ensureAdminUsers(env);
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  const auth = await requirePerm(env, request, 'data.export');
   if (auth instanceof Response) return auth;
 
   await ensureProductColumns(env);
@@ -58,7 +59,7 @@ export async function onRequestGet(context) {
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='contact'),0) AS contacts,
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='resource_unlock'),0) AS resource_unlocks,
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.product_id = p.id),0) AS bindings
-       FROM products p
+       FROM products p WHERE p.deleted_at IS NULL
        ORDER BY p.sort ASC, p.id DESC`
     ).all(),
     DB.prepare(
@@ -70,8 +71,8 @@ export async function onRequestGet(context) {
     ).all(),
     DB.prepare(
       `SELECT c.id, c.name, c.parent_id, c.sort, c.is_hidden,
-              (SELECT COUNT(*) FROM products p WHERE p.cid = c.id) AS product_count
-       FROM categories c
+              (SELECT COUNT(*) FROM products p WHERE p.cid = c.id AND p.deleted_at IS NULL) AS product_count
+       FROM categories c WHERE c.deleted_at IS NULL
        ORDER BY c.sort ASC, c.id ASC`
     ).all(),
     DB.prepare(
@@ -101,7 +102,7 @@ export async function onRequestGet(context) {
               COALESCE(SUM(CASE WHEN s.type='contact' THEN 1 ELSE 0 END),0) AS contacts,
               COALESCE(SUM(CASE WHEN s.type='resource_unlock' THEN 1 ELSE 0 END),0) AS resource_unlocks,
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.product_id = p.id),0) AS bindings
-       FROM products p
+       FROM products p WHERE p.deleted_at IS NULL
        LEFT JOIN stats s ON s.product_id = p.id
        GROUP BY p.id
        ORDER BY views DESC, p.id DESC`

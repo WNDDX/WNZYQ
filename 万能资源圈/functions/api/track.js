@@ -15,7 +15,7 @@
 import { json, readJSON, getCookie, getAuthAdmin } from '../_utils.js';
 
 // 允许的埋点类型白名单：不认识的类型一律按 'view' 记录
-const VALID_TRACK_TYPES = ['view', 'contact', 'resource_unlock'];
+const VALID_TRACK_TYPES = ['view', 'contact', 'resource_unlock', 'ann_read']; /* v439 #118：公告阅读 */
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -47,7 +47,12 @@ export async function onRequestPost(context) {
         { name: 'stats', dateCol: 'created_at' },
         { name: 'sessions', dateCol: 'created_at' },
         { name: 'login_attempts', dateCol: 'last_attempt' },
-        { name: 'code_issues', dateCol: 'issued_at', extra: "AND status = 'issued'" }
+        { name: 'code_issues', dateCol: 'issued_at', extra: "AND status = 'issued'" },
+        /* v439 #64/#63/#68：审计/登录记录 60 天清；回收站到期（deleted_at 超 60 天）彻底删除 */
+        { name: 'audit_log', dateCol: 'created_at' },
+        { name: 'admin_logins', dateCol: 'created_at' },
+        { name: 'products', dateCol: 'deleted_at', extra: 'AND deleted_at IS NOT NULL' },
+        { name: 'categories', dateCol: 'deleted_at', extra: 'AND deleted_at IS NOT NULL' }
       ];
       for (const t of tables) {
         const countRow = await env.DB.prepare(

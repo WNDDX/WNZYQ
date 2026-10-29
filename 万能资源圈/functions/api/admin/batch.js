@@ -9,7 +9,8 @@
  *   changeCat   批量改分类（需 cid）
  *   changePrice 批量改价格（需 price）
  */
-import { json, requireAuth, readJSON, deleteBucketImages } from '../../_utils.js';
+import { json, requireAuth, requirePerm, productScopeOk, readJSON, deleteBucketImages } from '../../_utils.js';
+import { parsePerms, can } from '../../_perms.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -21,6 +22,17 @@ export async function onRequestPost(context) {
   const action = String(b.action || '');
 
   if (ids.length === 0) return json({ ok: false, msg: '请选择资源' }, 400);
+  /* #116：批量动作逐项鉴权 + 范围锁（选中的资源必须全部在授权范围内） */
+  const ACT = { online: 'batch.online', offline: 'batch.online', hide: 'batch.online', show: 'batch.online', delete: 'batch.del', changeCat: 'products.moveCat', changePrice: 'batch.price' };
+  const need = ACT[action];
+  if (need) {
+    const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+    if (!can(need, auth.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
+    for (const pid of ids) {
+      const sc = await productScopeOk(env, auth, pid);
+      if (!sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
+    }
+  }
   // R307（用户 09-30）：单次批量操作最多 500 条的限制已取消，不再做条数限制；
   // 底层单次执行机制（placeholders + 事务）保持不变
   if (!['online', 'offline', 'hide', 'show', 'delete', 'changeCat', 'changePrice'].includes(action)) {
@@ -41,7 +53,7 @@ export async function onRequestPost(context) {
     try {
       for (const c of chunks) {
         const p = ph(c);
-        const { results: imgRows } = await env.DB.prepare(`SELECT img, detail, detail_images, detail_videos FROM products WHERE id IN (${p})`).bind(...c).all();
+        const { results: imgRows } = await env.DB.prepare(`SELECT img, detail, detail_images, detail_videos FROM products WHERE id IN (${p}) AND deleted_at IS NULL`).bind(...c).all();
         const { results: vRows } = await env.DB.prepare(`SELECT "desc", img, video, resource_content FROM product_variants WHERE product_id IN (${p})`).bind(...c).all();
         for (const r of (imgRows || [])) sources.push(r.img, r.detail, r.detail_images, r.detail_videos);
         for (const v of (vRows || [])) sources.push(v.desc, v.img, v.video, v.resource_content);
@@ -51,7 +63,8 @@ export async function onRequestPost(context) {
     for (const c of chunks) {
       const p = ph(c);
       await Promise.all([
-        env.DB.prepare(`DELETE FROM products WHERE id IN (${p})`).bind(...c).run(),
+        /* v439 #68：批删改软删除进回收站 */
+        env.DB.prepare(`UPDATE products SET deleted_at = datetime('now') WHERE id IN (${p})`).bind(...c).run(),
         env.DB.prepare(`DELETE FROM product_variants WHERE product_id IN (${p})`).bind(...c).run(),
         env.DB.prepare(`DELETE FROM stats WHERE product_id IN (${p})`).bind(...c).run(),
       ]);

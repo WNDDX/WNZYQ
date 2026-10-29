@@ -10,7 +10,10 @@ export async function onRequestGet(context) {
   try {
     const admin = await getAuthAdmin(env, request);
     if (admin && admin.username) {
-      return json({ ok: true, username: admin.username });
+      /* v439 #116：返回身份与权限（前端按此隐藏无权功能/显示范围数据） */
+      let perms = admin.perms || '{}';
+      try { perms = typeof perms === 'string' ? JSON.parse(perms) : perms; } catch (e) { perms = {}; }
+      return json({ ok: true, username: admin.username, role: admin.role || 'super', perms });
     }
     return json({ ok: false });
   } catch (e) {

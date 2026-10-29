@@ -5,7 +5,7 @@
  * 重的统计明细（byProduct/trend/recent/hourly）留给用户切到 stats tab 时通过 admin/stats 拉取
  * 带版本号：客户端传 ?v=lastVersion，没变则返回 { unchanged: true }
  */
-import { json, requireAuth, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable } from '../../_utils.js';
+import { json, requirePerm, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable } from '../../_utils.js';
 
 // v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v316全量返回需改回首屏只拿第一页，翻页/搜索/筛选点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置+统计概览，其余前端按需拉取。
 const ADMIN_PAGE_SIZE = 20;
@@ -38,9 +38,9 @@ async function attachVariants(env, list) {
 // 计算数据版本（Beijing 时间口径）
 async function computeVersion(env) {
   const [pRow, cRow, sRow, setRow] = await Promise.all([
-    env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(MAX(updated_at),'') AS m FROM products").first(),
+    env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(MAX(updated_at),'') AS m FROM products WHERE deleted_at IS NULL").first(),
     // v313：categories 表无 created_at，用 MAX(id) 反映增删变化
-    env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(MAX(id),'') AS m FROM categories").first(),
+    env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(MAX(id),'') AS m FROM categories WHERE deleted_at IS NULL").first(),
     env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(MAX(created_at),'') AS m FROM stats").first(),
     env.DB.prepare("SELECT COUNT(*) AS n FROM settings").first(),
   ]);
@@ -53,8 +53,9 @@ async function count(db, sql, params) {
 }
 
 export async function onRequestGet(context) {
+  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  const auth = await requirePerm(env, request, 'data.stats');
   if (auth instanceof Response) return auth;
 
   const version = await computeVersion(env);
@@ -75,18 +76,18 @@ export async function onRequestGet(context) {
   // stats 仅保留 overview COUNT（六卡数字），去掉 byProduct/trend/recent/hourly 等重查询
   const [countRes, { results: prodRows }, { results: catRows }, { results: setRows },
     oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, oBindings] = await Promise.all([
-    env.DB.prepare('SELECT COUNT(*) AS n FROM products').first(),
-    env.DB.prepare('SELECT * FROM products ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?').bind(ADMIN_PAGE_SIZE, 0).all(), // v317：首屏只拿第一页
+    env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE deleted_at IS NULL').first(),
+    env.DB.prepare('SELECT * FROM products WHERE deleted_at IS NULL ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?').bind(ADMIN_PAGE_SIZE, 0).all(), // v317：首屏只拿第一页
     env.DB.prepare(
       `SELECT c.id, c.name, c.sort, c.parent_id, c.is_hidden,
-              (SELECT COUNT(*) FROM products p WHERE p.cid = c.id) AS cnt
-       FROM categories c
+              (SELECT COUNT(*) FROM products p WHERE p.cid = c.id AND p.deleted_at IS NULL) AS cnt
+       FROM categories c WHERE c.deleted_at IS NULL
        ORDER BY c.sort ASC, c.id ASC`
     ).all(),
     env.DB.prepare('SELECT key, value FROM settings').all(),
-    count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
-    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0'),
-    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 0 OR is_hidden = 1'),
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE deleted_at IS NULL'),
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL'),
+    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 0 OR is_hidden = 1 AND deleted_at IS NULL'),
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE type = 'view' AND date(created_at, '+8 hours') >= ? AND date(created_at, '+8 hours') <= ?`, [todayBJ, todayBJ]),
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE type = 'contact' AND date(created_at, '+8 hours') >= ? AND date(created_at, '+8 hours') <= ?`, [todayBJ, todayBJ]),
     count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE type = 'resource_unlock' AND date(created_at, '+8 hours') >= ? AND date(created_at, '+8 hours') <= ?`, [todayBJ, todayBJ]),
@@ -98,7 +99,7 @@ export async function onRequestGet(context) {
 
   let totalProducts = 0;
   try {
-    const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM products').first();
+    const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE deleted_at IS NULL').first();
     totalProducts = row ? row.n : 0;
   } catch (e) {}
   const categories = (catRows || []).map((c) => {

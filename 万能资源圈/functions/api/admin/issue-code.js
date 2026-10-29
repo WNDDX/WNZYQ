@@ -8,11 +8,12 @@
  *   → 返回 { issuedCode:刚复制出去的旧码, code:面板新码 }
  * 前端拿到响应后把 issuedCode 复制进剪贴板（复制的就是刚发出的码）。
  */
-import { json, requireAuth, readJSON, ensureCodeIssuesTable, ensureVariantColumns, issueCodeForVariant } from '../../_utils.js';
+import { json, requirePerm, readJSON, ensureCodeIssuesTable, ensureVariantColumns, issueCodeForVariant } from '../../_utils.js';
 
 export async function onRequestPost(context) {
+  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+  const auth = await requirePerm(env, request, 'sensitive.super');
   if (auth instanceof Response) return auth;
 
   const b = await readJSON(request);

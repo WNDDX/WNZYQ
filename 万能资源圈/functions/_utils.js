@@ -146,7 +146,7 @@ export async function getAuthAdmin(env, request) {
   if (!auth) auth = (request.headers.get('Authorization') || '').replace('Bearer ', '').trim();
   if (!auth) return null;
   const row = await env.DB.prepare(
-    'SELECT s.admin_id AS id, a.username, s.expires_at FROM sessions s LEFT JOIN admins a ON a.id = s.admin_id WHERE s.token = ?'
+    'SELECT s.admin_id AS id, s.utype, a.username, s.expires_at FROM sessions s LEFT JOIN admins a ON a.id = s.admin_id WHERE s.token = ?'
   )
     .bind(auth)
     .first();
@@ -169,7 +169,18 @@ export async function getAuthAdmin(env, request) {
       } catch (e) { /* 续期失败不影响本次请求 */ }
     }
   }
-  return row;
+  /* v439 #116：多账号——utype='u' 会话对应 admin_users 子账号；旧会话（utype 空）= admins 超管 */
+  if (row.utype === 'u') {
+    const u = await env.DB.prepare('SELECT id, username, role, perms, status, note FROM admin_users WHERE id = ?').bind(row.id).first();
+    if (!u || !u.status) { /* 停用/删除的子账号会话立即失效 */
+      try { await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(auth).run(); } catch (e) {}
+      return null;
+    }
+    try { await env.DB.prepare("UPDATE admin_users SET last_seen = datetime('now') WHERE id = ?").bind(u.id).run(); } catch (e) {}
+    return { id: row.id, utype: 'u', username: u.username, role: u.role || 'sub', perms: u.perms || '{}', note: u.note || '' };
+  }
+  try { await env.DB.prepare("UPDATE admins SET last_login = datetime('now') WHERE id = ?").bind(row.id).run(); } catch (e) {}
+  return { id: row.id, utype: 'a', username: row.username, role: 'super', perms: '{}', note: '' };
 }
 
 // 管理接口鉴权：返回管理员对象；未登录返回 401 Response（调用方需判断 instanceof Response）
@@ -188,6 +199,48 @@ export async function requireAuth(env, request) {
   const admin = await getAuthAdmin(env, request);
   if (!admin) return json({ ok: false, msg: '未登录或登录已过期' }, 401);
   return admin;
+}
+
+/* ===== v439 #116 多账号：账号表迁移 + 权限门卫 ===== */
+
+/* admin_users 表 + products.created_by + sessions.utype 迁移（幂等，每实例一次） */
+var __auDone = false;
+export async function ensureAdminUsers(env) {
+  if (__auDone) return;
+  __auDone = true;
+  try { await env.DB.prepare("CREATE TABLE IF NOT EXISTS admin_users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, pwd_hash TEXT NOT NULL, salt TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'sub', parent_id INTEGER NOT NULL DEFAULT 0, perms TEXT NOT NULL DEFAULT '{}', status INTEGER NOT NULL DEFAULT 1, note TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT (datetime('now')), last_seen TEXT)").run(); } catch (e) {}
+  try { await env.DB.prepare("ALTER TABLE sessions ADD COLUMN utype TEXT NOT NULL DEFAULT 'a'").run(); } catch (e) {}
+  try { await env.DB.prepare('ALTER TABLE products ADD COLUMN created_by TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {}
+  try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN created_by TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {} /* #116：分类创建者（只能改自己名下的分类） */
+}
+
+/* 权限门卫：requireAuth 之后调用。无权（含冻结中的子账号）→ 统一「该功能未开放」 */
+export async function requirePerm(env, request, action) {
+  const me = await requireAuth(env, request);
+  if (me instanceof Response) return me;
+  const { can, frozenDenied, DENY_MSG, parsePerms } = await import('./_perms.js');
+  let freezeOn = false;
+  if (me.role !== 'super') {
+    try {
+      const r = await env.DB.prepare("SELECT value FROM settings WHERE key = 'sub_freeze'").first();
+      freezeOn = r && r.value === '1';
+    } catch (e) {}
+  }
+  const perms = typeof me.perms === 'string' ? parsePerms(me.perms) : (me.perms || null);
+  if (frozenDenied(me.role, freezeOn) || !can(action, me.role, perms)) {
+    return json({ ok: false, msg: DENY_MSG }, 403);
+  }
+  return me;
+}
+
+/* #116 范围锁 helper：校验某资源是否在当前身份授权分类内，返回 { ok, cid, createdBy, product } */
+export async function productScopeOk(env, auth, productId) {
+  const row = await env.DB.prepare('SELECT id, cid, created_by, title FROM products WHERE id = ? AND deleted_at IS NULL').bind(Number(productId) || 0).first();
+  if (!row) return { ok: false, missing: true };
+  if (auth.role === 'super') return { ok: true, cid: row.cid, createdBy: row.created_by, product: row };
+  const { parsePerms, catAllowed } = await import('./_perms.js');
+  const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+  return { ok: catAllowed(Number(row.cid) || 0, auth.role, perms), cid: row.cid, createdBy: row.created_by, product: row };
 }
 
 // 把数据库行转成前台友好字段（snake_case → camelCase）
@@ -216,6 +269,7 @@ export function cleanProduct(p) {
     schedule_on: p.schedule_on || '',    // 定时显示时间（空=不定时）
     schedule_off: p.schedule_off || '',  // 定时隐藏时间（空=不定时）
     sort: p.sort,
+    created_by: p.created_by || '',        /* v439 #116：创建者用户名（码可见规则用） */
     updated_at: p.updated_at || '',       // v294：211 并发编辑乐观锁用
   };
 }
@@ -598,4 +652,54 @@ export function rateLimit(request, tag, maxPerMin) {
     if (__rate.size > 5000) __rate.clear(); /* 防内存膨胀 */
     return true;
   } catch (e) { return true; }
+}
+
+/* ===== v439（总账 #63/#64/#68）：软删除迁移 + 变更审计 + 登录记录 ===== */
+
+/* 软删除列迁移（幂等，每实例一次；新装走 install.js 新建表已含列） */
+var __sdDone = false;
+export async function ensureSoftDelete(env) {
+  if (__sdDone) return;
+  __sdDone = true;
+  try { await env.DB.prepare('ALTER TABLE products ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
+  try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
+}
+
+/* #64 数据变更留痕（audit_log 表，60 天自动清理覆盖） */
+export async function audit(env, request, action, target) {
+  try {
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS audit_log (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT (datetime('now')), admin TEXT NOT NULL DEFAULT 'admin', action TEXT NOT NULL, target TEXT NOT NULL DEFAULT '')").run();
+    await env.DB.prepare("INSERT INTO audit_log (admin, action, target) VALUES ('admin', ?, ?)").bind(String(action || '').slice(0, 60), String(target || '').slice(0, 200)).run();
+  } catch (e) { /* 审计失败不阻塞业务 */ }
+}
+
+/* #68 公告软删：公开端下发 announcements 时摘掉带 deleted 标记的条目（回收站可见，60 天后随清理摘除） */
+export function publicAnnouncements(value) {
+  try {
+    var arr = JSON.parse(value);
+    if (!Array.isArray(arr)) return value;
+    return JSON.stringify(arr.filter(function (a) { return a && !a.deleted; }));
+  } catch (e) { return value; }
+}
+
+/* #63 设备描述：UA → 人话（系统 · 浏览器 · 环境） */
+export function describeDevice(ua) {
+  ua = String(ua || '');
+  var parts = [];
+  var os = /Windows NT 10/.test(ua) ? 'Windows' : /Windows/.test(ua) ? 'Windows' : /Android ([\d.]+)/.exec(ua) ? ('Android ' + RegExp.$1) : /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : '';
+  if (os) parts.push(os);
+  var br = /Edg\/(\d+)/.exec(ua) ? ('Edge ' + RegExp.$1) : /MicroMessenger/.test(ua) ? '微信内' : /QQBrowser/.test(ua) ? 'QQ浏览器' : /Firefox\/(\d+)/.test(ua) ? ('Firefox ' + RegExp.$1) : /Chrome\/(\d+)/.test(ua) ? ('Chrome ' + RegExp.$1) : /Safari/.test(ua) ? 'Safari' : '';
+  if (br) parts.push(br);
+  if (/Mobile/.test(ua)) parts.push('手机');
+  return parts.join(' · ') || '未知设备';
+}
+
+/* #63 登录记录（admin_logins 表，60 天自动清理覆盖） */
+export async function recordAdminLogin(env, request) {
+  try {
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS admin_logins (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT (datetime('now')), device TEXT NOT NULL DEFAULT '', ip TEXT NOT NULL DEFAULT '', ua TEXT NOT NULL DEFAULT '')").run();
+    var ua = request.headers.get('User-Agent') || '';
+    var ip = request.headers.get('CF-Connecting-IP') || (request.headers.get('X-Forwarded-For') || '').split(',')[0] || '';
+    await env.DB.prepare('INSERT INTO admin_logins (device, ip, ua) VALUES (?, ?, ?)').bind(describeDevice(ua), ip, String(ua).slice(0, 300)).run();
+  } catch (e) { /* 记录失败不阻塞登录 */ }
 }
