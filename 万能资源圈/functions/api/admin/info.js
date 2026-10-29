@@ -8,8 +8,8 @@ import { json, requireAuth, requirePerm, ensureAdminUsers } from '../../_utils.j
 const BJ = 8 * 3600 * 1000;
 
 export async function onRequestGet(context) {
-  await ensureAdminUsers(env);
   const { env, request } = context;
+  await ensureAdminUsers(env); /* v440 修复：移到解构后（此前 env 未初始化即引用 → 500） */
   const auth = await requirePerm(env, request, 'info.view');
   if (auth instanceof Response) return auth;
 

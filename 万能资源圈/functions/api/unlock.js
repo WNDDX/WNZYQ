@@ -238,6 +238,5 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestOptions(context) {
-
-  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  return new Response(null, { status: 204, headers: corsHeaders(context.request) });
+  return new Response(null, { status: 204, headers: corsHeaders(context.request) });
 }

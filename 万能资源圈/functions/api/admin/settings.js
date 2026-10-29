@@ -21,8 +21,8 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPut(context) {
-  await ensureAdminUsers(env);
   const { env, request } = context;
+  await ensureAdminUsers(env); /* v440 修复：移到解构后 */
   /* #116：平台设置仅超管；但子账号有公告权限时可保存公告相关键（功能锁落地） */
   const ANN_KEYS = ['announcement', 'announcement_mode', 'announcements'];
   const b = await readJSON(request);
@@ -59,8 +59,8 @@ export async function onRequestPut(context) {
  * 权限：ann.add（发公告）；软删口径与 PUT 一致——追加不会碰已删公告条目。
  */
 export async function onRequestPost(context) {
-  await ensureAdminUsers(env);
   const { env, request } = context;
+  await ensureAdminUsers(env); /* v440 修复：移到解构后 */
   const auth = await requirePerm(env, request, 'ann.add');
   if (auth instanceof Response) return auth;
 
