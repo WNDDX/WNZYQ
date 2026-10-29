@@ -53,8 +53,7 @@ async function count(db, sql, params) {
 }
 
 export async function onRequestGet(context) {
-  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
-  const { env, request } = context;
+  const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'data.stats');
   if (auth instanceof Response) return auth;
 

@@ -6,8 +6,7 @@
 import { json, requirePerm, clearPublicCache } from '../../_utils.js';
 
 export async function onRequestPost(context) {
-  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
-  const { env, request } = context;
+  const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'sensitive.super');
   if (auth instanceof Response) return auth;
   try {

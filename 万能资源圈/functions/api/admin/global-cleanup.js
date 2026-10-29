@@ -9,8 +9,7 @@ import { json, requirePerm, buildContentText } from '../../_utils.js';
 const GRACE_HOURS = 24;
 
 export async function onRequestPost(context) {
-  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
-  const { env, request } = context;
+  const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'sensitive.super');
   if (auth instanceof Response) return auth;
 

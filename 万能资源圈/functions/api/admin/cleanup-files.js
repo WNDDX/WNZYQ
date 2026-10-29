@@ -12,8 +12,7 @@ const P_FIELDS = ['img', 'detail', 'detail_images', 'detail_videos', 'resource_c
 const V_FIELDS = ['desc', 'img', 'video', 'resource_content'];
 
 export async function onRequestPost(context) {
-  const { env } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
-  const { env, request } = context;
+  const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'sensitive.super');
   if (auth instanceof Response) return auth;
 
