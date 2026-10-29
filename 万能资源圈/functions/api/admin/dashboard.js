@@ -5,7 +5,7 @@
  * 重的统计明细（byProduct/trend/recent/hourly）留给用户切到 stats tab 时通过 admin/stats 拉取
  * 带版本号：客户端传 ?v=lastVersion，没变则返回 { unchanged: true }
  */
-import { json, requirePerm, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable } from '../../_utils.js';
+import { cleanProduct, cleanVariant, ensureBindingsTable, ensureProductColumns, ensureSoftDelete, ensureVariantColumns, json, requirePerm } from '../../_utils.js';
 
 // v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v316全量返回需改回首屏只拿第一页，翻页/搜索/筛选点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置+统计概览，其余前端按需拉取。
 const ADMIN_PAGE_SIZE = 20;
@@ -53,7 +53,8 @@ async function count(db, sql, params) {
 }
 
 export async function onRequestGet(context) {
-  const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'data.stats');
   if (auth instanceof Response) return auth;
 

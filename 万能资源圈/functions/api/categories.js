@@ -3,11 +3,12 @@
  * 返回分类列表（公开接口，前台用），含两级分类结构，过滤隐藏分类
  * 带 5 分钟缓存
  */
-import { json } from '../_utils.js';
+import { ensureSoftDelete, json } from '../_utils.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const cacheKey = new Request(new URL(request.url).toString(), request);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const cacheKey = new Request(new URL(request.url).toString(), request);
   const cache = caches.default;
 
   const cached = await cache.match(cacheKey);

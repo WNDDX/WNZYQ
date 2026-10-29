@@ -3,7 +3,7 @@
  * 前台首页聚合接口（R308）：一次返回首屏全部数据
  * 带版本号：客户端传 ?v=lastVersion，没变则返回 { unchanged: true }
  */
-import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns, ensureProductColumns, publicAnnouncements } from '../../_utils.js'; // v299（用户 10-04 23:11）：修复引用层级错误致 Cloudflare 构建失败
+import { cleanProduct, cleanVariantPublic, ensureProductColumns, ensureSoftDelete, ensureVariantColumns, json, publicAnnouncements } from '../../_utils.js'; // v299（用户 10-04 23:11）：修复引用层级错误致 Cloudflare 构建失败
 
 // v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v315全量返回需改回首屏只拿第一页，翻页/切分类/搜索点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置，其余前端按需拉取。
 /* v383：+ group_url/contact_qr/group_qr/gzh_qr——客服/群聊链接与三张二维码全量走设置值 */
@@ -23,6 +23,7 @@ async function computeVersion(env) {
 export async function onRequestGet(context) {
   const { request, env } = context;
 
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
   /* v339 条225：原来 9 次串行查库（每次一个跨区域来回）导致进页接口首字节 2.5 秒+。
      改为 4 轮并行——第 1 轮把互不依赖的查询全部同时发出，实测首字节显著下降。 */
   // 第 1 轮（并行）：版本指纹 + 定时预检 + 列迁移 + 分类 + 设置

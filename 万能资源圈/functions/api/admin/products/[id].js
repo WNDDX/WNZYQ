@@ -5,7 +5,7 @@
  * 均需登录
  */
 
-import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, audit } from '../../../_utils.js';
+import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, ensureProductColumns, ensureVariantColumns, audit } from '../../../_utils.js';
 import { catAllowed, visibleCode, parsePerms } from '../../../_perms.js';
 
 /* #116 范围锁：资源是否在当前身份的授权分类内 */
@@ -17,7 +17,9 @@ async function scopeOk(env, auth, cid) {
 
 export async function onRequestGet(context) {
   const { env, request, params } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
+  await ensureProductColumns(env); await ensureVariantColumns(env); /* v440：线上旧库列迁移 */  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'products.view');
   if (auth instanceof Response) return auth;
 
@@ -44,7 +46,9 @@ export async function onRequestGet(context) {
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
-  const auth = await requirePerm(env, request, 'products.edit');
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
+  await ensureProductColumns(env); await ensureVariantColumns(env); /* v440：线上旧库列迁移 */  const auth = await requirePerm(env, request, 'products.edit');
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);
@@ -158,7 +162,9 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { env, request, params } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
+  await ensureProductColumns(env); await ensureVariantColumns(env); /* v440：线上旧库列迁移 */  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'products.del');
   if (auth instanceof Response) return auth;
 

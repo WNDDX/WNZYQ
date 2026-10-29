@@ -1,8 +1,11 @@
 /**
  * GET /rss → 资源订阅源（v439 #110：最新 20 条资源，用户可用阅读器追更新）
  */
+import { ensureSoftDelete } from './_utils.js';
+
 export async function onRequestGet(context) {
   const { env } = context;
+  await ensureSoftDelete(env); /* v440：先迁移软删列 */
   const origin = 'https://wnzyq.pages.dev';
   let items = '';
   try {

@@ -8,10 +8,11 @@
  *  - 列表按 sort ASC, id ASC；id=0 为虚拟根分类「全部」，由建表默认数据写入
  *  - cnt = 该分类下全部资源数（含隐藏/下架，后台管理口径，与前端 refreshCatCnts 一致）
  */
-import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON } from '../../_utils.js';
+import { ensureAdminUsers, ensureSoftDelete, json, readJSON, requireAuth, requirePerm } from '../../_utils.js';
 
 export async function onRequestGet(context) {
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const { env, request } = context;
   const auth = await requirePerm(env, request, 'cats.view');
   if (auth instanceof Response) return auth;
@@ -44,7 +45,8 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const { env, request } = context;
   const auth = await requirePerm(env, request, 'cats.add');
   if (auth instanceof Response) return auth;

@@ -8,11 +8,12 @@
  * R303（09-30）：支持分页按页拉取（page + page_size），兼容旧口径（不传参=返回全部）
  * 带 20 秒边缘缓存（Cache API），管理员修改后自动失效
  */
-import { json, cleanProduct, cleanVariantPublic, ensureVariantColumns, ensureProductColumns } from '../_utils.js';
+import { cleanProduct, cleanVariantPublic, ensureProductColumns, ensureSoftDelete, ensureVariantColumns, json } from '../_utils.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const cacheUrl = new URL(request.url);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const cacheUrl = new URL(request.url);
   const cacheKey = new Request(cacheUrl.toString(), request);
   const cache = caches.default;
 

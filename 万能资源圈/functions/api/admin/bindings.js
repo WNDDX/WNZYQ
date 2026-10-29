@@ -4,7 +4,7 @@
  *   device 显示为「设备 + token 前 6 位」（v386 与信息中心统一口径；完整 token 不下发，避免被拿到后伪造设备）
  * R303（09-30）：支持分页按页拉取（page + page_size）
  */
-import { json, requireAuth, ensureBindingsTable, ensureVariantColumns, ensureCodeIssuesTable, getSetting } from '../../_utils.js';
+import { ensureBindingsTable, ensureCodeIssuesTable, ensureSoftDelete, ensureVariantColumns, getSetting, json, requireAuth } from '../../_utils.js';
 import { parsePerms, visibleCode, catScopeSQL } from '../../_perms.js';
 
 /* #116 复检修正：绑定明细接口的码可见锁——此前任何登录者都能拿全站所有资源码明文（绕过码可见范围） */
@@ -57,7 +57,8 @@ async function backfillLegacyCodes(env, variantId) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
   const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
   const scopeIds = scopeIdsOf(auth);

@@ -9,12 +9,13 @@
  *   changeCat   批量改分类（需 cid）
  *   changePrice 批量改价格（需 price）
  */
-import { json, requireAuth, requirePerm, productScopeOk, readJSON, deleteBucketImages } from '../../_utils.js';
+import { deleteBucketImages, ensureSoftDelete, json, productScopeOk, readJSON, requireAuth, requirePerm } from '../../_utils.js';
 import { parsePerms, can } from '../../_perms.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;
-  const auth = await requireAuth(env, request);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
 
   const b = await readJSON(request);

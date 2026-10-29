@@ -4,7 +4,7 @@
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  * R303（09-30）：GET 支持分页按页拉取（page + page_size），支持筛选（kw / cid / status）
  */
-import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, ensureVariantColumns, ensureProductColumns, ensureBindingsTable, ensureCodeIssuesTable, clearPublicCache } from '../../_utils.js';
+import { cleanProduct, cleanVariant, clearPublicCache, ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensureProductColumns, ensureSoftDelete, ensureVariantColumns, json, readJSON, requireAuth, requirePerm } from '../../_utils.js';
 import { catScopeSQL, catAllowed, visibleCode, parsePerms } from '../../_perms.js';
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
@@ -37,7 +37,8 @@ async function attachVariants(env, list) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'products.view');
   if (auth instanceof Response) return auth;
 
@@ -120,7 +121,8 @@ function maskList(auth, list) {
 
 export async function onRequestPost(context) {
   const { env, request } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'products.add');
   if (auth instanceof Response) return auth;
 

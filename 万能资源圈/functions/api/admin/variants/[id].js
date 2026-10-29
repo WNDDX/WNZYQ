@@ -3,12 +3,13 @@
  * PUT    /api/admin/variants/:id   → 更新类型
  * DELETE /api/admin/variants/:id   → 删除类型
  */
-import { json, requireAuth, requirePerm, productScopeOk, readJSON, ensureVariantColumns, clearPublicCache, sweepDroppedKeys } from '../../../_utils.js';
+import { clearPublicCache, ensureSoftDelete, ensureVariantColumns, json, productScopeOk, readJSON, requireAuth, requirePerm, sweepDroppedKeys } from '../../../_utils.js';
 
 /* #116 信息锁：掩码回写保护——前端回显的码是掩码 ●●●●，保存时保留库里的真码 */
 export async function onRequestPut(context) {
   const { env, request, params } = context;
-  const auth = await requirePerm(env, request, 'products.edit');
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const auth = await requirePerm(env, request, 'products.edit');
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);
@@ -68,7 +69,8 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { env, request, params } = context;
-  const auth = await requirePerm(env, request, 'products.del');
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const auth = await requirePerm(env, request, 'products.del');
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);

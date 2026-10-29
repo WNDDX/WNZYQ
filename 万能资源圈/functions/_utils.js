@@ -312,6 +312,8 @@ export async function ensureProductColumns(env) {
     await add('schedule_off', "schedule_off TEXT");
     await add('sort', "sort INTEGER NOT NULL DEFAULT 0");
     await add('updated_at', "updated_at TEXT NOT NULL DEFAULT (datetime('now'))");
+    await add('original_urls', "original_urls TEXT NOT NULL DEFAULT ''"); /* v440：#79 压缩恢复列（线上旧库缺） */
+    await add('created_by', "created_by TEXT NOT NULL DEFAULT ''"); /* v440：#116 创建者列（线上旧库缺） */
     _productColsEnsured = true;
   } catch (e) { /* 表尚未创建时忽略，install 会按新结构建表 */ }
 }

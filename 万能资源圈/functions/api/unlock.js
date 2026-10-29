@@ -25,7 +25,7 @@
  *
  * 统计：resource_unlock 埋点仍由前台在内容渲染成功后统一上报（口径不变），本接口不写 stats。
  */
-import { json, readJSON, corsHeaders, randomToken, ensureBindingsTable, ensureVariantColumns, ensureCodeIssuesTable, getSetting, getCookie } from '../_utils.js';
+import { corsHeaders, ensureBindingsTable, ensureCodeIssuesTable, ensureSoftDelete, ensureVariantColumns, getCookie, getSetting, json, randomToken, readJSON } from '../_utils.js';
 
 // 设备 Cookie 名与有效期（10 年，等效永久设备标识）
 const DEVICE_COOKIE = 'wnzyq_device';
@@ -49,7 +49,8 @@ function wrongClear(device) { __wrongStreak.delete(device || 'anon'); }
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-  /* v440 复检加固：IP 级解锁限流——#98 的错码计数按设备 Cookie 记账，换 Cookie 即绕过；
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  /* v440 复检加固：IP 级解锁限流——#98 的错码计数按设备 Cookie 记账，换 Cookie 即绕过；
      此处按 IP 兜底 30 次/分（正常访客充裕，脚本爆破被压平） */
   try {
     const { rateLimit } = await import('../_utils.js');
@@ -237,5 +238,6 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestOptions(context) {
-  return new Response(null, { status: 204, headers: corsHeaders(context.request) });
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  return new Response(null, { status: 204, headers: corsHeaders(context.request) });
 }

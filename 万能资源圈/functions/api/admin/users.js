@@ -6,7 +6,7 @@
  * DELETE /api/admin/users?id=      → 删除（其下级账号统一上移成为超管下级）
  * 安全：授出权限必须是授者权限子集；防环；动作全部留痕
  */
-import { json, readJSON, hashPasswordNew, requireAuth, ensureAdminUsers, audit } from '../../_utils.js';
+import { audit, ensureAdminUsers, ensureSoftDelete, hashPasswordNew, json, readJSON, requireAuth } from '../../_utils.js';
 import { parsePerms, superPerms, validateGrant, treeMoveOk } from '../../_perms.js';
 
 /* #116 复检修正：范围锁勾一级分类自动含其下二级（否则二级资源看不到） */
@@ -41,7 +41,8 @@ async function descendantIds(env, rootId) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const me = await requireAuth(env, request);
   if (me instanceof Response) return me;
   const { can, parsePerms } = await import('../../_perms.js');
@@ -78,7 +79,8 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env, request } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const me = await requireAuth(env, request);
   if (me instanceof Response) return me;
   const { can, parsePerms } = await import('../../_perms.js');
@@ -119,7 +121,8 @@ export async function onRequestPost(context) {
 
 export async function onRequestPut(context) {
   const { env, request } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const me = await requireAuth(env, request);
   if (me instanceof Response) return me;
   const { can, parsePerms } = await import('../../_perms.js');
@@ -204,7 +207,8 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { env, request } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const me = await requireAuth(env, request);
   if (me instanceof Response) return me;
   const { can, parsePerms } = await import('../../_perms.js');

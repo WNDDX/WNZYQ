@@ -7,7 +7,7 @@
  *  - 单字段更新：{ is_hidden } 切换显示隐藏；{ sort } 拖拽排序保存
  *  - 完整保存：{ name, sort, parent_id, is_hidden }（编辑弹窗确定）
  */
-import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, clearPublicCache } from '../../../_utils.js';
+import { clearPublicCache, ensureAdminUsers, ensureSoftDelete, json, readJSON, requireAuth, requirePerm } from '../../../_utils.js';
 import { parsePerms, catAllowed } from '../../../_perms.js';
 
 /* #116：sub 只能改/删自己创建的分类（cats.edit/del），超管不限 */
@@ -26,7 +26,8 @@ const ALLOWED_CAT_FIELDS = ['name', 'sort', 'parent_id', 'is_hidden'];
 
 export async function onRequestPut(context) {
   const { env, request, params } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'cats.edit');
   if (auth instanceof Response) return auth;
 
@@ -69,7 +70,8 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { env, request, params } = context;
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'cats.del');
   if (auth instanceof Response) return auth;
 

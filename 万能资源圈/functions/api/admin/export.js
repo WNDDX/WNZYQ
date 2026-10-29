@@ -14,7 +14,7 @@
  *   recent    访问记录明细（stats 全量：时间/资源/类型/IP）
  * 纯技术表（admins / sessions / login_attempts）含敏感凭据，不导出。
  */
-import { json, requirePerm, ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensureVariantColumns, ensureProductColumns } from '../../_utils.js';
+import { ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensureProductColumns, ensureSoftDelete, ensureVariantColumns, json, requirePerm } from '../../_utils.js';
 
 /* R307（用户 09-30 拍板「不再做限制，没有封顶」）：访问记录明细不再封顶 10000 条——
    RECENT_LIMIT 人为上限已移除，改为 id 游标分批全量拉取（每批 5000 条拼接），
@@ -38,7 +38,8 @@ async function fetchAllRecent(DB) {
 }
 
 export async function onRequestGet(context) {
-  await ensureAdminUsers(env);
+
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const { env, request } = context;
   const auth = await requirePerm(env, request, 'data.export');
   if (auth instanceof Response) return auth;
