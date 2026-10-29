@@ -8,6 +8,7 @@ import { json, requireAuth, requirePerm, ensureAdminUsers } from '../../_utils.j
 const BJ = 8 * 3600 * 1000;
 
 export async function onRequestGet(context) {
+  try { /* v440 自诊断壳：线上真库错误直出 */
   const { env, request } = context;
   await ensureAdminUsers(env); /* v440 修复：移到解构后（此前 env 未初始化即引用 → 500） */
   const auth = await requirePerm(env, request, 'info.view');
@@ -103,4 +104,7 @@ export async function onRequestGet(context) {
     recent: rows,
     serverNow: new Date().toISOString()
   });
+  } catch (e) {
+    return json({ ok: false, msg: '信息中心错误: ' + (e && e.message || String(e)) });
+  }
 }
