@@ -14,6 +14,14 @@ function isKVBucket(bucket) { return typeof bucket.getWithMetadata === 'function
 export async function onRequestPost(context) {
   const { env, request } = context;
   const auth = await requireAuth(env, request);
+  /* #116：上传是资源编辑的一部分——sub 需有新增或编辑权限（防无权者刷存储）；super 不限 */
+  if (auth.role !== 'super') {
+    const { parsePerms, can } = await import('../../_perms.js');
+    const _pp = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+    if (!(can('products.edit', auth.role, _pp) || can('products.add', auth.role, _pp))) {
+      return json({ ok: false, msg: '该功能未开放' }, 403);
+    }
+  }
   if (auth instanceof Response) return auth;
   /* v432 #39：上传写接口防刷（30 次/分钟） */
   if (!rateLimit(request, 'upload', 60)) return json({ ok: false, msg: '操作太频繁，请一分钟后再试' }, 429);

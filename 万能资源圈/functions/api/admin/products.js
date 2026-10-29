@@ -117,7 +117,6 @@ function maskList(auth, list) {
   const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
   return list.map(p => { p.code = visibleCode(p.code, auth.role, perms, p.created_by, auth.username, p.cid); return p; });
 }
-}
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -170,5 +169,6 @@ export async function onRequestPost(context) {
   /* v333：新增资源后立刻清掉前台公开接口缓存 —— 否则访客那边最长要等 20 秒才看得到新资源 */
   try { await clearPublicCache(request); } catch (e) {}
 
+  try { const { audit } = await import('../../_utils.js'); await audit(env, request, '新增资源', String(b.title || '').trim()); } catch (e) {}
   return json({ ok: true, id: r.meta.last_row_id });
 }

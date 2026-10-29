@@ -102,7 +102,9 @@ export async function hashPasswordNew(password) {
 // 统一密码验证（兼容新旧格式）：row = { password_hash, salt }
 // 返回 { ok, needUpgrade }：needUpgrade=true 表示命中旧格式且密码正确，调用方应顺手升级重哈希
 export async function verifyPassword(password, row) {
-  const stored = String(row.password_hash || '');
+  /* #116 复检修正：子账号表 admin_users 的列名是 pwd_hash（admins 表是 password_hash）——
+     此前子账号登录/改密时 stored 恒为空串，验证必然失败（多账号登录全挂的 P0）。两列名兼容。 */
+  const stored = String(row.password_hash || row.pwd_hash || '');
   if (stored.startsWith('pbkdf2$')) {
     const parts = stored.split('$');
     const iter = parseInt(parts[1], 10) || PBKDF2_ITERATIONS;
@@ -642,7 +644,10 @@ export async function sniffMatchesType(file, type) {
 const __rate = new Map();
 export function rateLimit(request, tag, maxPerMin) {
   try {
-    const key = tag + ':' + (getCookie(request, 'wnzyq_admin') || getCookie(request, 'wnzyq_session') || 'anon');
+    /* v440 复检修正：限流键改 IP 优先——原键取管理员 Cookie，子账号/访客全部挤进同一个 'anon' 共享桶
+       （多个子账号同时上传互相挤占配额），且清 Cookie 即换桶。现按 CF 连接 IP 独立计数，语义与拍板一致。 */
+    const ip = request.headers.get('CF-Connecting-IP') || (request.headers.get('X-Forwarded-For') || '').split(',')[0] || (getCookie(request, 'wnzyq_token') || getCookie(request, 'wnzyq_admin') || 'anon').slice(0, 16);
+    const key = tag + ':' + ip;
     const now = Date.now();
     let arr = __rate.get(key);
     if (!arr) { arr = []; __rate.set(key, arr); }

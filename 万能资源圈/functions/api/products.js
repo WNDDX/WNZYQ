@@ -26,8 +26,8 @@ export async function onRequestGet(context) {
   const [pre] = await Promise.all([
     env.DB.prepare(
       `SELECT
-         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')) AS need_show,
-         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')) AS need_hide`
+         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours') AND deleted_at IS NULL) AS need_show,
+         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours') AND deleted_at IS NULL) AS need_hide`
     ).first().catch(() => null),
     (async () => { await ensureProductColumns(env); await ensureVariantColumns(env); })().catch(() => {}),
   ]);
@@ -35,13 +35,13 @@ export async function onRequestGet(context) {
     if (pre && pre.need_show) {
       await env.DB.prepare(
         `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now')
-         WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')`
+         WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours') AND deleted_at IS NULL` /* v440：定时上线不碰数据缓存中的资源 */
       ).run();
     }
     if (pre && pre.need_hide) {
       await env.DB.prepare(
         `UPDATE products SET is_online = 0, updated_at = datetime('now')
-         WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')`
+         WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours') AND deleted_at IS NULL`
       ).run();
     }
   } catch (e) { /* 忽略定时显示/隐藏错误 */ }
@@ -60,7 +60,7 @@ export async function onRequestGet(context) {
 
   // 单品完整数据（详情弹窗按需拉取用）
   if (singleId > 0) {
-    const r = await env.DB.prepare('SELECT * FROM products WHERE id = ? AND is_online = 1 AND is_hidden = 0').bind(singleId).first();
+    const r = await env.DB.prepare('SELECT * FROM products WHERE id = ? AND is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL').bind(singleId).first(); /* v440：软删（数据缓存中）资源前台不可见 */
     if (!r) return json({ ok: false, msg: '资源不存在或已下架' }, 404);
     const item = cleanProduct(r);
     const { results: vrows } = await env.DB.prepare('SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort ASC, id ASC').bind(singleId).all();
@@ -72,7 +72,7 @@ export async function onRequestGet(context) {
   }
 
   // 构建 WHERE 条件
-  let where = 'WHERE is_online = 1 AND is_hidden = 0';
+  let where = 'WHERE is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL'; /* v440：软删过滤 */
   const params = [];
 
   if (subCid > 0) {

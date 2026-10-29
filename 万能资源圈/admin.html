@@ -88,7 +88,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <div class="topbar-right">
           <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
           <!-- v386：信息键——与资源页「公告」同图标（wn-ico-bell）同组键规格（.tab）；红点=距上次查看有新绑定/咨询 -->
-          <button class="tab info-ct-btn" id="topInfoBtn" title="信息" aria-label="信息">
+          <button class="tab info-ct-btn" id="topInfoBtn" data-perm="info.view" title="信息" aria-label="信息">
             <svg class="wn-ico" width="15" height="15" aria-hidden="true"><use href="#wn-ico-bell"/></svg>
             <span>信息</span>
             <i class="dot-badge" id="infoDot" hidden></i>

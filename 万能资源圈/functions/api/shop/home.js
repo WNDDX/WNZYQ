@@ -49,13 +49,13 @@ export async function onRequestGet(context) {
     if (pre && pre.need_show) {
       await env.DB.prepare(
         `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now')
-         WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours')`
+         WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours') AND deleted_at IS NULL` /* v440：定时上线不碰数据缓存中的资源 */
       ).run();
     }
     if (pre && pre.need_hide) {
       await env.DB.prepare(
         `UPDATE products SET is_online = 0, updated_at = datetime('now')
-         WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours')`
+         WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours') AND deleted_at IS NULL`
       ).run();
     }
   } catch (e) {}

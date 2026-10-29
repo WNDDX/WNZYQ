@@ -32,6 +32,11 @@ export async function onRequestPost(context) {
       const sc = await productScopeOk(env, auth, pid);
       if (!sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
     }
+    /* #116 范围锁：挪分类的目标分类也必须在授权范围内（防止把资源挪出自己范围/挪进别人的） */
+    if (action === 'changeCat') {
+      const { catAllowed } = await import('../../_perms.js');
+      if (!catAllowed(Number(b.cid) || 0, auth.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
+    }
   }
   // R307（用户 09-30）：单次批量操作最多 500 条的限制已取消，不再做条数限制；
   // 底层单次执行机制（placeholders + 事务）保持不变
@@ -47,35 +52,18 @@ export async function onRequestPost(context) {
   const ph = (arr) => arr.map(() => '?').join(',');
 
   if (action === 'delete') {
-    // R31-#7：批量删除前先取出图片字段，删除后联动清理图仓里的自有图片
-    // R36：清理范围扩到详情视频 + 类型富文本字段
-    const sources = [];
-    try {
-      for (const c of chunks) {
-        const p = ph(c);
-        const { results: imgRows } = await env.DB.prepare(`SELECT img, detail, detail_images, detail_videos FROM products WHERE id IN (${p}) AND deleted_at IS NULL`).bind(...c).all();
-        const { results: vRows } = await env.DB.prepare(`SELECT "desc", img, video, resource_content FROM product_variants WHERE product_id IN (${p})`).bind(...c).all();
-        for (const r of (imgRows || [])) sources.push(r.img, r.detail, r.detail_images, r.detail_videos);
-        for (const v of (vRows || [])) sources.push(v.desc, v.img, v.video, v.resource_content);
-      }
-    } catch (e) { console.error('批量删除取媒体字段失败(不影响删除):', e); }
-    // 逐批删除（每批内三条并行）；全部删完再清图仓
+    /* v439 复检修正：批量删除与单个删除口径统一——纯软删除进回收站（60 天），
+       类型/资源码/统计/图片全部保留，恢复后资源完整可用（此前批删硬删了类型/统计/图仓，
+       恢复出来是空壳）。到期彻底清除由 track.js 日清扫负责（届时才清图仓）。 */
     for (const c of chunks) {
-      const p = ph(c);
-      await Promise.all([
-        /* v439 #68：批删改软删除进回收站 */
-        env.DB.prepare(`UPDATE products SET deleted_at = datetime('now') WHERE id IN (${p})`).bind(...c).run(),
-        env.DB.prepare(`DELETE FROM product_variants WHERE product_id IN (${p})`).bind(...c).run(),
-        env.DB.prepare(`DELETE FROM stats WHERE product_id IN (${p})`).bind(...c).run(),
-      ]);
+      await env.DB.prepare(`UPDATE products SET deleted_at = datetime('now') WHERE id IN (${ph(c)})`).bind(...c).run();
     }
-    if (sources.length) await deleteBucketImages(env, sources);
   } else if (action === 'changeCat') {
     const cid = Number(b.cid);
     if (isNaN(cid)) return json({ ok: false, msg: '请提供分类ID' }, 400);
     for (const c of chunks) {
       await env.DB.prepare(
-        `UPDATE products SET cid = ?, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+        `UPDATE products SET cid = ?, updated_at = datetime('now') WHERE id IN (${ph(c)}) AND deleted_at IS NULL`
       ).bind(cid, ...c).run();
     }
   } else if (action === 'changePrice') {
@@ -83,21 +71,21 @@ export async function onRequestPost(context) {
     if (isNaN(price) || price < 0) return json({ ok: false, msg: '请提供有效价格' }, 400);
     for (const c of chunks) {
       await env.DB.prepare(
-        `UPDATE products SET price = ?, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+        `UPDATE products SET price = ?, updated_at = datetime('now') WHERE id IN (${ph(c)}) AND deleted_at IS NULL`
       ).bind(price, ...c).run();
     }
   } else if (action === 'online') {
     // 两态：显示 = is_online=1 且清掉 is_hidden（旧隐藏数据也能真正显示）
     for (const c of chunks) {
       await env.DB.prepare(
-        `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+        `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${ph(c)}) AND deleted_at IS NULL`
       ).bind(...c).run();
     }
   } else if (action === 'offline') {
     // 两态：隐藏 = is_online=0 且清掉 is_hidden
     for (const c of chunks) {
       await env.DB.prepare(
-        `UPDATE products SET is_online = 0, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+        `UPDATE products SET is_online = 0, is_hidden = 0, updated_at = datetime('now') WHERE id IN (${ph(c)}) AND deleted_at IS NULL`
       ).bind(...c).run();
     }
   } else {
@@ -105,10 +93,16 @@ export async function onRequestPost(context) {
     const val = action === 'show' ? 1 : 0;
     for (const c of chunks) {
       await env.DB.prepare(
-        `UPDATE products SET is_hidden = ?, updated_at = datetime('now') WHERE id IN (${ph(c)})`
+        `UPDATE products SET is_hidden = ?, updated_at = datetime('now') WHERE id IN (${ph(c)}) AND deleted_at IS NULL`
       ).bind(val, ...c).run();
     }
   }
 
+  /* v440：批量动作留痕（#64 口径补全） */
+  try {
+    const LABEL = { online: '批量上架', offline: '批量下架', hide: '批量隐藏', show: '批量显示', delete: '批量删除（进回收站）', changeCat: '批量挪分类', changePrice: '批量改价' };
+    const { audit } = await import('../../_utils.js');
+    await audit(env, request, LABEL[action] || ('批量' + action), ids.length + ' 个资源' + (action === 'changeCat' ? (' → 分类#' + b.cid) : action === 'changePrice' ? (' → ' + b.price) : ''));
+  } catch (e) {}
   return json({ ok: true, count: ids.length });
 }

@@ -5,6 +5,17 @@
  * R303（09-30）：支持分页按页拉取（page + page_size）
  */
 import { json, requireAuth, ensureBindingsTable, ensureVariantColumns, ensureCodeIssuesTable, getSetting } from '../../_utils.js';
+import { parsePerms, visibleCode, catScopeSQL } from '../../_perms.js';
+
+/* #116 复检修正：绑定明细接口的码可见锁——此前任何登录者都能拿全站所有资源码明文（绕过码可见范围） */
+function scopeIdsOf(auth) {
+  const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+  const sc = catScopeSQL(auth.role, perms);
+  return sc ? sc.ids : null; /* null=全范围 */
+}
+function maskCode(auth, perms, code, createdBy, cid) {
+  return visibleCode(String(code || ''), auth.role, perms, createdBy || '', auth.username, cid == null ? null : Number(cid));
+}
 
 
 // R223：发码记录展示口径（原与 _utils.recentIssues 一致，R307 已删该函数）——
@@ -48,6 +59,8 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
+  const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+  const scopeIds = scopeIdsOf(auth);
 
   const url = new URL(request.url);
   const variantId = Number(url.searchParams.get('variant_id') || 0);
@@ -62,9 +75,13 @@ export async function onRequestGet(context) {
     const globalLimit = Math.max(1, parseInt(limitRaw, 10) || 1);
     let vrows = [];
     try {
-      const r = await env.DB.prepare('SELECT id, resource_code, bind_limit FROM product_variants').all();
+      const vScope = scopeIds
+        ? ' JOIN products p ON p.id = v.product_id AND p.deleted_at IS NULL AND p.cid IN (' + scopeIds.map(() => '?').join(',') + ')'
+        : ' JOIN products p ON p.id = v.product_id AND p.deleted_at IS NULL';
+      const r = await env.DB.prepare('SELECT v.id, v.resource_code, v.bind_limit, p.cid AS p_cid, p.created_by AS p_created_by FROM product_variants v' + vScope).bind(...(scopeIds || [])).all();
       vrows = r.results || [];
     } catch (e) { console.error('R114 预载类型查询失败（按空降级）:', e && e.message); }
+    const inScopeVid = new Set((vrows || []).map((v) => v.id));
     let brows = [];
     try {
       /* v348 条31：原来是"一次把全表拉出来"，数据多了会很慢甚至超时。
@@ -72,16 +89,19 @@ export async function onRequestGet(context) {
       const r = await env.DB.prepare(
         'SELECT variant_id, code, id, device_token, ua, created_at, last_access FROM resource_bindings ORDER BY variant_id ASC, id ASC LIMIT 5000'
       ).all();
-      brows = r.results || [];
+      brows = (r.results || []).filter((x) => inScopeVid.has(x.variant_id));
     } catch (e) { console.error('R114 预载绑定清单查询失败（按空降级）:', e && e.message); }
     const byV = {};
+    const vMeta = {};
+    (vrows || []).forEach((v) => { vMeta[v.id] = { cid: v.p_cid, createdBy: v.p_created_by }; });
     (brows || []).forEach((r) => {
       if (!byV[r.variant_id]) byV[r.variant_id] = [];
+      const _m = vMeta[r.variant_id] || {};
       byV[r.variant_id].push({
         id: r.id,
         device: '设备 ' + String(r.device_token || '').slice(0, 6), /* v386 统一：与信息中心同款「设备+前6位」 */
         ua: r.ua || '',
-        code: r.code || '',
+        code: maskCode(auth, perms, r.code, _m.createdBy, _m.cid), /* #116：码按可见规则打码 */
         created_at: r.created_at,
         last_access: r.last_access,
       });
@@ -91,12 +111,15 @@ export async function onRequestGet(context) {
       const r = await env.DB.prepare(
         'SELECT variant_id, code, issued_at, status, bound_at FROM code_issues ORDER BY issued_at DESC, id DESC'
       ).all();
-      irows = r.results || [];
+      irows = (r.results || []).filter((x) => inScopeVid.has(x.variant_id));
     } catch (e) { console.error('R223 预载发码记录查询失败（按空降级）:', e && e.message); }
     const issuesByV = {};
     (irows || []).forEach((r) => {
       if (!issuesByV[r.variant_id]) issuesByV[r.variant_id] = [];
-      issuesByV[r.variant_id].push(issueView(r));
+      const _iv = issueView(r);
+      const _m = vMeta[r.variant_id] || {};
+      _iv.code = maskCode(auth, perms, _iv.code, _m.createdBy, _m.cid); /* #116 */
+      issuesByV[r.variant_id].push(_iv);
     });
     const map = {};
     (vrows || []).forEach((v) => {
@@ -108,12 +131,24 @@ export async function onRequestGet(context) {
       if (code) {
         for (const r of brows) if (r.variant_id === v.id && r.code === code) curCount++;
       }
-      map[v.id] = { limit, code, cur_count: curCount, count: list.length, list, issues: issuesByV[v.id] || [] };
+      map[v.id] = { limit, code: maskCode(auth, perms, code, v.p_created_by, v.p_cid), cur_count: curCount, count: list.length, list, issues: issuesByV[v.id] || [] }; /* #116：主码打码 */
     });
     return json({ ok: true, map });
   }
 
   if (!variantId) return json({ ok: false, msg: '缺少 variant_id' }, 400);
+  /* #116：范围锁——只能看授权范围内类型的绑定明细 */
+  try {
+    const _vrow = await env.DB.prepare('SELECT product_id FROM product_variants WHERE id = ?').bind(variantId).first();
+    if (!_vrow) return json({ ok: false, msg: '类型不存在' }, 404);
+    const _prow = await env.DB.prepare('SELECT cid, created_by FROM products WHERE id = ? AND deleted_at IS NULL').bind(_vrow.product_id).first();
+    if (!_prow) return json({ ok: false, msg: '资源不存在或已下架' }, 404);
+    if (auth.role !== 'super') {
+      const { catAllowed } = await import('../../_perms.js');
+      if (!catAllowed(Number(_prow.cid) || 0, auth.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
+      var _curCid = Number(_prow.cid) || 0; var _curOwner = _prow.created_by || '';
+    } else { var _curCid = Number(_prow.cid) || 0; var _curOwner = _prow.created_by || ''; }
+  } catch (eS) { return json({ ok: false, msg: '查询失败' }, 500); }
   await ensureBindingsTable(env);
   await ensureVariantColumns(env);
   await ensureCodeIssuesTable(env);
@@ -182,18 +217,18 @@ export async function onRequestGet(context) {
   const resp = {
     ok: true,
     limit,
-    code: curCode,
+    code: maskCode(auth, perms, curCode, _curOwner, _curCid), /* #116 */
     cur_count: curCount,
     count: total,
     list: results.map((r) => ({
       id: r.id,
       device: '设备 ' + String(r.device_token || '').slice(0, 6), /* v386 统一：与信息中心同款「设备+前6位」 */
       ua: r.ua || '',
-      code: r.code || '',
+      code: maskCode(auth, perms, r.code, _curOwner, _curCid), /* #116 */
       created_at: r.created_at,
       last_access: r.last_access,
     })),
-    issues,
+    issues: issues.map((x) => { x.code = maskCode(auth, perms, x.code, _curOwner, _curCid); return x; }),
   };
   if (pageSize > 0) {
     resp.page = page;

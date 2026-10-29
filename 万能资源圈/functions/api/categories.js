@@ -14,7 +14,7 @@ export async function onRequestGet(context) {
   if (cached) return new Response(cached.body, cached);
 
   const { results } = await env.DB.prepare(
-    'SELECT id, name, sort, parent_id, is_hidden FROM categories WHERE is_hidden = 0 ORDER BY sort ASC, id ASC'
+    'SELECT id, name, sort, parent_id, is_hidden FROM categories WHERE is_hidden = 0 AND deleted_at IS NULL ORDER BY sort ASC, id ASC' /* v440：软删分类前台不可见 */
   ).all();
 
   const response = new Response(JSON.stringify({ ok: true, list: results }), {

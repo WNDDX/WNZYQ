@@ -49,6 +49,12 @@ function wrongClear(device) { __wrongStreak.delete(device || 'anon'); }
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+  /* v440 复检加固：IP 级解锁限流——#98 的错码计数按设备 Cookie 记账，换 Cookie 即绕过；
+     此处按 IP 兜底 30 次/分（正常访客充裕，脚本爆破被压平） */
+  try {
+    const { rateLimit } = await import('../_utils.js');
+    if (!rateLimit(request, 'unlock', 30)) return json({ ok: false, msg: '操作太频繁，请稍后再试' }, 429);
+  } catch (e0) { /* 限流失败不拦正常访问 */ }
   const b = await readJSON(request);
   const productId = Number(b.productId) || 0;
   const variantId = Number(b.variantId) || 0;
@@ -77,7 +83,7 @@ export async function onRequestPost(context) {
       `SELECT v.id, v.product_id, v.resource_code, v.resource_content, v.bind_limit,
               p.is_online, p.is_hidden
        FROM product_variants v JOIN products p ON p.id = v.product_id
-       WHERE v.id = ? AND v.product_id = ?`
+       WHERE v.id = ? AND v.product_id = ? AND p.deleted_at IS NULL` /* v440：软删（回收站中）资源的码不可解锁 */
     ).bind(variantId, productId).first();
   } catch (e) {
     console.error('R106 类型查询失败（无 bind_limit 降级重查）:', e && e.message);
@@ -85,7 +91,7 @@ export async function onRequestPost(context) {
       `SELECT v.id, v.product_id, v.resource_code, v.resource_content,
               p.is_online, p.is_hidden
        FROM product_variants v JOIN products p ON p.id = v.product_id
-       WHERE v.id = ? AND v.product_id = ?`
+       WHERE v.id = ? AND v.product_id = ? AND p.deleted_at IS NULL` /* v440：软删（回收站中）资源的码不可解锁 */
     ).bind(variantId, productId).first();
   }
   if (!v || !v.is_online || v.is_hidden) {

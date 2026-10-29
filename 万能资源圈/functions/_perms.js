@@ -29,6 +29,7 @@ export function parsePerms(raw) {
     ann: { view: g(p.ann, 'view'), add: g(p.ann, 'add'), edit: g(p.ann, 'edit'), del: g(p.ann, 'del') },
     batch: { import: g(p.batch, 'import'), price: g(p.batch, 'price'), online: g(p.batch, 'online'), del: g(p.batch, 'del') },
     data: { stats: g(p.data, 'stats'), detail: g(p.data, 'detail'), ip: g(p.data, 'ip'), export: g(p.data, 'export') },
+    info: { view: g(p.info, 'view') }, /* #116 复检修正：info 组必须进解析白名单，否则勾了也判无权 */
     users: !!p.users,
     catsScope: (p.catsScope === 'all') ? 'all' : (Array.isArray(p.catsScope) ? p.catsScope.map(Number).filter(x => x > 0) : []), /* 兜底=空范围（最小权限），显式 'all' 才全范围 */
     codeScope: (p.codeScope === 'scoped' || p.codeScope === 'all') ? p.codeScope : 'own',
@@ -43,6 +44,7 @@ export function superPerms() {
     ann: { view: true, add: true, edit: true, del: true },
     batch: { import: true, price: true, online: true, del: true },
     data: { stats: true, detail: true, ip: true, export: true },
+    info: { view: true },
     users: true,
     catsScope: 'all',
     codeScope: 'all',
@@ -102,7 +104,7 @@ export function validateGrant(childRaw, grantorRole, grantorPermsRaw) {
   const child = parsePerms(typeof childRaw === 'string' ? childRaw : JSON.stringify(childRaw || {}));
   const mine = parsePerms(typeof grantorPermsRaw === 'string' ? grantorPermsRaw : JSON.stringify(grantorPermsRaw || {}));
   const violations = [];
-  const grps = ['products', 'cats', 'ann', 'batch', 'data'];
+  const grps = ['products', 'cats', 'ann', 'batch', 'data', 'info'];
   for (const g of grps) {
     for (const k of Object.keys(child[g])) {
       if (child[g][k] && !mine[g][k]) violations.push(g + '.' + k);

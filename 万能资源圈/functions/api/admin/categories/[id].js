@@ -63,6 +63,7 @@ export async function onRequestPut(context) {
   await env.DB.prepare(`UPDATE categories SET ${sets.join(', ')} WHERE id=?`).bind(...vals).run();
 
   await clearPublicCache(request);
+  try { const { audit } = await import('../../../_utils.js'); await audit(env, request, '修改分类', '#' + id); } catch (e) {}
   return json({ ok: true });
 }
 
@@ -84,7 +85,7 @@ export async function onRequestDelete(context) {
   const ids = [id, ...(children || []).map((c) => Number(c.id))];
 
   /* v439 #68：删除改软删除（进回收站保 60 天）——子分类一并进回收站；其下资源保持原分类归属（恢复即还原） */
-  const { ensureSoftDelete, audit } = await import('../../_utils.js');
+  const { ensureSoftDelete, audit } = await import('../../../_utils.js');
   await ensureSoftDelete(env);
   const placeholders = ids.map(() => '?').join(',');
   await env.DB.prepare(

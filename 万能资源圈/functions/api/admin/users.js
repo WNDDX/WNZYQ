@@ -9,6 +9,20 @@
 import { json, readJSON, hashPasswordNew, requireAuth, ensureAdminUsers, audit } from '../../_utils.js';
 import { parsePerms, superPerms, validateGrant, treeMoveOk } from '../../_perms.js';
 
+/* #116 复检修正：范围锁勾一级分类自动含其下二级（否则二级资源看不到） */
+async function expandCatsScope(env, ids) {
+  if (!Array.isArray(ids) || !ids.length) return ids;
+  const clean = ids.map(Number).filter(x => x > 0);
+  if (!clean.length) return [];
+  const ph = clean.map(() => '?').join(',');
+  const { results } = await env.DB.prepare(
+    `SELECT id FROM categories WHERE deleted_at IS NULL AND (id IN (${ph}) OR parent_id IN (${ph}))`
+  ).bind(...clean, ...clean).all();
+  const set = new Set(clean);
+  for (const r of (results || [])) set.add(Number(r.id));
+  return Array.from(set);
+}
+
 /* 当前操作者权限对象（super 用 superPerms） */
 function myPerms(me) {
   return me.role === 'super' ? superPerms() : parsePerms(me.perms);
@@ -95,6 +109,7 @@ export async function onRequestPost(context) {
   }
 
   const { salt, hash } = await hashPasswordNew(password);
+  try { if (b.perms && Array.isArray(b.perms.catsScope)) b.perms.catsScope = await expandCatsScope(env, b.perms.catsScope); } catch (e) { /* 展开失败按原勾选 */ }
   const permsJson = JSON.stringify(b.perms || {});
   const r = await env.DB.prepare('INSERT INTO admin_users (username, pwd_hash, salt, role, parent_id, perms, status, note) VALUES (?, ?, ?, ?, ?, ?, 1, ?)')
     .bind(username, hash, salt, 'sub', parentId, permsJson, note).run();
@@ -127,6 +142,8 @@ export async function onRequestPut(context) {
     const v = validateGrant(b.perms || {}, me.role, myPerms(me));
     if (!v.ok) return json({ ok: false, msg: '权限超出您的范围：' + v.violations.join('、') }, 400);
     const note = String(b.note != null ? b.note : '').slice(0, 100);
+    /* #116 复检修正：范围勾选展开子分类（与创建口径一致） */
+    try { if (b.perms && Array.isArray(b.perms.catsScope)) b.perms.catsScope = await expandCatsScope(env, b.perms.catsScope); } catch (e) { /* 展开失败按原勾选 */ }
     await env.DB.prepare('UPDATE admin_users SET perms = ?, note = ? WHERE id = ?')
       .bind(JSON.stringify(b.perms || {}), note, id).run();
     await audit(env, request, '修改子账号权限', target.username + (note ? '（' + note + '）' : ''));

@@ -3,7 +3,7 @@ import { json } from '../../_utils.js';
 export async function onRequestGet(context) {
   const { env } = context;
   try {
-    const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0').first();
+    const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL /* v440：软删不计入前台总数 */').first();
     const res = json({ ok: true, total: (r && r.n) || 0 });
     /* v348 条29：原 60 秒太长（后台改完前台最多要等一分钟才更新）→ 缩到 10 秒并要求回源确认 */
     res.headers.set('Cache-Control', 'public, max-age=10, must-revalidate');

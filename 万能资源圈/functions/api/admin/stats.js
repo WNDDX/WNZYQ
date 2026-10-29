@@ -7,6 +7,14 @@ import { json, requirePerm, ensureBindingsTable } from '../../_utils.js';
 export async function onRequestGet(context) {
   const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'data.stats');
+  /* #116 范围锁 + 软删口径（复检修正）：sub 统计只算授权分类；软删（数据缓存中）资源一律不计入统计。
+     super 时 scopeIds=null，所有片段为空，SQL 与既有口径一致（仅补 deleted_at 过滤）。 */
+  const { catScopeSQL, parsePerms } = await import('../../_perms.js');
+  const _sc = catScopeSQL(auth.role, typeof auth.perms === 'string' ? parsePerms(auth.perms) : null);
+  const scopeIds = _sc ? _sc.ids : null;
+  const pScope = scopeIds ? ' AND p.cid IN (' + scopeIds.map(() => '?').join(',') + ')' : '';
+  const scopeJoin = scopeIds ? ' JOIN products p ON p.id = stats.product_id AND p.deleted_at IS NULL AND p.cid IN (' + scopeIds.map(() => '?').join(',') + ')' : '';
+  const SP = scopeIds || [];
   if (auth instanceof Response) return auth;
 
   // R168-③：时区统一北京时间口径（全系统统一，一天为北京时间 0:00-24:00）——
@@ -56,15 +64,15 @@ export async function onRequestGet(context) {
 
   const byProductDateFilter = statsDateFilter.replace(/stats\.created_at/g, 's.created_at');
   const [oProducts, oOnline, oHidden, oViews, oContacts, oUnlocks, oBindings, byProductRes, trendRowsRes, byCategoryRes, recentRes, hourlyRowsRes, prevTotalRes, prevTrendRes, prevHourlyRes] = await Promise.all([
-    count(env.DB, 'SELECT COUNT(*) AS n FROM products'),
+    count(env.DB, `SELECT COUNT(*) AS n FROM products p WHERE p.deleted_at IS NULL${pScope}`, SP),
     // 两态口径：显示 = is_online=1 且未隐藏；隐藏 = 其余全部（历史遗留数据统一归入隐藏）
-    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 1 AND is_hidden = 0'),
-    count(env.DB, 'SELECT COUNT(*) AS n FROM products WHERE is_online = 0 OR is_hidden = 1'),
-    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'view'${statsDateFilter}`, statsDateParams),
-    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'contact'${statsDateFilter}`, statsDateParams),
-    count(env.DB, `SELECT COUNT(*) AS n FROM stats WHERE stats.type = 'resource_unlock'${statsDateFilter}`, statsDateParams),
+    count(env.DB, `SELECT COUNT(*) AS n FROM products p WHERE p.deleted_at IS NULL AND p.is_online = 1 AND p.is_hidden = 0${pScope}`, SP),
+    count(env.DB, `SELECT COUNT(*) AS n FROM products p WHERE p.deleted_at IS NULL AND (p.is_online = 0 OR p.is_hidden = 1)${pScope}`, SP),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats${scopeJoin} WHERE stats.type = 'view'${statsDateFilter}`, [...SP, ...statsDateParams]),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats${scopeJoin} WHERE stats.type = 'contact'${statsDateFilter}`, [...SP, ...statsDateParams]),
+    count(env.DB, `SELECT COUNT(*) AS n FROM stats${scopeJoin} WHERE stats.type = 'resource_unlock'${statsDateFilter}`, [...SP, ...statsDateParams]),
     // R92：绑定设备总数（存量，与 30 天窗口无关——绑定数是"当前多少设备持有通行证"的概念）
-    count(env.DB, 'SELECT COUNT(*) AS n FROM resource_bindings'),
+    count(env.DB, `SELECT COUNT(*) AS n FROM resource_bindings rb JOIN products p ON p.id = rb.product_id WHERE p.deleted_at IS NULL${pScope}`, SP),
     env.DB.prepare(
       `SELECT p.id, p.title, p.is_online, p.is_hidden,
               COALESCE(SUM(CASE WHEN s.type='view' THEN 1 ELSE 0 END),0) AS views,
@@ -73,66 +81,75 @@ export async function onRequestGet(context) {
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.product_id = p.id),0) AS bindings
        FROM products p
        LEFT JOIN stats s ON s.product_id = p.id${byProductDateFilter}
+       WHERE p.deleted_at IS NULL${pScope}
        GROUP BY p.id
        ORDER BY views DESC, p.id DESC`
-    ).bind(...statsDateParams).all(),
+    ).bind(...statsDateParams, ...SP).all(),
     env.DB.prepare(
       `SELECT date(stats.created_at, '+8 hours') AS day, stats.type, COUNT(*) AS cnt
-       FROM stats
+       FROM stats${scopeJoin}
        WHERE 1=1${statsDateFilter}
        GROUP BY day, stats.type ORDER BY day ASC`
-    ).bind(...statsDateParams).all(),
+    ).bind(...SP, ...statsDateParams).all(),
     env.DB.prepare(
       `SELECT c.id, c.name,
               COUNT(p.id) AS product_count,
               COALESCE(SUM(s2.views),0) AS total_views
        FROM categories c
-       LEFT JOIN products p ON p.cid = c.id
+       LEFT JOIN products p ON p.cid = c.id AND p.deleted_at IS NULL${scopeIds ? ' AND p.cid IN (' + scopeIds.map(() => '?').join(',') + ')' : ''}
        LEFT JOIN (
          SELECT product_id, COUNT(*) AS views FROM stats WHERE stats.type='view'${statsDateFilter} GROUP BY product_id
        ) s2 ON s2.product_id = p.id
        GROUP BY c.id
        ORDER BY c.sort ASC, c.id ASC`
-    ).bind(...statsDateParams).all(),
+    ).bind(...SP, ...statsDateParams).all(),
     // 浏览记录：不再 LIMIT 20（前端翻页每页 20 条）；R73：查询窗口 30→60 天，与全系统 60 天保留统一（保留的都查得到）
-    env.DB.prepare(
-      `SELECT s.id, s.type, s.created_at, p.title, p.img
-       FROM stats s
-       LEFT JOIN products p ON p.id = s.product_id
-       WHERE s.created_at >= datetime('now', '-60 days')
-       ORDER BY s.id DESC`
-    ).all(),
+    scopeIds
+      ? env.DB.prepare(
+          `SELECT s.id, s.type, s.created_at, p.title, p.img
+           FROM stats s
+           JOIN products p ON p.id = s.product_id AND p.deleted_at IS NULL AND p.cid IN (${scopeIds.map(() => '?').join(',')})
+           WHERE s.created_at >= datetime('now', '-60 days')
+           ORDER BY s.id DESC`
+        ).bind(...scopeIds).all()
+      : env.DB.prepare(
+          `SELECT s.id, s.type, s.created_at, p.title, p.img
+           FROM stats s
+           LEFT JOIN products p ON p.id = s.product_id
+           WHERE s.created_at >= datetime('now', '-60 days')
+           ORDER BY s.id DESC`
+        ).all(),
     // R29（优化项8）：单日范围时按小时聚合（1天档/自定义同日选择走这里，与趋势同口径）；R168-③：+8 小时=北京时间小时
     effectiveStart === effectiveEnd
       ? env.DB.prepare(
           `SELECT strftime('%H', stats.created_at, '+8 hours') AS hour, stats.type, COUNT(*) AS cnt
-           FROM stats
+           FROM stats${scopeJoin}
            WHERE date(stats.created_at, '+8 hours') = ?
            GROUP BY hour, stats.type ORDER BY hour ASC`
-        ).bind(effectiveStart).all()
+        ).bind(...SP, effectiveStart).all()
       : Promise.resolve(null),
     // R57：上期总量（三项流量指标一次聚合）
     env.DB.prepare(
       `SELECT stats.type, COUNT(*) AS cnt
-       FROM stats
+       FROM stats${scopeJoin}
        WHERE stats.type IN ('view','contact','resource_unlock')${prevDateFilter}
        GROUP BY stats.type`
-    ).bind(...prevDateParams).all(),
+    ).bind(...SP, ...prevDateParams).all(),
     // R57：上期按日趋势（与当前 trend 同形状，按索引对齐）
     env.DB.prepare(
       `SELECT date(stats.created_at, '+8 hours') AS day, stats.type, COUNT(*) AS cnt
-       FROM stats
+       FROM stats${scopeJoin}
        WHERE 1=1${prevDateFilter}
        GROUP BY day, stats.type ORDER BY day ASC`
-    ).bind(...prevDateParams).all(),
+    ).bind(...SP, ...prevDateParams).all(),
     // R57：单日范围时上期（昨日）按小时聚合（与 hourly 同形状）；R168-③：+8 小时=北京时间小时
     effectiveStart === effectiveEnd
       ? env.DB.prepare(
           `SELECT strftime('%H', stats.created_at, '+8 hours') AS hour, stats.type, COUNT(*) AS cnt
-           FROM stats
+           FROM stats${scopeJoin}
            WHERE date(stats.created_at, '+8 hours') = ?
            GROUP BY hour, stats.type ORDER BY hour ASC`
-        ).bind(prevEnd).all()
+        ).bind(...SP, prevEnd).all()
       : Promise.resolve(null),
   ]);
 

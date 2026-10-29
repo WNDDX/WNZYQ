@@ -729,6 +729,13 @@
           codeBtn.textContent = v.resourceCode;
           codeBtn.title = v.resourceCode + '（点击复制并发新码）'; /* R179：固定宽截断后悬停 title 看全码；R221：复制即换码 */
           (function (cvObj, cBtn) {
+            /* #116 复检修正：发码仅超级管理员——子账号码键只读（掩码展示），不再点了报「未开放」 */
+            if (window.__me && window.__me.role !== 'super') {
+              cBtn.disabled = true;
+              cBtn.style.cursor = 'default';
+              cBtn.title = '仅超级管理员可发码';
+              return;
+            }
             cBtn.addEventListener('click', function (ev) {
               ev.preventDefault(); ev.stopPropagation();
               /* R221：复制即换码——旧码记 issued（60 天窗口起算）+ 立即出新码；无 id 的未保存类型退回普通复制 */

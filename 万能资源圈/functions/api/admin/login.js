@@ -66,6 +66,11 @@ export async function onRequestPost(context) {
       const sub = await env.DB.prepare('SELECT * FROM admin_users WHERE username = ?').bind(username).first();
       if (sub) {
         if (!sub.status) { await recordFailure(env, ip, username, attempt); return json({ ok: false, msg: '该账号已停用，请联系管理员' }, 403); }
+        /* #116：应急冻结期间子账号一律拒绝登录（超管不受影响） */
+        try {
+          const fz = await env.DB.prepare("SELECT value FROM settings WHERE key = 'sub_freeze'").first();
+          if (fz && fz.value === '1') return json({ ok: false, msg: '该功能未开放' }, 403);
+        } catch (e) { /* 查询失败不拦登录（requirePerm 仍会拦操作） */ }
         row = sub; isSub = true;
       }
     }
@@ -88,6 +93,10 @@ export async function onRequestPost(context) {
     if (attempt) {
       await env.DB.prepare('DELETE FROM login_attempts WHERE ip = ? AND username = ?')
         .bind(ip, username).run();
+    }
+    /* #116：子账号登录成功记最近活跃（子账号管理列表展示用） */
+    if (isSub) {
+      try { await env.DB.prepare("UPDATE admin_users SET last_seen = datetime('now') WHERE id = ?").bind(row.id).run(); } catch (e) { /* 不影响登录 */ }
     }
 
     // 5. 签发新 token（24 小时过期，允许多设备同时登录）；#116：子账号会话标 utype='u'

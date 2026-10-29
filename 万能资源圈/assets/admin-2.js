@@ -719,6 +719,13 @@ function renderProducts() {
             cd.title = v.resourceCode + '（点击复制并发新码）'; /* R179：固定宽截断后悬停 title 看全码 */
             item.appendChild(cd);
             (function (cvObj, cdEl) {
+              /* #116 复检修正：发码仅超级管理员（后端 issue-code 已限）——子账号码键只读展示，不再点了报错 */
+              if (window.__me && window.__me.role !== 'super') {
+                cdEl.disabled = true;
+                cdEl.style.cursor = 'default';
+                cdEl.title = '仅超级管理员可发码';
+                return;
+              }
               /* R221（老板 15:44 拍板·复制即换码）：点码键=发码——当前码复制给客户（60 天兑换窗口
                  从本次点按起算），面板立即出新码、下方发码记录即时更新，面板不再收起 */
               cdEl.addEventListener('click', function (ev) {

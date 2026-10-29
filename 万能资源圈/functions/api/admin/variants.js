@@ -83,12 +83,13 @@ export async function onRequestPost(context) {
       String(b.contactUrl || ''),
       Number(b.price) || 0,
       Number(b.sort) || 0,
-      String(b.resourceCode || ''),
+      newCode, /* v440：掩码兜底后的码 */
       String(b.resourceContent || ''),
       b.isHidden ? 1 : 0,
       bindLimit
     )
     .run();
 
+  try { const { audit } = await import('../../_utils.js'); await audit(env, request, '新增类型', name); } catch (e) {}
   return json({ ok: true, id: r.meta.last_row_id });
 }

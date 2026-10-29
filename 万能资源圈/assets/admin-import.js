@@ -130,7 +130,15 @@
     });
     (data['资源'] || []).forEach(function (r) {
       if (!r[0]) return;
-      seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({ title: r[0], desc: r[2] || '', price: Number(r[3]) || 0, img: r[4] || '', code: r[5] || '', hidden: /隐藏/.test(r[6] || '') ? 1 : 0 }) }); }).then(function (x) { say('资源「' + r[0] + '」' + (x && x.ok ? '✓' : '失败')); }).catch(function () { say('资源「' + r[0] + '」失败'); });
+      seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({ title: r[0], desc: r[2] || '', price: Number(r[3]) || 0, img: r[4] || '', hidden: /隐藏/.test(r[6] || '') ? 1 : 0 }) }); }).then(function (x) {
+        if (!(x && x.ok)) { say('资源「' + r[0] + '」失败'); return; }
+        /* v440 复检修正：导入表「资源码」列不再静默丢弃——带码时自动建一个默认类型并写入码 */
+        var code = String(r[5] || '').trim();
+        if (!code) { say('资源「' + r[0] + '」✓'); return; }
+        return apiCall('admin/variants', { method: 'POST', body: JSON.stringify({ productId: x.id, name: '默认类型', resourceCode: code }) }).then(function (y) {
+          say('资源「' + r[0] + '」✓（含码）');
+        }).catch(function () { say('资源「' + r[0] + '」✓（码写入失败，请手动补）'); });
+      }).catch(function () { say('资源「' + r[0] + '」失败'); });
     });
     (data['公告'] || []).forEach(function (r) {
       if (!r[0]) return;
@@ -497,11 +505,11 @@
     ['data.stats', '看统计总量'], ['data.detail', '看逐条明细'], ['data.ip', '看访客 IP'], ['data.export', '数据导出'],
     ['info.view', '信息中心'], ['users', '管理下级账号'],
   ];
-  function usersCall(method, body, done) {
+  function usersCall(method, body, done, fail) {
     fetch('/api/admin/users', { method: method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { return r.json(); })
-      .then(function (x) { if (x && x.ok) { if (done) done(x); } else if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error'); })
-      .catch(function () { if (window.showToast) window.showToast('网络开小差了，请稍后再试', 'error'); });
+      .then(function (x) { if (x && x.ok) { if (done) done(x); } else { if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error'); if (fail) fail(x); } })
+      .catch(function () { if (window.showToast) window.showToast('网络开小差了，请稍后再试', 'error'); if (fail) fail(); });
   }
   function openUsers() {
     var old = document.getElementById('usersMask'); if (old) old.remove();
@@ -656,16 +664,14 @@
         usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
           if (window.showToast) window.showToast('已保存', 'success');
           mask.remove(); renderUsersList();
-        });
-        btn.disabled = false; btn.textContent = '保存修改';
+        }, function () { btn.disabled = false; btn.textContent = '保存修改'; });
       } else {
         var un = (mask.querySelector('#ufUser') || {}).value || '';
         var pw = (mask.querySelector('#ufPwd') || {}).value || '';
         usersCall('POST', { username: un, password: pw, note: note, perms: pv }, function () {
           if (window.showToast) window.showToast('子账号已创建', 'success');
           mask.remove(); renderUsersList();
-        });
-        btn.disabled = false; btn.textContent = '创建子账号';
+        }, function () { btn.disabled = false; btn.textContent = '创建子账号'; });
       }
     });
   }
@@ -736,6 +742,16 @@
   /* 平台设置页挂入口键（v434b：照「修改密码」组同款——独立白色卡片、各占一行、btn-inline-pd 自适应键宽，
      不再 flex 拉满半屏、不再游离在卡片外） */
   (function wait() {
+    /* #116 复检修正：有批量导入权限者在资源页也放入口（子账号无设置页签，否则权限是摆设） */
+    var tb = document.querySelector('.tb-group.g-add');
+    if (tb && !document.getElementById('batchImportBtn2') && (!window.__permCan || window.__permCan('batch.import'))) {
+      var b2 = document.createElement('button');
+      b2.type = 'button'; b2.className = 'btn-blue'; b2.id = 'batchImportBtn2';
+      b2.setAttribute('data-perm', 'batch.import');
+      b2.textContent = '批量导入';
+      tb.appendChild(b2);
+      b2.addEventListener('click', openWizard);
+    }
     var panel = document.getElementById('panel-settings');
     if (panel && !document.getElementById('batchImportBtn')) {
       var grp = document.createElement('div');
@@ -758,6 +774,8 @@
       /* #80 每日自动体检（复检改版）：跨天首次进管理页，延时 8s 静默跑；发现问题不再挂按钮红点，
          改为写本地提醒标记 → 信息中心置顶提醒条（带「去查看」键跳转体检详情），复查正常或看过即清 */
       try {
+        /* #116 复检修正：自动体检仅超管跑——子账号无体检入口也无权看全量结果，白耗资源+打扰 */
+        if (!window.__me || window.__me.role === 'super') {
         var today = new Date().toDateString();
         if (localStorage.getItem('wnzyq_autocheck_day') !== today) {
           localStorage.setItem('wnzyq_autocheck_day', today);
@@ -772,6 +790,7 @@
             }).catch(function () {});
           }, 8000);
         }
+        } /* end super-only autocheck */
       } catch (eA) { if (window.__silent) window.__silent(eA); }
       return;
     }

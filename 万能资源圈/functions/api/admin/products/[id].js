@@ -4,7 +4,6 @@
  * DELETE /api/admin/products/:id   → 删除资源（同时删其类型和统计）
  * 均需登录
  */
-import { json, requireAuth, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, audit } from '../../../_utils.js';
 
 import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, audit } from '../../../_utils.js';
 import { catAllowed, visibleCode, parsePerms } from '../../../_perms.js';
@@ -153,6 +152,7 @@ export async function onRequestPut(context) {
     .run();
 
   await clearPublicCache(request);
+  try { const { audit } = await import('../../../_utils.js'); await audit(env, request, '编辑资源', String(b.title || '') || ('#' + id)); } catch (e) {}
   return json({ ok: true });
 }
 

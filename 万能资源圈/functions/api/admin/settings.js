@@ -52,3 +52,44 @@ export async function onRequestPut(context) {
   try { const { audit } = await import('../_utils.js'); const keys = Object.keys(b).filter(function (k) { return ALLOWED_KEYS.indexOf(k) >= 0; }); await audit(env, request, '更新设置', keys.join('、')); } catch (e1) {}
   return json({ ok: true, msg: '设置已保存' });
 }
+
+/**
+ * POST /api/admin/settings  → 批量导入追加单条公告（v440 复检新增：此前接口不存在，导入公告必 405）
+ * body: { annAdd: { title, content, sort, hidden } }
+ * 权限：ann.add（发公告）；软删口径与 PUT 一致——追加不会碰已删公告条目。
+ */
+export async function onRequestPost(context) {
+  await ensureAdminUsers(env);
+  const { env, request } = context;
+  const auth = await requirePerm(env, request, 'ann.add');
+  if (auth instanceof Response) return auth;
+
+  const b = await readJSON(request);
+  const item = b && b.annAdd;
+  if (!item || !String(item.title || '').trim()) return json({ ok: false, msg: '请填写公告标题' }, 400);
+
+  const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'announcements'").first();
+  let list = [];
+  try { list = JSON.parse((row && row.value) || '[]') || []; } catch (e) { list = []; }
+  if (!Array.isArray(list)) list = [];
+  list = list.filter(x => !x.deleted); /* 已删公告不参与追加展示顺序，但保留原条目（与回收站语义一致） */
+  const deletedKept = [];
+  try { const raw = JSON.parse((row && row.value) || '[]'); if (Array.isArray(raw)) raw.forEach(x => { if (x && x.deleted) deletedKept.push(x); }); } catch (e2) {}
+  const nextId = list.concat(deletedKept).reduce((m, x) => Math.max(m, Number(x.id) || 0), 0) + 1;
+  list.push({
+    id: nextId,
+    title: String(item.title || '').trim(),
+    content: String(item.content || ''),
+    sort: Number(item.sort) || 0,
+    hidden: item.hidden ? 1 : 0,
+    level: 1,
+  });
+  const val = JSON.stringify(list.concat(deletedKept));
+  const existing = await env.DB.prepare('SELECT key FROM settings WHERE key = ?').bind('announcements').first();
+  if (existing) await env.DB.prepare('UPDATE settings SET value = ? WHERE key = ?').bind(val, 'announcements').run();
+  else await env.DB.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').bind('announcements', val).run();
+  /* 同步旧的 announcement 聚合字段（前台旧口径兜底） */
+  try { await env.DB.prepare("UPDATE settings SET value = '' WHERE key = 'announcement'").run(); } catch (e3) {}
+  try { const { audit } = await import('../_utils.js'); await audit(env, request, '导入公告', String(item.title || '').trim()); } catch (e4) {}
+  return json({ ok: true, id: nextId });
+}

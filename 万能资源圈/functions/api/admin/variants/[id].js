@@ -62,6 +62,7 @@ export async function onRequestPut(context) {
 
   await clearPublicCache(request);
   try { await sweepDroppedKeys(env, __oldVariant, JSON.stringify({ d: b.desc, i: b.img, v: b.video, r: b.resourceContent })); } catch (e) {} /* v354 */
+  try { const { audit } = await import('../../../_utils.js'); await audit(env, request, '编辑类型', String(b.name || '') || ('#' + id)); } catch (e) {}
   return json({ ok: true });
 }
 
@@ -80,6 +81,7 @@ export async function onRequestDelete(context) {
   if (!sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
 
   await env.DB.prepare('DELETE FROM product_variants WHERE id = ?').bind(id).run();
+  try { const { audit } = await import('../../../_utils.js'); await audit(env, request, '删除类型', '#' + id); } catch (e) {}
   await clearPublicCache(request);
   return json({ ok: true });
 }

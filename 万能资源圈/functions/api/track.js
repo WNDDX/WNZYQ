@@ -54,14 +54,47 @@ export async function onRequestPost(context) {
         { name: 'products', dateCol: 'deleted_at', extra: 'AND deleted_at IS NOT NULL' },
         { name: 'categories', dateCol: 'deleted_at', extra: 'AND deleted_at IS NOT NULL' }
       ];
+      /* v439 复检修正：回收站到期彻底删除时联动清理派生数据——
+         ① 先收集到期资源的图仓 key 并删除（否则 R2 永久孤儿占存储）
+         ② 删 product_variants（类型/资源码）与 resource_bindings（绑定记录），否则残留孤儿
+         categories 到期时其下资源早已随资源各自到期处理，此处仅删分类行 */
       for (const t of tables) {
         const countRow = await env.DB.prepare(
           `SELECT COUNT(*) AS n FROM ${t.name} WHERE ${t.dateCol} < datetime('now', '-60 days') ${t.extra || ''}`
         ).first();
         if (countRow && countRow.n > 0) {
+          if (t.name === 'products') {
+            /* ① 先收集到期资源的图仓地址（删行前取，之后行没了查不到） */
+            let sources = [];
+            try {
+              const { results: expRows } = await env.DB.prepare(
+                `SELECT p.img, p.detail, p.detail_images, p.detail_videos, v."desc" AS vd, v.img AS vi, v.video AS vv, v.resource_content AS vrc
+                 FROM products p LEFT JOIN product_variants v ON v.product_id = p.id
+                 WHERE p.deleted_at < datetime('now', '-60 days') AND p.deleted_at IS NOT NULL`
+              ).all();
+              for (const r of (expRows || [])) sources.push(r.img, r.detail, r.detail_images, r.detail_videos, r.vd, r.vi, r.vv, r.vrc);
+            } catch (e1) { console.error('到期清理收集图仓地址失败(继续):', e1 && e1.message); }
+            /* ② 派生行清理：类型/码 + 绑定（在删主表前删，靠 product_id 关联） */
+            try {
+              await env.DB.prepare(
+                `DELETE FROM product_variants WHERE product_id IN (SELECT id FROM products WHERE deleted_at < datetime('now', '-60 days') AND deleted_at IS NOT NULL)`
+              ).run();
+              await env.DB.prepare(
+                `DELETE FROM resource_bindings WHERE product_id IN (SELECT id FROM products WHERE deleted_at < datetime('now', '-60 days') AND deleted_at IS NOT NULL)`
+              ).run();
+            } catch (e2) { console.error('到期清理派生行失败(继续):', e2 && e2.message); }
+          }
           await env.DB.prepare(
             `DELETE FROM ${t.name} WHERE ${t.dateCol} < datetime('now', '-60 days') ${t.extra || ''}`
           ).run();
+          /* ③ 图仓清理必须放在删行之后——deleteBucketImages 的引用保护会把仍在库里的行算作引用者，
+             先删图会把到期资源自己的图当成「别处在用」而漏删（v440 复检修正顺序） */
+          if (t.name === 'products' && sources.length) {
+            try {
+              const { deleteBucketImages } = await import('../_utils.js');
+              await deleteBucketImages(env, sources);
+            } catch (e3) { console.error('到期清理图仓失败(不影响删行):', e3 && e3.message); }
+          }
         }
       }
       await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('last_cleanup_date', ?)").bind(today).run();

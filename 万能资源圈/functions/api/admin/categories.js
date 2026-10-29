@@ -55,6 +55,13 @@ export async function onRequestPost(context) {
 
   // 二级分类必须挂在一个存在的一级分类下；一级分类 parent_id 固定 0
   const parentId = Number(b.parent_id) || 0;
+  /* #116 复检修正：sub 挂二级分类时，上级一级必须在授权范围内（不许往别人的一级下挂） */
+  if (parentId !== 0 && auth.role !== 'super') {
+    const { catAllowed } = await import('../../_perms.js');
+    if (!catAllowed(parentId, auth.role, typeof auth.perms === 'string' ? parsePerms(auth.perms) : null)) {
+      return json({ ok: false, msg: '该功能未开放' }, 403);
+    }
+  }
   if (parentId !== 0) {
     const parent = await env.DB.prepare(
       'SELECT id, parent_id FROM categories WHERE id = ? AND deleted_at IS NULL'
@@ -70,5 +77,6 @@ export async function onRequestPost(context) {
     .bind(name, Number(b.sort) || 0, parentId, b.is_hidden ? 1 : 0, auth.username) /* #116：分类创建者 */
     .run();
 
+  try { const { audit } = await import('../../_utils.js'); await audit(env, request, '新增分类', name); } catch (e) {}
   return json({ ok: true, id: r.meta.last_row_id });
 }

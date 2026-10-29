@@ -2443,6 +2443,10 @@
     document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
     var list = document.getElementById('ctList');
     var _alert = sysAlertEntry();
+    /* 体检提醒插在筛选与列表之前（视觉顺序：⚠提醒 → 只看筛选 → 动态流） */
+    var _oldAlert = document.getElementById('ctSysAlert');
+    if (_oldAlert) _oldAlert.remove();
+    if (_alert) { list.insertAdjacentHTML('beforebegin', _alert); _alert = ''; }
     /* v439 #116：按人筛选（超管查某个员工的账） */
     if (window.__me && window.__me.role === 'super') {
       var whoBox = document.getElementById('ctWhoFilter');

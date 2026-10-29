@@ -42,6 +42,9 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   const auth = await requirePerm(env, request, 'data.export');
   if (auth instanceof Response) return auth;
+  /* #116 信息锁：子账号导出的资源码按其可见规则打码（防用导出绕过码可见范围） */
+  const { visibleCode, parsePerms } = await import('../../_perms.js');
+  const _myPerms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
 
   await ensureProductColumns(env);
   await ensureVariantColumns(env);
@@ -65,9 +68,10 @@ export async function onRequestGet(context) {
     DB.prepare(
       `SELECT v.id, v.product_id, p.title AS product_title, v.name, v.title AS vtitle, v."desc", v.price,
               v.resource_code, v.resource_content, v.is_hidden, v.sort,
+              p.created_by AS p_created_by, p.cid AS p_cid,
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.variant_id = v.id),0) AS bindings
-       FROM product_variants v LEFT JOIN products p ON p.id = v.product_id
-       ORDER BY v.product_id ASC, v.sort ASC, v.id ASC`
+       FROM product_variants v JOIN products p ON p.id = v.product_id AND p.deleted_at IS NULL
+       ORDER BY v.product_id ASC, v.sort ASC, v.id ASC` /* v440：软删资源不进导出 */
     ).all(),
     DB.prepare(
       `SELECT c.id, c.name, c.parent_id, c.sort, c.is_hidden,
@@ -187,7 +191,8 @@ export async function onRequestGet(context) {
       vtitle: v.vtitle || '',
       desc: v.desc || '',
       price: v.price || 0,
-      resource_code: v.resource_code || '',
+      /* #116 信息锁：子账号导出按其码可见规则打码（防用导出绕过「只看自己新增的码」） */
+      resource_code: auth.role === 'super' ? (v.resource_code || '') : visibleCode(v.resource_code || '', auth.role, _myPerms, v.p_created_by || '', auth.username, v.p_cid || 0),
       has_content: !!(v.resource_content && String(v.resource_content).trim()),
       is_hidden: v.is_hidden || 0,
       sort: v.sort || 0,
@@ -219,12 +224,20 @@ export async function onRequestGet(context) {
       resource_unlocks: p.resource_unlocks,
       bindings: p.bindings,
     })),
-    recent: (recentRes || []).map((r) => ({
-      created_at: r.created_at,
-      type_text: TYPE_TEXT[r.type] || r.type,
-      product_title: r.product_title || '(已删除)',
-      ip: r.ip || '',
-    })),
+    recent: (recentRes || []).map((r) => {
+      /* #116 信息锁：sub 无 data.ip 时访客地址脱敏 */
+      let ip = r.ip || '';
+      if (auth.role !== 'super' && !(_myPerms && _myPerms.data && _myPerms.data.ip)) {
+        const seg = ip.split('.');
+        ip = seg.length >= 4 ? seg[0] + '.' + seg[1] + '.*.*' : ip.slice(0, 3) + '***';
+      }
+      return {
+        created_at: r.created_at,
+        type_text: TYPE_TEXT[r.type] || r.type,
+        product_title: r.product_title || '(已删除)',
+        ip,
+      };
+    }),
     counts: {
       products: (productsRes.results || []).length,
       variants: (variantsRes.results || []).length,
