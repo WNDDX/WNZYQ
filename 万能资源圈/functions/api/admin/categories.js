@@ -11,9 +11,10 @@
 import { ensureAdminUsers, ensureSoftDelete, json, readJSON, requireAuth, requirePerm } from '../../_utils.js';
 
 export async function onRequestGet(context) {
-
-  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
+  try { /* v440 自诊断壳 */
   const { env, request } = context;
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
+  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'cats.view');
   if (auth instanceof Response) return auth;
 
@@ -42,12 +43,15 @@ export async function onRequestGet(context) {
   }
 
   return json({ ok: true, list: list });
+  } catch (e) {
+    return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
+  }
 }
 
 export async function onRequestPost(context) {
-
-  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   const { env, request } = context;
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
+  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'cats.add');
   if (auth instanceof Response) return auth;
 

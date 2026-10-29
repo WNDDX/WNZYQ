@@ -53,8 +53,10 @@ async function count(db, sql, params) {
 }
 
 export async function onRequestGet(context) {
-
-  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
+  try { /* v440 自诊断壳 */
+  const { env, request } = context;
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
+  await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'data.stats');
   if (auth instanceof Response) return auth;
 
@@ -137,4 +139,7 @@ export async function onRequestGet(context) {
       // v313：首屏不返回重统计明细，留给 admin/stats 按需拉取
     }
   });
+  } catch (e) {
+    return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
+  }
 }

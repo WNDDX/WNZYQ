@@ -38,9 +38,10 @@ async function fetchAllRecent(DB) {
 }
 
 export async function onRequestGet(context) {
-
-  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
+  try { /* v440 自诊断壳 */
   const { env, request } = context;
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
+  await ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'data.export');
   if (auth instanceof Response) return auth;
   /* #116 信息锁：子账号导出的资源码按其可见规则打码（防用导出绕过码可见范围） */
@@ -252,4 +253,7 @@ export async function onRequestGet(context) {
       recent_total: recentTotalRes ? recentTotalRes.n : 0,
     },
   });
+  } catch (e) {
+    return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
+  }
 }
