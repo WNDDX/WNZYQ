@@ -69,6 +69,7 @@ export async function onRequestPut(context) {
 }
 
 export async function onRequestDelete(context) {
+  try { /* v441b：错误自曝壳——线上 500 黑盒改为返回具体错误 */
   const { env, request, params } = context;
 
   await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
@@ -97,4 +98,5 @@ export async function onRequestDelete(context) {
 
   await clearPublicCache(request);
   return json({ ok: true });
+  } catch (eD) { return json({ ok: false, msg: '删除分类错误: ' + (eD && eD.message ? eD.message : String(eD)) }, 500); }
 }
