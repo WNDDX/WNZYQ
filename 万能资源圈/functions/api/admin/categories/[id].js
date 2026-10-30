@@ -7,7 +7,7 @@
  *  - 单字段更新：{ is_hidden } 切换显示隐藏；{ sort } 拖拽排序保存
  *  - 完整保存：{ name, sort, parent_id, is_hidden }（编辑弹窗确定）
  */
-import { clearPublicCache, ensureAdminUsers, ensureSoftDelete, json, readJSON, requireAuth, requirePerm } from '../../../_utils.js';
+import { audit, clearPublicCache, ensureAdminUsers, ensureSoftDelete, json, readJSON, requireAuth, requirePerm } from '../../../_utils.js';
 import { parsePerms, catAllowed } from '../../../_perms.js';
 
 /* #116：sub 只能改/删自己创建的分类（cats.edit/del），超管不限 */
@@ -88,8 +88,9 @@ export async function onRequestDelete(context) {
   const ids = [id, ...(children || []).map((c) => Number(c.id))];
 
   /* v439 #68：删除改软删除（进回收站保 60 天）——子分类一并进回收站；其下资源保持原分类归属（恢复即还原） */
-  const { ensureSoftDelete, audit } = await import('../../../_utils.js');
-  await ensureSoftDelete(env);
+  /* v441b 修复：原来这里又动态 import 了一次与头部静态 import 同名的 ensureSoftDelete——
+     Cloudflare 打包时把同名符号改名成 ensureSoftDelete2 且声明被放到调用点之后 → TDZ「Cannot access before initialization」→ 删除分类一直 500。
+     头部已静态引入 ensureSoftDelete/audit，直接用即可（全站已扫，仅此一处同名冲突）。 */
   const placeholders = ids.map(() => '?').join(',');
   await env.DB.prepare(
     `UPDATE categories SET deleted_at = datetime('now') WHERE id IN (${placeholders})`
