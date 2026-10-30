@@ -305,6 +305,9 @@
     }
     /* 感叹号占位自适应：容器内完整显示、居中、淡白填充、不溢出 */
     img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light)!important;}
+    /* v441b（老板实测 10-30）：上面 height:100% 在网格模式下被 grid 拉伸行高越撑越高，把文字区挤出卡片、被卡片 overflow:hidden 裁掉
+       ——网格卡片"只剩封面图没文字"的真正根因。卡片场景恢复按比例定高（列表模式 flex 行不受影响，弹窗/灯箱各有专属覆盖不受影响）。 */
+    .product-card .card-img[src^="data:image/svg+xml"]{height:auto!important;}
     /* v308（用户 10-05 13:29）：卡片封面占位符首帧即终态——消除 cover→contain 闪烁 */
     .card-img[src^="data:image/svg+xml"],
     .product-grid.list-view .card-img[src^="data:image/svg+xml"] {

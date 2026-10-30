@@ -314,6 +314,10 @@ export async function ensureProductColumns(env) {
     await add('updated_at', "updated_at TEXT NOT NULL DEFAULT (datetime('now'))");
     await add('original_urls', "original_urls TEXT NOT NULL DEFAULT ''"); /* v440：#79 压缩恢复列（线上旧库缺） */
     await add('created_by', "created_by TEXT NOT NULL DEFAULT ''"); /* v440：#116 创建者列（线上旧库缺） */
+    await add('contact_url', "contact_url TEXT NOT NULL DEFAULT ''"); /* v441b：INSERT 点名列全兜底（线上旧库缺则新增资源 500） */
+    await add('contact_qr', "contact_qr TEXT NOT NULL DEFAULT ''"); /* v441b：同上 */
+    await add('is_online', "is_online INTEGER NOT NULL DEFAULT 1"); /* v441b：同上 */
+    await add('img', "img TEXT NOT NULL DEFAULT ''"); /* v441b：同上 */
     _productColsEnsured = true;
   } catch (e) { /* 表尚未创建时忽略，install 会按新结构建表 */ }
 }
@@ -384,6 +388,7 @@ export async function ensureBindingsTable(env) {
     await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bindings_product ON resource_bindings(product_id)').run();
     // R96：老表补 code 列（记录绑定时的资源码，"绑满自动换码"按码周期计数）；列已存在时报错忽略
     try { await env.DB.prepare("ALTER TABLE resource_bindings ADD COLUMN code TEXT NOT NULL DEFAULT ''").run(); } catch (e) { /* 已有该列 */ }
+    try { await env.DB.prepare("ALTER TABLE resource_bindings ADD COLUMN region TEXT NOT NULL DEFAULT ''").run(); } catch (e) { /* 已有该列 */ } /* v441b：线上旧库缺 region 列 → 信息中心 SQL 报 no such column: b.region */
     await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bindings_variant_code ON resource_bindings(variant_id, code)').run();
     _bindingsEnsured = true;
   } catch (e) { console.error('R106 ensureBindingsTable 失败（调用方按无绑定数据兜底）:', e && e.message); /* 建表失败时调用方按无绑定数据兜底 */ }

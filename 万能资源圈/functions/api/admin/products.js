@@ -124,6 +124,7 @@ function maskList(auth, list) {
 }
 
 export async function onRequestPost(context) {
+  try { /* v441b：错误自曝壳——线上任何异常直接返回具体错误，不再 500 黑盒 */
   const { env, request } = context;
 
   await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
@@ -177,4 +178,5 @@ export async function onRequestPost(context) {
 
   try { const { audit } = await import('../../_utils.js'); await audit(env, request, '新增资源', String(b.title || '').trim()); } catch (e) {}
   return json({ ok: true, id: r.meta.last_row_id });
+  } catch (e1) { return json({ ok: false, msg: '新增资源错误: ' + (e1 && e1.message ? e1.message : String(e1)) }, 500); }
 }
