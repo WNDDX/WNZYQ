@@ -357,11 +357,12 @@
       /* R159：取消 42px 双行预留——桌面与手机一样标题自然高度、紧贴蓝色简介（用户：手机上才刚好） */
       letter-spacing:var(--ls-btn,0.8px);
     }
+    .card-meta { font-size: 11px; color: var(--text-light, #8a97a5); margin-top: 2px; font-variant-numeric: tabular-nums; }
     .card-desc {
       font-size: 12px;
       color: var(--text-light); /* v336 条120：简介统一次级灰（原桌面蓝/手机灰两套） */ /* R24：简介字体颜色复用资源弹窗简介的蓝色（var(--blue1)），弹窗本身保持不变 */
       display: -webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 3; /* v441：网格简介 2→3 行（老板复检：信息量不足） */
       -webkit-box-orient: vertical;
       overflow: hidden;
       line-height: 1.6;

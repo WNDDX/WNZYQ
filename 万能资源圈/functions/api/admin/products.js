@@ -51,7 +51,7 @@ export async function onRequestGet(context) {
   const status = String(url.searchParams.get('status') || '');
 
   // 构建 WHERE 条件
-  let where = 'WHERE 1=1';
+  let where = 'AND 1=1'; /* v440 修复：SQL 基句已含 WHERE deleted_at，续接用 AND（原双重 WHERE 语法错） */
   const params = [];
 
   /* #116 范围锁：子账号只能看到授权分类的资源（列表/搜索一并过滤） */

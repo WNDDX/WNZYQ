@@ -637,16 +637,7 @@
         }
         cbox.appendChild(d);
       });
-        /* v439 #97：转化漏斗（浏览 → 解锁 → 绑定） */
-        try {
-          var _views = ov.views || 0, _unlocks = ov.resource_unlocks || 0, _binds = ov.bindings || 0;
-          var _fbox = document.createElement('div');
-          _fbox.style.cssText = 'margin:10px 0 0;padding:10px 12px;background:var(--bg-light,#f5f7fa);border-radius:10px;font-size:12px;color:var(--text-light,#666)';
-          var _pct = function (a, b) { return a > 0 && b > 0 ? Math.round(b / a * 100) + '%' : '—'; };
-          _fbox.innerHTML = '<b style="color:var(--text,#222)">转化漏斗</b>　浏览 ' + _views +
-            ' → 解锁 ' + _unlocks + '（' + _pct(_views, _unlocks) + '）→ 绑定 ' + _binds + '（' + _pct(_unlocks, _binds) + '）';
-          cbox.parentNode.insertBefore(_fbox, cbox.nextSibling);
-        } catch (eF) { if (window.__silent) window.__silent(eF); }
+        /* v441：转化漏斗按老板拍板移除 */
     }
 
     // R176（用户 10:16）：统计切档极致响应——日期全链北京时间口径（旧 toISOString 取 UTC 日，

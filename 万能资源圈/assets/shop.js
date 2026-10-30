@@ -1073,6 +1073,17 @@
       body.appendChild(title);
       body.appendChild(desc);
       /* v330 条14：卡片信息分层——第三层价格（橙色突出、固定底部行；免费不显示价格行） */
+      /* v441：网格卡片补信息行（类型数/分类名）——老板复检：网格只有封面图信息量太少 */
+      var _meta = document.createElement('div');
+      _meta.className = 'card-meta';
+      var _vN = (p.variants || []).length;
+      var _cName = '';
+      try { (DATA.categories || []).forEach(function (c) { if (Number(c.id) === Number(p.cid)) _cName = c.name || ''; }); } catch (eC) {}
+      var _metaParts = [];
+      if (_vN > 0) _metaParts.push(_vN + ' 个类型');
+      if (_cName) _metaParts.push(_cName);
+      _meta.textContent = _metaParts.join(' · ');
+      body.appendChild(_meta);
       var _pr = Number(p.price || 0);
       if (_pr > 0) {
         var prow = document.createElement('div');
@@ -2062,18 +2073,21 @@
       fill: function (nb, dir, panelB) {
         var _curGrid = document.getElementById('productGrid');
         panelB.className = (_curGrid && _curGrid.className) || 'product-grid'; /* v401 条9：镜像当前视图模式（原写死 'product-grid'，列表视图下滑动预览是网格、落定变列表=「切换后显示模式不同」） */
+        /* v441 复检修正：进入预览立即铺满 8 张同尺寸骨架占位——原实现异步期面板全空白，
+           数据回来卡片逐个长出=「凝聚再撑开」的闪动源；骨架→卡片原子替换后预览全程稳定 */
+        panelB.replaceChildren();
+        for (var _si = 0; _si < 8; _si++) {
+          var _sc = document.createElement('div');
+          _sc.className = 'card-skeleton';
+          _sc.innerHTML = '<div class="card-body"><div class="sk-img"></div><div class="sk-line w70"></div><div class="sk-line w95"></div></div>';
+          panelB.appendChild(_sc);
+        }
         window.__peekCat(nb.type === 'top' ? nb.id : (nb.type === 'sub' ? nb.parent : 0), nb.type === 'sub' ? nb.id : 0).then(function (list) {
           if (!panelB.isConnected) return;
-          list.slice(0, 8).forEach(function (p) { try { panelB.appendChild(window.__buildProductCard(p)); } catch (e) { if (window.__silent) window.__silent(e); } });
-          /* v389-11b：空分类/未加载也即时铺骨架（滑过去不再是一块白板像没切换） */
-          if (!panelB.children.length) {
-            for (var _si = 0; _si < 4; _si++) {
-              var _sc = document.createElement('div');
-              _sc.className = 'card-skeleton';
-              _sc.innerHTML = '<div class="card-body"><div class="sk-img"></div><div class="sk-line w70"></div><div class="sk-line w95"></div></div>';
-              panelB.appendChild(_sc);
-            }
-          }
+          var _frag = document.createDocumentFragment();
+          (list || []).slice(0, 8).forEach(function (p) { try { _frag.appendChild(window.__buildProductCard(p)); } catch (e) { if (window.__silent) window.__silent(e); } });
+          if (_frag.children.length) panelB.replaceChildren(_frag); /* 原子替换：骨架→卡片无中间态 */
+          /* 空分类保留骨架（落定后走正式渲染出空态） */
         });
       },
       onProgress: function (p, dir, nb) {

@@ -455,8 +455,8 @@
     if (!hasIssue) body = '<div style="text-align:center;padding:20px 0;color:#9fe3b8">全部正常 ✓ 图片 ' + R0.totalImgs + ' 张 · 外链 ' + okLinks + '/' + R0.links.length + ' 条可达 · 环境 ' + (R0.env || []).length + '/' + (R0.env || []).length + '</div>';
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'sysCheckMask';
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检结果"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
-      '<h2 class="modal-title">系统体检结果</h2>' +
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
+      '<h2 class="modal-title">系统体检</h2>' +
       '<div style="font-size:12px;color:#8aa0b5;margin:0 0 10px">图片 ' + R0.totalImgs + ' 张（失效 ' + R0.broken.length + '）· 重复引用 ' + R0.dups.length + ' 组 · 外链 ' + R0.links.length + ' 条（疑似失效 ' + badLinks.length + '）· 超大图 ' + (R0.oversize || []).length + ' 张</div>' +
       '<div style="max-height:46vh;overflow-y:auto;background:#0f2233;border-radius:8px;padding:10px 12px;font-size:12px">' + body + '</div></div>';
     document.body.appendChild(mask);
@@ -515,8 +515,8 @@
     var old = document.getElementById('usersMask'); if (old) old.remove();
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'usersMask';
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号管理"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
-      '<h2 class="modal-title">子账号管理</h2><div class="form" id="usBody">' +
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="账号管理"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
+      '<h2 class="modal-title">账号管理</h2><div class="form" id="usBody">' +
       '<div style="text-align:center;color:#8aa0b5;font-size:13px;padding:14px 0">加载中…</div></div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
@@ -543,27 +543,14 @@
           '<br><span style="color:#9aa9b8;font-size:11px">' + st + ' · 最近活跃 ' + esc((u.lastSeen || '—').slice(0, 16)) + ' · 下级 ' + (u.subtreeCount || 0) + '</span></span>' +
           '<button type="button" class="btn-blue btn-inline-pd" data-ua="edit" data-id="' + u.id + '">编辑</button>' +
           '<button type="button" class="btn-blue btn-inline-pd" data-ua="pwd" data-id="' + u.id + '">改密</button>' +
-          '<button type="button" class="btn-blue btn-inline-pd" data-ua="status" data-id="' + u.id + '" data-st="' + (u.status ? 0 : 1) + '">' + (u.status ? '停用' : '启用') + '</button>' +
+          '<button type="button" class="btn-blue btn-inline-pd" data-ua="status" data-id="' + u.id + '" data-st="' + (u.status ? 0 : 1) + '">' + (u.status ? '冻结' : '解冻') + '</button>' +
           '<button type="button" class="btn-blue btn-inline-pd" data-ua="del" data-id="' + u.id + '" data-n="' + (u.childrenCount || 0) + '" data-nsub="' + (u.subtreeCount || 0) + '" style="color:#c62828;border-color:#c62828">删除</button></div>';
       }).join('');
       body.innerHTML =
-        (isSuper ? '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff6e8;border:1px solid #f0c896;border-radius:10px;margin-bottom:10px;font-size:12px">' +
-          '<span style="flex:1;color:#8a5a00"><b>应急冻结</b>：一键停用全部子账号（您自己不受影响）</span>' +
-          '<button type="button" class="btn-blue btn-inline-pd" id="usFreeze">' + (window.__subFreeze ? '解除冻结' : '立即冻结') + '</button></div>' : '') +
-        '<div style="margin-bottom:10px;text-align:right"><button type="button" class="btn-blue btn-inline-pd" id="usAdd">+ 新增子账号</button></div>' +
+        '<div style="margin-bottom:10px;text-align:right"><button type="button" class="btn-blue btn-inline-pd" id="usAdd">+ 新增账号</button></div>' +
         (rows || '<div style="text-align:center;color:#8aa0b5;font-size:12px;padding:10px 0">还没有子账号</div>');
       var addBtn = body.querySelector('#usAdd');
       if (addBtn) addBtn.addEventListener('click', function () { usersForm(null); });
-      var fz = body.querySelector('#usFreeze');
-      if (fz) fz.addEventListener('click', function () {
-        var on = !window.__subFreeze;
-        if (window.showConfirm) {
-          window.showConfirm(on ? '应急冻结' : '解除冻结', on ? '将立即停用全部子账号的登录与操作，确定？' : '将恢复全部子账号，确定？', function (cc) {
-            cc();
-            apiSettingsPut({ sub_freeze: on ? '1' : '0' }, function () { window.__subFreeze = on; renderUsersList(); if (window.showToast) window.showToast(on ? '已冻结全部子账号' : '已解除冻结', 'success'); });
-          });
-        } else { apiSettingsPut({ sub_freeze: on ? '1' : '0' }, function () { window.__subFreeze = on; renderUsersList(); }); }
-      });
       body.querySelectorAll('[data-ua]').forEach(function (b) {
         b.addEventListener('click', function () {
           var id = Number(this.getAttribute('data-id'));
@@ -626,7 +613,7 @@
       return '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;margin:3px 8px 3px 0;cursor:pointer"><input type="checkbox" data-cat="' + c.id + '"' + (on ? ' checked' : '') + '> ' + esc(c.name || ('分类#' + c.id)) + '</label>';
     }).join('');
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
-      '<h2 class="modal-title">' + (isEdit ? '编辑子账号：' + esc(u.username) : '新增子账号') + '</h2><div class="form" id="usFormBody">' +
+      '<h2 class="modal-title">' + (isEdit ? '编辑子账号：' + esc(u.username) : '新增账号') + '</h2><div class="form" id="usFormBody">' +
       (isEdit ? '' : '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">用户名（2-20 位字母数字）</label><input id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">') +
       (isEdit ? '' : '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">初始密码（6-50 位）</label><input id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">') +
       '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">备注（这是谁）</label><input id="ufNote" style="width:100%;margin-bottom:10px" maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">' +
@@ -640,7 +627,7 @@
       '<label style="margin-right:10px;cursor:pointer"><input type="radio" name="ufCode" value="own"' + (codeScope === 'own' ? ' checked' : '') + '> 只看自己新增的</label>' +
       '<label style="margin-right:10px;cursor:pointer"><input type="radio" name="ufCode" value="scoped"' + (codeScope === 'scoped' ? ' checked' : '') + '> 范围内的都能看</label>' +
       '<label style="cursor:pointer"><input type="radio" name="ufCode" value="all"' + (codeScope === 'all' ? ' checked' : '') + '> 全部都能看</label></div>' +
-      '<button type="button" class="btn-blue" id="ufSave" style="width:100%">' + (isEdit ? '保存修改' : '创建子账号') + '</button></div></div>';
+      '<button type="button" class="btn-blue" id="ufSave" style="width:100%">' + (isEdit ? '保存修改' : '创建账号') + '</button></div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
       mask.classList.add('open');
@@ -669,9 +656,9 @@
         var un = (mask.querySelector('#ufUser') || {}).value || '';
         var pw = (mask.querySelector('#ufPwd') || {}).value || '';
         usersCall('POST', { username: un, password: pw, note: note, perms: pv }, function () {
-          if (window.showToast) window.showToast('子账号已创建', 'success');
+          if (window.showToast) window.showToast('账号已创建', 'success');
           mask.remove(); renderUsersList();
-        }, function () { btn.disabled = false; btn.textContent = '创建子账号'; });
+        }, function () { btn.disabled = false; btn.textContent = '创建账号'; });
       }
     });
   }
@@ -742,16 +729,7 @@
   /* 平台设置页挂入口键（v434b：照「修改密码」组同款——独立白色卡片、各占一行、btn-inline-pd 自适应键宽，
      不再 flex 拉满半屏、不再游离在卡片外） */
   (function wait() {
-    /* #116 复检修正：有批量导入权限者在资源页也放入口（子账号无设置页签，否则权限是摆设） */
-    var tb = document.querySelector('.tb-group.g-add');
-    if (tb && !document.getElementById('batchImportBtn2') && (!window.__permCan || window.__permCan('batch.import'))) {
-      var b2 = document.createElement('button');
-      b2.type = 'button'; b2.className = 'btn-blue'; b2.id = 'batchImportBtn2';
-      b2.setAttribute('data-perm', 'batch.import');
-      b2.textContent = '批量导入';
-      tb.appendChild(b2);
-      b2.addEventListener('click', openWizard);
-    }
+    /* v441：资源页批量导入入口按老板拍板撤除（导入只留平台设置页入口） */
     var panel = document.getElementById('panel-settings');
     if (panel && !document.getElementById('batchImportBtn')) {
       var grp = document.createElement('div');
@@ -763,8 +741,8 @@
         '<button type="button" class="btn-blue btn-inline-pd" id="imgCheckBtn">系统体检</button>' +
         '<label style="' + lblSt + 'margin-top:14px;">数据缓存</label>' +
         '<button type="button" class="btn-blue btn-inline-pd" id="recycleBtn">数据缓存</button>' +
-        '<label style="' + lblSt + 'margin-top:14px;">子账号管理</label>' +
-        '<button type="button" class="btn-blue btn-inline-pd" id="usersBtn" data-perm="users">子账号管理</button>';
+        '<label style="' + lblSt + 'margin-top:14px;">账号管理</label>' +
+        '<button type="button" class="btn-blue btn-inline-pd" id="usersBtn" data-perm="users">账号管理</button>';
       panel.appendChild(grp);
       grp.querySelector('#batchImportBtn').addEventListener('click', openWizard);
       grp.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });

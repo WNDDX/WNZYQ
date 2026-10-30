@@ -3,7 +3,7 @@
  * 信息中心（需登录）：距上次查看的增量 + 今日概览 + 明细列表（谁/什么时候/做了什么）
  * 数据源：stats 表（view/contact/resource_unlock）+ resource_bindings 表（领取绑定），不建新表
  */
-import { json, requireAuth, requirePerm, ensureAdminUsers } from '../../_utils.js';
+import { json, requireAuth, requirePerm, ensureAdminUsers, ensureBindingsTable } from '../../_utils.js';
 
 const BJ = 8 * 3600 * 1000;
 

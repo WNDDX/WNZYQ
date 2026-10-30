@@ -166,7 +166,7 @@ export async function onRequestPut(context) {
     const status = Number(b.status) ? 1 : 0;
     await env.DB.prepare('UPDATE admin_users SET status = ? WHERE id = ?').bind(status, id).run();
     if (!status) await env.DB.prepare('DELETE FROM sessions WHERE admin_id = ? AND utype = ?').bind(id, 'u').run(); /* 停用即踢下线 */
-    await audit(env, request, status ? '启用子账号' : '停用子账号', target.username);
+    await audit(env, request, status ? '解冻账号' : '冻结账号', target.username);
     return json({ ok: true });
   }
   if (op === 'move') {

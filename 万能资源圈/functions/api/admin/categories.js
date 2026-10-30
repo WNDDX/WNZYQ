@@ -9,6 +9,7 @@
  *  - cnt = 该分类下全部资源数（含隐藏/下架，后台管理口径，与前端 refreshCatCnts 一致）
  */
 import { ensureAdminUsers, ensureSoftDelete, json, readJSON, requireAuth, requirePerm } from '../../_utils.js';
+import { parsePerms, catAllowed } from '../../_perms.js';
 
 export async function onRequestGet(context) {
   try { /* v440 自诊断壳 */

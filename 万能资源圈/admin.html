@@ -199,7 +199,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           </div>
           <!-- 折线图 -->
           <div class="line-chart" id="lineChart">
-            <svg aria-hidden="true" id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="none" style="display:block;width:100%;height:200px;"></svg><!-- v416 条9：none 拉伸填满——原 meet 在手机窄容器下按比例缩放导致图内上下大量留白（老板实拍手机/电脑图高不一致） -->
+            <svg aria-hidden="true" id="lineSvg" width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto;aspect-ratio:4/1;"></svg> <!-- v441：等比容器替代 none 拉伸（老板复检：窄屏畸形） --><!-- v416 条9：none 拉伸填满——原 meet 在手机窄容器下按比例缩放导致图内上下大量留白（老板实拍手机/电脑图高不一致） -->
             <div class="line-legend">
               <!-- R65：本期项在左（不带「本期」字样，默认即本期），上期项在右（竖线分隔）；
                    「对比上期」关闭时上期项隐藏（.show-prev 由 JS 切换）
