@@ -52,6 +52,7 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
+  try { /* v441b：错误自曝壳 */
   const { env, request } = context;
   const auth = await requirePerm(env, request, 'products.add');
   if (auth instanceof Response) return auth;
@@ -92,4 +93,5 @@ export async function onRequestPost(context) {
 
   try { const { audit } = await import('../../_utils.js'); await audit(env, request, '新增类型', name); } catch (e) {}
   return json({ ok: true, id: r.meta.last_row_id });
+  } catch (e1) { return json({ ok: false, msg: '新增类型错误: ' + (e1 && e1.message ? e1.message : String(e1)) }, 500); }
 }

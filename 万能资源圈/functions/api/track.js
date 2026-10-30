@@ -34,6 +34,7 @@ export async function onRequestPost(context) {
   }
 
   const ip = request.headers.get('CF-Connecting-IP') || '';
+  try { const { ensureStatsColumns } = await import('../_utils.js'); await ensureStatsColumns(env); } catch (eM) {} /* v441b：stats.region 幂等补列（缺列=埋点 INSERT 一直失败） */
   // R298（用户 09-30）：60 天清理统一每天一次——纯代码实现，不碰后台定时配置。
   // 记录上次清理日期在 settings 表（key='last_cleanup_date'），跨天首访触发一次；先检查真有旧数据才删。
   try {

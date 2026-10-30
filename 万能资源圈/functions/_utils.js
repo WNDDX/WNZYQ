@@ -289,6 +289,12 @@ export async function ensureVariantColumns(env) {
     if (!names.includes('is_hidden')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0").run();
     // R106：绑定设备上限挪到类型编辑表单——老库补 bind_limit 列（NULL=未单独设置，按全局设置兜底）
     if (!names.includes('bind_limit')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN bind_limit INTEGER").run();
+    /* v441b：INSERT 点名列全兜底（线上旧库缺则新增类型 500） */
+    if (!names.includes('img')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN img TEXT NOT NULL DEFAULT ''").run();
+    if (!names.includes('video')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN video TEXT NOT NULL DEFAULT ''").run();
+    if (!names.includes('contact_url')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN contact_url TEXT NOT NULL DEFAULT ''").run();
+    if (!names.includes('price')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN price REAL NOT NULL DEFAULT 0").run();
+    if (!names.includes('sort')) await env.DB.prepare("ALTER TABLE product_variants ADD COLUMN sort INTEGER NOT NULL DEFAULT 0").run();
     _variantColsEnsured = true;
   } catch (e) { /* 表尚未创建时忽略，install 会按新结构建表 */ }
 }
@@ -495,6 +501,21 @@ export async function clearPublicCache(request) {
   } catch (e) { /* 缓存清除失败不影响写操作 */ }
 }
 
+// v441b：幂等补 stats.region 列——补列原只在 install.js（线上已初始化永远不会再跑），
+// 而 track.js 埋点 INSERT 点名 region → 线上旧库缺列=访客统计一直写入失败、信息中心明细 SQL 报错。
+// 放在工具层，track/info 入口各调一次（幂等，已存在则跳过）。
+var _statsColsEnsured = false;
+export async function ensureStatsColumns(env) {
+  if (_statsColsEnsured) return;
+  try {
+    const cols = await env.DB.prepare('PRAGMA table_info(stats)').all();
+    if (!(cols.results || []).some(c => c.name === 'region')) {
+      await env.DB.prepare("ALTER TABLE stats ADD COLUMN region TEXT NOT NULL DEFAULT ''").run();
+    }
+    _statsColsEnsured = true;
+  } catch (e) { console.error('ensureStatsColumns 失败(不影响主流程):', e && e.message); }
+}
+
 // R92：读取平台设置（settings 键值表），失败/未设置返回默认值
 export async function getSetting(env, key, fallback) {
   try {
@@ -675,6 +696,7 @@ export async function ensureSoftDelete(env) {
   __sdDone = true;
   try { await env.DB.prepare('ALTER TABLE products ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
   try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
+  try { await env.DB.prepare("ALTER TABLE categories ADD COLUMN created_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {} /* v441b：#116 创建者列兜底（线上已验证有，此处幂等保险） */
 }
 
 /* #64 数据变更留痕（audit_log 表，60 天自动清理覆盖） */

@@ -3,7 +3,7 @@
  * 信息中心（需登录）：距上次查看的增量 + 今日概览 + 明细列表（谁/什么时候/做了什么）
  * 数据源：stats 表（view/contact/resource_unlock）+ resource_bindings 表（领取绑定），不建新表
  */
-import { json, requireAuth, requirePerm, ensureAdminUsers, ensureBindingsTable } from '../../_utils.js';
+import { json, requireAuth, requirePerm, ensureAdminUsers, ensureBindingsTable, ensureStatsColumns } from '../../_utils.js';
 
 const BJ = 8 * 3600 * 1000;
 
@@ -33,6 +33,7 @@ export async function onRequestGet(context) {
   const todayStartUTC = new Date(new Date(todayBJ + 'T00:00:00+08:00').getTime() - 0).toISOString().slice(0, 19).replace('T', ' ');
 
   await ensureBindingsTable(env);
+  try { await ensureStatsColumns(env); } catch (eS) {} /* v441b：stats.region 幂等补列（明细 SQL 用 s.region，缺列即报错） */
   /* v439 #63/#64：登录/审计表兜底建表（首次使用前确保 recent UNION 不因缺表 500） */
   try {
     await env.DB.prepare("CREATE TABLE IF NOT EXISTS admin_logins (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT (datetime('now')), device TEXT NOT NULL DEFAULT '', ip TEXT NOT NULL DEFAULT '', ua TEXT NOT NULL DEFAULT '')").run();
