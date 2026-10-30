@@ -70,6 +70,9 @@ export async function onRequestPost(context) {
 
   // R106：绑定设备上限挪进类型表单（<1 或非法一律按 1）
   const bindLimit = Math.max(1, parseInt(b.bindLimit, 10) || 1);
+  /* X1/v440：掩码兜底——复制资源时前端可能把列表里的打码头「●●●●」原样回传，入库前置空 */
+  var newCode = String(b.resourceCode || '').trim();
+  if (newCode === '●●●●') newCode = '';
   const r = await env.DB.prepare(
     `INSERT INTO product_variants (product_id, name, title, "desc", img, video, contact_url, price, sort, resource_code, resource_content, is_hidden, bind_limit)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
