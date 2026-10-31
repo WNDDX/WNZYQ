@@ -2461,7 +2461,6 @@ window.__renderCarousel = function (carouselEl, trackEl, dotsEl, fallbackImgEl, 
   });
     if (dotsEl) dotsEl.querySelectorAll('.cc-dot').forEach(function (d, i) { d.classList.toggle('active', i === st.idx); });
     restartTimer();
-  }
   function pause() { if (carouselEl.__ccTimer) { clearInterval(carouselEl.__ccTimer); carouselEl.__ccTimer = null; } }
   function restartTimer() { pause(); carouselEl.__ccTimer = setInterval(function () { goToSlide(st.idx + 1); }, 3000); }
   carouselEl.__ccPause = pause;
