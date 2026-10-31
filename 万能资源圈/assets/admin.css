@@ -687,12 +687,13 @@
        （z-index: 200 原本就被公共层 2000!important 覆盖=死值）。此处仅保留本页特有的档位覆盖。 */
     .modal-mask#variantMask { z-index: 260; } /* v357 条8：类型弹窗恒高于编辑弹窗，杜绝"打开但被盖住=像卡死" */
     .modal-mask#inputMask { z-index: 320; } /* v357 条8：输入弹窗更高一级 */
-    /* v443 条3（老板反馈：账号管理删除确认点不了）：确认弹窗与列表/表单弹窗同 z=200，
-       动态弹窗 append 在 body 末尾=绘制在上 → 确认弹窗被盖住「确定键永远点不了」。按台账补档位 */
-    .modal-mask#confirmMask { z-index: 400; } /* 确认弹窗恒最高（任何弹窗上叠确认都能点到） */
-    .modal-mask#usersMask { z-index: 200; }
-    .modal-mask#usFormMask { z-index: 260; } /* 表单叠于列表 */
-    .modal-mask#usPwdMask { z-index: 320; } /* 改密小弹窗 */
+    /* v443 条3（老板反馈：账号管理删除确认点不了）：ui-common 的 .modal-mask z-index:2000!important
+       把所有打开弹窗拉平=叠层弹窗被盖（确认弹窗被列表弹窗盖住「确定键永远点不了」）。
+       按 ID 特异性压过 .modal-mask.open 的 !important，建立叠层档位 */
+    .modal-mask#confirmMask.open { z-index: 2100 !important; } /* 确认弹窗恒最高 */
+    .modal-mask#usPwdMask.open { z-index: 2050 !important; } /* 改密小弹窗 */
+    .modal-mask#usFormMask.open { z-index: 2020 !important; } /* 表单叠于列表 */
+    .modal-mask#usersMask.open { z-index: 2000 !important; } /* 列表为底层 */
     .modal-mask#editMask { z-index: 200; }
     .modal-box {
       position: relative; background: var(--card-bg); border-radius: var(--r-l);
