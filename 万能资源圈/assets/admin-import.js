@@ -798,10 +798,10 @@
         var pwdGrp = document.getElementById('pwdGroup');
         if (pwdGrp) { pwdGrp.className = ''; pwdGrp.style.marginTop = '6px'; accGrp.appendChild(pwdGrp); }
       } catch (eP) { if (window.__silent) window.__silent(eP); }
-      grp.querySelector('#batchImportBtn').addEventListener('click', openWizard);
-      grp.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });
-      grp.querySelector('#recycleBtn').addEventListener('click', openRecycle);
-      grp.querySelector('#usersBtn').addEventListener('click', openUsers);
+      panel.querySelector('#batchImportBtn').addEventListener('click', openWizard);
+      panel.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });
+      panel.querySelector('#recycleBtn').addEventListener('click', openRecycle);
+      panel.querySelector('#usersBtn').addEventListener('click', openUsers);
 
       /* #80 每日自动体检（复检改版）：跨天首次进管理页，延时 8s 静默跑；发现问题不再挂按钮红点，
          改为写本地提醒标记 → 信息中心置顶提醒条（带「去查看」键跳转体检详情），复查正常或看过即清 */
