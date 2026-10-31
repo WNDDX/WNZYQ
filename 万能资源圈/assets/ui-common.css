@@ -355,6 +355,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
    完全同一套样式：蓝渐变顶栏上的半透明白胶囊，激活白底蓝字。
    两页禁止各自再写 .tab 样式（复用，非复制）。 */
 .tab {
+  position: relative; /* v443 条12：红点宿主统一锁定定位基准（个别视口档基准跳走=圆点探出被裁） */
   border: none; background: rgba(255, 255, 255, 0.18);
   color: #fff; padding: 0 16px; height: 36px;
   display: inline-flex; align-items: center; justify-content: center;
