@@ -102,14 +102,17 @@ export async function onRequestGet(context) {
        GROUP BY day, type ORDER BY day ASC`
     ).all(),
     // 按资源统计：全量口径
+    // v442 修复（老板反馈「导出数据统计错误」）：原 SQL 把 LEFT JOIN 写在 WHERE 之后（FROM→WHERE→JOIN 非法顺序），
+    // 该工作表一导就报 near "LEFT": syntax error。改为标准顺序 FROM→LEFT JOIN→WHERE。
     DB.prepare(
       `SELECT p.id, p.title,
               COALESCE(SUM(CASE WHEN s.type='view' THEN 1 ELSE 0 END),0) AS views,
               COALESCE(SUM(CASE WHEN s.type='contact' THEN 1 ELSE 0 END),0) AS contacts,
               COALESCE(SUM(CASE WHEN s.type='resource_unlock' THEN 1 ELSE 0 END),0) AS resource_unlocks,
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.product_id = p.id),0) AS bindings
-       FROM products p WHERE p.deleted_at IS NULL
+       FROM products p
        LEFT JOIN stats s ON s.product_id = p.id
+       WHERE p.deleted_at IS NULL
        GROUP BY p.id
        ORDER BY views DESC, p.id DESC`
     ).all(),

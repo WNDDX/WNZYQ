@@ -2460,6 +2460,9 @@
         whoBox.innerHTML = '只看：<select id="ctWhoSel" style="font-size:12px;padding:2px 6px;border:1px solid #dfe7ef;border-radius:6px"><option value="">全部动态</option>' +
           opts.map(function (w) { return '<option value="' + w + '"' + (window.__ctWho === w ? ' selected' : '') + '>' + w + '</option>'; }).join('') + '</select>';
         list.parentNode.insertBefore(whoBox, list);
+        /* v442 条10：动态插入的 select 也要升级为全站统一下拉（upgradeAllSelects 只跑一次，
+           动态创建的原生 select 不走统一机制=观感不一致且不受偏移修复保护） */
+        try { if (typeof makeSelectPicker === 'function') makeSelectPicker(whoBox.querySelector('#ctWhoSel')); } catch (eM) {}
         var sel = whoBox.querySelector('#ctWhoSel');
         sel.addEventListener('change', function () {
           window.__ctWho = this.value;
@@ -2470,6 +2473,31 @@
         if (_sel) _sel.value = window.__ctWho || '';
       }
     }
+    /* v442 条2（老板问「细项动态的筛选到底筛选了什么，筛选项都没看到」）：
+       原筛选只在「超管+有员工操作记录」时才出现=平时整个筛选条看不见。现加「类型筛选」常显下拉，
+       并明确文案：类型筛选=只看某类动作（浏览/咨询/查看内容/绑定/登录/系统操作）。本地过滤，即时生效。 */
+    var TYPE_OPTS = [['', '全部类型'], ['view', '浏览资源'], ['contact', '咨询客服'], ['resource_unlock', '查看内容'], ['bind', '资源解锁'], ['login', '设备登录'], ['audit', '系统操作']];
+    var typeBox = document.getElementById('ctTypeFilter');
+    if (!typeBox) {
+      typeBox = document.createElement('div');
+      typeBox.id = 'ctTypeFilter';
+      typeBox.style.cssText = 'display:flex;align-items:center;gap:6px;margin:0 0 8px;font-size:12px;color:#66788a';
+      typeBox.innerHTML = '筛选：<select id="ctTypeSel" style="font-size:12px;padding:2px 6px;border:1px solid #dfe7ef;border-radius:6px">' +
+        TYPE_OPTS.map(function (o) { return '<option value="' + o[0] + '"' + (window.__ctType === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
+        '<span style="color:#9aa9b8">（选某类=只看这类动作）</span>';
+      list.parentNode.insertBefore(typeBox, list);
+      /* v442 条10：同上——动态 select 升级为全站统一下拉 */
+      try { if (typeof makeSelectPicker === 'function') makeSelectPicker(typeBox.querySelector('#ctTypeSel')); } catch (eM2) {}
+      typeBox.querySelector('#ctTypeSel').addEventListener('change', function () {
+        window.__ctType = this.value;
+        var d3 = window.__lastInfo; if (d3) render(d3);
+      });
+    }
+    var _tSel = typeBox.querySelector('#ctTypeSel');
+    if (_tSel) _tSel.value = window.__ctType || '';
+    var _recentAll = d.recent || [];
+    if (window.__ctType) d.recent = _recentAll.filter(function (r) { return r.type === window.__ctType; });
+    window.__lastInfo = d;
     if (!(d.recent || []).length) {
       /* v434：0 值可解释——管理员自己浏览前台不计入（R168-②拍板），全 0 时说明口径避免「跟实际对不上」的疑惑 */
       var _allZero = !(d.delta && (d.delta.view || d.delta.contact || d.delta.unlock || d.delta.bind));
@@ -2511,21 +2539,29 @@
     try { var a = JSON.parse(localStorage.getItem('wnzyq_syscheck_alert') || 'null'); _al = !!(a && a.n); } catch (e) {}
     if (dot) dot.hidden = !_al;
   }
-  /* 红点：主视图可见后静默查一次——窗口内绑定/咨询任一 >0 才亮（访问量再大不打扰）；#80：体检提醒也亮 */
+  /* 红点：主视图可见后静默查一次。v442 条2（老板问「红点去不掉的逻辑」）明确并简化口径：
+     只有「新访客绑定 / 新咨询 / 体检提醒」才亮——设备登录和系统操作（管理员自己登录、自己改东西都算 audit）
+     不再点亮红点（原来连自己登录都亮=几乎永远亮，观感就是「一直去不掉」） */
   function checkDot() {
     var mv = document.getElementById('mainView');
     if (!mv || getComputedStyle(mv).display === 'none') { setTimeout(checkDot, 1200); return; }
     fetchInfo(function (d) {
       var _al = false;
       try { var a = JSON.parse(localStorage.getItem('wnzyq_syscheck_alert') || 'null'); _al = !!(a && a.n); } catch (e) {}
-      if (dot) dot.hidden = !((d.delta.bind > 0) || (d.delta.contact > 0) || (d.delta.login > 0) || (d.delta.audit > 0) || _al); /* v439：登录+下级动作+体检提醒都亮 */
+      if (dot) dot.hidden = !((d.delta.bind > 0) || (d.delta.contact > 0) || _al);
     });
   }
   window.__syscheckAlertChanged = function () { checkDot(); }; /* #80：自动体检写标记后即时刷新红点 */
   setTimeout(checkDot, 1500);
   if (btn) btn.addEventListener('click', function () {
+    markSeen(); /* v442 条2：打开即算看过——红点立刻灭（同时解决「红点被弹窗遮罩挡住一部分」的观感问题） */
     mask.classList.add('open');
     if (window.__haptic) window.__haptic();
+    /* v442 条2（老板反馈：内容加载慢、先空后闪动难看）：打开先铺骨架，数据回来再渲染 */
+    var _list0 = document.getElementById('ctList');
+    if (_list0) _list0.innerHTML = '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' +
+      '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' +
+      '<div class="sk-line" style="height:34px;border-radius:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>';
     fetchInfo(function (d) { render(d); }, window.__ctWho || undefined);
   });
   var fold = document.getElementById('ctFold');

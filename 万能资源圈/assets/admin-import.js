@@ -13,35 +13,19 @@
     return cats.map(function (c) { return c.name; });
   }
 
-  /* 生成 SpreadsheetML 模板：资源/分类/公告 三表 + 选项表（下拉源） + 使用说明
-     v436b（老板拍板）大改：①列名专业化不带括号描述 ②下拉=真 Excel 数据验证（分类/级别/显示状态全部选不用填）
-     ③全部单元格居中（对齐数据统计导出）④每表首行冻结 ⑤文件名与统计导出同规格「年月日-时分-批量导入模板」 */
+  /* 生成 SpreadsheetML 模板：资源/分类/公告 三表
+     v442 条5（老板拍板）：①去掉「选项」表和「使用说明」表——用户环境里下拉验证根本显示不出来
+     （SpreadsheetML 的 DataValidation 在 WPS/新版 Excel 兼容性差，说了有下拉实际没有，与「分类」概念还冲突）；
+     ②所属分类直接填分类名字符串，导入解析按名字匹配（parseWorkbook 本来就按名字找）。 */
   function buildTemplate() {
-    var opts = catOptions();
-    var lv = ['一级分类', '二级分类'], st = ['显示', '隐藏'];
     var d2 = new Date(), pd = function (n) { return n < 10 ? '0' + n : '' + n; };
     var fname = '' + d2.getFullYear() + pd(d2.getMonth() + 1) + pd(d2.getDate()) + '-' + pd(d2.getHours()) + pd(d2.getMinutes()) + '-批量导入模板.xls';
-    var nOpt = Math.max(opts.length, 1);
     var escR = function (r) { return '<Row>' + r.map(function (c) { return '<Cell ss:StyleID="c"><Data ss:Type="String">' + esc(c) + '</Data></Cell>'; }).join('') + '</Row>'; };
     var head = function (arr) { return '<Row>' + arr.map(function (h) { return '<Cell ss:StyleID="h"><Data ss:Type="String">' + esc(h) + '</Data></Cell>'; }).join('') + '</Row>'; };
     var freeze = '<x:WorksheetOptions xmlns:x="urn:schemas-microsoft-com:office:excel"><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane><x:ActivePane>2</x:ActivePane><x:Panes><x:Pane><x:Number>3</x:Number></x:Pane><x:Pane><x:Number>2</x:Number></x:Pane></x:Panes></x:WorksheetOptions>';
-    var dv = function (formula) { return '<DataValidation ss:Type="List" ss:AllowBlank="yes"><x1:Formula1>' + esc(formula) + '</x1:Formula1></DataValidation>'; };
-    var sheet = function (name, rows, validations) {
-      return '<Worksheet ss:Name="' + esc(name) + '"><Table>' + rows.join('') + '</Table>' + validations + freeze + '</Worksheet>';
+    var sheet = function (name, rows) {
+      return '<Worksheet ss:Name="' + esc(name) + '"><Table>' + rows.join('') + '</Table>' + freeze + '</Worksheet>';
     };
-    var optRows = [head(['分类选项', '分类级别选项', '显示状态选项'])]
-      .concat(opts.map(function (n2, i) { return escR([n2, i === 0 ? lv[0] : '', i === 0 ? st[0] : '']); }))
-      .concat([escR(['', lv[0], st[0]]), escR(['', lv[1], st[1]])]);
-    var helpRows = [
-      head(['批量导入使用说明']),
-      escR(['1. 三张工作表（资源/分类/公告）各自独立导入，不留空的行才会导入，整行留空自动跳过。']),
-      escR(['2. 带「选项」下拉的列：点击单元格会出现下拉箭头，直接选当前系统已有的值，不要手打。']),
-      escR(['3. 导入顺序：先填好并导入「分类」表，再导入「资源」表（资源的所属分类从下拉里选，必须是已存在的分类）。']),
-      escR(['4. 资源价格留空 = 免费；填数字 = 收费金额（单位：元）。']),
-      escR(['5. 显示状态选「隐藏」的资源/分类/公告导入后不对外展示，可随时在后台改回显示。']),
-      escR(['6. 资源码留空 = 该类型无资源码；填写则用户需凭码解锁。']),
-      escR(['7. 上传本文件后系统先预览校验，错误行会标红提示原因，确认无误才入库。'])
-    ];
     var xml = '<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>' +
       '<Workbook xmlns="' + NS + '" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x1="urn:schemas-microsoft-com:office:excel">' +
       '<Styles>' +
@@ -50,15 +34,13 @@
       '</Styles>' +
       sheet('资源', [head(['资源标题', '所属分类', '资源简介', '资源价格', '封面图片链接', '资源码', '显示状态']),
         '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(7) + '</Row>'],
-        dv('选项!$A$2:$A$' + (nOpt + 1))) +
+        '') +
       sheet('分类', [head(['分类名称', '分类级别', '所属一级分类', '排序序号', '显示状态']),
         '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(5) + '</Row>'],
-        dv('选项!$B$2:$B$3') + dv('选项!$A$2:$A$' + (nOpt + 1)) + dv('选项!$C$2:$C$3')) +
+        '') +
       sheet('公告', [head(['公告标题', '公告内容', '排序序号', '显示状态']),
         '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(4) + '</Row>'],
-        dv('选项!$C$2:$C$3')) +
-      sheet('选项', optRows, '') +
-      sheet('使用说明', helpRows, '') +
+        '') +
       '</Workbook>';
     return { xml: xml, name: fname };
   }
@@ -155,7 +137,9 @@
     mask.className = 'modal-mask'; mask.id = 'importMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="批量导入"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
-      '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">第 1 步：下载模板（分类列已带下拉，选就行）→ 填好 → 第 2 步上传 → 预览无误后导入。</p>' +
+      '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">第 1 步：下载模板（内带示例行照着填）→ 填好 → 第 2 步上传 → 预览无误后导入。</p>' +
+      '<details style="font-size:12px;color:#5b7083;margin:0 0 10px;border:1px solid #e3eaf1;border-radius:8px;padding:8px 10px"><summary style="cursor:pointer">填表说明（点开看）</summary>' +
+      '<div style="line-height:1.9;margin-top:6px">① 三张表各自独立导入，整行留空自动跳过；<br>② 「所属分类」直接填分类名称文字（须与系统里已有分类同名）；<br>③ 分类级别填「一级分类」或「二级分类」，二级需再填「所属一级分类」；<br>④ 显示状态填「显示」或「隐藏」，隐藏=前台不展示；<br>⑤ 价格留空=免费；资源码留空=无码；<br>⑥ 建议先导「分类」表再导「资源」表。</div></details>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
       '<label class="btn-blue btn-inline" for="impFile" style="flex:1;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0">上传表格<input type="file" id="impFile" accept=".xls,.xml" style="display:none"></label></div>' +
       '<div id="impPrev" style="margin-top:10px"></div></div></div>';
@@ -168,7 +152,7 @@
     mask.addEventListener('click', function (e) {
       if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
     });
-    mask.querySelector('#impTpl').addEventListener('click', function () { var tpl = buildTemplate(); download(tpl.name, tpl.xml); if (window.showToast) window.showToast('模板已下载（分类/级别/显示状态均为下拉）', 'success'); });
+    mask.querySelector('#impTpl').addEventListener('click', function () { var tpl = buildTemplate(); download(tpl.name, tpl.xml); if (window.showToast) window.showToast('模板已下载（三张表，照列名填即可）', 'success'); });
     mask.querySelector('#impFile').addEventListener('change', function () {
       var f = this.files && this.files[0]; if (!f) return;
       var rd = new FileReader();
@@ -215,6 +199,26 @@
     return new Promise(function (resolve) {
       var products = (window.state && state.products) || [];
       if (!products.length) { if (!silent && window.showToast) window.showToast('当前没有资源可检查', 'info'); resolve(null); return; }
+      /* v442 条3（老板反馈：点体检不马上出弹窗很卡）：点击后立刻弹出「体检中」弹窗（骨架+进度文案），
+         探测完成后由下方结果渲染处自动替换同一弹窗内容。中途关闭（_userClosed）则结束后不再打扰。 */
+      var _shell = null;
+      if (!silent) {
+        var _old = document.getElementById('sysCheckMask'); if (_old) _old.remove();
+        _shell = document.createElement('div');
+        _shell.className = 'modal-mask'; _shell.id = 'sysCheckMask';
+        _shell.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
+          '<h2 class="modal-title">系统体检</h2>' +
+          '<div style="font-size:13px;color:#5b7083;margin:0 0 12px">正在逐张检查图片、逐条探测外链，最长约半分钟，请稍候…</div>' +
+          '<div style="background:#0f2233;border-radius:8px;padding:10px 12px;font-size:12px">' +
+          '<div class="sk-line" style="height:14px;width:70%;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,#1a3350 55%,#24466b 75%,#1a3350 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' +
+          '<div class="sk-line" style="height:14px;width:50%;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,#1a3350 55%,#24466b 75%,#1a3350 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' +
+          '<div class="sk-line" style="height:14px;width:62%;border-radius:6px;background:linear-gradient(90deg,#1a3350 55%,#24466b 75%,#1a3350 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div></div></div>';
+        document.body.appendChild(_shell);
+        requestAnimationFrame(function () { _shell.classList.add('open'); });
+        _shell.addEventListener('click', function (e) {
+          if (e.target === _shell || e.target.closest('[data-x]')) { _shell.dataset.userClosed = '1'; _shell.classList.remove('open'); setTimeout(function () { _shell.remove(); }, 200); }
+        });
+      }
       var imgs = [];
       products.forEach(function (p) {
         var pname = '「' + (p.title || ('资源#' + p.id)) + '」';
@@ -242,7 +246,7 @@
           } catch (e0) { if (window.__silent) window.__silent(e0); }
         });
       });
-      if (!imgs.length && !links.length) { if (!silent && window.showToast) window.showToast('当前没有可检查的图片和外链', 'info'); resolve(null); return; }
+      if (!imgs.length && !links.length) { var _eS = document.getElementById('sysCheckMask'); if (_eS) _eS.remove(); if (!silent && window.showToast) window.showToast('当前没有可检查的图片和外链', 'info'); resolve(null); return; } /* v442：早退先撤「体检中」弹窗 */
       if (!silent && window.showToast) window.showToast('系统体检中：图片 ' + imgs.length + ' 张 · 外链 ' + links.length + ' 条…', 'info');
 
       /* 图片按 URL 去重并发检测；引用关系统计重复；同趟 fetch 测体积（#79 超大图） */
@@ -454,6 +458,10 @@
     var hasIssue = R0.broken.length || R0.dups.length || badLinks.length || (R0.oversize || []).length || badEnv.length;
     if (!hasIssue) body = '<div style="text-align:center;padding:20px 0;color:#9fe3b8">全部正常 ✓ 图片 ' + R0.totalImgs + ' 张 · 外链 ' + okLinks + '/' + R0.links.length + ' 条可达 · 环境 ' + (R0.env || []).length + '/' + (R0.env || []).length + '</div>';
     var mask = document.createElement('div');
+    /* v442 条3：用户中途关掉了「体检中」弹窗 → 结果不再弹窗打扰（仍照常 resolve 供自动体检用） */
+    var _wasClosed = document.getElementById('sysCheckMask');
+    _wasClosed = !!(_wasClosed && _wasClosed.dataset.userClosed === '1');
+    if (_wasClosed) { document.getElementById('sysCheckMask').remove(); resolve(R0); return; }
     mask.className = 'modal-mask'; mask.id = 'sysCheckMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">系统体检</h2>' +
@@ -505,8 +513,28 @@
     ['data.stats', '看统计总量'], ['data.detail', '看逐条明细'], ['data.ip', '看访客 IP'], ['data.export', '数据导出'],
     ['info.view', '信息中心'], ['users', '管理下级账号'],
   ];
-  function usersCall(method, body, done, fail) {
-    fetch('/api/admin/users', { method: method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined })
+  /* v442 条7：重置子账号密码——页面内小弹窗（替代原生 prompt，杜绝「验证卡死」） */
+  function openResetPwd(u, onOk) {
+    var old = document.getElementById('usPwdMask'); if (old) old.remove();
+    var mask = document.createElement('div');
+    mask.className = 'modal-mask'; mask.id = 'usPwdMask';
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="重置密码"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
+      '<h2 class="modal-title">重置密码：' + esc(u.username || '') + '</h2><div class="form">' +
+      '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">新密码（6-50 位）</label>' +
+      '<input id="usPwdInput" type="text" maxlength="50" style="width:100%;margin-bottom:10px" autocomplete="off">' +
+      '<button type="button" class="btn-blue" id="usPwdGo" style="width:100%">确认重置</button></div></div>';
+    document.body.appendChild(mask);
+    requestAnimationFrame(function () { mask.classList.add('open'); try { mask.querySelector('#usPwdInput').focus({ preventScroll: true }); } catch (eF) {} });
+    var close = function () { mask.classList.remove('open'); setTimeout(function () { mask.remove(); }, 200); };
+    mask.addEventListener('click', function (e) { if (e.target === mask || e.target.closest('[data-x]')) close(); });
+    mask.querySelector('#usPwdGo').addEventListener('click', function () {
+      var np = (mask.querySelector('#usPwdInput').value || '').trim();
+      if (np.length < 6) { if (window.showToast) window.showToast('密码至少 6 位', 'error'); return; }
+      onOk(np); close();
+    });
+    mask.querySelector('#usPwdInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') mask.querySelector('#usPwdGo').click(); });
+  }
+  function usersCall(method, body, done, fail) {    fetch('/api/admin/users', { method: method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { return r.json(); })
       .then(function (x) { if (x && x.ok) { if (done) done(x); } else { if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error'); if (fail) fail(x); } })
       .catch(function () { if (window.showToast) window.showToast('网络开小差了，请稍后再试', 'error'); if (fail) fail(); });
@@ -547,7 +575,7 @@
           '<button type="button" class="btn-blue btn-inline-pd" data-ua="del" data-id="' + u.id + '" data-n="' + (u.childrenCount || 0) + '" data-nsub="' + (u.subtreeCount || 0) + '" style="color:#c62828;border-color:#c62828">删除</button></div>';
       }).join('');
       body.innerHTML =
-        '<div style="margin-bottom:10px;text-align:right"><button type="button" class="btn-blue btn-inline-pd" id="usAdd">+ 新增账号</button></div>' +
+        '<div style="margin-bottom:10px"><button type="button" class="btn-blue btn-inline-pd" id="usAdd">新增账号</button></div>' + /* v442 条7：去掉「+」且靠左（原 text-align:center） */
         (rows || '<div style="text-align:center;color:#8aa0b5;font-size:12px;padding:10px 0">还没有子账号</div>');
       var addBtn = body.querySelector('#usAdd');
       if (addBtn) addBtn.addEventListener('click', function () { usersForm(null); });
@@ -559,9 +587,11 @@
           var u = list.filter(function (x) { return x.id === id; })[0] || {};
           if (ua === 'edit') usersForm(u);
           else if (ua === 'pwd') {
-            var np = prompt('给「' + u.username + '」设置新密码（6-50 位）：');
-            if (np != null && np.length >= 6) usersCall('PUT', { id: id, op: 'resetpwd', password: np }, function () { if (window.showToast) window.showToast('密码已重置，该账号已强制下线', 'success'); });
-            else if (np !== null && window.showToast) window.showToast('密码至少 6 位', 'error');
+            /* v442 条7（老板反馈「验证卡死」）：原用原生 prompt()——浏览器弹出层被拦截/堆叠时永远停不住也回不来=卡死。
+               改为页面内小弹窗输入，和全站弹窗同一套规格，永不卡死。 */
+            openResetPwd(u, function (np) {
+              usersCall('PUT', { id: id, op: 'resetpwd', password: np }, function () { if (window.showToast) window.showToast('密码已重置，该账号已强制下线', 'success'); });
+            });
           }
           else if (ua === 'status') usersCall('PUT', { id: id, op: 'status', status: Number(this.getAttribute('data-st')) }, function () { renderUsersList(); });
           else if (ua === 'del') {
@@ -734,16 +764,23 @@
     if (panel && !document.getElementById('batchImportBtn')) {
       var grp = document.createElement('div');
       grp.className = 'setting-group';
+      /* v442 条11（老板反馈：按键按类型重新归类，修改密码放最下面）：
+         原 4 个键一股脑塞一个组且追加在「修改密码」组之后。现重建三组——
+         「内容管理」（批量导入/数据缓存）、「系统维护」（系统体检）、「账号与安全」（账号管理+修改密码移到最末） */
       var lblSt = 'display:block;font-size:13px;color:#666;margin-bottom:6px;';
-      grp.innerHTML = '<label style="' + lblSt + '">批量导入</label>' +
-        '<button type="button" class="btn-blue btn-inline-pd" id="batchImportBtn">批量导入</button>' +
-        '<label style="' + lblSt + 'margin-top:14px;">图片体检</label>' +
-        '<button type="button" class="btn-blue btn-inline-pd" id="imgCheckBtn">系统体检</button>' +
-        '<label style="' + lblSt + 'margin-top:14px;">数据缓存</label>' +
-        '<button type="button" class="btn-blue btn-inline-pd" id="recycleBtn">数据缓存</button>' +
-        '<label style="' + lblSt + 'margin-top:14px;">账号管理</label>' +
-        '<button type="button" class="btn-blue btn-inline-pd" id="usersBtn" data-perm="users">账号管理</button>';
+      var btnHtml = function (id, lab, extra) { return '<button type="button" class="btn-blue btn-inline-pd" id="' + id + '"' + (extra || '') + '>' + lab + '</button>'; };
+      var row = function (lab, btnStr) { return '<div class="setting-row"><label>' + lab + '</label>' + btnStr + '</div>'; };
+      grp.innerHTML =
+        '<h3>内容管理</h3>' + row('批量导入', btnHtml('batchImportBtn', '批量导入')) + row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存')) +
+        '<h3 style="margin-top:18px">系统维护</h3>' + row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检')) +
+        '<h3 style="margin-top:18px">账号与安全</h3>' + row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"'));
       panel.appendChild(grp);
+      /* 把静态「修改密码」组挪进「账号与安全」组最末（保证修改密码永远在最下面）；
+         原组自带 setting-group 白卡样式，挪进组内会双层嵌套 → 降级为普通块 */
+      try {
+        var pwdGrp = document.getElementById('pwdGroup');
+        if (pwdGrp) { pwdGrp.className = ''; pwdGrp.style.marginTop = '6px'; grp.appendChild(pwdGrp); }
+      } catch (eP) { if (window.__silent) window.__silent(eP); }
       grp.querySelector('#batchImportBtn').addEventListener('click', openWizard);
       grp.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });
       grp.querySelector('#recycleBtn').addEventListener('click', openRecycle);

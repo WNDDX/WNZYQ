@@ -112,6 +112,9 @@
     #announcementRteToolbar { border-radius: 8px 8px 0 0; } /* 顶栏圆角与编辑器体衔接（原内联） */
     #filterSearchBox { margin-left: auto; } /* 搜索组右靠（原内联；.tb-row 内的同款靠 .tb-row 规则，此处是 tb-group 场景） */
     .cat-picker { flex-shrink: 0; } /* v404 条22：原内联 flex-shrink 并入（position:relative 本就有） */
+    /* v442 条4（老板多次反馈：弹窗内按键字体不统一）根治：浏览器默认 <button>/<select> 不继承页面字体，
+       button 用系统 UI 字体、label/span 用页面字体 → 同一排键两种字。一句话让全部表单控件继承，全站生效 */
+    button, input, select, textarea { font-family: inherit; }
     /* R118：登录卡内按钮去掉通用 10px 下边距，框内内容上下真正对称居中 */
     .login-card .btn-blue { margin-bottom: 0; }
 
@@ -704,6 +707,11 @@
       #bindingsTable .row-btn { padding: 4px 4px; font-size: 12px; white-space: nowrap; }
     }
     .modal-mask#catMask > .modal-box, .modal-mask#batchCatMask > .modal-box { max-width: 520px; }
+    /* v442 条1（老板反馈：平台设置四个弹窗太小气）：批量导入/系统体检/账号管理(+表单)/数据缓存
+       内容都偏多，统一升到 680px 大弹窗档（对齐编辑资源/公告弹窗规矩） */
+    .modal-mask#importMask > .modal-box, .modal-mask#sysCheckMask > .modal-box,
+    .modal-mask#usersMask > .modal-box, .modal-mask#usFormMask > .modal-box,
+    .modal-mask#recycleMask > .modal-box { max-width: 680px; }
     /* 弹窗宽度由各弹窗 modal-wide/modal-lg 类控制 */
     /* R231 条10：maskIn 已抽公共到 ui-common.css */
     /* R231 条10：modalIn 已抽公共到 ui-common.css */

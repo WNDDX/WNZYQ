@@ -761,6 +761,9 @@
           if (window.visualViewport) window.visualViewport.addEventListener('resize', __re);
           window.addEventListener('scroll', __re, true);
         }
+        /* v442 条10 同款补丁：弹窗 modalIn 动画（scale）期间测量会偏——双 rAF 避开起始帧 + 动画结束后再校准一次 */
+        requestAnimationFrame(function () { requestAnimationFrame(function () { if (pop.classList.contains('open') && dtTarget && dtTarget.isConnected) openPicker(dtTarget); }); });
+        setTimeout(function () { if (pop.classList.contains('open') && dtTarget && dtTarget.isConnected) openPicker(dtTarget); }, 320);
       }
       function closePicker() { pop.classList.remove('open'); dtTarget = null; }
       function commit() {

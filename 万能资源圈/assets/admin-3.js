@@ -280,11 +280,16 @@
           if (pp) {
             /* v416 条3：空内容自动收起（对齐资源页分类三角逻辑）——面板没有任何可选项时不展开 */
             if (!pp.querySelector('.cp-item')) { picker.classList.remove('open'); pp.classList.remove('open'); return; }
-            if (picker.classList.contains('select-picker')) { if (pp.parentNode !== document.body) document.body.appendChild(pp); }
-            else if (pp.parentNode !== picker) picker.appendChild(pp);
+            /* v442 条10（老板反馈：下拉内容与下拉位置大幅偏移，全系统修）：原来只有 select-picker 面板移到 body，
+               纯 cat-picker 的面板留在原地——弹窗打开动画（modalIn 的 scale）期间/任何 transform 祖先存在时，
+               position:fixed 面板的基准点变成该祖先 → 面板整体错位。统一全部移到 body，彻底斩断 transform 影响。 */
+            if (pp.parentNode !== document.body) document.body.appendChild(pp);
             pp.classList.add('open');
           }
           positionCatPanel(picker);
+          /* v442 条10：动画期间测量会偏——双 rAF 避开起始帧 + 动画结束（约 300ms）后再校准一次 */
+          requestAnimationFrame(function () { requestAnimationFrame(function () { if (picker.classList.contains('open')) positionCatPanel(picker); }); });
+          setTimeout(function () { if (picker.classList.contains('open')) positionCatPanel(picker); }, 320);
         }
         return;
       }
@@ -673,7 +678,9 @@
     function renderVariants() {
       variantListEl.innerHTML = '';
       if (!state.variants.length) {
-        variantListEl.innerHTML = window.__adminEmpty('该资源暂无类型', '点右上角「新增类型」添加，可拖拽排序'); /* v349 条9：统一空态 */
+        /* v442 条8（老板拍板）：无类型时不再显示立方体图标和「该资源暂无类型」整套文案——
+           标题行（资源类型/套餐 + 新增类型键）本身就说明了状态，空态区直接留白更干净 */
+        variantListEl.innerHTML = '';
         return;
       }
       state.variants.forEach(function (v, idx) {
