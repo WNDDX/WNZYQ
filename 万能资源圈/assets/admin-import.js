@@ -90,12 +90,13 @@
   function preview(data) {
     var lines = [];
     var cats = catOptions();
-    var res = data['资源'] || [], cat = data['分类'] || [], ann = data['公告'] || [];
+    var res = data['资源'] || [], cat = data['分类'] || [], ann = data['公告'] || [], vars = data['类型'] || []; /* v443 条5：类型表纳入预览校验 */
     var bad = 0;
     res.forEach(function (r, i) { if (!r[0]) { bad++; lines.push('资源第' + (i + 2) + '行：缺标题，跳过'); } else if (r[1] && cats.indexOf(r[1]) < 0) { bad++; lines.push('资源第' + (i + 2) + '行：分类「' + r[1] + '」不存在，请先导分类'); } });
     cat.forEach(function (r, i) { if (!r[0]) { bad++; lines.push('分类第' + (i + 2) + '行：缺名称，跳过'); } });
     ann.forEach(function (r, i) { if (!r[0]) { bad++; lines.push('公告第' + (i + 2) + '行：缺标题，跳过'); } });
-    lines.unshift('校验完成：资源 ' + res.length + ' 条 / 分类 ' + cat.length + ' 条 / 公告 ' + ann.length + ' 条' + (bad ? '；问题 ' + bad + ' 条' : '，全部可导入'));
+    vars.forEach(function (r, i) { if (!r[0] || !r[1]) { bad++; lines.push('类型第' + (i + 2) + '行：缺所属资源标题或类型名称，跳过'); } }); /* v443 条5 */
+    lines.unshift('校验完成：资源 ' + res.length + ' 条 / 类型 ' + vars.length + ' 条 / 分类 ' + cat.length + ' 条 / 公告 ' + ann.length + ' 条' + (bad ? '；问题 ' + bad + ' 条' : '，全部可导入'));
     return { lines: lines, bad: bad, '资源': res, '分类': cat, '公告': ann }; /* v431b：键名与 doImport 对齐 */
   }
 
@@ -175,7 +176,7 @@
         try {
           var pv = preview(parseWorkbook(String(rd.result)));
           var body = mask.querySelector('#impPrev');
-          var total = (pv['资源'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length; /* v431c：键名与 preview 返回值对齐（旧 pv.res 未同步=预览空白的真凶） */
+          var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length; /* v431c：键名与 preview 返回值对齐（旧 pv.res 未同步=预览空白的真凶） */
           body.innerHTML = '<div class="probe" style="background:#0f2233;color:#9fe3b8;border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap">' + esc(pv.lines.join('\n')) + '</div>' +
             '<button class="btn-blue" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
           body.querySelector('#impGo').addEventListener('click', function () {
