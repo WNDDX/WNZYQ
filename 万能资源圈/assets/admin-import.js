@@ -549,7 +549,7 @@
     });
     mask.querySelector('#usPwdInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') mask.querySelector('#usPwdGo').click(); });
   }
-  function usersCall(method, body, done, fail) {    fetch('/api/admin/users', { method: method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined })
+  function usersCall(method, body, done, fail, urlOverride) {    fetch(urlOverride || '/api/admin/users', { method: method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined }) /* v443 条6：删除等需带 id 查询串的场景用 urlOverride */
       .then(function (r) { return r.json(); })
       .then(function (x) { if (x && x.ok) { if (done) done(x); } else { if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error'); if (fail) fail(x); } })
       .catch(function () { if (window.showToast) window.showToast('网络开小差了，请稍后再试', 'error'); if (fail) fail(); });
@@ -614,9 +614,9 @@
             if (window.showConfirm) {
               window.showConfirm('删除子账号', '删除「' + (u.username || '') + '」？' + (n > 0 ? '其 ' + n + ' 个直接下级账号将统一成为超级管理员的下级。' : '') + '该账号的留痕记录保留 60 天。', function (cc) {
                 cc();
-                usersCall('DELETE', null, function () { renderUsersList(); if (window.showToast) window.showToast('已删除', 'success'); });
+                usersCall('DELETE', null, function () { renderUsersList(); if (window.showToast) window.showToast('已删除', 'success'); }, null, '/api/admin/users?id=' + id); /* v443 条6：补 id 查询串（原请求缺 id=删除从未成功） */
               });
-            } else usersCall('DELETE', null, function () { renderUsersList(); });
+            } else usersCall('DELETE', null, function () { renderUsersList(); }, null, '/api/admin/users?id=' + id);
           }
         });
       });
