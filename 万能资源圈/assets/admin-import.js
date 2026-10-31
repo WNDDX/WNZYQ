@@ -97,7 +97,7 @@
     ann.forEach(function (r, i) { if (!r[0]) { bad++; lines.push('公告第' + (i + 2) + '行：缺标题，跳过'); } });
     vars.forEach(function (r, i) { if (!r[0] || !r[1]) { bad++; lines.push('类型第' + (i + 2) + '行：缺所属资源标题或类型名称，跳过'); } }); /* v443 条5 */
     lines.unshift('校验完成：资源 ' + res.length + ' 条 / 类型 ' + vars.length + ' 条 / 分类 ' + cat.length + ' 条 / 公告 ' + ann.length + ' 条' + (bad ? '；问题 ' + bad + ' 条' : '，全部可导入'));
-    return { lines: lines, bad: bad, '资源': res, '分类': cat, '公告': ann }; /* v431b：键名与 doImport 对齐 */
+    return { lines: lines, bad: bad, '资源': res, '类型': vars, '分类': cat, '公告': ann }; /* v431b：键名与 doImport 对齐；v443 条5：补类型键（漏了=类型表数据到 doImport 时变空=类型永不导入） */
   }
 
   /* 入库：分类→资源→公告（v431b：api() 是 admin-1 闭包内函数拿不到，改原生 fetch 同源带会话）
