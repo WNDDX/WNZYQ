@@ -186,20 +186,13 @@
       fileCards.forEach(function (card) {
         var a = card.querySelector('a[data-dl]');
         if (!a) return;
-        card.style.cursor = 'pointer';
-        card.addEventListener('click', function (e) {
-          if (e.target.closest('button, a, input')) return; /* v336 条162：链接/输入也不冒泡 */
-          a.click();
-        });
+        /* v443 条2（老板拍板）：去掉整卡点击代理下载——只有点「下载」键才下载，
+           点卡片其他任何地方都不触发（此前点卡片任意位置都会开始下载） */
       });
       function fcBindRow(row) {
         var key = row.getAttribute('data-key');
         if (!key) return;
-        row.style.cursor = 'pointer';
-        row.addEventListener('click', function (e) {
-          if (e.target.closest('button, a, input')) return; /* v336 条162 */
-          triggerDownload('/files/' + key);
-        });
+        /* v443 条2（老板拍板）：去掉整行点击代理下载——只有点行尾「下载」键才下载 */
         /* v380：把文件行的大小与下载键包成一组靠右，与文件夹标题行 .fc-head-meta 视觉统一 */
         var __existingDl = row.querySelector('.fc-dl');
         var __existingSize = row.querySelector('.fsize');

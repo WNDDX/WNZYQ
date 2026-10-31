@@ -13,34 +13,44 @@
     return cats.map(function (c) { return c.name; });
   }
 
-  /* 生成 SpreadsheetML 模板：资源/分类/公告 三表
-     v442 条5（老板拍板）：①去掉「选项」表和「使用说明」表——用户环境里下拉验证根本显示不出来
-     （SpreadsheetML 的 DataValidation 在 WPS/新版 Excel 兼容性差，说了有下拉实际没有，与「分类」概念还冲突）；
-     ②所属分类直接填分类名字符串，导入解析按名字匹配（parseWorkbook 本来就按名字找）。 */
+  /* 生成 SpreadsheetML 模板：分类/资源/类型/公告 四表 + 选项表（下拉源）
+     v443 条5（老板拍板）：①信息要全面——资源带定时显示/隐藏时间列，新增「类型」表（类型名/价格/资源码/状态）；
+     ②分类列恢复下拉选择（选项表=现有分类自动生成，不用手打）；③「使用说明」表不恢复（v442 已拍板去除）。 */
   function buildTemplate() {
+    var opts = catOptions();
+    var lv = ['一级分类', '二级分类'], st = ['显示', '隐藏'];
     var d2 = new Date(), pd = function (n) { return n < 10 ? '0' + n : '' + n; };
     var fname = '' + d2.getFullYear() + pd(d2.getMonth() + 1) + pd(d2.getDate()) + '-' + pd(d2.getHours()) + pd(d2.getMinutes()) + '-批量导入模板.xls';
+    var nOpt = Math.max(opts.length, 1);
     var escR = function (r) { return '<Row>' + r.map(function (c) { return '<Cell ss:StyleID="c"><Data ss:Type="String">' + esc(c) + '</Data></Cell>'; }).join('') + '</Row>'; };
     var head = function (arr) { return '<Row>' + arr.map(function (h) { return '<Cell ss:StyleID="h"><Data ss:Type="String">' + esc(h) + '</Data></Cell>'; }).join('') + '</Row>'; };
     var freeze = '<x:WorksheetOptions xmlns:x="urn:schemas-microsoft-com:office:excel"><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane><x:ActivePane>2</x:ActivePane><x:Panes><x:Pane><x:Number>3</x:Number></x:Pane><x:Pane><x:Number>2</x:Number></x:Pane></x:Panes></x:WorksheetOptions>';
-    var sheet = function (name, rows) {
-      return '<Worksheet ss:Name="' + esc(name) + '"><Table>' + rows.join('') + '</Table>' + freeze + '</Worksheet>';
+    var dv = function (formula) { return '<DataValidation ss:Type="List" ss:AllowBlank="yes"><x1:Formula1>' + esc(formula) + '</x1:Formula1></DataValidation>'; };
+    var sheet = function (name, rows, validations) {
+      return '<Worksheet ss:Name="' + esc(name) + '"><Table>' + rows.join('') + '</Table>' + validations + freeze + '</Worksheet>';
     };
+    var optRows = [head(['分类选项', '分类级别选项', '显示状态选项'])]
+      .concat(opts.map(function (n2, i) { return escR([n2, i === 0 ? lv[0] : '', i === 0 ? st[0] : '']); }))
+      .concat([escR(['', lv[0], st[0]]), escR(['', lv[1], st[1]])]);
     var xml = '<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>' +
       '<Workbook xmlns="' + NS + '" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x1="urn:schemas-microsoft-com:office:excel">' +
       '<Styles>' +
       '<Style ss:ID="h"><Font ss:Bold="1"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>' +
       '<Style ss:ID="c"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>' +
       '</Styles>' +
-      sheet('资源', [head(['资源标题', '所属分类', '资源简介', '资源价格', '封面图片链接', '资源码', '显示状态']),
-        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(7) + '</Row>'],
-        '') +
       sheet('分类', [head(['分类名称', '分类级别', '所属一级分类', '排序序号', '显示状态']),
         '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(5) + '</Row>'],
-        '') +
+        dv('选项!$B$2:$B$3') + dv('选项!$A$2:$A$' + (nOpt + 1)) + dv('选项!$C$2:$C$3')) +
+      sheet('资源', [head(['资源标题', '所属分类', '资源简介', '资源价格', '封面图片链接', '显示状态', '定时显示时间', '定时隐藏时间']),
+        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(8) + '</Row>'],
+        dv('选项!$A$2:$A$' + (nOpt + 1)) + dv('选项!$C$2:$C$3')) +
+      sheet('类型', [head(['所属资源标题', '类型名称', '类型价格', '资源码', '显示状态']),
+        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(5) + '</Row>'],
+        dv('选项!$C$2:$C$3')) +
       sheet('公告', [head(['公告标题', '公告内容', '排序序号', '显示状态']),
         '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(4) + '</Row>'],
-        '') +
+        dv('选项!$C$2:$C$3')) +
+      sheet('选项', optRows, '') +
       '</Workbook>';
     return { xml: xml, name: fname };
   }
@@ -110,17 +120,23 @@
         return apiCall('admin/categories', { method: 'POST', body: JSON.stringify({ name: r[0], parent_id: pid, sort: Number(r[3]) || 0, hidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) });
       }).then(function (x) { if (x && x.ok) catIdByName[r[0]] = x.id; say('分类「' + r[0] + '」' + (x && x.ok ? '✓' : '失败')); }).catch(function () { say('分类「' + r[0] + '」失败'); });
     });
+    var prodIdByName = {};
     (data['资源'] || []).forEach(function (r) {
       if (!r[0]) return;
-      seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({ title: r[0], desc: r[2] || '', price: Number(r[3]) || 0, img: r[4] || '', hidden: /隐藏/.test(r[6] || '') ? 1 : 0 }) }); }).then(function (x) {
-        if (!(x && x.ok)) { say('资源「' + r[0] + '」失败'); return; }
-        /* v440 复检修正：导入表「资源码」列不再静默丢弃——带码时自动建一个默认类型并写入码 */
-        var code = String(r[5] || '').trim();
-        if (!code) { say('资源「' + r[0] + '」✓'); return; }
-        return apiCall('admin/variants', { method: 'POST', body: JSON.stringify({ productId: x.id, name: '默认类型', resourceCode: code }) }).then(function (y) {
-          say('资源「' + r[0] + '」✓（含码）');
-        }).catch(function () { say('资源「' + r[0] + '」✓（码写入失败，请手动补）'); });
+      seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({ title: r[0], cid: catIdByName[r[1]] || 0, desc: r[2] || '', price: Number(r[3]) || 0, img: r[4] || '', hidden: /隐藏/.test(r[5] || '') ? 1 : 0, schedule_on: (r[6] || '').trim() || undefined, schedule_off: (r[7] || '').trim() || undefined }) }); }).then(function (x) {
+        if (!(x && x.ok)) { say('资源「' + r[0] + '」失败' + (x && x.msg ? '：' + x.msg : '')); return; }
+        prodIdByName[r[0]] = x.id;
+        say('资源「' + r[0] + '」✓');
       }).catch(function () { say('资源「' + r[0] + '」失败'); });
+    });
+    /* v443 条5：类型表导入——所属资源标题（对应资源表标题）/类型名称/类型价格/资源码/显示状态 */
+    (data['类型'] || []).forEach(function (r) {
+      if (!r[0] || !r[1]) return;
+      seq = seq.then(function () {
+        var pid = prodIdByName[r[0]];
+        if (!pid) { say('类型「' + r[1] + '」：资源「' + r[0] + '」未在本次导入中创建，跳过'); return Promise.resolve(null); }
+        return apiCall('admin/variants', { method: 'POST', body: JSON.stringify({ productId: pid, name: r[1], price: Number(r[2]) || 0, resourceCode: String(r[3] || '').trim() === '●●●●' ? '' : String(r[3] || '').trim(), isHidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) });
+      }).then(function (x) { if (x === null) return; say('类型「' + r[1] + '」' + (x && x.ok ? '✓' : '失败')); }).catch(function () { say('类型「' + r[1] + '」失败'); });
     });
     (data['公告'] || []).forEach(function (r) {
       if (!r[0]) return;
@@ -137,11 +153,9 @@
     mask.className = 'modal-mask'; mask.id = 'importMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="批量导入"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
-      '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">第 1 步：下载模板（内带示例行照着填）→ 填好 → 第 2 步上传 → 预览无误后导入。</p>' +
-      '<details style="font-size:12px;color:#5b7083;margin:0 0 10px;border:1px solid #e3eaf1;border-radius:8px;padding:8px 10px"><summary style="cursor:pointer">填表说明（点开看）</summary>' +
-      '<div style="line-height:1.9;margin-top:6px">① 三张表各自独立导入，整行留空自动跳过；<br>② 「所属分类」直接填分类名称文字（须与系统里已有分类同名）；<br>③ 分类级别填「一级分类」或「二级分类」，二级需再填「所属一级分类」；<br>④ 显示状态填「显示」或「隐藏」，隐藏=前台不展示；<br>⑤ 价格留空=免费；资源码留空=无码；<br>⑥ 建议先导「分类」表再导「资源」表。</div></details>' +
+      '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">第 1 步：下载模板 → 填好 → 第 2 步上传 → 预览无误后导入。建议顺序：先导「分类」→ 再导「资源」→ 最后导「类型」。</p>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
-      '<label class="btn-blue btn-inline" for="impFile" style="flex:1;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0">上传表格<input type="file" id="impFile" accept=".xls,.xml" style="display:none"></label></div>' +
+      '<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xls,.xml" style="display:none"></div>' +
       '<div id="impPrev" style="margin-top:10px"></div></div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
@@ -152,7 +166,8 @@
     mask.addEventListener('click', function (e) {
       if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
     });
-    mask.querySelector('#impTpl').addEventListener('click', function () { var tpl = buildTemplate(); download(tpl.name, tpl.xml); if (window.showToast) window.showToast('模板已下载（三张表，照列名填即可）', 'success'); });
+    mask.querySelector('#impTpl').addEventListener('click', function () { var tpl = buildTemplate(); download(tpl.name, tpl.xml); if (window.showToast) window.showToast('模板已下载（分类/资源/类型/公告四表，分类列可直接选）', 'success'); });
+    mask.querySelector('#impUploadBtn').addEventListener('click', function () { mask.querySelector('#impFile').click(); }); /* v443 条5：上传键改 button 与下载键完全同款（原 label 结构渲染发灰） */
     mask.querySelector('#impFile').addEventListener('change', function () {
       var f = this.files && this.files[0]; if (!f) return;
       var rd = new FileReader();
@@ -762,24 +777,26 @@
     /* v441：资源页批量导入入口按老板拍板撤除（导入只留平台设置页入口） */
     var panel = document.getElementById('panel-settings');
     if (panel && !document.getElementById('batchImportBtn')) {
-      var grp = document.createElement('div');
-      grp.className = 'setting-group';
-      /* v442 条11（老板反馈：按键按类型重新归类，修改密码放最下面）：
-         原 4 个键一股脑塞一个组且追加在「修改密码」组之后。现重建三组——
-         「内容管理」（批量导入/数据缓存）、「系统维护」（系统体检）、「账号与安全」（账号管理+修改密码移到最末） */
-      var lblSt = 'display:block;font-size:13px;color:#666;margin-bottom:6px;';
+      /* v443 条15（老板反馈：模块要分开，像基本设置那样独立卡片不粘连）：
+         三组各自独立 setting-group 白卡；「账号与安全」卡内末尾挪入修改密码组 */
       var btnHtml = function (id, lab, extra) { return '<button type="button" class="btn-blue btn-inline-pd" id="' + id + '"' + (extra || '') + '>' + lab + '</button>'; };
       var row = function (lab, btnStr) { return '<div class="setting-row"><label>' + lab + '</label>' + btnStr + '</div>'; };
-      grp.innerHTML =
-        '<h3>内容管理</h3>' + row('批量导入', btnHtml('batchImportBtn', '批量导入')) + row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存')) +
-        '<h3 style="margin-top:18px">系统维护</h3>' + row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检')) +
-        '<h3 style="margin-top:18px">账号与安全</h3>' + row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"'));
-      panel.appendChild(grp);
+      var mkGroup = function (title, rowsHtml) {
+        var g = document.createElement('div');
+        g.className = 'setting-group';
+        g.innerHTML = '<h3>' + title + '</h3>' + rowsHtml;
+        panel.appendChild(g);
+        return g;
+      };
+      mkGroup('内容管理', row('批量导入', btnHtml('batchImportBtn', '批量导入')) + row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存')));
+      mkGroup('系统维护', row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检')));
+      var accGrp = mkGroup('账号与安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"')));
+      var grp = accGrp;
       /* 把静态「修改密码」组挪进「账号与安全」组最末（保证修改密码永远在最下面）；
          原组自带 setting-group 白卡样式，挪进组内会双层嵌套 → 降级为普通块 */
       try {
         var pwdGrp = document.getElementById('pwdGroup');
-        if (pwdGrp) { pwdGrp.className = ''; pwdGrp.style.marginTop = '6px'; grp.appendChild(pwdGrp); }
+        if (pwdGrp) { pwdGrp.className = ''; pwdGrp.style.marginTop = '6px'; accGrp.appendChild(pwdGrp); }
       } catch (eP) { if (window.__silent) window.__silent(eP); }
       grp.querySelector('#batchImportBtn').addEventListener('click', openWizard);
       grp.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });

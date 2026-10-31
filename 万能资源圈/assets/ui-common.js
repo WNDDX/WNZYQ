@@ -2723,11 +2723,15 @@ window.__fmtDateTime = function (input, kind) {
 };
 
 (function () {
-  /* v336 条180：焦点圈闭实现——监听 Tab，焦点在弹窗外时拉回弹窗 */
-  var lastTrigger = null;
+  /* v336 条180：焦点圈闭实现——监听 Tab，焦点在弹窗外时拉回弹窗
+     v443 条3（老板反馈「账号管理无法进行任何操作」）重大修复：原 querySelector 取「文档第一个」open 弹窗——
+     叠层弹窗场景（账号列表弹窗上再开表单弹窗/编辑弹窗上再开类型弹窗）里，焦点一进上层弹窗就被
+     强制拉回底层弹窗的第一个按键（关闭键）→ 上层弹窗的输入框根本无法输入=「什么都操作不了」。
+     改为取「最后一个 open 弹窗」（动态弹窗按打开顺序 append 在 body 末尾=最上层），圈闭以最上层为界。 */
   document.addEventListener('focusin', function (e) {
-    var open = document.querySelector('.modal-mask.open, .share-mask.open, .kf-mask.open');
-    if (!open) return;
+    var opens = document.querySelectorAll('.modal-mask.open, .share-mask.open, .kf-mask.open');
+    if (!opens.length) return;
+    var open = opens[opens.length - 1];
     if (!open.contains(e.target)) {
       var f = open.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
       if (f) { try { f.focus({ preventScroll: true }); } catch (err) { try { f.focus(); } catch (err2) { if (window.__silent) window.__silent(err2); } } } /* v381 条7：preventScroll——真机 focus 触发的滚入视口会把画面带跳 */

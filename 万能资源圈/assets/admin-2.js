@@ -764,6 +764,14 @@ function renderProducts() {
               var _pp = (state.products || []).find(function (x) { return x.id === p.id; });
               if (_pp) _pp.variants = (res.list || []).slice();
               renderCodePanel(p.variants);
+              /* v443 条14（老板反馈「有些资源按键点击了不显示」）：首次点击时面板还是空的，
+                 全局开合逻辑按空面板收起了；数据此刻才回来——这里补一次完整展开，不用再点第二下。 */
+              if (!codePicker.classList.contains('open')) {
+                codePicker.classList.add('open');
+                var _cpPanel = document.querySelector('.cat-picker-panel[data-picker-id="' + codePicker.dataset.pickerId + '"]');
+                if (_cpPanel) { if (_cpPanel.parentNode !== document.body) document.body.appendChild(_cpPanel); _cpPanel.classList.add('open'); }
+                if (typeof positionCatPanel === 'function') positionCatPanel(codePicker);
+              }
             }
           });
         } else {

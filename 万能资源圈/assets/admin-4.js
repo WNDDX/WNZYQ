@@ -2447,54 +2447,40 @@
     var _oldAlert = document.getElementById('ctSysAlert');
     if (_oldAlert) _oldAlert.remove();
     if (_alert) { list.insertAdjacentHTML('beforebegin', _alert); _alert = ''; }
-    /* v439 #116：按人筛选（超管查某个员工的账） */
-    if (window.__me && window.__me.role === 'super') {
-      var whoBox = document.getElementById('ctWhoFilter');
-      if (!whoBox) {
-        whoBox = document.createElement('div');
-        whoBox.id = 'ctWhoFilter';
-        whoBox.style.cssText = 'display:flex;align-items:center;gap:6px;margin:0 0 8px;font-size:12px;color:#66788a';
-        var whos = {};
-        (d.recent || []).forEach(function (r) { if (r.type === 'audit' && r.who && r.who !== 'admin') whos[r.who] = 1; });
-        var opts = Object.keys(whos);
-        whoBox.innerHTML = '只看：<select id="ctWhoSel" style="font-size:12px;padding:2px 6px;border:1px solid #dfe7ef;border-radius:6px"><option value="">全部动态</option>' +
-          opts.map(function (w) { return '<option value="' + w + '"' + (window.__ctWho === w ? ' selected' : '') + '>' + w + '</option>'; }).join('') + '</select>';
-        list.parentNode.insertBefore(whoBox, list);
-        /* v442 条10：动态插入的 select 也要升级为全站统一下拉（upgradeAllSelects 只跑一次，
-           动态创建的原生 select 不走统一机制=观感不一致且不受偏移修复保护） */
-        try { if (typeof makeSelectPicker === 'function') makeSelectPicker(whoBox.querySelector('#ctWhoSel')); } catch (eM) {}
-        var sel = whoBox.querySelector('#ctWhoSel');
-        sel.addEventListener('change', function () {
-          window.__ctWho = this.value;
-          fetchInfo(function (d2) { render(d2); }, window.__ctWho || undefined);
-        });
-      } else {
-        var _sel = whoBox.querySelector('#ctWhoSel');
-        if (_sel) _sel.value = window.__ctWho || '';
-      }
-    }
-    /* v442 条2（老板问「细项动态的筛选到底筛选了什么，筛选项都没看到」）：
-       原筛选只在「超管+有员工操作记录」时才出现=平时整个筛选条看不见。现加「类型筛选」常显下拉，
-       并明确文案：类型筛选=只看某类动作（浏览/咨询/查看内容/绑定/登录/系统操作）。本地过滤，即时生效。 */
-    var TYPE_OPTS = [['', '全部类型'], ['view', '浏览资源'], ['contact', '咨询客服'], ['resource_unlock', '查看内容'], ['bind', '资源解锁'], ['login', '设备登录'], ['audit', '系统操作']];
-    var typeBox = document.getElementById('ctTypeFilter');
-    if (!typeBox) {
-      typeBox = document.createElement('div');
-      typeBox.id = 'ctTypeFilter';
-      typeBox.style.cssText = 'display:flex;align-items:center;gap:6px;margin:0 0 8px;font-size:12px;color:#66788a';
-      typeBox.innerHTML = '筛选：<select id="ctTypeSel" style="font-size:12px;padding:2px 6px;border:1px solid #dfe7ef;border-radius:6px">' +
-        TYPE_OPTS.map(function (o) { return '<option value="' + o[0] + '"' + (window.__ctType === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
-        '<span style="color:#9aa9b8">（选某类=只看这类动作）</span>';
-      list.parentNode.insertBefore(typeBox, list);
-      /* v442 条10：同上——动态 select 升级为全站统一下拉 */
-      try { if (typeof makeSelectPicker === 'function') makeSelectPicker(typeBox.querySelector('#ctTypeSel')); } catch (eM2) {}
-      typeBox.querySelector('#ctTypeSel').addEventListener('change', function () {
+    /* v443 条11（老板拍板）：两个筛选绑定一组一左一右等分；「只看」筛选常显列出员工；灰字说明全去掉；统一下拉组件。 */
+    var filterBar = document.getElementById('ctFilterBar');
+    if (!filterBar) {
+      filterBar = document.createElement('div');
+      filterBar.id = 'ctFilterBar';
+      filterBar.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px';
+      filterBar.innerHTML = '<div style="min-width:0"><select id="ctWhoSel" style="width:100%;box-sizing:border-box;font-size:12px;padding:4px 6px;border:1px solid #dfe7ef;border-radius:6px"></select></div><div style="min-width:0"><select id="ctTypeSel" style="width:100%;box-sizing:border-box;font-size:12px;padding:4px 6px;border:1px solid #dfe7ef;border-radius:6px"></select></div>';
+      list.parentNode.insertBefore(filterBar, list);
+      var TYPE_OPTS = [['', '全部类型'], ['view', '浏览资源'], ['contact', '咨询客服'], ['resource_unlock', '查看内容'], ['bind', '资源解锁'], ['login', '设备登录'], ['audit', '系统操作']];
+      var tSel0 = filterBar.querySelector('#ctTypeSel');
+      tSel0.innerHTML = TYPE_OPTS.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
+      tSel0.value = window.__ctType || '';
+      tSel0.addEventListener('change', function () {
         window.__ctType = this.value;
         var d3 = window.__lastInfo; if (d3) render(d3);
       });
+      filterBar.querySelector('#ctWhoSel').addEventListener('change', function () {
+        window.__ctWho = this.value;
+        fetchInfo(function (d2) { render(d2); }, window.__ctWho || undefined);
+      });
+      try { if (typeof makeSelectPicker === 'function') { makeSelectPicker(filterBar.querySelector('#ctWhoSel')); makeSelectPicker(filterBar.querySelector('#ctTypeSel')); } } catch (eM) {}
     }
-    var _tSel = typeBox.querySelector('#ctTypeSel');
-    if (_tSel) _tSel.value = window.__ctType || '';
+    /* 「只看」下拉选项=员工名单（来自近期操作记录；没有员工则只有全部动态一项） */
+    var _whoOpts = { '': '全部动态' };
+    (d.recent || []).forEach(function (r) { if (r.type === 'audit' && r.who && r.who !== 'admin') _whoOpts[r.who] = 1; });
+    var _whoSel = filterBar.querySelector('#ctWhoSel');
+    var _whoNative = _whoSel.dataset.sp ? null : _whoSel;
+    if (_whoNative) {
+      var _cur = _whoNative.value;
+      _whoNative.innerHTML = Object.keys(_whoOpts).map(function (w) { return '<option value="' + w + '">' + (w || '全部动态') + '</option>'; }).join('');
+      _whoNative.value = _cur || '';
+    }
+    var _tSel = filterBar.querySelector('#ctTypeSel');
+    if (_tSel && _tSel.dataset.sp) { try { if (typeof syncSelectDisplay === 'function') syncSelectDisplay(_tSel); } catch (eS2) {} }
     var _recentAll = d.recent || [];
     if (window.__ctType) d.recent = _recentAll.filter(function (r) { return r.type === window.__ctType; });
     window.__lastInfo = d;
