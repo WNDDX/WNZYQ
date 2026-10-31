@@ -2240,3 +2240,10 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .ff-youyuan { font-family: YouYuan; }
 .fs-10 { font-size: 10px; } .fs-13 { font-size: 13px; } .fs-16 { font-size: 16px; }
 .fs-18 { font-size: 18px; } .fs-24 { font-size: 24px; } .fs-32 { font-size: 32px; }
+
+/* ===== v443 条12（老板澄清：红点是「圆点显示不全」=被裁）根治 =====
+   .info-ct-btn 的 position:relative 原来只写在 ≤600px 媒体块内，桌面靠 .tab 类间接获得——
+   个别视口档位两者都落空时，红点的定位基准跳到顶栏，圆点探出视口顶部被裁掉一半。
+   ①顶层无条件锁定定位基准 ②红点内移避开按钮圆角，任何断点都完整显示 */
+.topbar-right .info-ct-btn { position: relative !important; }
+.topbar-right .info-ct-btn .dot-badge { top: 3px; right: 8px; }
