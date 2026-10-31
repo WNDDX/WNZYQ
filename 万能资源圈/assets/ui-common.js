@@ -2442,6 +2442,23 @@ window.__renderCarousel = function (carouselEl, trackEl, dotsEl, fallbackImgEl, 
     trackEl.style.transform = 'translateX(-' + (st.idx * 100) + '%)';
     clearTimeout(trackEl.__ccTrT);
     trackEl.__ccTrT = setTimeout(function () { trackEl.style.transition = ''; }, 340);
+  }
+  /* v443 条1（老板反馈：图片左右切换没有过渡）：补滑动手势——跟手拖动、松手带同款弹簧过渡吸附到最近一张 */
+  var __sx = 0, __dx = 0, __drag = false;
+  trackEl.style.touchAction = 'pan-y';
+  carouselEl.addEventListener('touchstart', function (e) { if (e.touches.length !== 1) return; __sx = e.touches[0].clientX; __dx = 0; __drag = true; trackEl.style.transition = 'none'; }, { passive: true });
+  carouselEl.addEventListener('touchmove', function (e) { if (!__drag || !e.touches.length) return; __dx = e.touches[0].clientX - __sx; trackEl.style.transform = 'translateX(calc(-' + (st.idx * 100) + '% + ' + __dx + 'px))'; }, { passive: true });
+  carouselEl.addEventListener('touchend', function () {
+    if (!__drag) return; __drag = false;
+    var _th = (carouselEl.offsetWidth || 320) * 0.18;
+    if (__dx < -_th && st.idx < images.length - 1) st.idx++;
+    else if (__dx > _th && st.idx > 0) st.idx--;
+    trackEl.style.transition = 'transform .32s cubic-bezier(.34,1.3,.64,1)';
+    trackEl.style.transform = 'translateX(-' + (st.idx * 100) + '%)';
+    clearTimeout(trackEl.__ccTrT); trackEl.__ccTrT = setTimeout(function () { trackEl.style.transition = ''; }, 340);
+    if (dotsEl) dotsEl.querySelectorAll('.cc-dot').forEach(function (d, i) { d.classList.toggle('active', i === st.idx); });
+    __dx = 0;
+  });
     if (dotsEl) dotsEl.querySelectorAll('.cc-dot').forEach(function (d, i) { d.classList.toggle('active', i === st.idx); });
     restartTimer();
   }

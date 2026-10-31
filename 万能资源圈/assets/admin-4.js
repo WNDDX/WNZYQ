@@ -1850,7 +1850,7 @@
           if (!it || !it.classList.contains('open')) { /* 面板没在编辑才回填输入框（输入中不覆盖） */
             var inp = document.getElementById('infoUrl' + __infoCap(k));
             /* v416 条1：输入框显示「当前生效值」=保存值||出厂默认——此前只显保存值，空时导航页却按出厂默认跳转=「输入框空但能跳转」的对不上 */
-            if (inp && document.activeElement !== inp) inp.value = uv; /* v421：输入框只显保存值（老板复检：出厂默认链接回显=莫名其妙的链接）；跳转兜底 defUrl 保留在跳转逻辑里 */
+            if (inp && document.activeElement !== inp) inp.value = uv || c.defUrl; /* v443 条10（老板拍板）：输入框实时显示「当前生效链接」（含出厂默认）——老板要随时看到访客实际会被带到哪；改链接=直接改输入框覆盖 */
           }
         }
         var it2 = document.getElementById('infoItem' + __infoCap(k));
@@ -1864,7 +1864,11 @@
       var img = document.getElementById('infoQrImg' + C);
       var del = document.getElementById('infoQrDel' + C);
       var add = document.getElementById('infoQrAdd' + C);
-      if (img) { if (qr) { img.src = qr; img.style.display = ''; } else { img.removeAttribute('src'); img.style.display = 'none'; } }
+      if (img) {
+        var _tip = document.getElementById('infoQrTip' + C);
+        if (qr) { img.src = qr; img.style.display = ''; if (_tip) _tip.remove(); }
+        else { img.removeAttribute('src'); img.style.display = 'none'; if (!_tip && img.parentNode) { _tip = document.createElement('div'); _tip.id = 'infoQrTip' + C; _tip.style.cssText = 'font-size:12px;color:#8a9aab;padding:10px 0;line-height:1.7'; _tip.textContent = '还没有上传二维码——点上方「上传二维码」添加，访客长按图片即可识别'; img.parentNode.appendChild(_tip); } } /* v443 条10：空面板给引导不再干等 */
+      }
       if (del) del.style.display = qr ? '' : 'none';   /* ×只在有图时出现 */
       if (add) add.style.display = qr ? 'none' : '';
     }

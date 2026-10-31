@@ -850,6 +850,10 @@
     /* 富文本编辑器 */
     .rte-toolbar {
       display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 8px;
+      scrollbar-width: none; /* v443 条6：收起态横滚条消隐（滚动条突现/消失=展开收起轻微抖动源） */
+    }
+    .rte-toolbar::-webkit-scrollbar { display: none; } /* v443 条6 同上 */
+    .rte-toolbar--x {
       background: var(--bg-light); border: 1px solid var(--border); border-bottom: none;
       border-radius: var(--radius-btn,10px) var(--radius-btn,10px) 0 0;
     }

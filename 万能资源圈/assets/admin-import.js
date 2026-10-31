@@ -560,7 +560,7 @@
     mask.className = 'modal-mask'; mask.id = 'usersMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="账号管理"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">账号管理</h2><div class="form" id="usBody">' +
-      '<div style="text-align:center;color:#8aa0b5;font-size:13px;padding:14px 0">加载中…</div></div></div>';
+      '<div style="padding:10px 0">' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '</div></div></div>' /* v443 条13：加载统一为全站骨架 */;
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
       mask.classList.add('open');
@@ -734,7 +734,7 @@
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="数据缓存"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">数据缓存</h2><div class="form" id="rcBody">' +
       '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
-      '<div style="text-align:center;color:#8aa0b5;font-size:13px;padding:14px 0">加载中…</div></div></div>';
+      '<div style="padding:10px 0">' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '</div></div></div>' /* v443 条13：加载统一为全站骨架 */;
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
       mask.classList.add('open');
