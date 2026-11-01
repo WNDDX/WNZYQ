@@ -14,6 +14,20 @@ export async function onRequestGet(context) {
   const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
 
+  /* v448 修复越权：原来这里只有 requireAuth —— 任何「已登录」的子账号（包括 perms={} 的零权限号）
+     都能读到平台运营配置（客服链接/群链接/二维码键/公告/绑定上限等）。写操作却要 settings.write，
+     读写权限不对称。改为与写操作对齐：超管放行；子账号需持公告或批量导入相关权限才可读
+     （公告编辑、批量导入都要读这份设置，不能一刀切 403）。 */
+  {
+    const { can, parsePerms } = await import('../../_perms.js');
+    const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+    const allowed = auth.role === 'super'
+      || can('settings.write', auth.role, perms)
+      || can('ann.view', auth.role, perms) || can('ann.edit', auth.role, perms) || can('ann.add', auth.role, perms)
+      || can('batch.import', auth.role, perms);
+    if (!allowed) return json({ ok: false, msg: '该功能未开放' }, 403);
+  }
+
   const { results } = await env.DB.prepare('SELECT key, value FROM settings').all();
   const obj = {};
   for (const r of results) obj[r.key] = r.value;
