@@ -1922,8 +1922,15 @@
        v369 条4：抽出 __catSeqTarget（算出滑动方向上的邻居分类），__swipeCatGo 与跟手版共用一份顺序逻辑 */
     window.__catSeqTarget = function (d) {
       /* v385 条5：一级判定改宽容口径（同 renderCategories 580 行）——旧数据无 parent_id 字段的
-         一级分类此前被严格过滤漏掉，滑切序列只剩「全部」，全部左右滑都没有邻居（表现=滑不动） */
-      var cats = (DATA.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
+         一级分类此前被严格过滤漏掉，滑切序列只剩「全部」，全部左右滑都没有邻居（表现=滑不动）
+         v447 滑切修复：**排除 id<=0 的伪分类**。后端 /api/categories 会返回一条
+         {id:0, name:'全部', parent_id:0} 的虚拟项，它满足「一级分类」条件混进 tops，造成两处错位：
+           ① seq 里同时有 {type:'all'} 和 {type:'top',id:0}，cur 先被 all 命中又被 top(0) 覆盖，
+              邻居索引整体偏移一位；
+           ② 其他 parent_id=0 的真分类（wifi 等）被当成 id=0 的「子分类」，滑一次落到
+              {type:'sub', id:1, parent:0}；提交时 currentCat=parent=0 仍是"全部"视图 →
+              表现就是「滑了但画面没切换」。 */
+      var cats = (DATA.categories || []).filter(function (c) { return Number(c.id) > 0 && (!c.parent_id || Number(c.parent_id) === 0); });
       var tops = cats.slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
       var seq = [{ type: 'all' }]; /* v370 条7：「全部」纳入滑切序列——第一分类右滑能回全部，全部左右都能滑 */
       tops.forEach(function (top) {

@@ -724,6 +724,7 @@
         if (hasEntry) {
           fcReadDropped(e.dataTransfer.items, function (files, folderName) {
             if (files && files.length) processLocalFiles(files, editor, folderName);
+            else toast('文件夹里没有可上传的文件', 'info'); /* v447：空目录原先静默无反应 */
           });
         } else {
           processLocalFiles(Array.prototype.slice.call(e.dataTransfer.files), editor, null);
@@ -914,6 +915,14 @@
       inp.click();
     }
     /* 递归读取拖拽进来的文件/文件夹（保留文件夹名） */
+    /* v447：修复文件夹拖拽（历史遗留项）。
+       原实现 pending 只按「顶层条目数」初始化，而每个文件都会 settle() 减一、目录读完
+       （readEntries 返回空批）却从不减，导致两种故障：
+         ① 目录里有多个文件时，第一批文件读完 pending 就归零 → 提前回调，只上传了部分文件；
+         ② 纯目录（尤其空目录）时 pending 永不归零 → 回调永不到达 → 拖文件夹「没反应/报异常」。
+       改为「活动任务计数」：进入一个条目 +1、完成 −1，归零才回调；目录本身也占一个任务直到读完，
+       避免子项瞬时归零提前触发；每个异步分支都保证 release，并补 entry.file 的 error 回调
+       （原实现缺失，单个文件读失败会永久挂起整个队列）。 */
     function fcReadDropped(dtItems, cb) {
       var entries = [];
       for (var i = 0; i < (dtItems ? dtItems.length : 0); i++) {
@@ -924,25 +933,37 @@
         }
       }
       if (!entries.length) return; /* 调用方自行回退到 dataTransfer.files */
-      var files = [], folderName = null, pending = entries.length;
+      var files = [], folderName = null, pending = 0, finished = false;
+      function finish() {
+        if (finished) return;
+        finished = true;
+        files.sort(function (a, b) { return (a.__folderName || '').localeCompare(b.__folderName || '') || a.name.localeCompare(b.name); });
+        cb(files, folderName);
+      }
+      function release() { pending--; if (pending === 0) finish(); }
       function walk(entry, parent) {
         if (entry.isFile) {
-          entry.file(function (f) { if (parent) f.__folderName = parent; files.push(f); settle(); }, settle);
+          pending++;
+          entry.file(function (f) {
+            try { if (parent) f.__folderName = parent; files.push(f); } catch (e) {}
+            release();
+          }, function () { release(); }); /* 单个文件读失败不卡死队列 */
         } else if (entry.isDirectory) {
+          pending++; /* 目录本身占一个任务，读到空批才释放 */
           if (!parent) folderName = entry.name;
           var reader = entry.createReader();
           var readBatch = function () {
             reader.readEntries(function (batch) {
-              if (!batch.length) return;
+              if (!batch.length) { release(); return; }
               batch.forEach(function (en) { walk(en, parent || entry.name); });
               readBatch();
-            }, settle);
+            }, function () { release(); });
           };
-          readBatch();
-        } else settle();
+          try { readBatch(); } catch (e) { release(); }
+        } else { pending++; release(); }
       }
-      function settle() { pending--; if (pending <= 0) { files.sort(function (a, b) { return (a.__folderName || '').localeCompare(b.__folderName || '') || a.name.localeCompare(b.name); }); cb(files, folderName); } }
       entries.forEach(function (en) { walk(en, null); });
+      if (pending === 0) finish(); /* 兜底：无可读条目 */
     }
 
 
