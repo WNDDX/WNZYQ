@@ -118,6 +118,36 @@
   --blue1-rgb: 30, 136, 229;  /* --blue1 的 RGB 通道，供 rgba() 叠加透明度 */
   --white-rgb: 255, 255, 255; /* 纯白 RGB 通道 */
   --black-rgb: 0, 0, 0;       /* 纯黑 RGB 通道 */
+
+  /* ===== v446 局部专用色（规范治理第 4 批）=====
+     用途：收编全站最后 29 处「单点/小范围」硬编码色值，达成 CSS 零裸写。
+     约定：这些令牌**不参与主题联动**（深色块不覆盖），值与原硬编码完全相同 → 视觉零变化。
+     新增同类色值请在下方续写，命名带上语义前缀（input-/empty-/badge-/shadow- 等）。 */
+  --green-rgb: 1, 192, 0;             /* --green 的 RGB 通道（高亮标记底色） */
+  --red-rgb: 211, 47, 47;             /* 删除键 hover 的深红 RGB 通道 */
+  --warn-rgb: 255, 153, 0;            /* 图表图例·咨询橙 RGB 通道 */
+  --ok-rgb: 76, 175, 80;              /* 图表图例·资源绿 RGB 通道 */
+  --blue2-rgb: 100, 176, 241;         /* 材质蓝 RGB 通道（类型切换键底） */
+  --shadow-ink-rgb: 10, 22, 38;       /* 深墨投影 RGB 通道 */
+  --shadow-navy-rgb: 10, 30, 60;      /* 藏青投影 RGB 通道（拖拽抬起） */
+  --shadow-deep-rgb: 20, 60, 110;     /* 深蓝投影 RGB 通道（弹层面板） */
+  --shadow-card-blue-rgb: 30, 80, 140;/* 卡片蓝投影 RGB 通道 */
+  --text-medium: #444;                /* 中深文字（文件条目名） */
+  --text-info: #5b78a0;               /* 信息行灰蓝文字 */
+  --empty-icon: #b9c6d4;              /* 空态图标色 */
+  --empty-desc: #8395a6;              /* 空态描述文字色 */
+  --input-border: #a9b8c6;            /* 输入框默认描边（比 --border 深一档） */
+  --input-border-hover: #8fa3b5;      /* 输入框悬停描边 */
+  --border-hover: #ddd;               /* 通用 hover 描边（公告标题输入） */
+  --border-blue-light: #9cc8f0;       /* 浅蓝描边（下拉 hover） */
+  --danger-bg-soft: #ffebee;          /* 危险操作 hover 淡底 */
+  --danger-border-soft: #e57373;      /* 错误提示描边（比 --danger-border 深） */
+  --badge-on-bg: #e6f7e6;             /* 状态徽章·启用底 */
+  --badge-off-bg: #f2f2f2;            /* 状态徽章·停用底 */
+  --surface-subtle: #fafbfc;          /* 极浅面底（文件卡） */
+  --chip-blue-bg: #e3f2fd;            /* 浅蓝胶囊底（类型切换键） */
+  --primary-alt: #1a73e8;             /* 主公告标题蓝（比 --blue1 略深） */
+  --sk-hi: #e8eaef;                   /* 骨架屏高光（v446 从 .skel 规则内提升至 :root 唯一源） */
 }
 
 /* ===== v388 改动2：页面入场/Logo 入场动画唯一源（原 shop.css 与 admin.css 各存一份同名副本，已删） ===== */
@@ -236,7 +266,7 @@
 }
 
 /* R192 二④：搜索命中高亮——全站唯一绿（咨询客服 #01C000）淡化底，不新增颜色 */
-mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; border-radius: var(--r-s); padding: 0 4px; }
+mark.hl { background: rgba(var(--green-rgb, 1,192,0), .16); color: inherit; font-weight: 700; border-radius: var(--r-s); padding: 0 4px; }
 /* R192 二②：卡片/行错峰入场；R211 二批（用户 09-20）升级：位移 10→16px、时长 0.18→0.30s（--dur-slow）、缓动换 --ease-emphasized，逐张 20ms 落位 180ms 封顶（JS 侧配合）；系统「减少动态效果」自动关闭 */
 @keyframes staggerIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 .stagger-in { animation: staggerIn var(--dur-slow) var(--ease-emphasized) both; }
@@ -673,7 +703,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
        底色走 Token var(--bg-light)（暗色模式自动跟随），高光带 --sk-hi 亮/暗两套。
        .sk-piece 双写提升特异性（0,3,0）——管理页真实行类（.thumb 等）自带 background（0,2,0），
        不双写会被更靠后的页内样式压掉失去微光；系统「减少动态效果」降级为呼吸脉冲。 */
-    .skel, .card-skeleton { pointer-events: none; --sk-hi: #e8eaef; }
+    .skel, .card-skeleton { pointer-events: none; }
     /* R213 口径（随迁）：渐变高光带整体移入磁贴后半段（55%/75%/95%）——高光在动画边界帧
        不贴右缘，扫过全程无残影 */
     .skel .sk-piece, .skel .sk-piece.sk-piece,
@@ -761,7 +791,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
   pointer-events: none; max-width: 90%; text-align: center;
   animation: uiToastDrop 0.24s var(--ease-out) both; /* R231 条11：入场带下落分量（从上 8px 落下） */
 }
-.ui-toast.error { color: var(--red); border-color: #e57373; }
+.ui-toast.error { color: var(--red); border-color: var(--danger-border-soft, #e57373); }
 .ui-toast.leaving { opacity: 0; transition: opacity var(--dur-slow) var(--ease-out); } /* R285 条32 */
 @keyframes uiToastDrop { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
 /* 条31：暗色模式切换过渡——只过渡 body 背景色与文字色（禁全局 *，避免拖慢其它动画） */
@@ -955,8 +985,8 @@ img.qph { background: var(--bg-light,#f5f7fa); min-height: 120px; }
 .rte-editor li, .rte-body li, .rte-content li { margin: 3px 0; }
 
 /* v336 条203：表单控件边框加深到 3:1 可辨（装饰性分隔线保持浅色） */
-input, select, textarea { border-color: #a9b8c6; }
-input:hover, select:hover, textarea:hover { border-color: #8fa3b5; }
+input, select, textarea { border-color: var(--input-border, #a9b8c6); }
+input:hover, select:hover, textarea:hover { border-color: var(--input-border-hover, #8fa3b5); }
 
 /* v336 条65：悬浮件与弹窗避让 home 条/刘海 */
 .modal-mask, .share-mask, .kf-mask, .lightbox, .cp-mask { padding-left: max(16px, var(--safe-l)) !important; padding-right: max(16px, var(--safe-r)) !important; padding-bottom: max(16px, var(--safe-b)) !important; }
@@ -1025,10 +1055,10 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
    （脚本用 .show 控制），被这条无条件 flex 覆盖后，〈不管有没有数据都会一直显示〉。
    现在 .empty-tip 只保留布局属性、显示与否仍由 .show 决定；.empty-state 才是常显型。 */
 .empty-tip { flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 44px 20px; text-align: center; }
-.empty-tip .empty-icon, .empty-tip .empty-ico, .empty-state .empty-icon { width: 48px; height: 48px; color: #b9c6d4; line-height: 1; opacity: .95; }
+.empty-tip .empty-icon, .empty-tip .empty-ico, .empty-state .empty-icon { width: 48px; height: 48px; color: var(--empty-icon, #b9c6d4); line-height: 1; opacity: .95; }
 .empty-tip .empty-icon svg, .empty-state .empty-icon svg { width: 48px; height: 48px; display: block; }
 .empty-tip .empty-title, .empty-state .empty-title { font-size: 16px; font-weight: 600; color: var(--empty-text, #5b6b7b); }
-.empty-tip .empty-desc, .empty-state .empty-desc { font-size: 13px; color: #8395a6; }
+.empty-tip .empty-desc, .empty-state .empty-desc { font-size: 13px; color: var(--empty-desc, #8395a6); }
 .empty-tip .empty-clear-btn, .empty-tip .empty-action, .empty-state .empty-action { margin-top: 8px; border: 1px solid var(--blue1, #1E88E5); background: var(--card-bg, var(--card-bg, #fff)); /* v390-3：硬编码白底→语义变量（深色模式适配） */ color: var(--blue1, #1E88E5); font-size: 13px; font-weight: 600; border-radius: var(--r-pill); padding: 0 16px; /* v350 条1：与基础规则同高（33px/行高31px）——原 8px 上下内边距叠在固定高度上，把「重试」文字挤出按钮中心 7.5px */ cursor: pointer; }
 .empty-tip .empty-clear-btn:hover, .empty-tip .empty-action:hover { background: var(--blue1, #1E88E5); color: var(--text-on-brand, #fff); }
 

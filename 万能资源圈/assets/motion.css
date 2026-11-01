@@ -58,7 +58,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
    只改动画，不动 __ctxMenu 的结构/文案/坐标逻辑 */
 .wn-ctx-dim {
   position: fixed; inset: 0; z-index: 10039; pointer-events: none;
-  background: rgba(10, 22, 38, 0.42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  background: rgba(var(--shadow-ink-rgb, 10,22,38), .42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
   opacity: 0; transition: opacity .18s ease;
 }
 .wn-ctx-dim.show { opacity: 1; }
@@ -76,7 +76,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
   transition: transform var(--dur-fast) var(--ease-press), box-shadow var(--dur-fast) var(--ease-press), filter .18s ease;
   will-change: transform;
 }
-.wn-ctx-src.lift { transform: scale(1.025); box-shadow: 0 16px 34px rgba(10,30,60,.28); z-index: 10040; position: relative; } /* v389-3：低于菜单 10042，不再挡四个选项 */
+.wn-ctx-src.lift { transform: scale(1.025); box-shadow: 0 16px 34px rgba(var(--shadow-navy-rgb, 10,30,60), .28); z-index: 10040; position: relative; } /* v389-3：低于菜单 10042，不再挡四个选项 */
 .wn-ctx-src.pressed { transform: scale(.975); }
 
 /* ===== D2 成功/失败 toast 图标描画（motion.js 给 .ui-toast 注入） ===== */
@@ -247,7 +247,7 @@ img.wn-lqip.wn-lqip-in { filter: blur(0); transition: filter .38s var(--ease-out
 /* ===== S4 边缘揭示滑切（__followSwipe 提交段使用；dim 层由 JS 挂在旧面板上） ===== */
 .__fs-stage .wn-s4-dim {
   position: absolute; inset: 0; z-index: 5; pointer-events: none;
-  background: rgba(10, 22, 38, .5); opacity: 0; transition: opacity var(--dur-fx-big) ease;
+  background: rgba(var(--shadow-ink-rgb, 10,22,38), .5); opacity: 0; transition: opacity var(--dur-fx-big) ease;
 }
 .__fs-stage .wn-s4-dim.show { opacity: 1; }
 

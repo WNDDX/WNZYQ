@@ -1014,7 +1014,7 @@
     .modal-mask#annModal > .ann-box > * { box-sizing: border-box; max-width: 100%; }
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
     .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--empty-text); /* v404 条6：写死 #5b6b7b 入令牌 */ padding: 24px 0; box-sizing: border-box; text-align: center; }
-.modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 1; color: #b9c6d4; } /* v356 条12：图标色对齐 */
+.modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 1; color: var(--empty-icon, #b9c6d4); } /* v356 条12：图标色对齐 */
 .modal-mask#annModal .ann-empty .ann-empty-icon > svg { display: block; margin: 0 auto; }
 .modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: var(--empty-text); font-weight: 600 /* v356 条12 */ /* v336 条115 */; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; overscroll-behavior: auto /* v421 分层：内层到头→弹窗跟滚 */; overflow-x: hidden; min-height: 0; box-sizing: border-box; }
@@ -1342,7 +1342,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* v336 条165：卡片悬停阴影预置，hover 只动透明度（一屏几十张不再掉帧） */
 .product-card { position: relative; }
-.product-card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 8px 24px rgba(30,80,140,.18); opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); pointer-events: none; }
+.product-card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 8px 24px rgba(var(--shadow-card-blue-rgb, 30,80,140), .18); opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); pointer-events: none; }
  .product-card:hover::after { opacity: 1; } 
 
 /* v343 条24：平板档（601~1024px）专属排版——卡片 3 列、工具栏允许换行、间距舒展 */
