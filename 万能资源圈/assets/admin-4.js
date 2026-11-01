@@ -2443,7 +2443,7 @@
     setDelta('ctDContact', d.delta.contact);
     setDelta('ctDUnlock', d.delta.unlock);
     setDelta('ctDView', d.delta.view);
-    document.getElementById('ctSince').textContent = '自 ' + fmtTime(d.lastSeen) + ' 以来';
+    document.getElementById('ctSince').textContent = '上方四格 = 较上次查看（' + fmtTime(d.lastSeen) + '）新增；「今日概览」= 今天 0 点起'; /* v443 条2：口径说明 */
     document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
     var list = document.getElementById('ctList');
     var _alert = sysAlertEntry();
@@ -2541,7 +2541,7 @@
     fetchInfo(function (d) {
       var _al = false;
       try { var a = JSON.parse(localStorage.getItem('wnzyq_syscheck_alert') || 'null'); _al = !!(a && a.n); } catch (e) {}
-      if (dot) dot.hidden = !((d.delta.bind > 0) || (d.delta.contact > 0) || _al);
+      if (dot) dot.hidden = !((d.delta.bind > 0) || (d.delta.contact > 0) || (d.delta.login > 0) || (d.delta.audit > 0) || _al); /* v443 条1（老板拍板）：恢复 v439 原逻辑 */
     });
   }
   window.__syscheckAlertChanged = function () { checkDot(); }; /* #80：自动体检写标记后即时刷新红点 */
