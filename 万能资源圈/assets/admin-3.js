@@ -2151,6 +2151,7 @@ document.addEventListener('click', function (e) {
         var _sp = (state.products || []).find(function (x) { return x.id === pid; });
         if (_sp) { _sp.contactQr = (document.getElementById('fContactQr').value || '').trim(); _sp.contactUrl = (document.getElementById('fContactUrl').value || '').trim(); }
         if (window.__haptic) window.__haptic();
+        if (window.showToast) window.showToast('已保存', 'success'); /* v453：同设置信息行 */
         if (after) after();
       }
       else { toast((res && res.msg) || '保存失败', 'error'); }

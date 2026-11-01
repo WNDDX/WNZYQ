@@ -2014,7 +2014,7 @@
           if (willOpen) { /* v385 条3：展开时回填网络地址输入框（暂存优先，无则已保存值）
              v415 条4：原读 c.qrKey（二维码图键）——键名写错，跳转链接输入框永远显示不了已保存的链接（老板实拍「链接不在输入框里」的根因）；改读 c.urlKey */
             var ni = document.getElementById('infoNet' + C);
-            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.urlKey] || ''); /* v421：同上，只显保存值 */
+            if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.qrKey] || ''); /* v453：这里填的是「图片网络地址」=二维码图，原来读成 urlKey（跳转链接），展开后两栏显示同一个链接，误导为二维码就是那个地址 */
           }
           if (window.__haptic) window.__haptic();
         };
@@ -2076,6 +2076,7 @@
               window.__infoApply(s2); /* 面板开着不覆盖 pending，已手动同步 */
               try { localStorage.setItem('wnzyq_kf_url_updated', Date.now().toString()); } catch (e) { if (window.__silent) window.__silent(e); }
               if (window.__haptic) window.__haptic();
+              if (window.showToast) window.showToast('已保存', 'success'); /* v453：「收起」=保存并收起，给一句反馈，不然不知道改动已生效 */
               if (after) after();
             }
             else { toast((res && res.msg) || '保存失败', 'error'); }

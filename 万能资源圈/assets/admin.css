@@ -2230,6 +2230,9 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* v450（老板拍板）：咨询客服/交流群聊/公众号讯 各行去掉「保存」键，「收起」=保存并收起，独占一行居中 */
 .info-panel-btns.is-single { justify-content: center; }
 .info-panel-btns.is-single > button { flex: 1 1 100% !important; width: 100% !important; max-width: 100% !important; text-align: center; }
+/* v453：「收起」现在是该行唯一的动作（=保存并收起），用主色而不是「取消/关闭」的红色系 —— 红色系会让人以为点了是放弃改动 */
+.info-panel-btns.is-single > button { background: var(--blue1) !important; color: var(--text-on-brand, #fff) !important; border-color: var(--blue1) !important; }
+.info-panel-btns.is-single > button:hover { background: var(--blue2) !important; color: var(--text-on-brand, #fff) !important; border-color: var(--blue2) !important; }
 @media (max-width: 600px) {
   .info-item { padding: 8px 10px; }
   .info-row-bar .btn-green, .info-row-bar .btn-blue, .info-row-bar .btn-cyan { height: 36px; font-size: 14px; }
