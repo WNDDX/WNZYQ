@@ -75,7 +75,7 @@
     // ---------- 工具 ----------
     // 图片加载失败占位图（SVG data URL，灰色背景+图片图标）
     /* v336 条9：占位图统一为“感叹号”画风（与公共层一致），全站不再有两种画风 */
-    var IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+    /* v450：占位图不再在本文件存快照（原来加载时把当时的主题版本存成常量，切主题后不跟着变）——统一实时读 window.WN_MEDIA_FALLBACK */
 
     // 滚动锁已取消（用户要求恢复自由滚动）：即使 ui-common.js 未加载，也不再拦截 touchmove/wheel
     if (!window.lockBodyScroll) {
@@ -115,7 +115,7 @@
         if (t.tagName === 'IMG') {
           if (t.dataset.lf) return; /* v345 条3：卡片图由 loadImg 处理回退与占位，这里不插手，避免先闪占位符 */
           t.dataset.fh = '1';
-          t.src = IMG_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
+          t.src = window.WN_MEDIA_FALLBACK; if (t && t.classList) t.classList.add('media-fail');
           t.style.display = 'block'; t.style.opacity = '1';
         } else if (t.tagName === 'VIDEO') {
           // R81：视频失败不再换感叹号死图，统一兜底卡（可点新窗口打开原链接）
@@ -127,7 +127,7 @@
           else if (t.parentNode) t.parentNode.removeChild(t);
         }
       }, true);
-      document.querySelectorAll('img').forEach(function (im) { if (im.dataset.lf) return; /* v345 条3 */ if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
+      document.querySelectorAll('img').forEach(function (im) { if (im.dataset.lf) return; /* v345 条3 */ if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = window.WN_MEDIA_FALLBACK; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
     }
 
     // 统一处理富文本内容里的图片/视频加载失败：替换为感叹号占位（全站统一风格，参考导航页）
@@ -138,13 +138,13 @@
         if (im.dataset.fh) return;
         im.addEventListener('error', function () {
           im.onerror = null;
-          im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail');
+          im.src = window.WN_MEDIA_FALLBACK; if (im && im.classList) im.classList.add('media-fail');
           im.style.display = 'block';
         });
-        im.addEventListener('load', function () { if (!im.dataset.fh && im.naturalWidth === 0 && String(im.getAttribute('src') || '').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
+        im.addEventListener('load', function () { if (!im.dataset.fh && im.naturalWidth === 0 && String(im.getAttribute('src') || '').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = window.WN_MEDIA_FALLBACK; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
         var _s = im.getAttribute('src') || '';
         if (!_s || _s.indexOf('data:') === 0 || (im.complete && im.naturalWidth === 0)) {
-          im.dataset.fh = '1'; im.src = IMG_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block';
+          im.dataset.fh = '1'; im.src = window.WN_MEDIA_FALLBACK; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block';
         }
       })(imgs[i]);
       var vids = root.querySelectorAll('video');
@@ -369,7 +369,7 @@
          立即定型占位（重渲染/切分类回来都零闪烁）。“闪几次”根源=占位图每次重渲染重播 img-in 入场动画 */
       if (!src) {
         try { img.onerror = null; img.onload = null; } catch (e0) { if (window.__silent) window.__silent(e0); }
-        img.src = IMG_PLACEHOLDER;
+        img.src = window.WN_MEDIA_FALLBACK;
         if (img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading', 'img-in'); }
         img.style.display = 'block'; img.style.opacity = '1';
         return;
@@ -382,16 +382,16 @@
         /* R304 P18：小图 404（存量旧图还没补到小图）先回退原图，不能空图；原图也失败才走占位符 */
         if (fallbackSrc && this.getAttribute('src') !== fallbackSrc) { this.src = fallbackSrc; return; }
         this.onerror = null; // 防止占位图也加载失败导致死循环
-        this.src = IMG_PLACEHOLDER; if (this && this.classList) { this.classList.add('media-fail'); this.classList.remove('m-loading'); } this.style.opacity = '1';
+        this.src = window.WN_MEDIA_FALLBACK; if (this && this.classList) { this.classList.add('media-fail'); this.classList.remove('m-loading'); } this.style.opacity = '1';
         this.style.display = 'block';
       };
       img.onload = function () { this.style.display = 'block'; this.style.opacity = '1'; if (this.classList) this.classList.remove('m-loading'); if (!window.__swipeCommitting && !window.__fastNav) this.classList.add('img-in'); }; /* v405b 条14-C：秒出导航不播图片入场 */ /* v375：滑切提交期图片直接落定不播入场（防闪动） */ /* R183 条2：图片入场动画（同二维码 kfQrIn 口径）；R215 条9：摘除居中加载槽 */
       if (img.classList && img.classList.contains('modal-cover')) img.classList.add('m-loading'); /* R215 条9：封面加载期固定 16:9 居中槽，首帧不再靠左 */
-      img.style.opacity = '0'; img.src = src || IMG_PLACEHOLDER;
+      img.style.opacity = '0'; img.src = src || window.WN_MEDIA_FALLBACK;
       /* R280（老板 09-28 00:35 ①）：封面改固定展示框（CSS 定宽高 + contain）——框尺寸恒定，
          加载前后布局天然零收敛，R258 按 16:9 加载槽比例内联定型的补丁（与固定框冲突）整体退役。 */
       // R93：封面缺省/加载失败回退感叹号占位（R91 文字版已被用户否决回退）
-      if (!src) { img.src = IMG_PLACEHOLDER; if (img && img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading'); } img.style.display = 'block'; img.style.opacity = '1'; }
+      if (!src) { img.src = window.WN_MEDIA_FALLBACK; if (img && img.classList) { img.classList.add('media-fail'); img.classList.remove('m-loading'); } img.style.display = 'block'; img.style.opacity = '1'; }
       /* R213 P2⑦（质检 R212）：R191 时代的旧媒体回退注释尸体已删（全局兜底已上移至脚本顶部统一注册） */
     }
 
@@ -1043,7 +1043,7 @@
       /* v352 遗留3：无封面的资源直接上占位图（原先是空 src → 等报错再换占位图，
          每次渲染都"空白→占位"闪一下，切分类回来又闪）；有封面才走小图/回退逻辑 */
       if (!__orig) {
-        img.src = window.WN_MEDIA_FALLBACK || EXC_PLACEHOLDER;
+        img.src = window.WN_MEDIA_FALLBACK;
         img.classList.add('media-fail');
       } else {
         loadImg(img, __thumb, __orig); /* R304 P18：列表卡片读小图、小图缺失回退原图；详情弹窗封面/轮播/详情图仍走原图 */
@@ -1316,13 +1316,12 @@
 
     // R269（用户 09-27 15:14）：根因→R268 修复在 v265 打包时回退丢失，补 renderCarousel + coverImages 字段修正重做
     // ---------- 封面轮播组件 ----------
-    var EXC_PLACEHOLDER = window.WN_MEDIA_FALLBACK; /* v349 条7：占位图统一取公共层一份（原先这里整段抄了一遍，改一处漏一处） */
     /* v333 整理：这段约 86 行的轮播实现与 admin.js 里那份逐字相同，已统一提取到
        ui-common.js 的 window.__renderCarousel（以后只改那一处，前后台自动同步）。
        这里保留转发，公共层万一没加载也不会整页崩。 */
     function renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images) {
       /* v402 条7：旧本地壳（含与 ui-common 重复的单图分支）删除——ui-common __renderCarousel 恒在（shop 必载），直接唯一源 */
-      if (window.__renderCarousel) { window.__renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images, EXC_PLACEHOLDER); }
+      if (window.__renderCarousel) { window.__renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images, window.WN_MEDIA_FALLBACK); }
     }
 
     // ---------- 详情弹窗 ----------
@@ -1420,7 +1419,7 @@
                 im.loading = 'lazy'; /* v439 #57 */
                 im.className = 'm-loading';
                 im.onload = function () { this.classList.remove('m-loading'); this.style.opacity = '1'; };
-                im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; };
+                im.onerror = function () { this.onerror = null; this.src = window.WN_MEDIA_FALLBACK; if (this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; };
                 im.src = url;
                 im.addEventListener('click', function () { window.openLightbox(url); });
                 if (window.mediaStable) window.mediaStable(im);
@@ -1495,7 +1494,7 @@
         im.loading = 'lazy'; /* v439 #57 */
                 im.className = 'm-loading'; /* v309:加载前CSS占位，尺寸恒定*/
         im.onload = function () { this.classList.remove('m-loading'); this.style.opacity = '1'; };
-        im.onerror = function () { this.onerror = null; this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; this.style.display = 'block'; };
+        im.onerror = function () { this.onerror = null; this.src = window.WN_MEDIA_FALLBACK; if (this && this.classList) this.classList.add('media-fail'); this.classList.remove('m-loading'); this.style.opacity = '1'; this.style.display = 'block'; };
         im.src = url;
         im.addEventListener('click', function () {
           /* v359 条3：本媒体区即一组（封面+正文媒体同容器）——组内所有图/视频传给灯箱，左右滑在本组内切 */
@@ -1805,7 +1804,7 @@
         // R266（用户 09-27 15:08）：onerror 必须在 src 赋值前注册，杜绝注册前即失败导致的裸闪破损图标。
         im.onerror = function () {
           this.onerror = null;
-          this.src = IMG_PLACEHOLDER; if (this && this.classList) this.classList.add('media-fail'); this.style.display = 'block';
+          this.src = window.WN_MEDIA_FALLBACK; if (this && this.classList) this.classList.add('media-fail'); this.style.display = 'block';
         };
         im.src = currentVariant.img;
         im.alt = '';

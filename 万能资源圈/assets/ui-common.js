@@ -132,7 +132,11 @@ if ('serviceWorker' in navigator) {
  */
 (function () {
   'use strict';
-  var KF_QR_FAIL = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+  /* v450：客服二维码失败占位按主题取（.kf-qr 底色跟 --bg-light 走，深色下浅色占位块突兀） */
+  var KF_QR_FAIL_LIGHT = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+  var KF_QR_FAIL_DARK = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%232b3a4c"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%2355697f"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%2355697f"/%3E%3C/svg%3E';
+  function KF_QRF() { return document.documentElement.getAttribute('data-theme') === 'dark' ? KF_QR_FAIL_DARK : KF_QR_FAIL_LIGHT; }
+
 
   // 背景视频显隐管理：原生 <video> 在移动端浏览器层级高于一切 DOM（即使 z-index 更大也盖不住），
   // 打开客服弹窗必须同时 暂停+隐藏 背景视频，关闭后恢复，否则视频会压在客服弹窗之上
@@ -231,7 +235,7 @@ if ('serviceWorker' in navigator) {
       img.classList.remove('kf-qr-in');
       img.onerror = function () {
         this.onerror = null;
-        this.src = KF_QR_FAIL;
+        this.src = KF_QRF();
         if (this.classList) this.classList.add('media-fail');
         img.style.opacity = '';
       };
@@ -298,12 +302,12 @@ if ('serviceWorker' in navigator) {
       var fbBtn = m.querySelector('.kf-jump');
       if (fbBtn) fbBtn.classList.toggle('kf-jump-green', !!(opts && opts.green)); /* v436b */
       var im = document.getElementById('kfFallbackImg');
-      if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = KF_QR_FAIL; };
+      if (im) im.onerror = function () { this.onerror = null; this.classList&&this.classList.add('media-fail'); this.src = KF_QRF(); };
     }
     var jb = m.querySelector('button[data-u]');
     if (jb) jb.setAttribute('data-u', url || '');
     var im = document.getElementById('kfFallbackImg');
-    if (im) { im.src = window.__kefuQrSrc() || KF_QR_FAIL; } /* v383：未配置二维码直接失败占位（kefu.png 已删） */
+    if (im) { im.src = window.__kefuQrSrc() || KF_QRF(); } /* v383：未配置二维码直接失败占位（kefu.png 已删） */
     try { document.querySelectorAll('video').forEach(function (v) { if (!v.closest('#kfFallback, .kf-box, .kf-mask, .modal-mask, .ann-modal, .share-mask, .lightbox, .stat-modal')) { v.dataset.__kfFbHid = '1'; try { v.pause(); } catch (e) { if (window.__silent) window.__silent(e); } v.style.visibility = 'hidden'; } }); } catch (e) { if (window.__silent) window.__silent(e); }
     m.style.display = 'flex';
     if (window.lockBodyScroll) window.lockBodyScroll(true);
@@ -363,7 +367,7 @@ if ('serviceWorker' in navigator) {
       var im = document.createElement(isVideo ? 'video' : 'img');
       // R266（用户 09-27 15:08）：灯箱图片加 onerror 兜底，杜绝坏链接裸闪破损图标。
       if (!isVideo) {
-        im.onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E'; if (this.classList) this.classList.add('media-fail'); };
+        im.onerror = function () { this.onerror = null; this.src = (window.WN_MEDIA_FALLBACK || ''); if (this.classList) this.classList.add('media-fail'); };
         im.onload = function () {
           /* v358：按图片真实比例设定盒子尺寸——盒子=看得见的图，点「图片外」即点遮罩，立刻可关 */
           try {
@@ -2506,7 +2510,7 @@ Object.defineProperty(window, '__IMG_PLACEHOLDER', { configurable: true, get: fu
 window.__logoFail = function (im) {
   try {
     im.onerror = null;
-    im.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 rx=%223%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E'; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) { if (window.__silent) window.__silent(e); } };
+    im.src = (window.__IMG_PLACEHOLDER || ''); if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; im.style.opacity = '1'; if (im.parentNode) { im.parentNode.style.opacity = '1'; if (!im.parentNode.classList.contains('logo-enter')) im.parentNode.classList.add('logo-enter'); } } catch (e) { if (window.__silent) window.__silent(e); } };
 
 /* v297（用户 10-04 02:14）：C-242 翻页按钮置灰逻辑提取到公共函数，前后台共用 */
 window.__setPagerDisabled = function (btn, disabled) { btn.disabled = disabled; btn.style.opacity = disabled ? '0.4' : ''; };
@@ -2768,6 +2772,33 @@ var __PH_DARK_24 = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/sv
 Object.defineProperty(window, 'WN_MEDIA_FALLBACK', { configurable: true, get: function () {
   try { return document.documentElement.getAttribute('data-theme') === 'dark' ? __PH_DARK_24 : __PH_LIGHT_24; } catch (e) { return __PH_LIGHT_24; }
 } });
+
+/* v450（老板实拍：关掉深色后刷新，资源卡片占位块还是深色、变不回去；导航页/错误页的占位块则一直是浅色）：
+   占位图是 data URI，一旦写进 img.src 就不会随主题重算——切主题后旧图原地留着。
+   这里在主题变化时把「已经渲染出来的占位图」原地换装；只精确比对四张已知占位图，绝不误伤资源封面等其它内联 SVG。 */
+(function () {
+  function syncPlaceholders() {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var map = {};
+    var l24 = dark ? __PH_DARK_24 : __PH_LIGHT_24;
+    var l80 = dark ? __PH_DARK_80 : __PH_LIGHT_80;
+    map[__PH_LIGHT_24] = l24; map[__PH_DARK_24] = l24;
+    map[__PH_LIGHT_80] = l80; map[__PH_DARK_80] = l80;
+    var imgs = document.querySelectorAll('img[src^="data:image/svg+xml"]');
+    for (var i = 0; i < imgs.length; i++) {
+      var s = imgs[i].getAttribute('src') || '';
+      var to = map[s];
+      if (to && to !== s) imgs[i].setAttribute('src', to);
+    }
+  }
+  window.__wnSyncPlaceholders = syncPlaceholders;
+  try {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    var on = function () { setTimeout(syncPlaceholders, 30); setTimeout(syncPlaceholders, 380); };
+    if (mq.addEventListener) mq.addEventListener('change', on);
+    else if (mq.addListener) mq.addListener(on);
+  } catch (e) { if (window.__silent) window.__silent(e); }
+})();
 
 /* v349 条9：后台「空空的列表」统一小空态（图标＋标题＋提示）——
    原先后台各处空态是一行干巴巴的小字，和前台带插画的空态不是一个画风。 */

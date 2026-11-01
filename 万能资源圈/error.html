@@ -55,11 +55,11 @@ body{background:var(--grad-brand);min-height:100vh;min-height:100dvh;display:fle
 .err-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;} /* v400 条10：底部跳转键弹性布局+统一间距（原各键内联 margin-left:14px） */
 /* v333 修：下面这条原本用 JS 的 // 注释，CSS 遇 // 会丢弃到下一个分号，连 text-decoration 一起吞掉（错误页 logo 少了这行样式） */
 /* v310（用户 10-05 14:25）：差异→统一口径。A1+A4 logo 边框+阴影统一 */
-.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 24px;opacity:0;overflow:hidden; /* R33：logo下方24px与大标题下方24px对称 */background:transparent;box-sizing:border-box;border:3px solid var(--card-bg);box-shadow:var(--avatar-shadow);text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease,opacity 0.8s ease;} /* R53：logo 无链接但特效全保留（与导航页 logo 同款 hover/active） */
+.logo{display:block;width:100px;height:100px;border-radius:50%;margin:0 auto 24px;opacity:0;overflow:hidden; /* R33：logo下方24px与大标题下方24px对称 */background:var(--bg-light);box-sizing:border-box;border:3px solid var(--card-bg); /* v450：底色接令牌（原靠 onload 写死 #e2e5e9，深色下永远浅灰） */box-shadow:var(--avatar-shadow);text-decoration:none;cursor:pointer;transition:transform 0.12s ease,box-shadow 0.12s ease,opacity 0.8s ease;} /* R53：logo 无链接但特效全保留（与导航页 logo 同款 hover/active） */
 .logo:hover{box-shadow:0 0 0 3px rgba(255,255,255,0.45);}
 .logo:active{transform:scale(0.94);opacity:0.8;}
 .logo img{width:100%;height:100%;object-fit:cover;}
-img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:#f5f5f5!important;}
+img[src^="data:image/svg+xml"]{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center;background:var(--bg-light,#f5f5f5)!important;} /* v450：占位底灰接令牌（原写死 #f5f5f5，深色下永远是浅灰块） */
 html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html,body{overscroll-behavior:auto;}}
 /* R116：与全站 toast 同位同高（top:80px 居中、展开 28px），对齐 shop 定稿规格 */
 /* R148（用户 01:29）：下拉刷新与全站同步（与 index/shop/admin 同款帘式展开 + 32px 胶囊，逐字对齐 index.html 口径） */
@@ -80,7 +80,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 </head>
 <body><a class="skip-link" href="#mainContent">跳到主要内容</a>
 <div class="box" id="mainContent" role="main"><!-- v346 条70/67：skip-link 目标 + 主区语义 -->
-  <div class="logo"><!-- R51：logo 去掉链接纯展示（跳转由下方「导航页」按钮承担） --><img id="errLogo" alt="万能资源圈" decoding="async" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.background='#e2e5e9';p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></div>
+  <div class="logo"><!-- R51：logo 去掉链接纯展示（跳转由下方「导航页」按钮承担） --><img id="errLogo" alt="万能资源圈" decoding="async" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></div>
   <div class="code" id="errorCode" role="heading" aria-level="1">万能资源圈・错误</div>
   <div class="title" id="errorTitle">页面访问异常</div>
   <div class="desc" id="errorDesc">抱歉！你访问的页面出现了问题<br><ul class="err-reasons"><li>①地址有误</li><li>②页面已删除</li><li>③服务暂不可用</li></ul>可点击【导航页】或【资源页】继续浏览</div>
@@ -133,17 +133,22 @@ if (code && errorMap[code]) {
 // 因此返回导航按钮与 logo 需根据当前路径自动计算正确地址，保证任何情况都能跳回导航页。
 // R30-补全：错误页也挂全局媒体兜底——页面上任何图片/视频（含将来新增的）加载失败统一换感叹号占位，
 // 与导航页/资源页/管理页同一套机制，做到全站四个页面全覆盖
+/* v450：占位图按主题取（错误页不加载 ui-common，本地保留一份深色版）——提到全局作用域，logo.onerror 与媒体兜底共用 */
+var EXC_PH_LIGHT = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3, 11.2, 9.6, 13.1, 11 13.6 C 11.6, 13.8, 12.4, 13.8, 13 13.6 C 14.4, 13.1, 15.7, 11.2, 15.7, 8.4 C 15.7, 5.6, 14.6, 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+var EXC_PH_DARK = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%232b3a4c%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%2355697f%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%2355697f%22/%3E%3C/svg%3E';
+/* v450：占位图按主题取（错误页不加载 ui-common，故本地保留一份深色版） */
+var EXC_PH = function () { return document.documentElement.getAttribute('data-theme') === 'dark' ? EXC_PH_DARK : EXC_PH_LIGHT; };
+
 document.addEventListener('error', function (e) {
   var t = e.target;
   if (!t || !t.tagName || t.dataset.fh) return;
-  var EXC_PH = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3, 11.2, 9.6, 13.1, 11 13.6 C 11.6, 13.8, 12.4, 13.8, 13 13.6 C 14.4, 13.1, 15.7, 11.2, 15.7, 8.4 C 15.7, 5.6, 14.6, 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
   if (t.tagName === 'IMG') {
     t.dataset.fh = '1';
-    t.src = EXC_PH; if (t.classList) t.classList.add('media-fail'); t.style.objectFit = 'contain'; t.style.display = 'block'; t.style.opacity = '1';
+    t.src = EXC_PH(); if (t.classList) t.classList.add('media-fail'); t.style.objectFit = 'contain'; t.style.display = 'block'; t.style.opacity = '1';
   } else if (t.tagName === 'VIDEO') {
     t.dataset.fh = '1';
     var ph = document.createElement('img');
-    ph.src = EXC_PH; ph.classList.add('media-fail'); ph.style.cssText = 'width:100%;height:auto;display:block;';
+    ph.src = EXC_PH(); ph.classList.add('media-fail'); ph.style.cssText = 'width:100%;height:auto;display:block;';
     if (t.parentNode) t.parentNode.replaceChild(ph, t);
   }
 }, true);
@@ -155,7 +160,7 @@ document.addEventListener('error', function (e) {
       var _pp = this.parentNode; if (_pp) { _pp.style.opacity = '1'; if (!_pp.classList.contains('logo-enter')) _pp.classList.add('logo-enter'); }
       this.onerror = null;
       this.classList && this.classList.add('media-fail');
-      this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+      this.src = EXC_PH();
       this.style.objectFit = 'contain';
       this.style.display = 'block';
     };

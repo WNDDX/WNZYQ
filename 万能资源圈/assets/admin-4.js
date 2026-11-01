@@ -970,8 +970,9 @@
     // v328（用户 10-06 15:37）：文件弹窗主控——极简设计：一行说明+链接框+上传按钮，无虚线框无二级菜单
     function setupFileDialog(editor) {
       if (!editor) return;
-      /* v352 条3：弹窗级拖拽已移除——拖到弹窗其它位置也会上传但看不到插到哪，浪费存储。
-         只认编辑器本体（bindFileCardManagement 里的 drop），外加全站兜底：拖在编辑器外面只提示不收。 */
+      /* v450（老板实拍：拖文件进「插入文件」弹窗，被全局兜底弹「请把文件拖到正文编辑框里再松手」——
+         而弹窗自己的文案写着「也可直接拖文件/文件夹到弹窗」，说明承诺了却没接线，功能等于废的）。
+         恢复弹窗级拖拽：投到弹窗上按本地文件处理，且优先于全局兜底（兜底见到 #inputMask 就闭嘴）。 */
       if (!window.__fileDropGuard) {
         window.__fileDropGuard = true;
         document.addEventListener('dragover', function (e) {
@@ -980,12 +981,68 @@
         document.addEventListener('drop', function (e) {
           if (!(e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1)) return;
           e.preventDefault();
-          var inEditor = e.target && e.target.closest && e.target.closest('.rte-editor');
+          var t = e.target;
+          if (t && t.closest && t.closest('#inputMask')) return; /* 文件弹窗自己的 drop 负责，兜底不插手 */
+          var inEditor = t && t.closest && t.closest('.rte-editor');
           if (!inEditor) toast('请把文件拖到正文编辑框里再松手', 'info');
         }, true);
       }
+      window.__fileDropEditor = editor;
+      var mask = document.getElementById('inputMask');
+      if (mask && !mask.__wnFileDrop) {
+        mask.__wnFileDrop = 1;
+        var hasFiles = function (e) {
+          return !!(e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1);
+        };
+        var setHot = function (on) {
+          var box = mask.querySelector('.modal-box');
+          if (box) box.classList.toggle('file-drop-hot', !!on);
+        };
+        mask.addEventListener('dragenter', function (e) { if (!hasFiles(e)) return; e.preventDefault(); setHot(true); });
+        mask.addEventListener('dragover', function (e) {
+          if (!hasFiles(e)) return;
+          e.preventDefault(); e.stopPropagation();
+          try { e.dataTransfer.dropEffect = 'copy'; } catch (err) {}
+          setHot(true);
+        });
+        mask.addEventListener('dragleave', function (e) {
+          if (!e.relatedTarget || !mask.contains(e.relatedTarget)) setHot(false);
+        });
+        mask.addEventListener('drop', function (e) {
+          if (!hasFiles(e)) return;
+          e.preventDefault(); e.stopPropagation();
+          setHot(false);
+          var ed = window.__fileDropEditor || editor;
+          var dt = e.dataTransfer;
+          var done = false;
+          function take(files, folderName) {
+            if (done) return;
+            done = true;
+            if (files && files.length) processLocalFiles(files, ed, folderName);
+            else toast('文件夹里没有可上传的文件', 'info');
+          }
+          var hasEntry = false;
+          try {
+            for (var di = 0; di < dt.items.length; di++) { if (dt.items[di].webkitGetAsEntry) { hasEntry = true; break; } }
+          } catch (err3) {}
+          if (hasEntry) {
+            fcReadDropped(dt.items, take);
+            /* 兜底：Entry 读取被浏览器拒绝时退回普通文件列表，避免「拖了没反应」 */
+            setTimeout(function () {
+              if (done) return;
+              var fl = dt.files;
+              if (fl && fl.length) take(Array.prototype.slice.call(fl), null);
+              else take([], null);
+            }, 2000);
+          } else {
+            var fl2 = dt.files;
+            if (fl2 && fl2.length) take(Array.prototype.slice.call(fl2), null);
+            else take([], null);
+          }
+        });
+      }
       showInput('插入文件',
-        '粘贴网络链接，或点「上传本地文件」选择文件；也可直接拖文件/文件夹到弹窗',
+        '粘贴网络链接，或点「上传本地文件」选择文件；也可直接把文件/文件夹拖进本弹窗',
         'https://...',
         handleFileInsert(editor), '', 'file');
     }
@@ -1964,7 +2021,7 @@
         var fold = document.getElementById('infoFold' + C);
         if (fold) fold.addEventListener('click', toggle);
         var col = document.getElementById('infoCollapse' + C);
-        if (col) col.addEventListener('click', toggle); /* 收起=同三角（只收面板，不动其他） */
+        /* v450（老板拍板）：去掉「保存」键——「收起」=保存并收起（一键完成，不再出现两个都像提交的键） */
         var add = document.getElementById('infoQrAdd' + C);
         var fi = document.getElementById('infoQrFile' + C);
         if (add && fi) {
@@ -1977,7 +2034,7 @@
               if (!url) return;
               __infoPending[k] = url; /* 只到页面，保存才入库 */
               __infoRefreshPanel(k);
-              toast('二维码已就绪，点「保存」后生效', 'info');
+              toast('二维码已就绪，点「收起」后保存生效', 'info');
               if (window.__haptic) window.__haptic();
             });
           });
@@ -1995,35 +2052,36 @@
             if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
             __infoPending[k] = v;
             __infoRefreshPanel(k);
-            if (v) { toast('网络图已就绪，点「保存」后生效', 'info'); if (window.__haptic) window.__haptic(); }
+            if (v) { toast('网络图已就绪，点「收起」后保存生效', 'info'); if (window.__haptic) window.__haptic(); }
           });
         }
         /* v385 条1：点行首三键=实时预览导航页对应弹窗（值取 pending||已保存，所见即所得） */
         var pvBtn = document.getElementById('infoBtn' + C);
         if (pvBtn) pvBtn.addEventListener('click', function () { __infoPreview(k); });
-        var sv = document.getElementById('infoSave' + C);
-        if (sv) sv.addEventListener('click', function () {
-          var b = this, _t = b.textContent;
+        /* v450：保存逻辑抽成 __infoSaveRow，绑在「收起」上（先存后收；失败不收起，留在原地可重试） */
+        function __infoSaveRow(after) {
           var body = {}; body[c.qrKey] = __infoPending[k] || '';
           if (c.urlKey) {
             var inp = document.getElementById('infoUrl' + C);
             body[c.urlKey] = (inp ? inp.value : '').trim();
           }
+          var b = col, _t = b.textContent;
           b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '保存中');
           api('admin/settings', { method: 'PUT', body: JSON.stringify(body) }).then(function (res) {
-            b.disabled = false;
+            b.disabled = false; b.textContent = _t;
             if (res && res.ok) {
-              try { b.textContent = '✓ 已保存'; setTimeout(function () { b.textContent = _t; }, 400); } catch (e0) { if (window.__silent) window.__silent(e0); }
               var s2 = {}; Object.keys(body).forEach(function (kk) { s2[kk] = body[kk]; });
               window.__infoSettings[c.qrKey] = body[c.qrKey]; __infoPending[k] = body[c.qrKey];
               if (c.urlKey) window.__infoSettings[c.urlKey] = body[c.urlKey];
               window.__infoApply(s2); /* 面板开着不覆盖 pending，已手动同步 */
               try { localStorage.setItem('wnzyq_kf_url_updated', Date.now().toString()); } catch (e) { if (window.__silent) window.__silent(e); }
               if (window.__haptic) window.__haptic();
+              if (after) after();
             }
-            else { b.textContent = _t; toast((res && res.msg) || '保存失败', 'error'); }
+            else { toast((res && res.msg) || '保存失败', 'error'); }
           }).catch(function () { b.disabled = false; b.textContent = _t; toast('网络开小差了，请稍后再试', 'error'); });
-        });
+        }
+        if (col) col.addEventListener('click', function () { __infoSaveRow(toggle); });
       });
     })();
 

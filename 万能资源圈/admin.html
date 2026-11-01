@@ -53,7 +53,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     <div class="login-card">
       <a class="login-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
         <div class="login-logo">
-          <img src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+          <img src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src=(window.WN_MEDIA_FALLBACK||'')' />
         </div>
       </a>
       <h1>万能资源圈・管理</h1>
@@ -75,7 +75,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <div class="topbar-inner">
         <div class="topbar-brand">
           <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
-            <img class="topbar-logo" src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E"' />
+            <img class="topbar-logo" src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src=(window.WN_MEDIA_FALLBACK||'')' />
           </a>
           <span>万能资源圈・管理</span>
         </div>
@@ -542,8 +542,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <label for="infoUrlContact">跳转链接</label>
               <input class="input" id="infoUrlContact" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
             </div>
-            <div class="info-panel-btns">
-              <button type="button" class="modal-inner-btn info-save-green" id="infoSaveContact">保存</button>
+            <div class="info-panel-btns is-single">
               <button type="button" class="modal-close" id="infoCollapseContact">收起</button>
             </div>
           </div>
@@ -568,8 +567,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <label for="infoUrlGroup">跳转链接</label>
               <input class="input" id="infoUrlGroup" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
             </div>
-            <div class="info-panel-btns">
-              <button type="button" class="modal-inner-btn info-save-blue" id="infoSaveGroup">保存</button>
+            <div class="info-panel-btns is-single">
               <button type="button" class="modal-close" id="infoCollapseGroup">收起</button>
             </div>
           </div>
@@ -590,8 +588,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <label for="infoNetGzh">图片网络地址</label>
               <input class="input" id="infoNetGzh" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...（二维码网络图）" />
             </div>
-            <div class="info-panel-btns">
-              <button type="button" class="modal-inner-btn info-save-cyan" id="infoSaveGzh">保存</button>
+            <div class="info-panel-btns is-single">
               <button type="button" class="modal-close" id="infoCollapseGzh">收起</button>
             </div>
           </div>
@@ -738,8 +735,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <label for="fContactUrl">跳转链接</label>
               <input class="input" id="fContactUrl" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...（留空用平台设置）" />
             </div>
-            <div class="info-panel-btns">
-              <button type="button" class="modal-inner-btn info-save-green" id="edContactSave">保存</button>
+            <div class="info-panel-btns is-single">
               <button type="button" class="modal-close" id="edContactCollapse">收起</button>
             </div>
           </div>

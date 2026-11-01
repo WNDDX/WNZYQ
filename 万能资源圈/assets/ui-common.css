@@ -455,6 +455,8 @@ mark.hl { background: rgba(var(--green-rgb, 1,192,0), .16); color: inherit; font
 
 /* v368 条3：恢复弹窗边框（此前统一样式时丢失） */
 .modal-box, .ann-box, .kf-box, .preview-box, .share-box { border: 1px solid var(--border, #d0d0d0); }
+/* v450：插入文件弹窗「可投放」热区——拖文件悬停在弹窗上时给虚线框，松手即上传（原拖进弹窗只弹全局兜底提示） */
+.modal-box.file-drop-hot { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(var(--blue1-rgb), 0.22); }
 /* v375（老板要求：全系统弹窗底键统一"文字不换行"）——确认框/客服窗/分享窗/输入窗/各类确定·关闭键，
    键内文字恒一行，放不下走省略号，绝不折行变两行（此前只有 .modal-footer button 有，确认框与客服窗漏了） */
 .modal-footer button, .modal-inner-btn, .modal-close, .kf-actions > button, .share-box .modal-footer button, .preview-box .modal-footer button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

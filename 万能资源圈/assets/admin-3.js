@@ -2086,7 +2086,6 @@ document.addEventListener('click', function (e) {
   var fi = document.getElementById('edContactQrFile');
   var del = document.getElementById('edContactQrDel');
   var net = document.getElementById('edContactNet');
-  var sv = document.getElementById('edContactSave');
   function __edContactRefresh() {
     var qr = (document.getElementById('fContactQr').value || '').trim();
     var img = document.getElementById('edContactQrImg');
@@ -2108,7 +2107,7 @@ document.addEventListener('click', function (e) {
     if (window.__haptic) window.__haptic();
   };
   if (fold) fold.addEventListener('click', toggle);
-  if (col) col.addEventListener('click', toggle);
+  /* v450（老板拍板）：去掉「保存」键——「收起」=保存并收起（一键完成） */
   if (add && fi) {
     add.addEventListener('click', function () { fi.click(); });
     fi.addEventListener('change', function () {
@@ -2119,7 +2118,7 @@ document.addEventListener('click', function (e) {
         if (!url) return;
         document.getElementById('fContactQr').value = url;
         __edContactRefresh();
-        toast('二维码已就绪，点「保存」后生效', 'info');
+        toast('二维码已就绪，点「收起」后保存生效', 'info');
         if (window.__haptic) window.__haptic();
       });
     });
@@ -2133,27 +2132,30 @@ document.addEventListener('click', function (e) {
     if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
     document.getElementById('fContactQr').value = v;
     __edContactRefresh();
-    if (v) { toast('网络图已就绪，点「保存」后生效', 'info'); if (window.__haptic) window.__haptic(); }
+    if (v) { toast('网络图已就绪，点「收起」后保存生效', 'info'); if (window.__haptic) window.__haptic(); }
   });
-  /* 行内保存=部分更新（只动专属客服两列，不碰表单其余字段；新增未入库资源提示先点确定） */
-  if (sv) sv.addEventListener('click', function () {
+  /* 行内保存=部分更新（只动专属客服两列，不碰表单其余字段；新增未入库资源提示先点确定）
+     v450：绑在「收起」上——先存后收；新增未入库时只提示、不收起（资源还没确定，收了会丢信息） */
+  function __edContactSaveNow(after) {
     var pid = window.state && window.state.editingId;
-    if (!pid) { toast('请先点「确定」保存资源，再单独更新客服信息', 'info'); return; }
-    var b = this, _t = b.textContent;
+    if (!pid) { toast('请先点「确定」保存资源，再单独更新客服信息', 'info'); return false; }
+    var b = col, _t = b.textContent;
     b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '保存中');
     api('admin/products/' + pid, { method: 'PUT', body: JSON.stringify({
       partial: 'contact',
       contactQr: (document.getElementById('fContactQr').value || '').trim(),
       contactUrl: (document.getElementById('fContactUrl').value || '').trim()
     }) }).then(function (res) {
-      b.disabled = false;
+      b.disabled = false; b.textContent = _t;
       if (res && res.ok) {
-        try { b.textContent = '✓ 已保存'; setTimeout(function () { b.textContent = _t; }, 400); } catch (e0) { if (window.__silent) window.__silent(e0); }
         var _sp = (state.products || []).find(function (x) { return x.id === pid; });
         if (_sp) { _sp.contactQr = (document.getElementById('fContactQr').value || '').trim(); _sp.contactUrl = (document.getElementById('fContactUrl').value || '').trim(); }
         if (window.__haptic) window.__haptic();
+        if (after) after();
       }
-      else { b.textContent = _t; toast((res && res.msg) || '保存失败', 'error'); }
+      else { toast((res && res.msg) || '保存失败', 'error'); }
     }).catch(function () { b.disabled = false; b.textContent = _t; toast('网络开小差了，请稍后再试', 'error'); });
-  });
+    return true;
+  }
+  if (col) col.addEventListener('click', function () { __edContactSaveNow(toggle); });
 })();

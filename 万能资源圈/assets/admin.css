@@ -2227,6 +2227,9 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .info-panel-btns { display: flex; gap: 8px; margin-top: 12px; }
 /* v385 条2：保存/收起严格等分（原 .modal-close 自带 padding 0 24px 参与布局致两键不等宽） */
 .info-panel-btns > button { flex: 0 0 calc(50% - 4px) !important; min-width: 0 !important; width: calc(50% - 4px) !important; padding-left: 8px !important; padding-right: 8px !important; box-sizing: border-box; margin: 0 !important; } /* v385 条2：对半公式严格等分（原 .modal-close 自带 padding 参与 flex 致不等宽）；v385 条6：margin-bottom 归零 */
+/* v450（老板拍板）：咨询客服/交流群聊/公众号讯 各行去掉「保存」键，「收起」=保存并收起，独占一行居中 */
+.info-panel-btns.is-single { justify-content: center; }
+.info-panel-btns.is-single > button { flex: 1 1 100% !important; width: 100% !important; max-width: 100% !important; text-align: center; }
 @media (max-width: 600px) {
   .info-item { padding: 8px 10px; }
   .info-row-bar .btn-green, .info-row-bar .btn-blue, .info-row-bar .btn-cyan { height: 36px; font-size: 14px; }

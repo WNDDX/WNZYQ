@@ -129,13 +129,13 @@
       return d.getUTCFullYear() + '-' + p2(d.getUTCMonth() + 1) + '-' + p2(d.getUTCDate()) + ' ' + p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()) + ':' + p2(d.getUTCSeconds());
     };
     // ---------- 全站统一：图片/视频加载失败 → 感叹号占位（与其它页面一致） ----------
-    var EXC_PLACEHOLDER = window.WN_MEDIA_FALLBACK; /* v349 条7：占位图统一取公共层一份（原先这里整段抄了一遍，改一处漏一处） */
+    /* v450：占位图实时读公共层 getter（去掉加载期快照，切主题后占位块跟着换） */
     document.addEventListener('error', function (e) {
       var t = e.target;
       if (!t || !t.tagName) return;
       if (t.tagName === 'IMG' && !t.dataset.fh && !t.dataset.lf) { /* v345 条3：由页面自己接管的图片不抢 */
         t.dataset.fh = '1';
-        t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail');
+        t.src = window.WN_MEDIA_FALLBACK; if (t && t.classList) t.classList.add('media-fail');
         t.style.display = 'block'; t.style.opacity = '1';
       } else if (t.tagName === 'VIDEO' && !t.dataset.fh) {
         t.dataset.fh = '1';
@@ -179,8 +179,8 @@
         }
       }
     }, true);
-    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh || t.dataset.lf) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = EXC_PLACEHOLDER; if (t && t.classList) t.classList.add('media-fail'); t.style.display = 'block'; t.style.opacity = '1'; } }, true);
-    document.querySelectorAll('img').forEach(function (im) { if (im.dataset.lf) return; if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = EXC_PLACEHOLDER; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
+    document.addEventListener('load', function (e) { var t = e.target; if (!t || !t.tagName || t.tagName !== 'IMG' || t.dataset.fh || t.dataset.lf) return; if (t.naturalWidth === 0 && String(t.getAttribute('src') || '').indexOf('data:') !== 0) { t.dataset.fh = '1'; t.src = window.WN_MEDIA_FALLBACK; if (t && t.classList) t.classList.add('media-fail'); t.style.display = 'block'; t.style.opacity = '1'; } }, true);
+    document.querySelectorAll('img').forEach(function (im) { if (im.dataset.lf) return; if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src').indexOf('data:') !== 0) { im.dataset.fh = '1'; im.src = window.WN_MEDIA_FALLBACK; if (im && im.classList) im.classList.add('media-fail'); im.style.display = 'block'; } });
 
     // ---------- DOM ----------
     window.__adminLoggedIn = false; /* v365 条4：开机即明确未登录（守卫依据，不再依赖样式状态） */
@@ -392,8 +392,8 @@
 
     // 改密码弹窗
 
-    // 占位图统一使用 EXC_PLACEHOLDER（见上方定义），IMG_PLACEHOLDER 保留兼容旧引用
-    var IMG_PLACEHOLDER = EXC_PLACEHOLDER; // 兼容旧引用，统一人形剪影占位（v339 全站恢复）
+    // 占位图统一使用 window.WN_MEDIA_FALLBACK（见上方定义），IMG_PLACEHOLDER 保留兼容旧引用
+    var IMG_PLACEHOLDER = null; // v450：快照作废，引用处已改用 window.WN_MEDIA_FALLBACK
     var state = {
       categories: [],
       products: [],
