@@ -2457,6 +2457,7 @@
       filterBar = document.createElement('div');
       filterBar.id = 'ctFilterBar';
       filterBar.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px';
+      filterBar.__adjustCols = function () { var whoEmpty = !(window.__ctWhoOpts && Object.keys(window.__ctWhoOpts).length > 1); this.style.gridTemplateColumns = whoEmpty ? '1fr' : '1fr 1fr'; var w = this.querySelector('#ctWhoSel'); if (w) w.closest('div').style.display = whoEmpty ? 'none' : ''; }; /* v443 条2：无员工时「只看」隐藏并单列（空筛选=看起来是空的） */
       filterBar.innerHTML = '<div style="min-width:0"><select id="ctWhoSel" style="width:100%;box-sizing:border-box;font-size:12px;padding:4px 6px;border:1px solid #dfe7ef;border-radius:6px"></select></div><div style="min-width:0"><select id="ctTypeSel" style="width:100%;box-sizing:border-box;font-size:12px;padding:4px 6px;border:1px solid #dfe7ef;border-radius:6px"></select></div>';
       list.parentNode.insertBefore(filterBar, list);
       var TYPE_OPTS = [['', '全部类型'], ['view', '浏览资源'], ['contact', '咨询客服'], ['resource_unlock', '查看内容'], ['bind', '资源解锁'], ['login', '设备登录'], ['audit', '系统操作']];
@@ -2477,6 +2478,8 @@
     var _whoOpts = { '': '全部动态' };
     (d.recent || []).forEach(function (r) { if (r.type === 'audit' && r.who && r.who !== 'admin') _whoOpts[r.who] = 1; });
     var _whoSel = filterBar.querySelector('#ctWhoSel');
+    window.__ctWhoOpts = _whoOpts;
+    try { filterBar.__adjustCols(); } catch (eAC) {}
     var _whoNative = _whoSel.dataset.sp ? null : _whoSel;
     if (_whoNative) {
       var _cur = _whoNative.value;
@@ -2544,8 +2547,7 @@
   window.__syscheckAlertChanged = function () { checkDot(); }; /* #80：自动体检写标记后即时刷新红点 */
   setTimeout(checkDot, 1500);
   if (btn) btn.addEventListener('click', function () {
-    markSeen(); /* v442 条2：打开即算看过——红点立刻灭（同时解决「红点被弹窗遮罩挡住一部分」的观感问题） */
-    mask.classList.add('open');
+    mask.classList.add('open'); /* v443 条1（老板拍板）：恢复原逻辑——打开不 markSeen，红点保持到关闭时才算看过 */
     if (window.__haptic) window.__haptic();
     /* v442 条2（老板反馈：内容加载慢、先空后闪动难看）：打开先铺骨架，数据回来再渲染 */
     var _list0 = document.getElementById('ctList');

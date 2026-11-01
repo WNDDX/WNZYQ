@@ -497,14 +497,14 @@
     mask.addEventListener('click', function (e) {
       var go = e.target.closest && e.target.closest('[data-goto-pid]');
       if (go) { gotoEditProduct(go.getAttribute('data-goto-pid')); return; }
-      if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); }, 200); }
+      if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
     });
   }
 
   /* 定位：关体检弹窗 → 切资源管理 → 找到资源行高亮 → 打开编辑弹窗 */
   function gotoEditProduct(pid) {
     var mask = document.getElementById('sysCheckMask');
-    if (mask) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); }, 200); }
+    if (mask) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
     var tab = document.querySelector('.tab[data-tab="products"]'); if (tab) tab.click();
     setTimeout(function () {
       var row = document.querySelector('#productList [data-id="' + pid + '"]');
@@ -541,7 +541,7 @@
       '<button type="button" class="btn-blue" id="usPwdGo" style="width:100%">确认重置</button></div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); try { mask.querySelector('#usPwdInput').focus({ preventScroll: true }); } catch (eF) {} });
-    var close = function () { mask.classList.remove('open'); setTimeout(function () { mask.remove(); }, 200); };
+    var close = function () { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); };
     mask.addEventListener('click', function (e) { if (e.target === mask || e.target.closest('[data-x]')) close(); });
     mask.querySelector('#usPwdGo').addEventListener('click', function () {
       var np = (mask.querySelector('#usPwdInput').value || '').trim();
@@ -680,7 +680,7 @@
       try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll: true }); } catch (eF) {}
     });
     mask.addEventListener('click', function (e) {
-      if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); }, 200); }
+      if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
     });
     mask.querySelector('#ufSave').addEventListener('click', function () {
       var pv = {};
@@ -696,14 +696,14 @@
       if (isEdit) {
         usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
           if (window.showToast) window.showToast('已保存', 'success');
-          mask.remove(); renderUsersList();
+          mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); renderUsersList();
         }, function () { btn.disabled = false; btn.textContent = '保存修改'; });
       } else {
         var un = (mask.querySelector('#ufUser') || {}).value || '';
         var pw = (mask.querySelector('#ufPwd') || {}).value || '';
         usersCall('POST', { username: un, password: pw, note: note, perms: pv }, function () {
           if (window.showToast) window.showToast('账号已创建', 'success');
-          mask.remove(); renderUsersList();
+          mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); renderUsersList();
         }, function () { btn.disabled = false; btn.textContent = '创建账号'; });
       }
     });

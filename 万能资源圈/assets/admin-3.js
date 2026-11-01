@@ -419,6 +419,17 @@
       });
     }
     upgradeAllSelects();
+    /* v443 条4（老板反馈：点分类筛选没看到下拉框）：v442 起面板统一移到 body，打开时靠 data-picker-id 找回——
+       静态 cat-picker（资源分类筛选/统计分类筛选/分类父级/批量改分类）从未挂 id，面板一移走就永远找不回=点击无下拉。
+       统一补挂（有面板子元素的都挂），全系统一处治 */
+    document.querySelectorAll('.cat-picker').forEach(function (pk) {
+      if (pk.dataset.pickerId) return;
+      var pp = pk.querySelector('.cat-picker-panel');
+      if (!pp) return;
+      var _id = 'cp-' + Math.random().toString(36).slice(2, 9);
+      pk.dataset.pickerId = _id;
+      pp.dataset.pickerId = _id;
+    });
 
     function initFilterCatPicker() {
       var fp = document.getElementById('filterCatPicker');
