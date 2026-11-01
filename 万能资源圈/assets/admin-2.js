@@ -562,9 +562,9 @@ function renderProducts() {
       img.onerror = function () {
         /* R304 P18：小图 404（存量旧图还没补到小图）先回退原图，不能空图；原图也失败才走占位符 */
         if (_origImg && this.getAttribute('src') !== _origImg) { this.src = _origImg; return; }
-        this.onerror = null; this.src = EXC_PLACEHOLDER; this.style.opacity = '1'; if (this && this.classList) this.classList.add('media-fail');
+        this.onerror = null; this.src = window.WN_MEDIA_FALLBACK; this.style.opacity = '1'; if (this && this.classList) this.classList.add('media-fail');
       };
-      img.src = _origImg ? thumbOf(_origImg) : EXC_PLACEHOLDER; /* R304 P18：管理页列表缩略图读小图 */
+      img.src = _origImg ? thumbOf(_origImg) : window.WN_MEDIA_FALLBACK; /* R304 P18：管理页列表缩略图读小图 */
 
       var info = document.createElement('div');
       info.className = 'info';

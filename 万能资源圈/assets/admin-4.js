@@ -1353,11 +1353,11 @@
         /* R304 P18：小图 404 先回退原图，不能空图；原图也失败才走占位符 */
         var _orig = escapeHtml(url);
         if (url && thumbOf(url) !== url && img.getAttribute('src') !== _orig) { img.src = _orig; return; }
-        img.style.opacity = '1'; item.classList.add('media-fail'); img.src = EXC_PLACEHOLDER;
+        img.style.opacity = '1'; item.classList.add('media-fail'); img.src = window.WN_MEDIA_FALLBACK;
       };
       // R277：去掉编辑弹窗缩略图点击放大（老板要求保留右键预览大图即可，点击只保留选中行为）
       item.appendChild(img);
-      if (url) { img.src = escapeHtml(thumbOf(url)); } else { img.style.opacity = '1'; item.classList.add('media-fail'); img.src = EXC_PLACEHOLDER; } /* R304 P18：编辑弹窗图库缩略图读小图 */
+      if (url) { img.src = escapeHtml(thumbOf(url)); } else { img.style.opacity = '1'; item.classList.add('media-fail'); img.src = window.WN_MEDIA_FALLBACK; } /* R304 P18：编辑弹窗图库缩略图读小图 */
       if (idx === 0) {
         var mainBadge = document.createElement('span');
         mainBadge.className = 'cg-main';

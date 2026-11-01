@@ -118,7 +118,7 @@
         if (url) {
           if (url === __lastBadUrl) {
             preview.onerror = null; preview.dataset.fh = '1';
-            preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
+            preview.src = window.WN_MEDIA_FALLBACK; if (preview && preview.classList) preview.classList.add('media-fail');
             preview.classList.add('show');
             return;
           }
@@ -143,7 +143,7 @@
               probe2.onerror = function () {
                 __lastBadUrl = url;
                 preview.onerror = null; preview.dataset.fh = '1';
-                preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
+                preview.src = window.WN_MEDIA_FALLBACK; if (preview && preview.classList) preview.classList.add('media-fail');
                 preview.classList.add('show');
               };
               probe2.src = url;
@@ -151,13 +151,13 @@
             }
             __lastBadUrl = url;
             preview.onerror = null; preview.dataset.fh = '1';
-            preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
+            preview.src = window.WN_MEDIA_FALLBACK; if (preview && preview.classList) preview.classList.add('media-fail');
             preview.classList.add('show');
           };
           probe.src = _tUrl;
         } else {
           preview.onerror = null; preview.dataset.fh = '1'; __lastBadUrl = null;
-          preview.src = EXC_PLACEHOLDER; if (preview && preview.classList) preview.classList.add('media-fail');
+          preview.src = window.WN_MEDIA_FALLBACK; if (preview && preview.classList) preview.classList.add('media-fail');
           preview.classList.add('show');
         }
       };

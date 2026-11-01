@@ -2071,7 +2071,7 @@ refreshCatCnts();
        ui-common.js 的 window.__renderCarousel（顺带修好了这里 img.src = escapeHtml(url) 的转义 bug）。
        这里保留转发，公共层万一没加载也不会整页崩。 */
     function renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images) {
-      if (window.__renderCarousel) { window.__renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images, EXC_PLACEHOLDER); return; }
+      if (window.__renderCarousel) { window.__renderCarousel(carouselEl, trackEl, dotsEl, fallbackImgEl, images, window.WN_MEDIA_FALLBACK); return; }
       if (!carouselEl || !trackEl) return;
       if (!images || images.length <= 1) {
         carouselEl.style.display = 'none';
