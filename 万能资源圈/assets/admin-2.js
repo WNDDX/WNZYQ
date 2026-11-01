@@ -611,6 +611,7 @@ function renderProducts() {
       var statusBtn = document.createElement('button');
       statusBtn.className = 'row-btn status-btn status-' + (curStatus === 'online' ? 'online' : 'hidden');
       statusBtn.textContent = curStatus === 'online' ? '显示' : '隐藏';
+      statusBtn.setAttribute('data-perm', 'products.online');
       statusBtn.title = '点击切换为' + (curStatus === 'online' ? '隐藏（资源页不显示）' : '显示');
       /* v330 条18：统一 SVG 图标 + 优先级（pri 越小越先保留文字；空间不够时从数字大的开始收成纯图标） */
       if (window.__decorateBtn) window.__decorateBtn(statusBtn, curStatus === 'online' ? 'show' : 'hide', 2);
@@ -629,18 +630,21 @@ function renderProducts() {
       var editBtn = document.createElement('button');
       editBtn.className = 'row-btn';
       editBtn.textContent = '编辑';
+      editBtn.setAttribute('data-perm', 'products.edit'); /* v452：权限锁下沉到行内键（原来只拦点击不隐藏，子账号看得见点不动） */
       editBtn.title = '编辑'; /* v395-5：补 title——原创建处遗漏，纯图标态（窄屏 ico-only）下既无文字也无 title/aria-label，悬停无提示、读屏念不出（复制/显示键都有，唯独编辑/删除/资源码漏） */
       if (window.__decorateBtn) window.__decorateBtn(editBtn, 'edit', 1); /* v330 条18：编辑优先级最高，空间不够也优先留文字 */
       editBtn.addEventListener('click', function () { openEdit(p); });
       var copyBtn = document.createElement('button');
       copyBtn.className = 'row-btn';
       copyBtn.textContent = '复制';
+      copyBtn.setAttribute('data-perm', 'products.add');
       copyBtn.title = '复制此资源为新资源';
       if (window.__decorateBtn) window.__decorateBtn(copyBtn, 'copy', 3); /* v330 条18 */
       copyBtn.addEventListener('click', function () { copyProduct(p); });
       var delBtn = document.createElement('button');
       delBtn.className = 'row-btn danger';
       delBtn.textContent = '删除';
+      delBtn.setAttribute('data-perm', 'products.del');
       delBtn.title = '删除'; /* v395-5：同 editBtn——补 title 供纯图标态悬停/读屏 */
       if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v330 条18：删除优先级最低，先收成纯图标 */
       delBtn.addEventListener('click', function () { delProduct(p.id); });
@@ -648,6 +652,7 @@ function renderProducts() {
       // 与显示/隐藏下拉同款结构）——点开展示该资源各类型的资源码（无码显示"无资源码"），点码即复制。
       // R139（用户定稿）：下拉内码/无码项按键化，与编辑弹窗类型列表 codeBtn/noCodeBtn 完全同款（row-btn）
       var codePicker = document.createElement('div');
+      codePicker.setAttribute('data-perm', 'info.view');
       // R131（用户 16:14 定稿）：code-picker 钩子类用于容器布局对齐 .p-ops .row-btn（CSS 处理）
       codePicker.className = 'select-picker code-picker';
       // R255（老板 17:53「资源码选择框看不见」根因修复）：code-picker 与通用 makeSelectPicker 不同，
@@ -834,6 +839,8 @@ function renderProducts() {
           if (_er && _er.parentNode) _er.parentNode.removeChild(_er);
         }
       }
+      /* v452：行内键是动态建的，渲染完再套一次权限锁（无权的键直接不显示，而不是点了才提示） */
+      try { if (window.__applyPermUI) window.__applyPermUI(); } catch (eP) { if (window.__silent) window.__silent(eP); }
       /* R230：真实条数少于骨架数时收尾移除多余骨架（资源页同款） */
       if (__reuse) { for (var __sj = pageList.length; __sj < __skels.length; __sj++) { if (__skels[__sj] && __skels[__sj].parentNode) __skels[__sj].parentNode.removeChild(__skels[__sj]); } }
 

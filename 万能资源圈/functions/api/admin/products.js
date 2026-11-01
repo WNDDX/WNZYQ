@@ -116,11 +116,27 @@ export async function onRequestGet(context) {
   }
 }
 
-/* #116 信息锁：非本人资源的码打码（super 透传） */
+/* #116 信息锁：非本人资源的码打码（super 透传）
+   v452 修：原来只对 p.code 打码——可产品的码根本不在 p.code 上，而在 variants[].resourceCode，
+   等于没打码。实测零权限范围=own 的子账号能在列表里直接看到别人资源的明文码。 */
 function maskList(auth, list) {
   if (auth.role === 'super') return list;
-  const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
-  return list.map(p => { p.code = visibleCode(p.code, auth.role, perms, p.created_by, auth.username, p.cid); return p; });
+  const perms = parsePerms(typeof auth.perms === 'string' ? auth.perms : JSON.stringify(auth.perms || {}));
+  const canInfo = !!(perms.info && perms.info.view);
+  return list.map(p => {
+    p.code = visibleCode(p.code, auth.role, perms, p.created_by, auth.username, p.cid);
+    if (Array.isArray(p.variants)) {
+      p.variants = p.variants.map(v => {
+        if (!canInfo) { v.resourceCode = ''; v.resourceContent = ''; v.hasContent = false; return v; }
+        const raw = String(v.resourceCode || '');
+        if (!raw) return v;
+        const shown = visibleCode(raw, auth.role, perms, p.created_by, auth.username, p.cid);
+        if (shown !== raw) { v.resourceCode = shown; v.resourceContent = ''; v.hasContent = false; }
+        return v;
+      });
+    }
+    return p;
+  });
 }
 
 export async function onRequestPost(context) {

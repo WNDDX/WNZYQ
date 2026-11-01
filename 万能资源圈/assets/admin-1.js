@@ -1142,6 +1142,17 @@
         var act = map[name];
         if (act) t.style.display = window.__permCan(act) ? '' : 'none';
       });
+      /* v452：所有带 data-perm 的控件按权限显隐——原来只拦点击（点了弹「该功能未开放」），
+         子账号仍看得见「新增资源/编辑/删除/显示切换/资源码」这些键，等于把无关按钮摆在眼前。 */
+      Array.prototype.forEach.call(document.querySelectorAll('[data-perm]'), function (el) {
+        var allowed = window.__permCan(el.getAttribute('data-perm'));
+        if (!allowed) {
+          if (el.style.display !== 'none') { el.setAttribute('data-perm-hid', el.style.display || ''); el.style.display = 'none'; }
+        } else if (el.hasAttribute('data-perm-hid')) {
+          el.style.display = el.getAttribute('data-perm-hid');
+          el.removeAttribute('data-perm-hid');
+        }
+      });
       /* 当前激活页签若被隐藏 → 切到第一个可见页签 */
       var active = document.querySelector('.tab.active');
       if (active && active.style.display === 'none') {

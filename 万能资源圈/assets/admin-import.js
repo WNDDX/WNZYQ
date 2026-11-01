@@ -124,7 +124,7 @@
     var prodIdByName = {};
     (data['资源'] || []).forEach(function (r) {
       if (!r[0]) return;
-      seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({ title: r[0], cid: catIdByName[r[1]] || 0, desc: r[2] || '', price: Number(r[3]) || 0, img: r[4] || '', hidden: /隐藏/.test(r[5] || '') ? 1 : 0, schedule_on: (r[6] || '').trim() || undefined, schedule_off: (r[7] || '').trim() || undefined }) }); }).then(function (x) {
+      seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({ title: r[0], cid: catIdByName[r[1]] || 0, desc: r[2] || '', price: Number(r[3]) || 0, img: r[4] || '', is_online: /隐藏/.test(r[5] || '') ? 0 : 1, is_hidden: /隐藏/.test(r[5] || '') ? 1 : 0, /* v452：原来只传 hidden（接口不认这个键），导入的资源一律 is_online=0 —— 导完前台一个都看不到 */ schedule_on: (r[6] || '').trim() || undefined, schedule_off: (r[7] || '').trim() || undefined }) }); }).then(function (x) {
         if (!(x && x.ok)) { say('资源「' + r[0] + '」失败' + (x && x.msg ? '：' + x.msg : '')); return; }
         prodIdByName[r[0]] = x.id;
         say('资源「' + r[0] + '」✓');
