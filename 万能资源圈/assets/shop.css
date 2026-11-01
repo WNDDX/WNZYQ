@@ -71,7 +71,7 @@
       flex-shrink: 0;
     }
     .shop-name {
-      color: #fff;
+      color: var(--text-on-brand, #fff);
       font-size: 18px;
       font-weight: 700;
       letter-spacing:var(--ls-head,1.2px);
@@ -135,7 +135,7 @@
       display: block; width: 100%; margin-top: 16px; height: 46px; /* R285 条1：弹窗底部按钮统一 46px 模子 */
       padding: 0 8px; border: none; border-radius: var(--radius-btn,10px);
       background: var(--blue1);
-      color: #fff; font-size: 16px; font-weight: 600; letter-spacing: var(--ls-btn); /* R285 条1：统一 16px/1.2px */ cursor: pointer;
+      color: var(--text-on-brand, #fff); font-size: 16px; font-weight: 600; letter-spacing: var(--ls-btn); /* R285 条1：统一 16px/1.2px */ cursor: pointer;
       transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; letter-spacing:var(--ls-btn,0.8px);
     }
     .share-close:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
@@ -228,7 +228,7 @@
 
     .category-tag.active {
       background: var(--link-blue, #1565c0); /* v346 条33：选中态蓝加深（原 #1E88E5 上白字对比仅 3.68，改深蓝后达可读） */
-      color: #fff;
+      color: var(--text-on-brand, #fff);
       border-color: transparent;
       font-weight: 600;
       box-shadow: var(--shadow-blue);
@@ -397,7 +397,7 @@
       border-radius: 50%;
       border: none;
       background: var(--blue1);
-      color: #fff;
+      color: var(--text-on-brand, #fff);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -557,7 +557,7 @@
       border-radius: var(--r-m);
       margin-bottom: 8px;
       display: block;
-      background: #000;
+      background: var(--black, #000);
     }
 
     /* 弹窗内富文本图片/视频自适应（不超模；v380：图片与文字统一左对齐，不再居中） */
@@ -602,7 +602,7 @@
 
     .variant-tab.active {
       background: var(--link-blue, #1565c0); /* v349：与一级分类标签的选中态同色（原 var(--blue1) #1E88E5 上白字对比仅 3.68，分类标签早已改深蓝，两处不一致） */
-      color: #fff;
+      color: var(--text-on-brand, #fff);
       border-color: transparent;
       font-weight: 600;
       box-shadow: var(--shadow-blue);
@@ -611,7 +611,7 @@
     .ann-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 0 4px; }
     .ann-tab { position: relative; /* v443 条12：红点宿主锁定 */ padding: 4px 16px; border-radius: var(--r-pill); border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 13px; cursor: pointer; transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) ease, background var(--dur-mid) ease, color var(--dur-mid) ease, box-shadow var(--dur-mid) ease ; user-select: none; }
 
-    .ann-tab.active { background: var(--blue1); color: #fff; border-color: transparent; font-weight: 600; box-shadow: var(--shadow-blue); }
+    .ann-tab.active { background: var(--blue1); color: var(--text-on-brand, #fff); border-color: transparent; font-weight: 600; box-shadow: var(--shadow-blue); }
     .variant-detail {
       background: var(--bg-light);
       border-radius: var(--r-m);
@@ -708,7 +708,7 @@
       border: none;
       border-radius: var(--radius-btn,10px); /* v404 条2：8→10 对齐后台 */
       background: var(--blue1);
-      color: #fff;
+      color: var(--text-on-brand, #fff);
       font-size: 16px; /* v404 条3：14→16 主键字号统一 16px（R192 口径） */
       font-weight: 600;
       cursor: pointer;
@@ -778,7 +778,7 @@
       border: none;
       border-radius: var(--radius-btn,10px);
       background: var(--blue1); /* v394fix-2：原 var(--blue-live,#1E88E5) 为幽灵令牌（--blue-live 全站从未定义，一直靠 fallback 兜底），改直接引用全站标准蓝 --blue1（同值 #1E88E5） | v293/R192：联系类蓝键与全站标准蓝统一；客服跳转键保持咨询客服绿 #01C000 */
-      color: #fff;
+      color: var(--text-on-brand, #fff);
       font-size: 16px;
       font-weight: 600;
       letter-spacing:var(--ls-head,1.2px); /* R192 一③：主按钮字距全站标准 1.2px */
@@ -828,7 +828,7 @@
     .ann-modal .ann-body p { margin: 4px 0; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 8px auto; border-radius: var(--r-m); min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
     /* 交互动效复用 ui-common.css 全站统一弹窗按键规则（R17 统一标准：hover 缩小变淡、按压更小更暗） */
-    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: var(--radius-btn,10px); background: var(--blue1, #1e88e5); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: var(--radius-btn,10px); background: var(--blue1, #1e88e5); color: var(--text-on-brand, #fff); font-size: 14px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
     /* v400 条4：.ann-modal .modal-close-x 布局副本已删——ui-common × 唯一源全覆盖（原值与唯一源逐字相同） */
     /* 分类栏 */
     .category-bar-wrap {
@@ -1019,7 +1019,7 @@
 .modal-mask#annModal .ann-empty .ann-empty-title { font-size: 16px; color: var(--empty-text); font-weight: 600 /* v356 条12 */ /* v336 条115 */; }
     .ann-modal .ann-body { flex: 1; overflow-y: auto; overscroll-behavior: auto /* v421 分层：内层到头→弹窗跟滚 */; overflow-x: hidden; min-height: 0; box-sizing: border-box; }
     /* 商品页顶部 logo 栏复用管理页：logo/名字位置、大小、间距完全一致 */
-    .shop-brand { color: #fff; font-size: 18px; font-weight: 700; letter-spacing:var(--ls-head,1.2px); white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
+    .shop-brand { color: var(--text-on-brand, #fff); font-size: 18px; font-weight: 700; letter-spacing:var(--ls-head,1.2px); white-space: nowrap; flex: 0 0 auto !important; gap: 12px !important; }
     /* logo 与一级分类白色栏左边缘对齐：一级分类栏加与二级分类栏一致的左右内边距 */
     .category-bar-wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
     @media (max-width: 600px) { .category-bar-wrap, .sub-category-bar-wrap { padding: 0 12px; } }
@@ -1035,7 +1035,7 @@
     /* === R21：弹窗内视频固定 16:9 占位（object-fit:contain 黑底完整显示）=== 未加载/加载完成/加载失败三种状态尺寸完全一致，弹窗不再先小后大跳动；!important 同时压过 mediaStable 的真实宽高比接管与富文本内联样式 */
     .modal-box video, .ann-body video, .ann-box video, .modal-detail video, .variant-detail video, .media-list video, .rte-editor video, .resource-content video {
       width: 100% !important; max-width: 100% !important; aspect-ratio: 16 / 9 !important; height: auto !important;
-      object-fit: contain; background: #000; display: block; border-radius: var(--r-m);
+      object-fit: contain; background: var(--black, #000); display: block; border-radius: var(--r-m);
     }
     /* v400 条4：.modal-close-x 字号/圆角/按压副本已删——ui-common × 唯一源全覆盖（按压态含 brightness(0.9)，全站统一） */
     /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
@@ -1080,7 +1080,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   line-height: 1.2;
   border: none;
   background: var(--blue2);
-  color: #fff;
+  color: var(--text-on-brand, #fff);
   padding: 0 16px;
   height: 36px;
   border-radius: var(--r-pill);
@@ -1176,9 +1176,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* R211（用户 09-19 17:10）：sticky hover 隔离——触屏设备不挂 hover 态 */
 
   .shop-logo-link:hover .shop-logo {
-        box-shadow: 0 0 0 3px rgba(255,255,255,0.45);
+        box-shadow: 0 0 0 3px rgba(var(--white-rgb, 255,255,255), 0.45);
       }
-  .search-clear:hover { background: var(--red, #c62828); color: #fff; transform: translateY(calc(-50% - 1px)); filter: brightness(1.06); } /* R231 条7 */
+  .search-clear:hover { background: var(--red, #c62828); color: var(--text-on-brand, #fff); transform: translateY(calc(-50% - 1px)); filter: brightness(1.06); } /* R231 条7 */
   .category-tag:hover {
         border-color: var(--blue1);
         color: var(--blue1);
@@ -1195,7 +1195,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         box-shadow: var(--shadow-blue-strong);
       }
   /* v400 条4：两条被 ui-common !important 压死的 .modal-close-x:hover 旧规则（--red-strong 版 R285 item12 / --red 版 R231 条7）已删，悬停统一走 ui-common × 唯一源 */
-  .modal-share-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--blue1); color: #fff; } /* R285 item 12 */
+  .modal-share-x:hover { transform: translateY(-1px); filter: brightness(1.06); background: var(--blue1); color: var(--text-on-brand, #fff); } /* R285 item 12 */
   .variant-tab:hover {
         border-color: var(--blue1);
         color: var(--blue1);
@@ -1244,8 +1244,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .cover-carousel .cc-slide img { width:100%; height:100%; object-fit:contain; display:block; }
 /* R280 ①：轮播内占位图也按固定框 contain（特异性 0,3,1 顶掉弹窗占位符 16:9 通配规则的 height:auto!important） */
 .modal-box .cover-carousel .cc-slide img[src^="data:image/svg+xml"] { height:100% !important; width:100%; aspect-ratio:auto !important; min-height:0 !important; margin:0 !important; object-fit:contain !important; }
-.cover-carousel .cc-dots { position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:flex; justify-content:center; gap:4px; padding:4px 8px; margin:0; background:rgba(0,0,0,.35); border-radius: var(--r-pill); z-index: 2; }
-.cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.55); cursor:pointer; }
+.cover-carousel .cc-dots { position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:flex; justify-content:center; gap:4px; padding:4px 8px; margin:0; background:rgba(var(--black-rgb, 0,0,0), .35); border-radius: var(--r-pill); z-index: 2; }
+.cover-carousel .cc-dots .cc-dot { width:8px; height:8px; border-radius:50%; background:rgba(var(--white-rgb, 255,255,255), .55); cursor:pointer; }
 .cover-carousel .cc-dots .cc-dot.active { background:var(--card-bg, #fff); }
 
 
@@ -1311,12 +1311,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .fc-arrow { width: 24px; height: 24px; border: none; background: transparent; color: var(--blue1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; line-height: 0; } /* v378：line-height:0 消基线偏移 */
 /* v376：文件卡三角已并入全站同款（见 941 行统一规则） */
 .fc-dl { flex-shrink: 0; border: 1px solid var(--blue2); background: var(--card-bg); color: var(--blue1); border-radius: var(--r-pill); padding: 2px 10px; font-size: 12px; cursor: pointer; }
-.fc-dl:hover { background: var(--blue1); color: #fff; }
+.fc-dl:hover { background: var(--blue1); color: var(--text-on-brand, #fff); }
 .file-folder-open { padding: 8px 12px; text-align: center; }
 .file-folder-open a {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 12px; border-radius: var(--r-m); border: 1px solid var(--blue1);
-  background: var(--blue1); color: #fff; font-size: 13px; text-decoration: none; /* v394fix-2：原 var(--primary,var(--blue1)) 中 --primary 全站从未定义，属幽灵令牌，清为直接引用 */
+  background: var(--blue1); color: var(--text-on-brand, #fff); font-size: 13px; text-decoration: none; /* v394fix-2：原 var(--primary,var(--blue1)) 中 --primary 全站从未定义，属幽灵令牌，清为直接引用 */
 }
 /* v320：390px 双端文件卡无重叠 */
 @media (max-width: 390px) {
@@ -1326,8 +1326,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 
 /* v336 条182：搜索框聚焦品牌色光晕 */
-.search-input:focus-visible, .search-input:focus { box-shadow: 0 0 0 3px rgba(30,136,229,.25); }
-.admin-search input:focus-visible { box-shadow: 0 0 0 3px rgba(30,136,229,.25); }
+.search-input:focus-visible, .search-input:focus { box-shadow: 0 0 0 3px rgba(var(--blue1-rgb, 30,136,229), .25); }
+.admin-search input:focus-visible { box-shadow: 0 0 0 3px rgba(var(--blue1-rgb, 30,136,229), .25); }
 
 
        .product-card:hover .card-img{ transform: scale(1.05); }  /* v336 条72 */

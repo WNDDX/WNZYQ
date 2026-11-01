@@ -47,11 +47,11 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 .wn-ripple-host { position: relative; overflow: hidden; }
 .wn-ripple-ink {
   position: absolute; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgba(30,136,229,.28) 0%, rgba(30,136,229,.12) 55%, transparent 72%);
+  background: radial-gradient(circle, rgba(var(--blue1-rgb, 30,136,229), .28) 0%, rgba(var(--blue1-rgb, 30,136,229), .12) 55%, transparent 72%);
   transform: translate(-50%,-50%) scale(0); will-change: transform, opacity;
 }
 .wn-ripple-ink.go { animation: wnRipple .55s var(--ease-out) forwards; }
-.wn-ripple-ink.dark-ink { background: radial-gradient(circle, rgba(0,0,0,.14) 0%, rgba(0,0,0,.06) 55%, transparent 72%); }
+.wn-ripple-ink.dark-ink { background: radial-gradient(circle, rgba(var(--black-rgb, 0,0,0), .14) 0%, rgba(var(--black-rgb, 0,0,0), .06) 55%, transparent 72%); }
 @keyframes wnRipple { to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
 
 /* ===== C1 长按菜单升级：卡片微缩抬起 + 背景压暗模糊 + 菜单弹簧弹出 =====
@@ -94,7 +94,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 
 /* ===== D5 红点弹出/缩没（作用于 .dot-badge 显隐瞬间） ===== */
 /* v436b：基础视觉样式上移到全站层（原只在 admin.css——shop 公告红点加载不到 admin.css 永远不显示） */
-.dot-badge { position: absolute; top: 3px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--red, #c62828); border: 2px solid #fff; box-sizing: content-box; } /* v443 条12：统一内移避按钮圆角（原 2/2 贴边=部分设备圆点被裁一半），全站唯一源 */
+.dot-badge { position: absolute; top: 3px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--red, #c62828); border: 2px solid var(--border-on-brand, #fff); box-sizing: content-box; } /* v443 条12：统一内移避按钮圆角（原 2/2 贴边=部分设备圆点被裁一半），全站唯一源 */
 .dot-badge { transform-origin: center; }
 .dot-badge.wn-pop-in { animation: wnDotPop .38s var(--spring) both; }
 .dot-badge.wn-pop-out { animation: wnDotOut var(--dur-mid) ease both; }
@@ -137,14 +137,14 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 /* ===== A6 统一转圈（全站唯一规格） ===== */
 .wn-spin {
   display: inline-block; width: 18px; height: 18px; border-radius: 50%;
-  border:2px solid rgba(30,136,229,.22); border-top-color: var(--blue1, #1E88E5);
+  border:2px solid rgba(var(--blue1-rgb, 30,136,229), .22); border-top-color: var(--blue1, #1E88E5);
   animation: wnSpin .8s linear infinite; vertical-align: -4px;
 }
-.wn-spin.white { border-color: rgba(255,255,255,.35); border-top-color: #fff; }
+.wn-spin.white { border-color: rgba(var(--white-rgb, 255,255,255), .35); border-top-color: var(--border-on-brand, #fff); }
 @keyframes wnSpin { to { transform: rotate(360deg); } }
 
 /* ===== A8 不定进度条（不知道多久的等待） ===== */
-.wn-indet { position: relative; height: 4px; border-radius: 2px; background: rgba(30,136,229,.25); overflow: hidden; }
+.wn-indet { position: relative; height: 4px; border-radius: 2px; background: rgba(var(--blue1-rgb, 30,136,229), .25); overflow: hidden; }
 .wn-indet > i { position: absolute; top: 0; bottom: 0; left: 0; width: 34%; border-radius: 2px; background: var(--blue1, #1E88E5); animation: wnIndet 1.3s var(--ease-press) infinite; }
 @keyframes wnIndet { 0% { left: -34%; } 100% { left: 100%; } }
 
@@ -185,7 +185,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
   color: var(--text, #222); padding: 0; outline: none; caret-color: var(--blue1);
   transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) var(--spring);
 }
-.otp-row input:focus { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(30,136,229,.25); transform: translateY(-1px); }
+.otp-row input:focus { border-color: var(--blue1); box-shadow: 0 0 0 3px rgba(var(--blue1-rgb, 30,136,229), .25); transform: translateY(-1px); }
 .otp-row input.filled { border-color: var(--blue2, #64B5F6); }
 
 /* ===== v401 条8：详情封面统一入场（轮播首图与单图封面同一份：右滑入+弹簧，与轮播切图同曲线同时长） ===== */
@@ -214,7 +214,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 
 
 /* ===== v394-48：文字选区统一 ===== */
-::selection { background: rgba(30,136,229,.28); color: inherit; }
+::selection { background: rgba(var(--blue1-rgb, 30,136,229), .28); color: inherit; }
 html[data-theme="dark"] ::selection { background: rgba(100,181,246,.4); }
 /* ===== v394-37：Logo 入场动画唯一源 ===== */
 @keyframes logoFadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
@@ -223,7 +223,7 @@ html[data-theme="dark"] ::selection { background: rgba(100,181,246,.4); }
 /* ===== v392-4：下拉刷新胶囊四页唯一源（原 index/error 内联 + shop/admin 各一套类名，已归一） ===== */
 @keyframes wnPullSpin { to { transform: rotate(360deg); } }
 .pull-refresh { position: fixed; top: 80px; left: 0; right: 0; height: 0; overflow: visible; display: flex; align-items: flex-start; justify-content: center; z-index: 998; pointer-events: none; background: transparent; }
-.prt-text { font-size: 12px; line-height: 18px; color: var(--blue1, #1E88E5); background: rgba(255,255,255,.92); border: 1px solid var(--blue2, #64B5F6); border-radius: var(--r-pill); padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-card, 0 1px 4px rgba(0,0,0,.07)); transform: translateY(-48px); opacity: 0; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease; }
+.prt-text { font-size: 12px; line-height: 18px; color: var(--blue1, #1E88E5); background: rgba(var(--white-rgb, 255,255,255), .92); border: 1px solid var(--blue2, #64B5F6); border-radius: var(--r-pill); padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-card, 0 1px 4px rgba(0,0,0,.07)); transform: translateY(-48px); opacity: 0; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease; }
 .prt-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2, #64B5F6); border-top-color: var(--blue1, #1E88E5); border-radius: 50%; animation: wnPullSpin 0.6s linear infinite; }
 
 /* ===== v392-2：错误页深色（此前四页唯一没接入深色的页面；走 data-page 作用域防跨页类名冲突） ===== */
