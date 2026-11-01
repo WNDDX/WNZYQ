@@ -278,7 +278,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 /* R16c：分享链接弹窗确定键——与资源页分享本站弹窗 .share-close 逐字复用（含按压动画，此前动态弹窗为纯内联样式无反馈） */
 .share-ok {
   display: block; width: 100%; margin-top: 16px; height: 46px; padding: 0; border: none; border-radius: var(--radius-btn,10px);
-  background: #1E88E5; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; /* v356 条12：统一 46px/16px 模子 */
+  background: var(--blue1, #1E88E5); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; /* v356 条12：统一 46px/16px 模子 */
   transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; letter-spacing:var(--ls-btn,0.8px); -webkit-tap-highlight-color: transparent;
 }
 .share-ok:active { transform: scale(0.94); opacity: 0.8; filter: brightness(0.9); }
@@ -446,7 +446,7 @@ mark.hl { background: rgba(1, 192, 0, 0.16); color: inherit; font-weight: 700; b
 .modal-detail video, .resource-content video, .ann-body video, .rte-editor video, .variant-detail video, .preview-detail video { background: #000; }
 /* R215 条4（老板 09-21）：富文本复选框前台展示——与文字同高（1em）、可点击勾选，后台编辑器内同款 */
 .rte-editor input[type="checkbox"], .modal-detail input[type="checkbox"], .resource-content input[type="checkbox"], .ann-body input[type="checkbox"], .variant-detail input[type="checkbox"], .preview-detail input[type="checkbox"] {
-  width: 1em; height: 1em; vertical-align: -0.12em; margin: 0 0.35em 0 0; cursor: pointer; accent-color: #1E88E5; flex: none;
+  width: 1em; height: 1em; vertical-align: -0.12em; margin: 0 0.35em 0 0; cursor: pointer; accent-color: var(--blue1, #1E88E5); flex: none;
 }
 
 /* ===== 全站统一加载失败占位图（感叹号）尺寸：固定 16:9 + 最小高度，任何位置都不撑破容器、不引起弹窗高度跳动 ===== */
@@ -835,7 +835,7 @@ body { transition: background-color var(--dur-slow) ease, color var(--dur-slow) 
 .search-clear.show { display: flex; }
  /* R211 sticky hover 隔离：触屏设备不挂 hover 态 */
   /* v333 修：此处原为 translateY(calc(50% - 1px))，基准缺失负号 —— × 号会从居中位置瞬间向下跳一个身位；改成 -50% 基准 */
-  .search-clear:hover { background: #c62828; color: #fff; transform: translateY(calc(-50% - 1px)); filter: brightness(1.06); }
+  .search-clear:hover { background: var(--red, #c62828); color: #fff; transform: translateY(calc(-50% - 1px)); filter: brightness(1.06); }
 
 
 
@@ -921,7 +921,7 @@ svg.toggle-arrow { display: block; }
 img.qph { background: var(--bg-light,#f5f7fa); min-height: 120px; }
 
 /* v336 条190：键盘直达正文 */
-.skip-link { position: absolute; left: -9999px; top: 0; z-index: 200000; background: #1E88E5; color: #fff; padding: 8px 16px; border-radius: 0 0 var(--r-m) 0; }
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 200000; background: var(--blue1, #1E88E5); color: #fff; padding: 8px 16px; border-radius: 0 0 var(--r-m) 0; }
 .skip-link:focus { left: 0; }
 
 /* v336 条216：错误原因列表 */

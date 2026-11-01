@@ -809,7 +809,7 @@
     .ann-modal .ann-title.active { color: var(--blue1); }
     .ann-modal .ann-body { font-size: 14px; color: var(--text); line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; border-radius: var(--r-m); margin: 4px 0; min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
-    .ann-modal .ann-body a { color: #1e88e5; }
+    .ann-modal .ann-body a { color: var(--blue1, #1e88e5); }
     /* R194 第一批：前台表格展示样式（详情弹窗/公告/变体简介/解锁内容统一，全灰系接变量，手机整表横滑） */
     .modal-detail table, .ann-body table, .variant-detail table, .resource-content table {
       display: block; width: max-content; max-width: 100%; overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ 
@@ -828,7 +828,7 @@
     .ann-modal .ann-body p { margin: 4px 0; }
     .ann-modal .ann-body img, .ann-modal .ann-body video { max-width: 100%; height: auto; display: block; margin: 8px auto; border-radius: var(--r-m); min-height: 80px; background: var(--bg-light); } /* v309:加载前占位*/
     /* 交互动效复用 ui-common.css 全站统一弹窗按键规则（R17 统一标准：hover 缩小变淡、按压更小更暗） */
-    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: var(--radius-btn,10px); background: #1e88e5; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
+    .ann-modal .ann-ok { display: block; width: 100%; margin-top: 16px; padding: 12px 0; border: none; border-radius: var(--radius-btn,10px); background: var(--blue1, #1e88e5); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; height: 46px; /* v293（用户 10-04 02:14）：023公告弹窗确定按钮高度→跟全站弹窗底部按钮统一46px */ transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease ; }
     /* v400 条4：.ann-modal .modal-close-x 布局副本已删——ui-common × 唯一源全覆盖（原值与唯一源逐字相同） */
     /* 分类栏 */
     .category-bar-wrap {

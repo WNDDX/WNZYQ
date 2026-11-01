@@ -94,7 +94,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 
 /* ===== D5 红点弹出/缩没（作用于 .dot-badge 显隐瞬间） ===== */
 /* v436b：基础视觉样式上移到全站层（原只在 admin.css——shop 公告红点加载不到 admin.css 永远不显示） */
-.dot-badge { position: absolute; top: 3px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #c62828; border: 2px solid #fff; box-sizing: content-box; } /* v443 条12：统一内移避按钮圆角（原 2/2 贴边=部分设备圆点被裁一半），全站唯一源 */
+.dot-badge { position: absolute; top: 3px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--red, #c62828); border: 2px solid #fff; box-sizing: content-box; } /* v443 条12：统一内移避按钮圆角（原 2/2 贴边=部分设备圆点被裁一半），全站唯一源 */
 .dot-badge { transform-origin: center; }
 .dot-badge.wn-pop-in { animation: wnDotPop .38s var(--spring) both; }
 .dot-badge.wn-pop-out { animation: wnDotOut var(--dur-mid) ease both; }
@@ -232,7 +232,7 @@ html[data-page="error"][data-theme="dark"] body { background: linear-gradient(18
 html[data-page="error"][data-theme="dark"] .btn { background: #16324e; color: #9ECAFF; }
 
 /* ===== 深色下拉胶囊（白胶囊在暗底刺眼） ===== */
-html[data-theme="dark"] .prt-text { background: #1b2735; color: #64B5F6; border-color: #2b3a4c; }
+html[data-theme="dark"] .prt-text { background: #1b2735; color: var(--blue2, #64B5F6); border-color: #2b3a4c; }
 
 /* ===== v391：I6 图片模糊渐显（全站所有 <img>）——插入时模糊占位，加载完成转清晰 ===== */
 img.wn-lqip { filter: blur(10px); }
