@@ -2496,7 +2496,13 @@ window.__renderCarousel = function (carouselEl, trackEl, dotsEl, fallbackImgEl, 
 /* v333 修：原 data URI 里 <text> 的闭合标签被误写成 </t>，且标签内没有任何字符 —— logo 加载失败时只能看到一块灰方块，没有提示。
    现改为闭合正确的 </text> 并在中间放一个「!」，全站（含轮播占位的老板要求口径）共用同一个占位图常量。 */
 /* v336 条9：全站占位图唯一源（感叹号画风） */
-window.__IMG_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 rx=%223%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';
+/* v448：占位图按主题取色 —— 深色模式下原浅色占位（#f5f5f5 底）在深色卡片上刺眼。
+   改为 getter：按 data-theme 返回对应版本，调用方写法不变（window.__IMG_PLACEHOLDER）。 */
+var __PH_LIGHT_80 = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 rx=%223%22 fill=%22%23f5f5f5%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%23c3ccd6%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%23c3ccd6%22/%3E%3C/svg%3E';;
+var __PH_DARK_80 = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 rx=%223%22 fill=%22%232b3a4c%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%2355697f%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%2355697f%22/%3E%3C/svg%3E';
+Object.defineProperty(window, '__IMG_PLACEHOLDER', { configurable: true, get: function () {
+  try { return document.documentElement.getAttribute('data-theme') === 'dark' ? __PH_DARK_80 : __PH_LIGHT_80; } catch (e) { return __PH_LIGHT_80; }
+} });
 window.__logoFail = function (im) {
   try {
     im.onerror = null;
@@ -2756,7 +2762,12 @@ window.__fmtDateTime = function (input, kind) {
 })();
 
 /* v349 条7：图片加载失败的占位图——全站唯一一份（原先资源页/管理页/公共层各抄一份，改一处漏两处） */
-window.WN_MEDIA_FALLBACK = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';
+/* v448：同上，媒体失败占位图按主题取色（深色用深底 + 亮灰人形，不再是刺眼浅块）。 */
+var __PH_LIGHT_24 = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';;
+var __PH_DARK_24 = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 rx=%223%22 fill=%22%232b3a4c%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%2355697f%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%2355697f%22/%3E%3C/svg%3E';
+Object.defineProperty(window, 'WN_MEDIA_FALLBACK', { configurable: true, get: function () {
+  try { return document.documentElement.getAttribute('data-theme') === 'dark' ? __PH_DARK_24 : __PH_LIGHT_24; } catch (e) { return __PH_LIGHT_24; }
+} });
 
 /* v349 条9：后台「空空的列表」统一小空态（图标＋标题＋提示）——
    原先后台各处空态是一行干巴巴的小字，和前台带插画的空态不是一个画风。 */

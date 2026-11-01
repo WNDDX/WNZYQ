@@ -272,11 +272,26 @@
       var broken = [], oversize = [], done = 0, total = testList.length;
       /* v438b：双阶段齐活再渲染（图片+外链都回来才算完）；v439 #79：同源图 fetch 测大小 */
       var imgDone = new Promise(function (res) { window.__sysImgFinish = res; });
+      /* v448 修复「外链检测必然误报」：CSP 的 connect-src 只允许 'self'，原来对每条外链发
+         fetch(no-cors) 在线上必被安全策略拦截 —— 结果①控制台刷 CSP 违规 ②所有外链一律被标
+         「疑似失效」（误报），体检结论不可信。现改为：
+           · 图片类外链（扩展名可判）→ 用 Image 探测（img-src 允许 https:，不受 connect-src 限制）；
+           · 网页类外链 → 不发起任何请求，标为「未检测」(ok=null)，不参与失效统计。
+         渲染端原本就用 L.ok === false / === true 严格判断，null 天然被排除，无需改动下游。 */
       var linkDone = Promise.all(links.map(function (L) {
-        return Promise.race([
-          fetch(L.href, { mode: 'no-cors', cache: 'no-store' }).then(function () { L.ok = true; }).catch(function () { L.ok = false; }),
-          new Promise(function (res) { setTimeout(function () { L.ok = res(false) || L.ok === true; }, 6000); })
-        ]);
+        return new Promise(function (res) {
+          var href = String(L.href || '');
+          if (/\.(png|jpe?g|gif|webp|svg|ico|bmp)(\?|#|$)/i.test(href)) {
+            var imL = new Image(), settled = false;
+            var done2 = function (v) { if (settled) return; settled = true; L.ok = v; res(L); };
+            imL.onload = function () { done2(true); };
+            imL.onerror = function () { done2(false); };
+            setTimeout(function () { done2(null); }, 6000);
+            imL.src = href;
+          } else {
+            L.ok = null; L.unchecked = true; res(L);
+          }
+        });
       })).then(function () { return links; });
       var finish = function () {
         if (done < total) return;
@@ -443,6 +458,7 @@
     }).join('');
     var badLinks = R0.links.filter(function (L) { return L.ok === false; });
     var okLinks = R0.links.filter(function (L) { return L.ok === true; }).length;
+    var uncheckedLinks = (R0.links || []).filter(function (L) { return L.ok === null; }).length; /* v448：网页类外链受 CSP 限制无法自动检测，需人工核对 */
     var linkRows = badLinks.map(function (L) {
       return '<div style="padding:6px 0;border-bottom:1px solid #223a52"><b style="color:#ffcdd2">' + esc(L.where) + '</b><br><span style="color:#8aa0b5;word-break:break-all;font-size:11px">' + esc(L.href) + '</span></div>';
     }).join('');
@@ -481,7 +497,7 @@
     mask.className = 'modal-mask'; mask.id = 'sysCheckMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">系统体检</h2>' +
-      '<div style="font-size:12px;color:#8aa0b5;margin:0 0 10px">图片 ' + R0.totalImgs + ' 张（失效 ' + R0.broken.length + '）· 重复引用 ' + R0.dups.length + ' 组 · 外链 ' + R0.links.length + ' 条（疑似失效 ' + badLinks.length + '）· 超大图 ' + (R0.oversize || []).length + ' 张</div>' +
+      '<div style="font-size:12px;color:#8aa0b5;margin:0 0 10px">图片 ' + R0.totalImgs + ' 张（失效 ' + R0.broken.length + '）· 重复引用 ' + R0.dups.length + ' 组 · 外链 ' + R0.links.length + ' 条（疑似失效 ' + badLinks.length + (uncheckedLinks ? '，<b style="color:#e0b25a">' + uncheckedLinks + ' 条为网页链接需人工核对</b>' : '') + '）· 超大图 ' + (R0.oversize || []).length + ' 张</div>' +
       '<div style="max-height:46vh;overflow-y:auto;background:#0f2233;border-radius:8px;padding:10px 12px;font-size:12px">' + body + '</div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
