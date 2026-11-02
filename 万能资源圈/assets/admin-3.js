@@ -485,7 +485,14 @@
       clearFieldErr(d); /* R193c ⑨：清除实时校验红框 */
       // 若不在编辑弹窗中（即资源管理分类筛选场景），切换分类即时刷新列表
       var em = document.getElementById('editMask');
-      if (em && !em.classList.contains('open')) { adminPage = 1; renderProducts(); }
+      if (em && !em.classList.contains('open')) {
+        adminPage = 1;
+        /* v454（老板反馈：资源管理的分类筛选点了没反应）：pickCatValue 只写了 hidden 值和显示文字，
+           **没有派发 change 事件**，而筛选是靠 document 上的 change 监听走 loadProducts 的；
+           这里原来又只调了 renderProducts（本地重画，不带 cid 条件）→ 选了分类列表纹丝不动。
+           改成走 loadProducts，真正带 cid 去后端取数。 */
+        if (window.__reloadAdminProducts) window.__reloadAdminProducts(); else renderProducts();
+      }
     }
 
     function fillCidSelect(selected) {
