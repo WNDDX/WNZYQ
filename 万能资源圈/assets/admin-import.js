@@ -264,6 +264,7 @@
         out.push({ title: title.slice(0, 90), cover: cover, src_url: url });
         if (out.length >= 500) break;
       }
+      try { window.__lastSheet = { sheet: best.name, head: head, iT: iT, iC: iC, iU: iU, hi: hi, sample: out.slice(0, 3) }; } catch (e0) {} /* 排查用 */
       return out;
     });
   };
