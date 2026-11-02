@@ -2295,3 +2295,13 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .ct-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue1); flex: 0 0 6px; margin-right: 2px; align-self: center; }
 .ct-unread .ct-target { font-weight: 600; }
 .ct-unread .ct-time i { color: var(--blue1); }
+
+/* ===== v456（老板：电脑端设置页部分弹窗鼠标滚轮失效）=====
+   根因：弹窗内部的 .form 容器（如账号管理 #usBody）自身带 overflow-y:auto + overscroll-behavior:contain，
+   但它内容往往没有溢出（scrollHeight==clientHeight），于是滚轮既滚不动它、又被 contain 掐断了向 .modal-box 的传递
+   → 整个弹窗"鼠标滚轮完全没反应"。
+   修法：弹窗内的表单容器不再圈死滚动链（auto = 到边界后交给外层继续滚）。
+   .modal-box 自己的 contain 保留（body 已锁，滚到底也不会带动整页）。 */
+.modal-mask .modal-box .form,
+.modal-mask .modal-box .usf-body,
+.modal-mask .modal-box > div[class*="form"] { overscroll-behavior: auto !important; }

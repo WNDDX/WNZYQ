@@ -16,49 +16,283 @@
   /* 生成 SpreadsheetML 模板：分类/资源/类型/公告 四表 + 选项表（下拉源）
      v443 条5（老板拍板）：①信息要全面——资源带定时显示/隐藏时间列，新增「类型」表（类型名/价格/资源码/状态）；
      ②分类列恢复下拉选择（选项表=现有分类自动生成，不用手打）；③「使用说明」表不恢复（v442 已拍板去除）。 */
-  function buildTemplate() {
-    var opts = catOptions();
-    var lv = ['一级分类', '二级分类'], st = ['显示', '隐藏'];
-    var d2 = new Date(), pd = function (n) { return n < 10 ? '0' + n : '' + n; };
-    var fname = '' + d2.getFullYear() + pd(d2.getMonth() + 1) + pd(d2.getDate()) + '-' + pd(d2.getHours()) + pd(d2.getMinutes()) + '-批量导入模板.xls';
-    var nOpt = Math.max(opts.length, 1);
-    var escR = function (r) { return '<Row>' + r.map(function (c) { return '<Cell ss:StyleID="c"><Data ss:Type="String">' + esc(c) + '</Data></Cell>'; }).join('') + '</Row>'; };
-    var head = function (arr) { return '<Row>' + arr.map(function (h) { return '<Cell ss:StyleID="h"><Data ss:Type="String">' + esc(h) + '</Data></Cell>'; }).join('') + '</Row>'; };
-    var freeze = '<x:WorksheetOptions xmlns:x="urn:schemas-microsoft-com:office:excel"><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane><x:ActivePane>2</x:ActivePane><x:Panes><x:Pane><x:Number>3</x:Number></x:Pane><x:Pane><x:Number>2</x:Number></x:Pane></x:Panes></x:WorksheetOptions>';
-    var dv = function (formula) { return '<DataValidation ss:Type="List" ss:AllowBlank="yes"><x1:Formula1>' + esc(formula) + '</x1:Formula1></DataValidation>'; };
-    var sheet = function (name, rows, validations) {
-      return '<Worksheet ss:Name="' + esc(name) + '"><Table>' + rows.join('') + '</Table>' + (validations || '') + freeze + '</Worksheet>';
-    };
-    /* v454（老板：模板要按后台填写顺序、写全、能选就别让人手打）：
-       ① 资源表列序＝编辑窗口：标题→分类→简介→详情→价格→封面→排序→显示→定时显/隐→专属客服链接/二维码
-       ② 类型表补齐：简介、解锁后内容、绑定上限、排序
-       ③ 分类/显示状态/定时时间 全部给下拉或提示，少手打 */
-    var optRows = [head(['分类选项', '分类级别选项', '显示状态选项', '定时格式示例'])]
-      .concat(opts.map(function (n2) { return escR([n2, '', '', '']); }))
-      .concat([escR(['', lv[0], st[0], '2026-11-01 09:00']), escR(['', lv[1], st[1], '2026-11-01 18:30'])]);
-    var xml = '<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>' +
-      '<Workbook xmlns="' + NS + '" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x1="urn:schemas-microsoft-com:office:excel">' +
-      '<Styles>' +
-      '<Style ss:ID="h"><Font ss:Bold="1"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>' +
-      '<Style ss:ID="c"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>' +
-      '</Styles>' +
-      sheet('分类', [head(['分类名称', '分类级别', '所属一级分类', '排序序号', '显示状态']),
-        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(5) + '</Row>'],
-        dv('选项!$B$2:$B$3') + dv('选项!$A$2:$A$' + (nOpt + 1)) + dv('选项!$C$2:$C$3')) +
-      sheet('资源', [head(['资源标题', '所属分类', '资源简介', '资源详情', '资源价格', '封面图片链接', '排序', '显示状态', '定时显示时间', '定时隐藏时间', '专属客服链接', '专属客服二维码']),
-        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(12) + '</Row>'],
-        dv('选项!$A$2:$A$' + (nOpt + 1)) + dv('选项!$C$2:$C$3')) +
-      sheet('类型', [head(['所属资源标题', '类型名称', '类型价格', '类型简介', '资源码', '解锁后内容', '绑定上限', '显示状态', '排序']),
-        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(9) + '</Row>'],
-        dv('选项!$C$2:$C$3')) +
-      sheet('公告', [head(['公告标题', '公告内容', '排序序号', '显示状态']),
-        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(4) + '</Row>'],
-        dv('选项!$C$2:$C$3')) +
-      sheet('选项', optRows, '') +
-      '</Workbook>';
-    return { xml: xml, name: fname };
+  /* ===== v456：真 .xlsx 生成与解析（纯 JS，不引第三方库）=====
+     老板拍板：模板里的「所属分类 / 显示状态 / 分类级别」必须是**单元格下拉**，点一下出小箭头直接选，不用手打。
+     老的 .xls（SpreadsheetML 2003）那种写法 Excel/WPS 里下拉箭头根本出不来（只有 Data 类型，没有 validation），
+     所以这里改成生成标准 OOXML .xlsx：手写一份不压缩(store)的 zip，里面放 worksheet + dataValidations。
+     上传时同一个文件也要能读回来 —— 用户用 Excel/WPS 存过之后是压缩包，故解析器同时支持 store 与 deflate。 */
+
+  var __crcT = (function () { var t = [], n, k, c; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) { c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); } t[n] = c >>> 0; } return t; })();
+  function __crc32(u8) { var c = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) { c = __crcT[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); } return (c ^ 0xFFFFFFFF) >>> 0; }
+  function __u16(n) { return [n & 255, (n >>> 8) & 255]; }
+  function __u32(n) { return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]; }
+
+  /* 组装 zip（stored，不压缩：xlsx 体积小，省掉压缩库，任何解压器都认） */
+  function __zip(files) {
+    var enc = new TextEncoder(), parts = [], central = [], offset = 0, i;
+    for (i = 0; i < files.length; i++) {
+      var f = files[i], nb = enc.encode(f.name), crc = __crc32(f.data), sz = f.data.length;
+      var lh = [].concat(__u32(0x04034b50), __u16(20), __u16(0x0800), __u16(0), __u16(0x5000), __u16(0x5D62),
+        __u32(crc), __u32(sz), __u32(sz), __u16(nb.length), __u16(0));
+      parts.push(new Uint8Array(lh), nb, f.data);
+      central.push({ name: nb, crc: crc, size: sz, off: offset });
+      offset += lh.length + nb.length + sz;
+    }
+    var cd = [], cdSize = 0;
+    for (i = 0; i < central.length; i++) {
+      var c = central[i];
+      var h = [].concat(__u32(0x02014b50), __u16(20), __u16(20), __u16(0x0800), __u16(0), __u16(0x5000), __u16(0x5D62),
+        __u32(c.crc), __u32(c.size), __u32(c.size), __u16(c.name.length), __u16(0), __u16(0), __u16(0), __u16(0), __u32(0), __u32(c.off));
+      cd.push(new Uint8Array(h), c.name);
+      cdSize += h.length + c.name.length;
+    }
+    var eocd = new Uint8Array([].concat(__u32(0x06054b50), __u16(0), __u16(0), __u16(files.length), __u16(files.length), __u32(cdSize), __u32(offset), __u16(0)));
+    var total = offset + cdSize + eocd.length, out = new Uint8Array(total), pos = 0;
+    parts.concat(cd, [eocd]).forEach(function (b) { out.set(b, pos); pos += b.length; });
+    return out;
   }
 
+  function __colName(i) { var s = ''; i++; while (i > 0) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+
+  var __XLSX_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  var __REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+  /* 单表 XML：rows 为二维数组（首行=表头），dv 为下拉定义数组 */
+  function __sheetXml(cfg) {
+    var hdr = cfg.headerRows == null ? 1 : cfg.headerRows;
+    var cols = '';
+    if (cfg.widths && cfg.widths.length) {
+      cols = '<cols>' + cfg.widths.map(function (w, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols>';
+    }
+    var rowsXml = cfg.rows.map(function (r, ri) {
+      var cells = r.map(function (v, ci) {
+        var ref = __colName(ci) + (ri + 1);
+        var st = ri < hdr ? 1 : 2;   /* 1=表头（粗体+浅蓝底） 2=数据区（细边框） */
+        if (v === '' || v == null) return '<c r="' + ref + '" s="' + st + '"/>';
+        return '<c r="' + ref + '" s="' + st + '" t="inlineStr"><is><t xml:space="preserve">' + esc(String(v)) + '</t></is></c>';
+      }).join('');
+      return '<row r="' + (ri + 1) + '"' + (ri < hdr ? ' ht="26" customHeight="1"' : '') + '>' + cells + '</row>';
+    }).join('');
+    var dv = '';
+    if (cfg.dv && cfg.dv.length) {
+      dv = '<dataValidations count="' + cfg.dv.length + '">' + cfg.dv.map(function (d) {
+        return '<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1"' +
+          (d.prompt ? ' promptTitle="' + esc(d.promptTitle || '填写提示') + '" prompt="' + esc(d.prompt) + '"' : '') +
+          ' errorTitle="只能选列表里的值" error="' + esc(d.err || '请点单元格右侧的小三角，从列表里选；不要自己输入。') + '"' +
+          ' sqref="' + d.sqref + '"><formula1>' + esc(d.formula) + '</formula1></dataValidation>';
+      }).join('') + '</dataValidations>';
+    }
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="' + __XLSX_NS + '">' +
+      '<sheetViews><sheetView workbookViewId="0"><pane ySplit="' + hdr + '" topLeftCell="A' + (hdr + 1) + '" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
+      '<sheetFormatPr defaultRowHeight="20"/>' + cols +
+      '<sheetData>' + rowsXml + '</sheetData>' + dv +
+      '</worksheet>';
+  }
+
+  var __STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="' + __XLSX_NS + '">' +
+    '<fonts count="2"><font><sz val="11"/><name val="等线"/></font><font><b/><sz val="11"/><color rgb="FF1B3A57"/><name val="等线"/></font></fonts>' +
+    '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFEAF3FD"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' +
+    '<border><left style="thin"><color rgb="FFD6E4F0"/></left><right style="thin"><color rgb="FFD6E4F0"/></right><top style="thin"><color rgb="FFD6E4F0"/></top><bottom style="thin"><color rgb="FFD6E4F0"/></bottom><diagonal/></border></borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="3">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>' +
+    '</cellXfs>' +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+    '</styleSheet>';
+
+  /* sheets: [{name, rows, widths, dv}] → Uint8Array */
+  function __buildXlsx(sheets) {
+    var enc = new TextEncoder();
+    var files = [];
+    var ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      sheets.map(function (sh, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join('') +
+      '</Types>';
+    files.push({ name: '[Content_Types].xml', data: enc.encode(ct) });
+    files.push({ name: '_rels/.rels', data: enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="' + __REL_NS + '/officeDocument" Target="xl/workbook.xml"/>' +
+      '</Relationships>') });
+
+    var wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="' + __XLSX_NS + '" xmlns:r="' + __REL_NS + '"><sheets>' +
+      sheets.map(function (sh, i) { return '<sheet name="' + esc(sh.name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') +
+      '</sheets></workbook>';
+    files.push({ name: 'xl/workbook.xml', data: enc.encode(wb) });
+
+    var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      sheets.map(function (sh, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="' + __REL_NS + '/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join('') +
+      '<Relationship Id="rId' + (sheets.length + 1) + '" Type="' + __REL_NS + '/styles" Target="styles.xml"/>' +
+      '</Relationships>';
+    files.push({ name: 'xl/_rels/workbook.xml.rels', data: enc.encode(rels) });
+    files.push({ name: 'xl/styles.xml', data: enc.encode(__STYLES) });
+
+    sheets.forEach(function (sh, i) {
+      files.push({ name: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: enc.encode(__sheetXml(sh)) });
+    });
+    return __zip(files);
+  }
+
+  /* ---- 读取：zip 目录 + store/deflate 解压 ---- */
+  function __unzip(buf) {
+    var dv = new DataView(buf), eocd = -1, i;
+    for (i = buf.byteLength - 22; i >= 0 && i > buf.byteLength - 66000; i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('这不是标准的 xlsx 文件');
+    var cnt = dv.getUint16(eocd + 10, true), cdOff = dv.getUint32(eocd + 16, true);
+    var out = {}, p = cdOff;
+    for (i = 0; i < cnt; i++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      var method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true),
+        nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true),
+        clen = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+      var name = new TextDecoder().decode(new Uint8Array(buf, p + 46, nlen));
+      var lnlen = dv.getUint16(lho + 26, true), lelen = dv.getUint16(lho + 28, true);
+      out[name] = { method: method, data: new Uint8Array(buf, lho + 30 + lnlen + lelen, csize) };
+      p += 46 + nlen + elen + clen;
+    }
+    return out;
+  }
+
+  function __readPart(files, name) {
+    var f = files[name];
+    if (!f) return Promise.resolve('');
+    if (f.method === 0) return Promise.resolve(new TextDecoder('utf-8').decode(f.data));
+    if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('当前浏览器不支持解压，请把这文件另存为 .xls 再导入'));
+    var st = new Blob([f.data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Response(st).arrayBuffer().then(function (ab) { return new TextDecoder('utf-8').decode(ab); });
+  }
+
+  function __colIdx(ref) {
+    var m = String(ref || '').match(/^([A-Z]+)/); if (!m) return 0;
+    var s = m[1], n = 0;
+    for (var i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64);
+    return n - 1;
+  }
+
+  /* 一张表 → 二维数组（去掉表头行与全空行，与老 .xls 解析口径一致） */
+  function __rowsFromSheet(xml, shared) {
+    var doc = new DOMParser().parseFromString(xml, 'application/xml');
+    var rs = doc.getElementsByTagName('row'), rows = [];
+    for (var i = 0; i < rs.length; i++) {
+      var cs = rs[i].getElementsByTagName('c'), cells = [];
+      for (var j = 0; j < cs.length; j++) {
+        var c = cs[j], col = __colIdx(c.getAttribute('r')), t = c.getAttribute('t'), v = '';
+        if (t === 'inlineStr') { var is = c.getElementsByTagName('t')[0]; v = is ? is.textContent : ''; }
+        else if (t === 's') { var vv = c.getElementsByTagName('v')[0]; v = vv ? (shared[+vv.textContent] || '') : ''; }
+        else { var v2 = c.getElementsByTagName('v')[0]; v = v2 ? v2.textContent : ''; }
+        while (cells.length < col) cells.push('');
+        cells[col] = String(v == null ? '' : v).trim();
+      }
+      rows.push(cells);
+    }
+    return rows.slice(1).filter(function (r) { return r.some(function (x) { return x; }); });
+  }
+
+  function parseXlsx(buf) {
+    var files;
+    try { files = __unzip(buf); } catch (e) { return Promise.reject(e); }
+    return Promise.all([__readPart(files, 'xl/workbook.xml'), __readPart(files, 'xl/_rels/workbook.xml.rels'), __readPart(files, 'xl/sharedStrings.xml')]).then(function (a) {
+      var wb = a[0], rels = a[1], sst = a[2];
+      var shared = [], m2, siRe = /<si>([\s\S]*?)<\/si>/g;
+      while ((m2 = siRe.exec(sst))) {
+        var ts = m2[1].match(/<t[^>]*>[\s\S]*?<\/t>/g) || [];
+        shared.push(ts.map(function (x) { return x.replace(/<[^>]+>/g, ''); }).join(''));
+      }
+      var relMap = {}, rm, relRe = /<Relationship[^>]*Id="([^"]+)"[^>]*Target="([^"]+)"[^>]*\/?>/g;
+      while ((rm = relRe.exec(rels))) relMap[rm[1]] = rm[2];
+      var sheets = [], sm, sRe = /<sheet\b[^>]*\/?>/g;
+      while ((sm = sRe.exec(wb))) {
+        var tag = sm[0];
+        var nm = (tag.match(/name="([^"]*)"/) || [])[1] || '';
+        var rid = (tag.match(/r:id="([^"]+)"/) || [])[1] || '';
+        sheets.push({ name: nm, target: relMap[rid] || '' });
+      }
+      return Promise.all(sheets.map(function (sh) {
+        var t = sh.target; if (!t) return Promise.resolve(null);
+        var path = t.charAt(0) === '/' ? t.slice(1) : ('xl/' + t.replace(/^\.\//, ''));
+        return __readPart(files, path).then(function (xml) { return { name: sh.name, rows: xml ? __rowsFromSheet(xml, shared) : [] }; });
+      })).then(function (list) {
+        var out = {};
+        list.forEach(function (x) { if (x) out[x.name] = x.rows; });
+        return out;
+      });
+    });
+  }
+
+  /* 生成 .xlsx 模板：资源 / 类型 / 分类 / 公告 + 选项（下拉源）
+     v456：改成真 xlsx（老 .xls 那种下拉箭头出不来）。列序＝后台「新增资源」窗口的填写顺序。
+     下拉列：所属分类、显示状态、分类级别 —— 只能选，不能自己乱写。 */
+  function buildTemplate() {
+    var opts = catOptions().filter(Boolean);
+    if (!opts.length) opts = ['（请先到后台分类管理新增分类）'];
+    var lastOpt = opts.length + 1;              /* 选项表 A2..A(lastOpt) */
+    var CAT_DV = '选项!$A$2:$A$' + lastOpt;
+    var LV_DV = '选项!$B$2:$B$3';
+    var ST_DV = '选项!$C$2:$C$3';
+    var ROWSN = 30;                              /* 预留 30 行空白（带边框 + 下拉） */
+    var d2 = new Date(), pd = function (n) { return n < 10 ? '0' + n : '' + n; };
+    var fname = '' + d2.getFullYear() + pd(d2.getMonth() + 1) + pd(d2.getDate()) + '-' + pd(d2.getHours()) + pd(d2.getMinutes()) + '-批量导入模板.xlsx';
+
+    /* 每张表：表头 + 30 行空行（空行只给样式，让用户看得见格子） */
+    var mk = function (heads) {
+      var rows = [heads];
+      for (var r = 0; r < ROWSN; r++) { var e = []; for (var c = 0; c < heads.length; c++) e.push(''); rows.push(e); }
+      return rows;
+    };
+
+    var resHeads = ['资源标题', '所属分类', '资源简介', '资源详情', '资源价格', '封面图片链接', '排序', '显示状态', '定时显示时间', '定时隐藏时间', '专属客服链接', '专属客服二维码'];
+    var varHeads = ['所属资源标题', '类型名称', '类型价格', '类型简介', '资源码', '解锁后内容', '绑定上限', '显示状态', '排序'];
+    var catHeads = ['分类名称', '分类级别', '所属一级分类', '排序序号', '显示状态'];
+    var annHeads = ['公告标题', '公告内容', '排序序号', '显示状态'];
+    var optHeads = ['分类选项', '分类级别选项', '显示状态选项', '时间格式示例'];
+
+    var optRows = [optHeads];
+    for (var i = 0; i < Math.max(opts.length, 2); i++) {
+      optRows.push([opts[i] || '', i === 0 ? '一级分类' : (i === 1 ? '二级分类' : ''), i === 0 ? '显示' : (i === 1 ? '隐藏' : ''), i === 0 ? '2026-11-02 09:00' : '']);
+    }
+
+    var sheets = [
+      { name: '资源', rows: mk(resHeads), widths: [26, 18, 30, 40, 12, 30, 8, 12, 18, 18, 30, 30], dv: [
+        { sqref: 'B2:B' + (ROWSN + 1), formula: CAT_DV, promptTitle: '所属分类', prompt: '点右边小三角选已有分类；没有就先到后台分类管理里加一个。' },
+        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”= 前台立刻能看到；选“隐藏”= 前台不显示。' }
+      ] },
+      { name: '类型', rows: mk(varHeads), widths: [26, 18, 12, 30, 24, 40, 12, 12, 8], dv: [
+        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”或“隐藏”。' }
+      ] },
+      { name: '分类', rows: mk(catHeads), widths: [22, 14, 22, 12, 12], dv: [
+        { sqref: 'B2:B' + (ROWSN + 1), formula: LV_DV, promptTitle: '分类级别', prompt: '只有“一级分类 / 二级分类”两种。' },
+        { sqref: 'C2:C' + (ROWSN + 1), formula: CAT_DV, promptTitle: '所属一级分类', prompt: '二级分类才填；从列表里选一个已有的一级分类。' },
+        { sqref: 'E2:E' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”或“隐藏”。' }
+      ] },
+      { name: '公告', rows: mk(annHeads), widths: [26, 50, 12, 12], dv: [
+        { sqref: 'D2:D' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”或“隐藏”。' }
+      ] },
+      { name: '选项', rows: optRows, widths: [24, 16, 16, 22], dv: [] }
+    ];
+
+    return { blob: new Blob([__buildXlsx(sheets)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name: fname, xml: '' };
+  }
+
+  function downloadBlob(name, blob) {
+    try { window.__tplName = name; } catch (e0) {}
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
   function download(name, content) { try { window.__tplName = name; } catch (e0) {} /* v437 探针可读文件名 */
     var blob = new Blob(['\ufeff' + content], { type: 'application/vnd.ms-excel;charset=utf-8' });
     var a = document.createElement('a');
@@ -173,7 +407,7 @@
       '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
       '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">第 1 步：下载模板 → 填好 → 第 2 步上传 → 预览无误后导入。建议顺序：先导「分类」→ 再导「资源」→ 最后导「类型」。</p>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
-      '<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xls,.xml" style="display:none"></div>' +
+      '<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xlsx,.xls,.xml" style="display:none"></div>' +
       '<div id="impPrev" style="margin-top:10px"></div></div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
@@ -184,14 +418,21 @@
     mask.addEventListener('click', function (e) {
       if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
     });
-    mask.querySelector('#impTpl').addEventListener('click', function () { var tpl = buildTemplate(); download(tpl.name, tpl.xml); if (window.showToast) window.showToast('模板已下载（分类/资源/类型/公告四表，分类列可直接选）', 'success'); });
+    mask.querySelector('#impTpl').addEventListener('click', function () {
+      var tpl = buildTemplate();
+      downloadBlob(tpl.name, tpl.blob);
+      if (window.showToast) window.showToast('模板已下载（.xlsx：资源/类型/分类/公告 四表，分类与显示状态点单元格右侧小三角直接选）', 'success');
+    });
     mask.querySelector('#impUploadBtn').addEventListener('click', function () { mask.querySelector('#impFile').click(); }); /* v443 条5：上传键改 button 与下载键完全同款（原 label 结构渲染发灰） */
     mask.querySelector('#impFile').addEventListener('change', function () {
       var f = this.files && this.files[0]; if (!f) return;
       var rd = new FileReader();
       rd.onload = function () {
-        try {
-          var pv = preview(parseWorkbook(String(rd.result)));
+        /* v456：先看文件头——zip(PK) 走 xlsx 解析，其余按老 SpreadsheetML/HTML 表格解析 */
+        var buf = rd.result, isZip = false;
+        try { var head = new Uint8Array(buf, 0, 4); isZip = head[0] === 0x50 && head[1] === 0x4B; } catch (eH) { isZip = false; }
+        var doneParse = function (data) {
+          var pv = preview(data);
           var body = mask.querySelector('#impPrev');
           var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length; /* v431c：键名与 preview 返回值对齐（旧 pv.res 未同步=预览空白的真凶） */
           body.innerHTML = '<div class="probe" style="background:#0f2233;color:#9fe3b8;border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap">' + esc(pv.lines.join('\n')) + '</div>' +
@@ -219,9 +460,15 @@
               if (window.showToast) window.showToast(badN ? '导入完成，有失败项请看明细' : '导入完成', badN ? 'info' : 'success');
             });
           });
-        } catch (e) { if (window.showToast) window.showToast('解析失败：' + e.message, 'error'); }
+        };
+        if (isZip) {
+          parseXlsx(buf).then(doneParse).catch(function (e) { if (window.showToast) window.showToast('解析失败：' + e.message, 'error'); });
+        } else {
+          try { doneParse(parseWorkbook(new TextDecoder('utf-8').decode(buf))); }
+          catch (e) { if (window.showToast) window.showToast('解析失败：' + e.message, 'error'); }
+        }
       };
-      rd.readAsText(f, 'utf-8');
+      rd.readAsArrayBuffer(f);
     });
   }
 

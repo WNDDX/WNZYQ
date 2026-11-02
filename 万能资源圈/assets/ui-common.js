@@ -724,11 +724,13 @@ var __BLOCK_TOUCH_SEL = '.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.
     e.preventDefault();
   }
   function __blockWheel(e) {
-    if (!e.target || !e.target.closest) return;
-    /* v417 条5：同 __blockTouch——滚轮也按「能滚放行」口径 */
-    if (e.target.closest(__BLOCK_TOUCH_SEL)) return;
-    if (__scrollableAncestor(e.target)) return;
-    e.preventDefault();
+    /* v456（老板：电脑端设置页部分弹窗鼠标滚轮完全不能滑）：
+       原来这里在「触点无可滚祖先」时 preventDefault。可 PC 上弹窗打开时 body 与 html 都已 overflow:hidden，
+       整页本来就滚不动，拦 wheel 纯属多余；反而当内层容器 overflow:auto 但内容没溢出时（如账号管理 #usBody），
+       滚轮既滚不动它、又被这里一并吞掉，表现为「整个弹窗滑不动」。
+       现在 PC 滚轮一律放行，交给浏览器原生滚动链；防背景穿透由 body/html 的 overflow:hidden 负责。
+       移动端 touchmove 拦截保留（iOS 上 body overflow:hidden 不可靠）。 */
+    return;
   }
   // v307：lockBodyScroll 保留引用计数，确保嵌套弹窗（弹窗里再开弹窗）全部关闭后才恢复背景滚动
   var __bodyLockCount = 0;
