@@ -27,6 +27,8 @@ export async function onRequestGet(context) {
   // 30 天封顶（防数字爆炸，与统计页最大范围同口径）——v434 修复：原多加了 +8h 使下限前移 8 小时
   const floor = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
   if (last < floor) last = floor;
+  /* v454：明细流窗口 = 最近 7 天（和「距上次查看」解耦） */
+  const windowStart = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
 
   // 今日 0 点（北京口径，与统计页一致）
   const todayBJ = new Date(Date.now() + BJ).toISOString().slice(0, 10);
@@ -73,10 +75,10 @@ export async function onRequestGet(context) {
          SELECT a.created_at, 'audit', a.admin, '', a.action, a.target
            FROM audit_log a WHERE a.created_at > ?1
        ) ORDER BY at DESC LIMIT 100`
-    ).bind(last).all()
+    ).bind(windowStart).all()   /* v454：明细流固定看最近 7 天（下面再标未读），不再跟着 last 走——原来每看一次就把列表清空 */
   ]);
 
-  let rows = (recent.results || []).map(function (r) { return { at: r.at, type: r.type, who: r.who || '', region: r.region || '', title: r.title || '', extra: r.extra || '' }; });
+  let rows = (recent.results || []).map(function (r) { return { at: r.at, type: r.type, who: r.who || '', region: r.region || '', title: r.title || '', extra: r.extra || '', unread: String(r.at || '') > String(last) }; }); /* v454：未读标记（比上次查看新） */
   /* #116：子账号视角——别人的操作留痕与管理登录不给看 */
   if (isSub) rows = rows.filter(function (r) { return !(r.type === 'audit' && r.who !== auth.username) && r.type !== 'login'; });
   /* #116：按人筛选（超管查某个员工的账） */

@@ -33,6 +33,8 @@ export function parsePerms(raw) {
     users: !!p.users,
     catsScope: (p.catsScope === 'all') ? 'all' : (Array.isArray(p.catsScope) ? p.catsScope.map(Number).filter(x => x > 0) : []), /* 兜底=空范围（最小权限），显式 'all' 才全范围 */
     codeScope: (p.codeScope === 'scoped' || p.codeScope === 'all') ? p.codeScope : 'own',
+    /* v454：公告范围（老板要「只能改指定公告」，与指定分类同思路）。'all'=全部；数组=只这些公告 id */
+    annScope: (p.annScope === 'all' || p.annScope == null) ? 'all' : (Array.isArray(p.annScope) ? p.annScope.map(String) : 'all'),
   };
 }
 

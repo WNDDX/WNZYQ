@@ -27,11 +27,15 @@
     var freeze = '<x:WorksheetOptions xmlns:x="urn:schemas-microsoft-com:office:excel"><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane><x:ActivePane>2</x:ActivePane><x:Panes><x:Pane><x:Number>3</x:Number></x:Pane><x:Pane><x:Number>2</x:Number></x:Pane></x:Panes></x:WorksheetOptions>';
     var dv = function (formula) { return '<DataValidation ss:Type="List" ss:AllowBlank="yes"><x1:Formula1>' + esc(formula) + '</x1:Formula1></DataValidation>'; };
     var sheet = function (name, rows, validations) {
-      return '<Worksheet ss:Name="' + esc(name) + '"><Table>' + rows.join('') + '</Table>' + validations + freeze + '</Worksheet>';
+      return '<Worksheet ss:Name="' + esc(name) + '"><Table>' + rows.join('') + '</Table>' + (validations || '') + freeze + '</Worksheet>';
     };
-    var optRows = [head(['分类选项', '分类级别选项', '显示状态选项'])]
-      .concat(opts.map(function (n2, i) { return escR([n2, i === 0 ? lv[0] : '', i === 0 ? st[0] : '']); }))
-      .concat([escR(['', lv[0], st[0]]), escR(['', lv[1], st[1]])]);
+    /* v454（老板：模板要按后台填写顺序、写全、能选就别让人手打）：
+       ① 资源表列序＝编辑窗口：标题→分类→简介→详情→价格→封面→排序→显示→定时显/隐→专属客服链接/二维码
+       ② 类型表补齐：简介、解锁后内容、绑定上限、排序
+       ③ 分类/显示状态/定时时间 全部给下拉或提示，少手打 */
+    var optRows = [head(['分类选项', '分类级别选项', '显示状态选项', '定时格式示例'])]
+      .concat(opts.map(function (n2) { return escR([n2, '', '', '']); }))
+      .concat([escR(['', lv[0], st[0], '2026-11-01 09:00']), escR(['', lv[1], st[1], '2026-11-01 18:30'])]);
     var xml = '<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>' +
       '<Workbook xmlns="' + NS + '" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x1="urn:schemas-microsoft-com:office:excel">' +
       '<Styles>' +
@@ -41,11 +45,11 @@
       sheet('分类', [head(['分类名称', '分类级别', '所属一级分类', '排序序号', '显示状态']),
         '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(5) + '</Row>'],
         dv('选项!$B$2:$B$3') + dv('选项!$A$2:$A$' + (nOpt + 1)) + dv('选项!$C$2:$C$3')) +
-      sheet('资源', [head(['资源标题', '所属分类', '资源简介', '资源价格', '封面图片链接', '显示状态', '定时显示时间', '定时隐藏时间']),
-        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(8) + '</Row>'],
+      sheet('资源', [head(['资源标题', '所属分类', '资源简介', '资源详情', '资源价格', '封面图片链接', '排序', '显示状态', '定时显示时间', '定时隐藏时间', '专属客服链接', '专属客服二维码']),
+        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(12) + '</Row>'],
         dv('选项!$A$2:$A$' + (nOpt + 1)) + dv('选项!$C$2:$C$3')) +
-      sheet('类型', [head(['所属资源标题', '类型名称', '类型价格', '资源码', '显示状态']),
-        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(5) + '</Row>'],
+      sheet('类型', [head(['所属资源标题', '类型名称', '类型价格', '类型简介', '资源码', '解锁后内容', '绑定上限', '显示状态', '排序']),
+        '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(9) + '</Row>'],
         dv('选项!$C$2:$C$3')) +
       sheet('公告', [head(['公告标题', '公告内容', '排序序号', '显示状态']),
         '<Row>' + '<Cell ss:StyleID="c"></Cell>'.repeat(4) + '</Row>'],
@@ -124,7 +128,14 @@
     var prodIdByName = {};
     (data['资源'] || []).forEach(function (r) {
       if (!r[0]) return;
-      seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({ title: r[0], cid: catIdByName[r[1]] || 0, desc: r[2] || '', price: Number(r[3]) || 0, img: r[4] || '', is_online: /隐藏/.test(r[5] || '') ? 0 : 1, is_hidden: /隐藏/.test(r[5] || '') ? 1 : 0, /* v452：原来只传 hidden（接口不认这个键），导入的资源一律 is_online=0 —— 导完前台一个都看不到 */ schedule_on: (r[6] || '').trim() || undefined, schedule_off: (r[7] || '').trim() || undefined }) }); }).then(function (x) {
+      /* v454：列序对齐模板新列（标题/分类/简介/详情/价格/封面/排序/显示/定时显/定时隐/客服链接/客服二维码） */
+      seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({
+        title: r[0], cid: catIdByName[r[1]] || 0, desc: r[2] || '', detail: r[3] || '',
+        price: Number(r[4]) || 0, img: r[5] || '', sort: Number(r[6]) || 0,
+        is_online: /隐藏/.test(r[7] || '') ? 0 : 1, is_hidden: /隐藏/.test(r[7] || '') ? 1 : 0,
+        schedule_on: (r[8] || '').trim() || undefined, schedule_off: (r[9] || '').trim() || undefined,
+        contactUrl: (r[10] || '').trim() || '', contactQr: (r[11] || '').trim() || ''
+      }) }); }).then(function (x) {
         if (!(x && x.ok)) { say('资源「' + r[0] + '」失败' + (x && x.msg ? '：' + x.msg : '')); return; }
         prodIdByName[r[0]] = x.id;
         say('资源「' + r[0] + '」✓');
@@ -136,7 +147,13 @@
       seq = seq.then(function () {
         var pid = prodIdByName[r[0]];
         if (!pid) { say('类型「' + r[1] + '」：资源「' + r[0] + '」未在本次导入中创建，跳过'); return Promise.resolve(null); }
-        return apiCall('admin/variants', { method: 'POST', body: JSON.stringify({ productId: pid, name: r[1], price: Number(r[2]) || 0, resourceCode: String(r[3] || '').trim() === '●●●●' ? '' : String(r[3] || '').trim(), isHidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) });
+        /* v454：类型列补齐（所属资源/名称/价格/简介/资源码/解锁后内容/绑定上限/显示/排序） */
+        return apiCall('admin/variants', { method: 'POST', body: JSON.stringify({
+          productId: pid, name: r[1], price: Number(r[2]) || 0, desc: r[3] || '',
+          resourceCode: String(r[4] || '').trim() === '●●●●' ? '' : String(r[4] || '').trim(),
+          resourceContent: r[5] || '', bindLimit: Number(r[6]) || 1,
+          isHidden: /隐藏/.test(r[7] || '') ? 1 : 0, sort: Number(r[8]) || 0
+        }) });
       }).then(function (x) { if (x === null) return; say('类型「' + r[1] + '」' + (x && x.ok ? '✓' : '失败')); }).catch(function () { say('类型「' + r[1] + '」失败'); });
     });
     (data['公告'] || []).forEach(function (r) {
@@ -571,6 +588,49 @@
       .then(function (x) { if (x && x.ok) { if (done) done(x); } else { if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error'); if (fail) fail(x); } })
       .catch(function () { if (window.showToast) window.showToast('网络开小差了，请稍后再试', 'error'); if (fail) fail(); });
   }
+  /* v454：账号操作的小弹窗（改密/冻结/删除共用）——样式与全站弹窗一致，不再用浏览器原生 prompt */
+  function usAsk(title, msg, opts, onOk) {
+    opts = opts || {};
+    var old = document.getElementById('usAskMask'); if (old) old.remove();
+    var m = document.createElement('div');
+    m.className = 'modal-mask'; m.id = 'usAskMask';
+    m.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" style="max-width:360px">'
+      + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
+      + '<h2 class="modal-title">' + esc(title) + '</h2>'
+      + '<p style="font-size:13px;color:var(--text-light);margin:0 0 10px;line-height:1.6">' + msg + '</p>'
+      + (opts.input ? '<input class="input" id="usAskInput" type="' + (opts.inputType || 'text') + '" style="width:100%;margin-bottom:10px" maxlength="' + (opts.maxlength || 50) + '" placeholder="' + esc(opts.placeholder || '') + '">' : '')
+      + '<div class="modal-footer"><button class="modal-inner-btn" id="usAskOk">' + esc(opts.okText || '确定') + '</button><button class="modal-close" data-x="1">取消</button></div></div>';
+    document.body.appendChild(m);
+    requestAnimationFrame(function () { m.classList.add('open'); var i = m.querySelector('#usAskInput'); if (i) { try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); } } });
+    function close() { m.classList.remove('open'); setTimeout(function () { m.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180); }
+    m.addEventListener('click', function (e) { if (e.target === m || e.target.closest('[data-x]')) close(); });
+    m.querySelector('#usAskOk').addEventListener('click', function () {
+      var v = m.querySelector('#usAskInput') ? m.querySelector('#usAskInput').value : '';
+      if (opts.input && !String(v).trim()) { if (window.showToast) window.showToast('请填写内容', 'error'); return; }
+      var btn = this; btn.disabled = true; btn.textContent = '处理中…';
+      onOk(String(v).trim(), function () { close(); }, function () { btn.disabled = false; btn.textContent = opts.okText || '确定'; });
+    });
+  }
+  function usersPwd(u) {
+    usAsk('修改密码', '给「' + esc(u.username) + '」设置新密码（6-50 位）。', { input: true, inputType: 'password', placeholder: '新密码', okText: '保存' }, function (v, done, fail) {
+      if (v.length < 6) { if (window.showToast) window.showToast('密码至少 6 位', 'error'); fail(); return; }
+      usersCall('PUT', { id: u.id, op: 'resetpwd', password: v }, function () { if (window.showToast) window.showToast('密码已更新', 'success'); done(); }, fail);
+    });
+  }
+  function usersStatus(u, st) {
+    usAsk(st ? '解冻账号' : '冻结账号', (st ? '解冻后「' : '冻结后「') + esc(u.username) + (st ? '」可以重新登录。' : '」将无法登录（已有数据保留）。'), { okText: st ? '解冻' : '冻结' }, function (v, done, fail) {
+      usersCall('PUT', { id: u.id, op: 'status', status: st }, function () { if (window.showToast) window.showToast(st ? '已解冻' : '已冻结', 'success'); done(); renderUsersList(); }, fail);
+    });
+  }
+  function usersDel(u, children, subtree) {
+    var warn = (subtree > 0)
+      ? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后这些账号会一并失效（数据保留，可在「数据缓存」找回）。'
+      : '删除后该账号立即无法登录，其新增的内容按分类范围保留。';
+    usAsk('删除账号', '确认删除「' + esc(u.username) + '」？<br>' + warn, { okText: '删除' }, function (v, done, fail) {
+      usersCall('DELETE', null, function () { if (window.showToast) window.showToast('账号已删除', 'success'); done(); renderUsersList(); }, fail, '/api/admin/users?id=' + u.id);
+    });
+  }
+
   function openUsers() {
     var old = document.getElementById('usersMask'); if (old) old.remove();
     var mask = document.createElement('div');
@@ -593,103 +653,162 @@
     var body = document.getElementById('usBody'); if (!body) return;
     fetch('/api/admin/users', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
       if (!x || !x.ok) { body.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">' + esc((x && x.msg) || '加载失败') + '</div>'; return; }
-      var me = x.me || {};
-      window.__usList = x.list || [];
+      var me = x.me || {}; window.__usMe = me; window.__usList = x.list || [];
       var isSuper = me.role === 'super';
-      var rows = (x.list || []).map(function (u) {
-        var st = u.status ? '<span style="color:#2e7d32;font-size:11px">启用</span>' : '<span style="color:#c62828;font-size:11px">停用</span>';
-        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eef2f6">' +
-          '<span style="flex:1;min-width:0;font-size:13px"><b>' + esc(u.username) + '</b>' + (u.note ? ' <span style="color:#9aa9b8;font-size:11px">' + esc(u.note) + '</span>' : '') +
-          '<br><span style="color:#9aa9b8;font-size:11px">' + st + ' · 最近活跃 ' + esc((u.lastSeen || '—').slice(0, 16)) + ' · 下级 ' + (u.subtreeCount || 0) + '</span></span>' +
-          '<button type="button" class="btn-blue btn-inline-pd" data-ua="edit" data-id="' + u.id + '">编辑</button>' +
-          '<button type="button" class="btn-blue btn-inline-pd" data-ua="pwd" data-id="' + u.id + '">改密</button>' +
-          '<button type="button" class="btn-blue btn-inline-pd" data-ua="status" data-id="' + u.id + '" data-st="' + (u.status ? 0 : 1) + '">' + (u.status ? '冻结' : '解冻') + '</button>' +
-          '<button type="button" class="btn-blue btn-inline-pd" data-ua="del" data-id="' + u.id + '" data-n="' + (u.childrenCount || 0) + '" data-nsub="' + (u.subtreeCount || 0) + '" style="color:#c62828;border-color:#c62828">删除</button></div>';
+      var list = window.__usList;
+      if (!list.length) { body.innerHTML = '<div style="text-align:center;color:#8aa0b5;font-size:12px;padding:14px 0">还没有子账号</div>'; return; }
+      /* v454：按 parentId 铺成树（同分类管理：展开/收起、缩进表示层级） */
+      var byParent = {};
+      list.forEach(function (u) { var pid = Number(u.parentId || 0); (byParent[pid] = byParent[pid] || []).push(u); });
+      var order = [], seen = {};
+      (function walk(pid, depth) {
+        (byParent[pid] || []).forEach(function (u) {
+          if (seen[u.id]) return; seen[u.id] = 1;
+          order.push({ u: u, depth: depth });
+          walk(u.id, depth + 1);
+        });
+      })(0, 0);
+      list.forEach(function (u) { if (!seen[u.id]) { seen[u.id] = 1; order.push({ u: u, depth: 0 }); } });
+      window.__usCollapsed = window.__usCollapsed || {};
+      var rows = order.map(function (it) {
+        var u = it.u, hasKids = (byParent[u.id] || []).length > 0;
+        var collapsed = !!window.__usCollapsed[u.id];
+        var isMe = u.username === me.username;
+        var canManage = isSuper || Number(u.parentId) === Number(me.id);
+        var ops = canManage && !isMe ? '<button type="button" class="row-btn" data-ua="edit" data-id="' + u.id + '">编辑</button>'
+          + '<button type="button" class="row-btn" data-ua="pwd" data-id="' + u.id + '">改密</button>'
+          + '<button type="button" class="row-btn" data-ua="status" data-id="' + u.id + '" data-st="' + (u.status ? 0 : 1) + '">' + (u.status ? '冻结' : '解冻') + '</button>'
+          + '<button type="button" class="row-btn danger" data-ua="del" data-id="' + u.id + '" data-n="' + (u.childrenCount || 0) + '" data-nsub="' + (u.subtreeCount || 0) + '">删除</button>' : '';
+        return '<div class="u-row" data-uid="' + u.id + '" data-pid="' + Number(u.parentId || 0) + '" data-depth="' + it.depth + '">'
+          + '<button type="button" class="u-fold' + (hasKids ? '' : ' is-leaf') + (collapsed ? ' collapsed' : '') + '" data-fold="' + u.id + '" aria-label="展开或收起下级"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>'
+          + '<span class="u-name" style="margin-left:' + (it.depth * 18) + 'px"><b>' + esc(u.username) + '</b>' + (isMe ? ' <span style="color:var(--blue1);font-size:11px">（我）</span>' : '')
+          + '<span class="u-sub">' + (u.note ? esc(u.note) + ' · ' : '') + (u.status ? '启用' : '已停用') + (hasKids ? ' · 下级 ' + (u.subtreeCount || 0) + ' 个' : ' · 无下级') + ' · 最近活跃 ' + esc(String(u.lastSeen || '—').slice(0, 16)) + '</span></span>'
+          + '<span class="u-ops">' + ops + '</span></div>';
       }).join('');
-      body.innerHTML =
-        '<div style="margin-bottom:10px"><button type="button" class="btn-blue btn-inline-pd" id="usAdd">新增账号</button></div>' + /* v442 条7：去掉「+」且靠左（原 text-align:center） */
-        (rows || '<div style="text-align:center;color:#8aa0b5;font-size:12px;padding:10px 0">还没有子账号</div>');
+      body.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+        + '<button type="button" class="btn-blue btn-inline-pd" id="usAdd">新增账号</button>'
+        + '<span class="pm-hint" style="margin:0">可展开三角查看下级；子账号只能挂在自己名下，权限只能在你拥有的范围内再缩小</span></div>'
+        + '<div class="u-tree">' + rows + '</div>';
+
+      function applyFold() {
+        var hidden = {};
+        body.querySelectorAll('.u-row').forEach(function (r) {
+          var pid = Number(r.getAttribute('data-pid') || 0);
+          if (hidden[pid]) { r.style.display = 'none'; hidden[Number(r.getAttribute('data-uid'))] = 1; }
+          else { r.style.display = ''; }
+        });
+      }
+      body.querySelectorAll('[data-fold]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var id = Number(this.getAttribute('data-fold'));
+          window.__usCollapsed[id] = !window.__usCollapsed[id];
+          this.classList.toggle('collapsed', !!window.__usCollapsed[id]);
+          applyFold();
+        });
+      });
+      applyFold();
+
       var addBtn = body.querySelector('#usAdd');
       if (addBtn) addBtn.addEventListener('click', function () { usersForm(null); });
       body.querySelectorAll('[data-ua]').forEach(function (b) {
         b.addEventListener('click', function () {
           var id = Number(this.getAttribute('data-id'));
           var ua = this.getAttribute('data-ua');
-          var list = (window.__usList || []);
-          var u = list.filter(function (x) { return x.id === id; })[0] || {};
+          var list2 = (window.__usList || []);
+          var u = list2.filter(function (x) { return x.id === id; })[0] || {};
           if (ua === 'edit') usersForm(u);
-          else if (ua === 'pwd') {
-            /* v442 条7（老板反馈「验证卡死」）：原用原生 prompt()——浏览器弹出层被拦截/堆叠时永远停不住也回不来=卡死。
-               改为页面内小弹窗输入，和全站弹窗同一套规格，永不卡死。 */
-            openResetPwd(u, function (np) {
-              usersCall('PUT', { id: id, op: 'resetpwd', password: np }, function () { if (window.showToast) window.showToast('密码已重置，该账号已强制下线', 'success'); });
-            });
-          }
-          else if (ua === 'status') usersCall('PUT', { id: id, op: 'status', status: Number(this.getAttribute('data-st')) }, function () { renderUsersList(); });
-          else if (ua === 'del') {
-            var n = Number(this.getAttribute('data-n')) || 0;
-            if (window.showConfirm) {
-              window.showConfirm('删除子账号', '删除「' + (u.username || '') + '」？' + (n > 0 ? '其 ' + n + ' 个直接下级账号将统一成为超级管理员的下级。' : '') + '该账号的留痕记录保留 60 天。', function (cc) {
-                cc();
-                usersCall('DELETE', null, function () { renderUsersList(); if (window.showToast) window.showToast('已删除', 'success'); }, null, '/api/admin/users?id=' + id); /* v443 条6：补 id 查询串（原请求缺 id=删除从未成功） */
-              });
-            } else usersCall('DELETE', null, function () { renderUsersList(); }, null, '/api/admin/users?id=' + id);
-          }
+          else if (ua === 'pwd') usersPwd(u);
+          else if (ua === 'status') usersStatus(u, Number(this.getAttribute('data-st')));
+          else if (ua === 'del') usersDel(u, Number(this.getAttribute('data-n') || 0), Number(this.getAttribute('data-nsub') || 0));
         });
       });
-      /* 冻结状态读取（一次） */
-      if (isSuper && window.__subFreeze === undefined) {
-        fetch('/api/admin/settings', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (sx) {
-          try { window.__subFreeze = JSON.parse('{' + '"v":"' + String(((sx.settings || {}).sub_freeze || '0')).replace(/"/g, '') + '"}').v === '1'; } catch (e) { window.__subFreeze = false; }
-          if (window.__subFreeze) renderUsersList();
-        }).catch(function () {});
-      }
-    }).catch(function () { var b = document.getElementById('usBody'); if (b) b.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">加载失败</div>'; });
+    }).catch(function () {
+      body.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">网络开小差了，请稍后再试</div>';
+    });
   }
-  function apiSettingsPut(data, done) {
-    fetch('/api/admin/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
-      .then(function (r) { return r.json(); }).then(function (x) { if (x && x.ok) { if (done) done(x); } else if (window.showToast) window.showToast((x && x.msg) || '保存失败', 'error'); })
-      .catch(function () { if (window.showToast) window.showToast('网络开小差了', 'error'); });
-  }
+
+  /* v454：权限分组（老板要求写全、排整齐）——顺序＝资源→分类→公告→批量→数据→其它 */
+  var PM_GROUPS = [
+    { t: '资源', k: 'products', items: [['view', '看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '改价格'], ['online', '上下架'], ['del', '删除资源'], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['moveCat', '挪分类']] },
+    { t: '分类', k: 'cats', items: [['view', '看分类'], ['add', '新增分类'], ['edit', '改分类'], ['del', '删分类']] },
+    { t: '公告', k: 'ann', items: [['view', '看公告'], ['add', '发公告'], ['edit', '改公告'], ['del', '删公告']] },
+    { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
+    { t: '数据', k: 'data', items: [['stats', '看总量'], ['detail', '看逐条明细'], ['ip', '看访客 IP'], ['export', '导出数据']] }
+  ];
   function usersForm(u) {
     var isEdit = !!(u && u.id);
     var perms = {};
     try { perms = (isEdit ? (typeof u.perms === 'string' ? JSON.parse(u.perms) : (u.perms || {})) : {}) || {}; } catch (e) { perms = {}; }
     var gval = function (grp, key) { try { return !!(perms[grp] || {})[key]; } catch (e) { return false; } };
-    var catsScope = perms.catsScope === 'all' || !isEdit ? 'all' : (Array.isArray(perms.catsScope) ? perms.catsScope : 'all');
+    var catsScope = (perms.catsScope === 'all' || !isEdit) ? 'all' : (Array.isArray(perms.catsScope) ? perms.catsScope : 'all');
     var codeScope = perms.codeScope || 'own';
+    var annScope = perms.annScope || 'all';
     var cats = (window.state && window.state.categories) || [];
+    var me = window.__usMe || {};
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'usFormMask';
-    var chk = function (act, lab, on) {
-      var dot = String(act).indexOf('.');
-      var grp = String(act).slice(0, dot), key = String(act).slice(dot + 1);
-      return '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;margin:3px 8px 3px 0;cursor:pointer"><input type="checkbox" data-pa="' + grp + '" data-pk="' + key + '"' + (on ? ' checked' : '') + '> ' + lab + '</label>';
-    };
-    var actsHtml = USERS_ACTS.map(function (a) {
-      var on = isEdit ? gval(String(a[0]).slice(0, String(a[0]).indexOf('.')), String(a[0]).slice(String(a[0]).indexOf('.') + 1)) : (a[0] === 'products.view' || a[0] === 'info.view');
-      return chk(a[0], a[1], on);
+
+    var secHtml = PM_GROUPS.map(function (g) {
+      var chks = g.items.map(function (it) {
+        var on = isEdit ? gval(g.k, it[0]) : (g.k === 'products' && (it[0] === 'view')) || (g.k === 'cats' && it[0] === 'view') || (g.k === 'ann' && it[0] === 'view');
+        return '<label class="pm-chk"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + it[0] + '"' + (on ? ' checked' : '') + '><span>' + it[1] + '</span></label>';
+      }).join('');
+      return '<div class="pm-sec" data-sec="' + g.k + '"><div class="pm-sec-hd"><b>' + g.t + '</b>'
+        + '<button type="button" class="pm-all" data-all="' + g.k + '">全选 / 清空</button></div>'
+        + '<div class="pm-grid">' + chks + '</div></div>';
     }).join('');
-    var catHtml = cats.map(function (c) {
-      var on = Array.isArray(catsScope) ? catsScope.indexOf(c.id) !== -1 : false;
-      return '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;margin:3px 8px 3px 0;cursor:pointer"><input type="checkbox" data-cat="' + c.id + '"' + (on ? ' checked' : '') + '> ' + esc(c.name || ('分类#' + c.id)) + '</label>';
-    }).join('');
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
-      '<h2 class="modal-title">' + (isEdit ? '编辑子账号：' + esc(u.username) : '新增账号') + '</h2><div class="form" id="usFormBody">' +
-      (isEdit ? '' : '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">用户名（2-20 位字母数字）</label><input id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">') +
-      (isEdit ? '' : '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">初始密码（6-50 位）</label><input id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">') +
-      '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">备注（这是谁）</label><input id="ufNote" style="width:100%;margin-bottom:10px" maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">' +
-      '<b style="display:block;font-size:13px;color:#666;margin-bottom:4px">① 功能权限（勾了才有）</b><div style="margin-bottom:10px">' + actsHtml + '</div>' +
-      '<b style="display:block;font-size:13px;color:#666;margin-bottom:4px">② 数据范围（只能碰这些分类）</b>' +
-      '<div style="margin-bottom:4px"><label style="font-size:12px;cursor:pointer"><input type="radio" name="ufScope" value="all"' + (catsScope === 'all' ? ' checked' : '') + '> 全部分类</label></div>' +
-      '<div style="margin-bottom:4px"><label style="font-size:12px;cursor:pointer"><input type="radio" name="ufScope" value="pick"' + (catsScope !== 'all' ? ' checked' : '') + '> 指定分类（别的分类看不见也不能动）</label></div>' +
-      '<div style="margin-bottom:10px">' + (catHtml || '<span style="color:#9aa9b8;font-size:11px">暂无分类可勾</span>') + '</div>' +
-      '<b style="display:block;font-size:13px;color:#666;margin-bottom:4px">③ 资源码可见</b>' +
-      '<div style="margin-bottom:10px;font-size:12px">' +
-      '<label style="margin-right:10px;cursor:pointer"><input type="radio" name="ufCode" value="own"' + (codeScope === 'own' ? ' checked' : '') + '> 只看自己新增的</label>' +
-      '<label style="margin-right:10px;cursor:pointer"><input type="radio" name="ufCode" value="scoped"' + (codeScope === 'scoped' ? ' checked' : '') + '> 范围内的都能看</label>' +
-      '<label style="cursor:pointer"><input type="radio" name="ufCode" value="all"' + (codeScope === 'all' ? ' checked' : '') + '> 全部都能看</label></div>' +
-      '<button type="button" class="btn-blue" id="ufSave" style="width:100%">' + (isEdit ? '保存修改' : '创建账号') + '</button></div></div>';
+
+    /* 其它：信息中心 + 管理下级账号 */
+    secHtml += '<div class="pm-sec"><div class="pm-sec-hd"><b>其它</b></div><div class="pm-grid">'
+      + '<label class="pm-chk"><input type="checkbox" data-pa="info" data-pk="view"' + (isEdit ? (gval('info', 'view') ? ' checked' : '') : ' checked') + '><span>信息中心</span></label>'
+      + '<label class="pm-chk"><input type="checkbox" data-pa="users" data-pk="_"' + (isEdit && perms.users ? ' checked' : '') + '><span>管理下级账号</span></label>'
+      + '</div></div>';
+
+    var catHtml = cats.length ? cats.map(function (c) {
+      var on = Array.isArray(catsScope) ? catsScope.indexOf(Number(c.id)) !== -1 : false;
+      var sub = Number(c.parent_id || 0) > 0;
+      return '<label class="pm-chip"><input type="checkbox" data-cat="' + c.id + '"' + (on ? ' checked' : '') + '><span>' + (sub ? '└ ' : '') + esc(c.name || ('分类#' + c.id)) + '</span></label>';
+    }).join('') : '<span class="pm-hint">暂无分类可勾</span>';
+
+    var scopeHtml = '<div class="pm-sec"><div class="pm-sec-hd"><b>数据范围（能碰哪些分类）</b></div>'
+      + '<div class="pm-grid" style="grid-template-columns:1fr">'
+      + '<label class="pm-chk"><input type="radio" name="ufScope" value="all"' + (catsScope === 'all' ? ' checked' : '') + '><span>全部分类（勾这个就不用往下选）</span></label>'
+      + '<label class="pm-chk"><input type="radio" name="ufScope" value="pick"' + (catsScope !== 'all' ? ' checked' : '') + '><span>只给下面勾选的分类（别的分类看不见也动不了）</span></label>'
+      + '</div><div class="pm-chips" id="ufCatChips">' + catHtml + '</div></div>';
+
+    var codeHtml = '<div class="pm-sec"><div class="pm-sec-hd"><b>资源码可见</b></div><div class="pm-grid" style="grid-template-columns:1fr">'
+      + '<label class="pm-chk"><input type="radio" name="ufCode" value="own"' + (codeScope === 'own' ? ' checked' : '') + '><span>只看自己新增的</span></label>'
+      + '<label class="pm-chk"><input type="radio" name="ufCode" value="scoped"' + (codeScope === 'scoped' ? ' checked' : '') + '><span>范围内资源的都能看</span></label>'
+      + '<label class="pm-chk"><input type="radio" name="ufCode" value="all"' + (codeScope === 'all' ? ' checked' : '') + '><span>全部都能看</span></label>'
+      + '</div></div>';
+
+    /* 公告范围：只让改指定公告（相当于分类范围的公告版） */
+    var annHtml = '<div class="pm-sec" id="ufAnnSec"><div class="pm-sec-hd"><b>公告范围（能改哪些公告）</b></div>'
+      + '<div class="pm-grid" style="grid-template-columns:1fr">'
+      + '<label class="pm-chk"><input type="radio" name="ufAnn" value="all"' + (annScope === 'all' ? ' checked' : '') + '><span>全部公告</span></label>'
+      + '<label class="pm-chk"><input type="radio" name="ufAnn" value="pick"' + (annScope !== 'all' ? ' checked' : '') + '><span>只能改下面勾选的公告</span></label>'
+      + '</div><div class="pm-chips" id="ufAnnChips"><span class="pm-hint">读取公告列表…</span></div></div>';
+
+    var parentOpts = '<option value="0">（我自己这一级）</option>';
+    if (me.role === 'super') {
+      (window.__usList || []).forEach(function (x) {
+        if (isEdit && x.id === u.id) return;
+        parentOpts += '<option value="' + x.id + '"' + (isEdit && Number(u.parentId) === x.id ? ' selected' : '') + '>' + esc(x.username) + (x.note ? '（' + esc(x.note) + '）' : '') + '</option>';
+      });
+    }
+
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑" style="max-width:560px">'
+      + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
+      + '<h2 class="modal-title" style="margin-bottom:10px">' + (isEdit ? '编辑账号：' + esc(u.username) : '新增账号') + '</h2>'
+      + '<div class="form usf-body" id="usFormBody">'
+      + (isEdit ? '' : '<label class="pm-hint" style="display:block;margin-bottom:4px">用户名（2-20 位字母数字）</label><input class="input" id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">')
+      + (isEdit ? '' : '<label class="pm-hint" style="display:block;margin-bottom:4px">初始密码（6-50 位）</label><input class="input" id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">')
+      + '<label class="pm-hint" style="display:block;margin-bottom:4px">备注（这个人是谁 / 负责什么）</label><input class="input" id="ufNote" style="width:100%;margin-bottom:10px" maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">'
+      + (me.role === 'super' ? '<label class="pm-hint" style="display:block;margin-bottom:4px">上级账号（决定跟谁是一组）</label><select class="input" id="ufParent" style="width:100%;margin-bottom:10px">' + parentOpts + '</select>' : '')
+      + secHtml + scopeHtml + annHtml + codeHtml
+      + '</div>'
+      + '<div class="usf-foot"><button type="button" class="btn-blue" id="ufSave" style="width:100%">' + (isEdit ? '保存修改' : '创建账号') + '</button></div></div>';
+
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
       mask.classList.add('open');
@@ -698,29 +817,66 @@
     mask.addEventListener('click', function (e) {
       if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
     });
+    /* 分组全选/清空 */
+    mask.querySelectorAll('[data-all]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var grp = this.getAttribute('data-all');
+        var boxes = [].slice.call(mask.querySelectorAll('[data-pa="' + grp + '"]'));
+        var allOn = boxes.every(function (c) { return c.checked; });
+        boxes.forEach(function (c) { c.checked = !allOn; });
+      });
+    });
+
+    /* 公告列表（scope 用） */
+    fetch('/api/admin/settings', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
+      var st = (x && x.settings) || {};
+      var arr = [];
+      try { arr = JSON.parse(st.announcements || '[]') || []; } catch (e) { arr = []; }
+      var box = mask.querySelector('#ufAnnChips'); if (!box) return;
+      if (!arr.length) { box.innerHTML = '<span class="pm-hint">还没有公告，可先到「设置公告」发一条</span>'; return; }
+      box.innerHTML = arr.map(function (a, i) {
+        var id = String(a.id || ('a' + i));
+        var on = annScope !== 'all' && Array.isArray(annScope) && annScope.indexOf(id) !== -1;
+        return '<label class="pm-chip"><input type="checkbox" data-ann="' + esc(id) + '"' + (on ? ' checked' : '') + '><span>' + esc(String(a.title || '未命名公告').slice(0, 14)) + '</span></label>';
+      }).join('');
+    }).catch(function () {
+      var box = mask.querySelector('#ufAnnChips'); if (box) box.innerHTML = '<span class="pm-hint">公告列表读取失败，可稍后重试</span>';
+    });
+
     mask.querySelector('#ufSave').addEventListener('click', function () {
       var pv = {};
-      mask.querySelectorAll('[data-pa]').forEach(function (c) { var g = c.getAttribute('data-pa'), k = c.getAttribute('data-pk'); pv[g] = pv[g] || {}; if (c.checked) pv[g][k] = 1; });
+      mask.querySelectorAll('[data-pa]').forEach(function (c) {
+        var g = c.getAttribute('data-pa'), k = c.getAttribute('data-pk');
+        if (!c.checked) return;
+        if (g === 'users') { pv.users = 1; return; }
+        pv[g] = pv[g] || {}; pv[g][k] = 1;
+      });
       var scopeMode = (mask.querySelector('input[name="ufScope"]:checked') || {}).value || 'all';
       var catIds = [];
       mask.querySelectorAll('[data-cat]').forEach(function (c) { if (c.checked) catIds.push(Number(c.getAttribute('data-cat'))); });
       pv.catsScope = scopeMode === 'all' ? 'all' : catIds;
+      var annMode = (mask.querySelector('input[name="ufAnn"]:checked') || {}).value || 'all';
+      var annIds = [];
+      mask.querySelectorAll('[data-ann]').forEach(function (c) { if (c.checked) annIds.push(c.getAttribute('data-ann')); });
+      pv.annScope = annMode === 'all' ? 'all' : annIds;
       pv.codeScope = (mask.querySelector('input[name="ufCode"]:checked') || {}).value || 'own';
       var note = (mask.querySelector('#ufNote') || {}).value || '';
       var btn = this;
       btn.disabled = true; btn.textContent = '保存中…';
+      var restore = function () { btn.disabled = false; btn.textContent = isEdit ? '保存修改' : '创建账号'; };
       if (isEdit) {
         usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
           if (window.showToast) window.showToast('已保存', 'success');
           mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); renderUsersList();
-        }, function () { btn.disabled = false; btn.textContent = '保存修改'; });
+        }, restore);
       } else {
         var un = (mask.querySelector('#ufUser') || {}).value || '';
         var pw = (mask.querySelector('#ufPwd') || {}).value || '';
-        usersCall('POST', { username: un, password: pw, note: note, perms: pv }, function () {
+        var psel = mask.querySelector('#ufParent');
+        usersCall('POST', { username: un, password: pw, note: note, perms: pv, parentId: psel ? Number(psel.value) || 0 : 0 }, function () {
           if (window.showToast) window.showToast('账号已创建', 'success');
           mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); renderUsersList();
-        }, function () { btn.disabled = false; btn.textContent = '创建账号'; });
+        }, restore);
       }
     });
   }

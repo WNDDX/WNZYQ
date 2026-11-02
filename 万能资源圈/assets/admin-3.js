@@ -278,6 +278,20 @@
           var pp = picker.querySelector('.cat-picker-panel');
           if (!pp && picker.dataset.pickerId) pp = document.querySelector('.cat-picker-panel[data-picker-id="' + picker.dataset.pickerId + '"]');
           if (pp) {
+            /* v454（老板反馈：资源管理的分类/状态筛选点了没反应；有的下拉能撑开有的撑不开）：
+               根因是「面板在数据到位前就建好了」——buildCatPicker 读 state.categories 时还是空的，
+               面板里一个 cp-item 都没有，下面的「空内容自动收起」直接把下拉关掉，看起来就是筛选失效。
+               这里在打开时补建一次：分类筛选重跑 initFilterCatPicker，原生 select 派生的重跑 refresh。 */
+            if (!pp.querySelector('.cp-item')) {
+              try {
+                if (picker.id === 'filterCatPicker' && typeof initFilterCatPicker === 'function') initFilterCatPicker();
+                else {
+                  var _sib = picker.nextElementSibling;
+                  if (_sib && _sib.tagName === 'SELECT') { var _ref = spRefs.get(_sib); if (_ref && _ref.refresh) _ref.refresh(); }
+                }
+              } catch (eLR) { if (window.__silent) window.__silent(eLR); }
+              pp = picker.querySelector('.cat-picker-panel') || pp;
+            }
             /* v416 条3：空内容自动收起（对齐资源页分类三角逻辑）——面板没有任何可选项时不展开 */
             if (!pp.querySelector('.cp-item')) { picker.classList.remove('open'); pp.classList.remove('open'); return; }
             /* v442 条10（老板反馈：下拉内容与下拉位置大幅偏移，全系统修）：原来只有 select-picker 面板移到 body，

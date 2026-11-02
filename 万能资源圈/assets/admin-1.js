@@ -871,8 +871,13 @@
       var __pv = document.getElementById('panel-' + name);
       /* v413 条7：页签切换的「从下滑入」出场动画已按老板要求移除（对齐资源页点分类=内容直接出现，无入场动画） */
       try { if (window.__fsTabLineUpdate) window.__fsTabLineUpdate(true); } catch (e) {} /* v370b：点标签切换，白线滑到新标签下 */
-      /* v358 S2：恢复该标签页离开时的滚动位置 */
-      try { var __sv = (window.__tabScroll || {})[name]; if (typeof __sv === 'number' && __sv > 0) setTimeout(function () { try { window.scrollTo(0, __sv); } catch (e) {} }, 80); } catch (e) {}
+      /* v454（老板反馈：点顶栏页签页面会往下/往上窜一下）：
+         原来恢复滚动位置是「等 80ms 再滚」——这 80ms 里新面板已经变矮，浏览器先把 scrollY 夹到面板最大高度（窜一下），
+         再被我们滚回去，观感就是闪跳。改成切换瞬间立即定位到该页签的既有位置（没有记录=回顶部），中间不留夹取期。 */
+      try {
+        var __sv = (window.__tabScroll || {})[name];
+        window.scrollTo(0, (typeof __sv === 'number' && __sv > 0) ? __sv : 0);
+      } catch (e) {}
       // v314（用户 10-05 15:59）：Tab切换立即出结果——首次加载数据，后续切回时已有数据秒显+后台静默刷新保最新。
       if (name === 'products') {
         if (!window.__plP) { window.__plP = 1; loadProducts(); }

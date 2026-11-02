@@ -4,6 +4,7 @@
  * body (PUT): { shop_name, shop_logo, contact_url, ... }
  */
 import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, sweepDroppedKeys } from '../../_utils.js';
+import { parsePerms } from '../../_perms.js';
 
 // 允许设置的 key 白名单
 /* v383：新增 group_url（交流群聊跳转链接）+ contact_qr/group_qr/gzh_qr（三张二维码图片），链接/图片全部后台可改 */
@@ -48,6 +49,31 @@ export async function onRequestPut(context) {
   /* v354：保存前记下旧值——保存完成后把"旧有新无"的上传文件自动追删（后端核对全库引用，绝不误删） */
   let __oldSettings = '';
   try { const { results } = await env.DB.prepare('SELECT value FROM settings').all(); for (const r of (results || [])) __oldSettings += (r.value || '') + '\n'; } catch (e) {}
+
+  /* v454：公告范围锁——子账号只能在授权的公告 id 上改/删，范围外的公告原样保留（老板：可以只让他改某一个公告） */
+  if (onlyAnn && auth.role !== 'super' && ('announcements' in b)) {
+    try {
+      const perms = parsePerms(typeof auth.perms === 'string' ? auth.perms : JSON.stringify(auth.perms || {}));
+      const scope = perms.annScope;
+      if (Array.isArray(scope)) {
+        const allowed = new Set(scope.map(String));
+        const cur = await env.DB.prepare('SELECT value FROM settings WHERE key = ?').bind('announcements').first();
+        let curArr = []; try { curArr = JSON.parse((cur && cur.value) || '[]') || []; } catch (e) { curArr = []; }
+        let inArr = []; try { inArr = JSON.parse(String(b.announcements || '[]')) || []; } catch (e) { inArr = []; }
+        const inMap = new Map((Array.isArray(inArr) ? inArr : []).map(x => [String(x && x.id), x]));
+        const merged = (Array.isArray(curArr) ? curArr : []).map(a => {
+          const id = String(a && a.id);
+          if (!allowed.has(id)) return a;                 /* 不在范围内：一个字都不许动 */
+          return inMap.has(id) ? inMap.get(id) : null;    /* 在范围内：可改，也可删（提交里没有=删） */
+        }).filter(Boolean);
+        (Array.isArray(inArr) ? inArr : []).forEach(x => {
+          const id = String(x && x.id);
+          if (!(curArr || []).some(a => String(a && a.id) === id) && allowed.has(id)) merged.push(x);
+        });
+        b.announcements = JSON.stringify(merged);
+      }
+    } catch (e) { /* 解析失败按原样保存，交给上面的权限锁兜底 */ }
+  }
 
   for (const key of ALLOWED_KEYS) {
     if (key in b) {

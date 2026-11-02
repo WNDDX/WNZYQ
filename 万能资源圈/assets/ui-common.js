@@ -371,7 +371,7 @@ if ('serviceWorker' in navigator) {
         im.onload = function () {
           /* v358：按图片真实比例设定盒子尺寸——盒子=看得见的图，点「图片外」即点遮罩，立刻可关 */
           try {
-            var vw = Math.min(window.innerWidth * 0.92, 1200), vh = Math.min(window.innerHeight * 0.92, 800);
+            var vw = window.innerWidth * 0.96, vh = window.innerHeight * 0.92; /* v454（老板：放大要占满整个页面，不管手机电脑）——原来把图封在 1200x800 以内，1440 屏上只占八成；改为按视口算，去掉固定上限 */
             var r = Math.min(vw / (this.naturalWidth || 1), vh / (this.naturalHeight || 1));
             this.style.width = Math.max(80, Math.round((this.naturalWidth || 1) * r)) + 'px';
             this.style.height = Math.max(80, Math.round((this.naturalHeight || 1) * r)) + 'px';
@@ -402,7 +402,7 @@ if ('serviceWorker' in navigator) {
         } catch (eFlip) { if (window.__silent) window.__silent(eFlip); }
       }
       if (isVideo) { im.controls = true; im.autoplay = true; im.playsInline = true; }
-      im.style.cssText = 'object-fit:contain;border-radius:8px;max-width:92vw;max-height:88vh;transition:transform .05s linear;' + (isVideo ? 'width:min(92vw,1200px);aspect-ratio:16/9;background:#000;' : '');
+      im.style.cssText = 'object-fit:contain;border-radius:8px;max-width:96vw;max-height:92vh;transition:transform .05s linear;' + (isVideo ? 'width:min(92vw,1200px);aspect-ratio:16/9;background:#000;' : '');
       /* v413 条1：切图方向滑入（v368 存的 __lbDir 此前从未被消费）；首次打开不播，保持原缩放入场。注意必须在 cssText 之后赋值否则被抹 */
       if (window.__lbDir) { im.style.animation = (window.__lbDir > 0 ? 'lbSlideNext' : 'lbSlidePrev') + ' .26s cubic-bezier(.3,0,.2,1)'; window.__lbDir = 0; }
       __lbMask.appendChild(im);

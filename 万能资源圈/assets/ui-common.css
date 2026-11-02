@@ -798,6 +798,9 @@ mark.hl { background: rgba(var(--green-rgb, 1,192,0), .16); color: inherit; font
 @keyframes uiToastDrop { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
 /* 条31：暗色模式切换过渡——只过渡 body 背景色与文字色（禁全局 *，避免拖慢其它动画） */
 body { transition: background-color var(--dur-slow) ease, color var(--dur-slow) ease; }
+/* v454（老板反馈：点按键时页面会往下窜一点点）：关掉浏览器滚动锚定——列表/骨架/筛选结果在视口上方变高变矮时，
+   浏览器会自动挪 scrollY 去"保持内容不动"，表现就是点一下页面自己抖一下。全站统一关掉，滚动只由我们的代码决定。 */
+html, body { overflow-anchor: none; }
 /* 条34：动画资源使用规矩——加速资源（will-change/合成层）只允许动画播放期间临时占用、结束释放；
    禁止常驻声明（本站唯一一处常驻 admin.css topbar 已在 R231 删除）。
    新增动画需要层的：JS 播放前 element.style.willChange='transform'，transitionend/animationend 后置 ''。 */

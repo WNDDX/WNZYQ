@@ -1400,7 +1400,9 @@
        在 flex-wrap 工具栏里会被挤到第二行（三角掉行）；工具栏右侧留 40px 防重叠 */
     .rte-toolbar { position: relative; padding-right: 44px; }
     .rte-toolbar .rte-expand {
-      position: absolute; right: 6px; top: 8px; margin-left: 0;
+      /* v454（老板反馈：编辑器工具栏的三角会跟着左右滑动）：原来是 position:absolute——收起态工具栏是横向滚动容器，
+         绝对定位元素在滚动容器里会跟着内容一起被推走。改 sticky 钉在滚动视口右缘，横向滑多远它都不动。 */
+      position: sticky; right: 6px; top: 0; margin-left: auto;
       display: flex; flex-shrink: 0; align-self: auto;
       width: 32px; height: 32px; padding: 0;
       border: none; background: transparent; /* v370c：三角统一裸三角——全站三角只允许大小差异，不允许边框/底色 */
@@ -1416,7 +1418,7 @@
     .rte-toolbar.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ }
     /* v385 条8：收起态三角坐标与展开态对齐（top:8/right:6 同值）——原 sticky 默认 top 归行内流位，
        状态切换瞬间三角位置跳动（老板反馈「状态变化后还是会动」），现两态同位仅剩旋转过渡 */
-    .rte-toolbar.rte-collapsed .rte-expand { position: absolute; right: 6px; top: 8px; margin-left: 0; z-index: 2; } /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
+    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 6px; top: 0; margin-left: auto; z-index: 2; } /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
     .rte-toolbar.rte-collapsed .rte-expand .toggle-arrow { transform: rotate(-90deg); }
 
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
@@ -2230,9 +2232,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* v450（老板拍板）：咨询客服/交流群聊/公众号讯 各行去掉「保存」键，「收起」=保存并收起，独占一行居中 */
 .info-panel-btns.is-single { justify-content: center; }
 .info-panel-btns.is-single > button { flex: 1 1 100% !important; width: 100% !important; max-width: 100% !important; text-align: center; }
-/* v453：「收起」现在是该行唯一的动作（=保存并收起），用主色而不是「取消/关闭」的红色系 —— 红色系会让人以为点了是放弃改动 */
-.info-panel-btns.is-single > button { background: var(--blue1) !important; color: var(--text-on-brand, #fff) !important; border-color: var(--blue1) !important; }
-.info-panel-btns.is-single > button:hover { background: var(--blue2) !important; color: var(--text-on-brand, #fff) !important; border-color: var(--blue2) !important; }
+/* v454（老板拍板）：收起键保持原来的淡红底红字（.modal-close 皮肤），不改成主色 */
 @media (max-width: 600px) {
   .info-item { padding: 8px 10px; }
   .info-row-bar .btn-green, .info-row-bar .btn-blue, .info-row-bar .btn-cyan { height: 36px; font-size: 14px; }
@@ -2255,3 +2255,43 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
    个别视口档位两者都落空时，红点的定位基准跳到顶栏，圆点探出视口顶部被裁掉一半。
    ①顶层无条件锁定定位基准 ②红点位置统一走 motion.css 唯一源（top:3 right:6 内移避圆角）*/
 .topbar-right .info-ct-btn { position: relative !important; }
+
+/* ===== v454 账号管理（老板要求：权限排整齐、树形看上下级、按钮向分类管理看齐） ===== */
+.u-tree { margin: 0; padding: 0; list-style: none; }
+.u-row { display: flex; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
+.u-row:hover { background: var(--hover-bg, #f0f7ff); }
+.u-fold { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--blue1); cursor: pointer; flex: 0 0 20px; padding: 0; }
+.u-fold .toggle-arrow { width: 18px; height: 18px; transition: transform var(--dur-mid) var(--ease-out); transform: rotate(0deg); }
+.u-fold.collapsed .toggle-arrow { transform: rotate(-90deg); }
+.u-fold.is-leaf { visibility: hidden; }
+.u-name { flex: 1 1 auto; min-width: 0; font-size: 13px; line-height: 1.4; }
+.u-name b { font-weight: 700; }
+.u-sub { display: block; color: var(--text-faint, #9aa9b8); font-size: 11px; }
+.u-ops { display: flex; gap: 6px; flex: 0 0 auto; }
+@media (max-width: 600px) {
+  .u-row { flex-wrap: wrap; }
+  .u-ops { flex: 1 1 100%; justify-content: flex-end; }
+}
+
+.pm-sec { border: 1px solid var(--border); border-radius: var(--r-m, 8px); padding: 8px 10px 10px; margin-bottom: 10px; background: var(--card-bg); }
+.pm-sec-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pm-sec-hd b { font-size: 13px; color: var(--text); }
+.pm-all { margin-left: auto; font-size: 11px; color: var(--blue1); background: transparent; border: none; cursor: pointer; padding: 2px 6px; border-radius: var(--r-s, 4px); }
+.pm-all:hover { background: var(--hover-bg, #f0f7ff); }
+.pm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 7px 10px; }
+.pm-chk { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; min-width: 0; line-height: 1.3; }
+.pm-chk input { width: 16px; height: 16px; flex: 0 0 16px; accent-color: var(--blue1); cursor: pointer; }
+.pm-chk span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pm-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--r-pill, 999px); cursor: pointer; background: var(--card-bg); }
+.pm-chip input { width: 14px; height: 14px; accent-color: var(--blue1); cursor: pointer; }
+.pm-chip.is-off { opacity: .55; }
+.pm-hint { font-size: 11px; color: var(--text-faint, #9aa9b8); margin: 6px 0 0; line-height: 1.5; }
+.usf-body { max-height: min(60vh, 60dvh); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+.usf-foot { position: sticky; bottom: 0; background: var(--card-bg); padding-top: 8px; }
+
+/* v454 信息中心：未读点（明细流固定 7 天，不再看完就清空） */
+.ct-row { position: relative; }
+.ct-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue1); flex: 0 0 6px; margin-right: 2px; align-self: center; }
+.ct-unread .ct-target { font-weight: 600; }
+.ct-unread .ct-time i { color: var(--blue1); }

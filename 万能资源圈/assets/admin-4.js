@@ -2523,7 +2523,7 @@
     setDelta('ctDContact', d.delta.contact);
     setDelta('ctDUnlock', d.delta.unlock);
     setDelta('ctDView', d.delta.view);
-    document.getElementById('ctSince').textContent = '上方四格 = 较上次查看（' + fmtTime(d.lastSeen) + '）新增；「今日概览」= 今天 0 点起'; /* v443 条2：口径说明 */
+    document.getElementById('ctSince').textContent = '上方四格 = 较上次查看（' + fmtTime(d.lastSeen) + '）新增；「今日概览」= 今天 0 点起；下方明细 = 最近 7 天全部动态（带蓝点的是上次查看后新增）'; /* v443 条2：口径说明 */
     document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
     var list = document.getElementById('ctList');
     var _alert = sysAlertEntry();
@@ -2586,7 +2586,8 @@
       var target = r.title + (r.extra ? ' · ' + r.extra : ''); /* extra 仅资源解锁（含类型名）才带 */
       /* v387 A10：时间线圆点逐条弹出（stagger 40ms，cap 12 条） */
       var _d = ' style="--casc-d:' + (Math.min(ri, 12) * 40) + 'ms"';
-      return '<div class="ct-row wn-tl"' + _d + '><span class="ct-time"><i>' + tp[0] + '</i><i>' + (tp[1] || '') + '</i></span><span class="ct-who">' +
+      /* v454：明细流固定展示最近 7 天，比上次查看新的行打未读点（原来整条流会随上次查看被清空，进来看一次下次就空了） */
+      return '<div class="ct-row wn-tl' + (r.unread ? ' ct-unread' : '') + '"' + _d + '>' + (r.unread ? '<span class="ct-dot" aria-label="未读"></span>' : '') + '<span class="ct-time"><i>' + tp[0] + '</i><i>' + (tp[1] || '') + '</i></span><span class="ct-who">' +
         (rl ? rl + ' ' : '') + String(who).replace(/</g, '&lt;') + '</span><span class="ct-what">' + (WHAT[r.type] || r.type) +
         '</span><span class="ct-target">' + String(target).replace(/</g, '&lt;') + '</span></div>';
     }).join('');

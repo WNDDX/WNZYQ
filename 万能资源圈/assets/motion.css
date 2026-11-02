@@ -222,8 +222,8 @@ html[data-theme="dark"] ::selection { background: rgba(100,181,246,.4); }
 
 /* ===== v392-4：下拉刷新胶囊四页唯一源（原 index/error 内联 + shop/admin 各一套类名，已归一） ===== */
 @keyframes wnPullSpin { to { transform: rotate(360deg); } }
-.pull-refresh { position: fixed; top: 80px; left: 0; right: 0; height: 0; overflow: visible; display: flex; align-items: flex-start; justify-content: center; z-index: 998; pointer-events: none; background: transparent; }
-.prt-text { font-size: 12px; line-height: 18px; color: var(--blue1, #1E88E5); background: rgba(var(--white-rgb, 255,255,255), .92); border: 1px solid var(--blue2, #64B5F6); border-radius: var(--r-pill); padding: 6px 16px; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-card, 0 1px 4px rgba(0,0,0,.07)); transform: translateY(-48px); opacity: 0; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease; }
+.pull-refresh { position: fixed; top: calc(80px + max(0px, (var(--topbar-h, 64px) - 64px))); /* v454：与 .ui-toast 同一套顶距，顶栏两行时一起下移，不再一个高一个低 */ left: 0; right: 0; height: 0; overflow: visible; display: flex; align-items: flex-start; justify-content: center; z-index: 998; pointer-events: none; background: transparent; }
+.prt-text { font-size: 12px; line-height: 18px; color: var(--blue1, #1E88E5); background: rgba(var(--white-rgb, 255,255,255), .92); border: 1px solid var(--blue2, #64B5F6); border-radius: var(--r-pill); padding: 4px 16px; /* v454：内边距 6→4，与 .ui-toast 的 28px 总高完全一致（原来 32px，比所有提示条都高一圈） */ display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-card, 0 1px 4px rgba(0,0,0,.07)); transform: translateY(-48px); opacity: 0; transition: transform var(--dur-mid) ease, opacity var(--dur-mid) ease; }
 .prt-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--blue2, #64B5F6); border-top-color: var(--blue1, #1E88E5); border-radius: 50%; animation: wnPullSpin 0.6s linear infinite; }
 
 /* ===== v392-2：错误页深色（此前四页唯一没接入深色的页面；走 data-page 作用域防跨页类名冲突） ===== */
