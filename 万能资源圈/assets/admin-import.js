@@ -204,11 +204,14 @@
   /* v473：外部商品采集要复用这套 xlsx 解析（老板从别家后台导出的商品表）。
      入口：把任意一张有数据的表读成 [{title, cover, src_url}]，前端自己认列。 */
   window.__parseAnySheet = function (buf) {
-    return parseXlsx(buf).then(function (sheets) {
+    return parseXlsx(buf).then(function (book) {
+      /* v479：parseXlsx 返回的是「表名 → 行数组」的对象，不是数组——
+         原来按数组遍历，一上传 xlsx 就报 (sheets||[]).forEach is not a function（实测踩到）。 */
       var best = null;
-      (sheets || []).forEach(function (sh) {
-        if (!sh || !sh.rows || !sh.rows.length) return;
-        if (!best || sh.rows.length > best.rows.length) best = sh;
+      Object.keys(book || {}).forEach(function (name) {
+        var rs = book[name] || [];
+        if (!rs.length) return;
+        if (!best || rs.length > best.rows.length) best = { name: name, rows: rs };
       });
       if (!best) return [];
       var rows = best.rows.filter(function (r) { return r && r.join('').trim(); });
