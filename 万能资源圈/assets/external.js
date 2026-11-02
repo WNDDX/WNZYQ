@@ -127,7 +127,7 @@
       '<button type="button" class="btn-blue btn-inline-pd" id="extAddLink" style="margin-left:auto">+ 登记链接</button></div>' +
       noteCard +
       '<div class="ext-toolbar">' +
-      '<input id="extQ" class="ext-search" placeholder="搜标题 / 备注 / 链接" value="' + esc(S.q) + '">' +
+      '<input id="extQ" class="ext-search" type="search" autocomplete="off" name="ext-q-' + Date.now() + '" placeholder="搜标题 / 备注 / 链接" value="' + esc(S.q) + '">' /* v465：不加 type=search+autocomplete=off 时，浏览器自动填充会把登录账号灌进搜索框（实测灌成了用户名） */ +
       '<select id="extStatus" class="ext-sel">' +
       '<option value="">全部状态</option>' +
       ['onsale', 'sold', 'offdown', 'broken', 'check'].map(function (k) {
