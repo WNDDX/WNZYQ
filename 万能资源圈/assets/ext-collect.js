@@ -71,6 +71,9 @@
     Array.prototype.forEach.call(bar.querySelectorAll('select[data-cmd]'), function (raw) {
       var plain = document.createElement('select');
       plain.className = 'rte-select';
+      /* v485：原生 select 会被父级样式撑开（截图里「字体」占了半行，把后面的按钮和「字号」挤乱）。
+         固定成和自制下拉差不多宽，工具栏才排得整齐。 */
+      plain.style.cssText = 'width:76px;min-width:76px;max-width:76px;flex:0 0 76px;height:30px;font-size:12px;padding:0 2px;border-radius:8px;';
       plain.setAttribute('data-cmd', raw.getAttribute('data-cmd') || '');
       plain.setAttribute('data-target', editorId);
       Array.prototype.forEach.call(raw.options, function (o) {
