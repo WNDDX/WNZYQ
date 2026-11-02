@@ -276,7 +276,15 @@ export async function onRequestPost(context) {
         const used = await env.DB.prepare('SELECT COUNT(*) AS n FROM external_links WHERE platform_id=? AND deleted_at IS NULL').bind(id).first();
         if (used && used.n > 0) return json({ ok: false, msg: '这个平台下还有 ' + used.n + ' 条链接，先删链接再删平台' }, 400);
         await env.DB.prepare('DELETE FROM external_platforms WHERE id=?').bind(id).run();
-        return json({ ok: true });
+        /* v476：删平台时，它采来的商品会变成「孤儿」——platform_id 指向不存在的平台，
+           界面上按平台筛永远看不到，等于悄悄占着库。改成置为「未归平台」（0），
+           商品还在、在「全部平台」里能看到，不会误删老板辛苦采的货。 */
+        let orphan = 0;
+        try {
+          const r0 = await env.DB.prepare('UPDATE external_goods SET platform_id=0 WHERE platform_id=?').bind(id).run();
+          orphan = (r0.meta && r0.meta.changes) || 0;
+        } catch (e) {}
+        return json({ ok: true, orphan: orphan });
       }
       return json({ ok: false, msg: '未知操作：' + op }, 400);
     }
