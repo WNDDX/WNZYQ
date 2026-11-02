@@ -224,6 +224,7 @@ export async function onRequestPost(context) {
   try {
     await ensureAdminUsers(env);
     await ensureExternal(env);
+    await ensureCollect(env);
     const auth0 = await requireAuth(env, request);
     if (auth0 instanceof Response) return auth0;
     const b = await readJSON(request);
@@ -246,19 +247,22 @@ export async function onRequestPost(context) {
         const name = String(b.name || '').trim().slice(0, 40);
         if (!name) return json({ ok: false, msg: '平台名不能为空' }, 400);
         const domain = String(b.domain || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').slice(0, 80);
+        const mallUrl = String(b.mall_url || '').trim().slice(0, 600);
         const loginUrl = String(b.login_url || '').trim().slice(0, 500);
         const note = String(b.note || '').slice(0, 2000);
         const settle = String(b.settle_note || '').slice(0, 300);
         const mode = b.fetch_mode === 'server' ? 'server' : 'paste';
         const sort = Number(b.sort || 0) || 0;
         if (id) {
-          await env.DB.prepare('UPDATE external_platforms SET name=?, domain=?, login_url=?, note=?, settle_note=?, fetch_mode=?, sort=? WHERE id=?')
-            .bind(name, domain, loginUrl, note, settle, mode, sort, id).run();
+          try { await env.DB.prepare('UPDATE external_platforms SET name=?, domain=?, login_url=?, note=?, settle_note=?, fetch_mode=?, sort=?, mall_url=? WHERE id=?')
+            .bind(name, domain, loginUrl, note, settle, mode, sort, mallUrl, id).run(); }
+          catch (eU) { await env.DB.prepare('UPDATE external_platforms SET name=?, domain=?, login_url=?, note=?, settle_note=?, fetch_mode=?, sort=? WHERE id=?')
+            .bind(name, domain, loginUrl, note, settle, mode, sort, id).run(); }
           return json({ ok: true, id });
         }
         try {
-          const r = await env.DB.prepare('INSERT INTO external_platforms (name, domain, login_url, note, settle_note, fetch_mode, sort, req_id) VALUES (?,?,?,?,?,?,?,?)')
-            .bind(name, domain, loginUrl, note, settle, mode, sort, reqId).run();
+          const r = await env.DB.prepare('INSERT INTO external_platforms (name, domain, login_url, note, settle_note, fetch_mode, sort, req_id, mall_url) VALUES (?,?,?,?,?,?,?,?,?)')
+            .bind(name, domain, loginUrl, note, settle, mode, sort, reqId, mallUrl).run();
           return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0 });
         } catch (eIns) {
           /* 唯一索引撞了 = 同一个请求重放，把已有那条还回去 */
@@ -355,6 +359,92 @@ export async function onRequestPost(context) {
       return json({ ok: true });
     }
 
+    /* ---------- v470 采集：抓某平台的商城页 → 商品池 ---------- */
+    if (op === 'collect' || op === 'find.one') {
+      const authC = await requirePerm(env, request, 'external.fetch');
+      if (authC instanceof Response) return authC;
+      const isSuperC = auth0.role === 'super';
+
+      if (op === 'find.one') {
+        /* 粘一条商品链接来解析（抓不到列表的站用这个兜底） */
+        const one = String(b.url || '').trim().slice(0, 1200);
+        if (!/^https?:\/\//i.test(one)) return json({ ok: false, msg: '链接要以 http 开头' }, 400);
+        const pg = await fetchPage(one, 15000);
+        if (!pg.ok) return json({ ok: false, msg: '打不开这条链接（HTTP ' + pg.status + '）' }, 400);
+        const title = (pg.text.match(/<title[^>]*>([\s\S]{0,200}?)<\/title>/i) || [])[1] || '';
+        const imgs = parseDetail(pg.text, one);
+        if (!imgs.length && !title) return json({ ok: false, msg: '这条链接抓不到内容（可能是前端渲染的站）' }, 200);
+        return json({ ok: true, title: plainText(title).slice(0, 80), cover: imgs[0] || '', media: imgs });
+      }
+
+      const pid = Number(b.platform_id || 0) || 0;
+      const p = await env.DB.prepare('SELECT * FROM external_platforms WHERE id=?').bind(pid).first();
+      if (!p) return json({ ok: false, msg: '先选一个平台' }, 400);
+      const mall = String(b.url || p.mall_url || '').trim();
+      if (!mall) return json({ ok: false, msg: '这个平台还没填「商城地址」' }, 400);
+      if (!/^https?:\/\//i.test(mall)) return json({ ok: false, msg: '商城地址要以 http 开头' }, 400);
+
+      let pg;
+      try { pg = await fetchPage(mall, 15000); }
+      catch (e) { return json({ ok: false, msg: '抓取超时或对方拒绝（' + (e && e.message || '') + '）' }, 200); }
+      if (!pg.ok) return json({ ok: false, msg: '打不开这个商城（HTTP ' + pg.status + '）' }, 200);
+
+      const list = parseGoodsList(pg.text, mall);
+      if (!list.length) {
+        return json({ ok: false, zero: true, msg: '这个平台抓不到商品 —— 多半是前端渲染的站（服务器只能拿到空壳）。可以用「粘链接解析」一条条来。' }, 200);
+      }
+      /* 去重入库（同平台 + 同标题 + 同封面 视为同一个） */
+      let added = 0;
+      const cap = Math.min(list.length, 60);
+      for (let i = 0; i < cap; i++) {
+        const g = list[i];
+        try {
+          const dup = await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=? AND cover=?')
+            .bind(pid, g.title, g.cover).first();
+          if (dup) continue;
+          await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, created_by) VALUES (?,?,?,?,?,?)')
+            .bind(pid, p.name, g.link || '', g.title, g.cover, auth0.username).run();
+          added++;
+        } catch (eI) { /* 单条失败不影响整体 */ }
+      }
+      return json({ ok: true, found: list.length, added, saved: cap });
+    }
+
+    if (op === 'goods.list') {
+      const authG = await requirePerm(env, request, 'external.view');
+      if (authG instanceof Response) return authG;
+      const pid = Number(b.platform_id || 0) || 0;
+      const st = String(b.status || '').slice(0, 12);
+      let q = 'SELECT * FROM external_goods WHERE 1=1';
+      const binds = [];
+      if (pid) { q += ' AND platform_id = ?' + (binds.length + 1); binds.push(pid); }
+      if (st) { q += ' AND status = ?' + (binds.length + 1); binds.push(st); }
+      if (auth0.role !== 'super') { q += ' AND created_by = ?' + (binds.length + 1); binds.push(auth0.username); }
+      q += ' ORDER BY id DESC LIMIT 300';
+      const stmt = binds.length ? env.DB.prepare(q).bind(...binds) : env.DB.prepare(q);
+      const { results } = await stmt.all();
+      return json({ ok: true, goods: results || [] });
+    }
+
+    if (op === 'goods.del') {
+      const authD = await requirePerm(env, request, 'external.del');
+      if (authD instanceof Response) return authD;
+      const id = Number(b.id || 0) || 0;
+      if (!id) return json({ ok: false, msg: '缺少 id' }, 400);
+      await env.DB.prepare('DELETE FROM external_goods WHERE id=?').bind(id).run();
+      return json({ ok: true });
+    }
+
+    if (op === 'goods.use') {
+      const authU = await requirePerm(env, request, 'external.edit');
+      if (authU instanceof Response) return authU;
+      const id = Number(b.id || 0) || 0;
+      const pitemId = Number(b.product_id || 0) || 0;
+      if (!id) return json({ ok: false, msg: '缺少 id' }, 400);
+      await env.DB.prepare("UPDATE external_goods SET status='used', used_product_id=? WHERE id=?").bind(pitemId, id).run();
+      return json({ ok: true });
+    }
+
     /* 点「打开」= 我看过了：只刷新巡检时间，不改状态（判断要真看到页面内容才做） */
     if (op === 'link.touch') {
       const id = Number(b.id || 0) || 0;
@@ -406,4 +496,107 @@ export async function onRequestDelete(context) {
   } catch (e) {
     return json({ ok: false, msg: '删除失败：' + (e && e.message || '未知错误') }, 500);
   }
+}
+
+/* ================= v470 采集（老板重新定义：从外站抓商品 → 商品池 → 他挑着上架） =================
+   与上面的「台账」共存，但主入口改成：平台设置 → 外部商品采集 → 弹窗。
+   只抓：标题 / 封面 / 详情长图。价格不抓（老板自己定价）。 */
+
+async function ensureCollect(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS external_goods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    platform_id INTEGER NOT NULL DEFAULT 0,
+    platform TEXT NOT NULL DEFAULT '',
+    src_url TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '',
+    cover TEXT NOT NULL DEFAULT '',
+    detail_html TEXT NOT NULL DEFAULT '',
+    detail_media TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'new',
+    used_product_id INTEGER NOT NULL DEFAULT 0,
+    collected_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_by TEXT NOT NULL DEFAULT '',
+    req_id TEXT NOT NULL DEFAULT ''
+  )`).run();
+  try { await env.DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_ext_goods_req ON external_goods(req_id) WHERE req_id <> ''").run(); } catch (e) {}
+  try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_ext_goods_pf ON external_goods(platform_id)').run(); } catch (e) {}
+  /* 平台档案补两个字段（商城地址 / 后台地址），老的 domain/login_url 保留兼容 */
+  try { await env.DB.prepare("ALTER TABLE external_platforms ADD COLUMN mall_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+}
+
+const BAD_IMG = /(icon|logo|avatar|qrcode|qr_|sprite|placeholder|blank|loading|tabbar|banner|swiper|advert|\/static\/|\/assets\/)/i;
+
+function absUrl(u, base) {
+  u = String(u || '').trim();
+  if (!u || /^data:/i.test(u)) return '';
+  if (u.indexOf('//') === 0) return 'https:' + u;
+  if (/^https?:\/\//i.test(u)) return u;
+  try { return new URL(u, base).href; } catch (e) { return ''; }
+}
+function plainText(s) {
+  return String(s || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+}
+
+/* 通用解析：围绕「像商品的图」找上下文（标题 / 下单链接）。
+   不依赖具体 class 名，所以能同时应付多种号卡模板。 */
+function parseGoodsList(html, baseUrl) {
+  const out = [], seen = {};
+  const imgRe = /<img\b[^>]*>/gi;
+  let m;
+  while ((m = imgRe.exec(html))) {
+    const tag = m[0];
+    const srcRaw = (tag.match(/(?:data-src|data-original|data-lazy-src|src)=["']([^"']+)["']/i) || [])[1];
+    const src = absUrl(srcRaw, baseUrl);
+    if (!src || BAD_IMG.test(src)) continue;
+    const ctx = html.slice(Math.max(0, m.index - 400), m.index + 900);
+    const texts = ctx.replace(/<[^>]+>/g, '\u0001').split('\u0001')
+      .map(plainText).filter(t => t.length >= 4 && t.length <= 70 && /[\u4e00-\u9fa5]/.test(t));
+    let title = texts.filter(t => /(卡|流量|套餐|通用|通话|月租)/.test(t))[0] || texts[0] || '';
+    if (!title) continue;
+    if (/^(下单|订购|购卡|充值|公告|须知|说明|客服|规则|提示|注意|首页|全部|移动|联通|电信|广电|搜索|登录|注册)$/.test(title)) continue;
+    if (/(下单请|订购须知|购买须知|开卡须知|客服微信|友情提示|公告[:：])/.test(title)) continue;
+    if (title.length < 6) continue;
+    const hrefs = (ctx.match(/href=["']([^"']+)["']/gi) || []).map(x => absUrl(x.replace(/^href=["']|["']$/gi, ''), baseUrl))
+      .filter(h => h && !/\.(css|js|png|jpe?g|webp|gif|svg)(\?|$)/i.test(h));
+    const link = hrefs.filter(h => /(pid=|\/order\/|detail|goods\/|goodsId=|\/card\/)/i.test(h))[0] || '';
+    const looksGoods = /(卡|流量|套餐|通用|通话|月租)/.test(title);
+    if (!link && !looksGoods) continue;
+    const key = (link || '') + '|' + title;
+    if (seen[key]) continue;
+    seen[key] = 1;
+    out.push({ title: title.slice(0, 80), cover: src, link: link || '' });
+    if (out.length >= 200) break;
+  }
+  return out;
+}
+
+async function fetchPage(url, timeoutMs) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(function () { ctrl.abort(); }, timeoutMs || 12000);
+  try {
+    const r = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1', 'Accept': 'text/html,application/xhtml+xml' },
+      redirect: 'follow'
+    });
+    const buf = await r.arrayBuffer();
+    const text = new TextDecoder('utf-8').decode(buf.slice(0, 600000));
+    return { ok: r.ok, status: r.status, text: text };
+  } finally { clearTimeout(timer); }
+}
+
+/* 从商品详情页抓长图（详情），拼成 html */
+function parseDetail(html, baseUrl) {
+  const imgs = [];
+  const re = /<img\b[^>]*>/gi;
+  let m;
+  while ((m = re.exec(html))) {
+    const s = absUrl((m[0].match(/(?:data-src|data-original|src)=["']([^"']+)["']/i) || [])[1], baseUrl);
+    if (!s || BAD_IMG.test(s)) continue;
+    if (imgs.indexOf(s) >= 0) continue;
+    imgs.push(s);
+    if (imgs.length >= 20) break;
+  }
+  return imgs;
 }

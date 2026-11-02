@@ -32,6 +32,9 @@
       if (p && p.id && !Array.isArray(p.variants)) loadVariants(p.id); // 兜底：旧缓存无 variants 字段才现场拉
     }
 
+    /* v470：外部采集「用它上架」要把标题/封面/详情预填进新增资源弹窗，故把 openEdit 暴露出去 */
+    try { window.__openEdit = openEdit; } catch (eOE) {}
+
     // 填充资源表单
     function fillProductForm(p) {
       fTitle.value = p ? (p.title || '') : '';

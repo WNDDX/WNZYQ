@@ -866,8 +866,6 @@
       document.getElementById('panel-stats').style.display = name === 'stats' ? '' : 'none';
       document.getElementById('panel-categories').style.display = name === 'categories' ? '' : 'none';
       document.getElementById('panel-settings').style.display = name === 'settings' ? '' : 'none';
-      /* v459：外部链接页签的面板显示（上面的四行是硬编码的，新增页签必须补一行，否则面板永远是 display:none） */
-      var __extP = document.getElementById('panel-external'); if (__extP) __extP.style.display = name === 'external' ? '' : 'none';
       /* R231 条21（用户 09-21 23:38）：切 tab 面板 0.18s 淡入上移——纯视觉层，
          R173 口径不变：只认 __plS 等单条件、不重新拉数据 */
       var __pv = document.getElementById('panel-' + name);

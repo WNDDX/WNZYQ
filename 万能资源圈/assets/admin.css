@@ -2362,3 +2362,52 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .ext-plist { max-height: min(56vh, 420px); overflow-y: auto; margin-bottom: 6px; }
 .ext-prow { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
 .ext-prow:last-child { border-bottom: none; }
+
+/* ===== v470 外部商品采集弹窗 ===== */
+.extc-box { display: flex; flex-direction: column; max-height: 88vh; max-height: 88dvh; }
+.extc-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.extc-sel { height: 32px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text); padding: 0 8px; min-width: 150px; }
+.extc-btn { height: 30px; padding: 0 12px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; white-space: nowrap; }
+.extc-btn:hover { border-color: var(--blue1); color: var(--blue1); }
+.extc-btn.primary { border-color: var(--blue1); color: var(--blue1); font-weight: 600; }
+.extc-btn.danger { color: #c62828; border-color: #e0a0a0; }
+.extc-btn:disabled { opacity: .55; cursor: default; }
+.extc-hint { font-size: 11px; color: var(--text-faint); flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.extc-tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+.extc-tab { border: none; background: transparent; font-size: 13px; color: var(--text-light); padding: 7px 10px; cursor: pointer; border-bottom: 2px solid transparent; }
+.extc-tab i { font-style: normal; font-size: 11px; opacity: .65; margin-left: 2px; }
+.extc-tab.on { color: var(--blue1); border-bottom-color: var(--blue1); font-weight: 600; }
+.extc-link { margin-left: auto; border: none; background: transparent; color: var(--blue1); font-size: 12px; cursor: pointer; padding: 4px 6px; }
+.extc-body { flex: 1 1 auto; min-height: 120px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+.extc-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: var(--text-light); }
+.extc-sp { flex: 1 1 auto; }
+.extc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.extc-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--card-bg); display: flex; flex-direction: column; }
+.extc-card.on { border-color: var(--blue1); box-shadow: 0 0 0 1px var(--blue1) inset; }
+.extc-thumb { height: 96px; background: var(--bg-light, #eef2f6); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.extc-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.extc-t { font-size: 12px; color: var(--text); line-height: 1.4; padding: 6px 7px 0; height: 40px; overflow: hidden; }
+.extc-m { font-size: 11px; color: var(--text-faint); padding: 2px 7px 4px; }
+.extc-ops { display: flex; gap: 4px; padding: 0 7px 7px; }
+.extc-mini { flex: 1 1 auto; height: 24px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; padding: 0 4px; }
+.extc-mini:hover { border-color: var(--blue1); color: var(--blue1); }
+.extc-mini.on { border-color: var(--blue1); color: var(--blue1); background: rgba(var(--blue1-rgb, 30,136,229), .08); }
+.extc-mini.primary { color: var(--blue1); border-color: var(--blue1); }
+.extc-mini.danger { color: #c62828; border-color: #e8c0c0; }
+.extc-empty { text-align: center; color: var(--text-faint); font-size: 12px; padding: 30px 14px; line-height: 1.9; }
+.extc-plist { display: flex; flex-direction: column; }
+.extc-prow { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
+.extc-pmain { flex: 1 1 auto; min-width: 0; }
+.extc-pmain b { font-size: 13px; color: var(--text); display: block; }
+.extc-plink { font-size: 11px; color: var(--text-faint); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.extc-pops { display: flex; gap: 5px; flex: none; }
+.extc-pops .extc-mini { flex: none; padding: 0 10px; }
+.extc-form label { margin-top: 9px; }
+.extc-formhint { font-size: 11px; color: var(--text-faint); margin-top: 4px; line-height: 1.6; }
+.extc-rte-tools { display: flex; gap: 4px; margin-bottom: 5px; }
+.extc-rte-tools button { height: 26px; min-width: 30px; padding: 0 8px; font-size: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); color: var(--text); cursor: pointer; }
+.extc-rte-tools button:hover { border-color: var(--blue1); color: var(--blue1); }
+.extc-rte { min-height: 92px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.7; color: var(--text); background: var(--card-bg); outline: none; }
+.extc-rte:focus { border-color: var(--blue1); }
+.extc-rte:empty::before { content: attr(data-placeholder); color: var(--text-faint); }
+.extc-rte a { color: var(--blue1); text-decoration: underline; }
