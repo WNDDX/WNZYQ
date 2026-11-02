@@ -211,8 +211,16 @@
         var ts = m2[1].match(/<t[^>]*>[\s\S]*?<\/t>/g) || [];
         shared.push(ts.map(function (x) { return x.replace(/<[^>]+>/g, ''); }).join(''));
       }
-      var relMap = {}, rm, relRe = /<Relationship[^>]*Id="([^"]+)"[^>]*Target="([^"]+)"[^>]*\/?>/g;
-      while ((rm = relRe.exec(rels))) relMap[rm[1]] = rm[2];
+      /* v456：rels 的属性顺序不固定（openpyxl 写的是 Type/Target/Id，Excel 写的是 Id/Type/Target），
+         原来用一条正则卡死「Id 必须在 Target 前面」，遇到 WPS/openpyxl 存的文件就一张表都匹配不到 → 导入 0 条。
+         改成逐个关系标签整段取，再分别抓 Id / Target，与顺序无关。 */
+      var relMap = {}, rm, relRe = /<Relationship\b[^>]*\/?>/g;
+      while ((rm = relRe.exec(rels))) {
+        var rtag = rm[0];
+        var rid2 = (rtag.match(/\bId="([^"]*)"/) || [])[1] || '';
+        var rtg = (rtag.match(/\bTarget="([^"]*)"/) || [])[1] || '';
+        if (rid2) relMap[rid2] = rtg;
+      }
       var sheets = [], sm, sRe = /<sheet\b[^>]*\/?>/g;
       while ((sm = sRe.exec(wb))) {
         var tag = sm[0];
@@ -222,7 +230,9 @@
       }
       return Promise.all(sheets.map(function (sh) {
         var t = sh.target; if (!t) return Promise.resolve(null);
-        var path = t.charAt(0) === '/' ? t.slice(1) : ('xl/' + t.replace(/^\.\//, ''));
+        /* 路径归一：/xl/worksheets/x.xml、worksheets/x.xml、../worksheets/x.xml 都落到 xl/worksheets/x.xml */
+        var path = t.charAt(0) === '/' ? t.slice(1)
+          : (t.indexOf('worksheets/') >= 0 ? ('xl/' + t.slice(t.indexOf('worksheets/'))) : ('xl/' + t.replace(/^\.\//, '')));
         return __readPart(files, path).then(function (xml) { return { name: sh.name, rows: xml ? __rowsFromSheet(xml, shared) : [] }; });
       })).then(function (list) {
         var out = {};
