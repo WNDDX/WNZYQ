@@ -80,20 +80,23 @@
         plain.appendChild(op);
       });
       var wrap = raw.closest ? raw.closest('.select-picker') : null;
-      if (wrap && wrap.parentNode) wrap.parentNode.replaceChild(plain, wrap);
-      else if (raw.parentNode) raw.parentNode.replaceChild(plain, raw);
-    });
-    /* 换完再扫一遍：自制下拉的「显示层」（那截带箭头的『字体 ▸』）如果和原生 select 挤在一起，
-       就是没清干净的旧壳，删掉——实测截图里出现「字体 ▸ 字体」两个。 */
-    Array.prototype.forEach.call(bar.querySelectorAll('.cat-picker-display, .cpd-arrow'), function (d) {
+      if (wrap && wrap.parentNode) {
+        wrap.parentNode.replaceChild(plain, wrap);
+      } else if (raw.parentNode) {
+        raw.parentNode.replaceChild(plain, raw);
+      }
+      /* v484：自制下拉换掉后，左边会残留那截「字体 ▸」显示层（原结构里它是 select 的兄弟），
+         只精准删这一个，别删整个容器——上一版扫 .select-picker 一并删，把「字号」整个删没了。 */
       try {
-        var host = d.parentNode;
-        if (host && host.querySelector && host.querySelector('select')) d.remove();
-        else if (host && host.parentNode && host.parentNode.querySelector && host.parentNode.querySelector('select') && !host.querySelector('select')) host.remove();
-      } catch (e) {}
-    });
-    Array.prototype.forEach.call(bar.querySelectorAll('.select-picker'), function (w) {
-      if (!w.querySelector('select')) { try { w.remove(); } catch (e) {} }
+        var prev = plain.previousElementSibling;
+        if (prev) {
+          if (prev.classList && prev.classList.contains('cat-picker-display')) prev.remove();
+          else if (prev.querySelector && prev.querySelector('.cat-picker-display') && !prev.querySelector('select')) {
+            var disp = prev.querySelector('.cat-picker-display');
+            if (disp) disp.remove();
+          }
+        }
+      } catch (e0) {}
     });
 
     var ed = document.createElement('div');
