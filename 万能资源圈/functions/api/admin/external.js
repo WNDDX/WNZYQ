@@ -140,8 +140,7 @@ function normMedia(raw) {
 export async function onRequestGet(context) {
   const { env, request } = context;
   try {
-    await ensureAdminUsers(env);
-    await ensureExternal(env);
+    await ensureSchema(env);
     const auth = await requirePerm(env, request, 'external.view');
     if (auth instanceof Response) return auth;
 
@@ -222,9 +221,7 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   const { env, request } = context;
   try {
-    await ensureAdminUsers(env);
-    await ensureExternal(env);
-    await ensureCollect(env);
+    await ensureSchema(env);
     const auth0 = await requireAuth(env, request);
     if (auth0 instanceof Response) return auth0;
     const b = await readJSON(request);
@@ -654,6 +651,17 @@ function isBadImg(u) {
   if (/(\/static\/|\/assets\/)/i.test(u) && !/(upload|attachment|goods|cover|product|card)/i.test(u)) return true;
   return false;
 }
+/* v474：建表/改表原本每次请求都跑一遍（十几个 CREATE / ALTER），实测页面里一次 POST 要 4~6 秒，
+   按钮转圈半天像卡死。表结构不会变，改成每个 isolate 只跑一次，后续请求直接跳过。 */
+let __SCHEMA_OK = false;
+async function ensureSchema(env) {
+  if (__SCHEMA_OK) return;
+  await ensureAdminUsers(env);
+  await ensureExternal(env);
+  await ensureCollect(env);
+  __SCHEMA_OK = true;
+}
+
 const BAD_IMG = { test: function (u) { return isBadImg(u); } }; /* 老调用点兼容 */
 
 function absUrl(u, base) {

@@ -33,7 +33,13 @@
       o.headers['Content-Type'] = 'application/json';
       o.body = JSON.stringify(body);
     }
-    return fetch('/api/' + path, o).then(function (r) { return r.json(); });
+    /* v474：任何异常都收成一个对象返回——原来请求超时/服务返回非 JSON 时 Promise 一直挂着，
+       保存按钮永远停在「保存中…」，用户以为卡死（实测确实这样）。 */
+    return fetch('/api/' + path, o)
+      .then(function (r) {
+        return r.json().catch(function () { return { ok: false, msg: '服务返回异常（HTTP ' + r.status + '），请重试' }; });
+      })
+      .catch(function () { return { ok: false, msg: '网络超时或中断，请重试' }; });
   }
   function toast(m, t) { if (window.showToast) window.showToast(m, t || 'info'); }
   function selIds() { return Object.keys(S.sel).filter(function (k) { return S.sel[k]; }).map(Number); }
@@ -508,6 +514,7 @@
 
     m.querySelector('#paSave').addEventListener('click', function () {
       var btn = this;
+      setTimeout(function () { if (btn.disabled) btn.textContent = '还在处理，请稍候…'; }, 6000);
       var pfId = Number(m.querySelector('#paPf').value) || 0;
       var tip = m.querySelector('#paTip');
       if (tab === 'link') {
