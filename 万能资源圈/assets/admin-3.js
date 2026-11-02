@@ -1312,31 +1312,42 @@ document.addEventListener('click', function (e) {
       }
     });
 
-    // 工具栏按钮点击执行命令
-    document.querySelectorAll('#detailRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
-      btn.addEventListener('mousedown', function (e) { e.preventDefault(); }); // 防止失去焦点
-      btn.addEventListener('click', function () {
-        var cmd = this.dataset.cmd;
-        if (__rte.editor !== rteEditor || !__rte.range) return; /* R217 条7：从未进入编辑器 → 不 focus、不执行（光标不跳输入框） */
-        if (!(cmd === 'underline' && rteUnderlineLink(rteEditor))) document.execCommand(cmd, false, null); /* R240：选区在链接内时下划线手动切换 <u>（Chrome 对 <a> 误判已下划线加不回），其余命令照旧 */
-        rteFocusStay(rteEditor); /* R240：preventScroll——点按键屏幕不离开光标 */
-        updateRteActive();
+    /* v475：工具栏绑定提成可复用函数——原来按 #detailRteToolbar 逐个 addEventListener，
+       别处克隆一份同样的工具条（外部采集的「我的说明」）就完全没有事件，点了没反应。
+       现在抽成 bindRteBar(barEl, editorEl)，谁的工具条都能挂，逻辑与原版逐字一致。 */
+    function bindRteBar(barEl, editorEl) {
+      if (!barEl || !editorEl) return;
+      // 工具栏按钮点击执行命令
+      Array.prototype.forEach.call(barEl.querySelectorAll('.rte-btn[data-cmd]'), function (btn) {
+        if (btn.__wnRteBound) return;
+        btn.__wnRteBound = 1;
+        btn.addEventListener('mousedown', function (e) { e.preventDefault(); }); // 防止失去焦点
+        btn.addEventListener('click', function () {
+          var cmd = this.dataset.cmd;
+          if (__rte.editor !== editorEl || !__rte.range) return; /* R217 条7：从未进入编辑器 → 不 focus、不执行（光标不跳输入框） */
+          if (!(cmd === 'underline' && rteUnderlineLink(editorEl))) document.execCommand(cmd, false, null); /* R240：选区在链接内时下划线手动切换 <u>（Chrome 对 <a> 误判已下划线加不回），其余命令照旧 */
+          rteFocusStay(editorEl); /* R240：preventScroll——点按键屏幕不离开光标 */
+          updateRteActive();
+        });
       });
-    });
-
-    // 下拉选择（字体、字号）
-    document.querySelectorAll('#detailRteToolbar .rte-select[data-cmd]').forEach(function (sel) {
-      sel.addEventListener('change', function () {
-        var cmd = this.dataset.cmd;
-        var val = this.value;
-        if (val && __rte.editor === rteEditor && __rte.range) { /* R217 条7：有选区才执行，否则只重置下拉不抢焦点 */
-          document.execCommand(cmd, false, val);
-          rteFocusStay(rteEditor); /* R240：preventScroll——选字体/字号屏幕不离开光标 */
-        }
-        this.selectedIndex = 0; // 重置选择
-        syncSelectDisplay(this); // R166：同步自制下拉显示框回到默认项
+      // 下拉选择（字体、字号）
+      Array.prototype.forEach.call(barEl.querySelectorAll('.rte-select[data-cmd]'), function (sel) {
+        if (sel.__wnRteBound) return;
+        sel.__wnRteBound = 1;
+        sel.addEventListener('change', function () {
+          var cmd = this.dataset.cmd;
+          var val = this.value;
+          if (val && __rte.editor === editorEl && __rte.range) { /* R217 条7：有选区才执行，否则只重置下拉不抢焦点 */
+            document.execCommand(cmd, false, val);
+            rteFocusStay(editorEl); /* R240：preventScroll——选字体/字号屏幕不离开光标 */
+          }
+          this.selectedIndex = 0; // 重置选择
+          try { syncSelectDisplay(this); } catch (e) {} // R166：同步自制下拉显示框回到默认项
+        });
       });
-    });
+    }
+    window.__bindRteBar = bindRteBar;
+    bindRteBar(document.getElementById('detailRteToolbar'), rteEditor);
 
     // 预设色板：点色块即应用（全局委托，四个编辑器统一使用）
     document.addEventListener('click', function (e) {
@@ -2049,7 +2060,10 @@ document.addEventListener('click', function (e) {
 
     // 更新工具栏按钮激活状态
     function updateRteActive() {
-      document.querySelectorAll('#detailRteToolbar .rte-btn[data-cmd]').forEach(function (btn) {
+      /* v475：按当前焦点编辑器找它的工具条（原来写死 #detailRteToolbar，克隆出来的按钮没有激活态） */
+      var _ae = (window.__rte && window.__rte.editor) || rteEditor;
+      var _aid = (_ae && _ae.id) || 'fDetail';
+      document.querySelectorAll('.rte-toolbar[data-editor="' + _aid + '"] .rte-btn[data-cmd]').forEach(function (btn) {
         var cmd = btn.dataset.cmd;
         try {
           if (document.queryCommandState(cmd)) {

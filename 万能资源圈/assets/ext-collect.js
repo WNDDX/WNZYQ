@@ -66,6 +66,24 @@
     Array.prototype.forEach.call(bar.querySelectorAll('[data-target]'), function (el) {
       el.setAttribute('data-target', editorId);
     });
+    /* 克隆过来的字体/字号下拉是系统「自制下拉」的运行时结构，里面的选项点击事件不会被复制，
+       点了没反应。这里把它换回原生 select（选项全保留），再交给 bindRteBar 绑 change。 */
+    Array.prototype.forEach.call(bar.querySelectorAll('select[data-cmd]'), function (raw) {
+      var plain = document.createElement('select');
+      plain.className = 'rte-select';
+      plain.setAttribute('data-cmd', raw.getAttribute('data-cmd') || '');
+      plain.setAttribute('data-target', editorId);
+      Array.prototype.forEach.call(raw.options, function (o) {
+        var op = document.createElement('option');
+        op.value = o.value;
+        op.textContent = o.textContent;
+        plain.appendChild(op);
+      });
+      var wrap = raw.closest ? raw.closest('.select-picker') : null;
+      if (wrap && wrap.parentNode) wrap.parentNode.replaceChild(plain, wrap);
+      else if (raw.parentNode) raw.parentNode.replaceChild(plain, raw);
+    });
+
     var ed = document.createElement('div');
     ed.className = 'rte-editor';
     ed.id = editorId;
@@ -76,6 +94,8 @@
     host.innerHTML = '';
     host.appendChild(bar);
     host.appendChild(ed);
+    /* v475：工具条事件必须挂上——系统的绑定只认 #detailRteToolbar，克隆的那份原本一个事件都没有 */
+    try { if (window.__bindRteBar) window.__bindRteBar(bar, ed); } catch (eB) { if (window.__silent) window.__silent(eB); }
     return ed;
   }
 
