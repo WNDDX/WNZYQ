@@ -525,9 +525,23 @@ export async function onRequestPost(context) {
         const srcUrl = String((r0 && r0.src_url) || '').trim().slice(0, 1200);
         try {
           const hit = pid
-            ? await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?').bind(pid, title).first()
-            : await env.DB.prepare("SELECT id FROM external_goods WHERE title=? AND platform='' ").bind(title).first();
-          if (hit) { dup++; continue; }
+            ? await env.DB.prepare('SELECT * FROM external_goods WHERE platform_id=? AND title=?').bind(pid, title).first()
+            : await env.DB.prepare("SELECT * FROM external_goods WHERE title=? AND platform='' ").bind(title).first();
+          if (hit) {
+            dup++;
+            /* v482：重复导入时不要直接跳过——之前可能是没带封面/链接导进去的，
+               这次带了就补上（原来「已存在就跳过」，导致重新导入也补不全，实测踩到）。 */
+            try {
+              const nCover = (cover && !hit.cover) ? cover : hit.cover;
+              const nUrl = (srcUrl && !hit.src_url) ? srcUrl : hit.src_url;
+              const nPid = (!hit.platform_id && pid) ? pid : hit.platform_id;
+              if (nCover !== hit.cover || nUrl !== hit.src_url || nPid !== hit.platform_id) {
+                await env.DB.prepare('UPDATE external_goods SET cover=?, src_url=?, platform_id=?, platform=CASE WHEN platform=\'\' THEN ? ELSE platform END WHERE id=?')
+                  .bind(nCover, nUrl, nPid, pfName, hit.id).run();
+              }
+            } catch (eU) {}
+            continue;
+          }
           await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, created_by) VALUES (?,?,?,?,?,?)')
             .bind(pid, pfName, srcUrl, title, cover, auth0.username).run();
           added++;
