@@ -469,10 +469,13 @@
     function checkShape() {
       var v = urlEl.value.trim(), tip = m.querySelector('#lkUrlWarn');
       if (!v) { tip.textContent = ''; return; }
-      var bad = ['/list', '/search', '/category', '/index', '/home', '/shoplist'];
-      var hasId = /[?&](id|goods_id|itemId|item_id)=/i.test(v);
-      var hitBad = bad.some(function (b) { return v.toLowerCase().indexOf(b) > 0; }) && !hasId;
-      var good = /(\/item|\/goods|\/product|\/detail|\/p\/)/i.test(v) || hasId;
+      /* v463：同后端 —— hash 路由（#/pages/goods/index?goodsId=xxx）要认 goodsId 这类驼峰参数，
+         且不能把 /index 当列表页特征（uni-app 路由大量叫 xxx/index，会大面积误报）。 */
+      var low = v.toLowerCase();
+      var hasId = /[?&#](?:goods|product|sku|item)?_?id=[^&\s]+/.test(v);
+      var bad = ['/list', '/search', '/category', '/cate', '/shoplist', '/result'];
+      var hitBad = !hasId && bad.some(function (b) { return low.indexOf(b) > 0; });
+      var good = hasId || /(\/item|\/goods|\/product|\/detail|\/p\/)/i.test(v);
       if (hitBad) { tip.textContent = '这看着是列表页/搜索页，不是商品详情页 —— 结算会对不上'; tip.className = 'ext-urlwarn bad'; }
       else if (!good) { tip.textContent = '看不出是商品详情页，确认一下地址栏那条是不是商品页'; tip.className = 'ext-urlwarn warn'; }
       else { tip.textContent = ''; tip.className = 'ext-urlwarn'; }

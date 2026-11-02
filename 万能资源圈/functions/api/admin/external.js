@@ -94,17 +94,21 @@ function urlShape(url) {
   let u;
   try { u = new URL(raw); } catch (e) { return { ok: 0, msg: '链接格式不对，要以 http 开头' }; }
   if (!/^https?:$/.test(u.protocol)) return { ok: 0, msg: '只支持 http / https 链接' };
-  const full = (u.pathname + '?' + u.searchParams.toString()).toLowerCase();
-  const hasId = !!(u.searchParams.get('id') || u.searchParams.get('goods_id') || u.searchParams.get('itemId') || u.searchParams.get('item_id'));
-  const badPaths = ['/list', '/search', '/category', '/cate', '/index', '/home', '/shoplist', '/result'];
+  /* v463：实测号卡商城的商品页是 hash 路由 —— https://ck.nxqingxian.cn/shop#/pages/goods/index?goodsId=2163&promoCode=xxx
+     pathname 只有 /shop，参数全在 # 后面，原来既读不到 goodsId、又被路径里的 /index 误判成列表页。
+     现在：把 hash 一起纳入判断 + 认 goodsId/productId/skuId/itemId 这类驼峰参数 + 去掉 /index 这个危险黑名单
+     （uni-app 的路由大量叫 pages/xxx/index，拿它当列表页特征会大面积误报）。 */
+  const full = (u.pathname + '?' + u.searchParams.toString() + u.hash).toLowerCase();
+  const hasId = /[?&#](?:goods|product|sku|item)?_?id=[^&\s]+/.test(full);
+  if (hasId) return { ok: 1, msg: '' };   /* 带商品 id = 详情页，这个判断优先，后面不再猜 */
+  const badPaths = ['/list', '/search', '/category', '/cate', '/shoplist', '/result'];
   for (const b of badPaths) {
-    if (u.pathname.toLowerCase().indexOf(b) === 0 && !hasId) {
+    if (full.indexOf(b) >= 0) {
       return { ok: 0, msg: '这看着是列表页/搜索页，不是商品详情页，结算会对不上' };
     }
   }
-  if (hasId) return { ok: 1, msg: '' };
   for (const g of ['/item', '/goods', '/product', '/detail', '/p/']) {
-    if (u.pathname.toLowerCase().indexOf(g) >= 0) return { ok: 1, msg: '' };
+    if (full.indexOf(g) >= 0) return { ok: 1, msg: '' };
   }
   return { ok: 0, msg: '看不出是商品详情页，确认一下地址栏那条是不是商品页' };
 }
