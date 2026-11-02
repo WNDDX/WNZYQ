@@ -2523,7 +2523,10 @@
     setDelta('ctDContact', d.delta.contact);
     setDelta('ctDUnlock', d.delta.unlock);
     setDelta('ctDView', d.delta.view);
-    document.getElementById('ctSince').textContent = '上方四格 = 较上次查看（' + fmtTime(d.lastSeen) + '）新增；「今日概览」= 今天 0 点起；下方明细 = 最近 7 天全部动态（带蓝点的是上次查看后新增）'; /* v443 条2：口径说明 */
+    /* v458：老板拍板「一天内的可以了」+ 要能看出什么时候同步的 */
+    var _now = new Date();
+    var _hhmm = ('0' + _now.getHours()).slice(-2) + ':' + ('0' + _now.getMinutes()).slice(-2);
+    document.getElementById('ctSince').textContent = '数据截至 ' + _hhmm + '（每次打开自动同步）· 上方四格 = 较上次查看（' + fmtTime(d.lastSeen) + '）新增 ·「今日概览」= 今天 0 点起 · 下方明细 = 最近 24 小时（带蓝点的是上次查看后新增）'; /* v458 口径：明细窗口 7 天 → 24 小时 */
     document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
     var list = document.getElementById('ctList');
     var _alert = sysAlertEntry();
@@ -2556,25 +2559,33 @@
     }
     /* 「只看」下拉选项=员工名单（来自近期操作记录；没有员工则只有全部动态一项） */
     var _whoOpts = { '': '全部动态' };
-    (d.recent || []).forEach(function (r) { if (r.type === 'audit' && r.who && r.who !== 'admin') _whoOpts[r.who] = 1; });
+    (d.__ctRaw || d.recent || []).forEach(function (r) { if (r.type === 'audit' && r.who && r.who !== 'admin') _whoOpts[r.who] = 1; }); /* v458：名单也取全量，否则切一次筛选人就少了 */
     var _whoSel = filterBar.querySelector('#ctWhoSel');
     window.__ctWhoOpts = _whoOpts;
     try { filterBar.__adjustCols(); } catch (eAC) {}
-    var _whoNative = _whoSel.dataset.sp ? null : _whoSel;
-    if (_whoNative) {
-      var _cur = _whoNative.value;
-      _whoNative.innerHTML = Object.keys(_whoOpts).map(function (w) { return '<option value="' + w + '">' + (w || '全部动态') + '</option>'; }).join('');
-      _whoNative.value = _cur || '';
-    }
+    /* v458（老板：信息里的筛选失效了）：原来 `_whoSel.dataset.sp ? null : _whoSel` —— 只要这个 select 被
+       makeSelectPicker 包装过（信息中心首次渲染时一定会包装），就**永远跳过重建 options**，
+       于是「只看」下拉里一个具体人都没有，等于完全不可用。现在无论是否被包装都重建，再让下拉面板刷新。 */
+    var _curWho = _whoSel.value;
+    _whoSel.innerHTML = Object.keys(_whoOpts).map(function (w) { return '<option value="' + w + '">' + (w || '全部动态') + '</option>'; }).join('');
+    _whoSel.value = (_curWho && _whoOpts[_curWho]) ? _curWho : '';
+    try {
+      if (typeof makeSelectPicker === 'function') { var _rw = makeSelectPicker(_whoSel); if (_rw && _rw.refresh) _rw.refresh(); }
+      else if (typeof syncSelectDisplay === 'function') syncSelectDisplay(_whoSel);
+    } catch (eW) { if (window.__silent) window.__silent(eW); }
     var _tSel = filterBar.querySelector('#ctTypeSel');
     if (_tSel && _tSel.dataset.sp) { try { if (typeof syncSelectDisplay === 'function') syncSelectDisplay(_tSel); } catch (eS2) {} }
-    var _recentAll = d.recent || [];
-    if (window.__ctType) d.recent = _recentAll.filter(function (r) { return r.type === window.__ctType; });
+    /* v458（老板：筛选失效）：原来 render 把 d.recent 覆盖成「已筛选」的结果，又把同一个 d 存进 __lastInfo；
+       下次换类型时从这份被截断的数据里再筛 → 越筛越空，切回「全部」也回不来（实测 100 条 → 选浏览资源 2 条 →
+       改咨询客服 0 条 → 切回全部仍 0 条）。现在把原始全量记在 d.__ctRaw 上，任何切换都从它筛。 */
+    if (!d.__ctRaw) d.__ctRaw = (d.recent || []).slice();
+    var _recentAll = d.__ctRaw;
+    d.recent = window.__ctType ? _recentAll.filter(function (r) { return r.type === window.__ctType; }) : _recentAll;
     window.__lastInfo = d;
     if (!(d.recent || []).length) {
       /* v434：0 值可解释——管理员自己浏览前台不计入（R168-②拍板），全 0 时说明口径避免「跟实际对不上」的疑惑 */
       var _allZero = !(d.delta && (d.delta.view || d.delta.contact || d.delta.unlock || d.delta.bind));
-      list.innerHTML = _alert + '<div class="wn-empty"><span class="wn-empty-ico" aria-hidden="true">📭</span><div class="wn-empty-t">该时段暂无新动态</div>' +
+      list.innerHTML = _alert + '<div class="wn-empty"><span class="wn-empty-ico" aria-hidden="true">📭</span><div class="wn-empty-t">最近 24 小时暂无动态</div>' +
         (_allZero ? '<div style="font-size:11px;color:#8a9aab;margin-top:6px;line-height:1.7">说明：您自己在前台资源页的浏览/解锁不计入统计（管理身份自动排除）；数字只来自真实访客。</div>' : '') + '</div>'; /* v394-16：空态模板（图标+主句） */
       bindSysAlertGo();
       return;
@@ -2586,7 +2597,7 @@
       var target = r.title + (r.extra ? ' · ' + r.extra : ''); /* extra 仅资源解锁（含类型名）才带 */
       /* v387 A10：时间线圆点逐条弹出（stagger 40ms，cap 12 条） */
       var _d = ' style="--casc-d:' + (Math.min(ri, 12) * 40) + 'ms"';
-      /* v454：明细流固定展示最近 7 天，比上次查看新的行打未读点（原来整条流会随上次查看被清空，进来看一次下次就空了） */
+      /* v454/v458：明细流固定展示最近 24 小时，比上次查看新的行打未读点（原来整条流会随上次查看被清空，进来看一次下次就空了） */
       return '<div class="ct-row wn-tl' + (r.unread ? ' ct-unread' : '') + '"' + _d + '>' + (r.unread ? '<span class="ct-dot" aria-label="未读"></span>' : '') + '<span class="ct-time"><i>' + tp[0] + '</i><i>' + (tp[1] || '') + '</i></span><span class="ct-who">' +
         (rl ? rl + ' ' : '') + String(who).replace(/</g, '&lt;') + '</span><span class="ct-what">' + (WHAT[r.type] || r.type) +
         '</span><span class="ct-target">' + String(target).replace(/</g, '&lt;') + '</span></div>';

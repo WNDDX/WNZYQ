@@ -28,7 +28,7 @@ export async function onRequestGet(context) {
   const floor = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
   if (last < floor) last = floor;
   /* v454：明细流窗口 = 最近 7 天（和「距上次查看」解耦） */
-  const windowStart = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
+  const windowStart = new Date(Date.now() - 1 * 86400000).toISOString().slice(0, 19).replace('T', ' '); /* v458：老板拍板「一天内的可以了」——明细窗口 7 天收成 24 小时 */
 
   // 今日 0 点（北京口径，与统计页一致）
   const todayBJ = new Date(Date.now() + BJ).toISOString().slice(0, 10);
@@ -75,7 +75,7 @@ export async function onRequestGet(context) {
          SELECT a.created_at, 'audit', a.admin, '', a.action, a.target
            FROM audit_log a WHERE a.created_at > ?1
        ) ORDER BY at DESC LIMIT 100`
-    ).bind(windowStart).all()   /* v454：明细流固定看最近 7 天（下面再标未读），不再跟着 last 走——原来每看一次就把列表清空 */
+    ).bind(windowStart).all()   /* v454/v458：明细流固定看最近 24 小时（下面再标未读），不跟着 last 走 */
   ]);
 
   let rows = (recent.results || []).map(function (r) { return { at: r.at, type: r.type, who: r.who || '', region: r.region || '', title: r.title || '', extra: r.extra || '', unread: String(r.at || '') > String(last) }; }); /* v454：未读标记（比上次查看新） */
