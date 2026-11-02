@@ -367,12 +367,26 @@
       var btn = this; btn.disabled = true; btn.textContent = '保存中…';
       api('admin/external', { method: 'POST', body: body }).then(function (r) {
         if (r && r.ok) {
-          toast('已保存', 'success'); closePf();
+          toast('已保存', 'success');
+          /* v470b：保存成功先就地更新本地列表并重绘，不等 loadAll 回刷 ——
+             实测「等回刷」时弹窗关得晚、下拉还是旧的，看着像没保存成功。 */
+          if (isEdit) {
+            S.platforms.forEach(function (x) {
+              if (Number(x.id) === Number(p.id)) { x.name = body.name; x.note = body.note; x.mall_url = body.mall_url; x.login_url = body.login_url; }
+            });
+          } else if (r.id) {
+            S.platforms.push({ id: r.id, name: body.name, mall_url: body.mall_url, login_url: body.login_url, note: body.note });
+          }
+          closePf();
+          render();
           loadAll();
         } else {
           toast((r && r.msg) || '保存失败', 'error');
           btn.disabled = false; btn.textContent = isEdit ? '保存' : '添加';
         }
+      }).catch(function () {
+        toast('网络开小差了，再试一次', 'error');
+        btn.disabled = false; btn.textContent = isEdit ? '保存' : '添加';
       });
     });
   }
