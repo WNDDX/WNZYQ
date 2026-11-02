@@ -183,7 +183,9 @@
   }
 
   /* 一张表 → 二维数组（去掉表头行与全空行，与老 .xls 解析口径一致） */
-  function __rowsFromSheet(xml, shared) {
+  /* v480：加 keepHeader —— 原实现无条件砍掉第一行（当表头处理），
+     外部采集要靠表头认出「封面/链接」是哪一列，砍了就只能瞎猜，实测封面和链接全丢。 */
+  function __rowsFromSheet(xml, shared, keepHeader) {
     var doc = new DOMParser().parseFromString(xml, 'application/xml');
     var rs = doc.getElementsByTagName('row'), rows = [];
     for (var i = 0; i < rs.length; i++) {
@@ -198,13 +200,14 @@
       }
       rows.push(cells);
     }
-    return rows.slice(1).filter(function (r) { return r.some(function (x) { return x; }); });
+    var out = rows.filter(function (r) { return r.some(function (x) { return x; }); });
+    return keepHeader ? out : out.slice(1);
   }
 
   /* v473：外部商品采集要复用这套 xlsx 解析（老板从别家后台导出的商品表）。
      入口：把任意一张有数据的表读成 [{title, cover, src_url}]，前端自己认列。 */
   window.__parseAnySheet = function (buf) {
-    return parseXlsx(buf).then(function (book) {
+    return parseXlsx(buf, true).then(function (book) {
       /* v479：parseXlsx 返回的是「表名 → 行数组」的对象，不是数组——
          原来按数组遍历，一上传 xlsx 就报 (sheets||[]).forEach is not a function（实测踩到）。 */
       var best = null;
@@ -217,21 +220,36 @@
       var rows = best.rows.filter(function (r) { return r && r.join('').trim(); });
       if (!rows.length) return [];
       /* 找表头行（前 5 行里挑含「标题/名称/商品/产品」的那行） */
-      var hi = 0;
-      for (var i = 0; i < Math.min(5, rows.length); i++) {
-        if (/标题|名称|商品|产品|套餐/.test(rows[i].join('|'))) { hi = i; break; }
+      var hi = -1;
+      for (var i = 0; i < Math.min(6, rows.length); i++) {
+        var line = rows[i].join('|');
+        /* 表头特征：一行里同时出现「名称/标题」类和「图/链接」类，或就是很短的列名行 */
+        if (/标题|名称|商品|产品|套餐/.test(line) && /图|链接|地址|url|备注|价格|id/i.test(line)) { hi = i; break; }
+        if (/标题|名称/.test(line) && rows[i].filter(Boolean).length >= 2) { hi = i; break; }
       }
+      if (hi < 0) hi = 0;   /* 没认出表头：按第一行是数据、0/1/2 的位置猜 */
       var head = (rows[hi] || []).map(function (x) { return String(x == null ? '' : x).trim(); });
       var idx = function (re) {
         for (var k = 0; k < head.length; k++) { if (re.test(head[k])) return k; }
         return -1;
       };
       var iT = idx(/标题|名称|商品|产品|套餐/);
-      var iC = idx(/封面|图片|主图|图/);
+      var iC = idx(/封面|图片|主图|缩略/);
       var iU = idx(/链接|地址|url|网址/i);
-      /* 没有表头就当第一行是数据，按 0/1/2 猜 */
-      var start = (iT >= 0 || iC >= 0 || iU >= 0) ? hi + 1 : 0;
+      var hasHead = (iT >= 0 || iC >= 0 || iU >= 0);
+      var start = hasHead ? hi + 1 : hi;
       if (iT < 0) iT = 0;
+      /* 没认出列名时按「值长什么样」兜底：图片后缀的当封面，其余 http 的当链接 */
+      var sniff = function (r) {
+        var c = '', u = '';
+        for (var k = 0; k < r.length; k++) {
+          var v = String(r[k] == null ? '' : r[k]).trim();
+          if (!/^https?:/i.test(v)) continue;
+          if (/\.(jpe?g|png|webp|gif)(\?|$)/i.test(v)) { if (!c) c = v; }
+          else if (!u) u = v;
+        }
+        return { c: c, u: u };
+      };
       var out = [];
       for (var r = start; r < rows.length; r++) {
         var row = rows[r] || [];
@@ -241,6 +259,8 @@
         var url = iU >= 0 ? String(row[iU] == null ? '' : row[iU]).trim() : '';
         if (!/^https?:/i.test(cover)) cover = '';
         if (!/^https?:/i.test(url)) url = '';
+        if (!cover || !url) { var sn = sniff(row); if (!cover) cover = sn.c; if (!url) url = sn.u; }
+        if (!cover && !url) { var sn2 = sniff(row); cover = sn2.c; url = sn2.u; }
         out.push({ title: title.slice(0, 90), cover: cover, src_url: url });
         if (out.length >= 500) break;
       }
@@ -248,7 +268,7 @@
     });
   };
 
-  function parseXlsx(buf) {
+  function parseXlsx(buf, keepHeader) {
     var files;
     try { files = __unzip(buf); } catch (e) { return Promise.reject(e); }
     return Promise.all([__readPart(files, 'xl/workbook.xml'), __readPart(files, 'xl/_rels/workbook.xml.rels'), __readPart(files, 'xl/sharedStrings.xml')]).then(function (a) {
@@ -280,7 +300,7 @@
         /* 路径归一：/xl/worksheets/x.xml、worksheets/x.xml、../worksheets/x.xml 都落到 xl/worksheets/x.xml */
         var path = t.charAt(0) === '/' ? t.slice(1)
           : (t.indexOf('worksheets/') >= 0 ? ('xl/' + t.slice(t.indexOf('worksheets/'))) : ('xl/' + t.replace(/^\.\//, '')));
-        return __readPart(files, path).then(function (xml) { return { name: sh.name, rows: xml ? __rowsFromSheet(xml, shared) : [] }; });
+        return __readPart(files, path).then(function (xml) { return { name: sh.name, rows: xml ? __rowsFromSheet(xml, shared, keepHeader) : [] }; });
       })).then(function (list) {
         var out = {};
         list.forEach(function (x) { if (x) out[x.name] = x.rows; });
