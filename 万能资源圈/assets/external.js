@@ -232,6 +232,33 @@
     });
   }
 
+  /* ---------- 状态关键词判定（与后端同一张表，顺序=优先级）----------
+     老板拍板：已售出全靠页面文字判断。粘贴后本地先判一次，省得自己选状态。 */
+  var KW = {
+    sold: ['已售出', '已卖出', '已售完', '卖掉啦', '已经卖出', '宝贝已卖出', '此商品已售出', '交易成功', '交易完成', '已成交',
+      '订单已完成', '买家已付款', '已拍下', '已被购买', '已抢光', '库存0', '库存 0', '剩余0件', '剩余 0 件'],
+    deleted: ['商品不存在', '宝贝不存在', '商品已删除', '已删除', '该宝贝已被删除', '找不到该商品', '页面不存在',
+      '已失效', '已过期', '该商品已失效', '商品已下架或删除'],
+    offdown: ['已下架', '商品已下架', '已关闭', '已停止出售', '违规下架', '审核不通过', '已冻结', '暂不销售'],
+    needlogin: ['请先登录', '请登录', '登录后查看', '需要登录', '安全验证', '滑动验证', '人机验证', '访问验证', '验证码'],
+    onsale: ['立即购买', '马上抢', '加入购物车', '拍下', '立即下单', '剩余', '库存', '在售', '可购买']
+  };
+  var KW_ORDER = ['sold', 'deleted', 'offdown', 'needlogin', 'onsale'];
+  function judgeLocal(text) {
+    var t = String(text || '');
+    if (!t) return null;
+    for (var i = 0; i < KW_ORDER.length; i++) {
+      var k = KW_ORDER[i], arr = KW[k];
+      for (var j = 0; j < arr.length; j++) {
+        if (t.indexOf(arr[j]) >= 0) {
+          var st = k === 'deleted' ? 'offdown' : (k === 'needlogin' ? 'check' : k);
+          return { status: st, hit: arr[j] };
+        }
+      }
+    }
+    return null;
+  }
+
   /* ---------- 粘贴解析：从富文本 HTML 里取标题 / 封面 / 描述图或视频 ---------- */
   var BAD_IMG = /(icon|logo|avatar|sprite|placeholder|loading|blank|1x1|spacer|qrcode|qr_)/i;
   function absolutize(u, base) {
@@ -348,9 +375,17 @@
       if (got.media.length && !m.querySelector('#lkMedia').value.trim()) {
         m.querySelector('#lkMedia').value = got.media.map(function (x) { return (x.t === 'video' ? '[视频] ' : '') + x.u; }).join('\n');
       }
-      m.querySelector('#lkParsed').innerHTML = got.media.length
-        ? '已提取：' + (got.cover ? '封面 1 张' : '无封面') + '，描述 ' + got.media.length + ' 个文件（' + got.media.filter(function (x) { return x.t === 'image'; }).length + ' 图 / ' + got.media.filter(function (x) { return x.t === 'video'; }).length + ' 视频）'
-        : '这段内容里没找到图片或视频，标题/描述已按文字填。这个平台可能需要手动贴图。';
+      var stHit = judgeLocal(text + ' ' + (got.desc || '') + ' ' + got.title);
+      if (stHit) {
+        m.querySelector('#lkStatus').value = stHit.status;
+        var lbl = (STATUS[stHit.status] || {}).t || stHit.status;
+        m.querySelector('#lkParsed').innerHTML = '识别为「<b>' + lbl + '</b>」（命中「' + esc(stHit.hit) + '」）' +
+          (got.media.length ? ' · 提取 ' + (got.cover ? '封面 1 张，' : '') + got.media.length + ' 个描述文件' : '');
+      } else {
+        m.querySelector('#lkParsed').innerHTML = got.media.length
+          ? '已提取：' + (got.cover ? '封面 1 张' : '无封面') + '，描述 ' + got.media.length + ' 个文件（' + got.media.filter(function (x) { return x.t === 'image'; }).length + ' 图 / ' + got.media.filter(function (x) { return x.t === 'video'; }).length + ' 视频）'
+          : '这段内容里没看出状态，也没找到图片。状态保持你选的那个。';
+      }
     });
 
     /* 链接形态即时提示 */
