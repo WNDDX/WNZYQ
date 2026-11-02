@@ -2305,3 +2305,57 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .modal-mask .modal-box .form,
 .modal-mask .modal-box .usf-body,
 .modal-mask .modal-box > div[class*="form"] { overscroll-behavior: auto !important; }
+
+/* ===== v459 外部链接台账 ===== */
+.ext-pfbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.ext-chip { height: 30px; padding: 0 12px; border-radius: var(--r-pill, 999px); border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 12px; cursor: pointer; white-space: nowrap; }
+.ext-chip i { font-style: normal; opacity: .7; margin-left: 2px; }
+.ext-chip.on { border-color: var(--blue1); color: var(--blue1); background: rgba(var(--blue1-rgb, 30,136,229), .08); font-weight: 600; }
+.ext-chip.ghost { border-style: dashed; color: var(--text-faint); }
+.ext-note { padding: 11px 13px; border-radius: var(--r-m, 8px); background: var(--bg-light, #f5f8fb); margin-bottom: 12px; }
+.ext-note-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.ext-note-hd b { font-size: 13px; color: var(--text); }
+.ext-linkbtn { border: none; background: transparent; color: var(--blue1); font-size: 12px; cursor: pointer; padding: 2px 4px; }
+.ext-note-body { font-size: 12px; color: var(--text-light); line-height: 1.7; }
+.ext-note-settle { font-size: 11px; color: var(--text-faint); margin-top: 5px; }
+.ext-toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+.ext-search { flex: 1 1 auto; min-width: 0; height: 32px; padding: 0 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text); }
+.ext-sel { height: 32px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text); padding: 0 6px; }
+.ext-list { display: flex; flex-direction: column; gap: 8px; }
+.ext-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--r-m, 8px); background: var(--card-bg); }
+.ext-row.st-bad { border-color: #e8b4b4; background: #fdf5f5; }
+.ext-row.st-warn { border-color: #ead9b0; }
+.ext-thumb-box { width: 60px; height: 60px; flex: none; border-radius: 8px; background: var(--bg-light, #eef2f6); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.ext-thumb-box.no-img::after { content: '无图'; font-size: 11px; color: var(--text-faint); }
+.ext-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ext-main { flex: 1 1 auto; min-width: 0; }
+.ext-title { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ext-desc { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+.ext-note-line { font-size: 11px; color: var(--text-faint); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ext-warn { font-size: 11px; color: #c62828; margin-top: 4px; }
+.ext-side { flex: none; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.ext-badge { font-size: 11px; padding: 1px 7px; border-radius: 6px; }
+.ext-badge.ok { color: #1b7f3b; background: rgba(1,192,0,.12); }
+.ext-badge.sold { color: #1565c0; background: rgba(30,136,229,.12); }
+.ext-badge.off { color: #6b7b8a; background: rgba(120,144,156,.14); }
+.ext-badge.bad { color: #c62828; background: #fdeaea; }
+.ext-badge.warn { color: #a2650b; background: #fdf3e2; }
+.ext-when { font-size: 11px; color: var(--text-faint); }
+.ext-when.old { color: #b07b12; }
+.ext-ops { display: flex; gap: 5px; }
+.ext-btn { height: 26px; padding: 0 9px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; white-space: nowrap; }
+.ext-btn:hover { border-color: var(--blue1); color: var(--blue1); }
+.ext-btn.danger { color: #c62828; border-color: #e0a0a0; }
+.ext-btn.danger:hover { background: #fdeaea; }
+.ext-empty { text-align: center; color: var(--text-faint); font-size: 12px; padding: 26px 12px; line-height: 1.8; }
+.ext-paste-hint { font-size: 12px; color: var(--text-light); line-height: 1.7; background: rgba(var(--blue1-rgb, 30,136,229), .06); border: 1px dashed rgba(var(--blue1-rgb, 30,136,229), .35); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.ext-paste { width: 100%; margin-bottom: 6px; }
+.ext-parsed { font-size: 11px; color: #1b7f3b; margin-bottom: 8px; min-height: 14px; }
+.ext-urlwarn { font-size: 11px; margin: -2px 0 8px; }
+.ext-urlwarn.bad { color: #c62828; }
+.ext-urlwarn.warn { color: #a2650b; }
+.ext-form label { margin-top: 8px; }
+@media (max-width: 600px) {
+  .ext-row { flex-wrap: wrap; }
+  .ext-side { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; margin-left: 72px; }
+}

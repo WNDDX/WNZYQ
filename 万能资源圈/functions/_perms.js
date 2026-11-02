@@ -30,6 +30,8 @@ export function parsePerms(raw) {
     batch: { import: g(p.batch, 'import'), price: g(p.batch, 'price'), online: g(p.batch, 'online'), del: g(p.batch, 'del') },
     data: { stats: g(p.data, 'stats'), detail: g(p.data, 'detail'), ip: g(p.data, 'ip'), export: g(p.data, 'export') },
     info: { view: g(p.info, 'view') }, /* #116 复检修正：info 组必须进解析白名单，否则勾了也判无权 */
+    /* v459：外部链接台账（老板共用平台用）——看/登记/改/删/取信息/导出 */
+    external: { view: g(p.external, 'view'), add: g(p.external, 'add'), edit: g(p.external, 'edit'), del: g(p.external, 'del'), fetch: g(p.external, 'fetch'), export: g(p.external, 'export') },
     users: !!p.users,
     catsScope: (p.catsScope === 'all') ? 'all' : (Array.isArray(p.catsScope) ? p.catsScope.map(Number).filter(x => x > 0) : []), /* 兜底=空范围（最小权限），显式 'all' 才全范围 */
     codeScope: (p.codeScope === 'scoped' || p.codeScope === 'all') ? p.codeScope : 'own',
@@ -47,6 +49,7 @@ export function superPerms() {
     batch: { import: true, price: true, online: true, del: true },
     data: { stats: true, detail: true, ip: true, export: true },
     info: { view: true },
+    external: { view: true, add: true, edit: true, del: true, fetch: true, export: true },
     users: true,
     catsScope: 'all',
     codeScope: 'all',

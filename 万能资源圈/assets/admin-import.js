@@ -990,7 +990,9 @@
     { t: '分类', k: 'cats', items: [['view', '看分类'], ['add', '新增分类'], ['edit', '改分类'], ['del', '删分类']] },
     { t: '公告', k: 'ann', items: [['view', '看公告'], ['add', '发公告'], ['edit', '改公告'], ['del', '删公告']] },
     { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
-    { t: '数据', k: 'data', items: [['stats', '看总量'], ['detail', '看逐条明细'], ['ip', '看访客 IP'], ['export', '导出数据']] }
+    { t: '数据', k: 'data', items: [['stats', '看总量'], ['detail', '看逐条明细'], ['ip', '看访客 IP'], ['export', '导出数据']] },
+    /* v459：外部链接台账（老板跟别人共用平台时，让别人只能登记自己的外链） */
+    { t: '外部链接', k: 'external', items: [['view', '看台账'], ['add', '登记链接'], ['edit', '改链接'], ['del', '删链接'], ['fetch', '取信息/巡检'], ['export', '导出']] }
   ];
   function usersForm(u) {
     var isEdit = !!(u && u.id);
