@@ -81,6 +81,9 @@
 
     var cur = null;
     S.platforms.forEach(function (p) { if (Number(p.id) === Number(S.curPf)) cur = p; });
+    /* v464：只有 1 个平台时，就算停在「全部」，也把它的说明卡显示出来——
+       否则老板新建完平台看不到自己写的那段话，以为没保存。 */
+    if (!cur && Number(S.curPf) === 0 && S.platforms.length === 1) cur = S.platforms[0];
 
     var noteCard = '';
     if (cur) {
@@ -96,8 +99,9 @@
     var rows = S.links.map(function (l) {
       var st = STATUS[l.status] || STATUS.onsale;
       var old = daysSince(l.last_checked) >= 7;
+      /* v464：号卡商城的图床有防盗链，带本站 Referer 会裂图；不发送 Referer 就能正常显示 */
       var cover = l.cover
-        ? '<img class="ext-thumb" src="' + esc(l.cover) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'no-img\')">'
+        ? '<img class="ext-thumb" src="' + esc(l.cover) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'no-img\')">'
         : '';
       return '<div class="ext-row st-' + st.c + '" data-id="' + l.id + '">' +
         '<div class="ext-thumb-box">' + cover + '</div>' +
