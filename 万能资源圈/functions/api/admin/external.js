@@ -371,10 +371,20 @@ export async function onRequestPost(context) {
         if (!/^https?:\/\//i.test(one)) return json({ ok: false, msg: '链接要以 http 开头' }, 400);
         const pg = await fetchPage(one, 15000);
         if (!pg.ok) return json({ ok: false, msg: '打不开这条链接（HTTP ' + pg.status + '）' }, 400);
-        const title = (pg.text.match(/<title[^>]*>([\s\S]{0,200}?)<\/title>/i) || [])[1] || '';
+        let title = plainText((pg.text.match(/<title[^>]*>([\s\S]{0,300}?)<\/title>/i) || [])[1] || '');
+        /* 有些站 title 是「加载中」或站点名，退一步用正文里像商品的标题 */
+        if (!title || title.length < 5 || /^(加载中|首页|商城|号卡|登录)$/.test(title)) {
+          const cand = parseGoodsList(pg.text, one);
+          if (cand.length) title = cand[0].title;
+        }
         const imgs = parseDetail(pg.text, one);
-        if (!imgs.length && !title) return json({ ok: false, msg: '这条链接抓不到内容（可能是前端渲染的站）' }, 200);
-        return json({ ok: true, title: plainText(title).slice(0, 80), cover: imgs[0] || '', media: imgs });
+        const desc = plainText((pg.text.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{0,300})["']/i) || [])[1] || '');
+        if (!imgs.length && !title) {
+          return json({ ok: false, shell: pg.text.length < 3000, msg: pg.text.length < 3000
+            ? '这条链接的页面是个空壳（前端渲染的站，服务器拿不到内容）。改用「粘整页内容」那条路。'
+            : '这条链接能打开，但页面里找不到商品图，可能是别的东西在挡（登录/验证）。' }, 200);
+        }
+        return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 300) });
       }
 
       const pid = Number(b.platform_id || 0) || 0;
@@ -391,23 +401,33 @@ export async function onRequestPost(context) {
 
       const list = parseGoodsList(pg.text, mall);
       if (!list.length) {
-        return json({ ok: false, zero: true, msg: '这个平台抓不到商品 —— 多半是前端渲染的站（服务器只能拿到空壳）。可以用「粘链接解析」一条条来。' }, 200);
+        const shell = pg.text.length < 4000;   /* 空壳：前端渲染，服务端拿不到数据 */
+        return json({
+          ok: false, zero: true, shell: shell,
+          bytes: pg.text.length,
+          msg: shell
+            ? '这个平台是前端渲染的站（服务器只拿到 ' + pg.text.length + ' 字节空壳，商品数据靠 JS 拉）。改用「粘链接」或「粘整页内容」一条条加。'
+            : '页面能打开（' + pg.text.length + ' 字节），但这种排版我没见过，解析不出商品。把商城地址发我，我针对它调规则。'
+        }, 200);
       }
-      /* 去重入库（同平台 + 同标题 + 同封面 视为同一个） */
-      let added = 0;
-      const cap = Math.min(list.length, 60);
+      /* 入库：同平台 + 同标题 视为同一个（封面可能变） */
+      let added = 0, dup = 0;
+      const cap = Math.min(list.length, 120);
       for (let i = 0; i < cap; i++) {
         const g = list[i];
         try {
-          const dup = await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=? AND cover=?')
-            .bind(pid, g.title, g.cover).first();
-          if (dup) continue;
+          const hit = await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?')
+            .bind(pid, g.title).first();
+          if (hit) { dup++; continue; }
           await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, created_by) VALUES (?,?,?,?,?,?)')
             .bind(pid, p.name, g.link || '', g.title, g.cover, auth0.username).run();
           added++;
         } catch (eI) { /* 单条失败不影响整体 */ }
       }
-      return json({ ok: true, found: list.length, added, saved: cap });
+      return json({
+        ok: true, found: list.length, added, dup, saved: cap, bytes: pg.text.length,
+        samples: list.slice(0, 5).map(function (x) { return x.title; })
+      });
     }
 
     if (op === 'goods.list') {
@@ -424,6 +444,91 @@ export async function onRequestPost(context) {
       const stmt = binds.length ? env.DB.prepare(q).bind(...binds) : env.DB.prepare(q);
       const { results } = await stmt.all();
       return json({ ok: true, goods: results || [] });
+    }
+
+    /* 粘一条 / 手动加一条进池（find.one 抓到的东西落库） */
+    if (op === 'goods.add') {
+      const authA = await requirePerm(env, request, 'external.add');
+      if (authA instanceof Response) return authA;
+      const title = String(b.title || '').trim().slice(0, 90);
+      if (!title) return json({ ok: false, msg: '标题不能为空' }, 400);
+      const pid = Number(b.platform_id || 0) || 0;
+      let pfName = '';
+      if (pid) {
+        const pf = await env.DB.prepare('SELECT name FROM external_platforms WHERE id=?').bind(pid).first();
+        pfName = (pf && pf.name) || '';
+      }
+      const cover = String(b.cover || '').trim().slice(0, 800);
+      const srcUrl = String(b.src_url || '').trim().slice(0, 1200);
+      const media = Array.isArray(b.media) ? b.media.slice(0, 30).map(function (u) { return String(u).slice(0, 800); }) : [];
+      const detailHtml = String(b.detail_html || '').slice(0, 60000)
+        || media.map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('');
+      const reqId2 = String(b.reqId || '').slice(0, 60);
+      if (reqId2) {
+        const dup0 = await env.DB.prepare('SELECT id FROM external_goods WHERE req_id=?').bind(reqId2).first();
+        if (dup0) return json({ ok: true, id: dup0.id, dup: true });
+      }
+      const dup1 = pid ? await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?').bind(pid, title).first() : null;
+      if (dup1) return json({ ok: true, id: dup1.id, dup: true, msg: '商品池里已经有了' });
+      try {
+        const r = await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, detail_html, detail_media, created_by, req_id) VALUES (?,?,?,?,?,?,?,?,?)')
+          .bind(pid, pfName, srcUrl, title, cover, detailHtml, JSON.stringify(media), auth0.username, reqId2).run();
+        return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0 });
+      } catch (eAdd) {
+        return json({ ok: false, msg: '存不进去：' + (eAdd && eAdd.message || '') }, 500);
+      }
+    }
+
+    /* 改池里的东西（标题 / 封面 / 详情图） */
+    if (op === 'goods.update') {
+      const authUp = await requirePerm(env, request, 'external.edit');
+      if (authUp instanceof Response) return authUp;
+      const id = Number(b.id || 0) || 0;
+      if (!id) return json({ ok: false, msg: '缺少 id' }, 400);
+      const sets = [], binds = [];
+      if (b.title != null) { sets.push('title=?'); binds.push(String(b.title).trim().slice(0, 90)); }
+      if (b.cover != null) { sets.push('cover=?'); binds.push(String(b.cover).trim().slice(0, 800)); }
+      if (b.src_url != null) { sets.push('src_url=?'); binds.push(String(b.src_url).trim().slice(0, 1200)); }
+      if (b.detail_html != null) { sets.push('detail_html=?'); binds.push(String(b.detail_html).slice(0, 60000)); }
+      if (Array.isArray(b.media)) {
+        sets.push('detail_media=?');
+        binds.push(JSON.stringify(b.media.slice(0, 30).map(function (u) { return String(u).slice(0, 800); })));
+      }
+      if (!sets.length) return json({ ok: false, msg: '没有要改的字段' }, 400);
+      binds.push(id);
+      await env.DB.prepare('UPDATE external_goods SET ' + sets.join(', ') + ' WHERE id=?').bind(...binds).run();
+      return json({ ok: true });
+    }
+
+    /* 批量导入（从别家后台导出的商品列表 / 粘贴多行） */
+    if (op === 'goods.import') {
+      const authIm = await requirePerm(env, request, 'external.add');
+      if (authIm instanceof Response) return authIm;
+      const pid = Number(b.platform_id || 0) || 0;
+      let pfName = String(b.platform || '').slice(0, 40);
+      if (pid) {
+        const pf = await env.DB.prepare('SELECT name FROM external_platforms WHERE id=?').bind(pid).first();
+        pfName = (pf && pf.name) || pfName;
+      }
+      const rows = Array.isArray(b.rows) ? b.rows.slice(0, 500) : [];
+      if (!rows.length) return json({ ok: false, msg: '没有可导入的行' }, 400);
+      let added = 0, dup = 0, bad = 0;
+      for (const r0 of rows) {
+        const title = String((r0 && r0.title) || '').trim().slice(0, 90);
+        if (!title) { bad++; continue; }
+        const cover = String((r0 && r0.cover) || '').trim().slice(0, 800);
+        const srcUrl = String((r0 && r0.src_url) || '').trim().slice(0, 1200);
+        try {
+          const hit = pid
+            ? await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?').bind(pid, title).first()
+            : await env.DB.prepare("SELECT id FROM external_goods WHERE title=? AND platform='' ").bind(title).first();
+          if (hit) { dup++; continue; }
+          await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, created_by) VALUES (?,?,?,?,?,?)')
+            .bind(pid, pfName, srcUrl, title, cover, auth0.username).run();
+          added++;
+        } catch (e) { bad++; }
+      }
+      return json({ ok: true, added, dup, bad, total: rows.length });
     }
 
     if (op === 'goods.del') {
@@ -534,7 +639,22 @@ async function ensureCollect(env) {
   try { await env.DB.prepare("ALTER TABLE external_platforms ADD COLUMN mall_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
 }
 
-const BAD_IMG = /(icon|logo|avatar|qrcode|qr_|sprite|placeholder|blank|loading|tabbar|banner|swiper|advert|\/static\/|\/assets\/)/i;
+/* ===== v473 解析器（真实数据驱动：上一版 77 个站只命中 21 个，其中 5 个标题是脏的）=====
+   改三处：
+   ① 标签剥离改成「引号安全」—— <a aria-label="查看XX卡"> 这种属性里带 > 的，旧正则会在 > 处切断，
+      把 aria-label="查看电信苏酥卡 当正文（实测 vip.777haoka.cn），还会留下 "pan> 竣工即可交付"。
+   ② 图片过滤不再整体排除 /static/ 与 /assets/ —— 很多站的商品图就在那里，只排图标特征。
+   ③ 标题判定收紧：必须像商品（含 卡/WiFi/宽带/流量包/套餐，且带运营商或数字），
+      滤掉「通用收集信息」「中国移动 · 查单」这类噪声。 */
+function isBadImg(u) {
+  if (!u) return true;
+  if (!/^https?:/i.test(u)) return true;
+  if (/\.svg(\?|$)/i.test(u)) return true;
+  if (/(icon|logo|avatar|qrcode|qr_|sprite|placeholder|blank|loading|tabbar|banner|swiper|advert|arrow|close|share)/i.test(u)) return true;
+  if (/(\/static\/|\/assets\/)/i.test(u) && !/(upload|attachment|goods|cover|product|card)/i.test(u)) return true;
+  return false;
+}
+const BAD_IMG = { test: function (u) { return isBadImg(u); } }; /* 老调用点兼容 */
 
 function absUrl(u, base) {
   u = String(u || '').trim();
@@ -543,39 +663,57 @@ function absUrl(u, base) {
   if (/^https?:\/\//i.test(u)) return u;
   try { return new URL(u, base).href; } catch (e) { return ''; }
 }
+/* 引号安全的标签剥离：属性值里的 > 不会提前截断标签 */
+function stripTags(s) {
+  return String(s || '').replace(/<[^<>]*(?:(?:"[^"]*"|'[^']*')[^<>]*)*>/g, '\u0001');
+}
+function decodeEnt(s) {
+  return String(s || '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#(\d+);/g, function (m, d) { return String.fromCharCode(Number(d)); });
+}
 function plainText(s) {
-  return String(s || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+  return decodeEnt(String(s || '').replace(/<[^<>]*(?:(?:"[^"]*"|'[^']*')[^<>]*)*>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
-/* 通用解析：围绕「像商品的图」找上下文（标题 / 下单链接）。
-   不依赖具体 class 名，所以能同时应付多种号卡模板。 */
+const NOISE = /(查单|收集信息|订单查询|客服|登录|注册|公告|须知|说明|规则|提示|注意|首页|全部商品|搜索|分享|下载|返回顶部|关于我们)/;
+const GOODS_WORD = /(卡|WiFi|WIFI|wifi|宽带|流量包|套餐|随身|物联)/;
+const OP_WORD = /(联通|电信|移动|广电|5G|4G|三网|虚拟)/;
+function looksLikeGoods(t) {
+  if (!t || t.length < 5 || t.length > 90) return false;
+  if (!/[\u4e00-\u9fa5]/.test(t)) return false;
+  if (NOISE.test(t)) return false;
+  if (!GOODS_WORD.test(t)) return false;
+  return OP_WORD.test(t) || /\d/.test(t);
+}
+
+/* 通用解析：围绕「像商品的图」在其上下文里找标题与下单链接。
+   不依赖 class 名，所以多套号卡模板共用一套规则。 */
 function parseGoodsList(html, baseUrl) {
   const out = [], seen = {};
   const imgRe = /<img\b[^>]*>/gi;
   let m;
   while ((m = imgRe.exec(html))) {
     const tag = m[0];
-    const srcRaw = (tag.match(/(?:data-src|data-original|data-lazy-src|src)=["']([^"']+)["']/i) || [])[1];
+    const srcRaw = (tag.match(/(?:data-src|data-original|data-lazy-src|data-echo|src)=["']([^"']+)["']/i) || [])[1];
     const src = absUrl(srcRaw, baseUrl);
-    if (!src || BAD_IMG.test(src)) continue;
-    const ctx = html.slice(Math.max(0, m.index - 400), m.index + 900);
-    const texts = ctx.replace(/<[^>]+>/g, '\u0001').split('\u0001')
-      .map(plainText).filter(t => t.length >= 4 && t.length <= 70 && /[\u4e00-\u9fa5]/.test(t));
-    let title = texts.filter(t => /(卡|流量|套餐|通用|通话|月租)/.test(t))[0] || texts[0] || '';
+    if (isBadImg(src)) continue;
+    const ctx = html.slice(Math.max(0, m.index - 600), m.index + 1400);
+    const parts = stripTags(ctx).split('\u0001').map(plainText).filter(Boolean);
+    const title = parts.filter(looksLikeGoods)[0] || '';
     if (!title) continue;
-    if (/^(下单|订购|购卡|充值|公告|须知|说明|客服|规则|提示|注意|首页|全部|移动|联通|电信|广电|搜索|登录|注册)$/.test(title)) continue;
-    if (/(下单请|订购须知|购买须知|开卡须知|客服微信|友情提示|公告[:：])/.test(title)) continue;
-    if (title.length < 6) continue;
-    const hrefs = (ctx.match(/href=["']([^"']+)["']/gi) || []).map(x => absUrl(x.replace(/^href=["']|["']$/gi, ''), baseUrl))
+    const hrefs = (ctx.match(/href=["']([^"']+)["']/gi) || [])
+      .map(x => absUrl(x.replace(/^href=["']|["']$/gi, ''), baseUrl))
       .filter(h => h && !/\.(css|js|png|jpe?g|webp|gif|svg)(\?|$)/i.test(h));
-    const link = hrefs.filter(h => /(pid=|\/order\/|detail|goods\/|goodsId=|\/card\/)/i.test(h))[0] || '';
-    const looksGoods = /(卡|流量|套餐|通用|通话|月租)/.test(title);
-    if (!link && !looksGoods) continue;
-    const key = (link || '') + '|' + title;
-    if (seen[key]) continue;
-    seen[key] = 1;
-    out.push({ title: title.slice(0, 80), cover: src, link: link || '' });
+    const link = hrefs.filter(h => /(pid=|\/order|detail|goods|goodsId=|\/card\/|\/buy)/i.test(h))[0] || '';
+    /* 有下单链接的算高置信；没链接但标题同时含「商品词 + 运营商」也留（不少站用 JS 跳转，href 拿不到） */
+    if (!link && !(GOODS_WORD.test(title) && OP_WORD.test(title))) continue;
+    /* 同站同标题只留一条：同一张商品图常在页面里出现两次（列表 + 推荐位），
+       用 link|title 去重挡不住（无链接时 key 相同但 title 相同却各占一条）——实测「联通陕西山暮卡」重复出现。 */
+    const key = title.replace(/\s+/g, '');
+    if (seen[key]) { if (!seen[key].link && link) seen[key].link = link; continue; }
+    const rec = { title: title.slice(0, 90), cover: src, link: link || '' };
+    seen[key] = rec;
+    out.push(rec);
     if (out.length >= 200) break;
   }
   return out;
@@ -596,17 +734,17 @@ async function fetchPage(url, timeoutMs) {
   } finally { clearTimeout(timer); }
 }
 
-/* 从商品详情页抓长图（详情），拼成 html */
+/* 从商品详情页抓长图（详情） */
 function parseDetail(html, baseUrl) {
   const imgs = [];
   const re = /<img\b[^>]*>/gi;
   let m;
   while ((m = re.exec(html))) {
-    const s = absUrl((m[0].match(/(?:data-src|data-original|src)=["']([^"']+)["']/i) || [])[1], baseUrl);
-    if (!s || BAD_IMG.test(s)) continue;
+    const s = absUrl((m[0].match(/(?:data-src|data-original|data-lazy-src|data-echo|src)=["']([^"']+)["']/i) || [])[1], baseUrl);
+    if (isBadImg(s)) continue;
     if (imgs.indexOf(s) >= 0) continue;
     imgs.push(s);
-    if (imgs.length >= 20) break;
+    if (imgs.length >= 24) break;
   }
   return imgs;
 }

@@ -201,6 +201,50 @@
     return rows.slice(1).filter(function (r) { return r.some(function (x) { return x; }); });
   }
 
+  /* v473：外部商品采集要复用这套 xlsx 解析（老板从别家后台导出的商品表）。
+     入口：把任意一张有数据的表读成 [{title, cover, src_url}]，前端自己认列。 */
+  window.__parseAnySheet = function (buf) {
+    return parseXlsx(buf).then(function (sheets) {
+      var best = null;
+      (sheets || []).forEach(function (sh) {
+        if (!sh || !sh.rows || !sh.rows.length) return;
+        if (!best || sh.rows.length > best.rows.length) best = sh;
+      });
+      if (!best) return [];
+      var rows = best.rows.filter(function (r) { return r && r.join('').trim(); });
+      if (!rows.length) return [];
+      /* 找表头行（前 5 行里挑含「标题/名称/商品/产品」的那行） */
+      var hi = 0;
+      for (var i = 0; i < Math.min(5, rows.length); i++) {
+        if (/标题|名称|商品|产品|套餐/.test(rows[i].join('|'))) { hi = i; break; }
+      }
+      var head = (rows[hi] || []).map(function (x) { return String(x == null ? '' : x).trim(); });
+      var idx = function (re) {
+        for (var k = 0; k < head.length; k++) { if (re.test(head[k])) return k; }
+        return -1;
+      };
+      var iT = idx(/标题|名称|商品|产品|套餐/);
+      var iC = idx(/封面|图片|主图|图/);
+      var iU = idx(/链接|地址|url|网址/i);
+      /* 没有表头就当第一行是数据，按 0/1/2 猜 */
+      var start = (iT >= 0 || iC >= 0 || iU >= 0) ? hi + 1 : 0;
+      if (iT < 0) iT = 0;
+      var out = [];
+      for (var r = start; r < rows.length; r++) {
+        var row = rows[r] || [];
+        var title = String(row[iT] == null ? '' : row[iT]).trim();
+        if (!title || title.length < 2) continue;
+        var cover = iC >= 0 ? String(row[iC] == null ? '' : row[iC]).trim() : '';
+        var url = iU >= 0 ? String(row[iU] == null ? '' : row[iU]).trim() : '';
+        if (!/^https?:/i.test(cover)) cover = '';
+        if (!/^https?:/i.test(url)) url = '';
+        out.push({ title: title.slice(0, 90), cover: cover, src_url: url });
+        if (out.length >= 500) break;
+      }
+      return out;
+    });
+  };
+
   function parseXlsx(buf) {
     var files;
     try { files = __unzip(buf); } catch (e) { return Promise.reject(e); }
