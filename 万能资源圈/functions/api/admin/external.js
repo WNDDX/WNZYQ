@@ -24,6 +24,7 @@ async function ensureExternal(env) {
     settle_note TEXT NOT NULL DEFAULT '',
     fetch_mode TEXT NOT NULL DEFAULT 'paste',
     sort INTEGER NOT NULL DEFAULT 0,
+    req_id TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`).run();
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS external_links (
@@ -43,11 +44,19 @@ async function ensureExternal(env) {
     url_msg TEXT NOT NULL DEFAULT '',
     last_checked TEXT,
     sort INTEGER NOT NULL DEFAULT 0,
+    req_id TEXT NOT NULL DEFAULT '',
     created_by TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     deleted_at TEXT
   )`).run();
   try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_ext_links_pf ON external_links(platform_id)').run(); } catch (e) {}
+  /* v459 热修：Cloudflare 会把「执行时间偏长」的 POST 再跑一遍，而 INSERT 不幂等 ——
+     实测点一次保存，库里出现两条一模一样的记录（同一个请求、只发了 1 次 fetch）。
+     给写操作加请求幂等键 reqId：同一 reqId 再来一次，直接返回上次那条，不再插。 */
+  try { await env.DB.prepare("ALTER TABLE external_platforms ADD COLUMN req_id TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  try { await env.DB.prepare("ALTER TABLE external_links ADD COLUMN req_id TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  try { await env.DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_ext_pf_req ON external_platforms(req_id) WHERE req_id <> ''").run(); } catch (e) {}
+  try { await env.DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_ext_lk_req ON external_links(req_id) WHERE req_id <> ''").run(); } catch (e) {}
 }
 
 /* ===== 状态关键词表（方案 v3 第四节；顺序即优先级） ===== */
@@ -201,6 +210,11 @@ export async function onRequestPost(context) {
 
       if (op === 'platform.save') {
         const id = Number(b.id || 0) || 0;
+        const reqId = String(b.reqId || '').slice(0, 60);
+        if (!id && reqId) {
+          const dup = await env.DB.prepare('SELECT id FROM external_platforms WHERE req_id = ?').bind(reqId).first();
+          if (dup) return json({ ok: true, id: dup.id, dup: true });
+        }
         const name = String(b.name || '').trim().slice(0, 40);
         if (!name) return json({ ok: false, msg: '平台名不能为空' }, 400);
         const domain = String(b.domain || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').slice(0, 80);
@@ -214,9 +228,18 @@ export async function onRequestPost(context) {
             .bind(name, domain, loginUrl, note, settle, mode, sort, id).run();
           return json({ ok: true, id });
         }
-        const r = await env.DB.prepare('INSERT INTO external_platforms (name, domain, login_url, note, settle_note, fetch_mode, sort) VALUES (?,?,?,?,?,?,?)')
-          .bind(name, domain, loginUrl, note, settle, mode, sort).run();
-        return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0 });
+        try {
+          const r = await env.DB.prepare('INSERT INTO external_platforms (name, domain, login_url, note, settle_note, fetch_mode, sort, req_id) VALUES (?,?,?,?,?,?,?,?)')
+            .bind(name, domain, loginUrl, note, settle, mode, sort, reqId).run();
+          return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0 });
+        } catch (eIns) {
+          /* 唯一索引撞了 = 同一个请求重放，把已有那条还回去 */
+          if (reqId) {
+            const dup2 = await env.DB.prepare('SELECT id FROM external_platforms WHERE req_id = ?').bind(reqId).first();
+            if (dup2) return json({ ok: true, id: dup2.id, dup: true });
+          }
+          throw eIns;
+        }
       }
       if (op === 'platform.del') {
         const id = Number(b.id || 0) || 0;
@@ -275,10 +298,23 @@ export async function onRequestPost(context) {
         return json({ ok: true, id, url_warn: shape.ok ? '' : shape.msg });
       }
 
-      const r = await env.DB.prepare(`INSERT INTO external_links
-        (platform_id, platform, url, url_backup, title, cover, desc_text, desc_media, note, status, url_ok, url_msg, created_by, last_checked)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, datetime('now'))`).bind(...payload, auth.username).run();
-      return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0, url_warn: shape.ok ? '' : shape.msg });
+      const reqId = String(b.reqId || '').slice(0, 60);
+      if (reqId) {
+        const dup = await env.DB.prepare('SELECT id FROM external_links WHERE req_id = ?').bind(reqId).first();
+        if (dup) return json({ ok: true, id: dup.id, dup: true, url_warn: shape.ok ? '' : shape.msg });
+      }
+      try {
+        const r = await env.DB.prepare(`INSERT INTO external_links
+          (platform_id, platform, url, url_backup, title, cover, desc_text, desc_media, note, status, url_ok, url_msg, created_by, last_checked, req_id)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, datetime('now'), ?)`).bind(...payload, auth.username, reqId).run();
+        return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0, url_warn: shape.ok ? '' : shape.msg });
+      } catch (eIns) {
+        if (reqId) {
+          const dup2 = await env.DB.prepare('SELECT id FROM external_links WHERE req_id = ?').bind(reqId).first();
+          if (dup2) return json({ ok: true, id: dup2.id, dup: true, url_warn: shape.ok ? '' : shape.msg });
+        }
+        throw eIns;
+      }
     }
 
     if (op === 'link.del') {

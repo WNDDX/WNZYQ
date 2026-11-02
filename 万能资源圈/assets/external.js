@@ -21,7 +21,16 @@
   function api(path, opt) {
     opt = opt || {};
     var o = { method: opt.method || 'GET', credentials: 'same-origin', headers: {} };
-    if (opt.body != null) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(opt.body); }
+    if (opt.body != null) {
+      var body = opt.body;
+      /* v459 热修：每次写操作带一个唯一 reqId —— Cloudflare 偶尔把同一次 POST 再跑一遍，
+         没有幂等键就会一条变两条（实测过）。后端凭这个键去重。 */
+      if (o.method === 'POST' && body && typeof body === 'object' && !body.reqId) {
+        body.reqId = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      }
+      o.headers['Content-Type'] = 'application/json';
+      o.body = JSON.stringify(body);
+    }
     return fetch('/api/' + path, o).then(function (r) { return r.json(); });
   }
   function toast(msg, type) { if (window.showToast) window.showToast(msg, type || 'info'); }
