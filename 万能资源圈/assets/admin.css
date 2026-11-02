@@ -2359,3 +2359,6 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   .ext-row { flex-wrap: wrap; }
   .ext-side { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; margin-left: 72px; }
 }
+.ext-plist { max-height: min(56vh, 420px); overflow-y: auto; margin-bottom: 6px; }
+.ext-prow { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
+.ext-prow:last-child { border-bottom: none; }

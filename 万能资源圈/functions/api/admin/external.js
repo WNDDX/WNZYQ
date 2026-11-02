@@ -178,6 +178,30 @@ export async function onRequestGet(context) {
     const counts = { all: links.length, onsale: 0, sold: 0, offdown: 0, broken: 0, check: 0 };
     links.forEach(l => { if (counts[l.status] != null) counts[l.status]++; });
 
+    /* v462：导出 CSV（老板要拿出去对结算） */
+    if (url.searchParams.get('format') === 'csv') {
+      const permsOk = isSuper || !!(perms.external && perms.external.export);
+      if (!permsOk) return json({ ok: false, msg: '该功能未开放' }, 403);
+      const ST = { onsale: '在售', sold: '已售出', offdown: '已下架', broken: '链接失效', check: '待核对' };
+      const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""').replace(/\r?\n/g, ' / ') + '"';
+      const head = ['平台', '标题', '状态', '商品链接', '备用链接', '封面图', '描述文字', '描述图或视频', '备注', '上次巡检', '登记时间', '登记人'];
+      const lines = [head.map(cell).join(',')];
+      links.forEach(l => {
+        let media = '';
+        try { media = (JSON.parse(l.desc_media || '[]') || []).map(x => (x.t === 'video' ? '[视频] ' : '') + x.u).join(' | '); } catch (e) { media = ''; }
+        lines.push([l.platform, l.title, ST[l.status] || l.status, l.url, l.url_backup, l.cover, l.desc_text, media, l.note, l.last_checked, l.created_at, l.created_by].map(cell).join(','));
+      });
+      const csv = '\ufeff' + lines.join('\r\n');
+      const fn = '外部链接-' + new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10) + '.csv';
+      return new Response(csv, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': 'attachment; filename="' + encodeURIComponent(fn) + '"; filename*=UTF-8\'\'' + encodeURIComponent(fn)
+        }
+      });
+    }
+
     return json({
       ok: true,
       platforms: pfRes.results || [],

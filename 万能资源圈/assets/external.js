@@ -128,7 +128,9 @@
       '<option value="">全部状态</option>' +
       ['onsale', 'sold', 'offdown', 'broken', 'check'].map(function (k) {
         return '<option value="' + k + '"' + (S.status === k ? ' selected' : '') + '>' + STATUS[k].t + '</option>';
-      }).join('') + '</select></div>' +
+      }).join('') + '</select>' +
+      '<button type="button" class="ext-btn" id="extPatrol" title="把超一天没看的挑出来，逐个点开">巡检</button>' +
+      '<button type="button" class="ext-btn" id="extCsv" title="导出成表格">导出</button></div>' +
       '<div class="ext-list">' + (rows || '<div class="ext-empty">还没有登记链接。点右上「+ 登记链接」，把商品页 Ctrl+A、Ctrl+C，粘到弹窗的框里就行。</div>') + '</div>';
 
     /* 事件 */
@@ -159,6 +161,10 @@
     });
     var stEl = wrap.querySelector('#extStatus');
     if (stEl) stEl.addEventListener('change', function () { S.status = this.value; load(); });
+    var csvBtn = wrap.querySelector('#extCsv');
+    if (csvBtn) csvBtn.addEventListener('click', function () { location.href = '/api/admin/external?format=csv'; });
+    var patrolBtn = wrap.querySelector('#extPatrol');
+    if (patrolBtn) patrolBtn.addEventListener('click', patrolForm);
 
     wrap.querySelectorAll('[data-act]').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -177,6 +183,50 @@
             else toast((r && r.msg) || '删除失败', 'error');
           });
         }
+      });
+    });
+  }
+
+  /* ---------- 巡检（一天一次）：把超一天没看过的挑出来，逐个点开 ---------- */
+  function patrolForm() {
+    var due = S.links.filter(function (l) { return daysSince(l.last_checked) >= 1; });
+    var m = document.createElement('div');
+    m.className = 'modal-mask'; m.id = 'extPatrolMask';
+    var listHtml = due.length ? due.map(function (l) {
+      var st = STATUS[l.status] || STATUS.onsale;
+      return '<div class="ext-prow" data-pid="' + l.id + '">' +
+        '<div style="flex:1 1 auto;min-width:0">' +
+        '<div class="ext-title">' + (esc(l.title) || '（未取到标题）') + '</div>' +
+        '<div class="ext-desc">' + esc(l.platform || '') + ' · ' + fmtWhen(l.last_checked) + ' · ' + st.t + '</div></div>' +
+        '<button type="button" class="ext-btn" data-popen="' + l.id + '">打开</button></div>';
+    }).join('') : '';
+    m.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" style="max-width:560px">' +
+      '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
+      '<h2 class="modal-title">今天该看的（' + due.length + ' 条）</h2>' +
+      (due.length
+        ? '<div class="ext-desc" style="margin-bottom:10px">点「打开」会跳到商品页，同时把这条的巡检时间记成现在。看一条少一条。</div><div class="ext-plist">' + listHtml + '</div>'
+        : '<div class="ext-empty">一天内都看过了，今天不用再巡检。</div>') +
+      '<div class="modal-footer"><button class="modal-close" data-x="1">关闭</button></div></div>';
+    document.body.appendChild(m);
+    requestAnimationFrame(function () { m.classList.add('open'); });
+    function close() { m.classList.remove('open'); setTimeout(function () { m.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180); }
+    m.addEventListener('click', function (e) { if (e.target === m || e.target.closest('[data-x]')) close(); });
+    Array.prototype.forEach.call(m.querySelectorAll('[data-popen]'), function (b) {
+      b.addEventListener('click', function () {
+        var id = Number(b.getAttribute('data-popen'));
+        var l = S.links.filter(function (x) { return Number(x.id) === id; })[0];
+        if (!l) return;
+        try { window.open(l.url, '_blank', 'noopener'); } catch (e) { location.href = l.url; }
+        api('admin/external', { method: 'POST', body: { op: 'link.touch', id: id } }).then(function () {
+          l.last_checked = new Date().toISOString();
+          var row = m.querySelector('.ext-prow[data-pid="' + id + '"]');
+          if (row) { row.style.opacity = '.45'; }
+          b.disabled = true;
+          var left = m.querySelectorAll('.ext-prow:not([style*=".45"])').length;
+          var t = m.querySelector('.modal-title');
+          if (t) t.textContent = '今天该看的（剩 ' + left + ' 条）';
+          if (!left) { if (window.showToast) window.showToast('今天巡检完了', 'success'); setTimeout(close, 600); }
+        });
       });
     });
   }
@@ -260,7 +310,22 @@
   }
 
   /* ---------- 粘贴解析：从富文本 HTML 里取标题 / 封面 / 描述图或视频 ---------- */
-  var BAD_IMG = /(icon|logo|avatar|sprite|placeholder|loading|blank|1x1|spacer|qrcode|qr_)/i;
+  /* v462：实测号卡商城商品页，除了商品图还混着 200x200 的底部 tabbar 图标和 popup-default.png，
+     光按 URL 过滤不够 —— 再加一道「按实际尺寸筛」，小于 200px 的当图标丢掉。 */
+  var BAD_IMG = /(icon|logo|avatar|sprite|placeholder|loading|blank|1x1|spacer|qrcode|qr_|tabbar|popup|default)/i;
+  function filterBigImages(urls, cb) {
+    var marks = [], n = urls.length, done = 0;
+    if (!n) return cb([]);
+    urls.forEach(function (u, i) {
+      var fired = false;
+      function fin(ok) { if (fired) return; fired = true; marks[i] = ok; if (++done === n) cb(urls.filter(function (x, j) { return marks[j]; })); }
+      var im = new Image();
+      im.onload = function () { fin(im.naturalWidth > 200 && im.naturalHeight > 200); };
+      im.onerror = function () { fin(false); };
+      im.src = u;
+      setTimeout(function () { fin(true); }, 4000); /* 加载超时保守保留，别把好图误杀 */
+    });
+  }
   function absolutize(u, base) {
     u = String(u || '').trim();
     if (!u || /^data:/i.test(u) || /^javascript:/i.test(u)) return '';
@@ -373,7 +438,18 @@
       if (got.cover && !m.querySelector('#lkCover').value) m.querySelector('#lkCover').value = got.cover;
       if (got.desc && !m.querySelector('#lkDesc').value) m.querySelector('#lkDesc').value = got.desc;
       if (got.media.length && !m.querySelector('#lkMedia').value.trim()) {
+        var imgs = got.media.filter(function (x) { return x.t === 'image'; }).map(function (x) { return x.u; });
+        var vids = got.media.filter(function (x) { return x.t === 'video'; }).map(function (x) { return x.u; });
         m.querySelector('#lkMedia').value = got.media.map(function (x) { return (x.t === 'video' ? '[视频] ' : '') + x.u; }).join('\n');
+        /* 异步测尺寸：把底部图标这类小图剔掉，提完再回填一次 */
+        filterBigImages(imgs, function (keep) {
+          if (keep.length === imgs.length) return;
+          var lines = keep.map(function (u) { return u; }).concat(vids.map(function (u) { return '[视频] ' + u; }));
+          m.querySelector('#lkMedia').value = lines.join('\n');
+          if (!m.querySelector('#lkCover').value && keep.length) m.querySelector('#lkCover').value = keep[0];
+          var p = m.querySelector('#lkParsed');
+          if (p) p.innerHTML += '（已滤掉 ' + (imgs.length - keep.length) + ' 张小图标）';
+        });
       }
       var stHit = judgeLocal(text + ' ' + (got.desc || '') + ' ' + got.title);
       if (stHit) {
