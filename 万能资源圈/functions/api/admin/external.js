@@ -435,6 +435,16 @@ export async function onRequestPost(context) {
       return json({ ok: true });
     }
 
+    if (op === 'goods.clear') {
+      /* 一次清空某平台采集来的商品（逐条删太慢，实测 240 条要跑几分钟） */
+      const authCl = await requirePerm(env, request, 'external.del');
+      if (authCl instanceof Response) return authCl;
+      const pid = Number(b.platform_id || 0) || 0;
+      if (!pid) return json({ ok: false, msg: '缺少 platform_id' }, 400);
+      const r = await env.DB.prepare('DELETE FROM external_goods WHERE platform_id=?').bind(pid).run();
+      return json({ ok: true, deleted: (r.meta && r.meta.changes) || 0 });
+    }
+
     if (op === 'goods.use') {
       const authU = await requirePerm(env, request, 'external.edit');
       if (authU instanceof Response) return authU;
