@@ -226,6 +226,27 @@
     else body.innerHTML = renderRuns();
   }
 
+  /* 批量操作条（勾选变化时只重画这一块，不重画整个网格——否则连点两个卡片，第二次会点在已被替换的旧节点上，
+     实测「勾 2 个只选中 1 个」） */
+  function actsHtml(n) {
+    return '<div class="extc-tools extc-acts">' +
+      '<button type="button" class="extc-btn" data-act="selpage">选中本页</button>' +
+      '<button type="button" class="extc-btn" data-act="selnone">清空选择</button>' +
+      '<span class="extc-sp"></span>' +
+      (n ? '<button type="button" class="extc-btn primary" data-act="batchuse">批量上架（' + n + '）</button>' : '') +
+      (n ? '<button type="button" class="extc-btn danger" data-act="delbatch">删除选中</button>' : '') +
+      '</div>';
+  }
+  /* 勾选后只刷新「已选 N 个」+ 按钮，网格保持不动 */
+  function refreshSelUI() {
+    if (!S.mask) return;
+    var n = selIds().length;
+    var cnt = S.mask.querySelector('.extc-cnt');
+    if (cnt) cnt.innerHTML = filtered().length + ' 个' + (n ? ' · 已选 <b>' + n + '</b>' : '');
+    var acts = S.mask.querySelector('.extc-acts');
+    if (acts) acts.innerHTML = actsHtml(n);
+  }
+
   function renderGoods() {
     var list = filtered();
     if (!S.goods.length) {
@@ -248,13 +269,7 @@
       '<span class="extc-cnt">' + list.length + ' 个' + (n ? ' · 已选 <b>' + n + '</b>' : '') + '</span>' +
       '</div>';
 
-    var acts = '<div class="extc-tools extc-acts">' +
-      '<button type="button" class="extc-btn" data-act="selpage">选中本页</button>' +
-      '<button type="button" class="extc-btn" data-act="selnone">清空选择</button>' +
-      '<span class="extc-sp"></span>' +
-      (n ? '<button type="button" class="extc-btn primary" data-act="batchuse">批量上架（' + n + '）</button>' : '') +
-      (n ? '<button type="button" class="extc-btn danger" data-act="delbatch">删除选中</button>' : '') +
-      '</div>';
+    var acts = actsHtml(n);
 
     var total = list.length;
     var pages = Math.max(1, Math.ceil(total / S.pageSize));
@@ -332,7 +347,17 @@
     var card = b.closest('.extc-card');
     var id = card ? Number(card.getAttribute('data-id')) : 0;
 
-    if (act === 'pick') { S.sel[id] = !S.sel[id]; render(); return; }
+    if (act === 'pick') {
+      S.sel[id] = !S.sel[id];
+      var on = !!S.sel[id];
+      if (card) {
+        card.classList.toggle('on', on);
+        var ck = card.querySelector('.extc-ck');
+        if (ck) ck.textContent = on ? '✓' : '';
+      }
+      refreshSelUI();
+      return;
+    }
     if (act === 'selpage') {
       filtered().slice((S.page - 1) * S.pageSize, S.page * S.pageSize).forEach(function (g) { S.sel[g.id] = true; });
       render(); return;
