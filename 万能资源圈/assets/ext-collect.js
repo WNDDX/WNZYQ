@@ -83,6 +83,18 @@
       if (wrap && wrap.parentNode) wrap.parentNode.replaceChild(plain, wrap);
       else if (raw.parentNode) raw.parentNode.replaceChild(plain, raw);
     });
+    /* 换完再扫一遍：自制下拉的「显示层」（那截带箭头的『字体 ▸』）如果和原生 select 挤在一起，
+       就是没清干净的旧壳，删掉——实测截图里出现「字体 ▸ 字体」两个。 */
+    Array.prototype.forEach.call(bar.querySelectorAll('.cat-picker-display, .cpd-arrow'), function (d) {
+      try {
+        var host = d.parentNode;
+        if (host && host.querySelector && host.querySelector('select')) d.remove();
+        else if (host && host.parentNode && host.parentNode.querySelector && host.parentNode.querySelector('select') && !host.querySelector('select')) host.remove();
+      } catch (e) {}
+    });
+    Array.prototype.forEach.call(bar.querySelectorAll('.select-picker'), function (w) {
+      if (!w.querySelector('select')) { try { w.remove(); } catch (e) {} }
+    });
 
     var ed = document.createElement('div');
     ed.className = 'rte-editor';
