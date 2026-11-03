@@ -404,15 +404,35 @@ export async function onRequestPost(context) {
       catch (e) { return json({ ok: false, msg: '抓取超时或对方拒绝（' + (e && e.message || '') + '）' }, 200); }
       if (!pg.ok) return json({ ok: false, msg: '打不开这个商城（HTTP ' + pg.status + '）' }, 200);
 
-      const list = parseGoodsList(pg.text, mall);
+      let list = parseGoodsList(pg.text, mall);
+      let fixedAddr = '';
+      /* v490（老板实测「录入两个平台都不行」的第一个原因）：填的地址常常是首页/入口页——
+         页面本身是壳，资源列表靠浏览器里的 JS 拉（服务端拿不到）。很多同类站的真列表在
+         /article/goods 这类固定路径上（实测 55555.wang 就是：首页壳、/article/goods 有 20 条）。
+         所以这里自动试一遍同域常见路径，能抓到就按那个地址入库，并告诉老板地址已自动换掉。 */
       if (!list.length) {
-        const shell = pg.text.length < 4000;   /* 空壳：前端渲染，服务端拿不到数据 */
+        try {
+          const u0 = new URL(mall);
+          const cands = ['/article/goods', '/article/goods/', '/goods', '/shop', '/goodslist', '/product', '/list'];
+          for (const c of cands) {
+            if (u0.pathname === c) continue;
+            let pg2;
+            try { pg2 = await fetchPage(u0.origin + c, 10000); } catch (e) { continue; }
+            if (!pg2.ok) continue;
+            const l2 = parseGoodsList(pg2.text, u0.origin + c);
+            if (l2.length >= 3) { list = l2; fixedAddr = u0.origin + c; break; }
+          }
+        } catch (e) {}
+      }
+      if (!list.length) {
+        const shell = pg.text.length < 4000 || /<!-- 商品将通过JS动态加载|id="productList"\s*>\s*</i.test(pg.text);
         return json({
           ok: false, zero: true, shell: shell,
           bytes: pg.text.length,
           msg: shell
-            ? '这个平台是前端渲染的站（服务器只拿到 ' + pg.text.length + ' 字节空壳，商品数据靠 JS 拉）。改用「粘链接」或「粘整页内容」一条条加。'
-            : '页面能打开（' + pg.text.length + ' 字节），但这种排版我没见过，解析不出商品。把商城地址发我，我针对它调规则。'
+            ? '这个地址是首页壳（资源要靠浏览器里的 JS 才加载出来，服务端抓不到），同域的常见列表页也没探到。两个办法：①去对方平台翻到真正的资源列表页，把那条地址换上再采集 ②用「粘贴」一条条加'
+            : '页面能打开（' + pg.text.length + ' 字节），但这种排版我没见过，解析不出。用「粘贴」兜底，或把商城地址发我，我针对它调规则。',
+          tip: shell ? '首页壳 → 换列表页地址或用粘贴' : '排版没见过 → 用粘贴兜底'
         }, 200);
       }
       /* 入库：同平台 + 同标题 视为同一个（封面可能变） */
@@ -431,6 +451,7 @@ export async function onRequestPost(context) {
       }
       return json({
         ok: true, found: list.length, added, dup, saved: cap, bytes: pg.text.length,
+        fixed_addr: fixedAddr,
         samples: list.slice(0, 5).map(function (x) { return x.title; })
       });
     }
