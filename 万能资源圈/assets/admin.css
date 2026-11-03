@@ -2409,6 +2409,10 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .modal-mask#extcSeeMask > .modal-box { max-width: var(--modal-w-xl); }
 .modal-mask#extcEditMask > .modal-box { max-width: var(--modal-w-md); }
 /* 弹窗内的编辑器：工具栏按 group 换行，别一组一行 */
-.modal-mask .rte-toolbar { flex-wrap: wrap; gap: 4px; }
+/* v505：这条也是「收起态失效」的同伙——同特异性、位置在后，把 .rte-collapsed 的 nowrap 顶掉。
+   改成只作用于非收起态；收起态的内层 .rte-group 也必须 nowrap，否则组内照样换行。 */
+.modal-mask .rte-toolbar { gap: 4px; }
+.modal-mask .rte-toolbar:not(.rte-collapsed) { flex-wrap: wrap; }
 .modal-mask .rte-toolbar .rte-group { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.modal-mask .rte-toolbar.rte-collapsed .rte-group { flex-wrap: nowrap; }
 
