@@ -79,15 +79,31 @@
   /* 克隆过来的自制下拉：显示层点开、选项点了要回写到 select 并派发 change */
   function bindPicker(bar, editor) {
     Array.prototype.forEach.call(bar.querySelectorAll('.select-picker'), function (pk) {
+      /* v491：系统的结构是「holder(.select-picker) 插在原生 select 前面，select 留在原位并 display:none」
+         —— select 是 holder 的**兄弟**，不在里面。上一版在容器内找 select 找不到就直接 return，
+         于是字体/字号点开毫无反应。这里改成：先找自己，再找下一个兄弟，最后在父级里找。 */
       var sel = pk.querySelector('select');
+      if (!sel) {
+        var nx = pk.nextElementSibling;
+        if (nx && nx.tagName === 'SELECT') sel = nx;
+        else if (pk.parentNode) sel = pk.parentNode.querySelector('select');
+      }
       var disp = pk.querySelector('.cat-picker-display');
-      var panel = pk.querySelector('.cat-picker-panel');
       if (!sel || !disp) return;
+
+      /* 面板自己重建并自己定位：系统的面板是丢到页面上的浮层，克隆带不过来，
+         而且位置依赖它自己的算法。这里做成相对 holder 的绝对定位，样式沿用系统的 .cp-item。 */
+      var panel = pk.querySelector('.cat-picker-panel');
       if (!panel) {
         panel = document.createElement('div');
         panel.className = 'cat-picker-panel';
         pk.appendChild(panel);
       }
+      try { pk.style.position = 'relative'; } catch (e0) {}
+      panel.style.cssText = 'position:absolute;left:0;top:100%;margin-top:4px;min-width:100%;width:auto;' +
+        'max-height:220px;overflow-y:auto;z-index:60;display:none;background:var(--card-bg,#fff);' +
+        'border:1px solid var(--border,#e3e9ef);border-radius:10px;box-shadow:0 8px 22px rgba(15,35,60,.14);padding:4px;';
+
       var txt = disp.querySelector('.cpd-text') || disp;
       panel.innerHTML = Array.prototype.map.call(sel.options, function (o) {
         return '<div class="cp-item" data-v="' + esc(o.value) + '">' + esc(o.textContent) + '</div>';
@@ -97,9 +113,13 @@
 
       disp.addEventListener('click', function (e) {
         e.preventDefault(); e.stopPropagation();
-        var open = !panel.classList.contains('open');
-        panel.classList.toggle('open', open);
-        pk.classList.toggle('open', open);
+        var willOpen = panel.style.display === 'none';
+        /* 先把别的面板关掉 */
+        Array.prototype.forEach.call(bar.querySelectorAll('.cat-picker-panel'), function (p2) {
+          if (p2 !== panel) p2.style.display = 'none';
+        });
+        panel.style.display = willOpen ? 'block' : 'none';
+        pk.classList.toggle('open', willOpen);
       });
       panel.addEventListener('click', function (e) {
         var it = e.target.closest ? e.target.closest('.cp-item') : null;
@@ -107,16 +127,18 @@
         e.preventDefault(); e.stopPropagation();
         sel.value = it.getAttribute('data-v');
         txt.textContent = it.textContent;
-        panel.classList.remove('open');
+        txt.classList.toggle('placeholder', !sel.value);
+        panel.style.display = 'none';
         pk.classList.remove('open');
         try { sel.dispatchEvent(new Event('change', { bubbles: true })); } catch (e2) {}
         try { if (editor) editor.focus({ preventScroll: true }); } catch (e3) {}
       });
     });
-    /* 点空白处收起所有面板 */
+    /* 点别处收起面板 */
     setTimeout(function () {
-      document.addEventListener('click', function () {
-        Array.prototype.forEach.call(bar.querySelectorAll('.cat-picker-panel.open'), function (p) { p.classList.remove('open'); });
+      document.addEventListener('click', function (ev) {
+        if (ev.target.closest && ev.target.closest('.select-picker')) return;
+        Array.prototype.forEach.call(bar.querySelectorAll('.cat-picker-panel'), function (p) { p.style.display = 'none'; });
         Array.prototype.forEach.call(bar.querySelectorAll('.select-picker.open'), function (p) { p.classList.remove('open'); });
       });
     }, 0);

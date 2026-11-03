@@ -2366,15 +2366,15 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* ===== v470 外部商品采集弹窗 ===== */
 .extc-box { display: flex; flex-direction: column; max-height: 88vh; max-height: 88dvh; }
 .extc-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.extc-sel { height: 32px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text); padding: 0 8px; min-width: 150px; }
-.extc-btn { height: 30px; padding: 0 12px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; white-space: nowrap; }
+.extc-sel { height: 34px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-btn,10px); background: var(--card-bg); color: var(--text); padding: 0 10px; min-width: 150px; }
+.extc-btn { height: 34px; padding: 0 14px; font-size: 13px; border-radius: var(--radius-btn,10px); border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; white-space: nowrap; }
 .extc-btn:hover { border-color: var(--blue1); color: var(--blue1); }
-.extc-btn.primary { border-color: var(--blue1); color: var(--blue1); font-weight: 600; }
+.extc-btn.primary { border-color: var(--blue1); background: var(--blue1); color: var(--text-on-brand,#fff); font-weight: 600; }
 .extc-btn.danger { color: #c62828; border-color: #e0a0a0; }
 .extc-btn:disabled { opacity: .55; cursor: default; }
 .extc-hint { font-size: 11px; color: var(--text-faint); flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .extc-tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
-.extc-tab { border: none; background: transparent; font-size: 13px; color: var(--text-light); padding: 7px 10px; cursor: pointer; border-bottom: 2px solid transparent; }
+.extc-tab { border: none; background: transparent; font-size: 14px; color: var(--text-light); padding: 9px 12px; cursor: pointer; border-bottom: 2px solid transparent; }
 .extc-tab i { font-style: normal; font-size: 11px; opacity: .65; margin-left: 2px; }
 .extc-tab.on { color: var(--blue1); border-bottom-color: var(--blue1); font-weight: 600; }
 .extc-link { margin-left: auto; border: none; background: transparent; color: var(--blue1); font-size: 12px; cursor: pointer; padding: 4px 6px; }
@@ -2389,7 +2389,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-t { font-size: 12px; color: var(--text); line-height: 1.4; padding: 6px 7px 0; height: 40px; overflow: hidden; }
 .extc-m { font-size: 11px; color: var(--text-faint); padding: 2px 7px 4px; }
 .extc-ops { display: flex; gap: 4px; padding: 0 7px 7px; }
-.extc-mini { flex: 1 1 auto; height: 24px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; padding: 0 4px; }
+.extc-mini { flex: 1 1 auto; height: 28px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; padding: 0 6px; }
 .extc-mini:hover { border-color: var(--blue1); color: var(--blue1); }
 .extc-mini.on { border-color: var(--blue1); color: var(--blue1); background: rgba(var(--blue1-rgb, 30,136,229), .08); }
 .extc-mini.primary { color: var(--blue1); border-color: var(--blue1); }
@@ -2408,8 +2408,8 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 
 /* ===== v473 采集弹窗补齐（搜索/分页/勾选/上架确认/粘贴/导入） ===== */
 .extc-mbody { max-height: min(64vh, 64dvh); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
-.extc-search { flex: 1 1 160px; min-width: 0; height: 30px; padding: 0 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text); }
-.extc-sel2 { height: 30px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text); padding: 0 6px; }
+.extc-search { flex: 1 1 160px; min-width: 0; height: 34px; padding: 0 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-btn,10px); background: var(--card-bg); color: var(--text); }
+.extc-sel2 { height: 34px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-btn,10px); background: var(--card-bg); color: var(--text); padding: 0 8px; }
 .extc-cnt { font-size: 12px; color: var(--text-light); white-space: nowrap; }
 .extc-cnt b { color: var(--blue1); font-style: normal; }
 .extc-tools .extc-cnt i { font-style: normal; }
