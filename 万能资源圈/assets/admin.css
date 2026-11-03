@@ -226,7 +226,7 @@
     /* .tab 按钮样式已抽入 ui-common.css 全站公共组件（与资源页顶栏咨询客服/分享同一份，零复制） */
     .topbar-right { display: flex; align-items: center; gap: 8px; color: var(--text-on-brand, #fff); font-size: 14px; }
     /* ---------- v386 信息中心 ---------- */
-    .modal-mask#infoCtMask > .modal-box { max-width: 520px; } /* v386 规整：宽度对齐资源页公告弹窗（520px） */
+    .modal-mask#infoCtMask > .modal-box { max-width: var(--modal-w-md); } /* v386 规整：宽度对齐资源页公告弹窗（520px） */
     /* 顶栏信息键：复用 .tab 键规格（与资源页公告键同一组），深色顶栏适配同 tabs 配色 */
     /* v389-16：设置行两字/四字键宽度收紧（内联 24px 内距统一压到 16px） */
     .setting-row .btn-blue, .setting-row button[class*="btn"] { padding-left: 16px !important; padding-right: 16px !important; }
@@ -700,24 +700,24 @@
       padding: 24px 24px; text-align: left; animation: modalIn var(--dur-mid) var(--ease-out);
     }
     .modal-box img, .modal-box video { max-width: 100%; height: auto; display: block; }
-    .modal-wide { max-width: 520px; }
+    .modal-wide { max-width: var(--modal-w-md); }
     /* 按内容量分配档位：大(编辑资源/公告/绑定设备清单 R94) 中(分类/批量改分类) 小(密码/客服/输入/确认/类型) */
-    .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box, .modal-mask#bindingsMask > .modal-box { max-width: 680px; }
-    .modal-mask#infoMask > .modal-box { max-width: 480px; } /* v384：设置信息弹窗宽度对齐导航页弹窗（480px） */
+    .modal-mask#editMask > .modal-box, .modal-mask#annMask > .modal-box { max-width: var(--modal-w-lg); }
+    .modal-mask#infoMask > .modal-box { max-width: var(--modal-w-sm); } /* v384：设置信息弹窗宽度对齐导航页弹窗（480px） */
     /* v402 条7：原「设置信息实时预览弹窗」scoped 样式块（v385 条1，约 30 行）随结构删除——预览统一走 ui-common kf-box 唯一源 */
     /* R223：资源码详情合并表 8 列——弹窗加宽（后写的规则生效） */
-    .modal-mask#bindingsMask > .modal-box { max-width: 880px; }
+    .modal-mask#bindingsMask > .modal-box { max-width: var(--modal-w-xl); }
     /* R225：窄屏（≤600px）合并表操作列「解绑」按钮完整显示——.stat-table 为 table-layout:fixed + td overflow:hidden，
        390 下操作列均分宽 < 按钮默认 padding 宽会被裁剪；缩 padding/字号并禁换行即可放下（桌面 880px 不受媒体查询影响） */
     @media (max-width: 600px) {
       #bindingsTable .row-btn { padding: 4px 4px; font-size: 12px; white-space: nowrap; }
     }
-    .modal-mask#catMask > .modal-box, .modal-mask#batchCatMask > .modal-box { max-width: 520px; }
+    .modal-mask#catMask > .modal-box, .modal-mask#batchCatMask > .modal-box { max-width: var(--modal-w-md); }
     /* v442 条1（老板反馈：平台设置四个弹窗太小气）：批量导入/系统体检/账号管理(+表单)/数据缓存
        内容都偏多，统一升到 680px 大弹窗档（对齐编辑资源/公告弹窗规矩） */
     .modal-mask#importMask > .modal-box, .modal-mask#sysCheckMask > .modal-box,
     .modal-mask#usersMask > .modal-box, .modal-mask#usFormMask > .modal-box,
-    .modal-mask#recycleMask > .modal-box { max-width: 680px; }
+    .modal-mask#recycleMask > .modal-box { max-width: var(--modal-w-lg); }
     /* 弹窗宽度由各弹窗 modal-wide/modal-lg 类控制 */
     /* R231 条10：maskIn 已抽公共到 ui-common.css */
     /* R231 条10：modalIn 已抽公共到 ui-common.css */
@@ -1036,7 +1036,7 @@
     /* R15：预览弹窗与资源页资源弹窗逐项完全同步（尺寸/字号/颜色/按键宽度/动画/移动端全一致）
        同步目标：shop.html 的 .modal-wrap(680px) / .modal-cover / .modal-title / .modal-price /
        .modal-desc / .modal-detail / .variant-tab(s) / .variant-detail / .btn-contact / .btn-close-modal */
-    #previewMask > .modal-box { max-width: 680px; }
+    #previewMask > .modal-box { max-width: var(--modal-w-lg); }
     #previewMask .preview-body { padding: 16px 20px var(--page-bottom-gap, 24px); } /* R285 条27：底部留白三页统一（对齐 shop R229 拍板口径） */
     #previewMask .preview-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
     #previewMask .preview-title { font-size: 20px; font-weight: 700; color: var(--text); flex: 1; line-height: 1.4; letter-spacing:var(--ls-btn,0.8px); padding-right: 36px; }
@@ -1470,9 +1470,9 @@
     #productList, #catList { transition: opacity var(--dur-fast) ease; }
     .stat-card { animation: rowIn var(--dur-mid) ease; }
     /* === 弹窗三档统一尺寸 === */
-    .modal-mask#confirmMask > .modal-box, .modal-mask#pwdMask > .modal-box, .modal-mask#inputMask > .modal-box { max-width: 480px !important; }
-    .modal-mask#batchCatMask > .modal-box { max-width: 560px !important; }
-    .modal-mask#annMask > .modal-box { max-width: 660px !important; }
+    .modal-mask#confirmMask > .modal-box, .modal-mask#pwdMask > .modal-box, .modal-mask#inputMask > .modal-box { max-width: var(--modal-w-sm) !important; }
+    /* v496：batchCatMask 宽度并入 --modal-w-md（原 520/560 两条互相覆盖，以 520 为准） */
+    /* v496：annMask 宽度并入 --modal-w-lg（原 680/660 两条互相覆盖，以 680 为准） */
     /* 管理页 logo 栏与资源页完全一致（复用 shop 样式：名称始终显示、自然宽度） */
     .topbar-brand { flex: 0 0 auto !important; min-width: 0; gap: 12px !important; }
     .topbar-brand span { display: inline !important; }
@@ -2307,62 +2307,6 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .modal-mask .modal-box .usf-body,
 .modal-mask .modal-box > div[class*="form"] { overscroll-behavior: auto !important; }
 
-/* ===== v459 外部链接台账 ===== */
-.ext-pfbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-.ext-chip { height: 30px; padding: 0 12px; border-radius: var(--r-pill, 999px); border: 1px solid var(--border); background: var(--card-bg); color: var(--text-light); font-size: 12px; cursor: pointer; white-space: nowrap; }
-.ext-chip i { font-style: normal; opacity: .7; margin-left: 2px; }
-.ext-chip.on { border-color: var(--blue1); color: var(--blue1); background: rgba(var(--blue1-rgb, 30,136,229), .08); font-weight: 600; }
-.ext-chip.ghost { border-style: dashed; color: var(--text-faint); }
-.ext-note { padding: 11px 13px; border-radius: var(--r-m, 8px); background: var(--bg-light, #f5f8fb); margin-bottom: 12px; }
-.ext-note-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
-.ext-note-hd b { font-size: 13px; color: var(--text); }
-.ext-linkbtn { border: none; background: transparent; color: var(--blue1); font-size: 12px; cursor: pointer; padding: 2px 4px; }
-.ext-note-body { font-size: 12px; color: var(--text-light); line-height: 1.7; }
-.ext-note-settle { font-size: 11px; color: var(--text-faint); margin-top: 5px; }
-.ext-toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
-.ext-search { flex: 1 1 auto; min-width: 0; height: 32px; padding: 0 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text); }
-.ext-sel { height: 32px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text); padding: 0 6px; }
-.ext-list { display: flex; flex-direction: column; gap: 8px; }
-.ext-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--r-m, 8px); background: var(--card-bg); }
-.ext-row.st-bad { border-color: #e8b4b4; background: #fdf5f5; }
-.ext-row.st-warn { border-color: #ead9b0; }
-.ext-thumb-box { width: 60px; height: 60px; flex: none; border-radius: 8px; background: var(--bg-light, #eef2f6); overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.ext-thumb-box.no-img::after { content: '无图'; font-size: 11px; color: var(--text-faint); }
-.ext-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ext-main { flex: 1 1 auto; min-width: 0; }
-.ext-title { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ext-desc { font-size: 11px; color: var(--text-light); margin-top: 4px; }
-.ext-note-line { font-size: 11px; color: var(--text-faint); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ext-warn { font-size: 11px; color: #c62828; margin-top: 4px; }
-.ext-side { flex: none; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-.ext-badge { font-size: 11px; padding: 1px 7px; border-radius: 6px; }
-.ext-badge.ok { color: #1b7f3b; background: rgba(1,192,0,.12); }
-.ext-badge.sold { color: #1565c0; background: rgba(30,136,229,.12); }
-.ext-badge.off { color: #6b7b8a; background: rgba(120,144,156,.14); }
-.ext-badge.bad { color: #c62828; background: #fdeaea; }
-.ext-badge.warn { color: #a2650b; background: #fdf3e2; }
-.ext-when { font-size: 11px; color: var(--text-faint); }
-.ext-when.old { color: #b07b12; }
-.ext-ops { display: flex; gap: 5px; }
-.ext-btn { height: 26px; padding: 0 9px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; white-space: nowrap; }
-.ext-btn:hover { border-color: var(--blue1); color: var(--blue1); }
-.ext-btn.danger { color: #c62828; border-color: #e0a0a0; }
-.ext-btn.danger:hover { background: #fdeaea; }
-.ext-empty { text-align: center; color: var(--text-faint); font-size: 12px; padding: 26px 12px; line-height: 1.8; }
-.ext-paste-hint { font-size: 12px; color: var(--text-light); line-height: 1.7; background: rgba(var(--blue1-rgb, 30,136,229), .06); border: 1px dashed rgba(var(--blue1-rgb, 30,136,229), .35); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
-.ext-paste { width: 100%; margin-bottom: 6px; }
-.ext-parsed { font-size: 11px; color: #1b7f3b; margin-bottom: 8px; min-height: 14px; }
-.ext-urlwarn { font-size: 11px; margin: -2px 0 8px; }
-.ext-urlwarn.bad { color: #c62828; }
-.ext-urlwarn.warn { color: #a2650b; }
-.ext-form label { margin-top: 8px; }
-@media (max-width: 600px) {
-  .ext-row { flex-wrap: wrap; }
-  .ext-side { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; margin-left: 72px; }
-}
-.ext-plist { max-height: min(56vh, 420px); overflow-y: auto; margin-bottom: 6px; }
-.ext-prow { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
-.ext-prow:last-child { border-bottom: none; }
 
 /* ===== v470 外部商品采集弹窗 ===== */
 .extc-box { display: flex; flex-direction: column; max-height: 88vh; max-height: 88dvh; }
@@ -2371,7 +2315,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-btn { height: 34px; padding: 0 14px; font-size: 13px; border-radius: var(--radius-btn,10px); border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; white-space: nowrap; }
 .extc-btn:hover { border-color: var(--blue1); color: var(--blue1); }
 .extc-btn.primary { border-color: var(--blue1); background: var(--blue1); color: var(--text-on-brand,#fff); font-weight: 600; }
-.extc-btn.danger { color: #c62828; border-color: #e0a0a0; }
+.extc-btn.danger { color: var(--red-strong); border-color: var(--danger-border); }
 .extc-btn:disabled { opacity: .55; cursor: default; }
 .extc-hint { font-size: 11px; color: var(--text-faint); flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .extc-tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
@@ -2383,18 +2327,18 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: var(--text-light); }
 .extc-sp { flex: 1 1 auto; }
 .extc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-.extc-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--card-bg); display: flex; flex-direction: column; }
+.extc-card { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card-bg); display: flex; flex-direction: column; }
 .extc-card.on { border-color: var(--blue1); box-shadow: 0 0 0 1px var(--blue1) inset; }
 .extc-thumb { height: 96px; background: var(--bg-light, #eef2f6); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .extc-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .extc-t { font-size: 12px; color: var(--text); line-height: 1.4; padding: 6px 7px 0; height: 40px; overflow: hidden; }
 .extc-m { font-size: 11px; color: var(--text-faint); padding: 2px 7px 4px; }
 .extc-ops { display: flex; gap: 4px; padding: 0 7px 7px; }
-.extc-mini { flex: 1 1 auto; height: 28px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; padding: 0 6px; }
+.extc-mini { flex: 1 1 auto; height: 28px; font-size: 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; padding: 0 6px; }
 .extc-mini:hover { border-color: var(--blue1); color: var(--blue1); }
 .extc-mini.on { border-color: var(--blue1); color: var(--blue1); background: rgba(var(--blue1-rgb, 30,136,229), .08); }
 .extc-mini.primary { color: var(--blue1); border-color: var(--blue1); }
-.extc-mini.danger { color: #c62828; border-color: #e8c0c0; }
+.extc-mini.danger { color: var(--red); border-color: var(--danger-border); }
 .extc-empty { text-align: center; color: var(--text-faint); font-size: 12px; padding: 30px 14px; line-height: 1.9; }
 .extc-plist { display: flex; flex-direction: column; }
 .extc-prow { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
@@ -2416,11 +2360,11 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-tools .extc-cnt i { font-style: normal; }
 .extc-acts { margin-top: -2px; }
 .extc-thumb { position: relative; }
-.extc-thumb .extc-ck { position: absolute; right: 6px; top: 6px; width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,.9); border: 1px solid var(--border); color: transparent; font-size: 12px; line-height: 16px; text-align: center; }
-.extc-card.on .extc-thumb .extc-ck { background: var(--blue1); border-color: var(--blue1); color: #fff; }
+.extc-thumb .extc-ck { position: absolute; right: 6px; top: 6px; width: 18px; height: 18px; border-radius: 50%; background: rgba(var(--white-rgb),.9); border: 1px solid var(--border); color: transparent; font-size: 12px; line-height: 16px; text-align: center; }
+.extc-card.on .extc-thumb .extc-ck { background: var(--blue1); border-color: var(--blue1); color: var(--text-on-brand); }
 .extc-thumb .extc-noimg { font-size: 11px; color: var(--text-faint); }
 .extc-thumb.noimg { background: repeating-linear-gradient(45deg, var(--bg-light,#eef2f6), var(--bg-light,#eef2f6) 6px, var(--card-bg) 6px, var(--card-bg) 12px); }
-.extc-used { position: absolute; left: 6px; bottom: 6px; font-size: 10px; line-height: 15px; padding: 0 6px; border-radius: 4px; background: rgba(1,192,0,.9); color: #fff; }
+.extc-used { position: absolute; left: 6px; bottom: 6px; font-size: 10px; line-height: 15px; padding: 0 6px; border-radius: 4px; background: rgba(var(--green-rgb),.9); color: #fff; }
 .extc-card.is-used { opacity: .78; }
 .extc-card.is-used .extc-t { color: var(--text-light); }
 .extc-pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; font-size: 12px; color: var(--text-light); }
@@ -2444,7 +2388,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-coverpreview { margin-top: 8px; }
 .extc-coverpreview img { max-height: 110px; border-radius: 6px; border: 1px solid var(--border); }
 .extc-badge { font-size: 10px; padding: 1px 6px; border-radius: 5px; }
-.extc-badge.ok { color: #1b7f3b; background: rgba(1,192,0,.13); }
+.extc-badge.ok { color: #1b7f3b; background: rgba(var(--green-rgb),.13); }
 .extc-badge.bad { color: #c62828; background: #fdeaea; }
 /* 弹窗内的 rte：工具条可以换行，编辑器给个合适高度 */
 .modal-mask .rte-toolbar { flex-wrap: wrap; }
@@ -2452,11 +2396,12 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 
 
 /* ===== v493 资源采集弹窗宽度档位（对齐系统：编辑资源 680 / 绑定清单 880 同一套思路） ===== */
-.modal-mask#extcMask > .modal-box.extc-box { max-width: 940px; }        /* 主弹窗：资源网格要放得下 */
-.modal-mask#extcPfMask > .modal-box { max-width: 760px; }              /* 平台档案：要放整个富文本工具栏 */
-.modal-mask#extcPasteMask > .modal-box { max-width: 620px; }
-.modal-mask#extcSeeMask > .modal-box { max-width: 760px; }
-.modal-mask#extcEditMask > .modal-box { max-width: 560px; }
+.modal-mask#extcMask > .modal-box.extc-box { max-width: var(--modal-w-2xl); }        /* 主弹窗：资源网格要放得下 */
+.modal-mask#extcPfMask > .modal-box { max-width: var(--modal-w-xl); }              /* 平台档案：要放整个富文本工具栏 */
+.modal-mask#extcPasteMask > .modal-box { max-width: var(--modal-w-lg); }
+.modal-mask#extcSeeMask > .modal-box { max-width: var(--modal-w-xl); }
+.modal-mask#extcEditMask > .modal-box { max-width: var(--modal-w-md); }
 /* 弹窗内的编辑器：工具栏按 group 换行，别一组一行 */
 .modal-mask .rte-toolbar { flex-wrap: wrap; gap: 4px; }
 .modal-mask .rte-toolbar .rte-group { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+

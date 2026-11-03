@@ -576,7 +576,13 @@ if ('serviceWorker' in navigator) {
       var x = mask.querySelector('.modal-close-x');
       if (x) x.addEventListener('click', close);
       window.lockBodyScroll ? window.lockBodyScroll(true) : (document.body.style.overflow = 'hidden');
-    } catch (e) { /* 弹窗失败时回退系统 alert，保证提示不丢失 */ try { window.alert(msg); } catch (e2) { if (window.__silent) window.__silent(e2); } }
+    } catch (e) { /* v496：弹窗失败时的兜底不再是 alert（规范禁止 alert/prompt/confirm）——
+       先退到页面级 toast，再退到控制台，提示不丢失也不打断用户操作 */
+      try {
+        if (typeof window.showToast === 'function') { window.showToast(msg, 'info'); return; }
+      } catch (e2) { if (window.__silent) window.__silent(e2); }
+      try { console.warn('[提示] ' + msg); } catch (e3) {}
+    }
   };
 
   // ===== R14 全站统一「分享链接」弹窗（复刻资源页分享本站弹窗观感：400px 白卡/标题/tip/链接/确定）=====

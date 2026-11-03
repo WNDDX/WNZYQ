@@ -35,6 +35,11 @@
       .catch(function () { return { ok: false, msg: '网络超时或中断，请重试' }; });
   }
   function toast(m, t) { if (window.showToast) window.showToast(m, t || 'info'); }
+  /* v496：空态统一走系统唯一源 __adminEmpty（插画 + 标题 + 说明），不再自写一行灰字 */
+  function empty(title, hint) {
+    if (window.__adminEmpty) return window.__adminEmpty(title, hint);
+    return '<div class="extc-empty">' + esc(title) + (hint ? '<br>' + esc(hint) : '') + '</div>';
+  }
   function selIds() { return Object.keys(S.sel).filter(function (k) { return S.sel[k]; }).map(Number); }
   function nowStr() {
     var d = new Date(), p = function (n) { return n < 10 ? '0' + n : '' + n; };
@@ -290,9 +295,7 @@
   function renderGoods() {
     var list = filtered();
     if (!S.goods.length) {
-      return '<div class="extc-empty">资源池是空的。<br><br>' +
-        '① 选一个平台点「采集」——填对商城地址能一次抓一批<br>' +
-        '② 抓不到的点「粘贴」——粘链接或整页内容，一条条加</div>';
+      return empty('资源池是空的', '选一个平台点「采集」一次抓一批；抓不到的点「粘贴」，粘链接或整页内容一条条加');
     }
     var n = selIds().length;
     var cur = S.platforms.filter(function (p) { return Number(p.id) === Number(S.curPf); })[0];
@@ -344,12 +347,12 @@
 
   function renderPlatforms() {
     if (!S.platforms.length) {
-      return '<div class="extc-empty">还没有平台。<br>点右上「+ 添加平台」，填平台名和商城地址（你在那边看资源列表的那一页）。</div>';
+      return empty('还没有平台', '点右上「+ 添加平台」，填平台名和商城地址（你在那边看资源列表的那一页）');
     }
     var rows = S.platforms.map(function (p) {
       var cnt = S.goods.filter(function (g) { return Number(g.platform_id) === Number(p.id); }).length;
       return '<div class="extc-prow" data-pid="' + p.id + '">' +
-        '<div class="extc-pmain"><b>' + esc(p.name) + ' <i class="extc-cnt">' + cnt + ' 条资源</i></b>' +
+        '<div class="extc-pmain"><b>' + esc(p.name) + ' <i class="extc-cnt">' + cnt + ' 个资源</i></b>' +
         '<span class="extc-plink">' + esc(p.mall_url || '（没填商城地址，采集不了）') + '</span></div>' +
         '<div class="extc-pops">' +
         '<button type="button" class="extc-mini" data-act="runpf">采集</button>' +
@@ -363,7 +366,7 @@
 
   function renderRuns() {
     if (!S.runs.length) {
-      return '<div class="extc-empty">还没有采集记录。<br>点「采集」后，成功的、失败的都会记在这里；失败的能看到原因并重试。</div>';
+      return empty('还没有采集记录', '点「采集」后，成功的、失败的都会记在这里；失败的能看到原因并重试');
     }
     return '<div class="extc-plist">' + S.runs.map(function (r, i) {
       var cls = r.ok ? 'ok' : 'bad';

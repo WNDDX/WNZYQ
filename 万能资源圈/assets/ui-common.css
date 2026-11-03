@@ -55,6 +55,14 @@
   --radius: 8px;         /* 小件档（小按钮/标签/输入类） */
   --radius-btn: 10px;    /* 普通档（普通按钮/卡片/图框） */
   --radius-lg: 12px;     /* 大件档（弹窗） */
+  /* ===== 弹窗宽度刻度（唯一源｜v496 统一）=====
+     全站弹窗只允许用这五档，按内容量取档；禁止再在 admin.css 里写裸 px 宽度。
+     480 单列表单/确认框 ｜ 520 分类·信息 ｜ 680 编辑资源·公告·导入·体检 ｜ 880 宽表·多图 ｜ 940 网格池 */
+  --modal-w-sm: 480px;
+  --modal-w-md: 520px;
+  --modal-w-lg: 680px;
+  --modal-w-xl: 880px;
+  --modal-w-2xl: 940px;
   /* ===== 遮罩两档 ===== */
   --overlay-modal: rgba(0, 0, 0, 0.76);    /* 普通弹窗 */
   --overlay-lightbox: rgba(0, 0, 0, 0.92); /* 全屏灯箱 */
@@ -667,7 +675,7 @@ mark.hl { background: rgba(var(--green-rgb, 1,192,0), .16); color: inherit; font
    白卡圆角 10px（弹窗档）+ shadow-pop 级阴影；条目 40px 高、hover 灰底（--bg-light）；
    颜色只用现有 Token，深色模式自动跟随；条目字距 1.2px（R192 全站字距标准） */
 /* R193c（用户 23:10）：长按小菜单与后台「资源码下拉框」(cat-picker-panel/cp-item) 同款规格——
-   面板 padding 6px/圆角 10px/投影 0 10px 28px rgba(20,60,110,0.16)；条目 flex 布局 padding 9px 10px/
+   面板 padding 6px/圆角 10px/投影 0 10px 28px rgba(var(--shadow-deep-rgb),0.16)；条目 flex 布局 padding 9px 10px/
    圆角 8px/14px/hover var(--hover-bg)，视觉与后台下拉完全一致 */
 .ctx-menu { position: fixed; display: none; /* v392-5：z-index 收归 motion.css 唯一源（原 10040 与 motion 10042 双源冲突） */ min-width: 148px; max-width: 220px; padding: 4px; background: var(--card-bg, var(--card-bg, #fff)); border: 1px solid var(--border); border-radius: var(--radius-btn,10px); box-shadow: var(--shadow-pop); /* R285 条20：归悬浮面板档 */ }
 .ctx-item { display: flex; align-items: center; gap: 4px; width: 100%; padding: 8px 8px; border: none; border-radius: var(--r-m); background: transparent; color: var(--text, #222); font-size: 14px; letter-spacing:var(--ls-head,1.2px); text-align: left; cursor: pointer; font-family: inherit; transition: background var(--dur-fast, 0.1s); }
@@ -1084,3 +1092,4 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 /* ===== v370b 条3：切换指示线——管理页标签白线/资源页分类蓝线，都是"本来那根"，
    切换与跟手拖动时从当前位置滑向目标（JS 驱动 left/width）===== */
 .cat-line { position: absolute; bottom: 0; height: 2px; background: var(--link-blue, #1565c0); border-radius: var(--r-s); pointer-events: none; z-index: 95; opacity: 0; }
+

@@ -619,6 +619,20 @@
       if (tt) tt.classList.add('active'); if (body) { var _c = sanitizeHTML((defAnn && defAnn.content) || ''); body.innerHTML = _c || '<div class="ann-empty"><div class="ann-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div><div class="ann-empty-title">该公告暂无内容</div></div>'; bindMediaFail(body); bindLightbox(body);
       bindQuoteCopyButtons(body); bindFileCards(body); } // v303 + v320
     }
+    /* v496：判断一条公告「有没有真内容」——
+       纯空白/纯占位图（data:image/svg+xml 的内置占位）都算空，自动弹窗时跳过。
+       真海报（http/https 图片）算有内容，不受影响。 */
+    function __annHasContent(a) {
+      var html = String((a && a.content) || '');
+      var text = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, '');
+      if (text) return true;
+      var srcs = html.match(/src\s*=\s*["']([^"']*)["']/gi) || [];
+      for (var i = 0; i < srcs.length; i++) {
+        if (!/data:image\/svg\+xml/i.test(srcs[i])) return true;
+      }
+      if (a && a.hidden) return false;
+      return false;
+    }
     function renderAnnouncement() {
       try { var mask = document.getElementById('annModal');
       if (!mask) return;
@@ -665,6 +679,10 @@
         if (mask.classList.contains('open')) renderAnnContent();
         return; }
       var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
+      /* v496：只有「真有内容」的公告才自动弹窗——占位图/纯空白公告一律不弹
+         （老板原来每次打开前台都先弹一个只有占位图的空公告；公告本身仍可从顶栏「公告」键查看） */
+      list = list.filter(__annHasContent);
+      if (!list.length) { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
       if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
       if (mode === 'daily') {
         try {

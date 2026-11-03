@@ -1059,8 +1059,8 @@
     { t: '公告', k: 'ann', items: [['view', '看公告'], ['add', '发公告'], ['edit', '改公告'], ['del', '删公告']] },
     { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
     { t: '数据', k: 'data', items: [['stats', '看总量'], ['detail', '看逐条明细'], ['ip', '看访客 IP'], ['export', '导出数据']] },
-    /* v459：外部链接台账（老板跟别人共用平台时，让别人只能登记自己的外链） */
-    { t: '外部链接', k: 'external', items: [['view', '看台账'], ['add', '登记链接'], ['edit', '改链接'], ['del', '删链接'], ['fetch', '取信息/巡检'], ['export', '导出']] }
+    /* v496：外部链接台账 →「资源采集」（v470 起模块已改名重建，权限文案还停在旧台账口径，统一过来） */
+    { t: '资源采集', k: 'external', items: [['view', '打开资源采集'], ['add', '加平台/粘一条'], ['edit', '改资源/改平台'], ['del', '删资源/删平台'], ['fetch', '采集/上架'], ['export', '导出']] }
   ];
   function usersForm(u) {
     var isEdit = !!(u && u.id);
@@ -1247,7 +1247,7 @@
     fetch('/api/admin/recycle', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
       var body = mask.querySelector('#rcBody'); if (!body) return;
       if (!x || !x.ok) { body.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">加载失败，请关掉重试</div>'; return; }
-      var sec = function (title, rows) { return '<div style="margin-bottom:12px"><b style="display:block;font-size:13px;color:#666;margin-bottom:6px">' + title + '</b>' + (rows || '<div style="color:#8aa0b5;font-size:12px;padding:4px 0">暂无</div>') + '</div>'; };
+      var sec = function (title, rows) { return '<div style="margin-bottom:12px"><b style="display:block;font-size:13px;color:var(--text-light);margin-bottom:6px">' + title + '</b>' + (rows || '<div style="color:var(--text-faint);font-size:12px;padding:4px 0">这一项没有内容</div>') + '</div>'; };
       var row = function (kind, id, name, t) {
         return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eef2f6">' +
           '<span style="flex:1;min-width:0;font-size:13px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(name) + '<span style="color:#9aa9b8;font-size:11px;margin-left:8px">' + fmtDelTime(t) + ' 删除</span></span>' +

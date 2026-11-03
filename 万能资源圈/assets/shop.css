@@ -1383,3 +1383,4 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* v443 条1：卡片图片加载前垫灰底——滑切预览/首屏图片未到时不露大块空白 */
 .card-img { background: var(--bg-light, #eef4fb); }
 .product-grid.list-view .card-img { background: var(--bg-light, #eef4fb); }
+

@@ -361,3 +361,4 @@ html.wn-theme-anim, html.wn-theme-anim * { transition: background-color var(--du
   .wn-casc, .ct-row.wn-tl, .wn-reveal, .ui-toast.wn-undo, .ctx-menu.ctx-anim { animation-duration: .01s !important; }
   .wn-press:active, .row-btn:active, .tab:active, .cat-tag:active { transform: none !important; }
 }
+

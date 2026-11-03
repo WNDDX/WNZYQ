@@ -2585,8 +2585,8 @@
     if (!(d.recent || []).length) {
       /* v434：0 值可解释——管理员自己浏览前台不计入（R168-②拍板），全 0 时说明口径避免「跟实际对不上」的疑惑 */
       var _allZero = !(d.delta && (d.delta.view || d.delta.contact || d.delta.unlock || d.delta.bind));
-      list.innerHTML = _alert + '<div class="wn-empty"><span class="wn-empty-ico" aria-hidden="true">📭</span><div class="wn-empty-t">最近 24 小时暂无动态</div>' +
-        (_allZero ? '<div style="font-size:11px;color:#8a9aab;margin-top:6px;line-height:1.7">说明：您自己在前台资源页的浏览/解锁不计入统计（管理身份自动排除）；数字只来自真实访客。</div>' : '') + '</div>'; /* v394-16：空态模板（图标+主句） */
+      list.innerHTML = _alert + window.__adminEmpty('最近 24 小时暂无动态',
+        _allZero ? '说明：您自己在前台资源页的浏览/解锁不计入统计（管理身份自动排除）；数字只来自真实访客。' : ''); /* v496：空态统一走 __adminEmpty 唯一源，不再手写图标+灰字 */
       bindSysAlertGo();
       return;
     }
