@@ -1,6 +1,6 @@
 /* ===== v490 资源采集（老板逐条要求重做）=====
    入口：平台设置 →「资源采集」
-   1) 术语统一叫「资源」，不叫商品
+   1) 术语统一叫「资源」（老板口径：平台里一律叫资源）
    2) 弹窗结构与系统其他弹窗一致（modal-box + modal-title + form + modal-footer），底部不再放关闭键
    3) 编辑器复用系统那一套（克隆运行时工具条，保留「字体 ▸」自制下拉外观，并补上事件）
    4) 上架 = 关掉本弹窗 + 打开系统的「新增资源」弹窗，标题/封面/详情已填好，你补分类和价格
@@ -456,20 +456,27 @@
     if (act === 'edit') { editForm(id); return; }
     if (act === 'see') { seeForm(id); return; }
     if (act === 'del') {
-      if (!confirm('从资源池删掉这条？（不影响对方平台）')) return;
-      api('admin/external', { method: 'POST', body: { op: 'goods.del', id: id } }).then(function (r) {
-        if (r && r.ok) { delete S.sel[id]; S.goods = S.goods.filter(function (g) { return Number(g.id) !== id; }); render(); }
-        else toast((r && r.msg) || '删除失败', 'error');
+      /* v521：换系统的确认框（原生 confirm 样式与全站不一致，且会打断浏览器） */
+      if (!window.showConfirm) { toast('页面需要刷新后再试', 'error'); return; }
+      window.showConfirm('删除资源', '从「采集到的资源」里删掉这条？不影响对方平台。', function (done) {
+        done();
+        api('admin/external', { method: 'POST', body: { op: 'goods.del', id: id } }).then(function (r) {
+          if (r && r.ok) { delete S.sel[id]; S.goods = S.goods.filter(function (g) { return Number(g.id) !== id; }); render(); }
+          else toast((r && r.msg) || '没删掉，请重试', 'error');
+        });
       });
       return;
     }
     if (act === 'delbatch') {
       var ids = selIds();
-      if (!ids.length) return;
-      if (!confirm('删掉选中的 ' + ids.length + ' 条？')) return;
-      Promise.all(ids.map(function (x) { return api('admin/external', { method: 'POST', body: { op: 'goods.del', id: x } }); })).then(function () {
-        S.goods = S.goods.filter(function (g) { return ids.indexOf(Number(g.id)) < 0; });
-        S.sel = {}; render(); toast('已删除 ' + ids.length + ' 条', 'success');
+      if (!ids.length) { toast('先勾选要删的资源', 'info'); return; }
+      if (!window.showConfirm) { toast('页面需要刷新后再试', 'error'); return; }
+      window.showConfirm('批量删除', '删除选中的 ' + ids.length + ' 条？不影响对方平台。', function (done) {
+        done();
+        Promise.all(ids.map(function (x) { return api('admin/external', { method: 'POST', body: { op: 'goods.del', id: x } }); })).then(function () {
+          S.goods = S.goods.filter(function (g) { return ids.indexOf(Number(g.id)) < 0; });
+          S.sel = {}; render(); toast('已删除 ' + ids.length + ' 条', 'success');
+        });
       });
       return;
     }
@@ -489,13 +496,16 @@
       } else if (act === 'editpf') {
         platformForm(p);
       } else {
-        if (!confirm('删除平台「' + p.name + '」？（采来的资源会转成未归平台，不会丢）')) return;
-        api('admin/external', { method: 'POST', body: { op: 'platform.del', id: p.id } }).then(function (r) {
-          if (r && r.ok) {
-            S.platforms = S.platforms.filter(function (x) { return Number(x.id) !== Number(p.id); });
-            if (Number(S.curPf) === Number(p.id)) S.curPf = 0;
-            loadGoods(); toast('已删除', 'success');
-          } else toast((r && r.msg) || '删除失败', 'error');
+        if (!window.showConfirm) { toast('页面需要刷新后再试', 'error'); return; }
+        window.showConfirm('删除平台', '删除平台「' + p.name + '」？采来的资源会转成「未归平台」，不会丢。', function (done) {
+          done();
+          api('admin/external', { method: 'POST', body: { op: 'platform.del', id: p.id } }).then(function (r) {
+            if (r && r.ok) {
+              S.platforms = S.platforms.filter(function (x) { return Number(x.id) !== Number(p.id); });
+              if (Number(S.curPf) === Number(p.id)) S.curPf = 0;
+              loadGoods(); toast('已删除', 'success');
+            } else toast((r && r.msg) || '没删掉，请重试', 'error');
+          });
         });
       }
       return;

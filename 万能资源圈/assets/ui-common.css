@@ -1106,6 +1106,8 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
   --r-s: 8px;
   --r-m: 10px;
   --r-l: 12px;
+  /* 顶栏高度：手机两行时由脚本回写真实值，这里给桌面默认值，避免 var(--topbar-h) 裸引用无兜底 */
+  --topbar-h: 64px;
 }
 
 /* 按压反馈：所有可点控件同一手感（原来只有个别按钮有） */

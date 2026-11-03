@@ -443,6 +443,10 @@
     // ---------- 通用确认弹窗 ----------
     var confirmCallback = null;
     var confirmCancelCallback = null;
+    /* v521（自检工具抓到的真 bug）：showConfirm 一直是本文件局部函数，
+       而 admin-import / 采集模块调用的是 window.showConfirm —— 实际是 undefined，
+       于是「删除确认」要么静默跳过、要么直接执行（危险）。这里挂到全局，确认框才真的会弹。 */
+    window.showConfirm = showConfirm;
     function showConfirm(title, msg, callback, cancelCallback) {
       document.getElementById('confirmTitle').textContent = title || '确认操作';
       document.getElementById('confirmMsg').textContent = msg || '';
