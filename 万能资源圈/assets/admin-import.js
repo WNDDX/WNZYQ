@@ -124,10 +124,18 @@
       '<Relationship Id="rId1" Type="' + __REL_NS + '/officeDocument" Target="xl/workbook.xml"/>' +
       '</Relationships>') });
 
+    /* v523（老板：模板里还是点不出下拉）——原来 dataValidation 直接写「选项!$A$2:$A$31」跨表区域，
+       这个写法在 Excel 里能用、在不少 WPS 版本里会静默失效（下拉箭头不出现）。改成「定义名称」引用，
+       Excel 与 WPS 都认，这是兼容性最好的做法。 */
+    var allNames = [];
+    sheets.forEach(function (sh) { (sh.names || []).forEach(function (n) { allNames.push(n); }); });
+    var defNames = allNames.length
+      ? '<definedNames>' + allNames.map(function (n) { return '<definedName name="' + esc(n.name) + '">' + esc(n.ref) + '</definedName>'; }).join('') + '</definedNames>'
+      : '';
     var wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<workbook xmlns="' + __XLSX_NS + '" xmlns:r="' + __REL_NS + '"><sheets>' +
       sheets.map(function (sh, i) { return '<sheet name="' + esc(sh.name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') +
-      '</sheets></workbook>';
+      '</sheets>' + defNames + '</workbook>';
     files.push({ name: 'xl/workbook.xml', data: enc.encode(wb) });
 
     var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -317,9 +325,14 @@
     var opts = catOptions().filter(Boolean);
     if (!opts.length) opts = ['（请先到后台分类管理新增分类）'];
     var lastOpt = opts.length + 1;              /* 选项表 A2..A(lastOpt) */
-    var CAT_DV = '选项!$A$2:$A$' + lastOpt;
-    var LV_DV = '选项!$B$2:$B$3';
-    var ST_DV = '选项!$C$2:$C$3';
+    var CAT_DV = '分类选项';
+    var LV_DV = '分类级别选项';
+    var ST_DV = '显示状态选项';
+    var OPT_NAMES = [
+      { name: '分类选项', ref: '选项!$A$2:$A$' + lastOpt },
+      { name: '分类级别选项', ref: '选项!$B$2:$B$3' },
+      { name: '显示状态选项', ref: '选项!$C$2:$C$3' }
+    ];
     var ROWSN = 30;                              /* 预留 30 行空白（带边框 + 下拉） */
     var d2 = new Date(), pd = function (n) { return n < 10 ? '0' + n : '' + n; };
     var fname = '' + d2.getFullYear() + pd(d2.getMonth() + 1) + pd(d2.getDate()) + '-' + pd(d2.getHours()) + pd(d2.getMinutes()) + '-导入模板.xlsx';
@@ -358,7 +371,7 @@
       { name: '公告', rows: mk(annHeads), widths: [26, 50, 12, 12], dv: [
         { sqref: 'D2:D' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”或“隐藏”。' }
       ] },
-      { name: '选项', rows: optRows, widths: [24, 16, 16, 22], dv: [] }
+      { name: '选项', rows: optRows, widths: [24, 16, 16, 22], dv: [], names: OPT_NAMES }
     ];
 
     return { blob: new Blob([__buildXlsx(sheets)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name: fname, xml: '' };
