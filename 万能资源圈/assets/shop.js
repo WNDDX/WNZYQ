@@ -628,14 +628,14 @@
        纯空白/纯占位图（data:image/svg+xml 的内置占位）都算空，自动弹窗时跳过。
        真海报（http/https 图片）算有内容，不受影响。 */
     function __annHasContent(a) {
-      var html = String((a && a.content) || '');
+      if (!a || a.hidden) return false;
+      var html = String(a.content || '');
       var text = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, '');
       if (text) return true;
       var srcs = html.match(/src\s*=\s*["']([^"']*)["']/gi) || [];
       for (var i = 0; i < srcs.length; i++) {
-        if (!/data:image\/svg\+xml/i.test(srcs[i])) return true;
+        if (!/data:image\/svg\+xml/i.test(srcs[i])) return true;   /* 真海报（http/https）算有内容 */
       }
-      if (a && a.hidden) return false;
       return false;
     }
     function renderAnnouncement() {

@@ -802,8 +802,14 @@
       '<div class="form">' + bodyHtml + '</div>' +
       '<div class="modal-footer">' + footHtml + '</div></div>';
     document.body.appendChild(m);
-    requestAnimationFrame(function () { m.classList.add('open'); });
-    if (window.syncBodyLock) window.syncBodyLock();
+    /* v496：打开时必须走系统的滚动计数锁 + 聚焦关闭键（二.4 弹窗铁律，缺一条就会出现「弹窗后面页面还在滚」或键盘用户被困住） */
+    if (window.lockBodyScroll) window.lockBodyScroll(true);
+    else if (window.syncBodyLock) window.syncBodyLock();
+    requestAnimationFrame(function () {
+      m.classList.add('open');
+      var x = m.querySelector('.modal-close-x');
+      if (x) { try { x.focus({ preventScroll: true }); } catch (e0) {} }
+    });
     m.addEventListener('click', function (e) { if (e.target === m || (e.target.closest && e.target.closest('[data-x]'))) closeM(m); });
     if (after) setTimeout(after, 30);
     return m;
@@ -811,7 +817,7 @@
   function closeM(m) {
     if (!m) return;
     m.classList.remove('open');
-    setTimeout(function () { m.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
+    setTimeout(function () { m.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200);
   }
 
   document.addEventListener('click', function (e) {
