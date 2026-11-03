@@ -3362,7 +3362,7 @@ window.closeShare = typeof closeShare !== 'undefined' ? closeShare : window.clos
 window.closeAnnModal = typeof closeAnnModal !== 'undefined' ? closeAnnModal : window.closeAnnModal;
 window.showAnnDefault = typeof showAnnDefault !== 'undefined' ? showAnnDefault : window.showAnnDefault;
 window.loadImg = typeof loadImg !== 'undefined' ? loadImg : window.loadImg;
-window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; } : null; /* v387 H18：搜索联想读取已加载商品 */
+window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; } : null; /* v387 H18：搜索联想读取已加载资源 */
 })();
 /* v368 条11：分类栏全员参与滑动——栏内横滑=滚动标签；滚到头继续滑=切上/下一个分类（弹回自然）；二级栏同理 */
 (function () {
@@ -3408,7 +3408,7 @@ window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; 
   var M = window.__motion;
   if (!M) return;
 
-  /* ---- A4 级联入场：商品网格每次渲染子项依次浮起 ---- */
+  /* ---- A4 级联入场：资源网格每次渲染子项依次浮起 ---- */
   function bootCasc() {
     var g = document.getElementById('productGrid');
     if (g && !g.__wnCasc) {
@@ -3481,7 +3481,7 @@ window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; 
     toastMo.observe(document.body, { childList: true });
   })();
 
-  /* ---- H18 搜索联想（输入即下拉；数据来自已加载商品，回车原逻辑不变） ---- */
+  /* ---- H18 搜索联想（输入即下拉；数据来自已加载资源，回车原逻辑不变） ---- */
   (function () {
     var si = document.getElementById('searchInput');
     if (!si || si.__wnSugg) return;
@@ -3506,7 +3506,7 @@ window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; 
       si.value = it.label;
       try { si.dispatchEvent(new Event('input', { bubbles: false })); } catch (e) {}
     });
-    /* 暴露全量商品给联想（渲染处已有 DATA；这里兜底读过滤前集合） */
+    /* 暴露全量资源给联想（渲染处已有 DATA；这里兜底读过滤前集合） */
     try { Object.defineProperty(window, '__shopAllProducts', { get: function () { return (typeof DATA !== 'undefined' && DATA.products) || []; }, configurable: true }); } catch (e) {}
   })();
 

@@ -204,7 +204,7 @@
     return keepHeader ? out : out.slice(1);
   }
 
-  /* v473：外部商品采集要复用这套 xlsx 解析（老板从别家后台导出的商品表）。
+  /* v473：资源采集要复用这套 xlsx 解析（老板从别家后台导出的资源表；表头仍可能是对方写的「商品/产品」）。
      入口：把任意一张有数据的表读成 [{title, cover, src_url}]，前端自己认列。 */
   window.__parseAnySheet = function (buf) {
     return parseXlsx(buf, true).then(function (book) {
