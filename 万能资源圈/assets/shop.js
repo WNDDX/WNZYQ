@@ -413,6 +413,7 @@
     // 数据统计：记录资源浏览/咨询客服/资源码解锁事件，发送到后端
     // 仅在使用远程 API 时记录，本地环境不记录
     function track(pid, type) {
+      if (window.__pvMode) return;      /* v518：后台预览不写统计 */
       if (!usingRemote || !pid) return;
       try {
         fetch('/api/track', {
@@ -682,6 +683,7 @@
       /* v384 修复：mode=off 时任何阶段都必须关弹窗——此前 off 只在 547 行检查，而骨架期先把弹窗
          打开并置 __annShown=true，数据到达后走下方早退分支（该分支不查 off），弹窗被填上内容永不关闭，
          还会挡住搜索框聚焦/分页按钮/滑动起手 */
+      if (window.__pvMode) { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; } /* v518：预览里不弹公告 */
       if (mode === 'off') { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
       /* v496：先按「有没有真内容」过滤，再决定要不要弹——
          空公告（只有占位图或纯空白）会让访客每次打开都先看到一个空弹窗；
@@ -1472,7 +1474,7 @@
       // ?pid= 分享直达通道不受影响（ui-common.js:2688 生成的分享链接 + checkSharePid 落地照常）。
       currentProduct = p;
       try { if (window.__ogDynamic) window.__ogDynamic(p); } catch (e) { if (window.__silent) window.__silent(e); } /* v439 #72：分享卡片动态化 */
-      try { __pushRecent(p.id); } catch (e) { if (window.__silent) window.__silent(e); }
+      try { if (!window.__pvMode) __pushRecent(p.id); } catch (e) { if (window.__silent) window.__silent(e); }
       try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); }
       currentVariant = null;
       track(p.id, 'view');
@@ -2591,6 +2593,39 @@
           is_online: p.is_online, is_hidden: p.is_hidden || 0
         };
       }) : [];
+    }
+
+    /* ================= v518：后台「预览效果」的桥接 =================
+       老板要「预览跟前台资源页一模一样，还要跟输入实时同步」。
+       唯一可靠的做法是：不再在后台另画一套预览 DOM（那套永远会漂移），
+       改成后台用 iframe 打开本页（?preview=1），把表单数据 postMessage 过来，
+       由**前台自己的 openModal** 渲染 —— 同一个函数、同一套样式，天生一致。
+       后台每改一个字都会重新发一次，这里重渲染即可（详情弹窗有模态滚动记忆，不会跳）。 */
+    var __PV = /[?&]preview=1(?:&|$)/.test(location.search);
+    window.__pvMode = __PV;
+    if (__PV) {
+      try { document.documentElement.classList.add('shop-preview'); } catch (e0) {}
+      var __pvProduct = null;
+      window.addEventListener('message', function (ev) {
+        var d = ev.data || {};
+        if (d.type !== 'wnzyq-preview') return;
+        var p = d.product || {};
+        /* 补齐前台渲染必需字段——务必带 detail 键，否则 openModal 会当成「列表瘦身」去请求接口 */
+        p.id = Number(p.id) || 900000001;
+        p.detail = String(p.detail || '');
+        p.desc = String(p.desc || '');
+        p.title = String(p.title || '');
+        p.img = String(p.img || '');
+        p.coverImages = (Array.isArray(p.coverImages) && p.coverImages.length) ? p.coverImages : (p.img ? [p.img] : []);
+        p.detailImages = Array.isArray(p.detailImages) ? p.detailImages : [];
+        p.detailVideos = Array.isArray(p.detailVideos) ? p.detailVideos : [];
+        p.variants = Array.isArray(p.variants) ? p.variants : [];
+        p.price = Number(p.price) || 0;
+        __pvProduct = p;
+        try { openModal(p); } catch (e1) {}
+      });
+      /* 告诉后台：我准备好了，可以发数据了（后台在 onload 里发，这里双保险） */
+      try { parent.postMessage({ type: 'wnzyq-preview-ready' }, '*'); } catch (e2) {}
     }
 
     function renderAll() {

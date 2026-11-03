@@ -1093,3 +1093,48 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
    切换与跟手拖动时从当前位置滑向目标（JS 驱动 left/width）===== */
 .cat-line { position: absolute; bottom: 0; height: 2px; background: var(--link-blue, #1565c0); border-radius: var(--r-s); pointer-events: none; z-index: 95; opacity: 0; }
 
+
+/* ================= v519：全站统一层（唯一源，勿在页面内重复定义） =================
+   这一层只做「收敛」：把散落各处、同一含义的数值/状态收成一处令牌与一组规则。
+   以后新增组件直接引用，不再各写一套。 */
+:root {
+  /* 按钮三档（行内小键 / 标准 / 主操作） */
+  --btn-h-sm: 30px;
+  --btn-h: 36px;
+  --btn-h-lg: 46px;
+  /* 圆角三档（小件 / 常规 / 大件） */
+  --r-s: 8px;
+  --r-m: 10px;
+  --r-l: 12px;
+}
+
+/* 按压反馈：所有可点控件同一手感（原来只有个别按钮有） */
+.btn-blue:active,
+.btn-inline-pd:active,
+.row-btn:active,
+.batch-btn:active,
+.modal-inner-btn:active,
+.modal-close:active,
+.modal-close-x:active,
+.extc-tab:active { transform: scale(.97); }
+
+/* 键盘焦点：统一蓝环（原来各浏览器默认，深浅主题下几乎看不见） */
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--blue1);
+  outline-offset: 2px;
+}
+:where(button, a, input, select, textarea):focus:not(:focus-visible) { outline: none; }
+
+/* 「减弱动画」系统开关：用户在系统里关掉动效后，全站不再晃（无障碍基本要求） */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 深色切换不再白闪：让浏览器原生控件（滚动条/输入框/下拉）也跟着主题走 */
+html { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }

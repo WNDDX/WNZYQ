@@ -1992,7 +1992,80 @@ refreshCatCnts();
         errEl.style.display = 'block';
       }
     }
+    /* ================= v518：预览 = 前台真页面（iframe） =================
+       老板要「预览跟前台资源页一样，还要跟输入实时同步」。
+       旧实现是后台另画一套预览 DOM，样式永远会跟前台漂移——这次直接搬前台本体：
+       iframe 打开 /shop?preview=1，把表单值 postMessage 过去，由前台 openModal 渲染。
+       改一个字就重发一次（250ms 合并），真正做到「所见即访客所见」。 */
+    function __pvCollect() {
+      var cover = [];
+      try { cover = (window.__coverImages ? window.__coverImages() : null) || []; } catch (e0) { cover = []; }
+      if (!cover.length) { var _i = (fImg.value || '').trim(); if (_i) cover = [_i]; }
+      var det = '';
+      try { det = serializeDetail() || ''; } catch (e1) { det = (fDetail && fDetail.innerHTML) || ''; }
+      return {
+        id: state.editingId || 0,
+        title: (fTitle.value || '').trim(),
+        desc: (fDesc.value || '').trim(),
+        price: Number(fPrice.value) || 0,
+        img: cover[0] || '',
+        coverImages: cover,
+        detail: det,
+        detailImages: [], detailVideos: [],
+        variants: (state.variants || []).map(function (v) {
+          return {
+            name: v.name || '', price: v.price || 0, desc: v.desc || '', sort: v.sort || 0,
+            hasCode: !!(v.resourceCode || '').trim()
+          };
+        })
+      };
+    }
+    function __pvSend() {
+      var fr = document.getElementById('previewFrame');
+      if (!fr || !fr.contentWindow) return;
+      try { fr.contentWindow.postMessage({ type: 'wnzyq-preview', product: __pvCollect() }, location.origin); } catch (e) {}
+    }
+    window.__pvSend = __pvSend;
+    function __openRealPreview() {
+      var mask = document.getElementById('previewMask');
+      var box = mask && mask.querySelector('.preview-box');
+      var fr = document.getElementById('previewFrame');
+      if (!mask || !box || !fr) return false;
+      box.classList.add('pv-real');
+      mask.classList.add('open');
+      if (!fr.dataset.started) {
+        fr.dataset.started = '1';
+        fr.addEventListener('load', function () { setTimeout(__pvSend, 150); });
+        fr.src = '/shop?preview=1';
+      } else {
+        __pvSend();
+      }
+      if (window.__modalScroll) { try { __modalScroll.open(mask, 'preview'); } catch (e2) {} }
+      /* 实时同步：编辑窗里任何输入（含富文本 contenteditable）都会冒泡到 editMask，捕获阶段接一次就够 */
+      if (!window.__pvLiveBound) {
+        window.__pvLiveBound = true;
+        var _t = 0;
+        var kick = function () {
+          if (!mask.classList.contains('open')) return;
+          clearTimeout(_t); _t = setTimeout(__pvSend, 250);
+        };
+        var em = document.getElementById('editMask');
+        if (em) { em.addEventListener('input', kick, true); em.addEventListener('change', kick, true); }
+      }
+      return true;
+    }
+    window.__openRealPreview = __openRealPreview;
+    /* iframe 里的前台脚本就绪后会喊一声，这里补发一次（防首次 postMessage 丢在监听器注册之前） */
+    window.addEventListener('message', function (ev) {
+      var d = ev.data || {};
+      if (d.type !== 'wnzyq-preview-ready') return;
+      var m = document.getElementById('previewMask');
+      if (m && m.classList.contains('open')) __pvSend();
+    });
+
     document.getElementById('previewProductBtn').addEventListener('click', function () {
+      /* v518：走「真页面预览」；iframe 缺失才回退旧的自绘预览 */
+      if (window.__openRealPreview && window.__openRealPreview()) return;
       previewCurVariant = 0;
       // R256：清除预览弹窗骨架
       var _pvSkel = document.getElementById('previewSkeleton'); if (_pvSkel) _pvSkel.style.display = 'none';

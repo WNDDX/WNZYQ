@@ -1384,3 +1384,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .card-img { background: var(--bg-light, #eef4fb); }
 .product-grid.list-view .card-img { background: var(--bg-light, #eef4fb); }
 
+
+/* ================= v518：后台「预览效果」嵌入模式 =================
+   后台用 iframe 打开本页 ?preview=1，把表单数据发过来，由前台自己的 openModal 渲染。
+   这里只把「页面壳」收掉，只留详情弹窗——弹窗尺寸/间距/字号全部沿用前台真实规则，
+   所以后台看到的就是访客看到的，不存在「预览一套、前台另一套」。 */
+html.shop-preview, html.shop-preview body { background: transparent !important; }
+html.shop-preview body > *:not(#modalMask):not(#lightboxMask):not(.toast-wrap):not(#toastWrap) { display: none !important; }
+html.shop-preview #modalMask { background: transparent !important; padding: 0 !important; align-items: stretch !important; }
+html.shop-preview #modalMask .modal-wrap { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+html.shop-preview #modalMask .modal-box { max-width: 100% !important; width: 100% !important; max-height: 100% !important; height: 100% !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
+html.shop-preview #modalMask .modal-close-x,
+html.shop-preview #modalMask .modal-share-x,
+html.shop-preview #modalMask .modal-footer { display: none !important; }

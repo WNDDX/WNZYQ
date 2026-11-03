@@ -2094,7 +2094,10 @@ window.uiToast = (function () {
    系统有一堆 makeSelectPicker，但只在 admin-3 初始化时扫了一遍静态 DOM；
    账号编辑、批量导入这类后生成的 <select> 就漏成了原生长条，跟别处不一致。 */
 window.__wrapSelects = function (root) {
+  /* v518：真因是 makeSelectPicker 一直是 admin-3 内的局部函数，这里 typeof 判断永远 false → 静默跳过。
+     现在 admin-3 把它挂到 window，并统一提供 __upgradeSelects（幂等）；这里只做转发，不再各写一份。 */
   try {
+    if (typeof window.__upgradeSelects === 'function') return window.__upgradeSelects(root || document);
     var scope = root || document;
     var list = scope.querySelectorAll ? scope.querySelectorAll('select') : [];
     for (var i = 0; i < list.length; i++) {

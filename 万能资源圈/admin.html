@@ -1059,6 +1059,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 <div class="modal-mask" id="previewMask">
     <div class="modal-box preview-box" style="padding:0;">
+      <!-- v518（老板：预览要跟前台资源页一模一样）：这里嵌入前台资源页本身，不再自己画一套预览 DOM -->
+      <iframe class="preview-frame" id="previewFrame" title="前台真实预览" src="about:blank"></iframe>
       <button aria-label="关闭" class="modal-close-x" id="previewCloseX"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <!-- R10 预览弹窗分享键（左上角，与×成对角）：与资源页弹窗同款转发图标，一套逻辑两处生效 -->
       <button class="modal-share-x" id="previewShareX" type="button" title="分享资源" aria-label="分享资源">

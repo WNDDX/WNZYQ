@@ -438,6 +438,29 @@
       });
     }
     upgradeAllSelects();
+    /* v518（老板：「现在依然也没有下拉菜单」）——**真因在这里**：
+       makeSelectPicker 是 admin-3 IIFE 里的局部函数，从来没挂到 window 上。
+       我上一版在 ui-common.js / ext-collect.js 里写的是 window.makeSelectPicker(...)，
+       判断 typeof === 'function' 永远是 false → 静默跳过，一个下拉也没升级。
+       同理 syncSelectDisplay 也没暴露，程序化改值后显示框不会跟着变（公告频率/筛选会显示旧值）。
+       现在统一挂成系统级能力：任何人（含后加载脚本、动态弹窗）都能调用。 */
+    window.makeSelectPicker = makeSelectPicker;
+    window.__syncSelectDisplay = syncSelectDisplay;
+    window.syncSelectDisplay = syncSelectDisplay;
+    /* 统一入口：给任意容器里的原生 select 补一次升级（幂等，升级过的会被 dataset.sp 跳过）。
+       账号编辑、批量导入、采集、平台档案这些「后生成」的弹窗都调这个，不再各写一套。 */
+    window.__upgradeSelects = function (root) {
+      var scope = root || document;
+      var list = [];
+      try { list = scope.querySelectorAll('select'); } catch (e) { return 0; }
+      var n = 0;
+      for (var i = 0; i < list.length; i++) {
+        var sel = list[i];
+        if (sel.dataset && sel.dataset.sp) continue;
+        try { makeSelectPicker(sel); n++; } catch (e2) {}
+      }
+      return n;
+    };
     /* v443 条4（老板反馈：点分类筛选没看到下拉框）：v442 起面板统一移到 body，打开时靠 data-picker-id 找回——
        静态 cat-picker（资源分类筛选/统计分类筛选/分类父级/批量改分类）从未挂 id，面板一移走就永远找不回=点击无下拉。
        统一补挂（有面板子元素的都挂），全系统一处治 */

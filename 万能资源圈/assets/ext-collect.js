@@ -38,18 +38,13 @@
   /* v501：下拉一律用系统的自制下拉（.select-picker）——
      老板原话「比如下拉选择的组件，都不会复用吗，现在你又新做了，要复用啊」。
      makeSelectPicker 是 admin-3.js 的全局函数：会插显示层、隐藏原生 select，并返回 {refresh}。 */
-  var PK_REFS = [];
   function bindSelects(root) {
     if (!root) return;
+    /* v518：走系统唯一入口（admin-3 暴露的 __upgradeSelects，幂等）；
+       升级完再把每个 select 的显示层刷一次，保证程序化改值后显示框不会停在旧文字。 */
+    try { if (window.__upgradeSelects) window.__upgradeSelects(root); } catch (e0) {}
     Array.prototype.forEach.call(root.querySelectorAll('select'), function (sel) {
-      var hit = null;
-      for (var i = 0; i < PK_REFS.length; i++) { if (PK_REFS[i].sel === sel) { hit = PK_REFS[i].ref; break; } }
-      if (hit) { try { hit.refresh(); } catch (e) {} return; }
-      if (typeof window.makeSelectPicker !== 'function') return;
-      try {
-        var ref = window.makeSelectPicker(sel);
-        if (ref) PK_REFS.push({ sel: sel, ref: ref });
-      } catch (e0) {}
+      try { if (window.__syncSelectDisplay) window.__syncSelectDisplay(sel); } catch (e1) {}
     });
   }
 
@@ -575,14 +570,22 @@
 
   /* ================= 上架：关掉本弹窗 + 打开系统的「新增资源」 ================= */
   function goEdit(g, detailHtml) {
-    /* v501：老板说「上架后要填的信息太少」——描述、详情、下单链接都带过去，别再让他手抄 */
+    /* v518（老板：「本来就没有专门的跳转按键，就放在详情里做成超链接」）：
+       不再往「专属客服链接」塞下单地址（那是客服用的，塞进去访客点客服会莫名跳到别人商城）。
+       改成在详情正文末尾追加一行超链接——访客看到的就是「点此前往原平台下单」，点开新窗口直达。 */
+    var buy = String(g.buy_url || g.src_url || '').trim();
+    var html = String(detailHtml || g.detail_html || '');
+    var buyLine = '';
+    if (buy) {
+      var already = html.indexOf(buy) >= 0;
+      if (!already) buyLine = '<p><a href="' + buy + '" target="_blank" rel="noopener">点此前往原平台下单</a></p>';
+    }
     var payload = {
       title: g.title || '',
       desc: g.descr || g.extra || '',
-      detail: detailHtml || g.detail_html || '',
+      detail: html + buyLine,
       img: g.cover || '',
       coverImages: g.cover ? [g.cover] : [],
-      contactUrl: g.buy_url || g.src_url || '',
       price: '',
       sort: 0,
       is_online: 1
@@ -596,7 +599,7 @@
       var em = document.getElementById('editMask');
       if (em && em.classList.contains('open')) {
         close();
-        toast('已填好标题、描述、详情和下单链接，补上分类和价格点确定就行', 'info');
+        toast('已填好标题、描述、详情（含下单链接），补上分类和价格点确定就行', 'info');
       } else {
         toast('新增资源没打开，采集窗给你留着，再点一次试试', 'error');
       }
