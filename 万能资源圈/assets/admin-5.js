@@ -530,9 +530,17 @@
           var L = window.__utcToLocal || function (t) { return t; };
           var sheets = [];
           // 1 资源清单
-          var pRows = [['ID', '资源标题', '分类', '状态', '价格(元)', '浏览量', '咨询客服', '资源码解锁', '绑定设备', '简介', '客服链接', '排序', '创建时间']];
+          /* v517（老板：导出的第一行要跟批量导入模板第一行一样）：
+             前 12 列＝「导入模板-资源表」的原样表头与顺序，导出来改一改就能直接导回去；
+             统计用的列（浏览量/咨询/解锁/绑定/ID/创建时间）追加在后面，不影响前 12 列的对应关系 */
+          var pRows = [['资源标题', '所属分类', '资源简介', '资源详情', '资源价格', '封面图片链接', '排序', '显示状态', '定时显示时间', '定时隐藏时间', '专属客服链接', '专属客服二维码', 'ID', '浏览量', '咨询客服', '资源码解锁', '绑定设备数', '创建时间']];
           (res.products || []).forEach(function (p) {
-            pRows.push([p.id, __xl(p.title), __xl(p.cat), (p.is_online && !p.is_hidden) ? '显示' : '隐藏', Number(p.price) || 0, p.views || 0, p.contacts || 0, p.resource_unlocks || 0, p.bindings || 0, __xl(p.desc), __xl(p.contact_url), p.sort || 0, L(p.created_at)]);
+            pRows.push([
+              __xl(p.title), __xl(p.cat), __xl(p.desc), __xl(p.detail_text || ''), Number(p.price) || 0,
+              __xl(p.cover || p.img || ''), p.sort || 0, (p.is_online && !p.is_hidden) ? '显示' : '隐藏',
+              __xl(p.schedule_on || ''), __xl(p.schedule_off || ''), __xl(p.contact_url || ''), __xl(p.contact_qr || ''),
+              p.id, p.views || 0, p.contacts || 0, p.resource_unlocks || 0, p.bindings || 0, L(p.created_at)
+            ]);
           });
           sheets.push({ name: '资源清单', rows: pRows });
           // 2 资源类型

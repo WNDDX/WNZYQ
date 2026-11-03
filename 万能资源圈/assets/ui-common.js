@@ -2090,6 +2090,21 @@ window.uiToast = (function () {
    每个按钮挂 data-pri（数字越小优先级越高，1=最先保留文字），容器加 .btn-fit-group。
    空间不够时从优先级最低的开始收成纯图标（加 .ico-only），优先保证高优先级（如"编辑"）显示文字。
    调用：window.__btnFit()（页面渲染后 / 窗口 resize 时） */
+/* v517：给动态生成的弹窗补一次「系统下拉」包装——
+   系统有一堆 makeSelectPicker，但只在 admin-3 初始化时扫了一遍静态 DOM；
+   账号编辑、批量导入这类后生成的 <select> 就漏成了原生长条，跟别处不一致。 */
+window.__wrapSelects = function (root) {
+  try {
+    var scope = root || document;
+    var list = scope.querySelectorAll ? scope.querySelectorAll('select') : [];
+    for (var i = 0; i < list.length; i++) {
+      var sel = list[i];
+      if (sel.dataset && sel.dataset.sp) continue;
+      if (typeof window.makeSelectPicker === 'function') window.makeSelectPicker(sel);
+    }
+  } catch (e) {}
+};
+
 window.__btnFit = function () {
   try {
     var groups = document.querySelectorAll('.btn-fit-group, .batch-group'); /* v375：批量条两组同享一套显示优先序 */

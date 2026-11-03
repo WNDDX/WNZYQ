@@ -322,7 +322,7 @@
     var ST_DV = '选项!$C$2:$C$3';
     var ROWSN = 30;                              /* 预留 30 行空白（带边框 + 下拉） */
     var d2 = new Date(), pd = function (n) { return n < 10 ? '0' + n : '' + n; };
-    var fname = '' + d2.getFullYear() + pd(d2.getMonth() + 1) + pd(d2.getDate()) + '-' + pd(d2.getHours()) + pd(d2.getMinutes()) + '-批量导入模板.xlsx';
+    var fname = '' + d2.getFullYear() + pd(d2.getMonth() + 1) + pd(d2.getDate()) + '-' + pd(d2.getHours()) + pd(d2.getMinutes()) + '-导入模板.xlsx';
 
     /* 每张表：表头 + 30 行空行（空行只给样式，让用户看得见格子） */
     var mk = function (heads) {
@@ -499,7 +499,7 @@
     mask.querySelector('#impTpl').addEventListener('click', function () {
       var tpl = buildTemplate();
       downloadBlob(tpl.name, tpl.blob);
-      if (window.showToast) window.showToast('模板已下载（.xlsx：资源/类型/分类/公告 四表，分类与显示状态点单元格右侧小三角直接选）', 'success');
+      if (window.showToast) window.showToast('模板已下载（.xlsx：资源/类型/分类/公告 四张填写表 + 一张「选项」下拉源表，分类与显示状态点单元格右侧小三角直接选）', 'success');
     });
     mask.querySelector('#impUploadBtn').addEventListener('click', function () { mask.querySelector('#impFile').click(); }); /* v443 条5：上传键改 button 与下载键完全同款（原 label 结构渲染发灰） */
     mask.querySelector('#impFile').addEventListener('change', function () {
@@ -1094,11 +1094,28 @@
       + '<label class="pm-chk"><input type="checkbox" data-pa="users" data-pk="_"' + (isEdit && perms.users ? ' checked' : '') + '><span>管理下级账号</span></label>'
       + '</div></div>';
 
-    var catHtml = cats.length ? cats.map(function (c) {
-      var on = Array.isArray(catsScope) ? catsScope.indexOf(Number(c.id)) !== -1 : false;
-      var sub = Number(c.parent_id || 0) > 0;
-      return '<label class="pm-chip"><input type="checkbox" data-cat="' + c.id + '"' + (on ? ' checked' : '') + '><span>' + (sub ? '└ ' : '') + esc(c.name || ('分类#' + c.id)) + '</span></label>';
-    }).join('') : '<span class="pm-hint">暂无分类可勾</span>';
+    /* v517（老板：一二级分类要有层次感）：原来是一排扁平的胶囊，只靠「└」区分父子。
+       现在改成一棵树：一级一行（粗体），它的子分类缩进挂在下面，带竖线。 */
+    var catHtml = (function () {
+      if (!cats.length) return '<span class="pm-hint">暂无分类可勾</span>';
+      var isOn = function (c) { return Array.isArray(catsScope) ? catsScope.indexOf(Number(c.id)) !== -1 : false; };
+      var tops = cats.filter(function (c) { return !Number(c.parent_id || 0); });
+      var kidsOf = function (id) { return cats.filter(function (c) { return Number(c.parent_id || 0) === Number(id); }); };
+      if (!tops.length) tops = cats.slice();  /* 全是子分类的极端情况兜底 */
+      return '<div class="pm-cattree">' + tops.map(function (t) {
+        var kids = kidsOf(t.id);
+        return '<div class="pm-catnode">' +
+          '<label class="pm-catrow' + (kids.length ? ' has-kids' : '') + '">' +
+            '<input type="checkbox" data-cat="' + t.id + '"' + (isOn(t) ? ' checked' : '') + '>' +
+            '<span class="pm-catname">' + esc(t.name || ('分类#' + t.id)) + '</span>' +
+            (kids.length ? '<i class="pm-catcnt">' + kids.length + ' 个子分类</i>' : '') +
+          '</label>' +
+          (kids.length ? '<div class="pm-catkids">' + kids.map(function (k) {
+            return '<label class="pm-catrow is-kid"><input type="checkbox" data-cat="' + k.id + '"' + (isOn(k) ? ' checked' : '') + '><span class="pm-catname">' + esc(k.name || ('分类#' + k.id)) + '</span></label>';
+          }).join('') + '</div>' : '') +
+        '</div>';
+      }).join('') + '</div>';
+    })();
 
     var scopeHtml = '<div class="pm-sec"><div class="pm-sec-hd"><b>数据范围（能碰哪些分类）</b></div>'
       + '<div class="pm-grid" style="grid-template-columns:1fr">'
@@ -1127,6 +1144,9 @@
       });
     }
 
+    /* v517：这个弹窗里还有动态生成的 <select>（上级账号），建完必须补一次系统下拉包装，
+       否则又出现一个「原生长条下拉」，跟别处不一致 */
+    setTimeout(function () { try { if (window.__wrapSelects) window.__wrapSelects(mask); } catch (e) {} }, 30);
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑" style="max-width:560px">'
       + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
       + '<h2 class="modal-title" style="margin-bottom:10px">' + (isEdit ? '编辑账号：' + esc(u.username) : '新增账号') + '</h2>'
@@ -1137,7 +1157,7 @@
       + (me.role === 'super' ? '<label class="pm-hint" style="display:block;margin-bottom:4px">上级账号（决定跟谁是一组）</label><select class="input" id="ufParent" style="width:100%;margin-bottom:10px">' + parentOpts + '</select>' : '')
       + secHtml + scopeHtml + annHtml + codeHtml
       + '</div>'
-      + '<div class="usf-foot"><button type="button" class="btn-blue" id="ufSave" style="width:100%">' + (isEdit ? '保存修改' : '创建账号') + '</button></div></div>';
+      + '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="ufSave">' + (isEdit ? '保存修改' : '创建账号') + '</button><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
 
     document.body.appendChild(mask);
     requestAnimationFrame(function () {

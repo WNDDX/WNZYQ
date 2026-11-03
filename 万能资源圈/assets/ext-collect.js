@@ -587,15 +587,23 @@
       sort: 0,
       is_online: 1
     };
-    close();
+    if (typeof window.__openEdit !== 'function') { toast('打不开新增资源，请刷新后台再试', 'error'); return; }
+    /* v517：老板反馈「点上架之后所有窗口都关了」——
+       原来先关采集窗、再延时开新增资源，中间任何一步失败就是「全关了」。
+       改成：先开新增资源 → 确认 editMask 真的 open 了 → 才关采集窗；没开起来就保留采集窗并提示。 */
+    try { window.__openEdit(payload); } catch (eOE) { toast('打不开新增资源：' + (eOE && eOE.message || '未知错误'), 'error'); return; }
     setTimeout(function () {
-      if (typeof window.__openEdit !== 'function') { toast('打不开新增资源，请刷新后台再试', 'error'); return; }
-      window.__openEdit(payload);
-      toast('已填好标题、描述、详情和下单链接，补上分类和价格点确定就行', 'info');
-    }, 220);
-    api('admin/external', { method: 'POST', body: { op: 'goods.use', id: g.id, product_id: 0 } }).then(function () {
-      S.goods.forEach(function (x) { if (Number(x.id) === Number(g.id)) x.status = 'used'; });
-    });
+      var em = document.getElementById('editMask');
+      if (em && em.classList.contains('open')) {
+        close();
+        toast('已填好标题、描述、详情和下单链接，补上分类和价格点确定就行', 'info');
+      } else {
+        toast('新增资源没打开，采集窗给你留着，再点一次试试', 'error');
+      }
+    }, 260);
+    /* v517：**不再**在打开编辑窗时就标「已上架」——老板点了上架又取消，库里已经标成已上架了。
+       改成挂一个待确认标记，等「新增资源」真的保存成功，再由 __extAfterProductSave 回写状态。 */
+    window.__extPendingGoods = Number(g.id) || 0;
   }
 
   function useGoods(id) {
@@ -761,8 +769,32 @@
       ((g.buy_url || g.src_url) ? '<label>下单链接</label><div class="extc-see-desc"><a href="' + esc(g.buy_url || g.src_url) + '" target="_blank" rel="noopener">' + esc(g.buy_url || g.src_url) + '</a></div>' : '') +
       '<div class="extc-seeimgs">' + (uniq.length
         ? uniq.map(function (u) { return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.remove()"></a>'; }).join('')
-        : '<div class="extc-formhint">这条还没抓到详情图，上架时会去抓。</div>') + '</div>',
+        : (g.__fetching ? '<div class="extc-formhint">正在按原页面地址抓详情图…</div>'
+          : '<div class="extc-formhint">这条还没抓到详情图。点下面「补抓详情」我按原页面地址去拿；拿不到就只能用封面。</div>')) + '</div>',
+      (uniq.length <= 1 && g.src_url && !g.__fetching ? '<button class="modal-inner-btn" id="seeFetch">补抓详情</button>' : '') +
       '<button class="modal-close" data-x="1">关闭</button>');
+
+    /* v517：老板「第一个资源有很多图，后面的只有封面」——采集时只自动补前 12 条，
+       剩下的在这里按需补：点一下就把这条的详情图/描述/下单链接抓回来并入库，下次直接有。 */
+    if (uniq.length <= 1 && g.src_url && !g.__fetching) {
+      var btnF = document.getElementById('seeFetch');
+      if (btnF) btnF.addEventListener('click', function () {
+        var b = this; b.disabled = true; b.textContent = '抓取中…';
+        g.__fetching = true;
+        api('admin/external', { method: 'POST', body: { op: 'find.one', url: g.src_url } }).then(function (r) {
+          g.__fetching = false;
+          if (!r || !r.ok) { toast((r && r.msg) || '没抓到，可能这站要登录', 'error'); if (b) { b.disabled = false; b.textContent = '补抓详情'; } return; }
+          var media = (r.media || []).filter(function (u) { return u !== g.cover; }).slice(0, 20);
+          var html = media.map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('');
+          g.detail_html = html || g.detail_html; g.detail_media = media;
+          if (!g.descr && r.desc) g.descr = r.desc;
+          if (!g.buy_url && r.buy_url) g.buy_url = r.buy_url;
+          api('admin/external', { method: 'POST', body: { op: 'goods.update', id: g.id, detail_html: g.detail_html, descr: g.descr, buy_url: g.buy_url } });
+          closeM(document.getElementById('extcSeeMask'));
+          setTimeout(function () { seeForm(g.id); render(); }, 200);
+        });
+      });
+    }
   }
 
   function editForm(id) {
@@ -887,5 +919,15 @@
     var b = e.target.closest && e.target.closest('#openExtCollectBtn');
     if (b) { e.preventDefault(); open(); }
   });
+  /* v517：新增资源「真的保存成功」后才回写采集状态——点了上架又取消，不会再无辜显示「已上架」 */
+  window.__extAfterProductSave = function (productId) {
+    var gid = Number(window.__extPendingGoods || 0);
+    if (!gid) return;
+    window.__extPendingGoods = 0;
+    api('admin/external', { method: 'POST', body: { op: 'goods.use', id: gid, product_id: Number(productId) || 0 } }).then(function () {
+      S.goods.forEach(function (x) { if (Number(x.id) === gid) { x.status = 'used'; x.used_product_id = Number(productId) || 0; } });
+      if (S.mask) render();
+    });
+  };
   window.__extOpenCollect = open;
 })();

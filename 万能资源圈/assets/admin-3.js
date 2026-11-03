@@ -671,6 +671,8 @@
           if (isNewSave) { try { delete __editDrafts['new']; } catch (e) { if (window.__silent) window.__silent(e); } } // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
           clearDraft(); // 保存成功后清除草稿
           try { window.__clearEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); } // R248：同时清 localStorage 草稿
+          /* v517：新增资源保存成功后，回写「采集来的那条资源」的状态（之前是点开编辑窗就标已上架，取消也标） */
+          try { if (window.__extAfterProductSave) window.__extAfterProductSave(res.id || state.editingId); } catch (eES) {}
           /* v330 条8：成功不再弹提示条——按钮已就地打✓「已保存」+ 列表对应行蓝光高亮，反馈就在视线里 */ if (window.__haptic) window.__haptic();
           clearCache();
           /* v351 C2：自动清理"旧版本有、新版本已不再引用"的文件——

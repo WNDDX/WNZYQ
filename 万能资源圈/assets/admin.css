@@ -2308,6 +2308,16 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* v512：勾选框与文字对齐——原生 checkbox 自带 3px 外边距和基线差，统一清零并锁定 16×16，文字行高跟盒子等高 */
 .pm-chk input { width: 16px; height: 16px; flex: 0 0 16px; margin: 0; padding: 0; accent-color: var(--blue1); cursor: pointer; display: block; }
 .pm-chk span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 16px; display: block; }
+/* v517：账号「数据范围」的一二级分类树——一级一行，子分类缩进带竖线 */
+.pm-cattree { margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 10px; background: var(--card-bg); max-height: 240px; overflow: auto; }
+.pm-catnode + .pm-catnode { border-top: 1px dashed var(--border-soft, #eef2f6); }
+.pm-catrow { display: flex; align-items: center; gap: 8px; padding: 6px 2px; font-size: 13px; color: var(--text); cursor: pointer; }
+.pm-catrow.has-kids { font-weight: 600; }
+.pm-catrow input { width: 15px; height: 15px; margin: 0; accent-color: var(--blue1); flex: 0 0 15px; }
+.pm-catname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-catcnt { font-style: normal; font-size: 11px; color: var(--text-faint); margin-left: auto; }
+.pm-catkids { margin: 0 0 6px 22px; padding-left: 10px; border-left: 2px solid var(--border-soft, #eef2f6); }
+.pm-catrow.is-kid { font-size: 12px; color: var(--text-light); padding: 4px 2px; }
 .pm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .pm-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--r-pill, 999px); cursor: pointer; background: var(--card-bg); }
 .pm-chip input { width: 14px; height: 14px; accent-color: var(--blue1); cursor: pointer; }
@@ -2382,7 +2392,10 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 
 /* ===== v473 采集弹窗补齐（搜索/分页/勾选/上架确认/粘贴/导入） ===== */
 .extc-mbody { max-height: min(64vh, 64dvh); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
-.extc-search { flex: 1 1 180px; min-width: 0; }
+.extc-search { flex: 1 1 200px; min-width: 0; max-width: 320px; height: 36px; }
+/* v517：采集弹窗筛选行——搜索框定宽、状态下拉定宽、计数推到最右，和资源管理的筛选行一个呼吸感 */
+.extc-tools { gap: 10px; padding: 2px 0 10px; border-bottom: 1px solid var(--border-soft, #eef2f6); margin-bottom: 12px; }
+.extc-tools .extc-cnt { margin-left: auto; }
 .extc-tools .select-picker { flex: 0 0 auto; min-width: 110px; }
 .extc-see-desc { font-size: 13px; color: var(--text); line-height: 1.7; word-break: break-all; padding: 6px 0 2px; }
 .extc-see-desc a { color: var(--link-blue); }
