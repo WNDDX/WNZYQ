@@ -2959,3 +2959,19 @@ document.addEventListener('keydown', function (e) {
 document.addEventListener('click', function (e) {
   try { if (e.target.closest && e.target.closest('.view-toggle, .view-btn, .tab, .tab-btn, [data-tab]')) setTimeout(function () { try { window.__btnFit && window.__btnFit(); } catch (err) {} }, 90); } catch (err) {}
 }, true);
+/* ================= v529：手机键盘弹出时，弹窗不要被盖住 =================
+   手机上一聚焦输入框，键盘会占掉下半屏；原来弹窗仍按整屏算高度，
+   底部「确定 / 关闭」被顶到键盘后面，看不见也点不到。
+   标准解法是看 visualViewport（可视视口）真实高度，把弹窗压到键盘上方。 */
+(function () {
+  if (!window.visualViewport) return;
+  var vv = window.visualViewport;
+  var root = document.documentElement;
+  function apply() {
+    var kb = (window.innerHeight - vv.height) > 140;   /* 键盘占了 140px 以上才算「键盘弹出」 */
+    root.classList.toggle('kb-open', kb);
+    root.style.setProperty('--vvh', Math.round(vv.height) + 'px');
+  }
+  try { vv.addEventListener('resize', apply); vv.addEventListener('scroll', apply); } catch (e) {}
+  apply();
+})();

@@ -1142,3 +1142,9 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 /* 深色切换不再白闪：让浏览器原生控件（滚动条/输入框/下拉）也跟着主题走 */
 html { color-scheme: light; }
 html[data-theme="dark"] { color-scheme: dark; }
+
+/* v529：键盘弹出时弹窗贴顶、限高、底部按钮吸底——手机上再也不会点不到「确定」 */
+html.kb-open .modal-mask { align-items: flex-start !important; padding-top: 8px !important; }
+html.kb-open .modal-mask .modal-box,
+html.kb-open .modal-mask .modal-wrap { max-height: calc(var(--vvh, 100dvh) - 16px) !important; }
+html.kb-open .modal-mask .modal-footer { position: sticky; bottom: 0; z-index: 6; background: var(--card-bg); }
