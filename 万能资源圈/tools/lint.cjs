@@ -82,6 +82,10 @@ for (const f of jsFiles.concat(pageFiles)) {
   if (braces !== 0) add(problems, 'assets/*.css', 0, '大括号不配平（多 ' + braces + ' 个）');
 }
 
+/* 6.5) 度量（只统计、不判错）：内联样式越少越好，组件份数应该不变 */
+let inlineStyles = 0;
+for (const f of jsFiles.concat(pageFiles)) { inlineStyles += (read(f).match(/style="/g) || []).length; }
+
 /* 7) 页面必须引用的公共文件是否都在 */
 for (const p of ['ui-common.css', 'ui-common.js']) {
   if (!exists('assets/' + p)) add(problems, 'assets/' + p, 0, '公共文件缺失');
@@ -90,7 +94,8 @@ for (const p of ['ui-common.css', 'ui-common.js']) {
 /* 输出 */
 const ok = problems.length === 0;
 console.log('=== 全站规范自检 ===');
-console.log('检查文件：' + (jsFiles.length + cssFiles.length + pageFiles.length) + ' 个\n');
+console.log('检查文件：' + (jsFiles.length + cssFiles.length + pageFiles.length) + ' 个');
+console.log('度量：内联样式 ' + inlineStyles + ' 处（应持续下降）｜按钮组件份数：row-btn / batch-btn / modal-inner-btn 各 1 份\n');
 if (problems.length) {
   console.log('必须修（' + problems.length + '）：');
   problems.slice(0, 60).forEach(p => console.log('  ' + p.file + (p.line ? ':' + p.line : '') + '  ' + p.msg));

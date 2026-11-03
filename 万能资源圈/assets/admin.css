@@ -2536,3 +2536,17 @@ label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left:
   .extc-tools .select-picker { flex: 1 1 100%; width: 100%; min-width: 0; }
   .extc-tools .extc-cnt { margin-left: 0; }
 }
+/* ================= v526：采集弹窗高度分配修正 =================
+   .extc-box 是 flex column，子项默认 flex-shrink:1 —— 手机上一挤，页签行被压成半截字。
+   现在只有内容区可伸缩，顶部工具/页签/筛选/批量条都固定高度。 */
+.extc-box > .extc-bar,
+.extc-box > .extc-tabs,
+.extc-box > .extc-tools,
+.extc-box > .extc-batch,
+.extc-box > .modal-title { flex-shrink: 0; }
+.extc-box > .extc-body { flex: 1 1 auto; min-height: 0; }
+
+@media (max-width: 560px) {
+  /* 窄屏页签要横滑，「添加平台」贴右侧常驻，不再被滚出视野 */
+  .extc-addpf { position: sticky; right: 0; margin-left: 8px; background: var(--card-bg); box-shadow: -10px 0 10px -8px rgba(0,0,0,.18); }
+}
