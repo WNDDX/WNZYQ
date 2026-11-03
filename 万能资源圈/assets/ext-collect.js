@@ -35,6 +35,13 @@
       .catch(function () { return { ok: false, msg: '网络超时或中断，请重试' }; });
   }
   function toast(m, t) { if (window.showToast) window.showToast(m, t || 'info'); }
+  /* v534：库里时间一律 UTC，界面统一北京时间（与数据统计/操作日志同口径，固定 +8） */
+  function bjShort(v) {
+    var s = String(v == null ? '' : v); if (!s) return '';
+    var d = new Date(s.replace(' ', 'T') + 'Z');
+    if (isNaN(d.getTime())) return s.slice(5, 16);
+    return new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
+  }
   /* v501：下拉一律用系统的自制下拉（.select-picker）——
      老板原话「比如下拉选择的组件，都不会复用吗，现在你又新做了，要复用啊」。
      makeSelectPicker 是 admin-3.js 的全局函数：会插显示层、隐藏原生 select，并返回 {refresh}。 */
@@ -399,7 +406,7 @@
       var last = S.runs.filter(function (x) { return Number(x.pid) === Number(p.id); })[0];
       var meta = [];
       if (Number(p.auto_collect)) meta.push('<i class="extc-auto">每天自动</i>');
-      if (p.last_auto_at) meta.push('<span>上次自动：' + esc(String(p.last_auto_at).slice(5, 16)) + '</span>');
+      if (p.last_auto_at) meta.push('<span>上次自动：' + esc(bjShort(p.last_auto_at)) + '</span>');
       if (last) meta.push('<span class="' + (last.ok ? 'is-ok' : 'is-bad') + '">上次手动：' + esc(String(last.at).slice(5, 16)) + ' · ' + esc(String(last.msg || '').slice(0, 46)) + '</span>');
       return '<div class="extc-prow" data-pid="' + p.id + '">' +
         '<div class="extc-pmain"><b>' + esc(p.name) + ' <i class="extc-cnt">' + cnt + ' 个资源</i></b>' +

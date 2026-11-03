@@ -1394,7 +1394,11 @@
         if (st.last.fails && st.last.fails.length) extra += '，' + st.last.fails.length + ' 个没抓到（' + st.last.fails.join('、') + '）';
         line.push('<div class="cs-row"><span>上次自动</span><b>' + st.last.at + ' · ' + extra + '</b></div>');
       } else if (st.lastAutoAt) {
-        line.push('<div class="cs-row"><span>上次自动</span><b>' + String(st.lastAutoAt).slice(5, 16) + '</b></div>');
+        /* v534：库里是 UTC，这里换算成北京时间再显示 */
+        var dT = new Date(String(st.lastAutoAt).replace(' ', 'T') + 'Z');
+        var txt = isNaN(dT.getTime()) ? String(st.lastAutoAt).slice(5, 16)
+          : new Date(dT.getTime() + 8 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
+        line.push('<div class="cs-row"><span>上次自动</span><b>' + txt + '</b></div>');
       }
       host.innerHTML = line.join('');
     };
