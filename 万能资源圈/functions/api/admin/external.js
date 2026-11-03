@@ -10,7 +10,7 @@
  * 只取标题 / 封面 / 描述（文字 + 图或视频链接），**不取价格**。
  * 状态判定按关键词表（方案 v3 第四节）：已售出 > 已删除 > 已下架 > 需登录 > 在售 > 判不出。
  */
-import { ensureAdminUsers, json, readJSON, requireAuth, requirePerm } from '../../_utils.js';
+import { ensureAdminUsers, json, readJSON, requireAuth, requirePerm, audit } from '../../_utils.js';
 import { parsePerms } from '../../_perms.js';
 
 /* ===== 建表（懒迁移，线上旧库直接跑） ===== */
@@ -256,11 +256,13 @@ export async function onRequestPost(context) {
             .bind(name, domain, loginUrl, note, settle, mode, sort, mallUrl, autoC, id).run(); }
           catch (eU) { await env.DB.prepare('UPDATE external_platforms SET name=?, domain=?, login_url=?, note=?, settle_note=?, fetch_mode=?, sort=?, auto_collect=? WHERE id=?')
             .bind(name, domain, loginUrl, note, settle, mode, sort, autoC, id).run(); }
+          try { await audit(env, request, '修改采集平台', name + (autoC ? '（开启每天自动采集）' : '')); } catch (eA) {}
           return json({ ok: true, id });
         }
         try {
           const r = await env.DB.prepare('INSERT INTO external_platforms (name, domain, login_url, note, settle_note, fetch_mode, sort, req_id, mall_url, auto_collect) VALUES (?,?,?,?,?,?,?,?,?,?)')
             .bind(name, domain, loginUrl, note, settle, mode, sort, reqId, mallUrl, autoC).run();
+          try { await audit(env, request, '新增采集平台', name + (autoC ? '（开启每天自动采集）' : '')); } catch (eA2) {}
           return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0 });
         } catch (eIns) {
           /* 唯一索引撞了 = 同一个请求重放，把已有那条还回去 */
@@ -277,6 +279,7 @@ export async function onRequestPost(context) {
         const used = await env.DB.prepare('SELECT COUNT(*) AS n FROM external_links WHERE platform_id=? AND deleted_at IS NULL').bind(id).first();
         if (used && used.n > 0) return json({ ok: false, msg: '这个平台下还有 ' + used.n + ' 条链接，先删链接再删平台' }, 400);
         await env.DB.prepare('DELETE FROM external_platforms WHERE id=?').bind(id).run();
+        try { await audit(env, request, '删除采集平台', '#' + id); } catch (eA3) {}
         /* v476：删平台时，它采来的商品会变成「孤儿」——platform_id 指向不存在的平台，
            界面上按平台筛永远看不到，等于悄悄占着库。改成置为「未归平台」（0），
            商品还在、在「全部平台」里能看到，不会误删老板辛苦采的货。 */
@@ -628,6 +631,7 @@ export async function onRequestPost(context) {
       const id = Number(b.id || 0) || 0;
       if (!id) return json({ ok: false, msg: '缺少 id' }, 400);
       await env.DB.prepare('DELETE FROM external_goods WHERE id=?').bind(id).run();
+      try { await audit(env, request, '删除采集资源', '#' + id); } catch (eA4) {}
       return json({ ok: true });
     }
 
