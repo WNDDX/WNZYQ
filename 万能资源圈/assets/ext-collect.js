@@ -320,8 +320,19 @@
       '<button type="button" class="batch-btn danger" data-act="delbatch" data-pri="2">批量删除</button>' +
       '<button type="button" class="batch-btn" data-act="selnone" data-pri="1">取消选中</button>' +
       '</div>';
+    /* v512：按键统一走系统的「图标 + 文字，窄了自动收成图标」（__decorateBtn + __btnFit），
+       和资源管理批量条同一套；不是自己画一排纯文字键 */
+    try {
+      var iconMap = { batchuse: 'save', selpage: 'show', delbatch: 'del', selnone: 'hide' };
+      var priMap = { batchuse: 5, selpage: 4, delbatch: 3, selnone: 2 };
+      Array.prototype.forEach.call(bar.querySelectorAll('.batch-btn'), function (b) {
+        var act = b.getAttribute('data-act');
+        if (window.__decorateBtn && iconMap[act]) window.__decorateBtn(b, iconMap[act], priMap[act] || 5);
+      });
+    } catch (eI) {}
     if (window.__setBatchBar) window.__setBatchBar(bar, n > 0);
     else bar.classList.toggle('show', n > 0);
+    try { if (window.__btnFit) window.__btnFit(); } catch (eF) {}
   }
   function refreshSelUI() {
     if (!S.mask) return;

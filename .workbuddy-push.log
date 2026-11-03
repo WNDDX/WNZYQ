@@ -1,0 +1,6 @@
+[00:45:26] fail 1
+[00:45:52] fail 2
+fatal: unable to access 'https://github.com/WNDDX/WNZYQ.git/': OpenSSL SSL_read: OpenSSL/3.5.7: error:0A000126:SSL routines::unexpected eof while reading, errno 0
+fail 1 00:46:32
+fatal: unable to access 'https://github.com/WNDDX/WNZYQ.git/': CONNECT tunnel failed, response 502
+fail 2 00:46:58
