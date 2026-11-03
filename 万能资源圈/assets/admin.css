@@ -1400,9 +1400,10 @@
        在 flex-wrap 工具栏里会被挤到第二行（三角掉行）；工具栏右侧留 40px 防重叠 */
     .rte-toolbar { position: relative; padding-right: 44px; }
     .rte-toolbar .rte-expand {
-      /* v454（老板反馈：编辑器工具栏的三角会跟着左右滑动）：原来是 position:absolute——收起态工具栏是横向滚动容器，
-         绝对定位元素在滚动容器里会跟着内容一起被推走。改 sticky 钉在滚动视口右缘，横向滑多远它都不动。 */
-      position: sticky; right: 6px; top: 0; margin-left: auto;
+      /* v492（老板实测：点三角会位移一点）：sticky 的 right 只在「内容溢出、sticky 真正激活」时生效，
+         展开态不溢出 → right:6px 不参与计算，收起态溢出 → 生效，两态差 6px，点一下就跳。
+         改成 right:0 + margin-right:6px —— 无论 sticky 是否激活，右缘都恒定留 6px。 */
+      position: sticky; right: 0; top: 0; margin-left: auto; margin-right: 6px;
       display: flex; flex-shrink: 0; align-self: auto;
       width: 32px; height: 32px; padding: 0;
       border: none; background: transparent; /* v370c：三角统一裸三角——全站三角只允许大小差异，不允许边框/底色 */
@@ -1418,7 +1419,7 @@
     .rte-toolbar.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ }
     /* v385 条8：收起态三角坐标与展开态对齐（top:8/right:6 同值）——原 sticky 默认 top 归行内流位，
        状态切换瞬间三角位置跳动（老板反馈「状态变化后还是会动」），现两态同位仅剩旋转过渡 */
-    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 6px; top: 0; margin-left: auto; z-index: 2; } /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
+    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 0; top: 0; margin-left: auto; margin-right: 6px; z-index: 2; } /* v492：与展开态同口径（right:0 + margin-right:6） */ /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
     .rte-toolbar.rte-collapsed .rte-expand .toggle-arrow { transform: rotate(-90deg); }
 
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
