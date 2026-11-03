@@ -370,7 +370,7 @@
       var used = g.status === 'used';
       return '<div class="extc-card' + (on ? ' on' : '') + (used ? ' is-used' : '') + '" data-id="' + g.id + '">' +
         '<div class="extc-thumb" data-act="pick">' +
-        (g.cover ? '<img src="' + esc(g.cover) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' : '<span class="extc-noimg">无图</span>') +
+        (g.cover ? '<img src="' + esc(g.cover) + '" alt="' + esc(g.title || '资源封面') + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' : '<span class="extc-noimg">无图</span>') +
         (used ? '<span class="extc-used">已上架</span>' : '') +
         '<span class="extc-ck">' + (on ? '✓' : '') + '</span>' +
         '</div>' +

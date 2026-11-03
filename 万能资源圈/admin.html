@@ -638,16 +638,16 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     <div class="modal-box modal-wide">
       <button aria-label="关闭" class="modal-close-x" data-close="editMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>      <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
-        <label for="fTitle">标题</label><input id="fTitle" maxlength="100" />
-        <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
+        <label for="fTitle">标题<em class="req" aria-hidden="true">*</em></label><input id="fTitle" maxlength="100" />
+        <label>分类<em class="req" aria-hidden="true">*</em></label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
         <!-- R256：封面多图轮播——横排小图列表 -->
         <label>资源封面图 </label>
         <div class="cover-gallery" id="coverGallery"></div>
-        <div style="display:flex;gap:8px;align-items:stretch;margin-top:8px;">
-          <input id="fImg" style="flex:1;min-width:0;" maxlength="500" />
-          <button type="button" class="btn-blue" id="fImgUpload" style="white-space:nowrap;width:auto;height:auto;margin-bottom:0;padding:0 16px;" title="从电脑选图，自动上传到自有图仓并填入链接">上传本地图片</button>
+        <div class="cover-url-row">
+          <input id="fImg" class="cover-url-input" maxlength="500" />
+          <button type="button" class="btn-blue cover-upload" id="fImgUpload" title="从电脑选图，自动上传到自有图仓并填入链接">上传本地图片</button>
         </div>
-        <div style="font-size:12px;color:var(--text-light,#666);margin-top:2px;margin-bottom:6px;">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
+        <div class="form-note">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" decoding="async" style="display:none;" />
         <label>简介 </label><input id="fDesc" maxlength="200" />
         <label>详细描述 </label>
@@ -717,7 +717,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           </h4>
           <div id="variantList"></div>
         </div>
-        <label>价格 </label>
+        <label>价格<em class="req" aria-hidden="true">*</em></label>
         <input id="fPrice" type="number" step="0.01" min="0" inputmode="decimal" />
         <!-- v385 条11：专属咨询客服——整套 UI 搬运设置信息行（绿键+三角+二维码上传/网络图/跳转链接/保存/收起），未设置默认用平台设置 -->
         <div class="info-item ed-contact" id="edContactItem">

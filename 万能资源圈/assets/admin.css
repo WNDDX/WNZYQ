@@ -2464,3 +2464,55 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .preview-frame { display: none; position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: inherit; background: var(--card-bg); }
 .preview-box.pv-real .preview-frame { display: block; }
 .preview-box.pv-real .modal-close-x { z-index: 12; }
+
+/* ================= v524 统一层 part2（后台页面级收敛） =================
+   原则：只补缺口、只统一「同一含义多种写法」，不改已经一致的数值。
+   每条都对应全系统审查报告里的一个编号，方便回溯。 */
+
+/* #19 #41 表格：三套包裹类（bind-table-wrap / table-scroll / admin-table-wrap）统一行为，
+   统计表也纳入；窄屏一律横向滚动，不再把表格挤变形。 */
+.stat-table-wrap,
+.bind-table-wrap,
+.table-scroll,
+.admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+@media (max-width: 640px) {
+  .stat-table-wrap table,
+  .bind-table-wrap table,
+  .table-scroll table,
+  .admin-table-wrap table { min-width: 560px; }
+}
+
+/* #40 页面底部留白：各页末块与浏览器底边至少留 32px，滚动到底不再贴边 */
+#mainView, .main-view, #app > main { padding-bottom: 32px; }
+
+/* #29 弹窗滚动手感：滚到弹窗尽头不要把背后页面带着滚 */
+.modal-mask { overscroll-behavior: contain; }
+.modal-box { overscroll-behavior: contain; }
+
+/* #38 采集卡片窄屏：手机上一行两张太挤（标题只剩一行），改成卡片变宽、标题两行 */
+@media (max-width: 520px) {
+  #extcMask .extc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  #extcMask .extc-t { -webkit-line-clamp: 2; white-space: normal; line-height: 1.35; }
+}
+
+/* #43 横屏（手机横过来）：弹窗按短边给高度，底部按钮不会被推出屏幕 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .modal-mask .modal-box { max-height: 94dvh; }
+  .modal-mask .modal-footer { position: sticky; bottom: 0; z-index: 5; background: var(--card-bg); }
+}
+
+/* #5 #12 文件卡按钮（.fc-btn）与系统行内键同高同圆角，不再自成一套 */
+.fc-btn { min-height: 30px; display: inline-flex; align-items: center; justify-content: center; }
+.fc-btn-strong { min-height: 30px; }
+
+/* #26 日期弹窗按钮的按压动效删掉自定义版，统一走全站 scale(.97)（ui-common 统一层） */
+.dt-pop .dt-btns button:active { transform: none; opacity: 1; filter: none; }
+
+/* #20 必填标记：星号统一（红色小星，跟在标签文字后） */
+label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left: 2px; font-weight: 600; }
+
+/* #54 封面地址行：原来三个内联样式，收成类 */
+.cover-url-row { display: flex; gap: 8px; align-items: stretch; margin-top: 8px; }
+.cover-url-input { flex: 1; min-width: 0; }
+.cover-upload { white-space: nowrap; width: auto; height: auto; margin-bottom: 0; padding: 0 16px; }
+.form-note { font-size: 12px; color: var(--text-light, #666); margin: 2px 0 6px; }
