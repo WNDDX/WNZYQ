@@ -1656,6 +1656,45 @@
       }
     }
     // 渲染公告项列表（拖拽排序）
+    /* v534：公告预览（老板：填完不知道访客看到什么）。做法与 v518 资源预览完全一致——
+       后台 iframe 打开 /shop?preview=ann，把当前编辑中的数据 postMessage 过去，
+       渲染仍走前台自己的公告弹窗，不另画一套 DOM（事故 #57 的教训）。 */
+    function openAnnPreview() {
+      flushAnnEdit();
+      var old = document.getElementById('annPvMask'); if (old) old.remove();
+      var mask = document.createElement('div');
+      mask.className = 'modal-mask'; mask.id = 'annPvMask';
+      mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="公告预览" style="max-width:var(--modal-w-md)">' +
+        '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
+        '<h2 class="modal-title">公告预览</h2>' +
+        '<div class="pv-ann-tip">这就是访客看到的样子（隐藏的公告不会显示，改完记得点保存）</div>' +
+        '<iframe class="pv-ann-frame" id="annPvFrame" title="公告预览"></iframe>' +
+        '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
+      document.body.appendChild(mask);
+      requestAnimationFrame(function () { mask.classList.add('open'); });
+      if (window.syncBodyLock) window.syncBodyLock();
+      var close = function () {
+        mask.classList.remove('open');
+        setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
+      };
+      mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+      var fr = mask.querySelector('#annPvFrame');
+      var send = function () {
+        var list = (stateAnn.list || []).map(function (a) {
+          return { id: a.id, title: a.title || '', content: a.content || '', hidden: a.hidden || 0, sort: a.sort || 0, level: a.level || 2 };
+        });
+        try { fr.contentWindow.postMessage({ type: 'wnzyq-ann-preview', list: list }, location.origin); } catch (e) {}
+      };
+      fr.addEventListener('load', function () { setTimeout(send, 200); });
+      fr.src = '/shop?preview=ann';
+      var onReady = function (ev) {
+        if (!ev.data || ev.data.type !== 'wnzyq-ann-ready') return;
+        window.removeEventListener('message', onReady);
+        send();
+      };
+      window.addEventListener('message', onReady);
+    }
+
     function renderAnnList() {
       // R256：清除公告列表骨架
       var _alBox = document.getElementById('annList'); if (_alBox) { var _als = _alBox.querySelectorAll('.ann-skel-item'); for (var i=0;i<_als.length;i++) _als[i].parentNode.removeChild(_als[i]); }
@@ -1686,6 +1725,8 @@
         annStatusBtn.addEventListener('click', function (e) { e.stopPropagation(); a.hidden = a.hidden ? 0 : 1; var _lab = this.querySelector('.btn-lab'); if (_lab) _lab.textContent = a.hidden ? '隐藏' : '显示'; else this.textContent = a.hidden ? '隐藏' : '显示'; this.classList.remove('status-online', 'status-hidden'); this.classList.add(a.hidden ? 'status-hidden' : 'status-online'); this.title = '点击切换为' + (a.hidden ? '显示' : '隐藏'); });
         if (window.__decorateBtn) window.__decorateBtn(annStatusBtn, a.hidden ? 'hide' : 'show', 2); /* v369 条1：空间不够收成图标（保底图标） */
         // 点击公告项整行即可选中编辑（无需单独编辑按钮）
+        var pvBtn = document.createElement('button'); pvBtn.className = 'row-btn'; pvBtn.textContent = '预览'; pvBtn.title = '按访客看到的样式预览';
+        pvBtn.addEventListener('click', function (e) { e.stopPropagation(); openAnnPreview(); });
         var delBtn = document.createElement('button'); delBtn.className = 'row-btn danger'; delBtn.textContent = '删除';
         if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v369 条1 */
         delBtn.addEventListener('click', function (e) {
@@ -1725,7 +1766,7 @@
         _agMain.appendChild(txt); _agMain.appendChild(sortEl);
         /* v381 条1：操作组复用分类行 .c-meta 折叠机制（显示/隐藏+删除默认收起，点右侧三角展开） */
         var _agAct = document.createElement('span'); _agAct.className = 'ann-group ann-act-group c-meta';
-        _agAct.appendChild(annStatusBtn); _agAct.appendChild(delBtn);
+        _agAct.appendChild(annStatusBtn); _agAct.appendChild(pvBtn); _agAct.appendChild(delBtn);
         item.appendChild(handle); item.appendChild(_agMain); item.appendChild(_agAct);
         /* v381 条1：行尾注入与分类行完全同款的展开/收起蓝三角 */
         var fold = document.createElement('button');
@@ -1893,6 +1934,18 @@
     /* v416 条2：设置信息弹窗点外关闭——此前无点外监听（其他弹窗都有=点框外逻辑不统一） */
     document.getElementById('infoMask').addEventListener('click', function (e) {
       if (e.target === document.getElementById('infoMask')) document.getElementById('infoMask').classList.remove('open');
+    });
+    /* v534：链接填了不知道对不对（老板：只能去前台点一次试）→ 每行加「测一下」，新窗口打开当前输入框里的链接 */
+    document.getElementById('infoMask').addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-test]');
+      if (!b) return;
+      e.stopPropagation();
+      var inp = document.getElementById(b.getAttribute('data-test'));
+      var u = inp ? String(inp.value || '').trim() : '';
+      if (!u) { if (window.showToast) window.showToast('这条链接还是空的，先填再测', 'info'); return; }
+      if (!/^https?:\/\//i.test(u)) { if (window.showToast) window.showToast('链接要以 http:// 或 https:// 开头', 'error'); return; }
+      var w = window.open(u, '_blank', 'noopener');
+      if (!w && window.showToast) window.showToast('浏览器拦了新窗口，允许弹出后再点一次', 'info');
     });
     document.getElementById('annMask').addEventListener('click', function (e) {
       // R257（老板 09-23 19:08）：点外关闭=暂存当前编辑（选中项+内容+频率保留），重开自动恢复到离开时的样子；

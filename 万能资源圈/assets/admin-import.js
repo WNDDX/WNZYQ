@@ -490,6 +490,40 @@
   }
 
   /* 向导弹窗（复用 modal 骨架） */
+  /* ===== v534：导入历史（老板：导入完只弹一次 toast，关掉就查不到上次导了几条、哪条失败）=====
+     存 localStorage，保留最近 10 次；只记时间/文件名/成功条数/失败原因摘要，不存内容。 */
+  var IMP_HIST_KEY = 'wnzyq_import_hist';
+  function impHistRead() {
+    try { var a = JSON.parse(localStorage.getItem(IMP_HIST_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+    catch (e) { return []; }
+  }
+  function impHistPush(rec) {
+    try {
+      var a = impHistRead(); a.unshift(rec); a = a.slice(0, 10);
+      localStorage.setItem(IMP_HIST_KEY, JSON.stringify(a));
+    } catch (e) {}
+  }
+  function bjNow() {
+    return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
+  }
+  function renderImpHist(host) {
+    if (!host) return;
+    var a = impHistRead();
+    var h = '<div class="imp-hist-h">导入历史（最近 10 次，只记在这台电脑上）</div>';
+    if (!a.length) {
+      h += '<div class="imp-hist-empty">还没有导入记录。导一次之后，这里会显示时间、文件名、成功几条、哪条失败。</div>';
+    } else {
+      h += a.map(function (r) {
+        var bad = Number(r.bad) || 0;
+        return '<div class="imp-hist-row"><span class="t">' + esc(r.at || '') + '</span>' +
+          '<span class="f" title="' + esc(r.file || '') + '">' + esc(r.file || '（未记文件名）') + '</span>' +
+          '<span class="r ' + (bad ? 'is-bad' : 'is-ok') + '">' + (bad ? (r.ok || 0) + ' 成功 / ' + bad + ' 失败' : (r.ok || 0) + ' 条全成功') + '</span></div>' +
+          (bad && r.note ? '<div class="imp-hist-note">' + esc(r.note) + '</div>' : '');
+      }).join('');
+    }
+    host.innerHTML = h;
+  }
+
   function openWizard() {
     var old = document.getElementById('importMask');
     if (old) old.remove();
@@ -500,8 +534,10 @@
       '<p class="imp-lead">第 1 步：下载模板 → 填好 → 第 2 步上传 → 预览无误后导入。建议顺序：先导「分类」→ 再导「资源」→ 最后导「类型」。</p>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
       '<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xlsx,.xls,.xml" style="display:none"></div>' +
-      '<div id="impPrev" style="margin-top:10px"></div></div></div>';
+      '<div id="impPrev" style="margin-top:10px"></div>' +
+      '<div class="imp-hist" id="impHist"></div></div></div>';
     document.body.appendChild(mask);
+    renderImpHist(mask.querySelector('#impHist'));
     requestAnimationFrame(function () {
       mask.classList.add('open');
       try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll: true }); } catch (eF) {} /* v439 #84 */
@@ -518,6 +554,7 @@
     mask.querySelector('#impUploadBtn').addEventListener('click', function () { mask.querySelector('#impFile').click(); }); /* v443 条5：上传键改 button 与下载键完全同款（原 label 结构渲染发灰） */
     mask.querySelector('#impFile').addEventListener('change', function () {
       var f = this.files && this.files[0]; if (!f) return;
+      var fname = String(f.name || '');
       var rd = new FileReader();
       rd.onload = function () {
         /* v456：先看文件头——zip(PK) 走 xlsx 解析，其余按老 SpreadsheetML/HTML 表格解析 */
@@ -527,28 +564,35 @@
           var pv = preview(data);
           var body = mask.querySelector('#impPrev');
           var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length; /* v431c：键名与 preview 返回值对齐（旧 pv.res 未同步=预览空白的真凶） */
-          body.innerHTML = '<div class="probe" style="background:#0f2233;color:#9fe3b8;border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap">' + esc(pv.lines.join('\n')) + '</div>' +
+          body.innerHTML = '<div class="imp-log">' + esc(pv.lines.join('\n')) + '</div>' +
             '<button class="btn-blue" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
           body.querySelector('#impGo').addEventListener('click', function () {
             this.disabled = true; this.textContent = '导入中…';
             /* v439 #69：实时回显——每条导入完成立即上屏（成功绿/失败红），不等全部结束 */
-            body.innerHTML = '<div id="impLive" style="background:#0f2233;color:#9fe3b8;border-radius:8px;padding:10px;font-size:12px;max-height:220px;overflow-y:auto"></div>';
+            body.innerHTML = '<div id="impLive" class="imp-log imp-log-live"></div>';
             var live = body.querySelector('#impLive');
             var onLog = function (line) {
               var ln = document.createElement('div');
               var bad = /失败|错误/.test(line);
               ln.textContent = line;
-              ln.style.color = bad ? '#ef9a9a' : '#9fe3b8';
+              ln.className = bad ? 'is-bad' : 'is-ok';
               live.appendChild(ln);
               try { live.scrollTop = live.scrollHeight; } catch (e2) {}
             };
             doImport(pv, onLog).then(function (log) {
               var badN = log.filter(function (l) { return /失败|错误/.test(l); }).length;
               var sum = document.createElement('div');
-              sum.style.cssText = 'margin-top:6px;padding-top:6px;border-top:1px solid #223a52;color:' + (badN ? '#ef9a9a' : '#9fe3b8') + ';font-weight:bold';
+              sum.className = 'imp-log-sum ' + (badN ? 'is-bad' : 'is-ok');
               sum.textContent = '导入完成：' + log.length + ' 条' + (badN ? '（失败 ' + badN + ' 条）' : '，全部成功');
               live.appendChild(sum);
               try { live.scrollTop = live.scrollHeight; } catch (e3) {}
+              /* v534：记一条导入历史（时间 / 文件 / 成功数 / 失败摘要），下次打开弹窗能回看 */
+              impHistPush({
+                at: bjNow(), file: fname, total: log.length,
+                ok: log.length - badN, bad: badN,
+                note: badN ? (log.filter(function (l) { return /失败|错误/.test(l); })[0] || '').slice(0, 80) : ''
+              });
+              renderImpHist(mask.querySelector('#impHist'));
               if (window.showToast) window.showToast(badN ? '导入完成，有失败项请看明细' : '导入完成', badN ? 'info' : 'success');
             });
           });
@@ -581,10 +625,10 @@
         _shell.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
           '<h2 class="modal-title">系统体检</h2>' +
           '<div style="font-size:13px;color:#5b7083;margin:0 0 12px">正在逐张检查图片、逐条探测外链，最长约半分钟，请稍候…</div>' +
-          '<div style="background:#0f2233;border-radius:8px;padding:10px 12px;font-size:12px">' +
-          '<div class="sk-line" style="height:14px;width:70%;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,#1a3350 55%,#24466b 75%,#1a3350 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' +
-          '<div class="sk-line" style="height:14px;width:50%;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,#1a3350 55%,#24466b 75%,#1a3350 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' +
-          '<div class="sk-line" style="height:14px;width:62%;border-radius:6px;background:linear-gradient(90deg,#1a3350 55%,#24466b 75%,#1a3350 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div></div></div>';
+          '<div class="chk-scroll"><div class="chk-skel">' +
+          '<div class="sk-line" style="height:14px;width:70%"></div>' +
+          '<div class="sk-line" style="height:14px;width:50%"></div>' +
+          '<div class="sk-line" style="height:14px;width:62%"></div></div></div></div>';
         document.body.appendChild(_shell);
         requestAnimationFrame(function () { _shell.classList.add('open'); });
         _shell.addEventListener('click', function (e) {
@@ -612,7 +656,7 @@
               var href = a.getAttribute('href') || '';
               if (/^https?:\/\//i.test(href) && href.indexOf(location.host) < 0) {
                 var k = href + '|' + p.id;
-                if (!linkKey[k]) { linkKey[k] = 1; links.push({ href: href, where: pname }); }
+                if (!linkKey[k]) { linkKey[k] = 1; links.push({ href: href, where: pname, pid: p.id }); }
               }
             });
           } catch (e0) { if (window.__silent) window.__silent(e0); }
@@ -801,60 +845,76 @@
   function renderSysResult(R0) {
     var old = document.getElementById('sysCheckMask'); if (old) old.remove();
     var brokenRows = R0.broken.map(function (it) {
-      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #223a52">' +
-        '<span style="width:40px;height:40px;flex:none;background:#33202a;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#e57373;font-size:16px">✕</span>' +
-        '<span style="flex:1;min-width:0"><b style="color:#ffcdd2">' + esc(it.refs[0].where) + '</b><br><span style="color:#8aa0b5;word-break:break-all;font-size:11px">' + esc(it.src) + '</span></span>' +
-        '<button type="button" class="btn-blue btn-inline-pd" data-goto-pid="' + esc(String(it.refs[0].pid)) + '" style="flex:none">去处理</button></div>';
+      return '<div class="chk-row">' +
+        '<span class="chk-thumb chk-thumb-bad">✕</span>' +
+        '<span class="chk-main"><b>' + esc(it.refs[0].where) + '</b><span class="chk-sub">' + esc(it.src) + '</span></span>' +
+        '<button type="button" class="btn-blue btn-inline-pd" data-goto-pid="' + esc(String(it.refs[0].pid)) + '">去处理</button></div>';
     }).join('');
     var dupRows = R0.dups.map(function (it) {
       var wheres = it.refs.map(function (r) { return r.where; }).join('、');
-      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #223a52">' +
-        '<img src="' + esc(it.src) + '" style="width:40px;height:40px;flex:none;object-fit:cover;border-radius:4px" onerror="this.style.visibility=\'hidden\'">' +
-        '<span style="flex:1;min-width:0"><b style="color:#ffe082">被 ' + it.refs.length + ' 处引用</b><br><span style="color:#8aa0b5;font-size:11px">' + esc(wheres) + '</span></span></div>';
+      return '<div class="chk-row">' +
+        '<img class="chk-thumb" src="' + esc(it.src) + '" alt="" onerror="this.style.visibility=\'hidden\'">' +
+        '<span class="chk-main"><b>被 ' + it.refs.length + ' 处引用</b><span class="chk-sub">' + esc(wheres) + '</span></span></div>';
     }).join('');
     var badLinks = R0.links.filter(function (L) { return L.ok === false; });
     var okLinks = R0.links.filter(function (L) { return L.ok === true; }).length;
     var uncheckedLinks = (R0.links || []).filter(function (L) { return L.ok === null; }).length; /* v448：网页类外链受 CSP 限制无法自动检测，需人工核对 */
     var linkRows = badLinks.map(function (L) {
-      return '<div style="padding:6px 0;border-bottom:1px solid #223a52"><b style="color:#ffcdd2">' + esc(L.where) + '</b><br><span style="color:#8aa0b5;word-break:break-all;font-size:11px">' + esc(L.href) + '</span></div>';
+      return '<div class="chk-row">' +
+        '<span class="chk-thumb chk-thumb-bad">⚠</span>' +
+        '<span class="chk-main"><b>' + esc(L.where) + '</b><span class="chk-sub">' + esc(L.href) + '</span></span>' +
+        (L.pid ? '<button type="button" class="btn-blue btn-inline-pd" data-goto-pid="' + esc(String(L.pid)) + '">去处理</button>' : '') + '</div>';
     }).join('');
     /* #79 超大图分组（>1MB，可压缩替换+恢复原图） */
     var osRows = (R0.oversize || []).map(function (it, oi) {
-      return '<div data-osidx="' + oi + '" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #223a52">' +
-        '<img src="' + esc(it.src) + '" style="width:40px;height:40px;flex:none;object-fit:cover;border-radius:4px" onerror="this.style.visibility=\'hidden\'">' +
-        '<span style="flex:1;min-width:0"><b style="color:#ffcc80">' + esc(it.refs[0].where) + '</b> <span style="color:#ffe082;font-size:11px">' + (it.size ? (it.size / 1024 / 1024).toFixed(2) + ' MB' : '') + '</span><br><span style="color:#8aa0b5;word-break:break-all;font-size:11px">' + esc(it.src) + '</span></span>' +
-        '<span data-osact="1" style="flex:none"></span></div>';
+      return '<div class="chk-row" data-osidx="' + oi + '">' +
+        '<img class="chk-thumb" src="' + esc(it.src) + '" alt="" onerror="this.style.visibility=\'hidden\'">' +
+        '<span class="chk-main"><b>' + esc(it.refs[0].where) + ' <span class="chk-size">' + (it.size ? (it.size / 1024 / 1024).toFixed(2) + ' MB' : '') + '</span></b><span class="chk-sub">' + esc(it.src) + '</span></span>' +
+        '<span class="chk-act" data-osact="1"></span>' +
+        '<button type="button" class="row-btn" data-goto-pid="' + esc(String(it.refs[0].pid)) + '">去处理</button></div>';
     }).join('');
     var badEnv = (R0.env || []).filter(function (e) { return !e.ok; });
     var envRows = (R0.env || []).map(function (e) {
-      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #223a52;font-size:12px">' +
-        '<span style="flex:none;color:' + (e.ok ? '#9fe3b8' : '#e57373') + '">' + (e.ok ? '✓' : '✕') + '</span>' +
-        '<b style="flex:none;color:' + (e.ok ? '#c9e7d4' : '#ffcdd2') + '">' + esc(e.name) + '</b>' +
-        '<span style="flex:1;min-width:0;color:#8aa0b5;text-align:right">' + esc(e.detail) + '</span></div>';
+      return '<div class="chk-row">' +
+        '<span class="chk-thumb ' + (e.ok ? 'chk-thumb-ok' : 'chk-thumb-bad') + '">' + (e.ok ? '✓' : '✕') + '</span>' +
+        '<span class="chk-main"><b>' + esc(e.name) + '</b><span class="chk-sub">' + esc(e.detail) + '</span></span></div>';
     }).join('');
-    var sec = function (title, color, body, note) {
+    var sec = function (title, tone, body, note, count) {
       if (!body) return '';
-      return '<div style="margin-bottom:12px"><b style="color:' + color + ';font-size:13px">' + title + '</b>' + (note ? '<span style="font-size:11px;color:#8aa0b5;margin-left:8px">' + note + '</span>' : '') + '<div style="margin-top:4px">' + body + '</div></div>';
+      return '<div class="chk-sec"><div class="chk-sec-h ' + tone + '"><span>' + title + '</span>' +
+        (note ? '<span class="chk-note">' + note + '</span>' : '') +
+        (count != null ? '<span class="chk-n">' + count + '</span>' : '') + '</div>' +
+        '<div class="chk-sec-b">' + body + '</div></div>';
     };
-    /* 环境检查分组（#115）：四项有一项不对也常驻展示 */
-    var envSec = sec('⚙ 环境检查 ' + ((R0.env || []).length - badEnv.length) + '/' + (R0.env || []).length + ' 项正常', badEnv.length ? '#ef9a9a' : '#9fe3b8', envRows, '后端 / 离线缓存 / 静态缓存 / 本地存储');
-    var body = envSec +
-      sec('✕ 失效图片 ' + R0.broken.length + ' 张（点「去处理」直接打开对应资源编辑）', '#ef9a9a', brokenRows) +
-      sec('⧉ 重复图片引用 ' + R0.dups.length + ' 组（同图多处使用，确认是否故意）', '#ffe082', dupRows) +
-      sec('⚠ 疑似失效外链 ' + badLinks.length + ' 条（域名无法访问；跨域限制下仅测域名可达性，HTTP 状态码拿不到）', '#ef9a9a', linkRows) +
-      sec('🖼 超大图片 ' + (R0.oversize || []).length + ' 张（超 1MB 拖慢加载；「压缩替换」自动压到 2000px 内，原图留存可随时恢复）', '#ffcc80', osRows, '跨域图片拿不到体积，不在检测范围');
+    var body = sec('环境检查', badEnv.length ? 'is-bad' : 'is-ok', envRows, '后端 / 离线缓存 / 静态缓存 / 本地存储',
+        ((R0.env || []).length - badEnv.length) + '/' + (R0.env || []).length + ' 正常') +
+      sec('失效图片', 'is-bad', brokenRows, '点「去处理」直接打开对应资源编辑', R0.broken.length + ' 张') +
+      sec('重复图片引用', 'is-warn', dupRows, '同图多处使用，确认是否故意', R0.dups.length + ' 组') +
+      sec('疑似失效外链', 'is-bad', linkRows, '跨域限制下只测图片类外链，网页链接需人工核对', badLinks.length + ' 条') +
+      sec('超大图片', 'is-warn', osRows, '超 1MB 拖慢加载；压缩替换后原图留存可恢复', (R0.oversize || []).length + ' 张');
     var hasIssue = R0.broken.length || R0.dups.length || badLinks.length || (R0.oversize || []).length || badEnv.length;
-    if (!hasIssue) body = '<div style="text-align:center;padding:20px 0;color:#9fe3b8">全部正常 ✓ 图片 ' + R0.totalImgs + ' 张 · 外链 ' + okLinks + '/' + R0.links.length + ' 条可达 · 环境 ' + (R0.env || []).length + '/' + (R0.env || []).length + '</div>';
+    if (!hasIssue) body = '<div class="chk-empty">全部正常 ✓ 图片 ' + R0.totalImgs + ' 张 · 外链 ' + okLinks + '/' + R0.links.length + ' 条可达 · 环境 ' + (R0.env || []).length + '/' + (R0.env || []).length + '</div>';
+    /* v534：顶部摘要改成一行小签（原来是灰字长句，挤成一团看不清哪个数是要紧的） */
+    var chip = function (n, label, tone) {
+      return '<span class="chk-chip' + (tone ? ' ' + tone : '') + '">' + label + ' <b>' + n + '</b></span>';
+    };
+    var chips = chip(R0.totalImgs, '图片', '') +
+      chip(R0.broken.length, '失效', R0.broken.length ? 'is-bad' : '') +
+      chip(R0.dups.length, '重复', R0.dups.length ? 'is-warn' : '') +
+      chip(badLinks.length, '失效外链', badLinks.length ? 'is-bad' : '') +
+      (uncheckedLinks ? chip(uncheckedLinks, '待人工核对', 'is-warn') : '') +
+      chip((R0.oversize || []).length, '超大图', (R0.oversize || []).length ? 'is-warn' : '');
     var mask = document.createElement('div');
     /* v442 条3：用户中途关掉了「体检中」弹窗 → 结果不再弹窗打扰（仍照常 resolve 供自动体检用） */
     var _wasClosed = document.getElementById('sysCheckMask');
     _wasClosed = !!(_wasClosed && _wasClosed.dataset.userClosed === '1');
     if (_wasClosed) { document.getElementById('sysCheckMask').remove(); resolve(R0); return; }
     mask.className = 'modal-mask'; mask.id = 'sysCheckMask';
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检" style="max-width:var(--modal-w-xl)"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">系统体检</h2>' +
-      '<div style="font-size:12px;color:#8aa0b5;margin:0 0 10px">图片 ' + R0.totalImgs + ' 张（失效 ' + R0.broken.length + '）· 重复引用 ' + R0.dups.length + ' 组 · 外链 ' + R0.links.length + ' 条（疑似失效 ' + badLinks.length + (uncheckedLinks ? '，<b style="color:#e0b25a">' + uncheckedLinks + ' 条为网页链接需人工核对</b>' : '') + '）· 超大图 ' + (R0.oversize || []).length + ' 张</div>' +
-      '<div style="max-height:46vh;overflow-y:auto;background:#0f2233;border-radius:8px;padding:10px 12px;font-size:12px">' + body + '</div></div>';
+      '<div class="chk-sum">' + chips + '</div>' +
+      '<div class="chk-scroll">' + body + '</div>' +
+      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
       mask.classList.add('open');

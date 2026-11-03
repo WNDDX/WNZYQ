@@ -2628,6 +2628,28 @@
       try { parent.postMessage({ type: 'wnzyq-preview-ready' }, '*'); } catch (e2) {}
     }
 
+    /* ================= v534：后台「公告预览」的桥接 =================
+       与上面资源预览同一个做法：后台 iframe 打开 /shop?preview=ann，把公告数据 postMessage 过来，
+       渲染走本页自己的 openAnnModal（真实的页签/正文/空态），不另画一套 DOM。
+       页面其它部分由 shop.css 的 html.shop-ann-preview 隐藏，只留公告弹窗。 */
+    var __ANNPV = /[?&]preview=ann(?:&|$)/.test(location.search);
+    if (__ANNPV) {
+      try { document.documentElement.classList.add('shop-ann-preview'); } catch (e0) {}
+      window.__pvMode = true; /* 预览不记统计、不自动弹公告 */
+      window.addEventListener('message', function (ev) {
+        var d = ev.data || {};
+        if (d.type !== 'wnzyq-ann-preview') return;
+        DATA.announcements = (Array.isArray(d.list) ? d.list : []).map(function (a) {
+          return {
+            id: a.id, title: String(a.title || ''), content: String(a.content || ''),
+            hidden: Number(a.hidden) || 0, sort: Number(a.sort) || 0, level: Number(a.level) || 2
+          };
+        });
+        try { window.openAnnModal(); } catch (e1) {}
+      });
+      try { parent.postMessage({ type: 'wnzyq-ann-ready' }, '*'); } catch (e2) {}
+    }
+
     function renderAll() {
       renderShopInfo();
       renderAnnouncement();

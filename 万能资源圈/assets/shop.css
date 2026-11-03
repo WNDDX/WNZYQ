@@ -1397,3 +1397,12 @@ html.shop-preview #modalMask .modal-box { max-width: 100% !important; width: 100
 html.shop-preview #modalMask .modal-close-x,
 html.shop-preview #modalMask .modal-share-x,
 html.shop-preview #modalMask .modal-footer { display: none !important; }
+
+/* v534：公告预览嵌入模式（?preview=ann）——同一个套路，只留公告弹窗 */
+html.shop-ann-preview, html.shop-ann-preview body { background: transparent !important; }
+html.shop-ann-preview body > *:not(#annModal):not(.toast-wrap):not(#toastWrap) { display: none !important; }
+html.shop-ann-preview #annModal { background: transparent !important; padding: 0 !important; align-items: stretch !important; }
+html.shop-ann-preview #annModal .ann-box { max-width: 100% !important; width: 100% !important;
+  max-height: 100% !important; height: 100% !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
+html.shop-ann-preview #annModal .modal-close-x,
+html.shop-ann-preview #annModal .ann-ok { display: none !important; }
