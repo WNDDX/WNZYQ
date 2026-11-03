@@ -932,7 +932,7 @@
     var old = document.getElementById('usAskMask'); if (old) old.remove();
     var m = document.createElement('div');
     m.className = 'modal-mask'; m.id = 'usAskMask';
-    m.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" style="max-width:360px">'
+    m.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" style="max-width:var(--modal-w-xs)">'
       + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
       + '<h2 class="modal-title">' + esc(title) + '</h2>'
       + '<p style="font-size:13px;color:var(--text-light);margin:0 0 10px;line-height:1.6">' + msg + '</p>'
@@ -1160,7 +1160,7 @@
     /* v517：这个弹窗里还有动态生成的 <select>（上级账号），建完必须补一次系统下拉包装，
        否则又出现一个「原生长条下拉」，跟别处不一致 */
     setTimeout(function () { try { if (window.__wrapSelects) window.__wrapSelects(mask); } catch (e) {} }, 30);
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑" style="max-width:560px">'
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑" style="max-width:var(--modal-w-md)">'
       + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
       + '<h2 class="modal-title" style="margin-bottom:10px">' + (isEdit ? '编辑账号：' + esc(u.username) : '新增账号') + '</h2>'
       + '<div class="form usf-body" id="usFormBody">'

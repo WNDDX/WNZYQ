@@ -184,7 +184,7 @@
       '<button type="button" class="extc-tab on" data-tab="goods">采集到的资源 <i id="extcNGoods">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="pf">我的平台 <i id="extcNPf">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="runs">采集记录 <i id="extcNRuns">0</i></button>' +
-      '<button type="button" class="btn-blue btn-inline-pd extc-addpf" id="extcAddPf">添加平台</button>' +
+      '<button type="button" class="row-btn extc-addpf" id="extcAddPf" title="添加一个平台档案">添加平台</button>' +
       '</div>' +
       '<div class="batch-bar extc-batch" id="extcBatch"></div>' +
       '<div class="extc-body" id="extcBody"><div class="extc-loading">正在读取平台和已采集的资源…</div></div>' +

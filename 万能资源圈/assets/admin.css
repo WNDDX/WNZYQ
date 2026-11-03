@@ -2516,3 +2516,23 @@ label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left:
 .cover-url-input { flex: 1; min-width: 0; }
 .cover-upload { white-space: nowrap; width: auto; height: auto; margin-bottom: 0; padding: 0 16px; }
 .form-note { font-size: 12px; color: var(--text-light, #666); margin: 2px 0 6px; }
+
+
+/* ================= v524：采集弹窗窄屏重排 =================
+   390 宽时原来「采集/粘贴」被挤到第二行、「添加平台」独占一行、状态下拉只剩一个箭头。
+   规则：下拉独占一行；三个动作键等宽一行；页签横向滚动；筛选框各占一行。 */
+@media (max-width: 560px) {
+  .extc-bar { gap: 8px; }
+  .extc-bar .select-picker { flex: 1 1 100%; width: 100%; max-width: none; min-width: 0; }
+  .extc-bar .extc-sel-input { flex: 1 1 100%; width: 100%; min-width: 0; }
+  .extc-bar .btn-blue.btn-inline { flex: 1 1 calc(33.333% - 6px); min-width: 0; padding: 0 6px; }
+  .extc-bar .extc-hint { flex: 1 1 100%; }
+  .extc-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .extc-tabs::-webkit-scrollbar { display: none; }
+  .extc-tab { flex: 0 0 auto; white-space: nowrap; padding: 9px 8px; font-size: 13px; }
+  .extc-addpf { flex: 0 0 auto; margin-left: auto; }
+  .extc-tools { flex-wrap: wrap; gap: 8px; }
+  .extc-tools .extc-search { flex: 1 1 100%; max-width: none; }
+  .extc-tools .select-picker { flex: 1 1 100%; width: 100%; min-width: 0; }
+  .extc-tools .extc-cnt { margin-left: 0; }
+}

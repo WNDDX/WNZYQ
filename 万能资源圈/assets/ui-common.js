@@ -550,11 +550,11 @@ if ('serviceWorker' in navigator) {
       mask.className = 'modal-mask alert-mask open';
       mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:10060;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
-        '<div class="modal-box" style="background:#fff;border-radius:12px;width:100%;max-width:400px;padding:24px 22px;position:relative;text-align:center;max-height:min(88vh,88dvh);overflow-y:auto;min-height:auto;">' + /* v356 条1：12px/24px/88dvh 对齐全站弹窗档 */
+        '<div class="modal-box" style="background:var(--card-bg);border-radius:12px;width:100%;max-width:var(--modal-w-xs);padding:24px 22px;position:relative;text-align:center;max-height:min(88vh,88dvh);overflow-y:auto;min-height:auto;">' + /* v356 条1：12px/24px/88dvh 对齐全站弹窗档 */
           '<button type="button" class="modal-close-x" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
-          '<div class="modal-title" style="font-size:20px;color:#222;margin-bottom:14px;letter-spacing:1px;padding:0 32px;text-align:center;"></div>' + /* v356 条9：字距/边距对齐弹窗标题档 */
-          '<div class="alert-body" style="font-size:15px;color:#555;line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
-          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:10px;height:46px;padding:0;background:#1E88E5 /* v293（用户 10-04 02:14）：069alert-ok圆角8→10px→跟全站按钮统一 */;color:#fff;font-size:16px;font-weight:600;cursor:pointer;letter-spacing:1.2px;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);box-shadow:var(--shadow-blue); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 2px 6px rgba(30,136,229,0.25)改var(--shadow-blue) */ -webkit-tap-highlight-color:transparent;">确定</button></div>' +
+          '<div class="modal-title" style="font-size:20px;color:var(--text);margin-bottom:14px;letter-spacing:1px;padding:0 32px;text-align:center;"></div>' + /* v356 条9：字距/边距对齐弹窗标题档 */
+          '<div class="alert-body" style="font-size:15px;color:var(--text-light);line-height:1.7;word-break:break-word;overflow-wrap:anywhere;margin-bottom:20px;text-align:center;"></div>' +
+          '<div style="display:flex;"><button type="button" class="alert-ok" style="flex:1;border:none;border-radius:10px;height:46px;padding:0;background:var(--blue1);color:var(--text-on-brand);font-size:16px;font-weight:600;cursor:pointer;letter-spacing:1.2px;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);box-shadow:var(--shadow-blue); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 2px 6px rgba(30,136,229,0.25)改var(--shadow-blue) */ -webkit-tap-highlight-color:transparent;">确定</button></div>' +
         '</div>';
       var titleEl = mask.querySelector('.modal-title');
       var bodyEl = mask.querySelector('.alert-body');
@@ -614,11 +614,11 @@ if ('serviceWorker' in navigator) {
       mask.setAttribute('role', 'dialog');
       mask.style.cssText = 'position:fixed;inset:0;background:var(--overlay-modal, rgba(0,0,0,0.76));z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
       mask.innerHTML =
-        '<div class="share-box" style="background:#fff;border-radius:12px;position:relative;padding:24px 20px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-modal); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 10px 40px rgba(0,0,0,0.3)改var(--shadow-modal) */ animation:modalIn var(--dur-mid) var(--ease-out); /* v356 条2：12px/24px/统一时长缓动 */">' +
+        '<div class="share-box" style="background:var(--card-bg);border-radius:12px;position:relative;padding:24px 20px;width:100%;max-width:var(--modal-w-xs);text-align:center;box-shadow:var(--shadow-modal); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 10px 40px rgba(0,0,0,0.3)改var(--shadow-modal) */ animation:modalIn var(--dur-mid) var(--ease-out); /* v356 条2：12px/24px/统一时长缓动 */">' +
           '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:var(--danger-bg,#fdecea);color:var(--red-strong,#c62828);font-size:19px; /* v356 条4：×键纳入全站红系 */cursor:pointer;line-height:1;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
-          '<div data-share-title style="font-size:20px;font-weight:600;color:#222;margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' + /* v356 条6：标题统一 20px */
+          '<div data-share-title style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' + /* v356 条6：标题统一 20px */
           '<div data-share-tip style="font-size:13px;color:var(--gray-mid);margin-bottom:10px;">资源链接已复制</div>' +
-          '<div data-share-url style="font-size:14px;color:#1565c0;word-break:break-all;overflow-wrap:anywhere;background:#f5f8fb;border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
+          '<div data-share-url style="font-size:14px;color:var(--blue1);word-break:break-all;overflow-wrap:anywhere;background:var(--gray-bg);border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
           '<button data-share-ok type="button" class="share-ok">确定</button>' +
         '</div>';
       var tEl = mask.querySelector('[data-share-title]');
