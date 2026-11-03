@@ -15,10 +15,10 @@
  */
 /* v339 条221：安全防护头——干净网址页面（/index、/shop）由本函数返回响应，而函数响应不经过
    _headers 文件（静态文件才走），导致这些防护此前从未在线上生效。现直接内置到每个响应：
-   ①CSP 防注入/防外链脚本 ②防嵌套点击劫持 ③防 MIME 嗅探 ④引用来源隐私 ⑤强制 HTTPS 记忆 */
+   ①CSP 防注入/防外链脚本 ②防嵌套点击劫持（v520：放宽到只允许同源——后台「预览」要嵌前台页面；外站仍禁止） ③防 MIME 嗅探 ④引用来源隐私 ⑤强制 HTTPS 记忆 */
 const SECURITY_HEADERS = {
-  'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
-  'x-frame-options': 'DENY',
+  'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'",
+  'x-frame-options': 'SAMEORIGIN',
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
   'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
