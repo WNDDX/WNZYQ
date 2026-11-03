@@ -2611,3 +2611,13 @@ label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left:
 
 /* 设置行里的次键（row-btn）右侧对齐，跟主键同右边界 */
 .setting-row > .row-btn { flex: 0 0 auto; align-self: center; }
+
+/* v533：回收站搜索框 */
+.rc-tools { margin-bottom: 10px; }
+.rc-tools .input { width: 100%; }
+
+/* v533：账号权限的「快速套用」模板 */
+.pm-tpl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.pm-tpl .pm-tpl-t { font-size: 12px; color: var(--text-light); }
+.pm-tpl .pm-tpl-hint { font-size: 11px; color: var(--text-faint); }
+.pm-tpl .row-btn.on { border-color: var(--blue1); color: var(--blue1); background: rgba(30,136,229,.08); }

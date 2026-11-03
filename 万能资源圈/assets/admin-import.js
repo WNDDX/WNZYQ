@@ -1131,6 +1131,13 @@
       }).join('') + '</div>';
     })();
 
+    /* v533（老板：权限二十多个勾选框，每加一个人都要从头点）：三个预设模板，点一下先勾好，再微调 */
+    var tplHtml = '<div class="pm-tpl"><span class="pm-tpl-t">快速套用：</span>' +
+      '<button type="button" class="row-btn" data-tpl="read">只看数据</button>' +
+      '<button type="button" class="row-btn" data-tpl="content">只管资源</button>' +
+      '<button type="button" class="row-btn" data-tpl="collect">只管采集</button>' +
+      '<span class="pm-tpl-hint">点一下自动勾好，再按需增减</span></div>';
+
     var scopeHtml = '<div class="pm-sec"><div class="pm-sec-hd"><b>数据范围（能碰哪些分类）</b></div>'
       + '<div class="pm-grid" style="grid-template-columns:1fr">'
       + '<label class="pm-chk"><input type="radio" name="ufScope" value="all"' + (catsScope === 'all' ? ' checked' : '') + '><span>全部分类（勾这个就不用往下选）</span></label>'
@@ -1169,11 +1176,26 @@
       + (isEdit ? '' : '<label class="pm-hint pm-hint-block">初始密码（6-50 位）</label><input class="input" id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">')
       + '<label class="pm-hint pm-hint-block">备注（这个人是谁 / 负责什么）</label><input class="input w-full-mb10" id="ufNote"  maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">'
       + (me.role === 'super' ? '<label class="pm-hint pm-hint-block">上级账号（决定跟谁是一组）</label><select class="input w-full-mb10" id="ufParent" >' + parentOpts + '</select>' : '')
-      + secHtml + scopeHtml + annHtml + codeHtml
+      + tplHtml + secHtml + scopeHtml + annHtml + codeHtml
       + '</div>'
       + '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="ufSave">' + (isEdit ? '保存修改' : '创建账号') + '</button><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
 
     document.body.appendChild(mask);
+    /* v533：三个角色模板——先清空再按模板勾，勾完还能手动微调 */
+    mask.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-tpl]');
+      if (!b) return;
+      var t = b.getAttribute('data-tpl');
+      mask.querySelectorAll('.pm-grid input[type=checkbox]').forEach(function (i) { i.checked = false; });
+      var set = function (pa, pk, on) {
+        var i = mask.querySelector('input[data-pa="' + pa + '"][data-pk="' + pk + '"]');
+        if (i) i.checked = !!on;
+      };
+      if (t === 'read') { set('data', 'stats', 1); set('data', 'detail', 1); set('info', 'view', 1); }
+      if (t === 'content') { ['view', 'add', 'edit'].forEach(function (k) { set('products', k, 1); }); set('cats', 'view', 1); set('ann', 'view', 1); }
+      if (t === 'collect') { ['view', 'add', 'edit', 'fetch', 'export'].forEach(function (k) { set('external', k, 1); }); }
+      b.parentNode.querySelectorAll('[data-tpl]').forEach(function (x) { x.classList.toggle('on', x === b); });
+    });
     requestAnimationFrame(function () {
       mask.classList.add('open');
       try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll: true }); } catch (eF) {}
@@ -1269,7 +1291,9 @@
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'recycleMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="数据缓存"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
-      '<h2 class="modal-title">数据缓存</h2><div class="form" id="rcBody">' +
+      '<h2 class="modal-title">数据缓存</h2>' +
+      '<div class="rc-tools"><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜资源 / 分类 / 公告的名字"></div>' +
+      '<div class="form" id="rcBody">' +
       '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
       '<div style="padding:10px 0">' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '</div></div></div>' /* v443 条13：加载统一为全站骨架 */;
     document.body.appendChild(mask);
@@ -1281,10 +1305,27 @@
     mask.addEventListener('click', function (e) {
       if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
     });
+    /* v533（老板：回收站没有搜索）：行一多就得滚到底，这里按关键词就地过滤 */
+    var _rcQ = mask.querySelector('#rcQ');
+    if (_rcQ) _rcQ.addEventListener('input', function () {
+      var q = String(this.value || '').trim().toLowerCase();
+      var bodyEl = mask.querySelector('#rcBody'); if (!bodyEl) return;
+      var secs = bodyEl.querySelectorAll('.rc-sec');
+      bodyEl.querySelectorAll('[data-rc]').forEach(function (b) {
+        var row = b.parentNode;
+        var hit = !q || String(row.textContent || '').toLowerCase().indexOf(q) >= 0;
+        row.style.display = hit ? '' : 'none';
+      });
+      secs.forEach(function (sec2) {
+        var any = false;
+        sec2.querySelectorAll('[data-rc]').forEach(function (b) { if (b.parentNode.style.display !== 'none') any = true; });
+        sec2.style.display = (q && !any) ? 'none' : '';
+      });
+    });
     fetch('/api/admin/recycle', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
       var body = mask.querySelector('#rcBody'); if (!body) return;
       if (!x || !x.ok) { body.innerHTML = '<div class="imp-err">加载失败，请关掉重试</div>'; return; }
-      var sec = function (title, rows) { return '<div style="margin-bottom:12px"><b style="display:block;font-size:13px;color:var(--text-light);margin-bottom:6px">' + title + '</b>' + (rows || '<div style="color:var(--text-faint);font-size:12px;padding:4px 0">这一项没有内容</div>') + '</div>'; };
+      var sec = function (title, rows) { return '<div class="rc-sec" style="margin-bottom:12px"><b style="display:block;font-size:13px;color:var(--text-light);margin-bottom:6px">' + title + '</b>' + (rows || '<div style="color:var(--text-faint);font-size:12px;padding:4px 0">这一项没有内容</div>') + '</div>'; };
       var row = function (kind, id, name, t) {
         return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eef2f6">' +
           '<span style="flex:1;min-width:0;font-size:13px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(name) + '<span style="color:#9aa9b8;font-size:11px;margin-left:8px">' + fmtDelTime(t) + ' 删除</span></span>' +
