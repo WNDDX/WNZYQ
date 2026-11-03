@@ -7,7 +7,9 @@
       state.editingProduct = p;
       editTitle.textContent = p ? '编辑资源' : '新增资源';
       // v294（用户 10-04 02:14）：271 编辑资源时刷新分类
-      loadCategories(true);
+      /* v508：loadCategories 定义在 admin-5 的块级作用域里，外部调用会 ReferenceError（实测打开新增资源报错）——
+         加存在性判断，有就刷、没有就跳过（分类在登录时已预载，不刷也不影响使用） */
+      try { if (typeof loadCategories === 'function') loadCategories(true); } catch (eLC) {}
       fillCidSelect(p ? p.cid : 0);
       fillProductForm(p);
       // 有草稿直接恢复，不弹确认框（R111 口径：×/取消=丢弃；点外/Esc=暂存草稿，下次打开自动恢复；
