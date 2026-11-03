@@ -424,12 +424,12 @@ export async function onRequestPost(context) {
          老板要「上架后别再手填」，所以这里趁采集就把详情补齐——只补前 12 条（控制请求数，
          Workers 单次请求有子请求上限），剩下的点「上架」时再按需抓。 */
       if (via !== 'api') {
-        const need = list.filter(function (x) { return x.link && !x.detail; }).slice(0, 12);
+        const need = list.filter(function (x) { return x.link && !x.detail; }).slice(0, 8);
         for (let i = 0; i < need.length; i += 4) {
           const batch = need.slice(i, i + 4);
           await Promise.all(batch.map(async function (g) {
             try {
-              const dp = await fetchPage(g.link, 9000);
+              const dp = await fetchPage(g.link, 5000);
               if (!dp.ok) return;
               const imgs = parseDetail(dp.text, g.link).filter(function (u) { return u !== g.cover; }).slice(0, 20);
               g.detail = imgs;
