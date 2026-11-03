@@ -449,6 +449,16 @@ export async function onRequestPost(context) {
           added++;
         } catch (eI) { /* 单条失败不影响整体 */ }
       }
+      /* v495：探到真列表页就写回平台档案——否则老板每次点采集都要多花几秒重新探一遍，
+         而且平台卡片上显示的地址一直是那个抓不到的首頁，看着像没生效。 */
+      if (fixedAddr) {
+        try { await env.DB.prepare('UPDATE external_platforms SET mall_url=? WHERE id=?').bind(fixedAddr, pid).run(); } catch (e) {}
+      }
+      /* v495：探到真列表页就写回平台档案——否则老板每次点采集都要多花几秒重新探一遍，
+         而且平台卡片上显示的地址一直是那个抓不到的首頁，看着像没生效。 */
+      if (fixedAddr) {
+        try { await env.DB.prepare('UPDATE external_platforms SET mall_url=? WHERE id=?').bind(fixedAddr, pid).run(); } catch (e) {}
+      }
       return json({
         ok: true, found: list.length, added, dup, saved: cap, bytes: pg.text.length,
         fixed_addr: fixedAddr,
