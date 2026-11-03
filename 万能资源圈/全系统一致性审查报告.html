@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>万能资源圈 · 全系统一致性审查报告</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#fff; --ink:#1f2937; --ink2:#4b5563; --ink3:#8a97a6;
+    --line:#e6ebf1; --blue:#1E88E5; --blue-bg:#eaf4fe; --red:#c62828; --red-bg:#fdecea;
+    --amber:#b26a00; --amber-bg:#fff7e6; --green:#1b7f3b; --green-bg:#eaf7ee; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+  header.top{background:linear-gradient(135deg,#1E88E5,#1565c0);color:#fff;border-radius:16px;padding:26px 28px;margin-bottom:22px}
+  header.top h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px}
+  header.top p{margin:4px 0;opacity:.92;font-size:14px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 26px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .kpi b{display:block;font-size:22px;color:var(--blue)}
+  .kpi span{font-size:12px;color:var(--ink3)}
+  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:18px}
+  h2{font-size:18px;margin:0 0 6px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h2 small{font-weight:400;color:var(--ink3);font-size:12px;margin-left:8px}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--blue)}
+  .item{padding:12px 0;border-bottom:1px dashed var(--line)}
+  .item:last-child{border-bottom:none}
+  .num{display:inline-block;min-width:30px;font-weight:700;color:var(--blue)}
+  .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:20px;margin-left:6px;vertical-align:2px}
+  .t-high{background:var(--red-bg);color:var(--red)}
+  .t-mid{background:var(--amber-bg);color:var(--amber)}
+  .t-low{background:var(--blue-bg);color:var(--blue)}
+  .t-done{background:var(--green-bg);color:var(--green)}
+  .kv{margin:4px 0 0 30px;font-size:14px;color:var(--ink2)}
+  .kv b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f8fafc;font-weight:600;color:var(--ink2)}
+  code{background:#f1f5f9;padding:1px 6px;border-radius:5px;font-size:13px;color:#0f172a}
+  .note{background:var(--blue-bg);border-left:4px solid var(--blue);padding:10px 14px;border-radius:8px;font-size:14px;margin:12px 0}
+  .warn{background:var(--amber-bg);border-left:4px solid var(--amber);padding:10px 14px;border-radius:8px;font-size:14px;margin:12px 0}
+  .fig{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin:12px 0;overflow:auto}
+  .fig figcaption{font-size:12px;color:var(--ink3);text-align:center;margin-top:6px}
+  ul{margin:6px 0 6px 22px;padding:0}
+  li{margin:4px 0}
+  .foot{color:var(--ink3);font-size:12px;text-align:center;margin-top:26px}
+  @media (max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>万能资源圈 · 全系统一致性审查报告</h1>
+  <p>审查时间：2026-11-04 ｜ 审查方式：真人模拟（真鼠标、真键盘）+ 源码逐处比对</p>
+  <p>审查范围：前台资源页、后台 6 个页签、全部弹窗、资源采集、批量导入、账号管理、数据统计</p>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><b>68</b><span>条建议（全部编号）</span></div>
+  <div class="kpi"><b>9</b><span>条已在本轮直接修好</span></div>
+  <div class="kpi"><b>12</b><span>条属于「看着像坏」的高优先级</span></div>
+  <div class="kpi"><b>3</b><span>类问题最集中：控件、文案、动效</span></div>
+</div>
+
+<section>
+  <h2>零、先说人话：这系统现在最大的问题是什么<small>不用懂技术也能看懂</small></h2>
+  <p>这套系统功能已经很全，但它是“一点点长出来的”，所以出现了三种典型的“不像一套系统”的痕迹：</p>
+  <ul>
+    <li><b>同一件事有两种做法。</b>比如都是翻页：资源管理自己有一根好看的翻页条（带“跳转”），采集弹窗却自己画了“上一页/下一页”两根小按钮；都是下拉：大部分是系统的圆角下拉，个别弹窗还是浏览器自带的长条下拉。</li>
+    <li><b>同一件事有两种叫法。</b>删除有“删 / 删除 / 彻底删除”三种写法；数量有“个 / 件 / 条”三种单位；页面标题有“改资源 / 看资源 / 编辑资源”。</li>
+    <li><b>同一件事有两种手感。</b>有的三角点下去是慢慢转的，有的一下就跳；有的弹窗点空白处能关，有的不能。</li>
+  </ul>
+  <div class="note">这三类问题本身都不影响功能，但叠在一起，客户一眼就能看出“这不是一家做的”。下面 68 条，就是把这三类问题挖到底。</div>
+</section>
+
+<section>
+  <h2>一、本轮已经修好的（你可以直接验）<small>v501 ~ v517</small></h2>
+  <table>
+    <tr><th style="width:40px">#</th><th>问题</th><th>改成了什么</th><th style="width:90px">状态</th></tr>
+    <tr><td>已1</td><td>点「上架」后所有窗口都关了</td><td>先打开「新增资源」，确认它真开了才关采集窗；没开起来就保留采集窗并提示</td><td>已修</td></tr>
+    <tr><td>已2</td><td>点了上架又取消，采集里却显示「已上架」</td><td>改成“新增资源保存成功”后才回写状态；取消不再误标</td><td>已修</td></tr>
+    <tr><td>已3</td><td>第一个资源有很多图，后面只有封面</td><td>采集时自动补前 12 条详情；其余在「查看」里点「补抓详情」按需补</td><td>已修</td></tr>
+    <tr><td>已4</td><td>编辑器三角点一下位置偏一下</td><td>收起/展开两态坐标写死一致（右 22px、上 8px），点击不位移</td><td>已修</td></tr>
+    <tr><td>已5</td><td>采集弹窗自造翻页</td><td>改用全站公共翻页条（带“跳转”输入）</td><td>已修</td></tr>
+    <tr><td>已6</td><td>选中资源后操作按钮挤在搜索行里</td><td>改为资源管理那套“顶部滑下批量条”，按键窄了自动收成图标</td><td>已修</td></tr>
+    <tr><td>已7</td><td>「删」「彻底删除」字数不一</td><td>统一为「删除」，不可恢复写在确认框里</td><td>已修</td></tr>
+    <tr><td>已8</td><td>账号权限里勾选框和文字不齐</td><td>根因是表单标签样式把它压成两行，已用更精确的样式压回一行</td><td>已修</td></tr>
+    <tr><td>已9</td><td>导出表格第一行跟导入模板对不上</td><td>前 12 列改成与「导入模板」完全一致，统计列追加在后</td><td>已修</td></tr>
+  </table>
+  <div class="warn">说明：以上改动已提交；其中 v517 因为 GitHub 今晚多次断线，可能还在排队构建。刷新页面看右下角/控制台的 <code>wnzyq-v517</code> 就知道生效没。</div>
+</section>
+
+<section>
+  <h2>二、视觉统一性<small>颜色 / 字号 / 间距 / 圆角 / 阴影 / 图标 / 控件</small></h2>
+
+  <div class="item"><span class="num">1</span><span class="tag t-high">高</span>
+    <b>同一个“删除”有四种长相</b>
+    <div class="kv">
+      <b>在哪：</b>资源列表行、采集卡片、回收站、批量条。<br>
+      <b>现在：</b>有的是白底红字小按钮，有的是蓝底按钮配红字（还带内联颜色），有的是纯文字链接。<br>
+      <b>建议：</b>只留两种——行内小动作统一白底红字（<code>row-btn danger</code>），弹窗底部统一淡红（<code>modal-close</code>）；禁止再写内联颜色。<br>
+      <b>为什么：</b>删除是危险动作，长相必须一致，用户才敢点。
+    </div>
+  </div>
+
+  <div class="item"><span class="num">2</span><span class="tag t-high">高</span>
+    <b>按钮有三种高度</b>
+    <div class="kv">
+      <b>在哪：</b>页面里 46px、工具行 36px、行内 28px 混用，个别地方还有 34px。<br>
+      <b>现在：</b>“采集”按钮 36px 旁边配 46px 的按钮，看着一高一矮。<br>
+      <b>建议：</b>固定三档：主操作 46、工具行 36、行内 28。工具行里不允许出现 46。<br>
+      <b>为什么：</b>高度不统一，眼睛会觉得“这两个按钮不是一套的”。
+    </div>
+  </div>
+
+  <div class="item"><span class="num">3</span><span class="tag t-mid">中</span>
+    <b>圆角有三套：8 / 10 / 12</b>
+    <div class="kv"><b>现在：</b>大部分 10px，行内小按钮 8px，弹窗 12px。<br><b>建议：</b>写进规范并标注用途，禁止出现 6px、14px 这种“凭手感”的值。<br><b>为什么：</b>圆角是“同一套系统”最直观的信号。</div>
+  </div>
+
+  <div class="item"><span class="num">4</span><span class="tag t-mid">中</span>
+    <b>字色深浅不统一</b>
+    <div class="kv"><b>现在：</b>说明文字有 #666、#888、#999、#8aa0b5 四种灰。<br><b>建议：</b>收敛成三档：主文字、次要文字、提示文字；其余全删。<br><b>为什么：</b>灰色太多，页面看起来“脏”。</div>
+  </div>
+
+  <div class="item"><span class="num">5</span><span class="tag t-low">低</span>
+    <b>图标风格混用</b>
+    <div class="kv"><b>现在：</b>一部分是线性图标，一部分是实心三角，个别是 emoji（📭）。<br><b>建议：</b>统一线性、统一 2px 线宽；emoji 全部换成图标。<br><b>为什么：</b>emoji 在不同手机上长得不一样，客户截图会显得很业余。</div>
+  </div>
+
+  <div class="item"><span class="num">6</span><span class="tag t-mid">中</span>
+    <b>卡片阴影深浅不一</b>
+    <div class="kv"><b>现在：</b>有的卡片有阴影、有的只有描边；弹窗阴影有两个版本。<br><b>建议：</b>卡片一律“细描边 + 极轻阴影”，弹窗一律一档大阴影。</div>
+  </div>
+
+  <div class="item"><span class="num">7</span><span class="tag t-mid">中</span>
+    <b>深色模式下少数控件没跟上</b>
+    <div class="kv"><b>现在：</b>大部分已适配，但个别自造控件（采集卡片、权限树）在深色下边框偏亮。<br><b>建议：</b>自造控件一律用颜色变量，不要写死颜色。</div>
+  </div>
+
+  <div class="item"><span class="num">8</span><span class="tag t-low">低</span>
+    <b>列表行高不统一</b>
+    <div class="kv"><b>现在：</b>资源行约 64px，采集卡片里的行更矮，信息中心又是另一种。<br><b>建议：</b>同类列表统一行高与内边距。</div>
+  </div>
+
+  <div class="item"><span class="num">9</span><span class="tag t-low">低</span>
+    <b>选中态样式两套</b>
+    <div class="kv"><b>现在：</b>资源列表选中是“整行淡蓝”，采集卡片选中是“蓝框 + 右上勾”。<br><b>建议：</b>列表用整行淡蓝，卡片用蓝框，但要写进规范（卡片没有“行”的概念，允许不同）。</div>
+  </div>
+
+  <div class="item"><span class="num">10</span><span class="tag t-mid">中</span>
+    <b>弹窗标题字号不一致</b>
+    <div class="kv"><b>现在：</b>大部分 20px 居中，个别自造弹窗是 18px 左对齐。<br><b>建议：</b>全部 20px 居中，副标题用 13px 灰字放标题下方。</div>
+  </div>
+
+  <div class="item"><span class="num">11</span><span class="tag t-low">低</span>
+    <b>输入框高度不统一</b>
+    <div class="kv"><b>现在：</b>表单里 44px，搜索框 34~36px 来回改。<br><b>建议：</b>表单 44、工具行 36，写死两档。</div>
+  </div>
+
+  <div class="item"><span class="num">12</span><span class="tag t-low">低</span>
+    <b>“危险区”没有统一的视觉语言</b>
+    <div class="kv"><b>建议：</b>凡是不可恢复的操作（删除、清空、彻底清除），统一用红字 + 二次确认；可恢复的（进回收站）用普通样式。</div>
+  </div>
+</section>
+
+<section>
+  <h2>三、组件规范<small>弹窗 / 表格 / 表单 / 提示 / 加载 / 空状态</small></h2>
+
+  <div class="item"><span class="num">13</span><span class="tag t-high">高</span>
+    <b>下拉框还有“原生态”漏网</b>
+    <div class="kv"><b>在哪：</b>账号编辑里的“上级账号”、批量导入预览里的部分选择。<br><b>现在：</b>大多数是系统圆角下拉，这几个还是浏览器自带的长条。<br><b>建议：</b>弹窗一生成就补一次“下拉升级”（本轮已加统一入口，后续新弹窗必须调用）。<br><b>为什么：</b>这是最容易被一眼看穿的“不是一套”。</div>
+  </div>
+
+  <div class="item"><span class="num">14</span><span class="tag t-high">高</span>
+    <b>翻页组件两套</b>
+    <div class="kv"><b>现在：</b>资源管理/统计是公共翻页（上一页 + 页码 + 跳转），采集弹窗原来是自己画的。<br><b>建议：</b>已改为公共组件；以后任何列表都只准用它。</div>
+  </div>
+
+  <div class="item"><span class="num">15</span><span class="tag t-mid">中</span>
+    <b>空状态有三种写法</b>
+    <div class="kv"><b>现在：</b>①图标+标题+说明（标准）②一行灰字 ③干脆空白。<br><b>建议：</b>统一走标准空状态，并区分“真没有”和“筛没了”两句话。</div>
+  </div>
+
+  <div class="item"><span class="num">16</span><span class="tag t-mid">中</span>
+    <b>加载状态不统一</b>
+    <div class="kv"><b>现在：</b>有的地方骨架屏，有的地方转圈，有的地方“正在读取…”文字。<br><b>建议：</b>列表用骨架屏、弹窗用一行“正在读取…”，按钮用转圈 + 文案变“保存中…”。</div>
+  </div>
+
+  <div class="item"><span class="num">17</span><span class="tag t-high">高</span>
+    <b>提示条（Toast）位置不统一</b>
+    <div class="kv"><b>现在：</b>大多在顶部居中，个别自造提示在右下角。<br><b>建议：</b>全部用同一个提示条，顶部居中、3 秒消失。</div>
+  </div>
+
+  <div class="item"><span class="num">18</span><span class="tag t-high">高</span>
+    <b>二次确认框有两种</b>
+    <div class="kv"><b>现在：</b>一种是系统确认框（有标题、正文、两个按钮），个别地方直接用浏览器自带的弹窗。<br><b>建议：</b>禁止使用浏览器自带弹窗（丑、且手机上像病毒）；一律用系统确认框。</div>
+  </div>
+
+  <div class="item"><span class="num">19</span><span class="tag t-mid">中</span>
+    <b>表格样式两套</b>
+    <div class="kv"><b>现在：</b>数据统计用的表格和资源列表是两种：一个纯表格，一个卡片式。<br><b>建议：</b>保留两种形态（数据看表、资源看卡），但表头、行高、斑马纹、空行提示要一套。</div>
+  </div>
+
+  <div class="item"><span class="num">20</span><span class="tag t-mid">中</span>
+    <b>表单里“必填”的标记不统一</b>
+    <div class="kv"><b>现在：</b>有的写“（必填）”，有的写红星，有的什么都不写。<br><b>建议：</b>统一红星 + 提交时红框提示，不要用文字括号。</div>
+  </div>
+
+  <div class="item"><span class="num">21</span><span class="tag t-mid">中</span>
+    <b>弹窗底部按钮数量不一致</b>
+    <div class="kv"><b>现在：</b>有的 1 个（保存）、有的 2 个、有的 3 个。<br><b>建议：</b>固定“主操作 + 关闭”两个；需要第三个动作（如预览）放左侧并弱化。</div>
+  </div>
+
+  <div class="item"><span class="num">22</span><span class="tag t-low">低</span>
+    <b>弹窗宽度没有遵守五档</b>
+    <div class="kv"><b>现在：</b>规范里有 480/520/680/880/940 五档，个别自造弹窗还写死 560、620。<br><b>建议：</b>全部改成五档之一。</div>
+  </div>
+
+  <div class="item"><span class="num">23</span><span class="tag t-low">低</span>
+    <b>“关闭”按钮位置不统一</b>
+    <div class="kv"><b>建议：</b>右上角 × 永远有；底部“关闭”永远在最右；不允许只有底部没有 ×。</div>
+  </div>
+
+  <div class="item"><span class="num">24</span><span class="tag t-low">低</span>
+    <b>图片占位图有两种</b>
+    <div class="kv"><b>现在：</b>一种是灰色方块，一种是斜纹。<br><b>建议：</b>统一斜纹 + 中间小字“无图”。</div>
+  </div>
+</section>
+
+<section>
+  <h2>四、交互与体验<small>悬停 / 点击 / 动画 / 反馈</small></h2>
+
+  <div class="item"><span class="num">25</span><span class="tag t-high">高</span>
+    <b>三角展开的动画不统一</b>
+    <div class="kv"><b>现在：</b>编辑器那条有动画，分类折叠、统计折叠有的有有的没有。<br><b>建议：</b>所有三角统一 0.18 秒缓动，且“内容高度”也要一起过渡，不是只有三角转。<br><b>为什么：</b>有的动有的不动，用户会觉得“卡了一下”。</div>
+  </div>
+
+  <div class="item"><span class="num">26</span><span class="tag t-high">高</span>
+    <b>按下没有反馈的按钮</b>
+    <div class="kv"><b>现在：</b>大部分按钮按下去会缩小一点，少数自造按钮完全没反应。<br><b>建议：</b>所有可点元素统一“按下缩到 94%”，并提供禁用态（变灰 + 点不动）。</div>
+  </div>
+
+  <div class="item"><span class="num">27</span><span class="tag t-mid">中</span>
+    <b>保存成功的反馈不一致</b>
+    <div class="kv"><b>现在：</b>有的按钮变“✓ 已保存”，有的弹提示条，有的什么都不提示。<br><b>建议：</b>按钮就地变“✓ 已保存”停 0.4 秒 + 弹窗自动关；不要再用提示条重复一遍。</div>
+  </div>
+
+  <div class="item"><span class="num">28</span><span class="tag t-mid">中</span>
+    <b>加载中重复点击没有保护</b>
+    <div class="kv"><b>现在：</b>采集、保存这类耗时操作，按钮会变“处理中”，但个别地方没锁，连点会发两次请求。<br><b>建议：</b>统一“点一次就禁用，成功或失败再恢复”。</div>
+  </div>
+
+  <div class="item"><span class="num">29</span><span class="tag t-high">高</span>
+    <b>滚轮/滑动在弹窗里的手感不一致</b>
+    <div class="kv"><b>现在：</b>有的弹窗滑到底会把整页带着滚，有的不会。<br><b>建议：</b>弹窗内滑到底不外传（页面不动），这是最不容易误操作的做法。</div>
+  </div>
+
+  <div class="item"><span class="num">30</span><span class="tag t-mid">中</span>
+    <b>点遮罩关闭有的能有的不能</b>
+    <div class="kv"><b>建议：</b>普通弹窗允许点空白关闭；正在填写的表单禁止（防误触丢内容），改为“点空白弹确认”。</div>
+  </div>
+
+  <div class="item"><span class="num">31</span><span class="tag t-mid">中</span>
+    <b>错误提示只说“失败”，不说为什么</b>
+    <div class="kv"><b>现在：</b>“保存失败”“采集失败”。<br><b>建议：</b>必须带原因和下一步，例如“对方站点拒绝了服务器（HTTP 520），换浏览器打开或粘贴”。</div>
+  </div>
+
+  <div class="item"><span class="num">32</span><span class="tag t-low">低</span>
+    <b>没有统一的“撤销”</b>
+    <div class="kv"><b>建议：</b>删除类操作统一进回收站（保留 60 天），并在提示条上给“撤销”按钮。</div>
+  </div>
+
+  <div class="item"><span class="num">33</span><span class="tag t-low">低</span>
+    <b>键盘操作缺失</b>
+    <div class="kv"><b>建议：</b>Esc 关弹窗、回车提交、Tab 能走完表单。这是“专业感”的细节。</div>
+  </div>
+
+  <div class="item"><span class="num">34</span><span class="tag t-mid">中</span>
+    <b>长任务（采集）没有进度感</b>
+    <div class="kv"><b>现在：</b>只说“采集中…”，十几秒里用户不知道到哪了。<br><b>建议：</b>显示“已抓到 N 条 / 正在补第 M 条详情”。</div>
+  </div>
+
+  <div class="item"><span class="num">35</span><span class="tag t-low">低</span>
+    <b>剪贴板粘贴没有明确的落点提示</b>
+    <div class="kv"><b>建议：</b>粘贴框获得焦点时高亮，并显示“按 Ctrl+V”的浮动提示。</div>
+  </div>
+
+  <div class="item"><span class="num">36</span><span class="tag t-low">低</span>
+    <b>切页签会跳到页面顶部</b>
+    <div class="kv"><b>建议：</b>切页签记住各自滚动位置（部分已做，仍有遗漏）。</div>
+  </div>
+</section>
+
+<section>
+  <h2>五、布局与响应式<small>结构 / 栅格 / 留白 / 各端适配</small></h2>
+
+  <div class="item"><span class="num">37</span><span class="tag t-high">高</span>
+    <b>手机上弹窗底部按钮会被手机键盘挡住</b>
+    <div class="kv"><b>建议：</b>弹窗高度用“可视高度”而不是屏幕高度，键盘弹出时自动收缩。</div>
+  </div>
+
+  <div class="item"><span class="num">38</span><span class="tag t-mid">中</span>
+    <b>采集卡片在窄屏挤成两列，标题只剩一行</b>
+    <div class="kv"><b>建议：</b>窄屏改一列，或把“编辑/查看/删除”收进“⋯”菜单。</div>
+  </div>
+
+  <div class="item"><span class="num">39</span><span class="tag t-mid">中</span>
+    <b>筛选项换行后没有对齐</b>
+    <div class="kv"><b>现在：</b>搜索框、下拉、计数挤在一行，换行后高低不齐。<br><b>建议：</b>筛选项分组：第一行搜索 + 状态，第二行计数 + 批量操作（已按此改）。</div>
+  </div>
+
+  <div class="item"><span class="num">40</span><span class="tag t-low">低</span>
+    <b>页面底部留白不一致</b>
+    <div class="kv"><b>建议：</b>统一底部留 24px，滚动到底不贴边。</div>
+  </div>
+
+  <div class="item"><span class="num">41</span><span class="tag t-low">低</span>
+    <b>表格在窄屏会横向溢出</b>
+    <div class="kv"><b>建议：</b>窄屏把表格转成“每行一张小卡片”的堆叠布局。</div>
+  </div>
+
+  <div class="item"><span class="num">42</span><span class="tag t-low">低</span>
+    <b>深色模式下页面切换有白闪</b>
+    <div class="kv"><b>建议：</b>首帧就把背景色写死在页面头部，样式晚到也不会闪白。</div>
+  </div>
+
+  <div class="item"><span class="num">43</span><span class="tag t-low">低</span>
+    <b>横屏（手机横过来）没专门适配</b>
+    <div class="kv"><b>建议：</b>横屏时弹窗改成“左右两栏”，缩短滚动距离。</div>
+  </div>
+
+  <div class="item"><span class="num">44</span><span class="tag t-low">低</span>
+    <b>顶栏在窄屏挤成两行</b>
+    <div class="kv"><b>建议：</b>窄屏只留 logo + 三个主键，其余收进“更多”。</div>
+  </div>
+</section>
+
+<section>
+  <h2>六、文案规范<small>术语 / 按钮字 / 提示语 / 标点</small></h2>
+
+  <div class="item"><span class="num">45</span><span class="tag t-high">高</span>
+    <b>“删除”有三种写法</b>
+    <div class="kv"><b>现在：</b>删 / 删除 / 彻底删除。<br><b>建议：</b>统一“删除”；不可恢复的意思写进确认框正文。</div>
+  </div>
+
+  <div class="item"><span class="num">46</span><span class="tag t-high">高</span>
+    <b>数量单位三种</b>
+    <div class="kv"><b>现在：</b>个 / 件 / 条。<br><b>建议：</b>统一“个”（资源），设备用“台”。</div>
+  </div>
+
+  <div class="item"><span class="num">47</span><span class="tag t-high">高</span>
+    <b>“商品”与“资源”混用</b>
+    <div class="kv"><b>现在：</b>界面基本已统一成“资源”，但权限、提示里还有残留。<br><b>建议：</b>全站只准出现“资源”两个字。</div>
+  </div>
+
+  <div class="item"><span class="num">48</span><span class="tag t-mid">中</span>
+    <b>按钮用词不统一</b>
+    <div class="kv"><b>现在：</b>“确定 / 保存 / 提交 / 完成”混用；“取消 / 关闭 / 返回”混用。<br><b>建议：</b>弹窗主操作一律“保存”或“确定”，副操作一律“关闭”。</div>
+  </div>
+
+  <div class="item"><span class="num">49</span><span class="tag t-mid">中</span>
+    <b>提示语有的带句号有的不带</b>
+    <div class="kv"><b>建议：</b>短提示不带句号，长说明带句号；数字与单位之间空一格。</div>
+  </div>
+
+  <div class="item"><span class="num">50</span><span class="tag t-mid">中</span>
+    <b>中英文混排没加空格</b>
+    <div class="kv"><b>现在：</b>“HTTP520”“60天”。<br><b>建议：</b>中英文、数字之间加空格：“HTTP 520”“60 天”。</div>
+  </div>
+
+  <div class="item"><span class="num">51</span><span class="tag t-low">低</span>
+    <b>时间格式三种</b>
+    <div class="kv"><b>现在：</b>“11-04 10:30”“2026-11-04”“11/4”。<br><b>建议：</b>列表用“月-日 时:分”，导出用完整年月日。</div>
+  </div>
+
+  <div class="item"><span class="num">52</span><span class="tag t-low">低</span>
+    <b>专业词吓人</b>
+    <div class="kv"><b>现在：</b>“渠道码”“SPA 首页壳”“子账号”。<br><b>建议：</b>换成“分享链接里那串码”“这个地址只有框架、内容要浏览器才加载”。</div>
+  </div>
+</section>
+
+<section>
+  <h2>七、代码质量<small>重复 / 命名 / 可维护性</small></h2>
+
+  <div class="item"><span class="num">53</span><span class="tag t-mid">中</span>
+    <b>同一个功能写了两遍</b>
+    <div class="kv"><b>现在：</b>翻页、空状态、下拉、按钮图标化都各有一份“自己写的”。<br><b>建议：</b>公共组件只留一份，谁需要谁调用；新代码禁止复制粘贴老代码。</div>
+  </div>
+
+  <div class="item"><span class="num">54</span><span class="tag t-mid">中</span>
+    <b>样式写死在行内</b>
+    <div class="kv"><b>现在：</b>还有不少 <code>style="color:#c62828"</code> 这种。<br><b>建议：</b>全部改成 class；改配色时才能一处生效。</div>
+  </div>
+
+  <div class="item"><span class="num">55</span><span class="tag t-mid">中</span>
+    <b>5 个后台脚本靠“全局变量”互相调用</b>
+    <div class="kv"><b>现在：</b>A 文件里调用 B 文件里的函数，名字写错就静默失效（今晚就踩到过一次）。<br><b>建议：</b>公共方法统一挂在 <code>window</code> 上并在文档里登记；调用前先判断存在。</div>
+  </div>
+
+  <div class="item"><span class="num">56</span><span class="tag t-low">低</span>
+    <b>魔法数字多</b>
+    <div class="kv"><b>建议：</b>高度、圆角、层级这些数字收敛成变量，加一处改全站。</div>
+  </div>
+
+  <div class="item"><span class="num">57</span><span class="tag t-low">低</span>
+    <b>死代码还在</b>
+    <div class="kv"><b>现在：</b>已经清过一轮（旧外部链接模块），但还有几个没人调的接口和样式。<br><b>建议：</b>每季度清一次，避免“看不懂哪段有用”。</div>
+  </div>
+
+  <div class="item"><span class="num">58</span><span class="tag t-low">低</span>
+    <b>版本说明堆在代码里</b>
+    <div class="kv"><b>现在：</b>已把 40KB 的历史注释清到 6KB，历史移进文档。<br><b>建议：</b>以后只留“最新一条 + 指向文档”。</div>
+  </div>
+
+  <div class="item"><span class="num">59</span><span class="tag t-low">低</span>
+    <b>命名中英混杂</b>
+    <div class="kv"><b>现在：</b><code>extc</code>、<code>pm</code>、<code>uf</code>、<code>rc</code> 这种缩写只有原作者懂。<br><b>建议：</b>新代码用完整单词，老代码加注释说明。</div>
+  </div>
+
+  <div class="item"><span class="num">60</span><span class="tag t-low">低</span>
+    <b>没有自动化检查</b>
+    <div class="kv"><b>建议：</b>上线前跑一次“语法检查 + 关键页面截图”，这次就是这么抓出一堆问题的。</div>
+  </div>
+</section>
+
+<section>
+  <h2>八、性能与可访问性<small>快不快 / 能不能被所有人用</small></h2>
+
+  <div class="item"><span class="num">61</span><span class="tag t-mid">中</span>
+    <b>采集一次要 5~20 秒</b>
+    <div class="kv"><b>建议：</b>先入库列表（1 秒内出结果），详情放后台慢慢补，页面显示进度。</div>
+  </div>
+
+  <div class="item"><span class="num">62</span><span class="tag t-mid">中</span>
+    <b>后台一次要下载 5 个脚本</b>
+    <div class="kv"><b>建议：</b>合并压缩，或按页签懒加载（打开哪个页签才下哪个）。</div>
+  </div>
+
+  <div class="item"><span class="num">63</span><span class="tag t-low">低</span>
+    <b>列表一次性渲染太多卡片</b>
+    <div class="kv"><b>建议：</b>超过 100 条用“滚动到底再加载”。</div>
+  </div>
+
+  <div class="item"><span class="num">64</span><span class="tag t-mid">中</span>
+    <b>键盘 Tab 走不完表单</b>
+    <div class="kv"><b>建议：</b>视觉上隐藏的按钮不要拦 Tab；弹窗打开时焦点落到第一个输入框。</div>
+  </div>
+
+  <div class="item"><span class="num">65</span><span class="tag t-mid">中</span>
+    <b>只有图标的按钮没有文字说明</b>
+    <div class="kv"><b>建议：</b>给每个纯图标按钮加“读屏名字”（aria-label），手机长按也能看到说明。</div>
+  </div>
+
+  <div class="item"><span class="num">66</span><span class="tag t-low">低</span>
+    <b>文字对比度偏低</b>
+    <div class="kv"><b>现在：</b>浅灰提示文字在白底上有点糊。<br><b>建议：</b>提示文字至少调到能看清的灰度。</div>
+  </div>
+
+  <div class="item"><span class="num">67</span><span class="tag t-low">低</span>
+    <b>动效没有“减弱动画”开关</b>
+    <div class="kv"><b>建议：</b>系统设置里开了“减少动态效果”的用户，自动关掉过渡。</div>
+  </div>
+
+  <div class="item"><span class="num">68</span><span class="tag t-low">低</span>
+    <b>图片没有替代文字</b>
+    <div class="kv"><b>建议：</b>封面图、详情图补 alt；加载失败要有占位，不要裂图。</div>
+  </div>
+</section>
+
+<section>
+  <h2>九、你直接问的四个问题<small>一次说明白</small></h2>
+
+  <h3>1）“下单链接自动带进跳转链接”——到底是哪个框？</h3>
+  <p>是「新增资源」弹窗里、资源价格下面那个<b>「跳转链接」</b>输入框（以前叫“专属客服链接”）。它的作用是：访客在你站里点“获取资源/咨询”时，跳到对方平台这件商品的页面去下单。采集来的“下单链接”就自动填在这里，你不用手抄。</p>
+  <div class="fig">
+    <svg viewBox="0 0 680 150" width="100%" height="150" role="img" aria-label="跳转链接位置示意">
+      <rect x="10" y="10" width="660" height="130" rx="10" fill="#fff" stroke="#e6ebf1"/>
+      <text x="30" y="40" font-size="13" fill="#8a97a6">新增资源 · 弹窗（局部）</text>
+      <rect x="30" y="55" width="150" height="34" rx="8" fill="#f5f7fa" stroke="#e6ebf1"/><text x="44" y="77" font-size="13" fill="#4b5563">资源标题</text>
+      <rect x="190" y="55" width="440" height="34" rx="8" fill="#fff" stroke="#e6ebf1"/><text x="204" y="77" font-size="12" fill="#8a97a6">联通星冷卡 39 元…</text>
+      <rect x="30" y="99" width="150" height="34" rx="8" fill="#eaf4fe" stroke="#1E88E5"/><text x="44" y="121" font-size="13" fill="#1E88E5" font-weight="700">跳转链接 ★</text>
+      <rect x="190" y="99" width="440" height="34" rx="8" fill="#fff" stroke="#1E88E5"/><text x="204" y="121" font-size="12" fill="#1565c0">https://hk.usim.vip/#/pages/goods/index?id=4597…</text>
+    </svg>
+    <figcaption>示意图：采集来的“下单链接”会自动填进这个框</figcaption>
+  </div>
+
+  <h3>2）导入模板里那张「选项」工作表是干什么的？</h3>
+  <p>它不是给人填的，是给 Excel 的“下拉菜单”当选项来源的。模板里有三列下拉（所属分类、分类级别、显示状态），Excel 需要一张表存这些选项，所以单独放了一张「选项」表。你<b>不用管它，也不要删</b>，删了下拉箭头就点不开了。</p>
+
+  <h3>3）为什么点了“上架”却没真上架，还显示“已上架”？</h3>
+  <p>因为老代码在“打开新增资源”那一刻就把采集记录标成了已上架，你后面取消，它也不会改回来。现在改成“新增资源保存成功”之后才标；取消就还是“未上架”。</p>
+
+  <h3>4）预览效果和前台不一样？</h3>
+  <p>「预览效果」用的是预览专用的样式，跟前台资源页确实有差异（图片按比例、价格位置、按钮样式）。建议下一步把预览直接改成“拿前台的样式来渲染”，做到“改一个字，预览立刻变”，这才叫真预览。这条我列为下一步第一优先。</p>
+</section>
+
+<section>
+  <h2>十、建议的动手顺序<small>先做这 5 件，效果最明显</small></h2>
+  <ol>
+    <li><b>把“预览效果”改成真预览</b>（用前台同一套样式 + 实时跟随输入）——这是客户最容易感知的“专业感”。</li>
+    <li><b>控件最后一轮收口</b>：还剩的原生下拉、自造按钮、内联颜色，一次性清干净（第 1、2、13、54 条）。</li>
+    <li><b>文案一表定稿</b>：把 45~52 条做成一张词表（删除/个/资源/保存/关闭…），全站按表改一遍。</li>
+    <li><b>动效统一</b>：三角、弹窗、提示条三处统一时长与缓动（第 25、26、29 条）。</li>
+    <li><b>采集进度可视化</b>：先出列表、后台补详情、给进度（第 34、61 条），解决“点了没反应”的焦虑。</li>
+  </ol>
+  <div class="note">这 5 件做完，系统在“看起来是一套、用起来是一套”这件事上，能到 90 分；剩下的都是锦上添花。</div>
+</section>
+
+<p class="foot">报告生成：2026-11-04 ｜ 所有“现在怎样”均来自线上 v515~v517 的实际页面与代码，不是猜的</p>
+</div>
+</body>
+</html>
