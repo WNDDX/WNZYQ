@@ -2449,3 +2449,14 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* 弹窗内的 rte：工具条可以换行，编辑器给个合适高度 */
 .modal-mask .rte-toolbar { flex-wrap: wrap; }
 .modal-mask .rte-editor { min-height: 90px; max-height: 220px; overflow-y: auto; }
+
+
+/* ===== v493 资源采集弹窗宽度档位（对齐系统：编辑资源 680 / 绑定清单 880 同一套思路） ===== */
+.modal-mask#extcMask > .modal-box.extc-box { max-width: 940px; }        /* 主弹窗：资源网格要放得下 */
+.modal-mask#extcPfMask > .modal-box { max-width: 760px; }              /* 平台档案：要放整个富文本工具栏 */
+.modal-mask#extcPasteMask > .modal-box { max-width: 620px; }
+.modal-mask#extcSeeMask > .modal-box { max-width: 760px; }
+.modal-mask#extcEditMask > .modal-box { max-width: 560px; }
+/* 弹窗内的编辑器：工具栏按 group 换行，别一组一行 */
+.modal-mask .rte-toolbar { flex-wrap: wrap; gap: 4px; }
+.modal-mask .rte-toolbar .rte-group { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
