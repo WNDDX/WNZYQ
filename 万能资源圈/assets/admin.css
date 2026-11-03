@@ -1406,7 +1406,7 @@
       /* v501（老板：「三角的意义是什么，不是收起展开按键吗，恢复回之前的样子」）：
          展开态原来用 margin-left:auto 在 flex-wrap 里排队，工具条换行后三角被挤到第二行末尾孤零零一颗。
          改回 v382 的绝对定位——永远钉在第一行右缘（.rte-toolbar 已 padding-right:44px 给它留位）。 */
-      position: absolute; right: 22px; top: 6px; margin: 0;
+      position: absolute; right: 22px; top: 8px; margin: 0;   /* v516：与收起态实测落点（top 8 / right 22）完全一致，点击不位移 */
       display: flex; flex-shrink: 0; align-self: auto;
       width: 32px; height: 32px; padding: 0;
       border: none; background: transparent; /* v370c：三角统一裸三角——全站三角只允许大小差异，不允许边框/底色 */
