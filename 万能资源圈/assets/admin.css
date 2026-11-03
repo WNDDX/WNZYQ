@@ -2547,6 +2547,10 @@ label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left:
 .extc-box > .extc-body { flex: 1 1 auto; min-height: 0; }
 
 @media (max-width: 560px) {
-  /* 窄屏页签要横滑，「添加平台」贴右侧常驻，不再被滚出视野 */
-  .extc-addpf { position: sticky; right: 0; margin-left: 8px; background: var(--card-bg); box-shadow: -10px 0 10px -8px rgba(0,0,0,.18); }
+  /* 窄屏页签：字号收一档让三项 + 添加平台正好落在一行；
+     添加平台回到正常流（之前 sticky 浮在上面，把「采集记录」盖住了） */
+  .extc-tab { padding: 8px 6px; font-size: 12px; }
+  .extc-tab i { font-size: 10px; }
+  .extc-tabs { gap: 2px; }
+  .extc-addpf { position: static; margin-left: auto; background: transparent; box-shadow: none; padding: 4px 8px; }
 }
