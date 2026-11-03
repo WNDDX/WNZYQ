@@ -4,3 +4,11 @@ fatal: unable to access 'https://github.com/WNDDX/WNZYQ.git/': OpenSSL SSL_read:
 fail 1 00:46:32
 fatal: unable to access 'https://github.com/WNDDX/WNZYQ.git/': CONNECT tunnel failed, response 502
 fail 2 00:46:58
+fatal: unable to access 'https://github.com/WNDDX/WNZYQ.git/': CONNECT tunnel failed, response 502
+fail 3 00:47:24
+fatal: unable to access 'https://github.com/WNDDX/WNZYQ.git/': CONNECT tunnel failed, response 502
+fail 4 00:47:49
+fatal: unable to access 'https://github.com/WNDDX/WNZYQ.git/': CONNECT tunnel failed, response 502
+fail 5 00:48:15
+[00:49:00] fail 1: Command failed: git -c http.sslBackend=openssl push origin main 2>&1
+[00:49:34] fail 2: Command failed: git -c http.sslBackend=openssl push origin main 2>&1
