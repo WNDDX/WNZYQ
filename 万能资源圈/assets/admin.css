@@ -1422,7 +1422,7 @@
     .rte-toolbar.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ }
     /* v385 条8：收起态三角坐标与展开态对齐（top:8/right:6 同值）——原 sticky 默认 top 归行内流位，
        状态切换瞬间三角位置跳动（老板反馈「状态变化后还是会动」），现两态同位仅剩旋转过渡 */
-    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 0; top: 0; margin-left: auto; margin-right: 6px; z-index: 2; } /* v492：与展开态同口径（right:0 + margin-right:6） */ /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
+    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 0; top: 6px; margin-left: auto; margin-right: -38px; z-index: 2; } /* v492：与展开态同口径（right:0 + margin-right:6） */ /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
     .rte-toolbar.rte-collapsed .rte-expand .toggle-arrow { transform: rotate(-90deg); }
 
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
@@ -2338,7 +2338,8 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-m { font-size: 11px; color: var(--text-faint); padding: 2px 7px 4px; }
 .extc-ops { display: flex; gap: 4px; padding: 0 7px 7px; }
 /* 卡片/行内按键 = 系统 .row-btn（尺寸、圆角、悬停全部继承），这里只做栅格伸缩 */
-.extc-ops .row-btn { flex: 1 1 0; min-width: 0; padding: 4px 6px; text-align: center; }
+.extc-ops { flex-wrap: wrap; }
+.extc-ops .row-btn { flex: 1 1 calc(50% - 3px); min-width: 0; padding: 4px 6px; text-align: center; }
 .extc-ops .row-btn.primary { color: var(--blue1); border-color: var(--blue1); }
 .extc-pops .row-btn { flex: none; }
 .extc-empty { text-align: center; color: var(--text-faint); font-size: 12px; padding: 30px 14px; line-height: 1.9; }
@@ -2395,7 +2396,9 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-badge.ok { color: #1b7f3b; background: rgba(var(--green-rgb),.13); }
 .extc-badge.bad { color: #c62828; background: #fdeaea; }
 /* 弹窗内的 rte：工具条可以换行，编辑器给个合适高度 */
-.modal-mask .rte-toolbar { flex-wrap: wrap; }
+/* v501：原来这条 .modal-mask .rte-toolbar{flex-wrap:wrap} 与 .rte-toolbar.rte-collapsed 同特异性、位置更后，
+   于是弹窗里的「收起态」根本没生效——工具条永远多行、三角被挤到第二行末尾（老板截图问「这三角干什么的」）。
+   现在收起/展开完全交给系统那套类，这里不再插手。 */
 .modal-mask .rte-editor { min-height: 90px; max-height: 220px; overflow-y: auto; }
 
 

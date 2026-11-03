@@ -355,7 +355,7 @@
         '<button type="button" class="row-btn primary" data-act="use">' + (used ? '再上架' : '上架') + '</button>' +
         '<button type="button" class="row-btn" data-act="edit">编辑</button>' +
         '<button type="button" class="row-btn" data-act="see">查看</button>' +
-        '<button type="button" class="row-btn danger" data-act="del">删</button>' +
+        '<button type="button" class="row-btn danger" data-act="del">删除</button>' +
         '</div></div>';
     }).join('');
 
