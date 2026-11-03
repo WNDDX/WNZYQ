@@ -1612,10 +1612,10 @@ refreshCatCnts();
           try { if (_cflip) _cflip(); } catch (e4) { if (window.__silent) window.__silent(e4); }
           silentSyncCategories();
         }
-        else toast('排序保存失败', 'error');
+        else toast('排序没保存上：服务器拒绝了这次修改，刷新后再拖一次', 'error');
       }).catch(function () {
         __reorderBusy = false;
-        toast('排序保存失败，请重试', 'error');
+        toast('排序没保存上：网络中断，请重试', 'error');
       });
     }
 

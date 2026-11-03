@@ -496,7 +496,7 @@
     mask.className = 'modal-mask'; mask.id = 'importMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="批量导入"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
-      '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">第 1 步：下载模板 → 填好 → 第 2 步上传 → 预览无误后导入。建议顺序：先导「分类」→ 再导「资源」→ 最后导「类型」。</p>' +
+      '<p class="imp-lead">第 1 步：下载模板 → 填好 → 第 2 步上传 → 预览无误后导入。建议顺序：先导「分类」→ 再导「资源」→ 最后导「类型」。</p>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
       '<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xlsx,.xls,.xml" style="display:none"></div>' +
       '<div id="impPrev" style="margin-top:10px"></div></div></div>';
@@ -908,7 +908,7 @@
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="重置密码"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">重置密码：' + esc(u.username || '') + '</h2><div class="form">' +
       '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">新密码（6-50 位）</label>' +
-      '<input id="usPwdInput" type="text" maxlength="50" style="width:100%;margin-bottom:10px" autocomplete="off">' +
+      '<input id="usPwdInput" type="text" maxlength="50" class="input w-full-mb10" autocomplete="off">' +
       '<button type="button" class="btn-blue" id="usPwdGo" style="width:100%">确认重置</button></div></div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); try { mask.querySelector('#usPwdInput').focus({ preventScroll: true }); } catch (eF) {} });
@@ -936,7 +936,7 @@
       + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
       + '<h2 class="modal-title">' + esc(title) + '</h2>'
       + '<p style="font-size:13px;color:var(--text-light);margin:0 0 10px;line-height:1.6">' + msg + '</p>'
-      + (opts.input ? '<input class="input" id="usAskInput" type="' + (opts.inputType || 'text') + '" style="width:100%;margin-bottom:10px" maxlength="' + (opts.maxlength || 50) + '" placeholder="' + esc(opts.placeholder || '') + '">' : '')
+      + (opts.input ? '<input class="input w-full-mb10" id="usAskInput" type="' + (opts.inputType || 'text') + '"  maxlength="' + (opts.maxlength || 50) + '" placeholder="' + esc(opts.placeholder || '') + '">' : '')
       + '<div class="modal-footer"><button class="modal-inner-btn" id="usAskOk">' + esc(opts.okText || '确定') + '</button><button class="modal-close" data-x="1">取消</button></div></div>';
     document.body.appendChild(m);
     requestAnimationFrame(function () { m.classList.add('open'); var i = m.querySelector('#usAskInput'); if (i) { try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); } } });
@@ -993,7 +993,7 @@
   function renderUsersList() {
     var body = document.getElementById('usBody'); if (!body) return;
     fetch('/api/admin/users', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
-      if (!x || !x.ok) { body.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">' + esc((x && x.msg) || '加载失败') + '</div>'; return; }
+      if (!x || !x.ok) { body.innerHTML = '<div class="imp-err">' + esc((x && x.msg) || '加载失败') + '</div>'; return; }
       var me = x.me || {}; window.__usMe = me; window.__usList = x.list || [];
       var isSuper = me.role === 'super';
       var list = window.__usList;
@@ -1064,7 +1064,7 @@
         });
       });
     }).catch(function () {
-      body.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">网络开小差了，请稍后再试</div>';
+      body.innerHTML = '<div class="imp-err">网络开小差了，请稍后再试</div>';
     });
   }
 
@@ -1164,10 +1164,10 @@
       + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
       + '<h2 class="modal-title" style="margin-bottom:10px">' + (isEdit ? '编辑账号：' + esc(u.username) : '新增账号') + '</h2>'
       + '<div class="form usf-body" id="usFormBody">'
-      + (isEdit ? '' : '<label class="pm-hint" style="display:block;margin-bottom:4px">用户名（2-20 位字母数字）</label><input class="input" id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">')
-      + (isEdit ? '' : '<label class="pm-hint" style="display:block;margin-bottom:4px">初始密码（6-50 位）</label><input class="input" id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">')
-      + '<label class="pm-hint" style="display:block;margin-bottom:4px">备注（这个人是谁 / 负责什么）</label><input class="input" id="ufNote" style="width:100%;margin-bottom:10px" maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">'
-      + (me.role === 'super' ? '<label class="pm-hint" style="display:block;margin-bottom:4px">上级账号（决定跟谁是一组）</label><select class="input" id="ufParent" style="width:100%;margin-bottom:10px">' + parentOpts + '</select>' : '')
+      + (isEdit ? '' : '<label class="pm-hint pm-hint-block">用户名（2-20 位字母数字）</label><input class="input" id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">')
+      + (isEdit ? '' : '<label class="pm-hint pm-hint-block">初始密码（6-50 位）</label><input class="input" id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">')
+      + '<label class="pm-hint pm-hint-block">备注（这个人是谁 / 负责什么）</label><input class="input w-full-mb10" id="ufNote"  maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">'
+      + (me.role === 'super' ? '<label class="pm-hint pm-hint-block">上级账号（决定跟谁是一组）</label><select class="input w-full-mb10" id="ufParent" >' + parentOpts + '</select>' : '')
       + secHtml + scopeHtml + annHtml + codeHtml
       + '</div>'
       + '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="ufSave">' + (isEdit ? '保存修改' : '创建账号') + '</button><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
@@ -1269,7 +1269,7 @@
     mask.className = 'modal-mask'; mask.id = 'recycleMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="数据缓存"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">数据缓存</h2><div class="form" id="rcBody">' +
-      '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
+      '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
       '<div style="padding:10px 0">' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '</div></div></div>' /* v443 条13：加载统一为全站骨架 */;
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
@@ -1282,7 +1282,7 @@
     });
     fetch('/api/admin/recycle', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
       var body = mask.querySelector('#rcBody'); if (!body) return;
-      if (!x || !x.ok) { body.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">加载失败，请关掉重试</div>'; return; }
+      if (!x || !x.ok) { body.innerHTML = '<div class="imp-err">加载失败，请关掉重试</div>'; return; }
       var sec = function (title, rows) { return '<div style="margin-bottom:12px"><b style="display:block;font-size:13px;color:var(--text-light);margin-bottom:6px">' + title + '</b>' + (rows || '<div style="color:var(--text-faint);font-size:12px;padding:4px 0">这一项没有内容</div>') + '</div>'; };
       var row = function (kind, id, name, t) {
         return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eef2f6">' +
@@ -1296,7 +1296,7 @@
       var cs = (x.categories || []).map(function (c) { return row('category', c.id, c.name || ('分类#' + c.id), c.deleted_at); }).join('');
       var as = (x.announcements || []).map(function (a) { return row('ann', a.id, a.title || '公告', a.deleted_at); }).join('');
       var none = !ps && !cs && !as;
-      body.innerHTML = '<p style="font-size:13px;color:#5b7083;margin:0 0 10px">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
+      body.innerHTML = '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
         (none ? '<div style="text-align:center;color:#2e7d32;font-size:13px;padding:20px 0">回收站是空的 ✓</div>'
           : sec('资源 ' + (x.products || []).length, ps) + sec('分类 ' + (x.categories || []).length, cs) + sec('公告 ' + (x.announcements || []).length, as));
       body.addEventListener('click', function (e) {
@@ -1306,7 +1306,7 @@
           window.showConfirm('删除', '删除后无法恢复（这条记录会被永久清掉），确定继续？', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
         } else recycleCall(op, kind, id, function () { openRecycle(); });
       });
-    }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">加载失败，请关掉重试</div>'; });
+    }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">加载失败，请关掉重试</div>'; });
   }
 
   /* 平台设置页挂入口键（v434b：照「修改密码」组同款——独立白色卡片、各占一行、btn-inline-pd 自适应键宽，

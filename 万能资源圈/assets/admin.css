@@ -2554,3 +2554,10 @@ label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left:
   .extc-tabs { gap: 2px; }
   .extc-addpf { position: static; margin-left: auto; background: transparent; box-shadow: none; padding: 4px 8px; }
 }
+
+/* ================= v528：批量导入/账号/回收站的内联样式收敛 =================
+   原来这些弹窗里有 20 多处写死的字号+颜色，深色模式下不跟随；现在收成类并走令牌。 */
+.imp-lead { font-size: 13px; color: var(--text-light); margin: 0 0 10px; line-height: 1.6; }
+.imp-err { text-align: center; color: var(--red-strong, #c62828); font-size: 13px; padding: 14px 0; }
+.pm-hint-block { display: block; margin-bottom: 4px; }
+.w-full-mb10 { width: 100%; margin-bottom: 10px; }

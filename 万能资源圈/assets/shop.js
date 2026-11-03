@@ -1451,7 +1451,7 @@
               _imgs.forEach(function (url) {
                 if (!url) return;
                 var im = document.createElement('img');
-                im.decoding = 'async'; im.alt = ''; im.style.cursor = 'zoom-in'; im.style.opacity = '0';
+                im.decoding = 'async'; im.alt = '资源详情图';   /* v528：内容图要有替代文字，读屏和图片挂了都靠它 */ im.style.cursor = 'zoom-in'; im.style.opacity = '0';
                 im.loading = 'lazy'; /* v439 #57 */
                 im.className = 'm-loading';
                 im.onload = function () { this.classList.remove('m-loading'); this.style.opacity = '1'; };
@@ -1524,7 +1524,7 @@
         if (!url) return;
         var im = document.createElement('img');
         im.decoding = 'async'; /* R193c ⑩ */
-        im.alt = '';
+        im.alt = '资源详情图';   /* v528：内容图要有替代文字，读屏和图片挂了都靠它 */
         im.style.cursor = 'zoom-in';
         im.style.opacity = '0';
         im.loading = 'lazy'; /* v439 #57 */
@@ -1843,7 +1843,7 @@
           this.src = window.WN_MEDIA_FALLBACK; if (this && this.classList) this.classList.add('media-fail'); this.style.display = 'block';
         };
         im.src = currentVariant.img;
-        im.alt = '';
+        im.alt = '资源详情图';   /* v528：内容图要有替代文字，读屏和图片挂了都靠它 */
         im.style.cursor = 'zoom-in';
         im.addEventListener('click', function () { window.openLightbox(currentVariant.img); });
         variantDetail.appendChild(im);
