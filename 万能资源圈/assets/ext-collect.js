@@ -266,22 +266,25 @@
     else body.innerHTML = renderRuns();
   }
 
+  /* v494：把「选中本页/清空/批量上架」并进搜索那一行——原来单独占一行、右边一片空，看着松散 */
   function actsHtml(n) {
-    return '<div class="extc-tools extc-acts">' +
-      '<button type="button" class="extc-btn" data-act="selpage">选中本页</button>' +
-      '<button type="button" class="extc-btn" data-act="selnone">清空选择</button>' +
-      '<span class="extc-sp"></span>' +
-      (n ? '<button type="button" class="extc-btn primary" data-act="batchuse">上架（' + n + '）</button>' : '') +
-      (n ? '<button type="button" class="extc-btn danger" data-act="delbatch">删除选中</button>' : '') +
-      '</div>';
+    return '<button type="button" class="extc-btn" data-act="selpage">选中本页</button>' +
+      '<button type="button" class="extc-btn" data-act="selnone">清空</button>' +
+      (n ? '<button type="button" class="extc-btn primary" data-act="batchuse">上架 ' + n + ' 个</button>' : '') +
+      (n ? '<button type="button" class="extc-btn danger" data-act="delbatch">删除选中</button>' : '');
   }
   function refreshSelUI() {
     if (!S.mask) return;
     var n = selIds().length;
     var cnt = S.mask.querySelector('.extc-cnt');
     if (cnt) cnt.innerHTML = filtered().length + ' 个' + (n ? ' · 已选 <b>' + n + '</b>' : '');
-    var acts = S.mask.querySelector('.extc-acts');
-    if (acts) acts.innerHTML = actsHtml(n);
+    /* 批量按钮现在在搜索行里，直接重绘那一行 */
+    var tools = S.mask.querySelector('.extc-tools');
+    if (tools) {
+      var oldBtns = tools.querySelectorAll('[data-act="selpage"],[data-act="selnone"],[data-act="batchuse"],[data-act="delbatch"]');
+      Array.prototype.forEach.call(oldBtns, function (b) { b.remove(); });
+      tools.insertAdjacentHTML('beforeend', actsHtml(n));
+    }
   }
 
   function renderGoods() {
@@ -303,6 +306,7 @@
       '<option value="used"' + (S.status === 'used' ? ' selected' : '') + '>已上架</option>' +
       '</select>' +
       '<span class="extc-cnt">' + list.length + ' 个' + (n ? ' · 已选 <b>' + n + '</b>' : '') + '</span>' +
+      actsHtml(n) +
       '</div>';
 
     var total = list.length;
@@ -335,7 +339,7 @@
         '<button type="button" class="extc-mini" data-act="next"' + (S.page >= pages ? ' disabled' : '') + '>下一页</button></div>'
       : '';
 
-    return pfNote + head + actsHtml(n) + '<div class="extc-grid">' + cards + '</div>' + pager;
+    return pfNote + head + '<div class="extc-grid">' + cards + '</div>' + pager;
   }
 
   function renderPlatforms() {
