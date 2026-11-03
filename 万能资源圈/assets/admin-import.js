@@ -957,6 +957,9 @@
   }
 
   function openUsers() {
+    /* v512：进账号管理前先静默刷一次分类——否则刚新增的分类在「分类范围」里看不到，
+       老板会以为新增没生效（实测：不刷就一直是登录那一刻的分类表） */
+    try { if (window.loadCategories) window.loadCategories(true); } catch (e) {}
     var old = document.getElementById('usersMask'); if (old) old.remove();
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'usersMask';
@@ -1221,7 +1224,7 @@
       .then(function (x) {
         if (x && x.ok) {
           if (kind === 'product' && op === 'restore' && window.__reloadAdminProducts) { try { window.__reloadAdminProducts(); } catch (e0) {} }
-          if (window.showToast) window.showToast(op === 'restore' ? '已恢复' : '已彻底删除', 'success'); /* #68：入口名=数据缓存，弹窗内仍表述回收站概念 */
+          if (window.showToast) window.showToast(op === 'restore' ? '已恢复' : '已删除', 'success'); /* v512：文案统一两字 */
           if (done) done();
         } else if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error');
       })
@@ -1251,8 +1254,10 @@
       var row = function (kind, id, name, t) {
         return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eef2f6">' +
           '<span style="flex:1;min-width:0;font-size:13px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(name) + '<span style="color:#9aa9b8;font-size:11px;margin-left:8px">' + fmtDelTime(t) + ' 删除</span></span>' +
-          '<button type="button" class="btn-blue btn-inline-pd" data-rc="restore" data-kind="' + kind + '" data-id="' + esc(String(id)) + '">恢复</button>' +
-          '<button type="button" class="btn-blue btn-inline-pd" data-rc="purge" data-kind="' + kind + '" data-id="' + esc(String(id)) + '" style="color:#c62828;border-color:#c62828">彻底删除</button></div>';
+          /* v512（老板：这里删除是四个字，跟别处不一样）：按键统一为系统行内键 .row-btn / .row-btn.danger，
+             文案统一两字「删除」；「删了不能恢复」这层意思放到确认框里说，不用四个字吓人 */
+          '<button type="button" class="row-btn" data-rc="restore" data-kind="' + kind + '" data-id="' + esc(String(id)) + '">恢复</button>' +
+          '<button type="button" class="row-btn danger" data-rc="purge" data-kind="' + kind + '" data-id="' + esc(String(id)) + '">删除</button></div>';
       };
       var ps = (x.products || []).map(function (p) { return row('product', p.id, p.title || ('资源#' + p.id), p.deleted_at); }).join('');
       var cs = (x.categories || []).map(function (c) { return row('category', c.id, c.name || ('分类#' + c.id), c.deleted_at); }).join('');
@@ -1265,7 +1270,7 @@
         var b = e.target.closest && e.target.closest('[data-rc]'); if (!b) return;
         var op = b.getAttribute('data-rc'), kind = b.getAttribute('data-kind'), id = b.getAttribute('data-id');
         if (op === 'purge' && window.showConfirm) {
-          window.showConfirm('彻底删除', '彻底删除后无法恢复，确定继续？', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
+          window.showConfirm('删除', '删除后无法恢复（这条记录会被永久清掉），确定继续？', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
         } else recycleCall(op, kind, id, function () { openRecycle(); });
       });
     }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div style="text-align:center;color:#c62828;font-size:13px;padding:14px 0">加载失败，请关掉重试</div>'; });

@@ -409,7 +409,7 @@ export async function onRequestPost(context) {
       if (!pg.ok) {
         return json({ ok: false, msg: pg.status >= 500
           ? '对方站点拒绝了服务器抓取（HTTP ' + pg.status + '）——这类站常按机房 IP 拦，只能开浏览器点「打开平台」看，或用「粘贴」'
-          : '打不开这个商城（HTTP ' + pg.status + '）' }, 200);
+          : (pg.status === 0 ? '连不上这个商城（超时或被直接断开）——换「打开平台」用浏览器看，或用「粘贴」' : '打不开这个商城（HTTP ' + pg.status + '）') }, 200);
       }
 
       /* v501：先走商站接口（uni-app 那类站 HTML 里永远是 0 条），不行再解析 HTML，最后同域探测 */
@@ -424,7 +424,7 @@ export async function onRequestPost(context) {
          老板要「上架后别再手填」，所以这里趁采集就把详情补齐——只补前 12 条（控制请求数，
          Workers 单次请求有子请求上限），剩下的点「上架」时再按需抓。 */
       if (via !== 'api') {
-        const need = list.filter(function (x) { return x.link && !x.detail; }).slice(0, 8);
+        const need = list.filter(function (x) { return x.link && !x.detail; }).slice(0, 12);
         for (let i = 0; i < need.length; i += 4) {
           const batch = need.slice(i, i + 4);
           await Promise.all(batch.map(async function (g) {
@@ -485,9 +485,9 @@ export async function onRequestPost(context) {
           const dHtml = (g.detail && g.detail.length)
             ? g.detail.map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('')
             : '';
-          await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, descr, buy_url, detail_html, detail_media, created_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
+          await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, descr, buy_url, detail_html, detail_media, extra, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
             .bind(pid, p.name, g.link || '', g.title, g.cover, g.desc || '', g.buy || g.link || '', dHtml,
-              JSON.stringify(g.detail || []), auth0.username).run();
+              JSON.stringify(g.detail || []), g.extra || '', auth0.username).run();
           added++;
         } catch (eI) { /* 单条失败不影响整体 */ }
       }
@@ -734,6 +734,8 @@ async function ensureCollect(env) {
   /* v501：老板要「描述」和「下单链接」——原来只有标题/封面/详情图，上架后还得自己补 */
   try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN descr TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
   try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN buy_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  /* v512：接口给的其它有用字段（月租/流量/通话/归属/标签）存下来，上架填不进去的至少能看 */
+  try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN extra TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
 }
 
 /* ===== v473 解析器（真实数据驱动：上一版 77 个站只命中 21 个，其中 5 个标题是脏的）=====
@@ -870,13 +872,26 @@ async function tryHaokaWeb(mall) {
       const id = g.id;
       const buy = origin + '/#/pages/goods/index?id=' + encodeURIComponent(id) + '&promoCode=' + encodeURIComponent(c);
       const imgs = (Array.isArray(g.details) ? g.details : []).filter(Boolean).slice(0, 20);
+      /* v512：能拿到的都拿——月租/优惠价/通用流量/定向流量/通话/结算方式/归属/标签，
+         上架时填不进去的字段放进「更多信息」，老板要看的时候不用再跑回对方平台 */
+      const tags = (Array.isArray(g.tagsSelect) ? g.tagsSelect : []).map(function (t) { return String(t && t.label || ''); }).filter(Boolean).slice(0, 8);
+      const ex = {
+        月租: g.monthFee || '', 优惠价: g.favourMonthFee || '', 通用流量: g.commonFlow || '',
+        定向流量: g.fixedFlow || '', 通话: g.callDuration || '', 归属: g.numberRegionName || g.provinceCode || '',
+        结算方式: g.settleMode === 2 ? '秒返' : (g.settleMode === 1 ? '月返' : ''), 标签: tags
+      };
+      const exTxt = Object.keys(ex).map(function (k) {
+        const v = ex[k];
+        return (Array.isArray(v) ? v.join('、') : v) ? k + '：' + (Array.isArray(v) ? v.join('、') : v) : '';
+      }).filter(Boolean).join('；');
       return {
         title: String(g.name || '').slice(0, 90),
         cover: String(g.tips || imgs[0] || ''),
-        desc: String(g.des || '').slice(0, 300),
+        desc: String(g.des || '').slice(0, 300) || exTxt.slice(0, 300),
         detail: imgs,
         link: buy,
-        buy: buy
+        buy: buy,
+        extra: exTxt.slice(0, 600)
       };
     }).filter(function (x) { return x.title && x.title.length >= 3; });
     if (items.length) return { items: items, code: c, origin: origin };
@@ -884,25 +899,25 @@ async function tryHaokaWeb(mall) {
   return null;
 }
 
-/* v510：一次拿不到就换一副「桌面浏览器」的样子再试一次——
-   实测有一批站（号卡类）对移动 UA + 无 Accept-Language 的请求直接超时/掐断，
-   换成完整桌面头就能过（本地复现：同样地址移动 UA 15s 超时、桌面头 1.2s 返回）。 */
+/* v511：抓取策略修正——v510 的「失败就再等 18 秒重试」直接把整次请求拖过函数时限，
+   结果三个站从「超时」变成「HTTP 0」（连状态都没拿到）。现在改成：
+   ① 只有「服务器明确回了 4xx/5xx」才换桌面 UA 再试一次（这种重试几十毫秒就回来）
+   ② 超时/网络异常一律不重试（重试只会更慢）
+   ③ 两次的等待都压在 12 秒以内，整次采集不会超过函数时限 */
 async function fetchPage(url, timeoutMs, opt) {
   opt = opt || {};
-  const UAS = [
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
-  ];
-  const tries = opt.retry === false ? 1 : 2;
-  let last = { ok: false, status: 0, text: '' };
-  for (let i = 0; i < tries; i++) {
+  const UA_MOBILE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1';
+  const UA_DESK = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+  const base = Math.min(timeoutMs || 12000, 12000);
+
+  async function once(ua, ms) {
     const ctrl = new AbortController();
-    const timer = setTimeout(function () { ctrl.abort(); }, (i === 0 ? (timeoutMs || 12000) : Math.max(timeoutMs || 12000, 18000)));
+    const timer = setTimeout(function () { ctrl.abort(); }, ms);
     try {
       const r = await fetch(url, {
         signal: ctrl.signal,
         headers: {
-          'User-Agent': UAS[i % UAS.length],
+          'User-Agent': ua,
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
           'Upgrade-Insecure-Requests': '1'
@@ -911,13 +926,17 @@ async function fetchPage(url, timeoutMs, opt) {
       });
       const buf = await r.arrayBuffer();
       const text = new TextDecoder('utf-8').decode(buf.slice(0, 600000));
-      if (r.ok) return { ok: true, status: r.status, text: text };
-      last = { ok: false, status: r.status, text: text };
+      return { ok: r.ok, status: r.status, text: text, aborted: false };
     } catch (e) {
-      last = { ok: false, status: 0, text: '' };
+      return { ok: false, status: 0, text: '', aborted: true };
     } finally { clearTimeout(timer); }
   }
-  return last;
+
+  const first = await once(UA_MOBILE, base);
+  if (first.ok || first.aborted || opt.retry === false) return first;
+  /* 只有对方明确给了状态码才换桌面头重试（多半是被 UA/头掐掉，换头就过） */
+  const second = await once(UA_DESK, 8000);
+  return second.ok ? second : (second.status ? second : first);
 }
 
 /* 从商品详情页抓长图（详情） */

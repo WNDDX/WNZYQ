@@ -2633,11 +2633,17 @@
     fetchInfo(function (d) {
       var _al = false;
       try { var a = JSON.parse(localStorage.getItem('wnzyq_syscheck_alert') || 'null'); _al = !!(a && a.n); } catch (e) {}
-      if (dot) dot.hidden = !((d.delta.bind > 0) || (d.delta.contact > 0) || (d.delta.login > 0) || (d.delta.audit > 0) || _al); /* v443 条1（老板拍板）：恢复 v439 原逻辑 */
+      /* v512（老板：红点怎么看不见了）：原口径只看「新绑定/新咨询/新登录/系统操作」四类，
+         自己在后台点来点去永远不亮。现改成「明细里还有未读就亮」，进信息中心看过（关闭即记已读）就灭。 */
+      var _unread = (d.recent || []).filter(function (r) { return r && r.unread; }).length;
+      if (dot) dot.hidden = !(_unread > 0 || _al);
     });
   }
   window.__syscheckAlertChanged = function () { checkDot(); }; /* #80：自动体检写标记后即时刷新红点 */
   setTimeout(checkDot, 1500);
+  /* v512：不刷新页面也能看到新消息——每 60 秒静默查一次，窗口重新获得焦点再查一次 */
+  setInterval(function () { try { checkDot(); } catch (e) {} }, 60000);
+  try { window.addEventListener('focus', function () { try { checkDot(); } catch (e) {} }); } catch (e) {}
   if (btn) btn.addEventListener('click', function () {
     mask.classList.add('open'); /* v443 条1（老板拍板）：恢复原逻辑——打开不 markSeen，红点保持到关闭时才算看过 */
     if (window.__haptic) window.__haptic();

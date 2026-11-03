@@ -1126,6 +1126,8 @@
       }
     }
 
+    /* v512：暴露到全局——账号权限表单/其它模块要能主动刷一次分类（原先只在 admin-5 块内可见） */
+    window.loadCategories = loadCategories;
     function loadCategories(silent) { if (window.__catLoading) { if (!silent) window.__catLoading.then(function () { renderCategories(state.categories); }); return window.__catLoading; } /* R281：silent=切回窗口静默重拉——不发重复请求、不弹 toast；diff 没变不重画 */
       /* R230（老板 09-21 21:10）：分类列表首载先铺骨架（分类无分页——按常显 8 行铺，真行不足收尾） */
       var _cbox0 = document.getElementById('catList');

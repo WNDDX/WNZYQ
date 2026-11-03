@@ -1406,7 +1406,7 @@
       /* v501（老板：「三角的意义是什么，不是收起展开按键吗，恢复回之前的样子」）：
          展开态原来用 margin-left:auto 在 flex-wrap 里排队，工具条换行后三角被挤到第二行末尾孤零零一颗。
          改回 v382 的绝对定位——永远钉在第一行右缘（.rte-toolbar 已 padding-right:44px 给它留位）。 */
-      position: absolute; right: 6px; top: 6px; margin: 0;
+      position: absolute; right: 14px; top: 6px; margin: 0;
       display: flex; flex-shrink: 0; align-self: auto;
       width: 32px; height: 32px; padding: 0;
       border: none; background: transparent; /* v370c：三角统一裸三角——全站三角只允许大小差异，不允许边框/底色 */
@@ -1414,6 +1414,17 @@
       align-items: center; justify-content: center;
     }
     .rte-expand .toggle-arrow { width: 20px; height: 20px; transition: transform var(--dur-mid) var(--ease-out); transform: rotate(0deg); }
+    /* v512（老板：「展开收起的内容动效有些有有些没有」）：全站三角/展开箭头统一缓动，禁止瞬切。
+       覆盖面：分类折叠 .cat-fold、文件夹 .fc-arrow、下拉 .cpd-arrow、统计折叠、信息弹窗行、批量条三角 */
+    .cat-fold .toggle-arrow,
+    .fc-arrow .toggle-arrow,
+    .cpd-arrow,
+    .stat-fold .toggle-arrow,
+    .info-row .toggle-arrow,
+    .ann-fold .toggle-arrow,
+    .sort-fold .toggle-arrow {
+      transition: transform var(--dur-mid) var(--ease-out) !important;
+    }
     .rte-expand:active { transform: scale(0.94); }
     @keyframes breathe { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(var(--blue1-rgb, 30,136,229), 0.25);} 50%{transform:scale(1.1);box-shadow:0 0 0 5px rgba(var(--blue1-rgb, 30,136,229), 0);} } /* R243（用户 09-22 23:18）：条43 收起键呼吸动画 */
     .rte-expand.breathe-once { animation: breathe 0.9s ease-in-out 2; } /* R243（用户 09-22 23:18）：条43 一次性引导 */
@@ -1425,7 +1436,7 @@
     /* v507：收起态三角本来就占位（sticky 在流内），再把容器右侧留 44px 就会多出一截空档——
        收起态把留白还给普通 padding，三角贴右缘 6px。 */
     .rte-toolbar.rte-collapsed { padding-right: 8px; }
-    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 6px; top: 6px; margin-left: auto; margin-right: 0; z-index: 2; } /* v492：与展开态同口径（right:0 + margin-right:6） */ /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
+    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 14px; top: 6px; margin-left: auto; margin-right: 0; z-index: 2; } /* v492：与展开态同口径（right:0 + margin-right:6） */ /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
     .rte-toolbar.rte-collapsed .rte-expand .toggle-arrow { transform: rotate(-90deg); }
 
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
@@ -2286,9 +2297,10 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .pm-all { margin-left: auto; font-size: 11px; color: var(--blue1); background: transparent; border: none; cursor: pointer; padding: 2px 6px; border-radius: var(--r-s, 4px); }
 .pm-all:hover { background: var(--hover-bg, #f0f7ff); }
 .pm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 7px 10px; }
-.pm-chk { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; min-width: 0; line-height: 1.3; }
-.pm-chk input { width: 16px; height: 16px; flex: 0 0 16px; accent-color: var(--blue1); cursor: pointer; }
-.pm-chk span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-chk { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; min-width: 0; line-height: 1; min-height: 20px; }
+/* v512：勾选框与文字对齐——原生 checkbox 自带 3px 外边距和基线差，统一清零并锁定 16×16，文字行高跟盒子等高 */
+.pm-chk input { width: 16px; height: 16px; flex: 0 0 16px; margin: 0; padding: 0; accent-color: var(--blue1); cursor: pointer; display: block; }
+.pm-chk span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 16px; display: block; }
 .pm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .pm-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--r-pill, 999px); cursor: pointer; background: var(--card-bg); }
 .pm-chip input { width: 14px; height: 14px; accent-color: var(--blue1); cursor: pointer; }
@@ -2323,6 +2335,9 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-sel-input { width: auto; min-width: 168px; max-width: 240px; }
 .extc-bar .btn-blue.btn-inline { flex: 0 0 auto; }
 .extc-addpf { margin-left: auto; align-self: center; margin-bottom: 6px; }
+/* v512：采集弹窗里的批量条沿用资源管理那套（.batch-bar + __setBatchBar 滑下），只压一点外边距 */
+.extc-batch { margin-bottom: 8px; }
+.extc-batch .batch-group { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
 .extc-loading { text-align: center; color: var(--text-faint); font-size: 13px; padding: 40px 0; }
 .extc-hint { font-size: 11px; color: var(--text-faint); flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .extc-tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }

@@ -189,8 +189,9 @@
       '<button type="button" class="extc-tab on" data-tab="goods">采集到的资源 <i id="extcNGoods">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="pf">我的平台 <i id="extcNPf">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="runs">采集记录 <i id="extcNRuns">0</i></button>' +
-      '<button type="button" class="row-btn extc-addpf" id="extcAddPf">+ 添加平台</button>' +
+      '<button type="button" class="btn-blue btn-inline-pd extc-addpf" id="extcAddPf">添加平台</button>' +
       '</div>' +
+      '<div class="batch-bar extc-batch" id="extcBatch"></div>' +
       '<div class="extc-body" id="extcBody"><div class="extc-loading">正在读取平台和已采集的资源…</div></div>' +
       '</div>';
     document.body.appendChild(m);
@@ -292,27 +293,42 @@
     else body.innerHTML = renderRuns();
     bindSelects(body);   /* v501：新渲染出来的下拉就地升级成系统控件 */
     bindSelects(m);      /* 平台下拉的选中项也要跟着刷新 */
+    /* v512：翻页用全站公共组件（带页码跳转），选中态用系统批量条 */
+    var pagerEl = body.querySelector('#extcPager');
+    if (pagerEl && window.buildUniPager) {
+      var _t = filtered().length;
+      window.buildUniPager(pagerEl, {
+        page: S.page, totalPages: Math.max(1, Math.ceil(_t / S.pageSize)), total: _t, unit: '个',
+        onPage: function (p2) { S.page = p2; render(); }
+      });
+    }
+    updateBatch();
   }
 
   /* v494：把「选中本页/清空/批量上架」并进搜索那一行——原来单独占一行、右边一片空，看着松散 */
-  function actsHtml(n) {
-    return '<button type="button" class="row-btn" data-act="selpage">选中本页</button>' +
-      '<button type="button" class="row-btn" data-act="selnone">清空</button>' +
-      (n ? '<button type="button" class="btn-blue btn-inline" data-act="batchuse">上架 ' + n + ' 个</button>' : '') +
-      (n ? '<button type="button" class="row-btn danger" data-act="delbatch">删除选中</button>' : '');
+  /* v512：选中后的操作改用系统资源管理那套「顶部滑下批量条」（.batch-bar + __setBatchBar），
+     不再是搜索行里挤几个小按钮。 */
+  function updateBatch() {
+    if (!S.mask) return;
+    var bar = S.mask.querySelector('#extcBatch');
+    if (!bar) return;
+    var n = selIds().length;
+    bar.innerHTML = '已选 <span class="batch-count">' + n + '</span> 个' +
+      '<div class="batch-group">' +
+      '<button type="button" class="batch-btn" data-act="batchuse" data-pri="4">上架选中</button>' +
+      '<button type="button" class="batch-btn" data-act="selpage" data-pri="3">选中本页</button>' +
+      '<button type="button" class="batch-btn danger" data-act="delbatch" data-pri="2">批量删除</button>' +
+      '<button type="button" class="batch-btn" data-act="selnone" data-pri="1">取消选中</button>' +
+      '</div>';
+    if (window.__setBatchBar) window.__setBatchBar(bar, n > 0);
+    else bar.classList.toggle('show', n > 0);
   }
   function refreshSelUI() {
     if (!S.mask) return;
     var n = selIds().length;
     var cnt = S.mask.querySelector('.extc-cnt');
     if (cnt) cnt.innerHTML = filtered().length + ' 个' + (n ? ' · 已选 <b>' + n + '</b>' : '');
-    /* 批量按钮现在在搜索行里，直接重绘那一行 */
-    var tools = S.mask.querySelector('.extc-tools');
-    if (tools) {
-      var oldBtns = tools.querySelectorAll('[data-act="selpage"],[data-act="selnone"],[data-act="batchuse"],[data-act="delbatch"]');
-      Array.prototype.forEach.call(oldBtns, function (b) { b.remove(); });
-      tools.insertAdjacentHTML('beforeend', actsHtml(n));
-    }
+    updateBatch();
   }
 
   function renderGoods() {
@@ -336,7 +352,6 @@
       '<option value="used"' + (S.status === 'used' ? ' selected' : '') + '>已上架</option>' +
       '</select>' +
       '<span class="extc-cnt">' + list.length + ' 个' + (n ? ' · 已选 <b>' + n + '</b>' : '') + '</span>' +
-      actsHtml(n) +
       '</div>';
 
     var total = list.length;
@@ -363,11 +378,8 @@
         '</div></div>';
     }).join('');
 
-    var pager = pages > 1
-      ? '<div class="extc-pager"><button type="button" class="row-btn" data-act="prev"' + (S.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
-        '<span>' + S.page + ' / ' + pages + '</span>' +
-        '<button type="button" class="row-btn" data-act="next"' + (S.page >= pages ? ' disabled' : '') + '>下一页</button></div>'
-      : '';
+    /* v512：翻页交给全站公共 .uni-pager（资源管理/数据统计同款，带页码跳转），不再自己画一对按钮 */
+    var pager = '<div class="uni-pager" id="extcPager"></div>';
 
     return pfNote + head + '<div class="extc-grid">' + cards + '</div>' + pager;
   }
@@ -385,7 +397,7 @@
         '<button type="button" class="row-btn" data-act="runpf">采集</button>' +
         '<button type="button" class="row-btn" data-act="gopf">打开</button>' +
         '<button type="button" class="row-btn" data-act="editpf">编辑</button>' +
-        '<button type="button" class="row-btn danger" data-act="delpf">删</button>' +
+        '<button type="button" class="row-btn danger" data-act="delpf">删除</button>' +
         '</div></div>';
     }).join('');
     return '<div class="extc-plist">' + rows + '</div>';
@@ -555,7 +567,7 @@
     /* v501：老板说「上架后要填的信息太少」——描述、详情、下单链接都带过去，别再让他手抄 */
     var payload = {
       title: g.title || '',
-      desc: g.descr || '',
+      desc: g.descr || g.extra || '',
       detail: detailHtml || g.detail_html || '',
       img: g.cover || '',
       coverImages: g.cover ? [g.cover] : [],
@@ -734,6 +746,7 @@
     mkModal('extcSeeMask', '查看资源', 'modal-wide',
       '<div class="extc-formhint"><b>' + esc(g.title) + '</b><br>' + esc(g.platform || '未归平台') + '</div>' +
       (g.descr ? '<label>描述</label><div class="extc-see-desc">' + esc(g.descr) + '</div>' : '') +
+      (g.extra ? '<label>更多信息（对方平台上的参数，填不进资源卡的放这儿）</label><div class="extc-see-desc">' + esc(g.extra) + '</div>' : '') +
       ((g.buy_url || g.src_url) ? '<label>下单链接</label><div class="extc-see-desc"><a href="' + esc(g.buy_url || g.src_url) + '" target="_blank" rel="noopener">' + esc(g.buy_url || g.src_url) + '</a></div>' : '') +
       '<div class="extc-seeimgs">' + (uniq.length
         ? uniq.map(function (u) { return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.remove()"></a>'; }).join('')
