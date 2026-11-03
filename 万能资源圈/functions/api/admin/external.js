@@ -389,7 +389,11 @@ export async function onRequestPost(context) {
             ? '这条链接的页面是个空壳（前端渲染的站，服务器拿不到内容）。改用「粘整页内容」那条路。'
             : '这条链接能打开，但页面里找不到商品图，可能是别的东西在挡（登录/验证）。' }, 200);
         }
-        return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 300) });
+        /* v501：顺便把这件资源的下单链接找出来（详情页里像「立即下单/立即领取」的链接） */
+        const buyHref = ((pg.text.match(/href=["']([^"']*(?:buy|order|goods|goodsId=|pid=)[^"']*)["']/gi) || [])
+          .map(function (x) { return absUrl(x.replace(/^href=["']|["']$/gi, ''), one); })
+          .filter(Boolean)[0]) || one;
+        return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 300), buy_url: buyHref });
       }
 
       const pid = Number(b.platform_id || 0) || 0;
@@ -404,7 +408,12 @@ export async function onRequestPost(context) {
       catch (e) { return json({ ok: false, msg: '抓取超时或对方拒绝（' + (e && e.message || '') + '）' }, 200); }
       if (!pg.ok) return json({ ok: false, msg: '打不开这个商城（HTTP ' + pg.status + '）' }, 200);
 
-      let list = parseGoodsList(pg.text, mall);
+      /* v501：先走商站接口（uni-app 那类站 HTML 里永远是 0 条），不行再解析 HTML，最后同域探测 */
+      let list = [];
+      let via = 'html';
+      const apiHit = await tryHaokaWeb(mall);
+      if (apiHit && apiHit.items.length) { list = apiHit.items; via = 'api'; }
+      if (!list.length) { list = parseGoodsList(pg.text, mall); }
       let fixedAddr = '';
       /* v490（老板实测「录入两个平台都不行」的第一个原因）：填的地址常常是首页/入口页——
          页面本身是壳，资源列表靠浏览器里的 JS 拉（服务端拿不到）。很多同类站的真列表在
@@ -419,6 +428,8 @@ export async function onRequestPost(context) {
             let pg2;
             try { pg2 = await fetchPage(u0.origin + c, 10000); } catch (e) { continue; }
             if (!pg2.ok) continue;
+            const api2 = await tryHaokaWeb(u0.origin + c);
+            if (api2 && api2.items.length >= 3) { list = api2.items; via = 'api'; fixedAddr = u0.origin + c; break; }
             const l2 = parseGoodsList(pg2.text, u0.origin + c);
             if (l2.length >= 3) { list = l2; fixedAddr = u0.origin + c; break; }
           }
@@ -432,7 +443,9 @@ export async function onRequestPost(context) {
           msg: shell
             ? '这个地址是首页壳（资源要靠浏览器里的 JS 才加载出来，服务端抓不到），同域的常见列表页也没探到。两个办法：①去对方平台翻到真正的资源列表页，把那条地址换上再采集 ②用「粘贴」一条条加'
             : '页面能打开（' + pg.text.length + ' 字节），但这种排版我没见过，解析不出。用「粘贴」兜底，或把商城地址发我，我针对它调规则。',
-          tip: shell ? '首页壳 → 换列表页地址或用粘贴' : '排版没见过 → 用粘贴兜底'
+          tip: !haokaCodes(mall).length
+            ? '这个地址不带渠道码（店铺首页）：把它换成分享出来的 /s/xxxx 那种链接再采，接口就能出数据'
+            : (shell ? '首页壳 → 换列表页地址或用粘贴' : '排版没见过 → 用粘贴兜底')
         }, 200);
       }
       /* 入库：同平台 + 同标题 视为同一个（封面可能变） */
@@ -444,24 +457,22 @@ export async function onRequestPost(context) {
           const hit = await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?')
             .bind(pid, g.title).first();
           if (hit) { dup++; continue; }
-          await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, created_by) VALUES (?,?,?,?,?,?)')
-            .bind(pid, p.name, g.link || '', g.title, g.cover, auth0.username).run();
+          const dHtml = (g.detail && g.detail.length)
+            ? g.detail.map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('')
+            : '';
+          await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, descr, buy_url, detail_html, detail_media, created_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
+            .bind(pid, p.name, g.link || '', g.title, g.cover, g.desc || '', g.buy || g.link || '', dHtml,
+              JSON.stringify(g.detail || []), auth0.username).run();
           added++;
         } catch (eI) { /* 单条失败不影响整体 */ }
       }
-      /* v495：探到真列表页就写回平台档案——否则老板每次点采集都要多花几秒重新探一遍，
-         而且平台卡片上显示的地址一直是那个抓不到的首頁，看着像没生效。 */
-      if (fixedAddr) {
-        try { await env.DB.prepare('UPDATE external_platforms SET mall_url=? WHERE id=?').bind(fixedAddr, pid).run(); } catch (e) {}
-      }
-      /* v495：探到真列表页就写回平台档案——否则老板每次点采集都要多花几秒重新探一遍，
-         而且平台卡片上显示的地址一直是那个抓不到的首頁，看着像没生效。 */
+      /* v495/v501：探到真列表页就写回平台档案——下次不用重探，平台上显示的也是能抓的那个地址 */
       if (fixedAddr) {
         try { await env.DB.prepare('UPDATE external_platforms SET mall_url=? WHERE id=?').bind(fixedAddr, pid).run(); } catch (e) {}
       }
       return json({
         ok: true, found: list.length, added, dup, saved: cap, bytes: pg.text.length,
-        fixed_addr: fixedAddr,
+        via: via, fixed_addr: fixedAddr,
         samples: list.slice(0, 5).map(function (x) { return x.title; })
       });
     }
@@ -506,9 +517,11 @@ export async function onRequestPost(context) {
       }
       const dup1 = pid ? await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?').bind(pid, title).first() : null;
       if (dup1) return json({ ok: true, id: dup1.id, dup: true, msg: '商品池里已经有了' });
+      const descrAdd = String(b.descr || '').slice(0, 300);
+      const buyAdd = String(b.buy_url || '').slice(0, 1200);
       try {
-        const r = await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, detail_html, detail_media, created_by, req_id) VALUES (?,?,?,?,?,?,?,?,?)')
-          .bind(pid, pfName, srcUrl, title, cover, detailHtml, JSON.stringify(media), auth0.username, reqId2).run();
+        const r = await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, descr, buy_url, detail_html, detail_media, created_by, req_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+          .bind(pid, pfName, srcUrl, title, cover, descrAdd, buyAdd || srcUrl, detailHtml, JSON.stringify(media), auth0.username, reqId2).run();
         return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0 });
       } catch (eAdd) {
         return json({ ok: false, msg: '存不进去：' + (eAdd && eAdd.message || '') }, 500);
@@ -526,6 +539,8 @@ export async function onRequestPost(context) {
       if (b.cover != null) { sets.push('cover=?'); binds.push(String(b.cover).trim().slice(0, 800)); }
       if (b.src_url != null) { sets.push('src_url=?'); binds.push(String(b.src_url).trim().slice(0, 1200)); }
       if (b.detail_html != null) { sets.push('detail_html=?'); binds.push(String(b.detail_html).slice(0, 60000)); }
+      if (b.descr != null) { sets.push('descr=?'); binds.push(String(b.descr).slice(0, 300)); }
+      if (b.buy_url != null) { sets.push('buy_url=?'); binds.push(String(b.buy_url).slice(0, 1200)); }
       if (Array.isArray(b.media)) {
         sets.push('detail_media=?');
         binds.push(JSON.stringify(b.media.slice(0, 30).map(function (u) { return String(u).slice(0, 800); })));
@@ -691,6 +706,9 @@ async function ensureCollect(env) {
   try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_ext_goods_pf ON external_goods(platform_id)').run(); } catch (e) {}
   /* 平台档案补两个字段（商城地址 / 后台地址），老的 domain/login_url 保留兼容 */
   try { await env.DB.prepare("ALTER TABLE external_platforms ADD COLUMN mall_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  /* v501：老板要「描述」和「下单链接」——原来只有标题/封面/详情图，上架后还得自己补 */
+  try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN descr TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN buy_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
 }
 
 /* ===== v473 解析器（真实数据驱动：上一版 77 个站只命中 21 个，其中 5 个标题是脏的）=====
@@ -782,6 +800,63 @@ function parseGoodsList(html, baseUrl) {
     if (out.length >= 200) break;
   }
   return out;
+}
+
+/* ================= v501 商站接口适配器（老板：「很多平台都采集不到」） =================
+   老板给的平台清单里，一大半是同一家的 uni-app 商城：页面只有 1KB 壳，商品全靠浏览器里的 JS 拉，
+   服务端解析 HTML 永远是 0 条。这类站其实有公开接口：
+     GET {origin}/api/shop/goodsList?promoCode={渠道码}
+   返回里 标题(name)/封面(tips)/详情图(details)/描述(des) 全都齐（实测 hk.usim.vip、app.kaziyou.cn、hk5.kyaowang.cn）。
+   渠道码 = 分享链接 /s/{code} 的最后一段，或地址里的 promoCode / id 参数。
+   接口优先、HTML 其次、同域探测兜底 —— 三条路都不通才报失败，并说清原因。 */
+const UA_DEFAULT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1';
+
+function haokaCodes(u) {
+  const out = [];
+  try {
+    const o = new URL(u);
+    const segs = o.pathname.split('/').filter(Boolean);
+    const last = segs[segs.length - 1] || '';
+    if (last && !/^(shop|index|h5|web|login|s|r|m)$/i.test(last)) out.push(last);
+    ['promoCode', 'promocode', 'code', 'id', 'agent_id', 'mall_id'].forEach(function (k) {
+      const v = o.searchParams.get(k);
+      if (v && out.indexOf(v) < 0) out.push(v);
+    });
+  } catch (e) {}
+  return out;
+}
+
+async function tryHaokaWeb(mall) {
+  const codes = haokaCodes(mall);
+  if (!codes.length) return null;
+  let origin = '';
+  try { origin = new URL(mall).origin; } catch (e) { return null; }
+  for (const c of codes) {
+    let j;
+    try {
+      const r = await fetch(origin + '/api/shop/goodsList?promoCode=' + encodeURIComponent(c), {
+        headers: { 'User-Agent': UA_DEFAULT, 'Accept': 'application/json' }
+      });
+      if (!/json/i.test(r.headers.get('content-type') || '')) continue;
+      j = await r.json();
+    } catch (e) { continue; }
+    if (!j || j.code !== 0 || !j.data || !Array.isArray(j.data.list)) continue;
+    const items = j.data.list.map(function (g) {
+      const id = g.id;
+      const buy = origin + '/#/pages/goods/index?id=' + encodeURIComponent(id) + '&promoCode=' + encodeURIComponent(c);
+      const imgs = (Array.isArray(g.details) ? g.details : []).filter(Boolean).slice(0, 20);
+      return {
+        title: String(g.name || '').slice(0, 90),
+        cover: String(g.tips || imgs[0] || ''),
+        desc: String(g.des || '').slice(0, 300),
+        detail: imgs,
+        link: buy,
+        buy: buy
+      };
+    }).filter(function (x) { return x.title && x.title.length >= 3; });
+    if (items.length) return { items: items, code: c, origin: origin };
+  }
+  return null;
 }
 
 async function fetchPage(url, timeoutMs) {

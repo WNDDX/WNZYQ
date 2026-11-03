@@ -1403,7 +1403,10 @@
       /* v492（老板实测：点三角会位移一点）：sticky 的 right 只在「内容溢出、sticky 真正激活」时生效，
          展开态不溢出 → right:6px 不参与计算，收起态溢出 → 生效，两态差 6px，点一下就跳。
          改成 right:0 + margin-right:6px —— 无论 sticky 是否激活，右缘都恒定留 6px。 */
-      position: sticky; right: 0; top: 0; margin-left: auto; margin-right: 6px;
+      /* v501（老板：「三角的意义是什么，不是收起展开按键吗，恢复回之前的样子」）：
+         展开态原来用 margin-left:auto 在 flex-wrap 里排队，工具条换行后三角被挤到第二行末尾孤零零一颗。
+         改回 v382 的绝对定位——永远钉在第一行右缘（.rte-toolbar 已 padding-right:44px 给它留位）。 */
+      position: absolute; right: 6px; top: 6px; margin: 0;
       display: flex; flex-shrink: 0; align-self: auto;
       width: 32px; height: 32px; padding: 0;
       border: none; background: transparent; /* v370c：三角统一裸三角——全站三角只允许大小差异，不允许边框/底色 */
@@ -2311,18 +2314,18 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* ===== v470 外部商品采集弹窗 ===== */
 .extc-box { display: flex; flex-direction: column; max-height: 88vh; max-height: 88dvh; }
 .extc-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.extc-sel { height: 34px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-btn,10px); background: var(--card-bg); color: var(--text); padding: 0 10px; min-width: 150px; }
-.extc-btn { height: 34px; padding: 0 14px; font-size: 13px; border-radius: var(--radius-btn,10px); border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; white-space: nowrap; }
-.extc-btn:hover { border-color: var(--blue1); color: var(--blue1); }
-.extc-btn.primary { border-color: var(--blue1); background: var(--blue1); color: var(--text-on-brand,#fff); font-weight: 600; }
-.extc-btn.danger { color: var(--red-strong); border-color: var(--danger-border); }
-.extc-btn:disabled { opacity: .55; cursor: default; }
+/* v501：控件一律复用系统（.btn-blue.btn-inline / .row-btn / .input / .select-picker），
+   这里只负责宽度与排布——老板：'很多都是自己创建出来的，要复用'。 */
+.extc-bar .select-picker { width: auto; min-width: 168px; max-width: 240px; flex: 0 0 auto; }
+.extc-sel-input { width: auto; min-width: 168px; max-width: 240px; }
+.extc-bar .btn-blue.btn-inline { flex: 0 0 auto; }
+.extc-addpf { margin-left: auto; }
 .extc-hint { font-size: 11px; color: var(--text-faint); flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .extc-tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
 .extc-tab { border: none; background: transparent; font-size: 14px; color: var(--text-light); padding: 9px 12px; cursor: pointer; border-bottom: 2px solid transparent; }
 .extc-tab i { font-style: normal; font-size: 11px; opacity: .65; margin-left: 2px; }
 .extc-tab.on { color: var(--blue1); border-bottom-color: var(--blue1); font-weight: 600; }
-.extc-link { margin-left: auto; border: none; background: transparent; color: var(--blue1); font-size: 12px; cursor: pointer; padding: 4px 6px; }
+
 .extc-body { flex: 1 1 auto; min-height: 120px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
 .extc-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: var(--text-light); }
 .extc-sp { flex: 1 1 auto; }
@@ -2334,11 +2337,10 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-t { font-size: 12px; color: var(--text); line-height: 1.4; padding: 6px 7px 0; height: 40px; overflow: hidden; }
 .extc-m { font-size: 11px; color: var(--text-faint); padding: 2px 7px 4px; }
 .extc-ops { display: flex; gap: 4px; padding: 0 7px 7px; }
-.extc-mini { flex: 1 1 auto; height: 28px; font-size: 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; padding: 0 6px; }
-.extc-mini:hover { border-color: var(--blue1); color: var(--blue1); }
-.extc-mini.on { border-color: var(--blue1); color: var(--blue1); background: rgba(var(--blue1-rgb, 30,136,229), .08); }
-.extc-mini.primary { color: var(--blue1); border-color: var(--blue1); }
-.extc-mini.danger { color: var(--red); border-color: var(--danger-border); }
+/* 卡片/行内按键 = 系统 .row-btn（尺寸、圆角、悬停全部继承），这里只做栅格伸缩 */
+.extc-ops .row-btn { flex: 1 1 0; min-width: 0; padding: 4px 6px; text-align: center; }
+.extc-ops .row-btn.primary { color: var(--blue1); border-color: var(--blue1); }
+.extc-pops .row-btn { flex: none; }
 .extc-empty { text-align: center; color: var(--text-faint); font-size: 12px; padding: 30px 14px; line-height: 1.9; }
 .extc-plist { display: flex; flex-direction: column; }
 .extc-prow { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
@@ -2346,15 +2348,17 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .extc-pmain b { font-size: 13px; color: var(--text); display: block; }
 .extc-plink { font-size: 11px; color: var(--text-faint); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .extc-pops { display: flex; gap: 5px; flex: none; }
-.extc-pops .extc-mini { flex: none; padding: 0 10px; }
+.extc-pops .row-btn { flex: none; padding: 4px 10px; }
 .extc-form label { margin-top: 9px; }
 .extc-formhint { font-size: 11px; color: var(--text-faint); margin-top: 4px; line-height: 1.6; }
 
 
 /* ===== v473 采集弹窗补齐（搜索/分页/勾选/上架确认/粘贴/导入） ===== */
 .extc-mbody { max-height: min(64vh, 64dvh); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
-.extc-search { flex: 1 1 160px; min-width: 0; height: 34px; padding: 0 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-btn,10px); background: var(--card-bg); color: var(--text); }
-.extc-sel2 { height: 34px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-btn,10px); background: var(--card-bg); color: var(--text); padding: 0 8px; }
+.extc-search { flex: 1 1 180px; min-width: 0; }
+.extc-tools .select-picker { flex: 0 0 auto; min-width: 110px; }
+.extc-see-desc { font-size: 13px; color: var(--text); line-height: 1.7; word-break: break-all; padding: 6px 0 2px; }
+.extc-see-desc a { color: var(--link-blue); }
 .extc-cnt { font-size: 12px; color: var(--text-light); white-space: nowrap; }
 .extc-cnt b { color: var(--blue1); font-style: normal; }
 .extc-tools .extc-cnt i { font-style: normal; }

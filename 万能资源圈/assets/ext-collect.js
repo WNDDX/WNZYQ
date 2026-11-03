@@ -35,6 +35,24 @@
       .catch(function () { return { ok: false, msg: '网络超时或中断，请重试' }; });
   }
   function toast(m, t) { if (window.showToast) window.showToast(m, t || 'info'); }
+  /* v501：下拉一律用系统的自制下拉（.select-picker）——
+     老板原话「比如下拉选择的组件，都不会复用吗，现在你又新做了，要复用啊」。
+     makeSelectPicker 是 admin-3.js 的全局函数：会插显示层、隐藏原生 select，并返回 {refresh}。 */
+  var PK_REFS = [];
+  function bindSelects(root) {
+    if (!root) return;
+    Array.prototype.forEach.call(root.querySelectorAll('select'), function (sel) {
+      var hit = null;
+      for (var i = 0; i < PK_REFS.length; i++) { if (PK_REFS[i].sel === sel) { hit = PK_REFS[i].ref; break; } }
+      if (hit) { try { hit.refresh(); } catch (e) {} return; }
+      if (typeof window.makeSelectPicker !== 'function') return;
+      try {
+        var ref = window.makeSelectPicker(sel);
+        if (ref) PK_REFS.push({ sel: sel, ref: ref });
+      } catch (e0) {}
+    });
+  }
+
   /* v496：空态统一走系统唯一源 __adminEmpty（插画 + 标题 + 说明），不再自写一行灰字 */
   function empty(title, hint) {
     if (window.__adminEmpty) return window.__adminEmpty(title, hint);
@@ -59,7 +77,9 @@
     }
     var bar = srcBar.cloneNode(true);
     bar.removeAttribute('id');
-    bar.classList.remove('rte-collapsed', 'rte-toolbar-large');
+    /* v501：保留系统默认的 rte-collapsed（单行横滚 + 三角展开）——之前这里把收起类摘了，
+       工具条永远多行、三角点了只剩「收起」，老板问「这三角到底干什么的」。现在和系统完全同款。 */
+    bar.classList.remove('rte-toolbar-large');
     bar.classList.add('rte-toolbar');
     bar.setAttribute('data-editor', editorId);
     Array.prototype.forEach.call(bar.querySelectorAll('[data-editor]'), function (el) { el.setAttribute('data-editor', editorId); });
@@ -159,23 +179,24 @@
       '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">资源采集</h2>' +
       '<div class="extc-bar">' +
-      '<select id="extcPf" class="extc-sel"></select>' +
-      '<button type="button" class="extc-btn" id="extcOpenPf" title="打开这个平台">打开平台</button>' +
-      '<button type="button" class="extc-btn primary" id="extcRun" title="按商城地址抓一批">采集</button>' +
-      '<button type="button" class="extc-btn" id="extcPaste" title="粘一条链接，或粘整页内容">粘贴</button>' +
+      '<select id="extcPf" class="extc-sel-input"></select>' +
+      '<button type="button" class="btn-blue btn-inline" id="extcOpenPf" title="打开这个平台">打开平台</button>' +
+      '<button type="button" class="btn-blue btn-inline" id="extcRun" title="按商城地址抓一批">采集</button>' +
+      '<button type="button" class="btn-blue btn-inline" id="extcPaste" title="粘一条链接，或粘整页内容">粘贴</button>' +
       '<span class="extc-hint" id="extcHint"></span>' +
       '</div>' +
       '<div class="extc-tabs">' +
-      '<button type="button" class="extc-tab on" data-tab="goods">资源池 <i id="extcNGoods">0</i></button>' +
+      '<button type="button" class="extc-tab on" data-tab="goods">采集到的资源 <i id="extcNGoods">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="pf">我的平台 <i id="extcNPf">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="runs">采集记录 <i id="extcNRuns">0</i></button>' +
-      '<button type="button" class="extc-link" id="extcAddPf">+ 添加平台</button>' +
+      '<button type="button" class="btn-blue btn-inline extc-addpf" id="extcAddPf">+ 添加平台</button>' +
       '</div>' +
       '<div class="extc-body" id="extcBody"></div>' +
       '</div>';
     document.body.appendChild(m);
     S.mask = m;
     requestAnimationFrame(function () { m.classList.add('open'); });
+    bindSelects(m);
     if (window.syncBodyLock) window.syncBodyLock();
 
     m.addEventListener('click', function (e) {
@@ -269,14 +290,16 @@
     if (S.tab === 'goods') body.innerHTML = renderGoods();
     else if (S.tab === 'pf') body.innerHTML = renderPlatforms();
     else body.innerHTML = renderRuns();
+    bindSelects(body);   /* v501：新渲染出来的下拉就地升级成系统控件 */
+    bindSelects(m);      /* 平台下拉的选中项也要跟着刷新 */
   }
 
   /* v494：把「选中本页/清空/批量上架」并进搜索那一行——原来单独占一行、右边一片空，看着松散 */
   function actsHtml(n) {
-    return '<button type="button" class="extc-btn" data-act="selpage">选中本页</button>' +
-      '<button type="button" class="extc-btn" data-act="selnone">清空</button>' +
-      (n ? '<button type="button" class="extc-btn primary" data-act="batchuse">上架 ' + n + ' 个</button>' : '') +
-      (n ? '<button type="button" class="extc-btn danger" data-act="delbatch">删除选中</button>' : '');
+    return '<button type="button" class="row-btn" data-act="selpage">选中本页</button>' +
+      '<button type="button" class="row-btn" data-act="selnone">清空</button>' +
+      (n ? '<button type="button" class="btn-blue btn-inline" data-act="batchuse">上架 ' + n + ' 个</button>' : '') +
+      (n ? '<button type="button" class="row-btn danger" data-act="delbatch">删除选中</button>' : '');
   }
   function refreshSelUI() {
     if (!S.mask) return;
@@ -302,8 +325,8 @@
     var pfNote = cur && cur.note ? '<div class="extc-pfnote"><b>' + esc(cur.name) + ' 的说明</b><div class="extc-pfnote-b">' + cur.note + '</div></div>' : '';
 
     var head = '<div class="extc-tools">' +
-      '<input id="extcQ" class="extc-search" type="search" autocomplete="off" placeholder="搜标题 / 平台 / 链接" value="' + esc(S.q) + '">' +
-      '<select id="extcSt" class="extc-sel2">' +
+      '<input id="extcQ" class="input extc-search" type="search" autocomplete="off" placeholder="搜标题 / 平台 / 链接" value="' + esc(S.q) + '">' +
+      '<select id="extcSt" class="extc-sel-input">' +
       '<option value="">全部状态</option>' +
       '<option value="new"' + (S.status === 'new' ? ' selected' : '') + '>未上架</option>' +
       '<option value="used"' + (S.status === 'used' ? ' selected' : '') + '>已上架</option>' +
@@ -329,17 +352,17 @@
         '<div class="extc-t" title="' + esc(g.title) + '">' + esc(g.title) + '</div>' +
         '<div class="extc-m">' + esc(g.platform || '未归平台') + '</div>' +
         '<div class="extc-ops">' +
-        '<button type="button" class="extc-mini primary" data-act="use">' + (used ? '再上架' : '上架') + '</button>' +
-        '<button type="button" class="extc-mini" data-act="edit">改</button>' +
-        '<button type="button" class="extc-mini" data-act="see">看</button>' +
-        '<button type="button" class="extc-mini danger" data-act="del">删</button>' +
+        '<button type="button" class="row-btn primary" data-act="use">' + (used ? '再上架' : '上架') + '</button>' +
+        '<button type="button" class="row-btn" data-act="edit">编辑</button>' +
+        '<button type="button" class="row-btn" data-act="see">查看</button>' +
+        '<button type="button" class="row-btn danger" data-act="del">删</button>' +
         '</div></div>';
     }).join('');
 
     var pager = pages > 1
-      ? '<div class="extc-pager"><button type="button" class="extc-mini" data-act="prev"' + (S.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+      ? '<div class="extc-pager"><button type="button" class="row-btn" data-act="prev"' + (S.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
         '<span>' + S.page + ' / ' + pages + '</span>' +
-        '<button type="button" class="extc-mini" data-act="next"' + (S.page >= pages ? ' disabled' : '') + '>下一页</button></div>'
+        '<button type="button" class="row-btn" data-act="next"' + (S.page >= pages ? ' disabled' : '') + '>下一页</button></div>'
       : '';
 
     return pfNote + head + '<div class="extc-grid">' + cards + '</div>' + pager;
@@ -355,10 +378,10 @@
         '<div class="extc-pmain"><b>' + esc(p.name) + ' <i class="extc-cnt">' + cnt + ' 个资源</i></b>' +
         '<span class="extc-plink">' + esc(p.mall_url || '（没填商城地址，采集不了）') + '</span></div>' +
         '<div class="extc-pops">' +
-        '<button type="button" class="extc-mini" data-act="runpf">采集</button>' +
-        '<button type="button" class="extc-mini" data-act="gopf">打开</button>' +
-        '<button type="button" class="extc-mini" data-act="editpf">改</button>' +
-        '<button type="button" class="extc-mini danger" data-act="delpf">删</button>' +
+        '<button type="button" class="row-btn" data-act="runpf">采集</button>' +
+        '<button type="button" class="row-btn" data-act="gopf">打开</button>' +
+        '<button type="button" class="row-btn" data-act="editpf">编辑</button>' +
+        '<button type="button" class="row-btn danger" data-act="delpf">删</button>' +
         '</div></div>';
     }).join('');
     return '<div class="extc-plist">' + rows + '</div>';
@@ -374,8 +397,8 @@
         '<div class="extc-pmain"><b><span class="extc-badge ' + cls + '">' + (r.ok ? '成功' : '失败') + '</span> ' + esc(r.name) + '</b>' +
         '<span class="extc-plink">' + esc(r.at) + ' · ' + esc(r.msg) + '</span></div>' +
         '<div class="extc-pops">' +
-        (r.ok ? '' : '<button type="button" class="extc-mini" data-act="retry" data-i="' + i + '">重试</button>') +
-        (r.ok ? '<button type="button" class="extc-mini" data-act="seeRun" data-i="' + i + '">看资源</button>' : '') +
+        (r.ok ? '' : '<button type="button" class="row-btn" data-act="retry" data-i="' + i + '">重试</button>') +
+        (r.ok ? '<button type="button" class="row-btn" data-act="seeRun" data-i="' + i + '">查看资源</button>' : '') +
         '</div></div>';
     }).join('') + '</div>';
   }
@@ -499,7 +522,9 @@
       S.busy = false;
       if (btn) { btn.disabled = false; btn.textContent = '采集'; }
       if (r && r.ok) {
-        S.hint = '抓到 ' + r.found + ' 条，新入库 ' + r.added + ' 条' + (r.dup ? '，已有 ' + r.dup + ' 条' : '') + (r.fixed_addr ? '（地址已自动换成 ' + r.fixed_addr + '）' : '');
+        S.hint = '抓到 ' + r.found + ' 条，新入库 ' + r.added + ' 条' + (r.dup ? '，已有 ' + r.dup + ' 条' : '')
+          + (r.via === 'api' ? '（走商城接口，标题/封面/描述/详情/下单链接都拿到了）' : '（走页面解析）')
+          + (r.fixed_addr ? '（地址已自动换成 ' + r.fixed_addr + '）' : '');
         S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: true, msg: S.hint + (r.samples && r.samples.length ? '（例：' + r.samples.slice(0, 2).join('、') + '）' : '') });
         if (r.fixed_addr) p.mall_url = r.fixed_addr;
         toast('采集完成：新入库 ' + r.added + ' 条', 'success');
@@ -523,12 +548,14 @@
 
   /* ================= 上架：关掉本弹窗 + 打开系统的「新增资源」 ================= */
   function goEdit(g, detailHtml) {
+    /* v501：老板说「上架后要填的信息太少」——描述、详情、下单链接都带过去，别再让他手抄 */
     var payload = {
       title: g.title || '',
-      desc: '',
+      desc: g.descr || '',
       detail: detailHtml || g.detail_html || '',
       img: g.cover || '',
       coverImages: g.cover ? [g.cover] : [],
+      contactUrl: g.buy_url || g.src_url || '',
       price: '',
       sort: 0,
       is_online: 1
@@ -537,7 +564,7 @@
     setTimeout(function () {
       if (typeof window.__openEdit !== 'function') { toast('打不开新增资源，请刷新后台再试', 'error'); return; }
       window.__openEdit(payload);
-      toast('已填好标题、封面和详情，补上分类和价格点确定就行', 'info');
+      toast('已填好标题、描述、详情和下单链接，补上分类和价格点确定就行', 'info');
     }, 220);
     api('admin/external', { method: 'POST', body: { op: 'goods.use', id: g.id, product_id: 0 } }).then(function () {
       S.goods.forEach(function (x) { if (Number(x.id) === Number(g.id)) x.status = 'used'; });
@@ -593,7 +620,7 @@
       '<div class="extc-formhint">会从粘进来的内容里提标题和图片，小图标自动过滤。</div>' +
       '</div>' +
       '<div class="extc-formhint" id="paTip"></div>',
-      '<button class="modal-inner-btn" id="paSave">加进资源池</button><button class="modal-close" data-x="1">关闭</button>');
+      '<button class="modal-inner-btn" id="paSave">加进资源</button><button class="modal-close" data-x="1">关闭</button>');
 
     var tab = 'link';
     Array.prototype.forEach.call(m.querySelectorAll('[data-ptab]'), function (b) {
@@ -700,9 +727,10 @@
     var all = (g.cover ? [g.cover] : []).concat(urls, media);
     var uniq = [];
     all.forEach(function (u) { if (u && uniq.indexOf(u) < 0) uniq.push(u); });
-    mkModal('extcSeeMask', '看资源', 'modal-wide',
-      '<div class="extc-formhint"><b>' + esc(g.title) + '</b><br>' + esc(g.platform || '未归平台') +
-      (g.src_url ? '<br><a href="' + esc(g.src_url) + '" target="_blank" rel="noopener">去原页面看</a>' : '') + '</div>' +
+    mkModal('extcSeeMask', '查看资源', 'modal-wide',
+      '<div class="extc-formhint"><b>' + esc(g.title) + '</b><br>' + esc(g.platform || '未归平台') + '</div>' +
+      (g.descr ? '<label>描述</label><div class="extc-see-desc">' + esc(g.descr) + '</div>' : '') +
+      ((g.buy_url || g.src_url) ? '<label>下单链接</label><div class="extc-see-desc"><a href="' + esc(g.buy_url || g.src_url) + '" target="_blank" rel="noopener">' + esc(g.buy_url || g.src_url) + '</a></div>' : '') +
       '<div class="extc-seeimgs">' + (uniq.length
         ? uniq.map(function (u) { return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.remove()"></a>'; }).join('')
         : '<div class="extc-formhint">这条还没抓到详情图，上架时会去抓。</div>') + '</div>',
@@ -712,12 +740,14 @@
   function editForm(id) {
     var g = S.goods.filter(function (x) { return Number(x.id) === id; })[0];
     if (!g) return;
-    var m = mkModal('extcEditMask', '改资源', '',
+    var m = mkModal('extcEditMask', '编辑资源', '',
       '<label>标题</label><input class="input" id="edTitle" maxlength="90" value="' + esc(g.title || '') + '">' +
       '<label>封面图地址</label><input class="input" id="edCover" value="' + esc(g.cover || '') + '">' +
       (g.cover ? '<div class="extc-coverpreview"><img src="' + esc(g.cover) + '" referrerpolicy="no-referrer" onerror="this.remove()"></div>' : '') +
+      '<label>描述（上架时自动带进「简介」）</label><input class="input" id="edDescr" maxlength="300" value="' + esc(g.descr || '') + '">' +
+      '<label>下单链接（上架时自动带进「跳转链接」）</label><input class="input" id="edBuy" value="' + esc(g.buy_url || '') + '">' +
       '<label>原页面地址（上架时拿它抓详情图）</label><input class="input" id="edUrl" value="' + esc(g.src_url || '') + '">' +
-      '<div class="extc-formhint">详情图不用手填：点「看」能预览，上架时会按原页面地址去抓。</div>',
+      '<div class="extc-formhint">详情图不用手填：点「查看」能预览，上架时会按原页面地址去抓。</div>',
       '<button class="modal-inner-btn" id="edSave">确定</button><button class="modal-close" data-x="1">关闭</button>');
     m.querySelector('#edSave').addEventListener('click', function () {
       var btn = this; btn.disabled = true; btn.textContent = '保存中…';
@@ -727,6 +757,8 @@
           op: 'goods.update', id: id,
           title: m.querySelector('#edTitle').value.trim(),
           cover: m.querySelector('#edCover').value.trim(),
+          descr: m.querySelector('#edDescr').value.trim(),
+          buy_url: m.querySelector('#edBuy').value.trim(),
           src_url: m.querySelector('#edUrl').value.trim()
         }
       }).then(function (r) {
@@ -734,6 +766,8 @@
         if (r && r.ok) {
           g.title = m.querySelector('#edTitle').value.trim();
           g.cover = m.querySelector('#edCover').value.trim();
+          g.descr = m.querySelector('#edDescr').value.trim();
+          g.buy_url = m.querySelector('#edBuy').value.trim();
           g.src_url = m.querySelector('#edUrl').value.trim();
           toast('已保存', 'success'); closeM(m); render();
         } else toast((r && r.msg) || '保存失败', 'error');
@@ -744,11 +778,12 @@
   /* ================= 平台档案（编辑器复用系统）================= */
   function platformForm(p) {
     var isEdit = !!(p && p.id);
-    var m = mkModal('extcPfMask', isEdit ? '改平台：' + esc(p.name) : '添加平台', '',
+    var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加平台', '',
       '<label>平台名（必填）</label><input class="input" id="epName" maxlength="40" value="' + esc(isEdit ? p.name : '') + '" placeholder="比如 五湖通信">' +
-      '<label>商城地址（我抓这个页面上的资源）</label><input class="input" id="epMall" maxlength="600" value="' + esc(isEdit ? (p.mall_url || '') : '') + '" placeholder="https://... 你在那边看资源列表那一页">' +
-      '<div class="extc-formhint">填「资源列表」那一页，不要填登录页。填错也没关系：抓不到时我会自动试同域的其他列表页。</div>' +
-      '<label>后台地址（可选，「打开平台」跳这里）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="https://... 登录后台用；不填就跳商城">' +
+      '<label>商城地址（对方后台里的「在线商城」那一条）</label><input class="input" id="epMall" maxlength="600" value="' + esc(isEdit ? (p.mall_url || '') : '') + '" placeholder="https://... 点「在线商城」复制过来的地址">' +
+      '<div class="extc-formhint">只填<b>在线商城</b>那一行链接（资源从这里抓）。不要填「注册」「资料」那种地址；填错我也会自动试同域的列表页。</div>' +
+      '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="https://... 点「手机登录」复制过来的地址">' +
+      '<div class="extc-formhint">只填<b>手机登录</b>那一行链接（点「打开平台」直接到登录页），不填就跳商城。</div>' +
       '<label>我的说明</label>' +
       '<div id="epNoteHost"></div>' +
       '<div class="extc-formhint">写给自己看的：账号、结算规则、注意事项。支持加粗、颜色、表格、插图。</div>',
