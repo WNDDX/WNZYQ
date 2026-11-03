@@ -10,6 +10,11 @@ export async function onRequestGet(context) {
   try {
     const admin = await getAuthAdmin(env, request);
     if (admin && admin.username) {
+      /* v534：老板打开后台也算"有人访问"——顺带把当天的自动采集跑掉（后台跑，不耽误这个请求） */
+      try {
+        const job = import('../../_autocollect.js').then(function (m) { return m.maybeAutoCollect(context); }).catch(function () {});
+        if (context.waitUntil) context.waitUntil(job);
+      } catch (eAC) {}
       /* v439 #116：返回身份与权限（前端按此隐藏无权功能/显示范围数据） */
       let perms = admin.perms || '{}';
       try { perms = typeof perms === 'string' ? JSON.parse(perms) : perms; } catch (e) { perms = {}; }

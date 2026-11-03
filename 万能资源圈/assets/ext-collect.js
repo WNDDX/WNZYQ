@@ -856,9 +856,9 @@
       '<div class="extc-formhint">只填<b>在线商城</b>那一行链接（资源从这里抓）。不要填「注册」「资料」那种地址；填错我也会自动试同域的列表页。</div>' +
       '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="https://... 点「手机登录」复制过来的地址">' +
       '<div class="extc-formhint">只填<b>手机登录</b>那一行链接（点「打开平台」直接到登录页），不填就跳商城。</div>' +
-      /* v530：定时采集——每个平台单独开关，勾了就每天 0 点自动采一次（由定时器调 /api/cron/collect） */
-      '<label class="checkbox-row" style="margin-top:10px"><input type="checkbox" id="epAuto"' + (isEdit && Number(p.auto_collect) ? ' checked' : '') + '> 每天 0 点自动采集一次</label>' +
-      '<div class="extc-formhint">勾上后由定时器触发（需要配一次 CRON_KEY，见设置页「定时采集」说明）。不勾就只能手动点「采集」。</div>' +
+      /* v534：定时采集改成系统自带机制（与 60 天清理同一套），不再需要任何配置 */
+      '<label class="checkbox-row" style="margin-top:10px"><input type="checkbox" id="epAuto"' + (isEdit && Number(p.auto_collect) ? ' checked' : '') + '> 每天自动采集一次</label>' +
+      '<div class="extc-formhint">勾上就行，不用配任何东西：每天第一次有人打开站点时，系统在后台自动采一遍（和自带的「清理 60 天前数据」同一个机制）。不勾就只能手动点「采集」。</div>' +
       '<label>我的说明</label>' +
       '<div id="epNoteHost"></div>' +
       '<div class="extc-formhint">写给自己看的：账号、结算规则、注意事项。支持加粗、颜色、表格、插图。</div>',

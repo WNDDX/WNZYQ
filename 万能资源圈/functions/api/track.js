@@ -115,5 +115,14 @@ export async function onRequestPost(context) {
     .bind(pid, type, ip, (request.cf && request.cf.region) || '')
     .run();
 
+  /* v534：顺带自动采集——和上面 60 天清理完全同一个思路，纯代码实现，不碰任何定时配置。
+     当天第一次有人访问就把勾了「每天自动」的平台采一遍；交给 waitUntil 后台跑，这条埋点照常立刻返回。 */
+  try {
+    const job = import('../_autocollect.js')
+      .then(function (m) { return m.maybeAutoCollect(context); })
+      .catch(function (e) { console.error('自动采集失败(不影响埋点):', e && e.message); });
+    if (context.waitUntil) context.waitUntil(job);
+  } catch (eA) { console.error('自动采集挂载失败(不影响埋点):', eA && eA.message); }
+
   return json({ ok: true });
 }

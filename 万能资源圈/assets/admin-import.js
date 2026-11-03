@@ -1351,32 +1351,75 @@
     }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">加载失败，请关掉重试</div>'; });
   }
 
-  /* ================= v530 定时采集说明 =================
-     为什么要有这一步：Cloudflare Pages Functions 只在「有请求」时运行，没有 Workers 那种 cron。
-     所以真正的「每天 0 点」必须由外部定时器来敲一下。这里把配置步骤直接写在界面上，老板照着做即可。 */
+  /* ================= v534 自动采集 =================
+     老板 r14：「定时不用做这些设置啊，就想我们系统自带清除一些数据那个机制一样啊」
+     所以界面上不再出现 CRON_KEY / GitHub / 定时器这些词——机制与 track.js 的 60 天清理完全相同：
+     每天第一次有人访问，后台顺手把活干完。这个弹窗只负责解释 + 给你看今天的进度 + 手动催一次。 */
   function openCronHelp() {
     var old = document.getElementById('cronHelpMask'); if (old) old.remove();
-    var host = 'https://' + location.host;
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'cronHelpMask';
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="定时采集说明">' +
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="自动采集">' +
       '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
-      '<div class="modal-title">定时采集</div>' +
-      '<p class="imp-lead">在「资源采集 → 我的平台 → 编辑」里勾上「每天 0 点自动采集一次」，这个平台就会被自动采。' +
-      '剩下只要配一次定时器，让它每天 0 点来敲一下下面这个地址。</p>' +
-      '<div class="cron-step"><b>1</b><span>到 Cloudflare Pages 的「设置 → 环境变量」加一个 <b>CRON_KEY</b>，值随便填一串长密码（比如 32 位字母数字）。</span></div>' +
-      '<div class="cron-step"><b>2</b><span>把同一个值配到定时器里，每 0 点调用：<span class="cron-code">' + host + '/api/cron/collect?key=你的CRON_KEY</span></span></div>' +
-      '<div class="cron-step"><b>3</b><span>定时器用 GitHub Actions 最省事（仓库里已经放好 <b>.github/workflows/auto-collect.yml</b>）：到仓库 Settings → Secrets 加 <b>CRON_KEY</b>，它每天北京时间 0 点会自动调一次。</span></div>' +
-      '<div class="cron-step"><b>4</b><span>想立刻验证，把地址后面加 <b>&force=1</b> 用浏览器打开——会返回每个平台抓了多少条。</span></div>' +
-      '<p class="imp-lead" style="margin-top:10px">说明：同一个平台一天只自动采一次（避免重复入库）。自动采集只抓列表信息（标题/封面/描述/下单链接），' +
-      '详情长图仍然在你点「查看 / 上架」时按需补，这样一次任务不会跑太久。</p>' +
-      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+      '<div class="modal-title">自动采集</div>' +
+      '<p class="imp-lead">在「资源采集 → 我的平台 → 编辑」里勾上「每天自动采集一次」，这个平台就会被自动采。' +
+      '<b>不用配任何东西</b>——和系统自带的「清理 60 天前数据」是同一个机制。</p>' +
+      '<div class="cron-step"><b>1</b><span>每天第一次有人打开站点（前台或后台都算），系统就在后台把所有勾了「每天自动」的平台采一遍，页面不会变慢。</span></div>' +
+      '<div class="cron-step"><b>2</b><span>一次最多跑 15 秒左右；平台多的，这次没采完的下次访问自动接着采，不会漏。</span></div>' +
+      '<div class="cron-step"><b>3</b><span>同一个平台一天只自动采一次，重复的按标题自动跳过，不会把库塞满。</span></div>' +
+      '<div class="cron-step"><b>4</b><span>只抓列表信息（标题 / 封面 / 描述 / 下单链接）；详情长图仍然在你点「查看 / 上架」时按需补。</span></div>' +
+      '<div class="cron-status" id="cronStatus">正在读取今天的采集状态…</div>' +
+      '<div class="modal-footer"><button type="button" class="btn-blue btn-inline-pd" id="cronRunNow">现在采一次</button>' +
+      '<button type="button" class="modal-close" data-x="1">关闭</button></div>' +
       '</div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); });
     if (window.syncBodyLock) window.syncBodyLock();
     var close = function () { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180); };
     mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
+    var host = mask.querySelector('#cronStatus');
+    var paint = function (st) {
+      if (!host) return;
+      if (!st) { host.innerHTML = '<span class="cs-bad">状态读取失败，关掉重开试试</span>'; return; }
+      var line = [];
+      line.push('<div class="cs-row"><span>开了自动采集的平台</span><b>' + (st.autoOn || 0) + ' 个</b></div>');
+      line.push('<div class="cs-row"><span>今天</span><b class="' + (st.todayDone ? 'cs-ok' : '') + '">' +
+        (st.todayDone ? '已自动采完' : '还没采（下次有人访问就会跑）') + '</b></div>');
+      if (st.progress && st.progress.total) {
+        line.push('<div class="cs-row"><span>今天进度</span><b>' + (st.progress.idx || 0) + ' / ' + st.progress.total + '</b></div>');
+      }
+      if (st.last && st.last.at) {
+        var extra = '新增 ' + (st.last.added || 0) + ' 个资源';
+        if (st.last.fails && st.last.fails.length) extra += '，' + st.last.fails.length + ' 个没抓到（' + st.last.fails.join('、') + '）';
+        line.push('<div class="cs-row"><span>上次自动</span><b>' + st.last.at + ' · ' + extra + '</b></div>');
+      } else if (st.lastAutoAt) {
+        line.push('<div class="cs-row"><span>上次自动</span><b>' + String(st.lastAutoAt).slice(5, 16) + '</b></div>');
+      }
+      host.innerHTML = line.join('');
+    };
+
+    var load = function () {
+      fetch('/api/cron/collect?op=status', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (r) { paint(r && r.ok ? r.status : null); })
+        .catch(function () { paint(null); });
+    };
+    load();
+
+    var btn = mask.querySelector('#cronRunNow');
+    btn.addEventListener('click', function () {
+      btn.disabled = true; btn.textContent = '正在采…';
+      if (host) host.innerHTML = '<span class="cs-bad">正在采，平台多的要十几秒，别关窗口…</span>';
+      fetch('/api/cron/collect', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          btn.disabled = false; btn.textContent = '再采一次';
+          if (window.showToast) window.showToast(r && r.ok ? ('采完了，新增 ' + ((r && r.added) || 0) + ' 个资源') : ((r && r.msg) || '采集失败'), r && r.ok ? 'success' : 'error');
+          load();
+        })
+        .catch(function () { btn.disabled = false; btn.textContent = '现在采一次'; if (window.showToast) window.showToast('网络中断，没采成', 'error'); load(); });
+    });
   }
 
   /* ================= v530 操作日志（复用已有 audit_log 表，不新建数据） =================
@@ -1474,7 +1517,7 @@
       };
       mkGroup('内容管理', row('批量导入（Excel 一次导多条）', btnHtml('batchImportBtn', '批量导入', '', 1))
         + row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存'))
-        + row('每天自动采集（每个平台可单独开关）', btnHtml('cronBtn', '定时采集')));
+        + row('每天自动采集（每个平台可单独开关）', btnHtml('cronBtn', '自动采集')));
       panel.querySelector('#cronBtn').addEventListener('click', function () { openCronHelp(); });
       mkGroup('系统维护', row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1)));
       var accGrp = mkGroup('账号与安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
