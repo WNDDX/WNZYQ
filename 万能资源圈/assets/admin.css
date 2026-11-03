@@ -1422,7 +1422,10 @@
     .rte-toolbar.rte-collapsed { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior: auto /* v375（老板拍板）：滑动到尽头要能把外面的窗口带着滚，不再圈死（旧 v311 方案C 废止） */; /* v311（用户 10-05 14:38）：老板拍板方案C→内部滚动区加 contain 圈住滚动不外传 */ }
     /* v385 条8：收起态三角坐标与展开态对齐（top:8/right:6 同值）——原 sticky 默认 top 归行内流位，
        状态切换瞬间三角位置跳动（老板反馈「状态变化后还是会动」），现两态同位仅剩旋转过渡 */
-    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 0; top: 6px; margin-left: auto; margin-right: -38px; z-index: 2; } /* v492：与展开态同口径（right:0 + margin-right:6） */ /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
+    /* v507：收起态三角本来就占位（sticky 在流内），再把容器右侧留 44px 就会多出一截空档——
+       收起态把留白还给普通 padding，三角贴右缘 6px。 */
+    .rte-toolbar.rte-collapsed { padding-right: 8px; }
+    .rte-toolbar.rte-collapsed .rte-expand { position: sticky; right: 6px; top: 6px; margin-left: auto; margin-right: 0; z-index: 2; } /* v492：与展开态同口径（right:0 + margin-right:6） */ /* v454：两态都用 sticky，横向滚动时钉住不动 */ /* v385 条8：与展开态完全同款定位（sticky 在收起横滚容器内不贴缘 gap 51≠7，两态改同位=切状态绝不跳动） */
     .rte-toolbar.rte-collapsed .rte-expand .toggle-arrow { transform: rotate(-90deg); }
 
     /* ========== 统一按钮动画（跟资源页一致；.tab/.view-btn 已统一由 ui-common.css 定义） ==========
