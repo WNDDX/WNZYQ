@@ -406,7 +406,11 @@ export async function onRequestPost(context) {
       let pg;
       try { pg = await fetchPage(mall, 15000); }
       catch (e) { return json({ ok: false, msg: '抓取超时或对方拒绝（' + (e && e.message || '') + '）' }, 200); }
-      if (!pg.ok) return json({ ok: false, msg: '打不开这个商城（HTTP ' + pg.status + '）' }, 200);
+      if (!pg.ok) {
+        return json({ ok: false, msg: pg.status >= 500
+          ? '对方站点拒绝了服务器抓取（HTTP ' + pg.status + '）——这类站常按机房 IP 拦，只能开浏览器点「打开平台」看，或用「粘贴」'
+          : '打不开这个商城（HTTP ' + pg.status + '）' }, 200);
+      }
 
       /* v501：先走商站接口（uni-app 那类站 HTML 里永远是 0 条），不行再解析 HTML，最后同域探测 */
       let list = [];
@@ -415,6 +419,27 @@ export async function onRequestPost(context) {
       if (apiHit && apiHit.items.length) { list = apiHit.items; via = 'api'; }
       if (!list.length) { list = parseGoodsList(pg.text, mall); }
       let fixedAddr = '';
+
+      /* v501：HTML 路子只有列表信息，详情图/下单链接/描述都在详情页里。
+         老板要「上架后别再手填」，所以这里趁采集就把详情补齐——只补前 12 条（控制请求数，
+         Workers 单次请求有子请求上限），剩下的点「上架」时再按需抓。 */
+      if (via !== 'api') {
+        const need = list.filter(function (x) { return x.link && !x.detail; }).slice(0, 12);
+        for (let i = 0; i < need.length; i += 4) {
+          const batch = need.slice(i, i + 4);
+          await Promise.all(batch.map(async function (g) {
+            try {
+              const dp = await fetchPage(g.link, 9000);
+              if (!dp.ok) return;
+              const imgs = parseDetail(dp.text, g.link).filter(function (u) { return u !== g.cover; }).slice(0, 20);
+              g.detail = imgs;
+              const d = plainText((dp.text.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{0,300})["']/i) || [])[1] || '');
+              if (!g.desc && d) g.desc = d;
+              if (!g.buy) g.buy = g.link;
+            } catch (e) {}
+          }));
+        }
+      }
       /* v490（老板实测「录入两个平台都不行」的第一个原因）：填的地址常常是首页/入口页——
          页面本身是壳，资源列表靠浏览器里的 JS 拉（服务端拿不到）。很多同类站的真列表在
          /article/goods 这类固定路径上（实测 55555.wang 就是：首页壳、/article/goods 有 20 条）。
