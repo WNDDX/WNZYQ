@@ -189,9 +189,9 @@
       '<button type="button" class="extc-tab on" data-tab="goods">采集到的资源 <i id="extcNGoods">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="pf">我的平台 <i id="extcNPf">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="runs">采集记录 <i id="extcNRuns">0</i></button>' +
-      '<button type="button" class="btn-blue btn-inline extc-addpf" id="extcAddPf">+ 添加平台</button>' +
+      '<button type="button" class="row-btn extc-addpf" id="extcAddPf">+ 添加平台</button>' +
       '</div>' +
-      '<div class="extc-body" id="extcBody"></div>' +
+      '<div class="extc-body" id="extcBody"><div class="extc-loading">正在读取平台和已采集的资源…</div></div>' +
       '</div>';
     document.body.appendChild(m);
     S.mask = m;
@@ -318,7 +318,11 @@
   function renderGoods() {
     var list = filtered();
     if (!S.goods.length) {
-      return empty('资源池是空的', '选一个平台点「采集」一次抓一批；抓不到的点「粘贴」，粘链接或整页内容一条条加');
+      return empty('采集到的资源还没有内容', '选一个平台点「采集」一次抓一批；抓不到的点「粘贴」，粘链接或整页内容一条条加');
+    }
+    /* v509：有数据但被搜索/状态筛空时，原来是整片空白（老板看到只会以为坏了） */
+    if (!list.length) {
+      return empty('没有符合条件的资源', '换个平台、清掉搜索词或把状态切回「全部」再试');
     }
     var n = selIds().length;
     var cur = S.platforms.filter(function (p) { return Number(p.id) === Number(S.curPf); })[0];
