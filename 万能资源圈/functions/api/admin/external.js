@@ -429,7 +429,7 @@ export async function onRequestPost(context) {
           const batch = need.slice(i, i + 4);
           await Promise.all(batch.map(async function (g) {
             try {
-              const dp = await fetchPage(g.link, 5000);
+              const dp = await fetchPage(g.link, 5000, { retry: false });
               if (!dp.ok) return;
               const imgs = parseDetail(dp.text, g.link).filter(function (u) { return u !== g.cover; }).slice(0, 20);
               g.detail = imgs;
@@ -451,7 +451,7 @@ export async function onRequestPost(context) {
           for (const c of cands) {
             if (u0.pathname === c) continue;
             let pg2;
-            try { pg2 = await fetchPage(u0.origin + c, 10000); } catch (e) { continue; }
+            try { pg2 = await fetchPage(u0.origin + c, 8000, { retry: false }); } catch (e) { continue; }
             if (!pg2.ok) continue;
             const api2 = await tryHaokaWeb(u0.origin + c);
             if (api2 && api2.items.length >= 3) { list = api2.items; via = 'api'; fixedAddr = u0.origin + c; break; }
@@ -884,19 +884,40 @@ async function tryHaokaWeb(mall) {
   return null;
 }
 
-async function fetchPage(url, timeoutMs) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(function () { ctrl.abort(); }, timeoutMs || 12000);
-  try {
-    const r = await fetch(url, {
-      signal: ctrl.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1', 'Accept': 'text/html,application/xhtml+xml' },
-      redirect: 'follow'
-    });
-    const buf = await r.arrayBuffer();
-    const text = new TextDecoder('utf-8').decode(buf.slice(0, 600000));
-    return { ok: r.ok, status: r.status, text: text };
-  } finally { clearTimeout(timer); }
+/* v510：一次拿不到就换一副「桌面浏览器」的样子再试一次——
+   实测有一批站（号卡类）对移动 UA + 无 Accept-Language 的请求直接超时/掐断，
+   换成完整桌面头就能过（本地复现：同样地址移动 UA 15s 超时、桌面头 1.2s 返回）。 */
+async function fetchPage(url, timeoutMs, opt) {
+  opt = opt || {};
+  const UAS = [
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
+  ];
+  const tries = opt.retry === false ? 1 : 2;
+  let last = { ok: false, status: 0, text: '' };
+  for (let i = 0; i < tries; i++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(function () { ctrl.abort(); }, (i === 0 ? (timeoutMs || 12000) : Math.max(timeoutMs || 12000, 18000)));
+    try {
+      const r = await fetch(url, {
+        signal: ctrl.signal,
+        headers: {
+          'User-Agent': UAS[i % UAS.length],
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Upgrade-Insecure-Requests': '1'
+        },
+        redirect: 'follow'
+      });
+      const buf = await r.arrayBuffer();
+      const text = new TextDecoder('utf-8').decode(buf.slice(0, 600000));
+      if (r.ok) return { ok: true, status: r.status, text: text };
+      last = { ok: false, status: r.status, text: text };
+    } catch (e) {
+      last = { ok: false, status: 0, text: '' };
+    } finally { clearTimeout(timer); }
+  }
+  return last;
 }
 
 /* 从商品详情页抓长图（详情） */
