@@ -576,6 +576,11 @@
       clearTimeout(window.__annSkelT);
       var _annSkel = document.getElementById('annSkeleton'); if (_annSkel) _annSkel.style.display = 'none';
       var list = DATA.announcements || [];
+      /* v496：渲染时也优先用「有真内容」的那几条——否则默认选中的往往是只有占位图的那条，
+         弹窗里就挂着一张灰色占位图（老板反馈的「打开就是空公告」）。全都为空时才退回原样，
+         让手动打开能看到「该公告暂无内容」的状态提示。 */
+      var _annReal = list.filter(__annHasContent);
+      if (_annReal.length) list = _annReal;
       if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
       // 渲染小项 tabs（仅多条时显示）
       var tabs = document.getElementById('annTabs');
@@ -674,15 +679,19 @@
          打开并置 __annShown=true，数据到达后走下方早退分支（该分支不查 off），弹窗被填上内容永不关闭，
          还会挡住搜索框聚焦/分页按钮/滑动起手 */
       if (mode === 'off') { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
+      /* v496：先按「有没有真内容」过滤，再决定要不要弹——
+         空公告（只有占位图或纯空白）会让访客每次打开都先看到一个空弹窗；
+         过滤必须在下面「已弹过就早退」的分支之前，否则骨架期已经把窗打开了，永远走不到过滤。
+         公告本身仍可从顶栏「公告」键手动查看。 */
+      var _annAll = DATA.announcements || [];
+      if (!_annAll.some(function (x) { return x.level === 1; })) _annAll = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(_annAll);
+      _annAll = _annAll.filter(__annHasContent);
+      if (!_annAll.length) { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
       if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) { if (window.__silent) window.__silent(e); } } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) { if (window.__silent) window.__silent(e); } }
         // 修复（首次开屏）：弹窗已打开但此前数据未到（首访无缓存先弹空窗），接口返回后在此用最新数据刷新 tabs/默认选中/默认内容
         if (mask.classList.contains('open')) renderAnnContent();
         return; }
-      var list = DATA.announcements || []; if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
-      /* v496：只有「真有内容」的公告才自动弹窗——占位图/纯空白公告一律不弹
-         （老板原来每次打开前台都先弹一个只有占位图的空公告；公告本身仍可从顶栏「公告」键查看） */
-      list = list.filter(__annHasContent);
-      if (!list.length) { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
+      var list = _annAll;
       if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
       if (mode === 'daily') {
         try {
