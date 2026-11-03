@@ -2561,3 +2561,53 @@ label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left:
 .imp-err { text-align: center; color: var(--red-strong, #c62828); font-size: 13px; padding: 14px 0; }
 .pm-hint-block { display: block; margin-bottom: 4px; }
 .w-full-mb10 { width: 100%; margin-bottom: 10px; }
+
+/* ================= v530：平台行的「自动采集」标记与上次结果 ================= */
+.extc-pmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; font-size: 11px; color: var(--text-faint); }
+.extc-pmeta .extc-auto { font-style: normal; background: rgba(30,136,229,.1); color: var(--blue1); border-radius: 999px; padding: 1px 8px; font-size: 11px; }
+.extc-pmeta .is-ok { color: var(--green-strong, #2e7d32); }
+.extc-pmeta .is-bad { color: var(--red-strong, #c62828); }
+
+/* ================= v530：操作日志列表 ================= */
+.logs-tools { display: flex; gap: 8px; margin-bottom: 10px; }
+.logs-tools .input { flex: 1 1 auto; min-width: 0; }
+.logs-tools .btn-blue { flex: 0 0 auto; }
+.logs-body { max-height: 46vh; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); }
+.log-row { display: grid; grid-template-columns: 118px 96px minmax(88px, 150px) 1fr; gap: 8px; align-items: center;
+  padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
+.log-row:last-child { border-bottom: none; }
+.log-t { color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.log-w { color: var(--blue1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-a { font-weight: 600; color: var(--text); }
+.log-g { color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 560px) {
+  .log-row { grid-template-columns: 1fr 1fr; row-gap: 2px; }
+  .log-g { grid-column: 1 / -1; }
+}
+
+/* 定时采集说明弹窗里的步骤块 */
+.cron-step { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border-soft, #eef2f6); font-size: 13px; line-height: 1.7; }
+.cron-step:last-child { border-bottom: none; }
+.cron-step b { flex: 0 0 22px; height: 22px; border-radius: 50%; background: var(--blue1); color: var(--text-on-brand, #fff);
+  display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+.cron-code { display: block; margin: 6px 0; padding: 8px 10px; background: var(--gray-bg, #f5f7fa); border-radius: var(--radius);
+  font-size: 12px; word-break: break-all; color: var(--text-light); }
+
+/* ================= v530：设置页导航 + 分组折叠 =================
+   原来 8 件事竖排到底，账号管理在 y≈896 才出现。现在顶部一条横向导航，点哪组滚哪组；
+   组标题可点折叠，页面宽度不够时导航自己横滑。 */
+.set-nav { position: sticky; top: 0; z-index: 6; display: flex; gap: 6px; padding: 8px 0; margin-bottom: 10px;
+  background: var(--page-bg, #f5f7fa); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.set-nav::-webkit-scrollbar { display: none; }
+.set-nav button { flex: 0 0 auto; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--card-bg); color: var(--text-light); font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.set-nav button:hover { border-color: var(--blue1); color: var(--blue1); }
+.set-nav button.on { background: var(--blue1); border-color: var(--blue1); color: var(--text-on-brand, #fff); }
+
+.setting-group > h3 { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; }
+.setting-group > h3::after { content: '▾'; font-size: 12px; color: var(--text-faint); transition: transform var(--dur-mid) var(--ease-out); }
+.setting-group.collapsed > h3::after { transform: rotate(-90deg); }
+.setting-group.collapsed > *:not(h3) { display: none !important; }
+
+/* 设置行里的次键（row-btn）右侧对齐，跟主键同右边界 */
+.setting-row > .row-btn { flex: 0 0 auto; align-self: center; }

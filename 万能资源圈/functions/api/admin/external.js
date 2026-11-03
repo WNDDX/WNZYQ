@@ -250,16 +250,17 @@ export async function onRequestPost(context) {
         const settle = String(b.settle_note || '').slice(0, 300);
         const mode = b.fetch_mode === 'server' ? 'server' : 'paste';
         const sort = Number(b.sort || 0) || 0;
+        const autoC = b.auto_collect ? 1 : 0;   /* v530：每天 0 点自动采一次 */
         if (id) {
-          try { await env.DB.prepare('UPDATE external_platforms SET name=?, domain=?, login_url=?, note=?, settle_note=?, fetch_mode=?, sort=?, mall_url=? WHERE id=?')
-            .bind(name, domain, loginUrl, note, settle, mode, sort, mallUrl, id).run(); }
-          catch (eU) { await env.DB.prepare('UPDATE external_platforms SET name=?, domain=?, login_url=?, note=?, settle_note=?, fetch_mode=?, sort=? WHERE id=?')
-            .bind(name, domain, loginUrl, note, settle, mode, sort, id).run(); }
+          try { await env.DB.prepare('UPDATE external_platforms SET name=?, domain=?, login_url=?, note=?, settle_note=?, fetch_mode=?, sort=?, mall_url=?, auto_collect=? WHERE id=?')
+            .bind(name, domain, loginUrl, note, settle, mode, sort, mallUrl, autoC, id).run(); }
+          catch (eU) { await env.DB.prepare('UPDATE external_platforms SET name=?, domain=?, login_url=?, note=?, settle_note=?, fetch_mode=?, sort=?, auto_collect=? WHERE id=?')
+            .bind(name, domain, loginUrl, note, settle, mode, sort, autoC, id).run(); }
           return json({ ok: true, id });
         }
         try {
-          const r = await env.DB.prepare('INSERT INTO external_platforms (name, domain, login_url, note, settle_note, fetch_mode, sort, req_id, mall_url) VALUES (?,?,?,?,?,?,?,?,?)')
-            .bind(name, domain, loginUrl, note, settle, mode, sort, reqId, mallUrl).run();
+          const r = await env.DB.prepare('INSERT INTO external_platforms (name, domain, login_url, note, settle_note, fetch_mode, sort, req_id, mall_url, auto_collect) VALUES (?,?,?,?,?,?,?,?,?,?)')
+            .bind(name, domain, loginUrl, note, settle, mode, sort, reqId, mallUrl, autoC).run();
           return json({ ok: true, id: (r.meta && r.meta.last_row_id) || 0 });
         } catch (eIns) {
           /* 唯一索引撞了 = 同一个请求重放，把已有那条还回去 */
@@ -711,7 +712,7 @@ export async function onRequestDelete(context) {
    与上面的「台账」共存，但主入口改成：平台设置 → 外部商品采集 → 弹窗。
    只抓：标题 / 封面 / 详情长图。价格不抓（老板自己定价）。 */
 
-async function ensureCollect(env) {
+export async function ensureCollect(env) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS external_goods (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     platform_id INTEGER NOT NULL DEFAULT 0,
@@ -731,6 +732,9 @@ async function ensureCollect(env) {
   try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_ext_goods_pf ON external_goods(platform_id)').run(); } catch (e) {}
   /* 平台档案补两个字段（商城地址 / 后台地址），老的 domain/login_url 保留兼容 */
   try { await env.DB.prepare("ALTER TABLE external_platforms ADD COLUMN mall_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  /* v530：定时采集——每个平台可单独开关；last_auto_at 记录上次自动采的时间 */
+  try { await env.DB.prepare('ALTER TABLE external_platforms ADD COLUMN auto_collect INTEGER NOT NULL DEFAULT 0').run(); } catch (e) {}
+  try { await env.DB.prepare("ALTER TABLE external_platforms ADD COLUMN last_auto_at TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
   /* v501：老板要「描述」和「下单链接」——原来只有标题/封面/详情图，上架后还得自己补 */
   try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN descr TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
   try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN buy_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
@@ -781,7 +785,7 @@ function decodeEnt(s) {
   return String(s || '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#(\d+);/g, function (m, d) { return String.fromCharCode(Number(d)); });
 }
-function plainText(s) {
+export function plainText(s) {
   return decodeEnt(String(s || '').replace(/<[^<>]*(?:(?:"[^"]*"|'[^']*')[^<>]*)*>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
@@ -798,7 +802,7 @@ function looksLikeGoods(t) {
 
 /* 通用解析：围绕「像商品的图」在其上下文里找标题与下单链接。
    不依赖 class 名，所以多套号卡模板共用一套规则。 */
-function parseGoodsList(html, baseUrl) {
+export function parseGoodsList(html, baseUrl) {
   const out = [], seen = {};
   const imgRe = /<img\b[^>]*>/gi;
   let m;
@@ -853,7 +857,7 @@ function haokaCodes(u) {
   return out;
 }
 
-async function tryHaokaWeb(mall) {
+export async function tryHaokaWeb(mall) {
   const codes = haokaCodes(mall);
   if (!codes.length) return null;
   let origin = '';
@@ -904,7 +908,7 @@ async function tryHaokaWeb(mall) {
    ① 只有「服务器明确回了 4xx/5xx」才换桌面 UA 再试一次（这种重试几十毫秒就回来）
    ② 超时/网络异常一律不重试（重试只会更慢）
    ③ 两次的等待都压在 12 秒以内，整次采集不会超过函数时限 */
-async function fetchPage(url, timeoutMs, opt) {
+export async function fetchPage(url, timeoutMs, opt) {
   opt = opt || {};
   const UA_MOBILE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1';
   const UA_DESK = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
@@ -940,7 +944,7 @@ async function fetchPage(url, timeoutMs, opt) {
 }
 
 /* 从商品详情页抓长图（详情） */
-function parseDetail(html, baseUrl) {
+export function parseDetail(html, baseUrl) {
   const imgs = [];
   const re = /<img\b[^>]*>/gi;
   let m;

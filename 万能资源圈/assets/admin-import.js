@@ -134,7 +134,7 @@
       : '';
     var wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<workbook xmlns="' + __XLSX_NS + '" xmlns:r="' + __REL_NS + '"><sheets>' +
-      sheets.map(function (sh, i) { return '<sheet name="' + esc(sh.name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') +
+      sheets.map(function (sh, i) { return '<sheet name="' + esc(sh.name) + '" sheetId="' + (i + 1) + '"' + (sh.hidden ? ' state="hidden"' : '') + ' r:id="rId' + (i + 1) + '"/>'; }).join('') +
       '</sheets>' + defNames + '</workbook>';
     files.push({ name: 'xl/workbook.xml', data: enc.encode(wb) });
 
@@ -371,7 +371,8 @@
       { name: '公告', rows: mk(annHeads), widths: [26, 50, 12, 12], dv: [
         { sqref: 'D2:D' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”或“隐藏”。' }
       ] },
-      { name: '选项', rows: optRows, widths: [24, 16, 16, 22], dv: [], names: OPT_NAMES }
+      /* v530：选项表设为隐藏工作表——它只是下拉源，用户填表时看不到，下拉照常能用 */
+      { name: '选项', rows: optRows, widths: [24, 16, 16, 22], dv: [], names: OPT_NAMES, hidden: true }
     ];
 
     return { blob: new Blob([__buildXlsx(sheets)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name: fname, xml: '' };
@@ -1309,6 +1310,106 @@
     }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">加载失败，请关掉重试</div>'; });
   }
 
+  /* ================= v530 定时采集说明 =================
+     为什么要有这一步：Cloudflare Pages Functions 只在「有请求」时运行，没有 Workers 那种 cron。
+     所以真正的「每天 0 点」必须由外部定时器来敲一下。这里把配置步骤直接写在界面上，老板照着做即可。 */
+  function openCronHelp() {
+    var old = document.getElementById('cronHelpMask'); if (old) old.remove();
+    var host = 'https://' + location.host;
+    var mask = document.createElement('div');
+    mask.className = 'modal-mask'; mask.id = 'cronHelpMask';
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="定时采集说明">' +
+      '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
+      '<div class="modal-title">定时采集</div>' +
+      '<p class="imp-lead">在「资源采集 → 我的平台 → 编辑」里勾上「每天 0 点自动采集一次」，这个平台就会被自动采。' +
+      '剩下只要配一次定时器，让它每天 0 点来敲一下下面这个地址。</p>' +
+      '<div class="cron-step"><b>1</b><span>到 Cloudflare Pages 的「设置 → 环境变量」加一个 <b>CRON_KEY</b>，值随便填一串长密码（比如 32 位字母数字）。</span></div>' +
+      '<div class="cron-step"><b>2</b><span>把同一个值配到定时器里，每 0 点调用：<span class="cron-code">' + host + '/api/cron/collect?key=你的CRON_KEY</span></span></div>' +
+      '<div class="cron-step"><b>3</b><span>定时器用 GitHub Actions 最省事（仓库里已经放好 <b>.github/workflows/auto-collect.yml</b>）：到仓库 Settings → Secrets 加 <b>CRON_KEY</b>，它每天北京时间 0 点会自动调一次。</span></div>' +
+      '<div class="cron-step"><b>4</b><span>想立刻验证，把地址后面加 <b>&force=1</b> 用浏览器打开——会返回每个平台抓了多少条。</span></div>' +
+      '<p class="imp-lead" style="margin-top:10px">说明：同一个平台一天只自动采一次（避免重复入库）。自动采集只抓列表信息（标题/封面/描述/下单链接），' +
+      '详情长图仍然在你点「查看 / 上架」时按需补，这样一次任务不会跑太久。</p>' +
+      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+      '</div>';
+    document.body.appendChild(mask);
+    requestAnimationFrame(function () { mask.classList.add('open'); });
+    if (window.syncBodyLock) window.syncBodyLock();
+    var close = function () { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180); };
+    mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+  }
+
+  /* ================= v530 操作日志（复用已有 audit_log 表，不新建数据） =================
+     老板要「谁在什么时候改了设置/删了资源，保留 60 天，多人共用时必需」。
+     数据本来就在写（_utils.js 的 audit()，20 多个业务动作），这次只做两件事：
+     ① 把操作者从写死的 admin 改成真实账号 ② 加这个查询界面。 */
+  function openLogs() {
+    var old = document.getElementById('logsMask'); if (old) old.remove();
+    var mask = document.createElement('div');
+    mask.className = 'modal-mask'; mask.id = 'logsMask';
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="操作日志">' +
+      '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
+      '<div class="modal-title">操作日志</div>' +
+      '<p class="imp-lead">记录谁在什么时候改了什么，保留 60 天。只记「改动类」动作（新增 / 编辑 / 删除 / 批量操作 / 登录），浏览不计。</p>' +
+      '<div class="logs-tools">' +
+        '<input class="input" id="logsQ" type="search" autocomplete="off" placeholder="搜动作或对象，比如 删除 / 分类 / 资源">' +
+        '<button type="button" class="btn-blue btn-inline" id="logsGo">搜索</button>' +
+      '</div>' +
+      '<div class="logs-body" id="logsBody"><div class="extc-loading">正在读取…</div></div>' +
+      '<div class="uni-pager" id="logsPager"></div>' +
+      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+      '</div>';
+    document.body.appendChild(mask);
+    requestAnimationFrame(function () { mask.classList.add('open'); });
+    if (window.syncBodyLock) window.syncBodyLock();
+
+    var close = function () {
+      mask.classList.remove('open');
+      setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
+    };
+    mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
+    var page = 1, q = '';
+    function bjTime(v) {
+      var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
+      if (isNaN(d.getTime())) return String(v || '');
+      return new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ');
+    }
+    function paint(d) {
+      var body = mask.querySelector('#logsBody');
+      var list = (d && d.list) || [];
+      if (!list.length) {
+        body.innerHTML = '<div class="extc-loading">' + (q ? '没有匹配的记录，换个词试试' : '还没有操作记录。改一次设置或删一条资源，这里就会出现。') + '</div>';
+      } else {
+        body.innerHTML = list.map(function (r) {
+          return '<div class="log-row">' +
+            '<span class="log-t">' + esc(bjTime(r.at)) + '</span>' +
+            '<span class="log-w">' + esc(r.who || 'admin') + '</span>' +
+            '<span class="log-a">' + esc(r.action || '') + '</span>' +
+            '<span class="log-g" title="' + esc(r.target || '') + '">' + esc(r.target || '') + '</span>' +
+            '</div>';
+        }).join('');
+      }
+      var pager = mask.querySelector('#logsPager');
+      if (pager && window.buildUniPager) {
+        window.buildUniPager(pager, {
+          page: d.page || 1, totalPages: Math.max(1, Math.ceil((d.total || 0) / (d.size || 30))), total: d.total || 0, unit: '条',
+          onPage: function (p2) { page = p2; load(); }
+        });
+      }
+    }
+    function load() {
+      var body = mask.querySelector('#logsBody');
+      body.innerHTML = '<div class="extc-loading">正在读取…</div>';
+      fetch('/api/admin/logs?page=' + page + '&size=30&q=' + encodeURIComponent(q), { credentials: 'same-origin', cache: 'no-cache' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { if (!d || !d.ok) throw new Error((d && d.msg) || '读取失败'); paint(d); })
+        .catch(function (e) { body.innerHTML = '<div class="imp-err">' + esc(e.message || '读取失败，请重试') + '</div>'; });
+    }
+    mask.querySelector('#logsGo').addEventListener('click', function () { q = mask.querySelector('#logsQ').value.trim(); page = 1; load(); });
+    mask.querySelector('#logsQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') { q = this.value.trim(); page = 1; load(); } });
+    load();
+  }
+
   /* 平台设置页挂入口键（v434b：照「修改密码」组同款——独立白色卡片、各占一行、btn-inline-pd 自适应键宽，
      不再 flex 拉满半屏、不再游离在卡片外） */
   (function wait() {
@@ -1317,7 +1418,11 @@
     if (panel && !document.getElementById('batchImportBtn')) {
       /* v443 条15（老板反馈：模块要分开，像基本设置那样独立卡片不粘连）：
          三组各自独立 setting-group 白卡；「账号与安全」卡内末尾挪入修改密码组 */
-      var btnHtml = function (id, lab, extra) { return '<button type="button" class="btn-blue btn-inline-pd" id="' + id + '"' + (extra || '') + '>' + lab + '</button>'; };
+      /* v530：按钮分级——每组只留一个主键（蓝实心 46px），其余用行内键（白底描边 30px）。
+         原来 8 个入口全是同款大蓝键，一眼看过去像一堵按钮墙。 */
+      var btnHtml = function (id, lab, extra, primary) {
+        return '<button type="button" class="' + (primary ? 'btn-blue btn-inline-pd' : 'row-btn') + '" id="' + id + '"' + (extra || '') + '>' + lab + '</button>';
+      };
       var row = function (lab, btnStr) { return '<div class="setting-row"><label>' + lab + '</label>' + btnStr + '</div>'; };
       var mkGroup = function (title, rowsHtml) {
         var g = document.createElement('div');
@@ -1326,9 +1431,13 @@
         panel.appendChild(g);
         return g;
       };
-      mkGroup('内容管理', row('批量导入', btnHtml('batchImportBtn', '批量导入')) + row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存')));
-      mkGroup('系统维护', row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检')));
-      var accGrp = mkGroup('账号与安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"')));
+      mkGroup('内容管理', row('批量导入（Excel 一次导多条）', btnHtml('batchImportBtn', '批量导入', '', 1))
+        + row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存'))
+        + row('每天自动采集（每个平台可单独开关）', btnHtml('cronBtn', '定时采集')));
+      panel.querySelector('#cronBtn').addEventListener('click', function () { openCronHelp(); });
+      mkGroup('系统维护', row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1)));
+      var accGrp = mkGroup('账号与安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
+        + row('谁改了什么（保留 60 天）', btnHtml('logsBtn', '操作日志', ' data-perm="users"')));
       var grp = accGrp;
       /* 把静态「修改密码」组挪进「账号与安全」组最末（保证修改密码永远在最下面）；
          原组自带 setting-group 白卡样式，挪进组内会双层嵌套 → 降级为普通块 */
@@ -1340,6 +1449,38 @@
       panel.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });
       panel.querySelector('#recycleBtn').addEventListener('click', openRecycle);
       panel.querySelector('#usersBtn').addEventListener('click', openUsers);
+      var _lgBtn = panel.querySelector('#logsBtn');
+      if (_lgBtn) _lgBtn.addEventListener('click', function () { openLogs(); });
+
+      /* v530：设置页导航 + 折叠
+         —— 原来 8 件事竖排，账号管理在 y≈896（视口 900），几乎要滚到底才看见。 */
+      try {
+        var groups = [].slice.call(panel.querySelectorAll('.setting-group'));
+        if (groups.length) {
+          var nav = document.createElement('div');
+          nav.className = 'set-nav';
+          nav.innerHTML = groups.map(function (g, i) {
+            var t = (g.querySelector('h3') || {}).textContent || ('第' + (i + 1) + '组');
+            g.setAttribute('data-set-group', String(i));
+            return '<button type="button" data-goto="' + i + '">' + t.replace(/（.*?）/g, '') + '</button>';
+          }).join('');
+          panel.insertBefore(nav, panel.firstChild);
+          nav.addEventListener('click', function (e) {
+            var b = e.target.closest('[data-goto]'); if (!b) return;
+            var g = groups[Number(b.getAttribute('data-goto'))];
+            if (!g) return;
+            g.classList.remove('collapsed');
+            g.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            [].forEach.call(nav.children, function (x) { x.classList.toggle('on', x === b); });
+          });
+          /* 点组标题折叠/展开；默认全展开，只记状态不强制收 */
+          groups.forEach(function (g) {
+            var h = g.querySelector('h3');
+            if (!h) return;
+            h.addEventListener('click', function () { g.classList.toggle('collapsed'); });
+          });
+        }
+      } catch (eNav) {}
 
       /* #80 每日自动体检（复检改版）：跨天首次进管理页，延时 8s 静默跑；发现问题不再挂按钮红点，
          改为写本地提醒标记 → 信息中心置顶提醒条（带「去查看」键跳转体检详情），复查正常或看过即清 */

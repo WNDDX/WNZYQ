@@ -703,7 +703,17 @@ export async function ensureSoftDelete(env) {
 export async function audit(env, request, action, target) {
   try {
     await env.DB.prepare("CREATE TABLE IF NOT EXISTS audit_log (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT (datetime('now')), admin TEXT NOT NULL DEFAULT 'admin', action TEXT NOT NULL, target TEXT NOT NULL DEFAULT '')").run();
-    await env.DB.prepare("INSERT INTO audit_log (admin, action, target) VALUES ('admin', ?, ?)").bind(String(action || '').slice(0, 60), String(target || '').slice(0, 200)).run();
+    /* v530（老板要「谁在什么时候改了设置/删了资源」）：
+       原来 admin 列写死 'admin'，多人共用时分不清是谁干的。
+       这里统一从登录态取真实账号——20 多个调用点一行都不用改，一处改造全站生效。
+       登录接口本身也能取到（session 刚写入）；真取不到才退回 'admin'。 */
+    let who = 'admin';
+    try {
+      const me = await getAuthAdmin(env, request);
+      if (me && me.username) who = String(me.username);
+    } catch (e) {}
+    await env.DB.prepare("INSERT INTO audit_log (admin, action, target) VALUES (?, ?, ?)")
+      .bind(who.slice(0, 40), String(action || '').slice(0, 60), String(target || '').slice(0, 200)).run();
   } catch (e) { /* 审计失败不阻塞业务 */ }
 }
 

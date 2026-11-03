@@ -183,7 +183,7 @@
       '<div class="extc-tabs">' +
       '<button type="button" class="extc-tab on" data-tab="goods">采集到的资源 <i id="extcNGoods">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="pf">我的平台 <i id="extcNPf">0</i></button>' +
-      '<button type="button" class="extc-tab" data-tab="runs">采集记录 <i id="extcNRuns">0</i></button>' +
+
       '<button type="button" class="row-btn extc-addpf" id="extcAddPf" title="添加一个平台档案">添加平台</button>' +
       '</div>' +
       '<div class="batch-bar extc-batch" id="extcBatch"></div>' +
@@ -284,8 +284,7 @@
 
     var body = m.querySelector('#extcBody');
     if (S.tab === 'goods') body.innerHTML = renderGoods();
-    else if (S.tab === 'pf') body.innerHTML = renderPlatforms();
-    else body.innerHTML = renderRuns();
+    else body.innerHTML = renderPlatforms();   /* v530：采集记录页签已合并进平台行，不再有第三个页签 */
     bindSelects(body);   /* v501：新渲染出来的下拉就地升级成系统控件 */
     bindSelects(m);      /* 平台下拉的选中项也要跟着刷新 */
     /* v512：翻页用全站公共组件（带页码跳转），选中态用系统批量条 */
@@ -396,9 +395,17 @@
     }
     var rows = S.platforms.map(function (p) {
       var cnt = S.goods.filter(function (g) { return Number(g.platform_id) === Number(p.id); }).length;
+      /* v530：原「采集记录」页签合并到这里——每个平台下面直接显示它自己的上次结果 */
+      var last = S.runs.filter(function (x) { return Number(x.pid) === Number(p.id); })[0];
+      var meta = [];
+      if (Number(p.auto_collect)) meta.push('<i class="extc-auto">每天自动</i>');
+      if (p.last_auto_at) meta.push('<span>上次自动：' + esc(String(p.last_auto_at).slice(5, 16)) + '</span>');
+      if (last) meta.push('<span class="' + (last.ok ? 'is-ok' : 'is-bad') + '">上次手动：' + esc(String(last.at).slice(5, 16)) + ' · ' + esc(String(last.msg || '').slice(0, 46)) + '</span>');
       return '<div class="extc-prow" data-pid="' + p.id + '">' +
         '<div class="extc-pmain"><b>' + esc(p.name) + ' <i class="extc-cnt">' + cnt + ' 个资源</i></b>' +
-        '<span class="extc-plink">' + esc(p.mall_url || '（没填商城地址，采集不了）') + '</span></div>' +
+        '<span class="extc-plink">' + esc(p.mall_url || '（没填商城地址，采集不了）') + '</span>' +
+        (meta.length ? '<span class="extc-pmeta">' + meta.join('') + '</span>' : '') +
+        '</div>' +
         '<div class="extc-pops">' +
         '<button type="button" class="row-btn" data-act="runpf">采集</button>' +
         '<button type="button" class="row-btn" data-act="gopf">打开</button>' +
@@ -407,22 +414,6 @@
         '</div></div>';
     }).join('');
     return '<div class="extc-plist">' + rows + '</div>';
-  }
-
-  function renderRuns() {
-    if (!S.runs.length) {
-      return empty('还没有采集记录', '点「采集」后，成功的、失败的都会记在这里；失败的能看到原因并重试');
-    }
-    return '<div class="extc-plist">' + S.runs.map(function (r, i) {
-      var cls = r.ok ? 'ok' : 'bad';
-      return '<div class="extc-prow" data-run="' + i + '">' +
-        '<div class="extc-pmain"><b><span class="extc-badge ' + cls + '">' + (r.ok ? '成功' : '失败') + '</span> ' + esc(r.name) + '</b>' +
-        '<span class="extc-plink">' + esc(r.at) + ' · ' + esc(r.msg) + '</span></div>' +
-        '<div class="extc-pops">' +
-        (r.ok ? '' : '<button type="button" class="row-btn" data-act="retry" data-i="' + i + '">重试</button>') +
-        (r.ok ? '<button type="button" class="row-btn" data-act="seeRun" data-i="' + i + '">查看资源</button>' : '') +
-        '</div></div>';
-    }).join('') + '</div>';
   }
 
   /* ================= 交互 ================= */
@@ -547,11 +538,19 @@
     var p = S.platforms.filter(function (x) { return Number(x.id) === Number(S.curPf); })[0];
     if (!p) { toast('先在左上选一个平台', 'error'); return; }
     if (!p.mall_url) { toast('这个平台还没填商城地址，去「我的平台 → 改」补一下', 'error'); return; }
-    S.busy = true; S.hint = '正在采集…（最多 20 秒）'; render();
+    S.busy = true; S.hint = '正在采集…（0 秒 / 最多 20 秒）'; render();
+    /* v530：采集时显示真实等待秒数，不再是干等 */
+    var __t0 = Date.now();
+    var __tick = setInterval(function () {
+      if (!S.busy) { clearInterval(__tick); return; }
+      S.hint = '正在采集…（' + Math.round((Date.now() - __t0) / 1000) + ' 秒 / 最多 20 秒）';
+      var h = S.mask && S.mask.querySelector('#extcHint');
+      if (h) h.textContent = S.hint;
+    }, 1000);
     var btn = S.mask && S.mask.querySelector('#extcRun');
     if (btn) { btn.disabled = true; btn.textContent = '采集中…'; }
     api('admin/external', { method: 'POST', body: { op: 'collect', platform_id: p.id } }).then(function (r) {
-      S.busy = false;
+      S.busy = false; clearInterval(__tick);
       if (btn) { btn.disabled = false; btn.textContent = '采集'; }
       if (r && r.ok) {
         S.hint = '抓到 ' + r.found + ' 条，新入库 ' + r.added + ' 条' + (r.dup ? '，已有 ' + r.dup + ' 条' : '')
@@ -857,6 +856,9 @@
       '<div class="extc-formhint">只填<b>在线商城</b>那一行链接（资源从这里抓）。不要填「注册」「资料」那种地址；填错我也会自动试同域的列表页。</div>' +
       '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="https://... 点「手机登录」复制过来的地址">' +
       '<div class="extc-formhint">只填<b>手机登录</b>那一行链接（点「打开平台」直接到登录页），不填就跳商城。</div>' +
+      /* v530：定时采集——每个平台单独开关，勾了就每天 0 点自动采一次（由定时器调 /api/cron/collect） */
+      '<label class="checkbox-row" style="margin-top:10px"><input type="checkbox" id="epAuto"' + (isEdit && Number(p.auto_collect) ? ' checked' : '') + '> 每天 0 点自动采集一次</label>' +
+      '<div class="extc-formhint">勾上后由定时器触发（需要配一次 CRON_KEY，见设置页「定时采集」说明）。不勾就只能手动点「采集」。</div>' +
       '<label>我的说明</label>' +
       '<div id="epNoteHost"></div>' +
       '<div class="extc-formhint">写给自己看的：账号、结算规则、注意事项。支持加粗、颜色、表格、插图。</div>',
@@ -873,6 +875,7 @@
         name: m.querySelector('#epName').value.trim(),
         mall_url: m.querySelector('#epMall').value.trim(),
         login_url: m.querySelector('#epAdmin').value.trim(),
+        auto_collect: m.querySelector('#epAuto') && m.querySelector('#epAuto').checked ? 1 : 0,
         note: ed ? ed.innerHTML.slice(0, 20000) : ''
       };
       if (!body.name) { toast('平台名不能为空', 'error'); return; }
@@ -882,10 +885,10 @@
           toast('已保存', 'success');
           if (isEdit) {
             S.platforms.forEach(function (x) {
-              if (Number(x.id) === Number(p.id)) { x.name = body.name; x.note = body.note; x.mall_url = body.mall_url; x.login_url = body.login_url; }
+              if (Number(x.id) === Number(p.id)) { x.name = body.name; x.note = body.note; x.mall_url = body.mall_url; x.login_url = body.login_url; x.auto_collect = body.auto_collect; }
             });
           } else if (r.id) {
-            S.platforms.push({ id: r.id, name: body.name, mall_url: body.mall_url, login_url: body.login_url, note: body.note });
+            S.platforms.push({ id: r.id, name: body.name, mall_url: body.mall_url, login_url: body.login_url, note: body.note, auto_collect: body.auto_collect });
             S.curPf = r.id;
           }
           closeM(m);
