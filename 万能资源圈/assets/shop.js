@@ -581,7 +581,11 @@
          让手动打开能看到「该公告暂无内容」的状态提示。 */
       var _annReal = list.filter(__annHasContent);
       if (_annReal.length) list = _annReal;
-      if (!list.some(function (x) { return x.level === 1; })) list = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(list);
+      /* v499：这条「默认公告」本身也要判空——否则补进去一条空公告，弹窗就成了「该公告暂无内容」 */
+      if (!list.some(function (x) { return x.level === 1; })) {
+        var _defA = { id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 };
+        if (__annHasContent(_defA)) list = [_defA].concat(list);
+      }
       // 渲染小项 tabs（仅多条时显示）
       var tabs = document.getElementById('annTabs');
       if (tabs) {
@@ -684,7 +688,10 @@
          过滤必须在下面「已弹过就早退」的分支之前，否则骨架期已经把窗打开了，永远走不到过滤。
          公告本身仍可从顶栏「公告」键手动查看。 */
       var _annAll = DATA.announcements || [];
-      if (!_annAll.some(function (x) { return x.level === 1; })) _annAll = [{ id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 }].concat(_annAll);
+      if (!_annAll.some(function (x) { return x.level === 1; })) {
+        var _defB = { id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 };
+        if (__annHasContent(_defB)) _annAll = [_defB].concat(_annAll);
+      }
       _annAll = _annAll.filter(__annHasContent);
       if (!_annAll.length) { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
       if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) { if (window.__silent) window.__silent(e); } } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) { if (window.__silent) window.__silent(e); } }
