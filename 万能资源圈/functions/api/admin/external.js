@@ -909,14 +909,26 @@ const UA_DEFAULT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) Apple
 
 function haokaCodes(u) {
   const out = [];
+  const add = function (v) { v = String(v || '').trim(); if (v && out.indexOf(v) < 0) out.push(v); };
   try {
     const o = new URL(u);
+    /* v546w（老板：要采的是「我店铺」的商品，不是我店铺以外平台的公共商品）：
+       这类商城的专属链接是 hash 路由，店铺标识写在 # 后面——
+       例：https://my.86hk.vip/#/pages/micro_store/index?agent_id=791fa38f1ffd60e1
+       原来只读 pathname 和 search，hash 里的 mall_id / agent_id 完全读不到，
+       于是这类站一律被判成「空壳」。现在先把 hash 里的参数也捞出来。 */
+    let hashQ = '';
+    if (o.hash && o.hash.indexOf('?') >= 0) hashQ = o.hash.slice(o.hash.indexOf('?') + 1);
+    try {
+      const hp = new URLSearchParams(hashQ);
+      ['mall_id', 'mallId', 'agent_id', 'agentId', 'shop_id', 'shopId', 'promoCode', 'promocode', 'code', 'userCode', 'id']
+        .forEach(function (k) { add(hp.get(k)); });
+    } catch (eH) {}
     const segs = o.pathname.split('/').filter(Boolean);
     const last = segs[segs.length - 1] || '';
-    if (last && !/^(shop|index|h5|web|login|s|r|m)$/i.test(last)) out.push(last);
-    ['promoCode', 'promocode', 'code', 'id', 'agent_id', 'mall_id'].forEach(function (k) {
-      const v = o.searchParams.get(k);
-      if (v && out.indexOf(v) < 0) out.push(v);
+    if (last && !/^(shop|index|h5|web|login|s|r|m|product)$/i.test(last)) add(last);
+    ['promoCode', 'promocode', 'code', 'id', 'agent_id', 'mall_id', 'userCode', 'shop_id'].forEach(function (k) {
+      add(o.searchParams.get(k));
     });
   } catch (e) {}
   return out;
