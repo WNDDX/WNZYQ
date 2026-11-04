@@ -607,7 +607,18 @@
       if (!box) return;
       try {
         var list = trend || window.state && window.state.statsTrend || [];
-        if (!list || !list.length) { box.hidden = true; return; }
+        /* 默认视图可能是"按小时"的 24 点（day 是 0..23），这种情况改用 2 天范围再取一次 */
+        var isDay = function (x) { return x && /^\d{4}-\d{2}-\d{2}$/.test(String(x.day || '')); };
+        if (!list.length || !list.some(isDay)) {
+          if (!window.__daySumP) {
+            window.__daySumP = 1;
+            api('admin/stats?days=2').then(function (r2) {
+              window.__daySumP = 0;
+              if (r2 && r2.trend) renderDaySum(r2.trend);
+            }).catch(function () { window.__daySumP = 0; });
+          }
+          box.hidden = true; return;
+        }
         var bj = function (d) { return new Date(d.getTime() + 8 * 3600e3).toISOString().slice(0, 10); };
         var yest = bj(new Date(Date.now() - 86400e3));
         var idx = -1;
@@ -797,7 +808,6 @@
         }
         // 保存统计数据到 state，供导出与「对比上期」开关重渲染使用
         state.statsTrend = trendData;
-      try { renderDaySum(trendData); } catch (eDS2) {}
         try { renderDaySum(trendData); } catch (eDS) {}
         state.statsTrendPrev = trendPrev || null;
         state.statsByProduct = res.byProduct || [];
