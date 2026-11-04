@@ -410,7 +410,7 @@ export async function onRequestPost(context) {
         /* v546p：京东/淘宝这类站，服务端拿到的常常是「登录墙 / 站点首页」而不是商品本身——
            标题是站点名、一张商品图都没有。这种别报成功，说清楚，让老板换「粘贴」。 */
         const weak = (!imgs.length) && (!desc || desc.length < 40);
-        return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 300), buy_url: buyHref, weak: weak });
+        return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 1000), buy_url: buyHref, weak: weak });
       }
 
       const pid = Number(b.platform_id || 0) || 0;
@@ -495,7 +495,20 @@ export async function onRequestPost(context) {
                   .map(function (s) { return s.replace(/\s+/g, ' ').trim(); })
                   .filter(function (s) { return s.length >= 6 && s.length <= 300; })
                   .filter(function (s) { return /(流量|套餐|通话|月租|首月|元|G\b|国内|分钟|发货|激活|归属)/.test(s); });
-                if (cand.length) g.desc = cand.slice(0, 4).map(function (s) { return s.slice(0, 60); }).join('、').slice(0, 200);
+                /* v547（老板：能采的都采）：原来只留 4 句共 200 字，号卡详情页里的
+                   「套餐归属 / 配送方式 / 开卡方式 / 首充渠道 / 年龄限制 / 套餐合约 / 禁发区域 / 结算规则」
+                   基本都被截掉。现在留 8 句、每句 120 字、总 900 字。 */
+                if (cand.length) g.desc = cand.slice(0, 8).map(function (s) { return s.slice(0, 120); }).join('；').slice(0, 900);
+                /* v547（老板：能采的都采）：详情页里的价格和正文原来全丢了。
+                   这里把「XX元」抓成价格、正文全文塞进 extra，上架时能直接用。 */
+                try {
+                  const ex = {};
+                  const priceM = /(?:月租|套餐|售价)?\s*(\d{1,4}(?:\.\d{1,2})?)\s*元/.exec(String(g.title || '') + ' ' + String(bodyTxt || ''));
+                  if (priceM) ex.price = Number(priceM[1]);
+                  const fullTxt = plainText(dp.text.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+                  if (fullTxt) ex.raw = fullTxt.slice(0, 3000);
+                  if (Object.keys(ex).length) g.extra = JSON.stringify(ex);
+                } catch (eEx) {}
               }
               if (!g.buy) g.buy = g.link;
             } catch (e) {}
@@ -536,7 +549,12 @@ export async function onRequestPost(context) {
             try {
               const gu = new URL(g.link);
               const miss = ownPairs.filter(function (p) { return !gu.searchParams.has(p.split('=')[0]); });
-              if (miss.length) g.link = g.link + (g.link.indexOf('?') >= 0 ? '&' : '?') + miss.join('&');
+              const q = (g.link.indexOf('?') >= 0 ? '&' : '?') + miss.join('&');
+              if (miss.length) g.link = g.link + q;
+              /* v547：客户点「去下单」用的是 buy_url，原来它没跟着补码——必须一起带。 */
+              if (g.buy && !/[?&](k|promocode|shop_id|mall_id|agent_id|usercode)=/i.test(g.buy)) {
+                g.buy = g.buy + ((g.buy.indexOf('?') >= 0 ? '&' : '?') + miss.join('&'));
+              }
             } catch (eL) {}
           });
         }
@@ -618,7 +636,7 @@ export async function onRequestPost(context) {
         ? await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?').bind(pid, title).first()
         : await env.DB.prepare('SELECT id FROM external_goods WHERE title=? AND src_url=?').bind(title, srcUrl).first();
       if (dup1) return json({ ok: true, id: dup1.id, dup: true, msg: '商品池里已经有了' });
-      const descrAdd = String(b.descr || '').slice(0, 300);
+      const descrAdd = String(b.descr || '').slice(0, 1200);
       const buyAdd = String(b.buy_url || '').slice(0, 1200);
       try {
         const r = await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, descr, buy_url, detail_html, detail_media, created_by, req_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
@@ -640,7 +658,7 @@ export async function onRequestPost(context) {
       if (b.cover != null) { sets.push('cover=?'); binds.push(String(b.cover).trim().slice(0, 800)); }
       if (b.src_url != null) { sets.push('src_url=?'); binds.push(String(b.src_url).trim().slice(0, 1200)); }
       if (b.detail_html != null) { sets.push('detail_html=?'); binds.push(String(b.detail_html).slice(0, 60000)); }
-      if (b.descr != null) { sets.push('descr=?'); binds.push(String(b.descr).slice(0, 300)); }
+      if (b.descr != null) { sets.push('descr=?'); binds.push(String(b.descr).slice(0, 1200)); }
       if (b.buy_url != null) { sets.push('buy_url=?'); binds.push(String(b.buy_url).slice(0, 1200)); }
       if (Array.isArray(b.media)) {
         sets.push('detail_media=?');
