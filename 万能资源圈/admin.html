@@ -175,6 +175,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       </section>
       <!-- 数据统计 -->
       <section id="panel-stats" style="display:none">
+        <!-- v539（老板：每天一封"昨天发生了什么"）——一行摘要，取自统计接口已有的按天趋势，不新增请求 -->
+        <div class="day-sum" id="daySum" hidden></div>
         <div class="stat-cards" id="statCards">
     </div>
         <div class="trend-chart">
