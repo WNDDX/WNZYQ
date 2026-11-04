@@ -534,6 +534,9 @@ export async function onRequestPost(context) {
           });
         }
       } catch (eOwn) {}
+      let _ownN = 0;
+      try { _ownN = (function () { const u = new URL(fixedAddr || mall); return ['k','shop_id','mall_id','agent_id','promoCode','userCode'].filter(function (k) { return u.searchParams.get(k); }).length; })(); } catch (e) {}
+      const _ownList = list.filter(function (g) { return /[?&](k|promoCode|shop_id|mall_id|agent_id)=/i.test(g.link || ''); }).length;
 
       /* 入库：同平台 + 同标题 视为同一个（封面可能变） */
       let added = 0, dup = 0;
@@ -559,7 +562,7 @@ export async function onRequestPost(context) {
       }
       return json({
         ok: true, found: list.length, added, dup, saved: cap, bytes: pg.text.length,
-        via: via, fixed_addr: fixedAddr,
+        via: via, fixed_addr: fixedAddr, own_params: _ownN, own_links: _ownList,
         samples: list.slice(0, 5).map(function (x) { return x.title; })
       });
     }
