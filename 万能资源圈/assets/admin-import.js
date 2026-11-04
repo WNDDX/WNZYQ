@@ -964,7 +964,7 @@ if (eb) eb.click(); else if (window.showToast) window.showToast('已定位到资
 
 var USERS_ACTS = [
 ['products.view', '看资源'], ['products.add', '新增资源'], ['products.edit', '编辑资源'], ['products.price', '改价'],
-['products.online', '上下架'], ['products.del', '删除（进回收站）'], ['products.restore', '恢复'], ['products.purge', '彻底删除'],
+['products.online', '上下架'], ['products.del', '删除（进回收站点）'], ['products.restore', '恢复'], ['products.purge', '彻底删除'],
 ['products.moveCat', '挪分类'],
 ['cats.view', '看分类'], ['cats.add', '新增分类'], ['cats.edit', '改分类'], ['cats.del', '删分类'],
 ['ann.view', '看公告'], ['ann.add', '发公告'], ['ann.edit', '改公告'], ['ann.del', '删公告'],
@@ -1034,7 +1034,7 @@ usersCall('PUT', { id: u.id, op: 'status', status: st }, function () { if (windo
 }
 function usersDel(u, children, subtree) {
 var warn = (subtree > 0)
-? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后这些账号会一并失效（数据保留，可在「回收站」找回）。'
+? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后这些账号会一并失效（数据保留，可在「回收站点」找回）。'
 : '删除后该账号立即无法登录，其新增的内容按分类范围保留。';
 usAsk('删除账号', '确认删除「' + esc(u.username) + '」？<br>' + warn, { okText: '删除' }, function (v, done, fail) {
 usersCall('DELETE', null, function () { if (window.showToast) window.showToast('账号已删除', 'success'); done(); renderUsersList(); }, fail, '/api/admin/users?id=' + u.id);
@@ -1174,7 +1174,7 @@ body.innerHTML = '<div class="imp-err">网络开小差了，请稍后再试</div
 
 
 var PM_GROUPS = [
-{ t: '资源', k: 'products', items: [['view', '看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '改价格'], ['online', '上下架'], ['del', '删除资源'], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['moveCat', '挪分类']] },
+{ t: '资源', k: 'products', items: [['view', '看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '改价格'], ['online', '上下架'], ['del', '删除资源'], ['restore', '恢复回收站点'], ['purge', '彻底删除'], ['moveCat', '挪分类']] },
 { t: '分类', k: 'cats', items: [['view', '看分类'], ['add', '新增分类'], ['edit', '改分类'], ['del', '删分类']] },
 { t: '公告', k: 'ann', items: [['view', '看公告'], ['add', '发公告'], ['edit', '改公告'], ['del', '删公告']] },
 { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
@@ -1371,8 +1371,8 @@ function openRecycle() {
 var old = document.getElementById('recycleMask'); if (old) old.remove();
 var mask = document.createElement('div');
 mask.className = 'modal-mask'; mask.id = 'recycleMask';
-mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="回收站">' +
-(window.__frag ? window.__frag.modalHead('回收站') : '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">回收站</h2>') +
+mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="回收站点">' +
+(window.__frag ? window.__frag.modalHead('回收站点') : '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">回收站点</h2>') +
 '<div class="rc-tools"><label class="rc-all"><input type="checkbox" id="rcAll" aria-label="全选"> 全选</label><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜资源 / 分类 / 公告的名字"></div>' +
 
 '<div class="batch-bar" id="rcBar"><span class="batch-count-label">已选 <b id="rcCount">0</b> 项</span>' +
@@ -1430,7 +1430,7 @@ RC.render = function () {
 var bodyEl = mask.querySelector('#rcBody'); if (!bodyEl) return;
 var lead = '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>';
 if (!RC.items.length) {
-bodyEl.innerHTML = lead + (window.__adminEmpty ? window.__adminEmpty('该回收站暂无内容', '删掉的资源、分类、公告会在这里保留 60 天，随时可以恢复') : '该回收站暂无内容');
+bodyEl.innerHTML = lead + (window.__adminEmpty ? window.__adminEmpty('该回收站点暂无内容', '删掉的资源、分类、公告会在这里保留 60 天，随时可以恢复') : '该回收站点暂无内容');
 return;
 }
 var q = RC.q.toLowerCase();
@@ -1621,9 +1621,9 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 
 '<div class="logs-range" id="logsRange">' +
 '<span class="logs-range-t">时间范围</span>' +
-'<button type="button" class="logs-rbtn" data-days="1">今天</button>' +
-'<button type="button" class="logs-rbtn on" data-days="7">近 7 天</button>' +
-'<button type="button" class="logs-rbtn" data-days="30">近 30 天</button>' +
+'<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
+'<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
 
 '<button type="button" class="row-btn logs-exp" id="logsExport">导出 Excel</button>' +
 '</div>' +
@@ -1647,7 +1647,7 @@ setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBody
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
 
 var page = 1, q = '', days = 7, who = '';
-var RANGE_TXT = { 1: '今天', 7: '近 7 天', 30: '近 30 天' };
+var RANGE_TXT = { 1: '1天', 7: '7天', 30: '30天' };
 function bjTime(v) {
 var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
 if (isNaN(d.getTime())) return String(v || '');
@@ -1661,7 +1661,7 @@ if (!box) return;
 sm = sm || {};
 var people = sm.people || [], acts = sm.actions || [], byDay = sm.byDay || [];
 if (!sm.total) {
-box.innerHTML = '<div class="logs-d-empty">' + RANGE_TXT[days] + '没有操作记录</div>';
+box.innerHTML = '<div class="logs-d-empty">' + RANGE_TXT[days] + '内没有操作记录</div>';
 return;
 }
 var maxP = 1;
@@ -1676,7 +1676,7 @@ return '<button type="button" class="log-who' + (who === p.who ? ' on' : '') + '
 var ah = acts.map(function (a) { return '<span class="logs-act">' + esc(a.action || '') + ' <b>' + a.n + '</b></span>'; }).join('');
 var dh = byDay.slice(0, 10).map(function (x) { return '<span class="logs-day">' + esc(String(x.day || '').slice(5)) + ' <b>' + x.n + '</b></span>'; }).join('');
 box.innerHTML =
-'<div class="logs-d-head"><b>' + RANGE_TXT[days] + '操作日报</b>' +
+'<div class="logs-d-head"><b>操作日报 · ' + RANGE_TXT[days] + '</b>' +
 '<span>共 ' + sm.total + ' 条 · ' + people.length + ' 人参与</span>' +
 (who ? '<button type="button" class="row-btn" id="logsWhoClear">只看「' + esc(who) + '」×</button>' : '') +
 '</div>' +
@@ -1795,7 +1795,7 @@ panel.appendChild(g);
 return g;
 };
 mkGroup('内容管理', row('批量导入（Excel 一次导多条）', btnHtml('batchImportBtn', '批量导入', '', 1))
-+ row('回收站（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站'))
++ row('回收站点（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站点'))
 + row('每天自动采集（录进去的平台全部自动采）', btnHtml('cronBtn', '自动采集')));
 panel.querySelector('#cronBtn').addEventListener('click', function () { openCronHelp(); });
 mkGroup('系统维护', row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1)));
