@@ -181,7 +181,7 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
 .otp-row input {
   width: 34px; height: 42px; text-align: center; font-size: 18px; font-weight: 700; /* v401 条1：格高与解锁键一致；v404 条2：对齐后台输入框 42px 标准 */
   font-variant-numeric: tabular-nums; text-transform: uppercase;
-  border:2px solid var(--border, #d0d0d0); border-radius: 9px; background: var(--card-bg, #fff);
+  border:2px solid var(--border, #d0d0d0); border-radius: var(--r-m, 8px); background: var(--card-bg, #fff);
   color: var(--text, #222); padding: 0; outline: none; caret-color: var(--blue1);
   transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) var(--spring);
 }
@@ -201,8 +201,8 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
   overscroll-behavior: contain; animation: wnSuggIn .18s var(--ease-out) both;
 }
 @keyframes wnSuggIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-.sugg-pop .sugg-it { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 13.5px; color: var(--text); cursor: pointer; }
-.sugg-pop .sugg-it i { flex: none; width: 16px; height: 16px; border-radius: 5px; background: var(--bg-light); }
+.sugg-pop .sugg-it { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 13px; color: var(--text); cursor: pointer; }
+.sugg-pop .sugg-it i { flex: none; width: 16px; height: 16px; border-radius: var(--r-s, 4px); background: var(--bg-light); }
 .sugg-pop .sugg-it:hover, .sugg-pop .sugg-it.hot { background: var(--hover-bg, #f0f7ff); }
 .sugg-pop .sugg-cat { padding: 5px 12px 3px; font-size: 12px; color: var(--text-faint); }
 
@@ -318,6 +318,11 @@ html[data-theme="dark"] {
   --hover-bg: #22334a;
   --toast-bg: rgba(27, 39, 53, 0.95);
   --neutral-3: #243240;
+  /* v535：语义色深色覆盖（浅色主题的定义在 ui-common.css） */
+  --ok-ink: #7fd18a; --bad-ink: #ff8a80; --warn-ink: #ffcc80;
+  --ok-tint: rgba(1, 192, 0, 0.16); --bad-tint: rgba(229, 57, 53, 0.18); --warn-tint: rgba(255, 152, 0, 0.18);
+  --sk-hi: #24313f;
+
   --danger-bg: rgba(198, 40, 40, 0.16);
   --danger-border: #6b3038;
   --danger-border-strong: #7d3a3f;
