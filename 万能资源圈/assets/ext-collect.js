@@ -710,7 +710,11 @@ var html = '';
 if (r && r.ok && r.media && r.media.length) {
 html = r.media.filter(function (u) { return u !== g.cover; }).slice(0, 20)
 .map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('');
-api('admin/external', { method: 'POST', body: { op: 'goods.update', id: g.id, detail_html: html } });
+
+var upd = { op: 'goods.update', id: g.id, detail_html: html };
+if (!g.descr && r.desc) { upd.descr = r.desc; g.descr = r.desc; }
+if (!g.buy_url && r.buy_url) { upd.buy_url = r.buy_url; g.buy_url = r.buy_url; }
+api('admin/external', { method: 'POST', body: upd });
 g.detail_html = html;
 }
 goEdit(g, html);
@@ -804,7 +808,12 @@ api('admin/external', { method: 'POST', body: { op: 'find.one', url: url } }).th
 btn.disabled = false; btn.textContent = '加进资源池';
 if (!r || !r.ok) { tip.textContent = (r && r.msg) || '抓不到'; return; }
 var media = (r.media || []).filter(function (u) { return u !== r.cover; });
-api('admin/external', { method: 'POST', body: { op: 'goods.add', platform_id: pfId, title: r.title, cover: r.cover, src_url: url, media: media } }).then(function (r2) {
+
+if (r.weak) {
+tip.textContent = '只抓到标题（这条是登录墙或靠浏览器渲染的页面），简介和图片可能是空的。存进去后请核对，实在不行改用「粘贴」。';
+}
+
+api('admin/external', { method: 'POST', body: { op: 'goods.add', platform_id: pfId, title: r.title, cover: r.cover, src_url: url, media: media, descr: r.desc || '', buy_url: r.buy_url || '' } }).then(function (r2) {
 if (r2 && r2.ok) { toast(r2.dup ? '资源池里已经有了' : '已加进资源池', 'success'); closeM(m); loadGoods(); }
 else toast((r2 && r2.msg) || '保存失败', 'error');
 });
