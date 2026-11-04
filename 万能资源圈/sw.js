@@ -11,7 +11,7 @@
  */
 /* 变更说明统一维护在 HANDOVER.md「修订记录」；本文件只保留运行所需代码与最新一条摘要。
    v538：设置键统一蓝色、图标全覆盖、空态口径、分类搜索、回收站批量、深色修复。 */
-const CACHE_NAME = 'wnzyq-v541b';
+const CACHE_NAME = 'wnzyq-v542';
 
 /* 预缓存只留访客必需——后台页面/样式/二维码库改为运行时按需入缓存（普通访客省约 700KB）；
    三个图标（192/512/苹果）必须预缓存，否则「装到桌面」时图标会裂。 */
@@ -108,7 +108,23 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // R298：JS / CSS / 图片 / 其它静态资源 → 缓存优先 + 后台更新
+  /* v542（老板反复反馈"改了看不到"的根因）：JS / CSS 改「网络优先」。
+     原来是缓存优先——部署后第一次访问仍然用旧脚本旧样式，要刷新第二次才更新；
+     更麻烦的是新 HTML 配旧 JS 会报错。改网络优先后每次拿到最新，断网才回缓存。
+     图片/字体继续缓存优先（体积大、不常改名，缓存命中更划算）。 */
+  if (/\.(js|css)(\?|$)/i.test(req.url)) {
+    event.respondWith(
+      fetch(req).then(function (res) {
+        if (isCacheable(req, res)) event.waitUntil(putCache(req, res));
+        return res;
+      }).catch(function () {
+        return caches.match(req).then(function (c) { return c || Response.error(); });
+      })
+    );
+    return;
+  }
+
+  // R298：图片 / 字体 / 其它静态资源 → 缓存优先 + 后台更新
   // 缓存命中直接返回，不发网络请求；后台静默 fetch 并更新缓存。
   // SW 版本升级时 activate 清旧缓存 + install 重新预缓存，确保代码/图片更新必生效。
   event.respondWith(

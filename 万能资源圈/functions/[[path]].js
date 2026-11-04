@@ -118,6 +118,7 @@ async function serveAsset(context, path) {
   const types = {
     js: 'application/javascript; charset=utf-8', css: 'text/css; charset=utf-8',
     json: 'application/json; charset=utf-8', png: 'image/png', jpg: 'image/jpeg',
+    xml: 'application/xml; charset=utf-8', txt: 'text/plain; charset=utf-8',
     jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', ico: 'image/x-icon',
     webp: 'image/webp', woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', mp4: 'video/mp4'
   };
@@ -134,6 +135,11 @@ export async function onRequestGet(context) {
   }
   // 静态资源兜底（子目录部署兼容）：根级 /assets/* /images/* /favicon.ico /manifest.json /sw.js 等
   if (path.startsWith('/assets/') || path.startsWith('/images/') || path === '/favicon.ico' || path === '/manifest.json' || path === '/sw.js') {
+    return serveAsset(context, path);
+  }
+  /* v542 修复：sitemap.xml / robots.txt 原来没进白名单，被本 catch-all 当成"不存在的页面"返回 404——
+     搜索引擎抓不到站点地图，robots 里的规则也从未生效。这两个是根级静态文件，直接交给静态兜底。 */
+  if (path === '/sitemap.xml' || path === '/robots.txt') {
     return serveAsset(context, path);
   }
   // config.js：存在则正常返回；缺失时返回空配置（页面自动用内置默认，杜绝 console 404 报错）
