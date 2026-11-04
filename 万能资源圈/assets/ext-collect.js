@@ -683,13 +683,20 @@ if (buy) {
 var already = html.indexOf(buy) >= 0;
 if (!already) buyLine = '<p><a href="' + buy + '" target="_blank" rel="noopener">点此前往原平台下单</a></p>';
 }
+
+var _ex = {};
+try { _ex = JSON.parse(g.extra || '{}') || {}; } catch (e0) { _ex = {}; }
+var _rawBlock = '';
+if (_ex.raw && String(_ex.raw).length > 20 && html.indexOf(String(_ex.raw).slice(0, 20)) < 0) {
+_rawBlock = '<h3>套餐资料</h3><p>' + String(_ex.raw).slice(0, 1500).replace(/</g, '&lt;') + '</p>';
+}
 var payload = {
 title: g.title || '',
-desc: g.descr || g.extra || '',
-detail: html + buyLine,
+desc: (g.descr || _ex.raw || '').slice(0, 1000),
+detail: html + _rawBlock + buyLine,
 img: g.cover || '',
 coverImages: g.cover ? [g.cover] : [],
-price: '',
+price: _ex.price ? String(_ex.price) : '',
 sort: 0,
 is_online: 1
 };
