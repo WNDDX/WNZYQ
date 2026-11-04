@@ -697,6 +697,12 @@
         if (done < total) return;
         window.__sysImgFinish();
       };
+      /* v534（事故 #61）：done2/finish2 必须在循环之前声明——原来写在 forEach 之后，
+         var 提升让循环里的 finish2 还是 undefined，跨域图走 else 分支时就成了 setTimeout(undefined, 0)，
+         浏览器把它当字符串去执行（CSP 拦下并刷控制台），同时计数永远不 +1，
+         导致 sizeDone 每次都要等满 9 秒超时（体检「点完要转圈很久」的真因之一）。 */
+      var done2 = 0;
+      var finish2 = function () { done2++; };
       testList.forEach(function (it) {
         var im = new Image();
         var fin = function (ok) { done++; if (!ok) broken.push(it); finish(); };
@@ -711,8 +717,6 @@
           }).catch(function () { finish2(); });
         } else setTimeout(finish2, 0);
       });
-      var done2 = 0;
-      var finish2 = function () { done2++; };
       var sizeDone = new Promise(function (res) {
         var t = setInterval(function () { if (done2 >= total) { clearInterval(t); res(); } }, 120);
         setTimeout(function () { clearInterval(t); res(); }, 9000);
