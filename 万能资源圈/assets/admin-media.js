@@ -1848,6 +1848,9 @@ try { stateAnn.raw = JSON.parse(JSON.stringify(_annOut)); } catch (e0) {}
 stateAnn._modeSaved = document.getElementById('annMode').value;
 stateAnn._stashed = false;
 try { window.__clearEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); }
+
+annBtn.disabled = false;
+if (window.__btnIdle) window.__btnIdle(annBtn); else { annBtn.textContent = _annBtnText; }
 document.getElementById('annMask').classList.remove('open');
 } else { annBtn.disabled = false; annBtn.textContent = _annBtnText; toast(res.msg || '保存失败', 'error'); }
 }).catch(function () {
@@ -2037,6 +2040,12 @@ var body = {}; body[c.qrKey] = __infoPending[k] || '';
 if (c.urlKey) {
 var inp = document.getElementById('infoUrl' + C);
 body[c.urlKey] = (inp ? inp.value : '').trim();
+
+if (body[c.urlKey] && !/^https?:\/\//i.test(body[c.urlKey])) {
+toast('跳转链接要以 http:// 或 https:// 开头', 'error');
+var _bad = document.getElementById('infoUrl' + C); if (_bad) { try { _bad.focus(); } catch (eF) {} }
+return;
+}
 }
 var b = col, _t = b.textContent;
 b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '保存中');
