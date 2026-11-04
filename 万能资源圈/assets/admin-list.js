@@ -922,7 +922,7 @@ var actionNames = { online: '批量显示', offline: '批量隐藏', delete: '�
 var msgs = {
 online: '确定显示选中的 ' + ids.length + ' 个资源？',
 offline: '确定隐藏选中的 ' + ids.length + ' 个资源？隐藏后资源页不显示。',
-delete: '确定删除选中的 ' + ids.length + ' 个资源？其类型和统计数据也会一并删除，不可恢复。'
+delete: '确定删除选中的 ' + ids.length + ' 个资源？其类型和统计数据也会一并删除；删除后进「回收站点」保留 60 天，可恢复。'
 };
 
 if (action === 'changeCat') {
