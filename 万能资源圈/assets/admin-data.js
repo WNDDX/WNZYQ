@@ -1672,7 +1672,19 @@ toast('密码已修改', 'success');
 document.getElementById('oldPwd').value = ''; document.getElementById('newPwd').value = ''; document.getElementById('confirmPwd').value = '';
 pwdMask.classList.remove('open');
 } else {
-toast(res.msg || '修改失败（原密码可能不正确）', 'error');
+
+var _msg = (res && res.msg) || '修改失败（原密码可能不正确）';
+var _el = /原密码/.test(_msg) ? document.getElementById('oldPwd') : null;
+if (_el) {
+_el.style.borderColor = 'var(--red-strong)';
+try { _el.focus({ preventScroll: true }); } catch (eF) { try { _el.focus(); } catch (eF2) {} }
+var _tip = document.createElement('div');
+_tip.className = 'pwd-err-tip';
+_tip.textContent = _msg;
+_tip.style.cssText = 'color:var(--red-strong);font-size:12px;margin:4px 0 0;';
+_el.parentNode.appendChild(_tip);
+setTimeout(function () { _tip.remove(); _el.style.borderColor = ''; }, 4000);
+} else { toast(_msg, 'error'); }
 }
 }).catch(function () {
 _cpBtn.disabled = false; _cpBtn.textContent = _cpTxt;
