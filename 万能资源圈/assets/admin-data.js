@@ -333,7 +333,15 @@ svg.addEventListener('mouseleave', function () { clearLineHover(svg); });
 
 function renderLineChart(trend, prev) {
 var svg = document.getElementById('lineSvg');
-if (!svg || !trend || !trend.length) { svg.innerHTML = ''; return; }
+
+if (!svg || !trend || !trend.length) {
+if (svg) {
+var _w0 = (svg.getBoundingClientRect().width || 800);
+svg.innerHTML = '<text x="400" y="104" text-anchor="middle" font-size="' + (13 * 800 / _w0).toFixed(2) + '" fill="var(--text-light)">这段时间还没有访问记录，换个时间范围看看</text>';
+}
+lineHover.data = null;
+return;
+}
 var _ax = 10, _asr = svg.getBoundingClientRect(); if (_asr && _asr.width) _ax = +(10 * 800 / _asr.width).toFixed(2);
 var W = 800, H = 200, padL = 40, padR = 20, padT = 20, padB = 30;
 try { svg.dataset.padT = padT; } catch (e0) { if (window.__silent) window.__silent(e0); }
@@ -388,10 +396,16 @@ trend.forEach(function (d, i) {
 var pv = pt(i, d.views);
 var pc = pt(i, d.contacts);
 var pr = pt(i, d.resource_unlocks || 0);
-html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="3.5" fill="#fff" stroke="#1E88E5" stroke-width="2"><title>浏览: ' + d.views + '</title></circle>';
-html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="3.5" fill="#fff" stroke="#ff9900" stroke-width="2"><title>咨询客服: ' + d.contacts + '</title></circle>';
-html += '<circle cx="' + pr.x + '" cy="' + pr.y + '" r="3.5" fill="#fff" stroke="#4CAF50" stroke-width="2"><title>资源码解锁: ' + (d.resource_unlocks || 0) + '</title></circle>';
+
+var _r = trend.length === 1 ? 5.5 : 3.5;
+html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="' + _r + '" fill="#fff" stroke="#1E88E5" stroke-width="2"><title>浏览: ' + d.views + '</title></circle>';
+html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="' + _r + '" fill="#fff" stroke="#ff9900" stroke-width="2"><title>咨询客服: ' + d.contacts + '</title></circle>';
+html += '<circle cx="' + pr.x + '" cy="' + pr.y + '" r="' + _r + '" fill="#fff" stroke="#4CAF50" stroke-width="2"><title>资源码解锁: ' + (d.resource_unlocks || 0) + '</title></circle>';
 });
+if (trend.length === 1) {
+var _d0 = trend[0];
+html += '<text x="' + (padL + 14) + '" y="' + (padT + 14) + '" font-size="' + (_ax * 1.25).toFixed(2) + '" fill="var(--text-light)">今天：浏览 ' + (_d0.views || 0) + ' · 咨询客服 ' + (_d0.contacts || 0) + ' · 资源码解锁 ' + (_d0.resource_unlocks || 0) + '</text>';
+}
 svg.innerHTML = html;
 lineHover.data = trend;
 lineHover.prev = hasPrev ? prev : null;
@@ -456,6 +470,10 @@ if (__exportStampState.min === min) { __exportStampState.seq++; } else { __expor
 return min + (__exportStampState.seq > 0 ? '(' + (__exportStampState.seq + 1) + ')' : '');
 }
 function __xl(v) { return v == null ? '' : String(v); }
+
+
+window.__downloadXLS = downloadMultiSheetXLS;
+window.__exportStamp = __exportStamp;
 
 function exportAllData() {
 var btn = document.getElementById('exportBtn');
@@ -832,7 +850,7 @@ renderProducts();
 renderCategories();
 refreshCatCnts();
 if (state.settings) {
-_safe(function () { if (window.__infoApply) window.__infoApply(state.settings); document.getElementById('annMode').value = state.settings.announcement_mode || 'always'; syncSelectDisplay(document.getElementById('annMode')); });
+_safe(function () { if (window.__infoApply) window.__infoApply(state.settings); document.getElementById('annMode').value = state.settings.announcement_mode || 'always'; syncSelectDisplay(document.getElementById('annMode')); if (window.__annModeHint) window.__annModeHint(); });
 }
 window.__lastFetchTime = Date.now();
 __preloadAdminCategoryPages();
@@ -1087,7 +1105,10 @@ return out;
 function renderCategories(list) {
 
 try {
-if (!localStorage.getItem('wnzyq_cat_drag_tip')) {
+
+var __catPanel = document.getElementById('panel-categories');
+var __catVisible = __catPanel && __catPanel.style.display !== 'none';
+if (__catVisible && !localStorage.getItem('wnzyq_cat_drag_tip')) {
 localStorage.setItem('wnzyq_cat_drag_tip', '1');
 setTimeout(function () { if (window.showToast) window.showToast('按住左边的六点可以拖动排序', 'info'); }, 600);
 }
@@ -2398,7 +2419,7 @@ __loadBindingsCache();
 _safe(function () { renderProducts(); });
 _safe(function () { renderCategories(state.categories); });
 _safe(function () { if (state.statsOverview) { __updateStatTitles(); renderStatCards(state.statsOverview, state.statsOverviewPrev); renderLineChart(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null);renderStatTables(); } });
-_safe(function () { if (state.settings) { if (window.__infoApply) window.__infoApply(state.settings); document.getElementById('annMode').value = state.settings.announcement_mode || 'always'; syncSelectDisplay(document.getElementById('annMode')); } });
+_safe(function () { if (state.settings) { if (window.__infoApply) window.__infoApply(state.settings); document.getElementById('annMode').value = state.settings.announcement_mode || 'always'; syncSelectDisplay(document.getElementById('annMode')); if (window.__annModeHint) window.__annModeHint(); } });
 }
 window.__adminEntryDone = false;
 if (window.__enterPageEntryMode) window.__enterPageEntryMode();
