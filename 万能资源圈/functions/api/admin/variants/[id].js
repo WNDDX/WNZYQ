@@ -36,7 +36,12 @@ export async function onRequestPut(context) {
 
   /* #116 信息锁：无权看码的人提交掩码 → 保留原码 */
   let outCode = String(b.resourceCode || '');
+  const __codeRaw = outCode;
   if (outCode === '●●●●') outCode = __oldCode;
+  /* v546b：只校验「这次真的改了码」的情况——老数据里的短码原样保留，不至于一编辑就存不回去 */
+  outCode = outCode ? String(outCode).toUpperCase() : '';
+  const __codeChanged = __codeRaw !== '●●●●' && outCode !== String(__oldCode || '').toUpperCase();
+  if (__codeChanged && outCode && !/^[A-Z0-9]{8}$/.test(outCode)) return json({ ok: false, msg: '资源码要 8 位字母或数字' }, 400);
 
   // R106：绑定设备上限挪进类型表单（<1 或非法一律按 1）
   const bindLimit = Math.max(1, parseInt(b.bindLimit, 10) || 1);

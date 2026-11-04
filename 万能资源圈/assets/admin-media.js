@@ -2198,6 +2198,15 @@ vContactUrl.value = v ? (v.contactUrl || '') : '';
 vPrice.value = v ? (v.price || '') : '';
 vSort.value = v ? (v.sort || 0) : 0;
 vResourceCode.value = v ? (v.resourceCode || '') : '';
+
+if (!vResourceCode.__wnCodeFmt) {
+vResourceCode.__wnCodeFmt = 1;
+vResourceCode.addEventListener('input', function () {
+var _p = this.selectionStart;
+var _v = String(this.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+if (this.value !== _v) { this.value = _v; try { this.setSelectionRange(_p, _p); } catch (eP) {} }
+});
+}
 var _vbl = document.getElementById('vBindLimit');
 _vbl.value = v && v.bindLimit ? v.bindLimit : 1;
 document.getElementById('vContentEditor').innerHTML = v ? (v.resourceContent || '') : '';
@@ -2348,6 +2357,13 @@ initVariantRte('vContentRteToolbar', 'vContentEditor', 'vContentRteLink', 'vCont
 variantOk.addEventListener('click', function () {
 if (!validateField(vName, '请填写类型名称')) return;
 var name = vName.value.trim();
+
+var _code = String(vResourceCode.value || '').trim().toUpperCase();
+if (_code && !/^[A-Z0-9]{8}$/.test(_code)) {
+toast('资源码要 8 位字母或数字（现在 ' + _code.length + ' 位）', 'error');
+try { vResourceCode.focus(); vResourceCode.select(); } catch (eS) {}
+return;
+}
 var isLocalVariant = !state.editingId;
 var data = {
 productId: state.editingId,
@@ -2360,7 +2376,7 @@ isHidden: vHidden.checked,
 contactUrl: vContactUrl.value.trim(),
 price: Number(vPrice.value) || 0,
 sort: Number(vSort.value) || 0,
-resourceCode: vResourceCode.value.trim(),
+resourceCode: _code,
 resourceContent: window.__rteClean(document.getElementById('vContentEditor')),
 bindLimit: Math.max(1, parseInt(document.getElementById('vBindLimit').value, 10) || 1)
 };

@@ -977,16 +977,38 @@ if (action === 'delete') {
 var _runDelete = function () {
 var _snap = (state.products || []).slice();
 applyBatchLocal('delete', ids); renderProducts();
+api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: action }) }).then(function (res) {
+if (res && res.ok) {
+clearCache();
 __undoable(
 '已删除 ' + ids.length + ' 个资源 · 回收站点可找回',
+function () { silentSyncProducts(); },
 function () {
-api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: action }) }).then(function (res) {
-if (res && res.ok) { clearCache(); silentSyncProducts(); }
-else { toast((res && res.msg) || '批量删除失败', 'error'); state.products = _snap; renderProducts(); }
-}).catch(function () { toast(window.T('netFail'), 'error'); state.products = _snap; renderProducts(); });
-},
-function () { state.products = _snap; renderProducts(); }
+var _seq = Promise.resolve();
+ids.forEach(function (id) {
+_seq = _seq.then(function () {
+return api('admin/recycle', { method: 'POST', body: JSON.stringify({ op: 'restore', kind: 'product', id: id }) });
+});
+});
+_seq.then(function () {
+clearCache();
+toast('已恢复 ' + ids.length + ' 个资源', 'success');
+silentSyncProducts();
+}).catch(function () {
+toast('恢复失败，请到「回收站点」手动恢复', 'error');
+silentSyncProducts();
+});
+}
 );
+silentSyncProducts();
+} else {
+toast((res && res.msg) || '批量删除失败', 'error');
+state.products = _snap; renderProducts();
+}
+}).catch(function () {
+toast(window.T('netFail'), 'error');
+state.products = _snap; renderProducts();
+});
 };
 __bDone(action);
 if (ids.length > 10) showConfirm(actionNames[action], msgs[action], function (closeConfirm) { closeConfirm(); _runDelete(); });
@@ -1095,12 +1117,31 @@ setTimeout(function () {
 if (_delRow && _delRow.parentNode) _delRow.parentNode.removeChild(_delRow);
 if (!document.querySelector('#productList .product-row')) renderProducts();
 }, 200);
+
+api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
+if (res && res.ok) {
+clearCache();
 __undoable(
 '已删除「' + (p.title || '未命名') + '」· 回收站点可找回',
+function () { silentSyncProducts(); },
 function () {
-api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
-if (res && res.ok) { clearCache(); silentSyncProducts(); }
-else {
+api('admin/recycle', { method: 'POST', body: JSON.stringify({ op: 'restore', kind: 'product', id: id }) })
+.then(function (r2) {
+if (r2 && r2.ok) {
+var _cur3 = (state.products || []).slice();
+_cur3.splice(Math.min(_idx, _cur3.length), 0, p);
+state.products = _cur3;
+try { refreshCatCnts(); } catch (e0) { if (window.__silent) window.__silent(e0); }
+renderProducts(); clearCache();
+toast('已恢复「' + (p.title || '未命名') + '」', 'success');
+} else {
+toast((r2 && r2.msg) || '恢复失败，请到「回收站点」手动恢复', 'error');
+}
+})
+.catch(function () { toast('恢复失败，请到「回收站点」手动恢复', 'error'); });
+}
+);
+} else {
 toast((res && res.msg) || '删除失败', 'error');
 var _cur = (state.products || []).slice(); _cur.splice(Math.min(_idx, _cur.length), 0, p);
 state.products = _cur; renderProducts();
@@ -1110,15 +1151,6 @@ toast(window.T('delFail'), 'error');
 var _cur2 = (state.products || []).slice(); _cur2.splice(Math.min(_idx, _cur2.length), 0, p);
 state.products = _cur2; renderProducts();
 });
-},
-function () {
-var _cur3 = (state.products || []).slice();
-_cur3.splice(Math.min(_idx, _cur3.length), 0, p);
-state.products = _cur3;
-try { refreshCatCnts(); } catch (e0) { if (window.__silent) window.__silent(e0); }
-renderProducts();
-}
-);
 }
 
 var __productStatusBusy = false;
