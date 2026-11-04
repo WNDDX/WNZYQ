@@ -2195,6 +2195,8 @@ renderProducts();
 
 
 function showToast(msg, type) { window.uiToast(msg, type); }
+
+window.showToast = showToast;
 window.toast = showToast;
 
 topContactBtn.addEventListener('click', function () {
