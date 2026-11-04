@@ -2181,7 +2181,7 @@ images.forEach(function (url, i) {
 var slide = document.createElement('div');
 slide.className = 'cc-slide';
 var img = document.createElement('img');
-img.alt = '';
+img.alt = '封面图 ' + (i + 1);
 img.decoding = 'async';
 if (i === 0) img.className = 'cover-enter';
 img.style.opacity = '0';

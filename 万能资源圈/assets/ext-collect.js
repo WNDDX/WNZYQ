@@ -594,10 +594,12 @@ if (h) h.textContent = S.hint;
 }, 1000);
 var btn = S.mask && S.mask.querySelector('#extcRun');
 if (btn) { btn.disabled = true; btn.textContent = '采集中…'; }
+
+var tryOnce = function (retryLeft) {
 api('admin/external', { method: 'POST', body: { op: 'collect', platform_id: p.id } }).then(function (r) {
+if (r && r.ok) {
 S.busy = false; clearInterval(__tick);
 if (btn) { btn.disabled = false; btn.textContent = '采集'; }
-if (r && r.ok) {
 S.hint = '抓到 ' + r.found + ' 条，新入库 ' + r.added + ' 条' + (r.dup ? '，已有 ' + r.dup + ' 条' : '')
 + (r.via === 'api' ? '（走商城接口，标题/封面/描述/详情/下单链接都拿到了）' : '（走页面解析）')
 + (r.fixed_addr ? '（地址已自动换成 ' + r.fixed_addr + '）' : '');
@@ -605,13 +607,37 @@ S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: true, msg: S.hint + 
 if (r.fixed_addr) p.mall_url = r.fixed_addr;
 toast('采集完成：新入库 ' + r.added + ' 条', 'success');
 loadGoods();
-} else {
+return;
+}
+var kind = window.__extcReason ? window.__extcReason((r && r.msg) || '').k : 'other';
+if (retryLeft > 0 && kind !== 'dead' && kind !== 'login') {
+S.hint = '没采到（' + ((r && r.msg) || '网络问题') + '），3 秒后自动再试一次…';
+var hh = S.mask && S.mask.querySelector('#extcHint'); if (hh) hh.textContent = S.hint;
+setTimeout(function () { tryOnce(retryLeft - 1); }, 3000);
+return;
+}
+S.busy = false; clearInterval(__tick);
+if (btn) { btn.disabled = false; btn.textContent = '采集'; }
 S.hint = (r && r.msg) || '采集失败';
 S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: false, msg: S.hint + (r && r.tip ? '｜' + r.tip : '') });
 toast(S.hint, 'error');
 render();
+}).catch(function () {
+if (retryLeft > 0) {
+S.hint = '网络中断，3 秒后自动再试一次…';
+var h2 = S.mask && S.mask.querySelector('#extcHint'); if (h2) h2.textContent = S.hint;
+setTimeout(function () { tryOnce(retryLeft - 1); }, 3000);
+return;
 }
+S.busy = false; clearInterval(__tick);
+if (btn) { btn.disabled = false; btn.textContent = '采集'; }
+S.hint = '网络中断，没采成';
+S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: false, msg: '网络中断' });
+toast('网络中断，没采成', 'error');
+render();
 });
+};
+tryOnce(1);
 }
 
 

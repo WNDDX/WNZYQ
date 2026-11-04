@@ -1272,7 +1272,7 @@ var item = document.createElement('div');
 item.className = 'cg-item' + (idx === selectedCoverIdx ? ' active' : '');
 item.dataset.idx = idx;
 var img = document.createElement('img');
-img.alt = '';
+img.alt = '封面图 ' + (idx + 1) + '（共 ' + coverImages.length + ' 张）';
 img.decoding = 'async';
 img.style.opacity = '0';
 img.onload = function () { img.style.opacity = '1'; };

@@ -838,7 +838,7 @@ return '<div class="chk-row">' +
 var dupRows = R0.dups.map(function (it) {
 var wheres = it.refs.map(function (r) { return r.where; }).join('、');
 return '<div class="chk-row">' +
-'<img class="chk-thumb" src="' + esc(it.src) + '" alt="">' +
+'<img class="chk-thumb" src="' + esc(it.src) + '" alt="重复引用的图片">' +
 '<span class="chk-main"><b>被 ' + it.refs.length + ' 处引用</b><span class="chk-sub">' + esc(wheres) + '</span></span></div>';
 });
 var badLinks = R0.links.filter(function (L) { return L.ok === false; });
@@ -853,7 +853,7 @@ return '<div class="chk-row">' +
 
 var osRows = (R0.oversize || []).map(function (it, oi) {
 return '<div class="chk-row" data-osidx="' + oi + '">' +
-'<img class="chk-thumb" src="' + esc(it.src) + '" alt="">' +
+'<img class="chk-thumb" src="' + esc(it.src) + '" alt="超大图片">' +
 '<span class="chk-main"><b>' + esc(it.refs[0].where) + ' <span class="chk-size">' + (it.size ? (it.size / 1024 / 1024).toFixed(2) + ' MB' : '') + '</span></b><span class="chk-sub">' + esc(it.src) + '</span></span>' +
 '<span class="chk-act" data-osact="1"></span>' +
 '<button type="button" class="row-btn" data-goto-pid="' + esc(String(it.refs[0].pid)) + '">去处理</button></div>';
