@@ -542,7 +542,7 @@ s.appendChild(_pp);
 }
 
 if (p.updated_by || p.updated_at) {
-var _ub = String(p.updated_by || '').trim();
+var _ub = String(p.updatedBy || p.updated_by || '').trim();
 var _ua = String(p.updated_at || '').trim();
 var _ut = '';
 if (_ua) {
