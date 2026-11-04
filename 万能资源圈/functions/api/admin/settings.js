@@ -46,6 +46,16 @@ export async function onRequestPut(context) {
   const auth = onlyAnn ? await requirePerm(env, request, 'ann.edit') : await requirePerm(env, request, 'settings.write');
   if (auth instanceof Response) return auth;
 
+  /* v546：跳转链接只收 http(s)。前端已拦一道，这里再拦一道——
+     实测「abc」「javascript:alert(1)」都能直接写进库，前台客服键拿这个值 window.open，等于把坏链接发给客户。 */
+  for (const k of ['contact_url', 'group_url']) {
+    if (b && typeof b[k] === 'string') {
+      const v = b[k].trim();
+      if (v && !/^https?:\/\//i.test(v)) return json({ ok: false, msg: '跳转链接要以 http:// 或 https:// 开头' }, 400);
+      b[k] = v;
+    }
+  }
+
   /* v354：保存前记下旧值——保存完成后把"旧有新无"的上传文件自动追删（后端核对全库引用，绝不误删） */
   let __oldSettings = '';
   try { const { results } = await env.DB.prepare('SELECT value FROM settings').all(); for (const r of (results || [])) __oldSettings += (r.value || '') + '\n'; } catch (e) {}
