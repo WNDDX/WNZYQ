@@ -397,12 +397,16 @@ export async function onRequestPost(context) {
            v546p（实测京东）：原正则只管关键词，结果把 360buyimg 的图片地址当成「下单链接」了——
            老板点进去是一张图。这里排掉图片/静态资源/图床域名，找不到就退回原链接。 */
         const isAssetUrl = function (u) {
-          return /\.(png|jpe?g|webp|gif|svg|ico|css|js|woff2?)(\?|#|$)/i.test(u)
-            || /\/\/(img|image|static|cdn|pic|pics|oss|res)[\w.-]*\./i.test(u);
+          if (/\.(png|jpe?g|webp|gif|svg|ico|css|js|woff2?)(\?|#|$)/i.test(u)) return true;
+          /* v546q（实测京东）：360buyimg / alicdn / qpic 这类图床域名不带路径，
+             上一条规则认不出来，结果「下单链接」存成了图床根地址。这里按域名关键词再排一次。 */
+          return /\/\/([\w-]+\.)*(360buyimg|alicdn|bdimg|qpic|hdslb|xiaohongshu|byteimg|sinaimg|zhimg|doubanio)\b/i.test(u)
+            || /\/\/(img|image|img\d|pic|pics|static|cdn|oss|res)[\w.-]*\./i.test(u);
         };
-        const buyHref = ((pg.text.match(/href=["']([^"']*(?:buy|order|goods|goodsId=|pid=)[^"']*)["']/gi) || [])
+        const buyCand = (pg.text.match(/href=["']([^"']*(?:buy|order|goods|goodsId=|pid=)[^"']*)["']/gi) || [])
           .map(function (x) { return absUrl(x.replace(/^href=["']|["']$/gi, ''), one); })
-          .filter(function (u) { return u && !isAssetUrl(u); })[0]) || one;
+          .filter(function (u) { return u && !isAssetUrl(u); })[0];
+        const buyHref = buyCand || one;
         /* v546p：京东/淘宝这类站，服务端拿到的常常是「登录墙 / 站点首页」而不是商品本身——
            标题是站点名、一张商品图都没有。这种别报成功，说清楚，让老板换「粘贴」。 */
         const weak = (!imgs.length) && (!desc || desc.length < 40);
@@ -571,7 +575,11 @@ export async function onRequestPost(context) {
         const dup0 = await env.DB.prepare('SELECT id FROM external_goods WHERE req_id=?').bind(reqId2).first();
         if (dup0) return json({ ok: true, id: dup0.id, dup: true });
       }
-      const dup1 = pid ? await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?').bind(pid, title).first() : null;
+      /* v546q（实测）：不选平台时 pid=0，原来直接跳过去重判断，
+         同一条链接反复「粘贴→保存」就会在池子里堆成好几条。没平台就按 标题+来源链接 去重。 */
+      const dup1 = pid
+        ? await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?').bind(pid, title).first()
+        : await env.DB.prepare('SELECT id FROM external_goods WHERE title=? AND src_url=?').bind(title, srcUrl).first();
       if (dup1) return json({ ok: true, id: dup1.id, dup: true, msg: '商品池里已经有了' });
       const descrAdd = String(b.descr || '').slice(0, 300);
       const buyAdd = String(b.buy_url || '').slice(0, 1200);

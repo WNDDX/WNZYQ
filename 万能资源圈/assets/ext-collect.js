@@ -731,7 +731,8 @@ if (g) useGoods(Number(g.id));
 
 
 function pasteForm() {
-var pid = Number(S.curPf) || 0;
+
+var pid = Number(S.curPf) || (S.platforms[0] ? Number(S.platforms[0].id) : 0);
 var pfOpts = '<option value="0">（不归平台）</option>' + S.platforms.map(function (p) {
 return '<option value="' + p.id + '"' + (Number(p.id) === pid ? ' selected' : '') + '>' + esc(p.name) + '</option>';
 }).join('');
