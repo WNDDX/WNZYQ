@@ -1220,7 +1220,11 @@ sel.addEventListener('change', function () {
 var cmd = this.dataset.cmd;
 var val = this.value;
 if (val && __rte.editor === editorEl && __rte.range) {
+
+try { rteFocusStay(editorEl); } catch (eF) {}
+try { var _ps = window.getSelection(); _ps.removeAllRanges(); _ps.addRange(__rte.range); } catch (eR) {}
 document.execCommand(cmd, false, val);
+try { __rte.editor = editorEl; __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (eC) {}
 rteFocusStay(editorEl);
 }
 this.selectedIndex = 0;
