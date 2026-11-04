@@ -581,17 +581,19 @@ function renderProducts() {
       s.className = 'p-sub';
       // R24：简介部分颜色复用资源页弹窗简介的蓝色（var(--blue1)），分类名保持灰色
       // R146（用户 00:34）：分隔点改黑色；简介后追加深色点+橙色金额（无金额整段不渲染）
+      /* v536：没有简介时不再挂那个「 · 」——原来列表里会出现「wifi·」「· 简介…」这种孤零零的点 */
+      var _catTxt = String(catName[p.cid] || '').trim() || '未分类';
+      var _descTxt = String(p.desc || '').trim();
       var _sc = document.createElement('span');
-      _sc.textContent = (catName[p.cid] || '未分类');
+      _sc.textContent = _catTxt;
       var _sdot = document.createElement('span');
       _sdot.className = 'p-dot';
       _sdot.textContent = ' · ';
       var _sd = document.createElement('span');
       _sd.className = 'p-desc';
-      _sd.textContent = p.desc || '';
+      _sd.textContent = _descTxt;
       s.appendChild(_sc);
-      s.appendChild(_sdot);
-      s.appendChild(_sd);
+      if (_descTxt) { s.appendChild(_sdot); s.appendChild(_sd); }
       var _pPriceText = formatPrice(p.price);
       if (_pPriceText) {
         var _pdot = document.createElement('span');
