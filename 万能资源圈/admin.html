@@ -376,11 +376,11 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           <h3>基本设置</h3>
           <!-- v384：「设置信息」单入口键（与「设置公告」同款）——点击打开弹窗，弹窗内三行（绿/蓝/青键+右缘三角），展开配置二维码+链接，各行独立保存 -->
           <!-- v490：资源采集（老板：统一叫资源；放在平台设置里，一个按键点出弹窗） -->
-          <div class="setting-row">
+          <div class="setting-row is-inline">
             <label>资源采集（从别家平台抓资源，挑着上架）</label>
             <button type="button" class="btn-blue btn-inline-pd" id="openExtCollectBtn" data-perm="external.view">资源采集</button>
           </div>
-          <div class="setting-row info-setting-row">
+          <div class="setting-row info-setting-row is-inline">
             <label>设置信息</label>
             <button type="button" class="row-btn" id="openInfoBtn">设置信息</button>
           </div>
@@ -449,8 +449,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           </div>
         </div>
         <div class="setting-group" id="pwdGroup">
-          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">修改密码</label>
-          <button class="row-btn" id="showPwdFormBtn">修改密码</button>
+          <div class="setting-row is-inline"><label>修改密码</label><button type="button" class="row-btn" id="showPwdFormBtn">修改密码</button></div>
         </div>
       </section>
     </main>

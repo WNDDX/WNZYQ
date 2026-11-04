@@ -1579,7 +1579,7 @@
       var btnHtml = function (id, lab, extra, primary) {
         return '<button type="button" class="' + (primary ? 'btn-blue btn-inline-pd' : 'row-btn') + '" id="' + id + '"' + (extra || '') + '>' + lab + '</button>';
       };
-      var row = function (lab, btnStr) { return '<div class="setting-row"><label>' + lab + '</label>' + btnStr + '</div>'; };
+      var row = function (lab, btnStr) { return '<div class="setting-row is-inline"><label>' + lab + '</label>' + btnStr + '</div>'; };
       var mkGroup = function (title, rowsHtml) {
         var g = document.createElement('div');
         g.className = 'setting-group';
