@@ -1633,7 +1633,7 @@ var delBtn = document.createElement('button'); delBtn.className = 'row-btn dange
 if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6);
 delBtn.addEventListener('click', function (e) {
 e.stopPropagation();
-showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？删除后可在回收站保留 60 天，随时恢复。', function (closeConfirm) {
+showConfirm('删除公告', '确定删除公告「' + (a.title || '') + '」？删除后进「回收站点」，保留 60 天，随时恢复。', function (closeConfirm) {
 closeConfirm();
 
 a.deleted = 1; a.deletedAt = new Date().toISOString();
@@ -2086,7 +2086,11 @@ sel.addEventListener('change', function () {
 var cmd = this.dataset.cmd;
 var val = this.value;
 if (val && __rte.editor === annEditor && __rte.range) {
+
+try { rteFocusStay(annEditor); } catch (eF) {}
+try { var _ps = window.getSelection(); _ps.removeAllRanges(); _ps.addRange(__rte.range); } catch (eR) {}
 document.execCommand(cmd, false, val);
+try { __rte.editor = annEditor; __rte.range = window.getSelection().getRangeAt(0).cloneRange(); } catch (eC) {}
 rteFocusStay(annEditor);
 }
 this.selectedIndex = 0;
