@@ -410,6 +410,17 @@ export async function onRequestPost(context) {
         /* v546p：京东/淘宝这类站，服务端拿到的常常是「登录墙 / 站点首页」而不是商品本身——
            标题是站点名、一张商品图都没有。这种别报成功，说清楚，让老板换「粘贴」。 */
         const weak = (!imgs.length) && (!desc || desc.length < 40);
+        /* v547（实测拼多多/闲鱼/微博/1688）：抓到的是「验证页 / 站点首页 / 已下架页」，
+           标题长这样：Sina Visitor System、闲鱼 - 闲不住？上闲鱼、阿里巴巴-1688商品无法查看或已下架、
+           拼多多。这些还被判成成功，入库就是垃圾。现在一律判失败并说清楚。 */
+        const junkTitle = /(Sina Visitor System|访客系统|安全验证|滑动验证|人机验证|访问验证|验证码|无法查看|已下架|商品不存在|宝贝不存在|页面不存在)/i.test(title)
+          || /^(拼多多|闲鱼|淘宝|淘宝网|天猫|京东|微博|小红书|抖音|快手|阿里巴巴|1688)$/.test(String(title).trim());
+        if (junkTitle) {
+          return json({ ok: false, junk: true, msg: '抓到的是验证页或站点首页，不是商品本身——对方把服务器挡在外面了。改用「粘贴整页内容」。' }, 200);
+        }
+        if (!imgs.length && (!desc || desc.length < 40)) {
+          return json({ ok: false, weak: true, msg: '只抓到了标题，页面里的图和外链都没抓到（对方可能是登录墙或靠浏览器渲染）。改用「粘贴整页内容」。' }, 200);
+        }
         return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 1000), buy_url: buyHref, weak: weak });
       }
 
