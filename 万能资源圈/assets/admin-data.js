@@ -224,7 +224,8 @@ renderVariants();
 };
 _doLocalRemove();
 __undoable(
-'已删除类型「' + ((_removedV && _removedV.name) || '未命名') + '」',
+
+'已删除类型「' + ((_removedV && _removedV.name) || '未命名') + '」· 10 秒后正式清除',
 function () {
 if (!state.editingId) return;
 api('admin/variants/' + id, { method: 'DELETE' }).then(function (res) {
