@@ -512,6 +512,29 @@ export async function onRequestPost(context) {
             : (shell ? '首页壳 → 换列表页地址或用粘贴' : '排版没见过 → 用粘贴兜底')
         }, 200);
       }
+      /* v546w（老板：采到的商品必须是我店铺的，不是平台公共商品）：
+         这些模板站的商品详情链接本身不带店铺标识——列表页带 k=xxx（我的店），
+         详情页却是 article/good?pid=5873，客户点「去下单」就落到平台默认店，佣金算别人的。
+         这里把来源店铺的专属参数（k / shop_id / mall_id / agent_id / promoCode / userCode）
+         原样补到每条商品链接上，商品链接自己已经带的不重复加。 */
+      try {
+        const srcU = new URL(fixedAddr || mall);
+        const ownKeys = ['k', 'shop_id', 'mall_id', 'agent_id', 'promoCode', 'userCode'];
+        const ownPairs = ownKeys
+          .map(function (k) { const v = srcU.searchParams.get(k); return v ? k + '=' + encodeURIComponent(v) : ''; })
+          .filter(Boolean);
+        if (ownPairs.length) {
+          list.forEach(function (g) {
+            if (!g.link) return;
+            try {
+              const gu = new URL(g.link);
+              const miss = ownPairs.filter(function (p) { return !gu.searchParams.has(p.split('=')[0]); });
+              if (miss.length) g.link = g.link + (g.link.indexOf('?') >= 0 ? '&' : '?') + miss.join('&');
+            } catch (eL) {}
+          });
+        }
+      } catch (eOwn) {}
+
       /* 入库：同平台 + 同标题 视为同一个（封面可能变） */
       let added = 0, dup = 0;
       const cap = Math.min(list.length, 120);
