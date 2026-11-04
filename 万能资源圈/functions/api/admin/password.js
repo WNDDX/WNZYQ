@@ -27,7 +27,10 @@ export async function onRequestPost(context) {
 
   // 验证旧密码（R29：兼容旧 SHA256 与新 PBKDF2 格式）
   const v = await verifyPassword(oldPassword, row);
-  if (!v.ok) return json({ ok: false, msg: '原密码错误' }, 401);
+  /* v546b 修（实测：原密码填错 → 后台弹窗直接消失、提示一闪、页面被刷新）：
+     这里原来返回 401，而后台 api() 把「401」一律当成「登录已过期」——弹提示并 1.2 秒后 reload。
+     改密码填错原密码是「表单校验错误」，不是会话失效，必须用 400，前端才会留在弹窗里给红字提示。 */
+  if (!v.ok) return json({ ok: false, msg: '原密码错误' }, 400);
 
   // 新密码一律用 PBKDF2 多轮哈希
   const { salt: newSalt, hash: newHash } = await hashPasswordNew(newPassword);

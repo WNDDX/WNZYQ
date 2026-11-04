@@ -73,6 +73,9 @@ export async function onRequestPost(context) {
   /* X1/v440：掩码兜底——复制资源时前端可能把列表里的打码头「●●●●」原样回传，入库前置空 */
   var newCode = String(b.resourceCode || '').trim();
   if (newCode === '●●●●') newCode = '';
+  /* v546b：资源码统一 8 位大写字母/数字（前台解锁按 8 位自动提交，短码永远解不开） */
+  newCode = newCode ? newCode.toUpperCase() : '';
+  if (newCode && !/^[A-Z0-9]{8}$/.test(newCode)) return json({ ok: false, msg: '资源码要 8 位字母或数字' }, 400);
   const r = await env.DB.prepare(
     `INSERT INTO product_variants (product_id, name, title, "desc", img, video, contact_url, price, sort, resource_code, resource_content, is_hidden, bind_limit)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
