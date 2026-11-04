@@ -1,3 +1,6 @@
+/* admin-data.js —— 数据页：分类、统计、绑定、操作日志相关的页面逻辑
+   注：v539 按"主要内容"改的名（原来是 admin-1..5，按行数切）。真正按功能拆分是另一件事，
+   所以文件里仍可能有跨模块的代码，改之前先全文搜一下函数名。 */
 /* v346 条1/12：后台按功能拆分 第5/5 段（由原 admin.js 物理切分；为支持拆分，已去掉最外层"圈屋"包裹，逻辑与拆分前一致） */
 // ---------- R92 绑定设备管理（一机一码）----------
     // 打开绑定设备清单弹窗：复用 modal-mask 弹窗外壳 + 统计表样式（全系统统一观感）
@@ -1232,6 +1235,13 @@ refreshCatCnts();
       return out;
     }
     function renderCategories(list) {
+      /* v539：第一次进分类页，告诉老板"能拖"（只提示一次，记在本机） */
+      try {
+        if (!localStorage.getItem('wnzyq_cat_drag_tip')) {
+          localStorage.setItem('wnzyq_cat_drag_tip', '1');
+          setTimeout(function () { if (window.showToast) window.showToast('按住左边的六点可以拖动排序', 'info'); }, 600);
+        }
+      } catch (eT) {}
       var box = document.getElementById('catList'); var _minH = box.offsetHeight; if (_minH > 0) box.style.minHeight = _minH + 'px';
       /* v538：分类搜索——命中二级分类时把它的一级父级也留下，别把树拆散 */
       var __q = String(window.__catQ || '').trim().toLowerCase();

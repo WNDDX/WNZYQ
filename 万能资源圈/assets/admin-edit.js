@@ -1,3 +1,6 @@
+/* admin-edit.js —— 资源编辑：表单回填、保存、类型、富文本/文件卡编辑器
+   注：v539 按"主要内容"改的名（原来是 admin-1..5，按行数切）。真正按功能拆分是另一件事，
+   所以文件里仍可能有跨模块的代码，改之前先全文搜一下函数名。 */
 /* v346 条1/12：后台按功能拆分 第3/5 段（由原 admin.js 物理切分；为支持拆分，已去掉最外层"圈屋"包裹，逻辑与拆分前一致） */
 // ---------- 编辑 / 新增资源弹窗 ----------
     document.getElementById('addProductBtn').addEventListener('click', function () { openEdit(null); });
@@ -707,7 +710,7 @@
               variants: (state.variants || []).slice() });
           }
           /* R211 二批（用户 09-20）：保存成功按钮状态链——转圈→✓（停留 400ms 让反馈可见）→收弹窗恢复；R183 条4 只有转圈无成功态 */
-          if (window.__btnSuccess) window.__btnSuccess(saveProductBtn, '已保存');
+          if (window.__btnSuccess) window.__btnSuccess(saveProductBtn, window.T('saved'));
           setTimeout(function () { editMask.classList.remove('open'); }, 400);
           if (isNewSave) { try { delete __editDrafts['new']; } catch (e) { if (window.__silent) window.__silent(e); } } // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
           clearDraft(); // 保存成功后清除草稿
@@ -2234,7 +2237,7 @@ document.addEventListener('click', function (e) {
         var _sp = (state.products || []).find(function (x) { return x.id === pid; });
         if (_sp) { _sp.contactQr = (document.getElementById('fContactQr').value || '').trim(); _sp.contactUrl = (document.getElementById('fContactUrl').value || '').trim(); }
         if (window.__haptic) window.__haptic();
-        if (window.showToast) window.showToast('已保存', 'success'); /* v453：同设置信息行 */
+        if (window.showToast) window.showToast(window.T('saved'), 'success'); /* v453：同设置信息行 */
         if (after) after();
       }
       else { toast((res && res.msg) || '保存失败', 'error'); }

@@ -1,3 +1,6 @@
+/* admin-media.js —— 媒体与信息：上传、设置信息行、公告、预览
+   注：v539 按"主要内容"改的名（原来是 admin-1..5，按行数切）。真正按功能拆分是另一件事，
+   所以文件里仍可能有跨模块的代码，改之前先全文搜一下函数名。 */
 /* v346 条1/12：后台按功能拆分 第4/5 段（由原 admin.js 物理切分；为支持拆分，已去掉最外层"圈屋"包裹，逻辑与拆分前一致） */
 // ---------- R31（优化项7）：自有图仓上传 ----------
     // 选图 → 必要时压缩（png 保无损防二维码糊；jpg/webp 超 1.5MB 或图超 2000px 转 jpeg 0.85）→ 上传 → 回调返回链接
@@ -2129,7 +2132,7 @@
               window.__infoApply(s2); /* 面板开着不覆盖 pending，已手动同步 */
               try { localStorage.setItem('wnzyq_kf_url_updated', Date.now().toString()); } catch (e) { if (window.__silent) window.__silent(e); }
               if (window.__haptic) window.__haptic();
-              if (window.showToast) window.showToast('已保存', 'success'); /* v453：「收起」=保存并收起，给一句反馈，不然不知道改动已生效 */
+              if (window.showToast) window.showToast(window.T('saved'), 'success'); /* v453：「收起」=保存并收起，给一句反馈，不然不知道改动已生效 */
               if (after) after();
             }
             else { toast((res && res.msg) || '保存失败', 'error'); }
