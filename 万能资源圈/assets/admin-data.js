@@ -333,15 +333,7 @@ svg.addEventListener('mouseleave', function () { clearLineHover(svg); });
 
 function renderLineChart(trend, prev) {
 var svg = document.getElementById('lineSvg');
-
-if (!svg || !trend || !trend.length) {
-if (svg) {
-var _w0 = (svg.getBoundingClientRect().width || 800);
-svg.innerHTML = '<text x="400" y="104" text-anchor="middle" font-size="' + (13 * 800 / _w0).toFixed(2) + '" fill="var(--text-light)">这段时间还没有访问记录，换个时间范围看看</text>';
-}
-lineHover.data = null;
-return;
-}
+if (!svg || !trend || !trend.length) { svg.innerHTML = ''; return; }
 var _ax = 10, _asr = svg.getBoundingClientRect(); if (_asr && _asr.width) _ax = +(10 * 800 / _asr.width).toFixed(2);
 var W = 800, H = 200, padL = 40, padR = 20, padT = 20, padB = 30;
 try { svg.dataset.padT = padT; } catch (e0) { if (window.__silent) window.__silent(e0); }
@@ -396,16 +388,10 @@ trend.forEach(function (d, i) {
 var pv = pt(i, d.views);
 var pc = pt(i, d.contacts);
 var pr = pt(i, d.resource_unlocks || 0);
-
-var _r = trend.length === 1 ? 5.5 : 3.5;
-html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="' + _r + '" fill="#fff" stroke="#1E88E5" stroke-width="2"><title>浏览: ' + d.views + '</title></circle>';
-html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="' + _r + '" fill="#fff" stroke="#ff9900" stroke-width="2"><title>咨询客服: ' + d.contacts + '</title></circle>';
-html += '<circle cx="' + pr.x + '" cy="' + pr.y + '" r="' + _r + '" fill="#fff" stroke="#4CAF50" stroke-width="2"><title>资源码解锁: ' + (d.resource_unlocks || 0) + '</title></circle>';
+html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="3.5" fill="#fff" stroke="#1E88E5" stroke-width="2"><title>浏览: ' + d.views + '</title></circle>';
+html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="3.5" fill="#fff" stroke="#ff9900" stroke-width="2"><title>咨询客服: ' + d.contacts + '</title></circle>';
+html += '<circle cx="' + pr.x + '" cy="' + pr.y + '" r="3.5" fill="#fff" stroke="#4CAF50" stroke-width="2"><title>资源码解锁: ' + (d.resource_unlocks || 0) + '</title></circle>';
 });
-if (trend.length === 1) {
-var _d0 = trend[0];
-html += '<text x="' + (padL + 14) + '" y="' + (padT + 14) + '" font-size="' + (_ax * 1.25).toFixed(2) + '" fill="var(--text-light)">今天：浏览 ' + (_d0.views || 0) + ' · 咨询客服 ' + (_d0.contacts || 0) + ' · 资源码解锁 ' + (_d0.resource_unlocks || 0) + '</text>';
-}
 svg.innerHTML = html;
 lineHover.data = trend;
 lineHover.prev = hasPrev ? prev : null;
