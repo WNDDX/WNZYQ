@@ -451,10 +451,11 @@ export async function onRequestPost(context) {
                   .replace(/<head[\s\S]*?<\/head>/gi, ' '));
                 /* v546m：直接截正文，抓到的常是站点名/导航（实测「五湖通信号卡系统|…」）。
                    改成按句切开，只留像套餐说明的句子（含流量/套餐/通话/元/G/月租这类词）。 */
-                const cand = String(bodyTxt || '').split(/[。|｜\n\r]+/)
+                const cand = String(bodyTxt || '').split(/[。|｜\n\r,，、；;]+/)
                   .map(function (s) { return s.replace(/\s+/g, ' ').trim(); })
-                  .filter(function (s) { return s.length >= 12 && s.length <= 120 && /(流量|套餐|通话|月租|首月|元|G\b|国内|分钟)/.test(s); });
-                if (cand.length) g.desc = cand.slice(0, 3).join('。').slice(0, 200);
+                  .filter(function (s) { return s.length >= 6 && s.length <= 300; })
+                  .filter(function (s) { return /(流量|套餐|通话|月租|首月|元|G\b|国内|分钟|发货|激活|归属)/.test(s); });
+                if (cand.length) g.desc = cand.slice(0, 4).map(function (s) { return s.slice(0, 60); }).join('、').slice(0, 200);
               }
               if (!g.buy) g.buy = g.link;
             } catch (e) {}
