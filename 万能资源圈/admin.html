@@ -786,7 +786,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <button aria-label="关闭" class="modal-close-x" data-close="catMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="catModalTitle">新增分类</h2>
       <div class="form">
-        <label for="catName">分类名称</label><input id="catName" class="input" maxlength="50" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('catSaveBtn').click();}" />
+        <label for="catName">分类名称</label><input id="catName" class="input" maxlength="50" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('catOk').click();}" />
         <label>分类级别</label>
         <div style="display:flex;gap:14px;margin-bottom:4px;flex-wrap:wrap;">
           <label class="radio-card">
