@@ -1779,6 +1779,68 @@ load();
 }
 
 
+function openReset() {
+var old = document.getElementById('resetMask'); if (old) old.remove();
+var mask = document.createElement('div');
+mask.className = 'modal-mask'; mask.id = 'resetMask';
+mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="清空测试数据">' +
+(window.__frag ? window.__frag.modalHead('清空测试数据') : '<button type="button" class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">清空测试数据</h2>') +
+'<p class="imp-lead"><b>会删掉的：</b>资源、资源类型、分类、访问统计、设备绑定、发码记录、采集到的资源与平台、操作日志、公告内容。<br>' +
+'<b>会留住的：</b>管理员账号和密码、店铺名、客服二维码、页面风格设置。</p>' +
+'<p class="imp-lead">这是不可恢复的删除。建议先点下面的「导出备份」，万一删错了还能对着找回来。</p>' +
+'<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份（Excel）</button></div>' +
+'<label for="rsConfirm">确认请原样输入「清空」两个字</label>' +
+'<input class="input" id="rsConfirm" type="text" autocomplete="off" placeholder="清空" aria-label="输入清空二字以确认">' +
+'<div class="modal-footer"><button type="button" class="row-btn danger-solid" id="rsGo" disabled>确认清空</button>' +
+'<button type="button" class="row-btn" data-x="1">关闭</button></div>' +
+'</div>';
+document.body.appendChild(mask);
+requestAnimationFrame(function () { mask.classList.add('open'); });
+if (window.syncBodyLock) window.syncBodyLock();
+
+var close = function () {
+mask.classList.remove('open');
+setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
+};
+mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
+var inp = mask.querySelector('#rsConfirm');
+var go = mask.querySelector('#rsGo');
+inp.addEventListener('input', function () { go.disabled = String(inp.value).trim() !== '清空'; });
+
+mask.querySelector('#rsBackup').addEventListener('click', function () {
+var eb = document.getElementById('exportBtn');
+if (eb) { eb.click(); if (window.showToast) window.showToast('已开始导出，存好后回来点「确认清空」', 'info'); }
+else if (window.showToast) window.showToast('导出入口没找到，请先关掉这个窗，到统计页点「导出数据统计」', 'error');
+});
+
+go.addEventListener('click', function () {
+if (String(inp.value).trim() !== '清空') return;
+go.disabled = true; var t0 = go.textContent; go.textContent = '正在清空…';
+fetch('/api/admin/reset', {
+method: 'POST', credentials: 'same-origin',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ confirm: '清空' })
+}).then(function (r) { return r.json(); }).then(function (d) {
+go.disabled = false; go.textContent = t0;
+if (!d || !d.ok) { if (window.showToast) window.showToast((d && d.msg) || '清空失败', 'error'); return; }
+close();
+if (window.showToast) window.showToast('已清空，可以重新开始了', 'success');
+
+try {
+if (window.state) { window.state.products = []; window.state.categories = []; }
+if (window.loadProducts) window.loadProducts(true);
+if (window.loadCategories) window.loadCategories(true);
+if (window.__reloadAdminProducts) window.__reloadAdminProducts();
+} catch (e0) { if (window.__silent) window.__silent(e0); }
+}).catch(function () {
+go.disabled = false; go.textContent = t0;
+if (window.showToast) window.showToast('网络没连上，没清成', 'error');
+});
+});
+}
+
+
 (function wait() {
 
 var panel = document.getElementById('panel-settings');
@@ -1800,7 +1862,9 @@ mkGroup('内容管理', row('批量导入（Excel 一次导多条）', btnHtml('
 + row('回收站点（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站点'))
 + row('每天自动采集（录进去的平台全部自动采）', btnHtml('cronBtn', '自动采集')));
 panel.querySelector('#cronBtn').addEventListener('click', function () { openCronHelp(); });
-mkGroup('系统维护', row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1)));
+mkGroup('系统维护',
+row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1))
++ row('清空测试数据（重新开始测试时用）', btnHtml('resetBtn', '清空数据', ' data-perm="sensitive.super"')));
 var accGrp = mkGroup('账号与安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
 + row('谁改了什么（保留 60 天）', btnHtml('logsBtn', '操作日志', ' data-perm="users"')));
 var grp = accGrp;
@@ -1810,6 +1874,7 @@ var pwdGrp = document.getElementById('pwdGroup');
 if (pwdGrp) { pwdGrp.className = ''; pwdGrp.style.marginTop = '6px'; accGrp.appendChild(pwdGrp); }
 } catch (eP) { if (window.__silent) window.__silent(eP); }
 panel.querySelector('#batchImportBtn').addEventListener('click', openWizard);
+panel.querySelector('#resetBtn').addEventListener('click', function () { openReset(); });
 panel.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });
 panel.querySelector('#recycleBtn').addEventListener('click', openRecycle);
 panel.querySelector('#usersBtn').addEventListener('click', openUsers);
