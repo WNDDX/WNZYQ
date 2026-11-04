@@ -265,6 +265,7 @@ export function cleanProduct(p) {
     detailVideos: detailVideos,   // 详情多视频（网络 URL 数组）
     contactUrl: p.contact_url,    // 咨询客服链接
     contactQr: p.contact_qr || '', // v385 条11：专属客服二维码（空=前台回退平台设置）
+    updatedBy: p.updated_by || '', // v545：最后修改人（cleanProduct 是白名单，不加这一行接口永远不返回）
     price: p.price || 0,           // 价格（0=免费不显示）
     is_online: p.is_online,
     is_hidden: p.is_hidden || 0,   // 1=隐藏（前台不显示）
