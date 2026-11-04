@@ -269,10 +269,12 @@ return '<option value="' + p.id + '">' + esc(p.name) + '</option>';
 }).join('');
 pfSel.value = String(S.curPf);
 }
-var nG = m.querySelector('#extcNGoods'); if (nG) nG.textContent = S.goods.length;
-var nP = m.querySelector('#extcNPf'); if (nP) nP.textContent = S.platforms.length;
-var nR = m.querySelector('#extcNRuns'); if (nR) nR.textContent = S.runs.length;
-var nR2 = m.querySelector('#extcNRuns2'); if (nR2) nR2.textContent = S.runs.length;
+
+var __cntEl = function (id) { return document.getElementById(id) || m.querySelector('#' + id); };
+var nG = __cntEl('extcNGoods'); if (nG) nG.textContent = S.goods.length;
+var nP = __cntEl('extcNPf'); if (nP) nP.textContent = S.platforms.length;
+var nR = __cntEl('extcNRuns'); if (nR) nR.textContent = S.runs.length;
+var nR2 = __cntEl('extcNRuns2'); if (nR2) nR2.textContent = S.runs.length;
 var hint = m.querySelector('#extcHint');
 if (hint) { hint.textContent = S.hint || ''; hint.title = S.hint || ''; }
 
