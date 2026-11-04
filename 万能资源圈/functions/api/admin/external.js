@@ -435,7 +435,30 @@ export async function onRequestPost(context) {
       const apiHit = await tryHaokaWeb(mall);
       if (apiHit && apiHit.items.length) { list = apiHit.items; via = 'api'; }
       if (!list.length) { list = parseGoodsList(pg.text, mall); }
+
+      /* v546u（实测 47 个真实号卡平台）：这个行业几乎都是同一套模板站——
+         首页 /index?k=xxx 只出 1~4 条甚至 0 条，真正的商品列表在 /article/goods 上。
+         实测 ek.haokaya.com 首页 1 条、同站 /article/goods 19 条；
+         ka.hkw10000.cn 首页 4 条、列表页 18 条。
+         原来只在「一条都没抓到」时才探同域，抓到 1~4 条的站就被判成「能用」，其实是残的。
+         现在少于 5 条就探一遍，探到更多就用探到的。 */
       let fixedAddr = '';
+      if (list.length < 5) {
+        try {
+          const u0 = new URL(mall);
+          const cands = ['/article/goods', '/article/goods/', '/goods', '/shop', '/goodslist', '/product', '/list'];
+          for (const c of cands) {
+            if (u0.pathname === c) continue;
+            let pg2;
+            try { pg2 = await fetchPage(u0.origin + c, 8000, { retry: false }); } catch (e) { continue; }
+            if (!pg2.ok) continue;
+            const api2 = await tryHaokaWeb(u0.origin + c);
+            if (api2 && api2.items.length > list.length) { list = api2.items; via = 'api'; fixedAddr = u0.origin + c; break; }
+            const l2 = parseGoodsList(pg2.text, u0.origin + c);
+            if (l2.length > list.length && l2.length >= 3) { list = l2; fixedAddr = u0.origin + c; break; }
+          }
+        } catch (e) {}
+      }
 
       /* v501：HTML 路子只有列表信息，详情图/下单链接/描述都在详情页里。
          老板要「上架后别再手填」，所以这里趁采集就把详情补齐——只补前 12 条（控制请求数，
@@ -475,26 +498,7 @@ export async function onRequestPost(context) {
           }));
         }
       }
-      /* v490（老板实测「录入两个平台都不行」的第一个原因）：填的地址常常是首页/入口页——
-         页面本身是壳，资源列表靠浏览器里的 JS 拉（服务端拿不到）。很多同类站的真列表在
-         /article/goods 这类固定路径上（实测 55555.wang 就是：首页壳、/article/goods 有 20 条）。
-         所以这里自动试一遍同域常见路径，能抓到就按那个地址入库，并告诉老板地址已自动换掉。 */
-      if (!list.length) {
-        try {
-          const u0 = new URL(mall);
-          const cands = ['/article/goods', '/article/goods/', '/goods', '/shop', '/goodslist', '/product', '/list'];
-          for (const c of cands) {
-            if (u0.pathname === c) continue;
-            let pg2;
-            try { pg2 = await fetchPage(u0.origin + c, 8000, { retry: false }); } catch (e) { continue; }
-            if (!pg2.ok) continue;
-            const api2 = await tryHaokaWeb(u0.origin + c);
-            if (api2 && api2.items.length >= 3) { list = api2.items; via = 'api'; fixedAddr = u0.origin + c; break; }
-            const l2 = parseGoodsList(pg2.text, u0.origin + c);
-            if (l2.length >= 3) { list = l2; fixedAddr = u0.origin + c; break; }
-          }
-        } catch (e) {}
-      }
+      /* v546u：同域探测已提前到解析完之后（少于 5 条就试），这里只留失败判定。 */
       if (!list.length) {
         const shell = pg.text.length < 4000 || /<!-- 商品将通过JS动态加载|id="productList"\s*>\s*</i.test(pg.text);
         return json({
