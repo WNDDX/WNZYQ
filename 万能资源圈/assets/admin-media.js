@@ -1772,6 +1772,7 @@ if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.u
 stateAnn.loaded = true;
 document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
 syncSelectDisplay(document.getElementById('annMode'));
+if (window.__annModeHint) window.__annModeHint();
 stateAnn._modeSaved = (res.settings || {}).announcement_mode || 'always';
 if (stateAnn.list.length) { var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; renderAnnList(); selectAnnItem(_defAnn.id); } else { renderAnnList(); clearAnnEdit(); }
 }
@@ -1785,6 +1786,40 @@ stateAnn.list.push(a);
 renderAnnList();
 selectAnnItem(a.id);
 }
+
+function annModeHint() {
+var sel = document.getElementById('annMode');
+var box = document.getElementById('annModeHint');
+if (!sel || !box) return;
+var v = sel.value || 'always';
+if (v === 'always') {
+box.innerHTML = '现在选的是「每次进来都弹」：老客户一天进三次就被挡三次。' +
+'<button type="button" class="row-btn ann-hint-btn" id="annToDaily">改成每天一次</button>';
+} else if (v === 'daily') {
+box.textContent = '现在选的是「每天只弹一次」：同一天第二次进来不再打扰；没看过的公告，资源页顶栏「公告」键上仍有红点。';
+} else if (v === 'session') {
+box.textContent = '现在选的是「一次浏览只弹一次」：刷新页面或重开浏览器会再弹一次。';
+} else {
+box.textContent = '现在选的是「不自动弹」：客户只能自己点资源页顶栏「公告」键查看。';
+}
+}
+window.__annModeHint = annModeHint;
+(function () {
+var sel = document.getElementById('annMode'), box = document.getElementById('annModeHint');
+if (!sel || !box) return;
+sel.addEventListener('change', annModeHint);
+box.addEventListener('click', function (e) {
+if (!e.target.closest || !e.target.closest('#annToDaily')) return;
+sel.value = 'daily';
+if (window.syncSelectDisplay) window.syncSelectDisplay(sel);
+annModeHint();
+
+var sv = document.getElementById('saveAnnBtn');
+if (sv) sv.click();
+});
+annModeHint();
+})();
+
 document.getElementById('saveAnnBtn').addEventListener('click', function () {
 var annBtn = this;
 var _annBtnText = annBtn.textContent;

@@ -899,6 +899,7 @@ document.getElementById('setAnnouncement').innerHTML = sanitizeHTML(s.announceme
 }
 
 document.getElementById('annMode').value = s.announcement_mode || 'always';
+if (window.__annModeHint) setTimeout(window.__annModeHint, 0);
 syncSelectDisplay(document.getElementById('annMode'));
 if (typeof stateAnn !== 'undefined' && stateAnn) stateAnn._modeSaved = s.announcement_mode || 'always';
 state.settings = s;

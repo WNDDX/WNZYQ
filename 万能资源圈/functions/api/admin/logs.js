@@ -23,7 +23,10 @@ export async function onRequestGet(context) {
     const url = new URL(request.url);
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
     /* v540：一页固定 20 条（老板：所有长列表只显示 20 条 + 翻页） */
-    const size = Math.min(100, Math.max(5, parseInt(url.searchParams.get('size') || '20', 10) || 20));
+    /* v543：size=0 = 导出用全量（最多 3000 条，够 60 天用；界面永远走 20 条分页） */
+    const sizeRaw = parseInt(url.searchParams.get('size') || '20', 10);
+    const allRows = sizeRaw === 0;
+    const size = allRows ? 3000 : Math.min(100, Math.max(5, sizeRaw || 20));
     const who = (url.searchParams.get('who') || '').slice(0, 40);
     const q = (url.searchParams.get('q') || '').slice(0, 60);
     /* 时间范围：1=今天 7=近 7 天 30=近 30 天（其它值按 7 处理） */
@@ -51,7 +54,7 @@ export async function onRequestGet(context) {
     const totalRow = await q1.first();
 
     let q2 = env.DB.prepare('SELECT id, created_at AS at, admin AS who, action, target FROM audit_log ' + w + ' ORDER BY id DESC LIMIT ? OFFSET ?');
-    q2 = q2.bind.apply(q2, binds.concat([size, (page - 1) * size]));
+    q2 = q2.bind.apply(q2, binds.concat([size, allRows ? 0 : (page - 1) * size]));
     const rows = await q2.all();
 
     /* ===== 员工操作日报：同一时间窗口内按人 / 按动作 / 按天汇总（搜索词也算进去） ===== */

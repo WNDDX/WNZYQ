@@ -1034,7 +1034,7 @@ usersCall('PUT', { id: u.id, op: 'status', status: st }, function () { if (windo
 }
 function usersDel(u, children, subtree) {
 var warn = (subtree > 0)
-? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后这些账号会一并失效（数据保留，可在「数据缓存」找回）。'
+? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后这些账号会一并失效（数据保留，可在「回收站」找回）。'
 : '删除后该账号立即无法登录，其新增的内容按分类范围保留。';
 usAsk('删除账号', '确认删除「' + esc(u.username) + '」？<br>' + warn, { okText: '删除' }, function (v, done, fail) {
 usersCall('DELETE', null, function () { if (window.showToast) window.showToast('账号已删除', 'success'); done(); renderUsersList(); }, fail, '/api/admin/users?id=' + u.id);
@@ -1371,8 +1371,8 @@ function openRecycle() {
 var old = document.getElementById('recycleMask'); if (old) old.remove();
 var mask = document.createElement('div');
 mask.className = 'modal-mask'; mask.id = 'recycleMask';
-mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="数据缓存">' +
-(window.__frag ? window.__frag.modalHead('数据缓存') : '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">数据缓存</h2>') +
+mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="回收站">' +
+(window.__frag ? window.__frag.modalHead('回收站') : '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">回收站</h2>') +
 '<div class="rc-tools"><label class="rc-all"><input type="checkbox" id="rcAll" aria-label="全选"> 全选</label><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜资源 / 分类 / 公告的名字"></div>' +
 
 '<div class="batch-bar" id="rcBar"><span class="batch-count-label">已选 <b id="rcCount">0</b> 项</span>' +
@@ -1624,6 +1624,8 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<button type="button" class="logs-rbtn" data-days="1">今天</button>' +
 '<button type="button" class="logs-rbtn on" data-days="7">近 7 天</button>' +
 '<button type="button" class="logs-rbtn" data-days="30">近 30 天</button>' +
+
+'<button type="button" class="row-btn logs-exp" id="logsExport">导出 Excel</button>' +
 '</div>' +
 '<div class="logs-daily" id="logsDaily"><div class="logs-d-empty">正在统计…</div></div>' +
 '<div class="logs-tools">' +
@@ -1690,7 +1692,7 @@ if (!list.length) {
 body.innerHTML = '<div class="extc-loading">' + (q ? '该搜索暂无记录，换个词试试'
 : (who ? '该账号在这段时间没有操作记录' : '该列表暂无操作记录。改一次设置或删一条资源，这里就会出现。')) + '</div>';
 } else {
-body.innerHTML = list.map(function (r) {
+body.innerHTML = '<div class="log-head" aria-hidden="true"><span>时间</span><span>账号</span><span>做了什么</span><span>对象</span></div>' + list.map(function (r) {
 return '<div class="log-row" data-who="' + esc(r.who || 'admin') + '">' +
 '<span class="log-t">' + esc(bjTime(r.at)) + '</span>' +
 '<span class="log-w">' + esc(r.who || 'admin') + '</span>' +
@@ -1745,6 +1747,32 @@ if (e.target.closest && e.target.closest('#logsWhoClear')) { who = ''; page = 1;
 
 mask.querySelector('#logsGo').addEventListener('click', function () { q = mask.querySelector('#logsQ').value.trim(); page = 1; load(); });
 mask.querySelector('#logsQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') { q = this.value.trim(); page = 1; load(); } });
+
+
+var expBtn = mask.querySelector('#logsExport');
+if (expBtn) expBtn.addEventListener('click', function () {
+if (typeof window.__downloadXLS !== 'function' || typeof window.__exportStamp !== 'function') {
+if (window.showToast) window.showToast('导出组件还没加载好，刷新页面再试', 'error');
+return;
+}
+var oldTxt = expBtn.textContent;
+expBtn.disabled = true; expBtn.textContent = '导出中…';
+var back = function () { expBtn.disabled = false; expBtn.textContent = oldTxt; };
+fetch('/api/admin/logs?page=1&size=0&days=' + days
++ '&q=' + encodeURIComponent(q) + '&who=' + encodeURIComponent(who),
+{ credentials: 'same-origin', cache: 'no-cache' })
+.then(function (r) { return r.json(); })
+.then(function (d) {
+if (!d || !d.ok) throw new Error((d && d.msg) || '读取失败');
+var rows = [['时间', '账号', '做了什么', '对象']];
+(d.list || []).forEach(function (r) { rows.push([bjTime(r.at), r.who || 'admin', r.action || '', r.target || '']); });
+window.__downloadXLS('操作日志-' + RANGE_TXT[days] + '-' + window.__exportStamp() + '.xls',
+[{ name: '操作日志', rows: rows }]);
+back();
+if (window.showToast) window.showToast('已导出 ' + (rows.length - 1) + ' 条（' + RANGE_TXT[days] + (who ? '・' + who : '') + '）', 'success');
+})
+.catch(function (e) { back(); if (window.showToast) window.showToast('导出失败：' + (e.message || '请重试'), 'error'); });
+});
 load();
 }
 
@@ -1767,7 +1795,7 @@ panel.appendChild(g);
 return g;
 };
 mkGroup('内容管理', row('批量导入（Excel 一次导多条）', btnHtml('batchImportBtn', '批量导入', '', 1))
-+ row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存'))
++ row('回收站（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站'))
 + row('每天自动采集（录进去的平台全部自动采）', btnHtml('cronBtn', '自动采集')));
 panel.querySelector('#cronBtn').addEventListener('click', function () { openCronHelp(); });
 mkGroup('系统维护', row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1)));
