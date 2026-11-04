@@ -783,7 +783,7 @@ window.buildUniPager(pager, {
 page: adminPage,
 totalPages: totalPages,
 total: state._backendPaged ? (state.total || list.length) : list.length,
-unit: '件',
+unit: '个',
 
 onPage: __adminTurnPage
 });
