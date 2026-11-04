@@ -673,7 +673,7 @@ var d = done + _linkCnt;
 var pct = _pTotal ? Math.round(d / _pTotal * 100) : 100;
 if (pct === _pLast && !stage) return;
 _pLast = pct;
-try { _pgFill.style.width = pct + '%'; } catch (eP) {}
+try { _pgFill.style.width = (stage ? 96 : pct) + '%'; } catch (eP) {}
 if (_pgTxt) _pgTxt.textContent = stage || ('正在检查：图片 ' + done + ' / ' + total + ' 张 · 外链 ' + _linkCnt + ' / ' + links.length + ' 条（' + pct + '%）');
 }
 __tickProg();
