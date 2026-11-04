@@ -741,7 +741,7 @@
       }).catch(function () {
         saving = false;
         saveProductBtn.disabled = false; saveProductBtn.textContent = '确定';
-        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
+        toast(window.T('netFail'), 'error'); // v294：087 网络提示统一
       });
     }
 
@@ -2238,7 +2238,7 @@ document.addEventListener('click', function (e) {
         if (after) after();
       }
       else { toast((res && res.msg) || '保存失败', 'error'); }
-    }).catch(function () { b.disabled = false; b.textContent = _t; toast('网络开小差了，请稍后再试', 'error'); });
+    }).catch(function () { b.disabled = false; b.textContent = _t; toast(window.T('netFail'), 'error'); });
     return true;
   }
   /* v537（老板）：编辑信息里的「收起」只负责收起，保存走弹窗下面的「保存修改」 */

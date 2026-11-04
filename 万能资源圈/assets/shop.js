@@ -1736,8 +1736,8 @@
       }).catch(function (err) {
         unlockBusy = false;
         // U3：超时提示「网络开小差了，请稍后再试」
-        if (err && err.message === 'timeout') return { ok: false, msg: '网络开小差了，请稍后再试' };
-        return { ok: false, msg: '网络开小差了，请稍后再试' }; // v294：087 网络提示统一
+        if (err && err.message === 'timeout') return { ok: false, msg: window.T('netFail') };
+        return { ok: false, msg: window.T('netFail') }; // v294：087 网络提示统一
       });
     }
     // 初始化/重置专属内容解锁区域
@@ -2219,7 +2219,7 @@
       if (!currentProduct || !currentProduct.id) { showToast('该资源暂不能分享', 'info'); return; }
       var url = window.location.origin + window.location.pathname + '?pid=' + currentProduct.id;
       if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (currentProduct.title || '') + ' · 资源链接已复制'); // R251：新标题+带资源名灰字
-      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } showToast('链接已复制', 'success'); }
+      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } showToast(window.T('copied'), 'success'); }
     });
 
     // ---------- 资源码验证 ----------
@@ -2499,7 +2499,7 @@
         }
         // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
         if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch (e) { if (window.__silent) window.__silent(e); } }, 1500); } catch (e) { if (window.__silent) window.__silent(e); } }
-        showToast('链接已复制', 'success');
+        showToast(window.T('copied'), 'success');
         if (shareMask) { shareMask.classList.add('open'); setBodyLock(true); }
       } catch (e) {
 
@@ -2524,7 +2524,7 @@
         else { try { fallbackCopy(url); } catch (e) { if (window.__silent) window.__silent(e); } }
         // R209（用户 09-19 00:41）：根因→__copyOk 的 .copy-ok 给链接文字加整块绿底；修法→链接文字专用绿字反馈
         if (shareLinkText) { try { shareLinkText.classList.add('copy-ok-text'); setTimeout(function(){ try{ shareLinkText.classList.remove('copy-ok-text'); }catch (e) { if (window.__silent) window.__silent(e); } }, 1500); } catch (e) { if (window.__silent) window.__silent(e); } }
-        showToast('链接已复制', 'success');
+        showToast(window.T('copied'), 'success');
       });
     }
 
@@ -3259,7 +3259,7 @@
         return function () {
           var url = window.location.origin + window.location.pathname + '?pid=' + p.id;
           if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (p.title || '') + ' · 资源链接已复制'); // R251：新标题+带资源名灰字
-          else __cp(url, '链接已复制');
+          else __cp(url, window.T('copied'));
         };
       }
       /* v347：存二维码——统一走公共层 window.__savePosterPng（生成带站名+资源名的图） */

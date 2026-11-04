@@ -488,7 +488,7 @@
     if (act === 'see') { seeForm(id); return; }
     if (act === 'del') {
       /* v521：换系统的确认框（原生 confirm 样式与全站不一致，且会打断浏览器） */
-      if (!window.showConfirm) { toast('页面需要刷新后再试', 'error'); return; }
+      if (!window.showConfirm) { toast(window.T('needRefresh'), 'error'); return; }
       window.showConfirm('删除资源', '从「采集到的资源」里删掉这条？不影响对方平台。', function (done) {
         done();
         api('admin/external', { method: 'POST', body: { op: 'goods.del', id: id } }).then(function (r) {
@@ -501,7 +501,7 @@
     if (act === 'delbatch') {
       var ids = selIds();
       if (!ids.length) { toast('先勾选要删的资源', 'info'); return; }
-      if (!window.showConfirm) { toast('页面需要刷新后再试', 'error'); return; }
+      if (!window.showConfirm) { toast(window.T('needRefresh'), 'error'); return; }
       window.showConfirm('批量删除', '删除选中的 ' + ids.length + ' 条？不影响对方平台。', function (done) {
         done();
         Promise.all(ids.map(function (x) { return api('admin/external', { method: 'POST', body: { op: 'goods.del', id: x } }); })).then(function () {
@@ -527,7 +527,7 @@
       } else if (act === 'editpf') {
         platformForm(p);
       } else {
-        if (!window.showConfirm) { toast('页面需要刷新后再试', 'error'); return; }
+        if (!window.showConfirm) { toast(window.T('needRefresh'), 'error'); return; }
         window.showConfirm('删除平台', '删除平台「' + p.name + '」？采来的资源会转成「未归平台」，不会丢。', function (done) {
           done();
           api('admin/external', { method: 'POST', body: { op: 'platform.del', id: p.id } }).then(function (r) {

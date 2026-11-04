@@ -1,4 +1,28 @@
 
+
+/* ================= v539：全站话术表（唯一出处） =================
+   老板：同一句提示散在十几个文件里、说法还不一样。以后改文案只改这张表。
+   用法：window.T('netFail')；带变量的：window.T('addedN', {n: 3}) */
+window.__COPY = window.__COPY || {
+  netFail: '网络开小差了，请稍后再试',
+  upFail: '上传失败，请重试',
+  delFail: '删除失败，请重试',
+  saveFail: '保存失败，请重试',
+  needRefresh: '页面需要刷新后再试',
+  saved: '已保存',
+  deleted: '已删除',
+  restored: '已恢复',
+  copied: '链接已复制',
+  loading: '正在读取…',
+  noData: '该列表暂无内容',
+  pickCatFirst: '请选择资源分类'
+};
+window.T = window.T || function (key, vars) {
+  var s = (window.__COPY && window.__COPY[key]) || key;
+  if (vars) Object.keys(vars).forEach(function (k) { s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]); });
+  return s;
+};
+
 /* v343 条5：统一取数据通道——前台与后台共用同一份核心。
    统一负责：超时、GET 失败重试一次、带上登录凭证、非 JSON 错误兜底、
    同一请求在途去重、登录过期回调。页面只管拿结果，不再各写一套。 */
@@ -62,19 +86,19 @@ window.WNApi = (function () {
         if (opts.raw) return r;
         var ct = r.headers.get('content-type') || '';
         if (r.status >= 400 && ct.indexOf('application/json') === -1) {
-          return { ok: false, msg: '网络开小差了，请稍后再试', _status: r.status };
+          return { ok: false, msg: window.T('netFail'), _status: r.status };
         }
         return r.json().then(function (d) {
           if (d && typeof d === 'object') d._status = r.status;
           if (r.status === 401 && opts.on401) { try { opts.on401(); } catch (e) { if (window.__silent) window.__silent(e); } }
           return d;
         }).catch(function () {
-          return r.status === 204 ? { ok: true, _status: 204 } : { ok: false, msg: '网络开小差了，请稍后再试', _status: r.status };
+          return r.status === 204 ? { ok: true, _status: 204 } : { ok: false, msg: window.T('netFail'), _status: r.status };
         });
       }).catch(function (e) {
         if (isGet && !isRetry) return once(true);
         if (opts.throwOnError) throw e;
-        var msg = (e && e.message === 'timeout') ? '网络开小差了，请稍后再试' : '网络开小差了，请稍后再试';
+        var msg = (e && e.message === 'timeout') ? window.T('netFail') : window.T('netFail');
         return { ok: false, msg: msg, _net: true };
       });
     }
@@ -607,7 +631,7 @@ if ('serviceWorker' in navigator) {
   window.showShareLinkModal = function (title, url, tip) {
     // R79+R138：分享按键点击那一刻统一复制链接（异步 clipboard.writeText，零主线程阻塞）+ 即时 toast
     // 与资源页顶栏分享、资源卡片分享、预览分享、弹窗链接点击全部同链路同提示
-    try { __shareCopy(url || ''); __shareToast('链接已复制'); } catch (e0) { if (window.__silent) window.__silent(e0); }
+    try { __shareCopy(url || ''); __shareToast(window.T('copied')); } catch (e0) { if (window.__silent) window.__silent(e0); }
     try {
       var mask = document.createElement('div');
       mask.className = 'share-mask';
@@ -634,7 +658,7 @@ if ('serviceWorker' in navigator) {
         uEl.addEventListener('click', function () {
           try { __shareCopy(uEl.textContent || ''); } catch (e) { if (window.__silent) window.__silent(e); }
           if (uEl.classList) { uEl.classList.add('copy-ok-text'); setTimeout(function () { try { uEl.classList.remove('copy-ok-text'); } catch (e) { if (window.__silent) window.__silent(e); } }, 1500); } /* R217 条1：复制成功=链接文字变绿 1.5s（全站统一口径，与资源页顶栏分享一致） */
-          __shareToast('链接已复制');
+          __shareToast(window.T('copied'));
         });
         /* R217 条1：弹窗打开那一刻的自动复制同样给绿字反馈（所有走本弹窗的分享入口统一） */
         uEl.classList.add('copy-ok-text');

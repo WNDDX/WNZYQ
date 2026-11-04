@@ -1038,7 +1038,7 @@ function renderProducts() {
                 /* v336 条139：本地已在请求前即时生效，此处只做后台静默对账 */ silentSyncProducts();
               }
               else toast(res.msg || '操作失败', 'error');
-            __inflight[action] = false; }).catch(function () { closeConfirm(); __bDone(action); toast('网络开小差了，请稍后再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
+            __inflight[action] = false; }).catch(function () { closeConfirm(); __bDone(action); toast(window.T('netFail'), 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
           });
         };
         return;
@@ -1059,7 +1059,7 @@ function renderProducts() {
                 /* v336 条139：本地已在请求前即时生效 */ silentSyncProducts();
               }
               else toast(res.msg || '操作失败', 'error');
-            }).catch(function () { closeConfirm(); __bDone(action); toast('网络开小差了，请稍后再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
+            }).catch(function () { closeConfirm(); __bDone(action); toast(window.T('netFail'), 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
           });
         });
         return;
@@ -1077,7 +1077,7 @@ function renderProducts() {
               api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: action }) }).then(function (res) {
                 if (res && res.ok) { clearCache(); silentSyncProducts(); }
                 else { toast((res && res.msg) || '批量删除失败', 'error'); state.products = _snap; renderProducts(); }
-              }).catch(function () { toast('网络开小差了，请稍后再试', 'error'); state.products = _snap; renderProducts(); });
+              }).catch(function () { toast(window.T('netFail'), 'error'); state.products = _snap; renderProducts(); });
             },
             function () { state.products = _snap; renderProducts(); } /* 撤销：原样还原快照 */
           );
@@ -1101,7 +1101,7 @@ function renderProducts() {
           } else {
             toast(res.msg || '操作失败', 'error');
           }
-        }).catch(function () { closeConfirm(); __bDone(action); toast('网络开小差了，请稍后再试', 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
+        }).catch(function () { closeConfirm(); __bDone(action); toast(window.T('netFail'), 'error'); }); // v294：087 网络提示统一 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误 // v349：失败也要解除防重
       });
     }
 
@@ -1213,7 +1213,7 @@ function renderProducts() {
               state.products = _cur; renderProducts(); /* 真删失败 → 回滚 */
             }
           }).catch(function () {
-            toast('删除失败，请重试', 'error');
+            toast(window.T('delFail'), 'error');
             var _cur2 = (state.products || []).slice(); _cur2.splice(Math.min(_idx, _cur2.length), 0, p);
             state.products = _cur2; renderProducts();
           });
@@ -1267,7 +1267,7 @@ function renderProducts() {
         /* v330 条25：网络异常同样回滚——乐观 UI 必须"要么成功、要么复原"，不留中间态 */
         target.is_online = prevOnline; target.is_hidden = prevHidden; window.__skipRenderOnce = false;
         renderProducts();
-        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
+        toast(window.T('netFail'), 'error'); // v294：087 网络提示统一
       });
     }
 

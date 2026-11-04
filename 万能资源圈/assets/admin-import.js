@@ -1005,7 +1005,7 @@
   function usersCall(method, body, done, fail, urlOverride) {    fetch(urlOverride || '/api/admin/users', { method: method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined }) /* v443 条6：删除等需带 id 查询串的场景用 urlOverride */
       .then(function (r) { return r.json(); })
       .then(function (x) { if (x && x.ok) { if (done) done(x); } else { if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error'); if (fail) fail(x); } })
-      .catch(function () { if (window.showToast) window.showToast('网络开小差了，请稍后再试', 'error'); if (fail) fail(); });
+      .catch(function () { if (window.showToast) window.showToast(window.T('netFail'), 'error'); if (fail) fail(); });
   }
   /* v454：账号操作的小弹窗（改密/冻结/删除共用）——样式与全站弹窗一致，不再用浏览器原生 prompt */
   function usAsk(title, msg, opts, onOk) {
@@ -1345,7 +1345,7 @@
           if (done) done();
         } else if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error');
       })
-      .catch(function () { if (window.showToast) window.showToast('网络开小差了，请稍后再试', 'error'); });
+      .catch(function () { if (window.showToast) window.showToast(window.T('netFail'), 'error'); });
   }
   function openRecycle() {
     var old = document.getElementById('recycleMask'); if (old) old.remove();

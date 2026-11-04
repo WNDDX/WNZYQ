@@ -1124,10 +1124,10 @@
             // 失败路径只弹一个弹窗（此前 toast+showAlert+分支内 showAlert 会叠出两个弹窗，已修复去重）
             var _local = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             // v294（用户 10-04 02:14）：113 登录失败提示统一
-            if (_local) { toast('网络开小差了，请稍后再试', 'error'); }
+            if (_local) { toast(window.T('netFail'), 'error'); }
             else if (res._status === 429) { var waitMin = res && res.retryAfter ? Math.ceil(res.retryAfter / 60) : 10;
             toast('尝试次数过多，请 ' + waitMin + ' 分钟后再试', 'error'); } // v294：125 提示加等待时间 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误
-            else { toast('登录失败：' + (res.msg || '网络开小差了，请稍后再试'), 'error'); }
+            else { toast('登录失败：' + (res.msg || window.T('netFail')), 'error'); }
           }
         })
         .finally(function () {

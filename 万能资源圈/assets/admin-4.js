@@ -51,9 +51,9 @@
             var res = JSON.parse(xhr.responseText);
             if (res && res.ok && res.url) cb(res.url, null, res.key); /* v353：钥匙一并回传，供遗留清理记账 */
             else { toast((res && (res.msg || res.error)) || '上传失败', 'error'); if (cb) cb(null, (res && (res.msg || res.error)) || '上传失败'); }
-          } catch (e) { toast('上传失败，请重试', 'error'); if (cb) cb(null, '上传失败'); }
+          } catch (e) { toast(window.T('upFail'), 'error'); if (cb) cb(null, '上传失败'); }
         };
-        xhr.onerror = function () { window.__uploadXHR = null; toast('上传失败，请重试', 'error'); if (cb) cb(null, '上传失败'); };
+        xhr.onerror = function () { window.__uploadXHR = null; toast(window.T('upFail'), 'error'); if (cb) cb(null, '上传失败'); };
         xhr.onabort = function () { window.__uploadXHR = null; }; /* v349：中止时清句柄，避免误停下一次上传 */
         xhr.open('POST', '/api/admin/upload-image');
         xhr.send(fd);
@@ -117,9 +117,9 @@
           var res = JSON.parse(xhr.responseText);
           if (res && res.ok && res.url) cb(res.url, res.note);
           else toast((res && (res.msg || res.error)) || '上传失败', 'error');
-        } catch (e) { toast('上传失败，请重试', 'error'); }
+        } catch (e) { toast(window.T('upFail'), 'error'); }
       };
-      xhr.onerror = function () { window.__uploadXHR = null; toast('上传失败，请重试', 'error'); };
+      xhr.onerror = function () { window.__uploadXHR = null; toast(window.T('upFail'), 'error'); };
       xhr.onabort = function () { window.__uploadXHR = null; };
       xhr.open('POST', '/api/admin/upload-video');
       xhr.send(fd);
@@ -576,7 +576,7 @@
           var a0 = card ? card.querySelector('a[data-dl]') : null;
           var u0 = a0 ? a0.getAttribute('href') : '';
           if (u0 && window.__shareCopyText) window.__shareCopyText(location.origin + u0, '') || window.__shareCopyText(u0, '');
-          if (u0) toast('链接已复制', 'success'); else toast('这个文件还没上传，没有链接可复制', 'info');
+          if (u0) toast(window.T('copied'), 'success'); else toast('这个文件还没上传，没有链接可复制', 'info');
           e.preventDefault(); e.stopPropagation();
           return;
         }
@@ -650,7 +650,7 @@
           row = target.closest('.file-folder-item');
           var key = row ? (row.getAttribute('data-key') || '') : '';
           if (key && window.__shareCopyText) window.__shareCopyText(location.origin + '/files/' + key, '');
-          if (key) toast('链接已复制', 'success'); else toast('这个文件还没上传，没有链接可复制', 'info');
+          if (key) toast(window.T('copied'), 'success'); else toast('这个文件还没上传，没有链接可复制', 'info');
           e.preventDefault(); e.stopPropagation();
           return;
         }
@@ -1923,7 +1923,7 @@
         } else { annBtn.disabled = false; annBtn.textContent = _annBtnText; toast(res.msg || '保存失败', 'error'); }
       }).catch(function () {
         annBtn.disabled = false; annBtn.textContent = _annBtnText;
-        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
+        toast(window.T('netFail'), 'error'); // v294：087 网络提示统一
       });
     });
     // 取消公告（不保存，下次打开重新加载已保存状态）
@@ -2133,7 +2133,7 @@
               if (after) after();
             }
             else { toast((res && res.msg) || '保存失败', 'error'); }
-          }).catch(function () { b.disabled = false; b.textContent = _t; toast('网络开小差了，请稍后再试', 'error'); });
+          }).catch(function () { b.disabled = false; b.textContent = _t; toast(window.T('netFail'), 'error'); });
         }
         /* v537（老板）：「收起」恢复成单纯的收起，不再顺手保存；保存交给旁边的「保存」键 */
         var sv = document.getElementById('infoSave' + C);
@@ -2500,7 +2500,7 @@
         }
       }).catch(function () {
         variantOk.disabled = false; variantOk.textContent = _variantOkText;
-        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
+        toast(window.T('netFail'), 'error'); // v294：087 网络提示统一
       });
     });
 
