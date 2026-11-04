@@ -1350,14 +1350,26 @@ setTimeout(function () { renderCategories(state.categories); refreshCatCnts(); r
 } catch (e0) { if (window.__silent) window.__silent(e0); }
 __undoable(
 '已删除分类「' + (c.name || '未命名') + '」· 回收站点可找回',
+function () { silentSyncCategories(); },
 function () {
+
+var _seqC = Promise.resolve();
+_delIds0.forEach(function (id) {
+_seqC = _seqC.then(function () {
+return api('admin/recycle', { method: 'POST', body: JSON.stringify({ op: 'restore', kind: 'category', id: id }) });
+});
+});
+_seqC.then(function () {
+__restoreCat(); clearCache(); silentSyncCategories();
+toast('已恢复分类「' + (c.name || '未命名') + '」', 'success');
+}).catch(function () { toast('恢复失败，请到「回收站点」手动恢复', 'error'); });
+}
+);
+
 api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
 if (res && res.ok) { clearCache(); silentSyncCategories(); }
 else { toast((res && res.msg) || '删除失败', 'error'); __restoreCat(); }
 }).catch(function () { toast(window.T('delFail'), 'error'); __restoreCat(); });
-},
-function () { __restoreCat(); }
-);
 function __restoreCat() {
 state.categories = _catSnap.slice();
 (state.products || []).forEach(function (p, i) { if (_cidSnap[i] !== undefined) p.cid = _cidSnap[i]; });
