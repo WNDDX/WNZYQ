@@ -1209,7 +1209,7 @@
        带富文本工具条的行（平台公告）不加这个类，保持上下结构。 */
     .setting-row.is-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; padding: 6px 0; }
     .setting-row.is-inline > label { flex: 1 1 auto; min-width: 0; margin: 0; }
-    .setting-row.is-inline > button { flex: 0 0 auto; }
+    .setting-row.is-inline > button { flex: 0 0 auto; margin: 0; border-radius: var(--r-m); } /* 主键自带的 8px 下边距会把这一行顶高 12px，和一键一行的高度对不上 */
     /* 主键在这一行里只靠颜色区分，不再靠"变大"——否则同一列里一高一矮，看着像两套按钮 */
     .setting-row.is-inline .btn-inline-pd { height: var(--btn-h-sm); min-height: var(--btn-h-sm); padding: 0 16px; font-size: 13px; }
     /* 平台公告那行带富文本工具条：标签+按钮在第一行，工具条另起一行占满 */
