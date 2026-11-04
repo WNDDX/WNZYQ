@@ -469,7 +469,7 @@
         main.textContent = '添加到桌面-点击可直达';
         var never = document.createElement('span');
         never.textContent = '不再提示';
-        never.style.cssText = 'color:#8a9aab;font-size:11px;text-decoration:underline;flex:none';
+        never.style.cssText = 'color:var(--text-light);font-size:11px;text-decoration:underline;flex:none';
         t.appendChild(main); t.appendChild(never);
         t.setAttribute('role', 'button'); t.setAttribute('tabindex', '0');
         var gone = false;

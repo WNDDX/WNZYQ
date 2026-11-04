@@ -1716,7 +1716,7 @@
         txt.addEventListener('input', function () { a.title = this.value; });
         txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '(未命名公告)'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
         // 公告隐藏状态由下方状态下拉框直接切换
-        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:#999;font-size:12px;min-width:40px;text-align:left;flex-shrink:0;'; /* v416 条8：排序标签 56→40px，与名称框同主行 */ sortEl.textContent = '排序:' + (idx + 1);
+        var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:var(--text-faint);font-size:12px;min-width:40px;text-align:left;flex-shrink:0;'; /* v416 条8：排序标签 56→40px，与名称框同主行 */ sortEl.textContent = '排序:' + (idx + 1);
         // R82：显示/隐藏切换改用与编辑同款的胶囊按钮（点击直接切换），不再用下拉框
         var annStatusBtn = document.createElement('button');
         annStatusBtn.className = 'row-btn status-btn ' + (a.hidden ? 'status-hidden' : 'status-online');
@@ -1998,7 +1998,7 @@
       if (img) {
         var _tip = document.getElementById('infoQrTip' + C);
         if (qr) { img.src = qr; img.style.display = ''; if (_tip) _tip.remove(); }
-        else { img.removeAttribute('src'); img.style.display = 'none'; if (!_tip && img.parentNode) { _tip = document.createElement('div'); _tip.id = 'infoQrTip' + C; _tip.style.cssText = 'font-size:12px;color:#8a9aab;padding:10px 0;line-height:1.7'; _tip.textContent = '还没有上传二维码——点上方「上传二维码」添加，访客长按图片即可识别'; img.parentNode.appendChild(_tip); } } /* v443 条10：空面板给引导不再干等 */
+        else { img.removeAttribute('src'); img.style.display = 'none'; if (!_tip && img.parentNode) { _tip = document.createElement('div'); _tip.id = 'infoQrTip' + C; _tip.style.cssText = 'font-size:12px;color:var(--text-light);padding:10px 0;line-height:1.7'; _tip.textContent = '还没有上传二维码——点上方「上传二维码」添加，访客长按图片即可识别'; img.parentNode.appendChild(_tip); } } /* v443 条10：空面板给引导不再干等 */
       }
       if (del) del.style.display = qr ? '' : 'none';   /* ×只在有图时出现 */
       if (add) add.style.display = qr ? 'none' : '';

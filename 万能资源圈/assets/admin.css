@@ -174,6 +174,12 @@
       .tabs .tab.btn-fit::after { content: attr(data-short); font-size: 11px; letter-spacing: 0; margin-left: 3px; opacity: .95; }
       .tabs .tab.btn-fit { padding-left: 8px; padding-right: 8px; gap: 2px; }
     }
+    
+/* v537：单选卡片（一级/二级分类）——原来写死在标签上的背景、描边、字号，收进一个类 */
+.radio-card { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); cursor: pointer;
+  background: var(--bg-light, #f6f9fd); border: 1px solid var(--border, #e6eef7); border-radius: var(--radius-btn, 10px); padding: 8px 14px; }
+.radio-card:has(input:checked) { border-color: var(--blue1); background: rgba(var(--blue1-rgb, 30,136,229), .06); }
+
     @media (max-width: 600px) {
       /* v340 条10 修复：顶栏容器此前被钉成 60px 高，而手机端 logo 行+标签行实际约 100px，
          内容被挤成负偏移叠在一起。改为自适应高度，高度变量由 JS 实测回写。 */

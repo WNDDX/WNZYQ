@@ -636,7 +636,7 @@
         _shell.className = 'modal-mask'; _shell.id = 'sysCheckMask';
         _shell.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
           '<h2 class="modal-title">系统体检</h2>' +
-          '<div style="font-size:13px;color:#5b7083;margin:0 0 12px">正在逐张检查图片、逐条探测外链，最长约半分钟，请稍候…</div>' +
+          '<div style="font-size:13px;color:var(--text-light);margin:0 0 12px">正在逐张检查图片、逐条探测外链，最长约半分钟，请稍候…</div>' +
           '<div class="chk-scroll"><div class="chk-skel">' +
           '<div class="sk-line" style="height:14px;width:70%"></div>' +
           '<div class="sk-line" style="height:14px;width:50%"></div>' +
@@ -988,7 +988,7 @@
     mask.className = 'modal-mask'; mask.id = 'usPwdMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="重置密码"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">重置密码：' + esc(u.username || '') + '</h2><div class="form">' +
-      '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px">新密码（6-50 位）</label>' +
+      '<label style="display:block;font-size:13px;color:var(--text-light);margin-bottom:4px">新密码（6-50 位）</label>' +
       '<input id="usPwdInput" type="text" maxlength="50" class="input w-full-mb10" autocomplete="off">' +
       '<button type="button" class="btn-blue" id="usPwdGo" style="width:100%">确认重置</button></div></div>';
     document.body.appendChild(mask);
@@ -1389,7 +1389,7 @@
       var sec = function (title, rows) { return '<div class="rc-sec" style="margin-bottom:12px"><b style="display:block;font-size:13px;color:var(--text-light);margin-bottom:6px">' + title + '</b>' + (rows || '<div style="color:var(--text-faint);font-size:12px;padding:4px 0">这一项没有内容</div>') + '</div>'; };
       var row = function (kind, id, name, t) {
         return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eef2f6">' +
-          '<span style="flex:1;min-width:0;font-size:13px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(name) + '<span style="color:#9aa9b8;font-size:11px;margin-left:8px">' + fmtDelTime(t) + ' 删除</span></span>' +
+          '<span style="flex:1;min-width:0;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(name) + '<span style="color:var(--text-faint);font-size:11px;margin-left:8px">' + fmtDelTime(t) + ' 删除</span></span>' +
           /* v512（老板：这里删除是四个字，跟别处不一样）：按键统一为系统行内键 .row-btn / .row-btn.danger，
              文案统一两字「删除」；「删了不能恢复」这层意思放到确认框里说，不用四个字吓人 */
           '<button type="button" class="row-btn" data-rc="restore" data-kind="' + kind + '" data-id="' + esc(String(id)) + '">恢复</button>' +

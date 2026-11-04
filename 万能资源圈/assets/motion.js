@@ -306,7 +306,7 @@
       list.forEach(function (it, i) {
         var row = document.createElement('div');
         row.className = 'sugg-it';
-        row.innerHTML = '<i></i><span>' + String(it.label).replace(/</g, '&lt;') + (it.sub ? '<span style="color:var(--text-faint);font-size:11.5px;margin-left:6px">' + String(it.sub).replace(/</g, '&lt;') + '</span>' : '') + '</span>';
+        row.innerHTML = '<i></i><span>' + String(it.label).replace(/</g, '&lt;') + (it.sub ? '<span style="color:var(--text-faint);font-size:12px;margin-left:6px">' + String(it.sub).replace(/</g, '&lt;') + '</span>' : '') + '</span>';
         row.addEventListener('pointerdown', function (e) { e.preventDefault(); close(); onPick && onPick(it); });
         pop.appendChild(row);
       });

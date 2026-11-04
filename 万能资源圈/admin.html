@@ -783,10 +783,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <label for="catName">分类名称</label><input id="catName" class="input" maxlength="50" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('catSaveBtn').click();}" />
         <label>分类级别</label>
         <div style="display:flex;gap:14px;margin-bottom:4px;flex-wrap:wrap;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:10px;padding:8px 14px;">
+          <label class="radio-card">
             <input type="radio" name="catLevel" value="0" checked /> 一级分类
           </label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:15px;color:#333;cursor:pointer;background:#f6f9fd;border:1px solid #e6eef7;border-radius:10px;padding:8px 14px;">
+          <label class="radio-card">
             <input type="radio" name="catLevel" value="1" /> 二级分类
           </label>
         </div>
@@ -808,7 +808,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     <div class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="batchCatMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title">批量改分类</h2>
-      <div style="font-size:13px;color:#666;margin-bottom:12px;">选择目标分类，将选中的资源移动到该分类下</div>
+      <div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">选择目标分类，将选中的资源移动到该分类下</div>
       <div class="cat-picker" id="batchCatPicker" style="margin-bottom:16px;"><input type="hidden" id="batchCatSelect" value="0" /><div class="cat-picker-display" id="batchCatDisplay"><span class="cpd-text">请选择目标分类</span><span class="cpd-arrow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="batchCatPanel"></div></div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="batchCatOk">确定</button>
@@ -821,7 +821,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     <div class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="inputMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
-      <div id="inputTip" style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;"></div>
+      <div id="inputTip" style="font-size:13px;color:var(--text-light);margin-bottom:12px;line-height:1.6;"></div>
       <div class="input-row" id="inputRow"><input class="input" id="inputValue"  /><button type="button" class="btn-blue input-upload-btn" id="inputUploadBtn">上传本地图片</button></div>
       <!-- v328（用户 10-06 15:37）：文件弹窗专用区已清空——极简设计无二级菜单无拖拽区 -->
       <div id="fileInputExtras" style="display:none;"></div>
@@ -1007,7 +1007,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     <div class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="confirmMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="confirmTitle">确认操作</h2>
-      <div id="confirmMsg" style="font-size:14px;color:#666;line-height:1.7;margin-bottom:20px;text-align:left;"></div>
+      <div id="confirmMsg" style="font-size:14px;color:var(--text-light);line-height:1.7;margin-bottom:20px;text-align:left;"></div>
       <div class="modal-footer">
         <button class="modal-inner-btn" id="confirmOk">确定</button>
         <button class="modal-close" id="confirmCancel">关闭</button>
