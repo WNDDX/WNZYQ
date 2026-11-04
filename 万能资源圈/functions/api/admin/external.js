@@ -428,17 +428,29 @@ export async function onRequestPost(context) {
          老板要「上架后别再手填」，所以这里趁采集就把详情补齐——只补前 12 条（控制请求数，
          Workers 单次请求有子请求上限），剩下的点「上架」时再按需抓。 */
       if (via !== 'api') {
-        const need = list.filter(function (x) { return x.link && !x.detail; }).slice(0, 12);
+        /* v546m：原来只补前 12 条，19 条的站会有 7 条没详情／没简介／点不进去。
+           Cloudflare 单次请求子请求上限 50，补 20 条 + 列表 1 条仍在安全线内。 */
+        const need = list.filter(function (x) { return x.link && !x.detail; }).slice(0, 20);
         for (let i = 0; i < need.length; i += 4) {
           const batch = need.slice(i, i + 4);
           await Promise.all(batch.map(async function (g) {
             try {
-              const dp = await fetchPage(g.link, 5000, { retry: false });
+              const dp = await fetchPage(g.link, 6000, { retry: false });
               if (!dp.ok) return;
               const imgs = parseDetail(dp.text, g.link).filter(function (u) { return u !== g.cover; }).slice(0, 20);
               g.detail = imgs;
-              const d = plainText((dp.text.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{0,300})["']/i) || [])[1] || '');
+              const d = plainText((dp.text.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{0,300})["']/i) || [])[1] || '') ||
+                plainText((dp.text.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']{0,300})["']/i) || [])[1] || '');
               if (!g.desc && d) g.desc = d;
+              /* v546m：号卡站详情页多半没有 meta description，老板要「信息全一点」——
+                 退一步取正文纯文本（先剥脚本/样式，避免把代码当简介）。 */
+              if (!g.desc) {
+                const bodyTxt = plainText(dp.text
+                  .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+                  .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+                  .replace(/<head[\s\S]*?<\/head>/gi, ' '));
+                if (bodyTxt && bodyTxt.length >= 30) g.desc = bodyTxt.slice(0, 200);
+              }
               if (!g.buy) g.buy = g.link;
             } catch (e) {}
           }));
@@ -822,6 +834,16 @@ export function parseGoodsList(html, baseUrl) {
     const hrefs = (ctx.match(/href=["']([^"']+)["']/gi) || [])
       .map(x => absUrl(x.replace(/^href=["']|["']$/gi, ''), baseUrl))
       .filter(h => h && !/\.(css|js|png|jpe?g|webp|gif|svg)(\?|$)/i.test(h));
+    /* v546m（实测 55555.wang 只有 2/19 条拿到链接）：很多站的商品卡根本不是 <a href>，
+       而是 onclick="openPopup('good?pid=5873')" / location.href='...' 这种 JS 跳转。
+       原来只认 href，于是 17 条只剩标题封面、点不进去也补不了详情。
+       这里把 onclick 里的跳转地址也捞出来，跟 href 一起参与筛选。 */
+    const clickRe = /(?:openPopup|openUrl|openWin|window\.open|location\.assign)\s*\(\s*['"]([^'"]{2,300})['"]|location\.href\s*=\s*['"]([^'"]{2,300})['"]/gi;
+    let cm;
+    while ((cm = clickRe.exec(ctx))) {
+      const cu = absUrl(cm[1] || cm[2], baseUrl);
+      if (cu && hrefs.indexOf(cu) < 0) hrefs.push(cu);
+    }
     const link = hrefs.filter(h => /(pid=|\/order|detail|goods|goodsId=|\/card\/|\/buy)/i.test(h))[0] || '';
     /* 有下单链接的算高置信；没链接但标题同时含「商品词 + 运营商」也留（不少站用 JS 跳转，href 拿不到） */
     if (!link && !(GOODS_WORD.test(title) && OP_WORD.test(title))) continue;
