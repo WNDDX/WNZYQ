@@ -131,7 +131,7 @@ export async function onRequestPut(context) {
   await env.DB.prepare(
     `UPDATE products SET cid=?, title=?, "desc"=?, detail=?, img=?,
        cover_images=?, detail_images=?, detail_videos=?, contact_url=?, contact_qr=?, price=?, is_online=?, is_hidden=?,
-       schedule_on=?, schedule_off=?, sort=?,
+       schedule_on=?, schedule_off=?, sort=?, updated_by=?,
        updated_at=datetime('now') WHERE id=?`
   )
     .bind(
@@ -151,6 +151,7 @@ export async function onRequestPut(context) {
       b.schedule_on ? String(b.schedule_on) : null,
       b.schedule_off ? String(b.schedule_off) : null,
       Number(b.sort) || 0,
+      auth.username, /* v544：记下是谁最后改的 */
       id
     )
     .run();

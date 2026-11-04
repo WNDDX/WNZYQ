@@ -1,5 +1,5 @@
 window.__COPY = window.__COPY || {
-netFail: '网络开小差了，请稍后再试',
+netFail: '网络没连上，稍后再试',
 upFail: '上传失败，请重试',
 delFail: '删除失败，请重试',
 saveFail: '保存失败，请重试',
@@ -2139,7 +2139,7 @@ if (old) old.parentNode.removeChild(old);
 var box = document.createElement('div');
 box.className = 'load-retry';
 var t = document.createElement('div');
-t.textContent = '加载失败，网络开小差了';
+t.textContent = '网络没连上，稍后再试';
 var b = document.createElement('button');
 b.type = 'button'; b.className = 'lr-btn'; b.textContent = '重试';
 b.addEventListener('click', function () {
@@ -2533,6 +2533,17 @@ if (f) { try { f.focus({ preventScroll: true }); } catch (err) { try { f.focus()
 
 var __PH_LIGHT_24 = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Crect width="24" height="24" rx="3" fill="%23f5f5f5"/%3E%3Cpath d="M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z" fill="%23c3ccd6"/%3E%3Ccircle cx="12" cy="17.5" r="1.7" fill="%23c3ccd6"/%3E%3C/svg%3E';;
 var __PH_DARK_24 = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 rx=%223%22 fill=%22%232b3a4c%22/%3E%3Cpath d=%22M12 3.5 C 9.4 3.5, 8.3 5.6, 8.3 8.4 C 8.3 11.2, 9.6 13.1, 11 13.6 C 11.6 13.8, 12.4 13.8, 13 13.6 C 14.4 13.1, 15.7 11.2, 15.7 8.4 C 15.7 5.6, 14.6 3.5, 12 3.5 Z%22 fill=%22%2355697f%22/%3E%3Ccircle cx=%2212%22 cy=%2217.5%22 r=%221.7%22 fill=%22%2355697f%22/%3E%3C/svg%3E';
+
+window.__fmtNum = function (v) {
+var n = Number(v);
+if (!isFinite(n)) return String(v == null ? '' : v);
+var neg = n < 0; n = Math.abs(n);
+var s = (Math.round(n * 100) / 100).toString();
+var p = s.split('.');
+p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+return (neg ? '-' : '') + p.join('.');
+};
+
 Object.defineProperty(window, 'WN_MEDIA_FALLBACK', { configurable: true, get: function () {
 try { return document.documentElement.getAttribute('data-theme') === 'dark' ? __PH_DARK_24 : __PH_LIGHT_24; } catch (e) { return __PH_LIGHT_24; }
 } });

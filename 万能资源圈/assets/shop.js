@@ -1029,7 +1029,7 @@ var kw = searchInput.value.trim();
 emptyTip.querySelectorAll('.empty-clear-btn, .empty-desc').forEach(function (n) { n.parentNode.removeChild(n); });
 
 if (window.__loadFailed && !kw) {
-emptyTitle.textContent = '加载失败，网络开小差了';
+emptyTitle.textContent = '网络没连上，稍后再试';
 var __retry = document.createElement('button');
 __retry.type = 'button'; __retry.className = 'empty-clear-btn'; __retry.textContent = '重试';
 __retry.addEventListener('click', function () {
@@ -1227,7 +1227,15 @@ var bar = document.createElement('div'); bar.id = 'recentBar'; bar.className = '
 var t = document.createElement('span'); t.className = 'recent-title'; t.textContent = '最近浏览'; bar.appendChild(t);
 items.forEach(function (p) {
 var b = document.createElement('button'); b.type = 'button'; b.className = 'recent-chip';
-b.textContent = p.title || p.name || '资源'; b.title = p.title || '';
+
+var _rt = String(p.title || p.name || '资源');
+if (_rt.length > 8) {
+var _cut = _rt.slice(0, 8);
+
+if (/[【（(\[]$/.test(_cut)) _cut = _cut.slice(0, -1);
+b.textContent = _cut + '…';
+} else b.textContent = _rt;
+b.title = p.title || '';
 b.addEventListener('click', function () { openModal(p); });
 bar.appendChild(b);
 });

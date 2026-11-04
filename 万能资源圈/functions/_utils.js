@@ -696,7 +696,9 @@ export async function ensureSoftDelete(env) {
   __sdDone = true;
   try { await env.DB.prepare('ALTER TABLE products ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
   try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
-  try { await env.DB.prepare("ALTER TABLE categories ADD COLUMN created_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {} /* v441b：#116 创建者列兜底（线上已验证有，此处幂等保险） */
+  try { await env.DB.prepare("ALTER TABLE categories ADD COLUMN created_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  /* v544：资源「最后修改人」——列表里显示谁改的，多人共用后台时不用再翻操作日志对时间 */
+  try { await env.DB.prepare("ALTER TABLE products ADD COLUMN updated_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {} /* v441b：#116 创建者列兜底（线上已验证有，此处幂等保险） */
 }
 
 /* #64 数据变更留痕（audit_log 表，60 天自动清理覆盖） */

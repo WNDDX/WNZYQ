@@ -2006,7 +2006,7 @@ uploadToBucket(f, function (url) {
 if (!url) return;
 document.getElementById('fContactQr').value = url;
 __edContactRefresh();
-toast('二维码已就绪，点下面的「保存修改」生效', 'info');
+toast('二维码已就绪，点下面的「确定」生效', 'info');
 if (window.__haptic) window.__haptic();
 });
 });
@@ -2020,7 +2020,7 @@ var v = (net.value || '').trim();
 if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
 document.getElementById('fContactQr').value = v;
 __edContactRefresh();
-if (v) { toast('网络图已就绪，点下面的「保存修改」生效', 'info'); if (window.__haptic) window.__haptic(); }
+if (v) { toast('网络图已就绪，点下面的「确定」生效', 'info'); if (window.__haptic) window.__haptic(); }
 });
 
 function __edContactSaveNow(after) {

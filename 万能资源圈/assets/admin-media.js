@@ -1526,7 +1526,7 @@ toast('上传成功', 'success');
 toast(res.msg || '上传失败', 'error');
 }
 })
-.catch(function () { toast('图片没传上去：网络中断或文件太大，换一张或稍后再试', 'error'); });
+.catch(function () { toast('图片没传上去：网络没连上或文件太大，换一张或稍后再试', 'error'); });
 };
 input.click();
 }

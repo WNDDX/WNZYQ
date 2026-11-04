@@ -878,7 +878,7 @@ isActive: function () { return !document.querySelector('.modal-mask.open'); }
 
 function loadSettings() {
 return api('admin/settings').then(function (res) {
-if (!res.ok) { toast(res.msg || '加载失败，网络开小差了', 'error'); return; }
+if (!res.ok) { toast(res.msg || '网络没连上，稍后再试', 'error'); return; }
 var s = res.settings || {};
 window.__plSet = 1; if (window.__infoApply) window.__infoApply(s);
 if (typeof stateAnn !== 'undefined' && stateAnn) {

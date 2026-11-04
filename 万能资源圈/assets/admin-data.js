@@ -192,7 +192,7 @@ onPage: function (p) { _bindingsPage = p; renderBindingsPage(); }
 function refreshBindings(variantId) {
 api('admin/bindings?variant_id=' + variantId).then(function (res) {
 if (!res || !res.ok) {
-if (!__bindingsCache[variantId]) document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="7" style="color:var(--text-faint);">加载失败，网络开小差了</td></tr>';
+if (!__bindingsCache[variantId]) document.getElementById('bindingsRows').innerHTML = '<tr><td colspan="7" style="color:var(--text-faint);">网络没连上，稍后再试</td></tr>';
 return;
 }
 __bindingsCache[variantId] = res;
@@ -561,12 +561,13 @@ for (var i = 0; i < list.length; i++) { if (String(list[i].day) === yest) { idx 
 if (idx < 0) { box.hidden = true; return; }
 var y = list[idx], pv = idx > 0 ? list[idx - 1] : null;
 var num = function (v) { return Number(v || 0); };
+var F = function (v) { return window.__fmtNum ? window.__fmtNum(v) : String(v); };
 var d = function (a, b) { if (!pv) return ''; var n = num(a) - num(b); return n === 0 ? '（持平）' : (n > 0 ? '（+' + n + '）' : '（' + n + '）'); };
 box.hidden = false;
 box.innerHTML = '<b>昨天 ' + yest.slice(5) + '</b>'
-+ '<span>访问 <i>' + num(y.views) + '</i>' + d(y.views, pv && pv.views) + '</span>'
-+ '<span>咨询 <i>' + num(y.contacts) + '</i>' + d(y.contacts, pv && pv.contacts) + '</span>'
-+ '<span>内容查看 <i>' + num(y.resource_unlocks) + '</i>' + d(y.resource_unlocks, pv && pv.resource_unlocks) + '</span>';
++ '<span>访问 <i>' + F(num(y.views)) + '</i>' + d(y.views, pv && pv.views) + '</span>'
++ '<span>咨询 <i>' + F(num(y.contacts)) + '</i>' + d(y.contacts, pv && pv.contacts) + '</span>'
++ '<span>内容查看 <i>' + F(num(y.resource_unlocks)) + '</i>' + d(y.resource_unlocks, pv && pv.resource_unlocks) + '</span>';
 } catch (e) { box.hidden = true; }
 }
 window.__renderDaySum = renderDaySum;
@@ -589,12 +590,13 @@ var n = document.createElement('div');
 n.className = 'num';
 n.textContent = '0';
 (function (__t, __n) {
-if (!__t || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { __n.textContent = __t; return; }
+if (!__t || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { __n.textContent = window.__fmtNum ? window.__fmtNum(__t) : String(__t); return; }
 var __t0 = null;
 requestAnimationFrame(function __step(ts) {
 if (__t0 === null) __t0 = ts;
 var __p = Math.min(1, (ts - __t0) / 600);
-__n.textContent = Math.round(__t * (1 - Math.pow(1 - __p, 3)));
+var _v = Math.round(__t * (1 - Math.pow(1 - __p, 3)));
+__n.textContent = window.__fmtNum ? window.__fmtNum(_v) : String(_v);
 if (__p < 1) requestAnimationFrame(__step);
 });
 })(c.num, n);
@@ -692,7 +694,7 @@ _sec.insertBefore(_ws[1], _ws[0]);
 }
 if (!res.ok) {
 __clearAdminSkel(document.getElementById('statRows')); __clearAdminSkel(document.getElementById('statCatRows')); __clearAdminSkel(document.getElementById('statRecentRows'));
-toast(res.msg || '加载失败，网络开小差了', 'error'); return; }
+toast(res.msg || '网络没连上，稍后再试', 'error'); return; }
 window.__lastFetchTime = Date.now();
 var ov = res.overview || {};
 var ovp = res.overview_prev || null;
@@ -894,6 +896,8 @@ function renderStatTables(onlyKey) {
 
 
 function __escCell(v) { return window.escapeHtml ? window.escapeHtml(v) : String(v == null ? '' : v); }
+
+function F2(v) { var n = Number(v || 0); return window.__fmtNum ? window.__fmtNum(n) : String(n); }
 var defs = [
 {
 key: 'product', tbodyId: 'statRows', pagerId: 'statPagerProduct', wrapId: 'statWrapProduct',
@@ -901,7 +905,7 @@ list: state.statByProduct || [],
 row: function (r) {
 var tr = document.createElement('tr');
 var status = (r.is_online && !r.is_hidden) ? '显示' : '隐藏';
-tr.innerHTML = '<td>' + __escCell(r.title || '(无标题)') + '</td><td>' + status + '</td><td>' + (r.views || 0) + '</td><td>' + (r.contacts || 0) + '</td><td>' + (r.resource_unlocks || 0) + '</td><td>' + (r.bindings || 0) + '</td>';
+tr.innerHTML = '<td>' + __escCell(r.title || '(无标题)') + '</td><td>' + status + '</td><td>' + F2(r.views) + '</td><td>' + F2(r.contacts) + '</td><td>' + F2(r.resource_unlocks) + '</td><td>' + F2(r.bindings) + '</td>';
 return tr;
 }
 },
@@ -910,7 +914,7 @@ key: 'cat', tbodyId: 'statCatRows', pagerId: 'statPagerCat', wrapId: 'statWrapCa
 list: state.statByCategory || [],
 row: function (r) {
 var tr = document.createElement('tr');
-tr.innerHTML = '<td>' + __escCell(r.name || '') + '</td><td>' + (r.product_count || 0) + '</td><td>' + (r.total_views || 0) + '</td>';
+tr.innerHTML = '<td>' + __escCell(r.name || '') + '</td><td>' + F2(r.product_count) + '</td><td>' + F2(r.total_views) + '</td>';
 return tr;
 }
 },
@@ -1055,7 +1059,7 @@ if (!silent && _cbox0 && !_cbox0.children.length) { window.__catSkelP = true; re
 var _snapC = silent ? __adminCatSig(state.categories) : null;
 window.__catLoading = api('admin/categories').then(function (res) { window.__catLoading = null;
 if (!res.ok) {
-if (!silent) { window.__catSkelP = false; __clearAdminSkel(_cbox0); toast(res.msg || '加载失败，网络开小差了', 'error'); }
+if (!silent) { window.__catSkelP = false; __clearAdminSkel(_cbox0); toast(res.msg || '网络没连上，稍后再试', 'error'); }
 return res; }
 window.__lastFetchTime = Date.now();
 var _ordered = orderCats((res.list || []).map(function (c) { return { id: Number(c.id), parent_id: Number(c.parent_id), name: c.name, sort: Number(c.sort) || 0, is_hidden: c.is_hidden, cnt: Number(c.cnt) || 0 }; }));
@@ -1157,7 +1161,7 @@ box.innerHTML = '';
 
 __pageRows.forEach(function (c, ci) {
 if (c.virtual) { var _vrow = document.createElement('div'); _vrow.className = 'cat-row cat-sub'; _vrow.dataset.id = c.id; _vrow.dataset.parentId = c.parent_id;
-var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.style.opacity='0.35';_vh.style.cursor='default';_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; _vrow.appendChild(_vh); var _vp=document.createElement('input'); _vp.type='checkbox'; _vp.disabled=true; _vp.className='cat-check is-fixed';_vp.style.cssText='width:20px;height:20px;flex-shrink:0;cursor:not-allowed;opacity:.45;accent-color:var(--blue1);'; _vp.title='固定项不可选';_vp.setAttribute('aria-label','固定项不可选'); _vrow.appendChild(_vp); var _vts=document.createElement('span'); _vts.style.cssText='width:20px;height:20px;margin-right:4px;flex-shrink:0;'; _vts.setAttribute('aria-hidden','true'); _vrow.appendChild(_vts); var _vnm = document.createElement('span'); _vnm.className = 'c-name'; _vnm.style.cssText = 'font-size:14px;color:var(--text);flex:1;text-align:left;white-space:nowrap;min-width:0;'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.style.cssText = 'visibility:hidden;pointer-events:none;'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 个资源'; _vcnt.style.cssText = 'color:var(--gray-mid);cursor:pointer;'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.style.cssText = 'visibility:hidden;pointer-events:none;'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.style.cssText = 'visibility:hidden;pointer-events:none;'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
+var _vh=document.createElement('span');_vh.className='drag-handle';_vh.draggable=false;_vh.classList.add('is-fixed');_vh.title='固定项不可拖动';_vh.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; _vrow.appendChild(_vh); var _vp=document.createElement('input'); _vp.type='checkbox'; _vp.disabled=true; _vp.className='cat-check is-fixed'; _vp.title='固定项不可选';_vp.setAttribute('aria-label','固定项不可选'); _vrow.appendChild(_vp); var _vts=document.createElement('span'); _vts.className='cat-spacer'; _vts.setAttribute('aria-hidden','true'); _vrow.appendChild(_vts); var _vnm = document.createElement('span'); _vnm.className = 'c-name is-virtual'; _vnm.textContent = '全部'; _vrow.appendChild(_vnm); var _vmeta = document.createElement('div'); _vmeta.className = 'c-meta'; var _vph = document.createElement('span'); _vph.className = 'row-btn'; _vph.className='row-btn is-slot'; _vph.textContent = '固定'; _vmeta.appendChild(_vph); var _vs = document.createElement('span'); _vs.className = 'c-sort'; _vs.textContent = '排序:1'; _vrow.appendChild(_vs); var _vcnt = document.createElement('span'); _vcnt.className = 'c-count'; _vcnt.textContent = (c.cnt || 0) + ' 个资源'; _vcnt.className='c-count is-muted'; _vcnt.title = '点击查看该分类下的资源'; _vcnt.addEventListener('click', function (e) { e.stopPropagation(); document.querySelector('.tab[data-tab="products"]').click(); initFilterCatPicker(); var _fc2 = document.getElementById('filterCat'); if (_fc2) { _fc2.value = c.parent_id; renderProducts(); } toast('已筛选分类：全部', 'success'); }); _vrow.appendChild(_vcnt); var _vedit = document.createElement('button'); _vedit.className = 'row-btn'; _vedit.textContent = '编辑'; _vedit.className='row-btn is-slot'; var _vdel = document.createElement('button'); _vdel.className = 'row-btn danger'; _vdel.textContent = '删除'; _vdel.className='row-btn danger is-slot'; _vmeta.appendChild(_vedit); _vmeta.appendChild(_vdel); _vrow.appendChild(_vmeta); if (state.catExpanded[c.parent_id] === false) { _vrow.style.display = 'none'; }
 _vrow.classList.add('stagger-in'); _vrow.style.animationDelay = Math.min(ci * 20, 180) + 'ms';
 if (__reuse && __skels[ci]) __skels[ci].parentNode.replaceChild(_vrow, __skels[ci]); else box.appendChild(_vrow);
 return; }
@@ -1167,12 +1171,12 @@ row.draggable = false;
 row.dataset.id = c.id; row.dataset.parentId = c.parent_id;
 if (Number(c.id) !== 0) { var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; row.appendChild(handle); }
 else {
-var _h0 = document.createElement('span'); _h0.className = 'drag-handle'; _h0.draggable = false; _h0.style.opacity = '0.35'; _h0.style.cursor = 'default'; _h0.title = '固定项不可拖动'; _h0.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; row.appendChild(_h0);
+var _h0 = document.createElement('span'); _h0.className = 'drag-handle'; _h0.draggable = false; _h0.classList.add('is-fixed'); _h0.title = '固定项不可拖动'; _h0.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; row.appendChild(_h0);
 
 var _cb0 = document.createElement('input'); _cb0.type = 'checkbox'; _cb0.disabled = true; _cb0.className = 'cat-check is-fixed';
-_cb0.style.cssText = 'width:20px;height:20px;flex-shrink:0;cursor:not-allowed;opacity:.45;accent-color:var(--blue1);'; _cb0.title = '固定项不可选';
+_cb0.title = '固定项不可选';
 _cb0.setAttribute('aria-label', '固定项不可选'); row.appendChild(_cb0);
-var _ar0 = document.createElement('span'); _ar0.style.cssText = 'width:20px;height:20px;margin-right:4px;flex-shrink:0;'; _ar0.setAttribute('aria-hidden', 'true'); row.appendChild(_ar0);
+var _ar0 = document.createElement('span'); _ar0.className = 'cat-spacer'; _ar0.setAttribute('aria-hidden', 'true'); row.appendChild(_ar0);
 }
 var isTop = c.parent_id === 0;
 if (!isTop) row.classList.add('cat-sub');
@@ -1345,7 +1349,7 @@ document.querySelectorAll('#catList .cat-row').forEach(function (r) { if (_delId
 setTimeout(function () { renderCategories(state.categories); refreshCatCnts(); renderProducts(); initFilterCatPicker(); }, 120);
 } catch (e0) { if (window.__silent) window.__silent(e0); }
 __undoable(
-'已删除分类「' + (c.name || '未命名') + '」',
+'已删除分类「' + (c.name || '未命名') + '」· 回收站点可找回',
 function () {
 api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
 if (res && res.ok) { clearCache(); silentSyncCategories(); }
@@ -1552,7 +1556,7 @@ silentSyncCategories();
 else toast('排序没保存上：服务器拒绝了这次修改，刷新后再拖一次', 'error');
 }).catch(function () {
 __reorderBusy = false;
-toast('排序没保存上：网络中断，请重试', 'error');
+toast('排序没存上：网络没连上，稍后再试', 'error');
 });
 }
 

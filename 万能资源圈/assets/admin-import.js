@@ -1009,7 +1009,7 @@ m.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" style="max
 + '<h2 class="modal-title">' + esc(title) + '</h2>'
 + '<p style="font-size:13px;color:var(--text-light);margin:0 0 10px;line-height:1.6">' + msg + '</p>'
 + (opts.input ? '<input class="input w-full-mb10" id="usAskInput" type="' + (opts.inputType || 'text') + '"  maxlength="' + (opts.maxlength || 50) + '" placeholder="' + esc(opts.placeholder || '') + '">' : '')
-+ '<div class="modal-footer"><button class="modal-inner-btn" id="usAskOk">' + esc(opts.okText || '确定') + '</button><button class="modal-close" data-x="1">取消</button></div></div>';
++ '<div class="modal-footer"><button class="modal-inner-btn" id="usAskOk">' + esc(opts.okText || '确定') + '</button><button class="modal-close" data-x="1">关闭</button></div></div>';
 document.body.appendChild(m);
 requestAnimationFrame(function () { m.classList.add('open'); var i = m.querySelector('#usAskInput'); if (i) { try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); } } });
 function close() { m.classList.remove('open'); setTimeout(function () { m.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180); }
@@ -1022,7 +1022,7 @@ onOk(String(v).trim(), function () { close(); }, function () { btn.disabled = fa
 });
 }
 function usersPwd(u) {
-usAsk('修改密码', '给「' + esc(u.username) + '」设置新密码（6-50 位）。', { input: true, inputType: 'password', placeholder: '新密码', okText: '保存' }, function (v, done, fail) {
+usAsk('修改密码', '给「' + esc(u.username) + '」设置新密码（6-50 位）。', { input: true, inputType: 'password', placeholder: '新密码', okText: '确定' }, function (v, done, fail) {
 if (v.length < 6) { if (window.showToast) window.showToast('密码至少 6 位', 'error'); fail(); return; }
 usersCall('PUT', { id: u.id, op: 'resetpwd', password: v }, function () { if (window.showToast) window.showToast('密码已更新', 'success'); done(); }, fail);
 });
@@ -1168,7 +1168,7 @@ else if (ua === 'del') usersDel(u, Number(this.getAttribute('data-n') || 0), Num
 });
 });
 }).catch(function () {
-body.innerHTML = '<div class="imp-err">网络开小差了，请稍后再试</div>';
+body.innerHTML = '<div class="imp-err">网络没连上，稍后再试</div>';
 });
 }
 
@@ -1275,7 +1275,7 @@ mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-la
 + (me.role === 'super' ? '<label class="pm-hint pm-hint-block">上级账号（决定跟谁是一组）</label><select class="input w-full-mb10" id="ufParent" >' + parentOpts + '</select>' : '')
 + tplHtml + secHtml + scopeHtml + annHtml + codeHtml
 + '</div>'
-+ '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="ufSave">' + (isEdit ? '保存修改' : '创建账号') + '</button><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
++ '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="ufSave">' + (isEdit ? '确定' : '创建账号') + '</button><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
 
 document.body.appendChild(mask);
 requestAnimationFrame(function () {
@@ -1331,7 +1331,7 @@ pv.codeScope = (mask.querySelector('input[name="ufCode"]:checked') || {}).value 
 var note = (mask.querySelector('#ufNote') || {}).value || '';
 var btn = this;
 btn.disabled = true; btn.textContent = '保存中…';
-var restore = function () { btn.disabled = false; btn.textContent = isEdit ? '保存修改' : '创建账号'; };
+var restore = function () { btn.disabled = false; btn.textContent = isEdit ? '确定' : '创建账号'; };
 if (isEdit) {
 usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
 if (window.showToast) window.showToast(window.T('saved'), 'success');
@@ -1401,7 +1401,7 @@ if (RC.render) RC.render();
 });
 fetch('/api/admin/recycle', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
 var body = mask.querySelector('#rcBody'); if (!body) return;
-if (!x || !x.ok) { body.innerHTML = '<div class="imp-err">加载失败，请关掉重试</div>'; return; }
+if (!x || !x.ok) { body.innerHTML = '<div class="imp-err">服务器忙，稍后再试</div>'; return; }
 
 var _kindName = { product: '资源', category: '分类', ann: '公告' };
 
@@ -1536,7 +1536,7 @@ if (op === 'purge' && window.showConfirm) {
 window.showConfirm('删除', '删除后无法恢复（这条记录会被永久清掉），确定继续？', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
 } else recycleCall(op, kind, id, function () { openRecycle(); });
 });
-}).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">加载失败，请关掉重试</div>'; });
+}).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">服务器忙，稍后再试</div>'; });
 }
 
 
@@ -1606,7 +1606,7 @@ btn.disabled = false; btn.textContent = '再采一次';
 if (window.showToast) window.showToast(r && r.ok ? ('采完了，新增 ' + ((r && r.added) || 0) + ' 个资源') : ((r && r.msg) || '采集失败'), r && r.ok ? 'success' : 'error');
 load();
 })
-.catch(function () { btn.disabled = false; btn.textContent = '现在采一次'; if (window.showToast) window.showToast('网络中断，没采成', 'error'); load(); });
+.catch(function () { btn.disabled = false; btn.textContent = '现在采一次'; if (window.showToast) window.showToast('网络没连上，没采成', 'error'); load(); });
 });
 }
 
@@ -1690,7 +1690,7 @@ var body = mask.querySelector('#logsBody');
 var list = (d && d.list) || [];
 if (!list.length) {
 body.innerHTML = '<div class="extc-loading">' + (q ? '该搜索暂无记录，换个词试试'
-: (who ? '该账号在这段时间没有操作记录' : '该列表暂无操作记录。改一次设置或删一条资源，这里就会出现。')) + '</div>';
+: (who ? '该账号在这段时间没有操作记录' : '该列表暂无操作记录。改一次设置或删一个资源，这里就会出现。')) + '</div>';
 } else {
 body.innerHTML = '<div class="log-head" aria-hidden="true"><span>时间</span><span>账号</span><span>做了什么</span><span>对象</span></div>' + list.map(function (r) {
 return '<div class="log-row" data-who="' + esc(r.who || 'admin') + '">' +
@@ -1769,7 +1769,9 @@ var rows = [['时间', '账号', '做了什么', '对象']];
 window.__downloadXLS('操作日志-' + RANGE_TXT[days] + '-' + window.__exportStamp() + '.xls',
 [{ name: '操作日志', rows: rows }]);
 back();
-if (window.showToast) window.showToast('已导出 ' + (rows.length - 1) + ' 条（' + RANGE_TXT[days] + (who ? '・' + who : '') + '）', 'success');
+if (window.showToast) window.showToast(d.truncated
+? '日志太多，只导出了最近 ' + (rows.length - 1) + ' 条；更早的请把时间范围改小再导'
+: '已导出 ' + (rows.length - 1) + ' 条（' + RANGE_TXT[days] + (who ? '・' + who : '') + '）', d.truncated ? 'info' : 'success');
 })
 .catch(function (e) { back(); if (window.showToast) window.showToast('导出失败：' + (e.message || '请重试'), 'error'); });
 });
