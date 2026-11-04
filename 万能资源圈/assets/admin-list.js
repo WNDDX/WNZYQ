@@ -490,7 +490,8 @@ cb.checked = !!state.prodSelected[p.id]; cb.addEventListener('change', function 
 var img = document.createElement('img');
 img.className = 'thumb';
 img.decoding = 'async';
-img.alt = '';
+
+img.alt = String(p.title || '资源封面').slice(0, 40);
 
 var _origImg = p.img || '';
 img.style.opacity = '0';
