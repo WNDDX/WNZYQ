@@ -683,7 +683,9 @@
       /* v384 修复：mode=off 时任何阶段都必须关弹窗——此前 off 只在 547 行检查，而骨架期先把弹窗
          打开并置 __annShown=true，数据到达后走下方早退分支（该分支不查 off），弹窗被填上内容永不关闭，
          还会挡住搜索框聚焦/分页按钮/滑动起手 */
-      if (window.__pvMode) { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; } /* v518：预览里不弹公告 */
+      /* v535：公告预览（?preview=ann）是后台要求打开的，不能被这句自动关闭顺手关掉——
+         公告数据比预览指令晚到时，弹窗刚开就被这里关掉，预览会是一片空白 */
+      if (window.__pvMode) { if (!window.__annPvShown) mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; } /* v518：预览里不弹公告 */
       if (mode === 'off') { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
       /* v496：先按「有没有真内容」过滤，再决定要不要弹——
          空公告（只有占位图或纯空白）会让访客每次打开都先看到一个空弹窗；
@@ -2645,6 +2647,7 @@
             hidden: Number(a.hidden) || 0, sort: Number(a.sort) || 0, level: Number(a.level) || 2
           };
         });
+        window.__annPvShown = true;
         try { window.openAnnModal(); } catch (e1) {}
       });
       try { parent.postMessage({ type: 'wnzyq-ann-ready' }, '*'); } catch (e2) {}
