@@ -1255,6 +1255,7 @@ bar.style.maxHeight = bar.scrollHeight + 'px'; void bar.offsetHeight; bar.style.
 } catch (e) { if (window.__silent) window.__silent(e); }
 }
 
+var __modalReturnFocus = null;
 function openModal(p) {
 
 if (p && !('detail' in p)) {
@@ -1446,6 +1447,12 @@ initResourceCodeSection();
 __tryRefillCode();
 
 modalMask.classList.add('open');
+
+try {
+__modalReturnFocus = document.activeElement;
+var _mb = document.getElementById('modalBox');
+if (_mb) { if (!_mb.hasAttribute('tabindex')) _mb.setAttribute('tabindex', '-1'); _mb.focus({ preventScroll: true }); }
+} catch (eF) { if (window.__silent) window.__silent(eF); }
 
 if (window.__modalScroll) __modalScroll.open(modalMask, p.id);
 setBodyLock(true);
@@ -1904,6 +1911,9 @@ var _ccCar = document.getElementById('modalCarousel');
 if (_ccCar && _ccCar.__ccPause) _ccCar.__ccPause();
 modalMask.classList.remove('open');
 setBodyLock(false);
+
+try { if (__modalReturnFocus && __modalReturnFocus.focus) __modalReturnFocus.focus({ preventScroll: true }); } catch (eR) { if (window.__silent) window.__silent(eR); }
+__modalReturnFocus = null;
 currentProduct = null;
 currentVariant = null;
 var resourceInput = document.getElementById('resourceCodeInput');
