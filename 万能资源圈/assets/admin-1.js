@@ -863,6 +863,14 @@
         var __cur = document.querySelector('.tab.active');
         if (__cur && __cur.dataset.tab) { window.__tabScroll = window.__tabScroll || {}; window.__tabScroll[__cur.dataset.tab] = window.scrollY || 0; }
       } catch (e) {}
+      /* v536：第一次切页签时把分类骨架的原样标记留一份，后面进分类面板可原样复用 */
+      try {
+        if (window.__catSkelHTML == null) {
+          var _cs = document.getElementById('catList');
+          var _cr = _cs && _cs.querySelector('.cat-row.admin-skel');
+          window.__catSkelHTML = _cr ? _cr.outerHTML : '';
+        }
+      } catch (e) { if (window.__silent) window.__silent(e); }
       document.querySelectorAll('.tab').forEach(function (t) {
         t.classList.toggle('active', t.dataset.tab === name);
       });
@@ -895,6 +903,15 @@
       }
       if (name === 'stats') { try { if (window.__rerenderLine) window.__rerenderLine(); } catch (e) { if (window.__silent) window.__silent(e); } } // R145：面板可见后重画，轴字号按真实宽度补偿
       if (name === 'categories') {
+        /* v536：分类面板首屏空白约 0.7 秒——页面自带的骨架在商品渲染时被 __clearAdminSkel 一起清掉了，
+           切过来时既没骨架也没数据。这里复用它：进面板先立刻铺一层骨架（同一段标记，零新增样式）。 */
+        try {
+          var _cb0 = document.getElementById('catList');
+          if (_cb0 && !_cb0.querySelector('.cat-row:not(.admin-skel)') && !_cb0.querySelector('.admin-skel')) {
+            if (window.__catSkelHTML == null) window.__catSkelHTML = '';
+            if (window.__catSkelHTML) _cb0.innerHTML = window.__catSkelHTML.repeat(8);
+          }
+        } catch (e) { if (window.__silent) window.__silent(e); }
         if (!window.__plC) { window.__plC = 1; loadCategories(); }
         else { loadCategories(true).catch(function () {}); } // 切回后台静默刷新
       }

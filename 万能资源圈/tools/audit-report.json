@@ -619,19 +619,19 @@
   },
   {
    "file": "assets/admin-import.js",
-   "line": 1034,
+   "line": 1035,
    "why": "建议统一叫「回收站」",
    "text": "? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后这些账号会一并失效（数据保留，可在「数据缓存」找回）。'"
   },
   {
    "file": "assets/admin-import.js",
-   "line": 1361,
+   "line": 1362,
    "why": "建议统一叫「回收站」",
    "text": "mask.innerHTML = '<div class=\"modal-box\" role=\"dialog\" aria-modal=\"true\" aria-label=\"数据缓存\""
   },
   {
    "file": "assets/admin-import.js",
-   "line": 1591,
+   "line": 1592,
    "why": "建议统一叫「回收站」",
    "text": "+ row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存'))"
   },

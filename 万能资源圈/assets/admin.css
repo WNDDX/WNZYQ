@@ -165,6 +165,15 @@
       box-shadow: var(--shadow-blue);
       min-height: 60px; /* R275：桌面端对齐资源页高度（R279 起 view-toggle 36px 与 .tab 同高，管理页 logo 36px 同为最高元素，两页内容行高一致） */
     }
+
+    /* v536：手机端顶部四个页签原来只有图标，不熟的人要逐个点开才知道是什么。
+       改成「图标 + 两字简称」：全名仍然只在宽屏显示，手机端用 data-short 补两个字。
+       无障碍不受影响——按钮上的 aria-label 一直是全名。 */
+    @media (max-width: 600px) {
+      .tabs .tab.btn-fit .btn-lab { display: none; }
+      .tabs .tab.btn-fit::after { content: attr(data-short); font-size: 11px; letter-spacing: 0; margin-left: 3px; opacity: .95; }
+      .tabs .tab.btn-fit { padding-left: 8px; padding-right: 8px; gap: 2px; }
+    }
     @media (max-width: 600px) {
       /* v340 条10 修复：顶栏容器此前被钉成 60px 高，而手机端 logo 行+标签行实际约 100px，
          内容被挤成负偏移叠在一起。改为自适应高度，高度变量由 JS 实测回写。 */
