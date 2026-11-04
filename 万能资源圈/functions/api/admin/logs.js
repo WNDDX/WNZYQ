@@ -79,6 +79,8 @@ export async function onRequestGet(context) {
       list: (rows && rows.results) || [],
       total: (totalRow && totalRow.n) || 0,
       page, size, days,
+      /* v544：导出上限 3000 条——到顶了要告诉前端，别静默少导 */
+      truncated: allRows && ((totalRow && totalRow.n) || 0) > size,
       summary: {
         range: days,
         total: (totalRow && totalRow.n) || 0,

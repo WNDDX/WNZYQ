@@ -110,7 +110,7 @@ loadProducts();
 }
 } catch (e0) { if (window.__silent) window.__silent(e0); }
 if (!(state.products || []).length) {
-toast(res.msg || '加载失败，网络开小差了', 'error');
+toast(res.msg || '网络没连上，稍后再试', 'error');
 }
 return; }
 window.__lastFetchTime = Date.now();
@@ -540,6 +540,32 @@ _pp.textContent = _pPriceText;
 s.appendChild(_pdot);
 s.appendChild(_pp);
 }
+
+if (p.updated_by || p.updated_at) {
+var _ub = String(p.updated_by || '').trim();
+var _ua = String(p.updated_at || '').trim();
+var _ut = '';
+if (_ua) {
+try {
+var _d = new Date(_ua.replace(' ', 'T') + 'Z');
+if (!isNaN(_d.getTime())) { _d = new Date(_d.getTime() + 8 * 3600e3); _ut = _d.toISOString().slice(5, 16).replace('T', ' '); }
+} catch (eT) { if (window.__silent) window.__silent(eT); }
+}
+var _ebTxt = (_ub ? _ub + ' ' : '') + _ut;
+if (_ebTxt.trim()) {
+if (s.childNodes.length) {
+var _ebDot = document.createElement('span');
+_ebDot.className = 'p-dot';
+_ebDot.textContent = ' · ';
+s.appendChild(_ebDot);
+}
+var _eb = document.createElement('span');
+_eb.className = 'p-edit-by';
+_eb.textContent = _ebTxt.trim();
+_eb.title = '最后一次修改：' + (_ub || '未知账号') + ' ' + _ut;
+s.appendChild(_eb);
+}
+}
 info.appendChild(t);
 info.appendChild(s);
 
@@ -952,7 +978,7 @@ var _runDelete = function () {
 var _snap = (state.products || []).slice();
 applyBatchLocal('delete', ids); renderProducts();
 __undoable(
-'已删除 ' + ids.length + ' 个资源',
+'已删除 ' + ids.length + ' 个资源 · 回收站点可找回',
 function () {
 api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: action }) }).then(function (res) {
 if (res && res.ok) { clearCache(); silentSyncProducts(); }
@@ -1070,7 +1096,7 @@ if (_delRow && _delRow.parentNode) _delRow.parentNode.removeChild(_delRow);
 if (!document.querySelector('#productList .product-row')) renderProducts();
 }, 200);
 __undoable(
-'已删除「' + (p.title || '未命名') + '」',
+'已删除「' + (p.title || '未命名') + '」· 回收站点可找回',
 function () {
 api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
 if (res && res.ok) { clearCache(); silentSyncProducts(); }

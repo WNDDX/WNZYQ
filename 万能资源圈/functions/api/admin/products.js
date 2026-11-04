@@ -165,8 +165,8 @@ export async function onRequestPost(context) {
   const detailVideos = JSON.stringify(Array.isArray(b.detailVideos) ? b.detailVideos : []);
 
   const r = await env.DB.prepare(
-    `INSERT INTO products (cid, title, "desc", detail, img, cover_images, detail_images, detail_videos, contact_url, contact_qr, price, is_online, is_hidden, schedule_on, schedule_off, sort, created_by)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO products (cid, title, "desc", detail, img, cover_images, detail_images, detail_videos, contact_url, contact_qr, price, is_online, is_hidden, schedule_on, schedule_off, sort, created_by, updated_by)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   )
     .bind(
       Number(b.cid) || 0,
@@ -185,7 +185,8 @@ export async function onRequestPost(context) {
       b.schedule_on ? String(b.schedule_on) : null,
       b.schedule_off ? String(b.schedule_off) : null,
       Number(b.sort) || 0,
-      auth.username /* #116：创建者（资源码可见规则用） */
+      auth.username, /* #116：创建者（资源码可见规则用） */
+      auth.username  /* v544：新增即算「谁最后动的」 */
     )
     .run();
 

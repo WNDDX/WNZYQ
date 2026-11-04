@@ -647,7 +647,7 @@ S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: false, msg: (r && r.
 setTimeout(step, 250);
 }).catch(function () {
 fails.push(p.name);
-S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: false, msg: '网络中断' });
+S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: false, msg: '网络没连上' });
 setTimeout(step, 250);
 });
 };
