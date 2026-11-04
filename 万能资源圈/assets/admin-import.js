@@ -1244,10 +1244,10 @@
     /* v517：这个弹窗里还有动态生成的 <select>（上级账号），建完必须补一次系统下拉包装，
        否则又出现一个「原生长条下拉」，跟别处不一致 */
     setTimeout(function () { try { if (window.__wrapSelects) window.__wrapSelects(mask); } catch (e) {} }, 30);
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑" style="max-width:var(--modal-w-md)">'
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑" style="max-width:var(--modal-w-lg)">' /* v537（老板：分类框只占弹窗三分之一、太小气）——账号弹窗 520→680 */
       + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
       + '<h2 class="modal-title" style="margin-bottom:10px">' + (isEdit ? '编辑账号：' + esc(u.username) : '新增账号') + '</h2>'
-      + '<div class="form usf-body" id="usFormBody">'
+      + '<div class="form usf-body" id="usFormBody">' /* v537：账号表单里权限有二十多项 + 分类树，520px 太挤，容器上挂 modal-wide */
       + (isEdit ? '' : '<label class="pm-hint pm-hint-block">用户名（2-20 位字母数字）</label><input class="input" id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">')
       + (isEdit ? '' : '<label class="pm-hint pm-hint-block">初始密码（6-50 位）</label><input class="input" id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">')
       + '<label class="pm-hint pm-hint-block">备注（这个人是谁 / 负责什么）</label><input class="input w-full-mb10" id="ufNote"  maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">'
