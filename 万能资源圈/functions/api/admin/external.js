@@ -447,15 +447,19 @@ export async function onRequestPost(context) {
         try {
           const u0 = new URL(mall);
           const cands = ['/article/goods', '/article/goods/', '/goods', '/shop', '/goodslist', '/product', '/list'];
+          /* v546y（实测）：老板粘的是「我店铺」的地址 …/index?k=店铺码，探测真列表页时
+             原来拼成 origin + /article/goods，把 k= 店铺码丢了——采回来的商品全成了平台默认店的，
+             佣金算别人。这里把原链接的 query 一起带过去。 */
           for (const c of cands) {
             if (u0.pathname === c) continue;
+            const cand = u0.origin + c + (u0.search || '');
             let pg2;
-            try { pg2 = await fetchPage(u0.origin + c, 8000, { retry: false }); } catch (e) { continue; }
+            try { pg2 = await fetchPage(cand, 8000, { retry: false }); } catch (e) { continue; }
             if (!pg2.ok) continue;
-            const api2 = await tryHaokaWeb(u0.origin + c);
-            if (api2 && api2.items.length > list.length) { list = api2.items; via = 'api'; fixedAddr = u0.origin + c; break; }
-            const l2 = parseGoodsList(pg2.text, u0.origin + c);
-            if (l2.length > list.length && l2.length >= 3) { list = l2; fixedAddr = u0.origin + c; break; }
+            const api2 = await tryHaokaWeb(cand);
+            if (api2 && api2.items.length > list.length) { list = api2.items; via = 'api'; fixedAddr = cand; break; }
+            const l2 = parseGoodsList(pg2.text, cand);
+            if (l2.length > list.length && l2.length >= 3) { list = l2; fixedAddr = cand; break; }
           }
         } catch (e) {}
       }
@@ -518,11 +522,14 @@ export async function onRequestPost(context) {
          这里把来源店铺的专属参数（k / shop_id / mall_id / agent_id / promoCode / userCode）
          原样补到每条商品链接上，商品链接自己已经带的不重复加。 */
       try {
-        const srcU = new URL(fixedAddr || mall);
         const ownKeys = ['k', 'shop_id', 'mall_id', 'agent_id', 'promoCode', 'userCode'];
-        const ownPairs = ownKeys
-          .map(function (k) { const v = srcU.searchParams.get(k); return v ? k + '=' + encodeURIComponent(v) : ''; })
-          .filter(Boolean);
+        /* v546y：店铺参数优先从老板粘的原始链接里读（mall），探测后的地址可能只剩列表路径。 */
+        const grab = function (u) {
+          try { const o = new URL(u); const r = {}; ownKeys.forEach(function (k) { const v = o.searchParams.get(k); if (v) r[k] = v; }); return r; } catch (e) { return {}; }
+        };
+        const ownMap = Object.assign({}, grab(fixedAddr || ''), grab(mall || ''));
+        const ownPairs = ownKeys.filter(function (k) { return ownMap[k]; })
+          .map(function (k) { return k + '=' + encodeURIComponent(ownMap[k]); });
         if (ownPairs.length) {
           list.forEach(function (g) {
             if (!g.link) return;
