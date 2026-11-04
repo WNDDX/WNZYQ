@@ -697,8 +697,18 @@ export async function ensureSoftDelete(env) {
   try { await env.DB.prepare('ALTER TABLE products ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
   try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
   try { await env.DB.prepare("ALTER TABLE categories ADD COLUMN created_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
-  /* v544：资源「最后修改人」——列表里显示谁改的，多人共用后台时不用再翻操作日志对时间 */
-  try { await env.DB.prepare("ALTER TABLE products ADD COLUMN updated_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {} /* v441b：#116 创建者列兜底（线上已验证有，此处幂等保险） */
+ /* v441b：#116 创建者列兜底（线上已验证有，此处幂等保险） */
+}
+
+/* v545 修：资源「最后修改人」列必须单独迁移。
+   原来挂在 ensureSoftDelete 里，而那个函数有 `if (__sdDone) return` ——线上 isolate 早就跑过一遍、
+   守卫已置位，新加的 ALTER 永远不执行（实测接口返回里根本没有 updated_by 这个字段）。
+   这里单独一个守卫，保证每台 isolate 第一次用到时都会补列。 */
+let __ubDone = false;
+export async function ensureUpdatedBy(env) {
+  if (__ubDone) return;
+  __ubDone = true;
+  try { await env.DB.prepare("ALTER TABLE products ADD COLUMN updated_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
 }
 
 /* #64 数据变更留痕（audit_log 表，60 天自动清理覆盖） */

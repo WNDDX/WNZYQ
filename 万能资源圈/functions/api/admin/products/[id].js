@@ -5,7 +5,7 @@
  * 均需登录
  */
 
-import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, ensureProductColumns, ensureVariantColumns, audit } from '../../../_utils.js';
+import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, ensureProductColumns, ensureUpdatedBy, ensureVariantColumns, audit } from '../../../_utils.js';
 import { catAllowed, visibleCode, parsePerms } from '../../../_perms.js';
 
 /* #116 范围锁：资源是否在当前身份的授权分类内 */
@@ -48,7 +48,8 @@ export async function onRequestPut(context) {
   const { env, request, params } = context;
 
   await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
-  await ensureProductColumns(env); await ensureVariantColumns(env); /* v440：线上旧库列迁移 */  const auth = await requirePerm(env, request, 'products.edit');
+  await ensureProductColumns(env); await ensureVariantColumns(env); /* v440：线上旧库列迁移 */  await ensureUpdatedBy(env); /* v545：最后修改人列，独立守卫 */
+  const auth = await requirePerm(env, request, 'products.edit');
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);
