@@ -1,0 +1,937 @@
+{
+ "hardColors": [
+  {
+   "file": "assets/motion.css",
+   "line": 225,
+   "color": "#0d1626",
+   "text": "html[data-page=\"error\"][data-theme=\"dark\"] body { background: linear-gradient(180deg, #0d1"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 225,
+   "color": "#13293f",
+   "text": "html[data-page=\"error\"][data-theme=\"dark\"] body { background: linear-gradient(180deg, #0d1"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 225,
+   "color": "#1b3a5c",
+   "text": "html[data-page=\"error\"][data-theme=\"dark\"] body { background: linear-gradient(180deg, #0d1"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 226,
+   "color": "#16324e",
+   "text": "html[data-page=\"error\"][data-theme=\"dark\"] .btn { background: #16324e; color: #9ECAFF; }"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 226,
+   "color": "#9ECAFF",
+   "text": "html[data-page=\"error\"][data-theme=\"dark\"] .btn { background: #16324e; color: #9ECAFF; }"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 229,
+   "color": "#1b2735",
+   "text": "html[data-theme=\"dark\"] .prt-text { background: #1b2735; color: var(--blue2, #64B5F6); bor"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 229,
+   "color": "#2b3a4c",
+   "text": "html[data-theme=\"dark\"] .prt-text { background: #1b2735; color: var(--blue2, #64B5F6); bor"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 298,
+   "color": "#0e1621",
+   "text": "--bg-page: #0e1621;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 299,
+   "color": "#16202c",
+   "text": "--bg-light: #16202c;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 300,
+   "color": "#1b2735",
+   "text": "--card-bg: #1b2735;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 301,
+   "color": "#2b3a4c",
+   "text": "--border: #2b3a4c;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 302,
+   "color": "#24313f",
+   "text": "--border-soft: #24313f;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 303,
+   "color": "#274257",
+   "text": "--border-light: #274257;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 304,
+   "color": "#43586d",
+   "text": "--border-strong: #43586d;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 305,
+   "color": "#e6edf5",
+   "text": "--text: #e6edf5;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 306,
+   "color": "#9db0c3",
+   "text": "--text-light: #9db0c3;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 307,
+   "color": "#69809a",
+   "text": "--text-faint: #69809a;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 308,
+   "color": "#e6edf5",
+   "text": "--text-primary: #e6edf5;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 309,
+   "color": "#8296ab",
+   "text": "--gray-mid: #8296ab;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 310,
+   "color": "#16202c",
+   "text": "--gray-bg: #16202c;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 311,
+   "color": "#9db0c3",
+   "text": "--gray-text: #9db0c3;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 312,
+   "color": "#22334a",
+   "text": "--hover-bg: #22334a;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 314,
+   "color": "#243240",
+   "text": "--neutral-3: #243240;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 316,
+   "color": "#7fd18a",
+   "text": "--ok-ink: #7fd18a; --bad-ink: #ff8a80; --warn-ink: #ffcc80;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 316,
+   "color": "#ff8a80",
+   "text": "--ok-ink: #7fd18a; --bad-ink: #ff8a80; --warn-ink: #ffcc80;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 316,
+   "color": "#ffcc80",
+   "text": "--ok-ink: #7fd18a; --bad-ink: #ff8a80; --warn-ink: #ffcc80;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 318,
+   "color": "#24313f",
+   "text": "--sk-hi: #24313f;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 321,
+   "color": "#6b3038",
+   "text": "--danger-border: #6b3038;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 322,
+   "color": "#7d3a3f",
+   "text": "--danger-border-strong: #7d3a3f;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 329,
+   "color": "#f0a24e",
+   "text": "--price-text: #f0a24e;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 330,
+   "color": "#64b5f6",
+   "text": "--link-blue: #64b5f6;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 332,
+   "color": "#10304c",
+   "text": "--blue3: #10304c;"
+  },
+  {
+   "file": "assets/motion.css",
+   "line": 337,
+   "color": "#15222e",
+   "text": "--panel-grad-b: #15222e;"
+  },
+  {
+   "file": "assets/ui-common.css",
+   "line": 75,
+   "color": "#1565c0",
+   "text": "--link-blue: #1565c0;"
+  },
+  {
+   "file": "assets/ui-common.css",
+   "line": 76,
+   "color": "#c8e0f5",
+   "text": "--border-light: #c8e0f5;"
+  },
+  {
+   "file": "assets/ui-common.css",
+   "line": 78,
+   "color": "#333",
+   "text": "--text-primary: #333;"
+  },
+  {
+   "file": "assets/ui-common.css",
+   "line": 94,
+   "color": "#2e7d32",
+   "text": "--ok-ink: #2e7d32; --bad-ink: #c62828; --warn-ink: #b26a00;"
+  },
+  {
+   "file": "assets/ui-common.css",
+   "line": 94,
+   "color": "#c62828",
+   "text": "--ok-ink: #2e7d32; --bad-ink: #c62828; --warn-ink: #b26a00;"
+  },
+  {
+   "file": "assets/ui-common.css",
+   "line": 94,
+   "color": "#b26a00",
+   "text": "--ok-ink: #2e7d32; --bad-ink: #c62828; --warn-ink: #b26a00;"
+  }
+ ],
+ "fontOutliers": [],
+ "radiusOutliers": [],
+ "unusedClass": [
+  {
+   "cls": "panel-in",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "lg-view",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "lg-contact",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "lg-resource",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "stat-fold",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "info-row",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "ann-fold",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "sort-fold",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "filter-bar",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "edit-mask",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "cg-badge",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "cg-cover-tag",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "admin-table-wrap",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "ann-name",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "ann-sort",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "a-sort",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "is-off",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "extc-form",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "noimg",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "extc-badge",
+   "file": "assets/admin.css"
+  },
+  {
+   "cls": "dark-ink",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "sugg-cat",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "wn-pop",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "tbl",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "top-share-btn",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "share-btn",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "wn-s4-dim",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "modal-scroll",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "lb-stage",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "skel-block",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "wn-press",
+   "file": "assets/motion.css"
+  },
+  {
+   "cls": "free",
+   "file": "assets/shop.css"
+  },
+  {
+   "cls": "file-folder-bulk",
+   "file": "assets/shop.css"
+  },
+  {
+   "cls": "cat-bar",
+   "file": "assets/shop.css"
+  },
+  {
+   "cls": "toast-wrap",
+   "file": "assets/shop.css"
+  },
+  {
+   "cls": "btn-busy",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "spin",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "wn-empty",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "ann-skel-",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "longpress-menu",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "btn-back-top",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "page-wrap",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "empty-ico",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "empty-state",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "empty-action",
+   "file": "assets/ui-common.css"
+  },
+  {
+   "cls": "bind-table",
+   "file": "assets/ui-common.css"
+  }
+ ],
+ "terms": [
+  {
+   "file": "全系统一致性审查报告.html",
+   "line": 265,
+   "why": "统一「正在读取…」",
+   "text": "<b>加载中重复点击没有保护</b>"
+  },
+  {
+   "file": "全系统一致性审查报告.html",
+   "line": 368,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "<b>“商品”与“资源”混用</b>"
+  },
+  {
+   "file": "全系统一致性审查报告.html",
+   "line": 490,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "<p>是「新增资源」弹窗里、资源价格下面那个<b>「跳转链接」</b>输入框（以前叫“专属客服链接”）。它的作用是：访客在你站里点“获取资源/咨询”时，跳到对方平台这件商品的页面去"
+  },
+  {
+   "file": "assets/admin-1.js",
+   "line": 306,
+   "why": "按钮文案统一「确定」",
+   "text": "inputOk.click(); // 上传完成自动确定（等于手填链接后点确定）"
+  },
+  {
+   "file": "assets/admin-import.js",
+   "line": 235,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "if (/标题|名称|商品|产品|套餐/.test(line) && /图|链接|地址|url|备注|价格|id/i.test(line)) { hi = i; break; }"
+  },
+  {
+   "file": "assets/admin-import.js",
+   "line": 244,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "var iT = idx(/标题|名称|商品|产品|套餐/);"
+  },
+  {
+   "file": "assets/admin-import.js",
+   "line": 1035,
+   "why": "建议统一叫「回收站」",
+   "text": "? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后这些账号会一并失效（数据保留，可在「数据缓存」找回）。'"
+  },
+  {
+   "file": "assets/admin-import.js",
+   "line": 1362,
+   "why": "建议统一叫「回收站」",
+   "text": "mask.innerHTML = '<div class=\"modal-box\" role=\"dialog\" aria-modal=\"true\" aria-label=\"数据缓存\""
+  },
+  {
+   "file": "assets/admin-import.js",
+   "line": 1592,
+   "why": "建议统一叫「回收站」",
+   "text": "+ row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存'))"
+  },
+  {
+   "file": "assets/ext-collect.js",
+   "line": 618,
+   "why": "按钮文案统一「确定」",
+   "text": "toast('已填好标题、描述、详情（含下单链接），补上分类和价格点确定就行', 'info');"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 2,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "* v459 外部链接台账（老板：把别家平台的商品链接收进来，点一下直达登录后的商品页，能看标题/封面/描述）"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 64,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "sold: ['已售出', '已卖出', '已售完', '卖掉啦', '已经卖出', '宝贝已卖出', '此商品已售出', '交易成功', '交易完成', '已成交',"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 66,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "deleted: ['商品不存在', '宝贝不存在', '商品已删除', '已删除', '该宝贝已被删除', '找不到该商品', '页面不存在',"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 67,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "'已失效', '已过期', '该商品已失效', '商品已下架或删除'],"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 93,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "if (!raw) return { ok: 0, msg: '还没填商品链接' };"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 103,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "if (hasId) return { ok: 1, msg: '' };   /* 带商品 id = 详情页，这个判断优先，后面不再猜 */"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 107,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "return { ok: 0, msg: '这看着是列表页/搜索页，不是商品详情页，结算会对不上' };"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 113,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "return { ok: 0, msg: '看不出是商品详情页，确认一下地址栏那条是不是商品页' };"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 190,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "const head = ['平台', '标题', '状态', '商品链接', '备用链接', '封面图', '描述文字', '描述图或视频', '备注', '上次巡检', '登记"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 285,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "商品还在、在「全部平台」里能看到，不会误删老板辛苦采的货。 */"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 305,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "if (!rawUrl) return json({ ok: false, msg: '商品链接不能为空' }, 400);"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 385,
+   "why": "统一「正在读取…」",
+   "text": "if (!title || title.length < 5 || /^(加载中|首页|商城|号卡|登录)$/.test(title)) {"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 394,
+   "why": "禁用词：全系统叫「资源」",
+   "text": ": '这条链接能打开，但页面里找不到商品图，可能是别的东西在挡（登录/验证）。' }, 200);"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 468,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "const shell = pg.text.length < 4000 || /<!-- 商品将通过JS动态加载|id=\"productList\"\\s*>\\s*</i.test(p"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 548,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "if (dup1) return json({ ok: true, id: dup1.id, dup: true, msg: '商品池里已经有了' });"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 716,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "与上面的「台账」共存，但主入口改成：平台设置 → 外部商品采集 → 弹窗。"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 753,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "② 图片过滤不再整体排除 /static/ 与 /assets/ —— 很多站的商品图就在那里，只排图标特征。"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 796,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "const NOISE = /(查单|收集信息|订单查询|客服|登录|注册|公告|须知|说明|规则|提示|注意|首页|全部商品|搜索|分享|下载|返回顶部|关于我们)/;"
+  },
+  {
+   "file": "functions/api/admin/external.js",
+   "line": 841,
+   "why": "禁用词：全系统叫「资源」",
+   "text": "老板给的平台清单里，一大半是同一家的 uni-app 商城：页面只有 1KB 壳，商品全靠浏览器里的 JS 拉，"
+  },
+  {
+   "file": "functions/api/products.js",
+   "line": 39,
+   "why": "建议统一叫「回收站」",
+   "text": "WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hou"
+  },
+  {
+   "file": "functions/api/products.js",
+   "line": 64,
+   "why": "建议统一叫「回收站」",
+   "text": "const r = await env.DB.prepare('SELECT * FROM products WHERE id = ? AND is_online = 1 AND "
+  },
+  {
+   "file": "functions/api/shop/home.js",
+   "line": 53,
+   "why": "建议统一叫「回收站」",
+   "text": "WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hou"
+  }
+ ],
+ "dupSelectors": [
+  {
+   "file": "assets/admin.css",
+   "sel": ".topbar-brand",
+   "times": 4
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".topbar-logo",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".tabs",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": "to",
+   "times": 8
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".p-ops .select-picker.code-picker .cat-picker-display",
+   "times": 5
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": "#productList.card-view .product-row .p-ops .select-picker.code-picker",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": "#productList.card-view .product-row .p-ops .row-btn",
+   "times": 6
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": "#productList.card-view .product-row .p-ops",
+   "times": 4
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": "#productList.card-view .product-row .thumb",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": "#productList.card-view .product-row .info",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".stat-card",
+   "times": 4
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".stat-card .delta",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".stat-table th, .stat-table td",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".cat-row",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".cat-row .c-name",
+   "times": 5
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".cat-row.cat-sub .c-name",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".cat-row .c-count",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".cat-row .c-sort",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".variant-item",
+   "times": 4
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".variant-item .v-name",
+   "times": 4
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".variant-item .v-price",
+   "times": 4
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".variant-item .v-sort",
+   "times": 4
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".ann-list",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".ann-item",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".modal-box",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".cp-item",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".cp-item .cp-price",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".rte-toolbar .select-picker .cat-picker-display",
+   "times": 4
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".rte-toolbar",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".modal-footer",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": "#previewMask .variant-tab",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".batch-btn",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".trend-legend",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".topbar-brand span",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".cat-row .c-meta .row-btn, .ann-item .c-meta .row-btn",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".variant-item .v-main-group",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".variant-item .v-act-group",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".variant-item .code-slot",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".variant-item .bind-slot",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".extc-addpf",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".extc-tabs",
+   "times": 3
+  },
+  {
+   "file": "assets/admin.css",
+   "sel": ".extc-tools",
+   "times": 3
+  },
+  {
+   "file": "assets/motion.css",
+   "sel": "to",
+   "times": 11
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".topbar-inner",
+   "times": 4
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".shop-logo",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".shop-name",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".search-box",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".shop-brand",
+   "times": 4
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".product-grid",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".card-img",
+   "times": 4
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".card-body",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".card-title",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".card-desc",
+   "times": 4
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".product-grid.list-view .card-img",
+   "times": 4
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".modal-price",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".product-card",
+   "times": 4
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".modal-box",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".variant-tab",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".ann-modal .ann-body img, .ann-modal .ann-body video",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": ".sub-cat-toggle",
+   "times": 3
+  },
+  {
+   "file": "assets/shop.css",
+   "sel": "to",
+   "times": 4
+  },
+  {
+   "file": "assets/ui-common.css",
+   "sel": "to",
+   "times": 19
+  },
+  {
+   "file": "assets/ui-common.css",
+   "sel": ".empty-tip",
+   "times": 3
+  }
+ ]
+}
