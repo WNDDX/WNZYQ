@@ -449,7 +449,12 @@ export async function onRequestPost(context) {
                   .replace(/<script[\s\S]*?<\/script>/gi, ' ')
                   .replace(/<style[\s\S]*?<\/style>/gi, ' ')
                   .replace(/<head[\s\S]*?<\/head>/gi, ' '));
-                if (bodyTxt && bodyTxt.length >= 30) g.desc = bodyTxt.slice(0, 200);
+                /* v546m：直接截正文，抓到的常是站点名/导航（实测「五湖通信号卡系统|…」）。
+                   改成按句切开，只留像套餐说明的句子（含流量/套餐/通话/元/G/月租这类词）。 */
+                const cand = String(bodyTxt || '').split(/[。|｜\n\r]+/)
+                  .map(function (s) { return s.replace(/\s+/g, ' ').trim(); })
+                  .filter(function (s) { return s.length >= 12 && s.length <= 120 && /(流量|套餐|通话|月租|首月|元|G\b|国内|分钟)/.test(s); });
+                if (cand.length) g.desc = cand.slice(0, 3).join('。').slice(0, 200);
               }
               if (!g.buy) g.buy = g.link;
             } catch (e) {}
@@ -840,11 +845,17 @@ export function parseGoodsList(html, baseUrl) {
        这里把 onclick 里的跳转地址也捞出来，跟 href 一起参与筛选。 */
     const clickRe = /(?:openPopup|openUrl|openWin|window\.open|location\.assign)\s*\(\s*['"]([^'"]{2,300})['"]|location\.href\s*=\s*['"]([^'"]{2,300})['"]/gi;
     let cm;
+    const clickHrefs = [];
     while ((cm = clickRe.exec(ctx))) {
       const cu = absUrl(cm[1] || cm[2], baseUrl);
       if (cu && hrefs.indexOf(cu) < 0) hrefs.push(cu);
+      if (cu && clickHrefs.indexOf(cu) < 0) clickHrefs.push(cu);
     }
-    const link = hrefs.filter(h => /(pid=|\/order|detail|goods|goodsId=|\/card\/|\/buy)/i.test(h))[0] || '';
+    /* v546m：分页/筛选链接里也带 goods，会被误认成商品链接（实测 55555.wang 全抓成 ?page=1）。
+       这些一律不当商品链接；onclick 里的跳转才是真正的商品页，优先取它。 */
+    const isPager = (h) => /[?&](page|p|pageno|pn)=\d/i.test(h) || /[?&](yys|status|value|keyword|kw|q|sort)=/i.test(h);
+    const hitGoods = (h) => !isPager(h) && /(pid=|\/order|detail|goods|goodsId=|\/card\/|\/buy)/i.test(h);
+    const link = clickHrefs.filter(hitGoods)[0] || hrefs.filter(hitGoods)[0] || '';
     /* 有下单链接的算高置信；没链接但标题同时含「商品词 + 运营商」也留（不少站用 JS 跳转，href 拿不到） */
     if (!link && !(GOODS_WORD.test(title) && OP_WORD.test(title))) continue;
     /* 同站同标题只留一条：同一张商品图常在页面里出现两次（列表 + 推荐位），
