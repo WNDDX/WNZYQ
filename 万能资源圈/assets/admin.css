@@ -2420,7 +2420,11 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* v517：采集弹窗筛选行——搜索框定宽、状态下拉定宽、计数推到最右，和资源管理的筛选行一个呼吸感 */
 .extc-tools { gap: 10px; padding: 2px 0 10px; border-bottom: 1px solid var(--border-soft, #eef2f6); margin-bottom: 12px; }
 .extc-tools .extc-cnt { margin-left: auto; }
-.extc-tools .select-picker { flex: 0 0 auto; min-width: 110px; }
+.extc-tools .select-picker { flex: 0 0 140px; width: 140px; min-width: 140px; max-width: 140px; }
+/* v537（老板：上面的框形状怪、长度不对）——搜索框被"状态"下拉挤到 26px，下拉却撑满整行。
+   这里把搜索框交给它伸缩，下拉锁 140px。 */
+.extc-tools .extc-search { flex: 1 1 auto; width: auto; max-width: none; min-width: 0; height: 40px; }
+.extc-tools .extc-cnt { flex: 0 0 auto; white-space: nowrap; }
 .extc-see-desc { font-size: 13px; color: var(--text); line-height: 1.7; word-break: break-all; padding: 6px 0 2px; }
 .extc-see-desc a { color: var(--link-blue); }
 .extc-cnt { font-size: 12px; color: var(--text-light); white-space: nowrap; }
