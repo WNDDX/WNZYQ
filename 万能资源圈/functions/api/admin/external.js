@@ -393,11 +393,20 @@ export async function onRequestPost(context) {
             ? '这条链接的页面是个空壳（前端渲染的站，服务器拿不到内容）。改用「粘整页内容」那条路。'
             : '这条链接能打开，但页面里找不到商品图，可能是别的东西在挡（登录/验证）。' }, 200);
         }
-        /* v501：顺便把这件资源的下单链接找出来（详情页里像「立即下单/立即领取」的链接） */
+        /* v501：顺便把这件资源的下单链接找出来（详情页里像「立即下单/立即领取」的链接）
+           v546p（实测京东）：原正则只管关键词，结果把 360buyimg 的图片地址当成「下单链接」了——
+           老板点进去是一张图。这里排掉图片/静态资源/图床域名，找不到就退回原链接。 */
+        const isAssetUrl = function (u) {
+          return /\.(png|jpe?g|webp|gif|svg|ico|css|js|woff2?)(\?|#|$)/i.test(u)
+            || /\/\/(img|image|static|cdn|pic|pics|oss|res)[\w.-]*\./i.test(u);
+        };
         const buyHref = ((pg.text.match(/href=["']([^"']*(?:buy|order|goods|goodsId=|pid=)[^"']*)["']/gi) || [])
           .map(function (x) { return absUrl(x.replace(/^href=["']|["']$/gi, ''), one); })
-          .filter(Boolean)[0]) || one;
-        return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 300), buy_url: buyHref });
+          .filter(function (u) { return u && !isAssetUrl(u); })[0]) || one;
+        /* v546p：京东/淘宝这类站，服务端拿到的常常是「登录墙 / 站点首页」而不是商品本身——
+           标题是站点名、一张商品图都没有。这种别报成功，说清楚，让老板换「粘贴」。 */
+        const weak = (!imgs.length) && (!desc || desc.length < 40);
+        return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 300), buy_url: buyHref, weak: weak });
       }
 
       const pid = Number(b.platform_id || 0) || 0;
