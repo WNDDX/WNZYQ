@@ -253,7 +253,7 @@
           api('admin/variants/' + id, { method: 'DELETE' }).then(function (res) {
             if (res && res.ok) { if (state.editingId) loadVariants(state.editingId); }
             else { toast((res && res.msg) || '删除失败', 'error'); _restoreV(); }
-          }).catch(function () { toast('删除失败，请重试', 'error'); _restoreV(); });
+          }).catch(function () { toast(window.T('delFail'), 'error'); _restoreV(); });
         },
         _restoreV
       );
@@ -601,6 +601,30 @@
 
     /* R57 柱状图已退役（v388 核实无渲染调用），原公共渲染注释一并清理（v390-2） */
     // R65：统计卡片渲染（拆成函数，供 loadStats 与「对比上期」开关切换重渲染共用）
+    /* v539：昨日小结——从"按天趋势"里取昨天那一格，跟前天比；不额外请求 */
+    function renderDaySum(trend) {
+      var box = document.getElementById('daySum');
+      if (!box) return;
+      try {
+        var list = trend || window.state && window.state.statsTrend || [];
+        if (!list || !list.length) { box.hidden = true; return; }
+        var bj = function (d) { return new Date(d.getTime() + 8 * 3600e3).toISOString().slice(0, 10); };
+        var yest = bj(new Date(Date.now() - 86400e3));
+        var idx = -1;
+        for (var i = 0; i < list.length; i++) { if (String(list[i].day) === yest) { idx = i; break; } }
+        if (idx < 0) { box.hidden = true; return; }
+        var y = list[idx], pv = idx > 0 ? list[idx - 1] : null;
+        var num = function (v) { return Number(v || 0); };
+        var d = function (a, b) { if (!pv) return ''; var n = num(a) - num(b); return n === 0 ? '（持平）' : (n > 0 ? '（+' + n + '）' : '（' + n + '）'); };
+        box.hidden = false;
+        box.innerHTML = '<b>昨天 ' + yest.slice(5) + '</b>'
+          + '<span>访问 <i>' + num(y.views) + '</i>' + d(y.views, pv && pv.views) + '</span>'
+          + '<span>咨询 <i>' + num(y.contacts) + '</i>' + d(y.contacts, pv && pv.contacts) + '</span>'
+          + '<span>内容查看 <i>' + num(y.resource_unlocks) + '</i>' + d(y.resource_unlocks, pv && pv.resource_unlocks) + '</span>';
+      } catch (e) { box.hidden = true; }
+    }
+    window.__renderDaySum = renderDaySum;
+
     function renderStatCards(ov, ovp) {
       // v302（用户 10-05 00:09）：每日数据去骨架，无需清理
       var cards = [
@@ -773,6 +797,8 @@
         }
         // 保存统计数据到 state，供导出与「对比上期」开关重渲染使用
         state.statsTrend = trendData;
+      try { renderDaySum(trendData); } catch (eDS2) {}
+        try { renderDaySum(trendData); } catch (eDS) {}
         state.statsTrendPrev = trendPrev || null;
         state.statsByProduct = res.byProduct || [];
         // 折线图（R58：上期虚线；R65：仅开关开启时显示）
@@ -845,7 +871,7 @@
           return;
         }
         if (!res || !res.ok) {
-          if (!silent) toast('网络开小差了，请稍后再试', 'error');
+          if (!silent) toast(window.T('netFail'), 'error');
           return;
         }
         // 解包产品
@@ -929,7 +955,7 @@
         if (_em && !(state.products || []).length) { _em.classList.add('show'); var _et = document.getElementById('productEmptyTitle'); if (_et) _et.textContent = __getAdminEmptyText(); }
         var _hasCache = __getAdminCache()._cacheFormat === 'v317' && (__getAdminCache().products || []).length;
         if (!silent && !_hasCache && !(state.products || []).length) {
-          toast('网络开小差了，请稍后再试', 'error');
+          toast(window.T('netFail'), 'error');
         }
       });
     }
@@ -1438,7 +1464,7 @@ refreshCatCnts();
                 api('admin/categories/' + c.id, { method: 'DELETE' }).then(function (res) {
                   if (res && res.ok) { clearCache(); silentSyncCategories(); }
                   else { toast((res && res.msg) || '删除失败', 'error'); __restoreCat(); }
-                }).catch(function () { toast('删除失败，请重试', 'error'); __restoreCat(); });
+                }).catch(function () { toast(window.T('delFail'), 'error'); __restoreCat(); });
               },
               function () { __restoreCat(); }
             );
@@ -1713,7 +1739,7 @@ refreshCatCnts();
         }
       }).catch(function () {
         catSaving = false; catOk.disabled = false; catOk.style.opacity = ''; catOk.textContent = _catOkText;
-        toast('网络开小差了，请稍后再试', 'error'); // v294：087 网络提示统一
+        toast(window.T('netFail'), 'error'); // v294：087 网络提示统一
       });
     });
 
@@ -2170,7 +2196,7 @@ refreshCatCnts();
       var url = window.location.origin + '/shop?pid=' + state.editingId;
       var _pn = ''; try { var _pp = (state.products || []).find(function (x) { return Number(x.id) === Number(state.editingId); }); _pn = (_pp && _pp.title) || ''; } catch (e) { if (window.__silent) window.__silent(e); }
       if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制'); // R251：新标题+带资源名灰字
-      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } toast('链接已复制', 'success'); }
+      else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } toast(window.T('copied'), 'success'); }
     });
     // R285 item 7：兜底弹窗已统一到 ui-common.js（window.openContactFallback / window.__kfFbClose）
     document.getElementById('previewContactBtn').addEventListener('click', function () {
@@ -2364,7 +2390,7 @@ refreshCatCnts();
           var url = __makeAdminShareUrl(pid);
           var _pn = __adminProdTitle(pid);
           if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制'); // R251：新标题+带资源名灰字
-          else __cp(url, '链接已复制');
+          else __cp(url, window.T('copied'));
         };
       }
       function __saveQrAdminFn(pid) {
