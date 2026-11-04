@@ -2348,7 +2348,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .pm-catrow.is-kid { font-size: 12px; color: var(--text-light); padding: 4px 2px; }
 .pm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 /* v537（老板）：数据范围里的分类树被挤成弹窗三分之一宽——它是整块列表，必须占满一整行 */
-.pm-chips > .pm-cattree { flex: 1 1 100%; width: 100%; box-sizing: border-box; }
+.pm-chips > .pm-cattree { flex: 1 1 100% !important; width: 100% !important; max-width: none !important; box-sizing: border-box; }
 .pm-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--r-pill, 999px); cursor: pointer; background: var(--card-bg); }
 .pm-chip input { width: 14px; height: 14px; accent-color: var(--blue1); cursor: pointer; }
 .pm-chip.is-off { opacity: .55; }
