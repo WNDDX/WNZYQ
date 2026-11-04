@@ -212,7 +212,8 @@ state.variants = (state.variants || []).filter(function (x) { return x.id !== id
 var _dvp = (state.products || []).find(function (x) { return x.id === state.editingId; });
 if (_dvp) _dvp.variants = (state.variants || []).slice();
 var __vi = variantListEl.querySelector('.variant-item[data-vid="' + id + '"]');
-var __post7 = function () { renderVariants(); if (state.editingId) loadVariants(state.editingId); };
+
+var __post7 = function () { renderVariants(); };
 if (__vi) { __vi.style.transition = 'opacity var(--dur-fast, .10s) ease'; __vi.style.opacity = '0'; setTimeout(__post7, 120); }
 else __post7();
 };
