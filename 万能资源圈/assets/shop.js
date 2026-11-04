@@ -1144,6 +1144,7 @@ __uniPager = window.buildUniPager(pager, {
 page: currentPage,
 totalPages: totalPages,
 total: DATA._backendPaged ? (DATA.total || 0) : list.length,
+unit: '个',
 onPage: __turnToPage
 });
 }
