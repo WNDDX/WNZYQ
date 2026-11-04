@@ -76,8 +76,8 @@
     var dv = '';
     if (cfg.dv && cfg.dv.length) {
       dv = '<dataValidations count="' + cfg.dv.length + '">' + cfg.dv.map(function (d) {
-        return '<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1"' +
-          (d.prompt ? ' promptTitle="' + esc(d.promptTitle || '填写提示') + '" prompt="' + esc(d.prompt) + '"' : '') +
+        /* v537（老板）：模板里不要那些一弹出就挡半屏的说明气泡了——只留下拉本身，填错才提示 */
+        return '<dataValidation type="list" allowBlank="1" showInputMessage="0" showErrorMessage="1"' +
           ' errorTitle="只能选列表里的值" error="' + esc(d.err || '请点单元格右侧的小三角，从列表里选；不要自己输入。') + '"' +
           ' sqref="' + d.sqref + '"><formula1>' + esc(d.formula) + '</formula1></dataValidation>';
       }).join('') + '</dataValidations>';
@@ -331,7 +331,8 @@
     var OPT_NAMES = [
       { name: '分类选项', ref: '选项!$A$2:$A$' + lastOpt },
       { name: '分类级别选项', ref: '选项!$B$2:$B$3' },
-      { name: '显示状态选项', ref: '选项!$C$2:$C$3' }
+      { name: '显示状态选项', ref: '选项!$C$2:$C$3' },
+      { name: '时间选项', ref: '选项!$D$2:$D$9' }   /* v537：两个"定时…时间"列也改成下拉选，不用手打 */
     ];
     var ROWSN = 30;                              /* 预留 30 行空白（带边框 + 下拉） */
     var d2 = new Date(), pd = function (n) { return n < 10 ? '0' + n : '' + n; };
@@ -348,28 +349,38 @@
     var varHeads = ['所属资源标题', '类型名称', '类型价格', '类型简介', '资源码', '解锁后内容', '绑定上限', '显示状态', '排序'];
     var catHeads = ['分类名称', '分类级别', '所属一级分类', '排序序号', '显示状态'];
     var annHeads = ['公告标题', '公告内容', '排序序号', '显示状态'];
-    var optHeads = ['分类选项', '分类级别选项', '显示状态选项', '时间格式示例'];
+    var optHeads = ['分类选项', '分类级别选项', '显示状态选项', '时间选项'];
+
+    /* v537：定时时间给 8 个常用时间点（按下载当天算），下拉直接选；要别的点仍可手打 */
+    var _dtNow = new Date();
+    var _dtStr = function (dayOffset, hh) {
+      var x = new Date(_dtNow.getTime() + dayOffset * 86400000);
+      return x.getFullYear() + '-' + pd(x.getMonth() + 1) + '-' + pd(x.getDate()) + ' ' + pd(hh) + ':00';
+    };
+    var DT_OPTS = [_dtStr(0, 9), _dtStr(0, 18), _dtStr(1, 9), _dtStr(1, 18), _dtStr(2, 9), _dtStr(3, 9), _dtStr(7, 9), _dtStr(7, 18)];
 
     var optRows = [optHeads];
-    for (var i = 0; i < Math.max(opts.length, 2); i++) {
-      optRows.push([opts[i] || '', i === 0 ? '一级分类' : (i === 1 ? '二级分类' : ''), i === 0 ? '显示' : (i === 1 ? '隐藏' : ''), i === 0 ? '2026-11-02 09:00' : '']);
+    for (var i = 0; i < Math.max(opts.length, DT_OPTS.length, 2); i++) {
+      optRows.push([opts[i] || '', i === 0 ? '一级分类' : (i === 1 ? '二级分类' : ''), i === 0 ? '显示' : (i === 1 ? '隐藏' : ''), DT_OPTS[i] || '']);
     }
 
     var sheets = [
       { name: '资源', rows: mk(resHeads), widths: [26, 18, 30, 40, 12, 30, 8, 12, 18, 18, 30, 30], dv: [
-        { sqref: 'B2:B' + (ROWSN + 1), formula: CAT_DV, promptTitle: '所属分类', prompt: '点右边小三角选已有分类；没有就先到后台分类管理里加一个。' },
-        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选「显示」= 前台立刻能看到；选「隐藏」= 前台不显示。' }
+        { sqref: 'B2:B' + (ROWSN + 1), formula: CAT_DV },
+        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV },
+        { sqref: 'I2:I' + (ROWSN + 1), formula: '时间选项' },
+        { sqref: 'J2:J' + (ROWSN + 1), formula: '时间选项' }
       ] },
       { name: '类型', rows: mk(varHeads), widths: [26, 18, 12, 30, 24, 40, 12, 12, 8], dv: [
-        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选「显示」或「隐藏」。' }
+        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV }
       ] },
       { name: '分类', rows: mk(catHeads), widths: [22, 14, 22, 12, 12], dv: [
-        { sqref: 'B2:B' + (ROWSN + 1), formula: LV_DV, promptTitle: '分类级别', prompt: '只有「一级分类 / 二级分类」两种。' },
-        { sqref: 'C2:C' + (ROWSN + 1), formula: CAT_DV, promptTitle: '所属一级分类', prompt: '二级分类才填；从列表里选一个已有的一级分类。' },
-        { sqref: 'E2:E' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选「显示」或「隐藏」。' }
+        { sqref: 'B2:B' + (ROWSN + 1), formula: LV_DV },
+        { sqref: 'C2:C' + (ROWSN + 1), formula: CAT_DV },
+        { sqref: 'E2:E' + (ROWSN + 1), formula: ST_DV }
       ] },
       { name: '公告', rows: mk(annHeads), widths: [26, 50, 12, 12], dv: [
-        { sqref: 'D2:D' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选「显示」或「隐藏」。' }
+        { sqref: 'D2:D' + (ROWSN + 1), formula: ST_DV }
       ] },
       /* v530：选项表设为隐藏工作表——它只是下拉源，用户填表时看不到，下拉照常能用 */
       { name: '选项', rows: optRows, widths: [24, 16, 16, 22], dv: [], names: OPT_NAMES, hidden: true }
@@ -1200,12 +1211,8 @@
       }).join('') + '</div>';
     })();
 
-    /* v533（老板：权限二十多个勾选框，每加一个人都要从头点）：三个预设模板，点一下先勾好，再微调 */
-    var tplHtml = '<div class="pm-tpl"><span class="pm-tpl-t">快速套用：</span>' +
-      '<button type="button" class="row-btn" data-tpl="read">只看数据</button>' +
-      '<button type="button" class="row-btn" data-tpl="content">只管资源</button>' +
-      '<button type="button" class="row-btn" data-tpl="collect">只管采集</button>' +
-      '<span class="pm-tpl-hint">点一下自动勾好，再按需增减</span></div>';
+    /* v537（老板）：去掉「快速套用」三键——按需自己勾就行，不要这排小抄 */
+    var tplHtml = '';
 
     var scopeHtml = '<div class="pm-sec"><div class="pm-sec-hd"><b>数据范围（能碰哪些分类）</b></div>'
       + '<div class="pm-grid" style="grid-template-columns:1fr">'
@@ -1250,21 +1257,6 @@
       + '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="ufSave">' + (isEdit ? '保存修改' : '创建账号') + '</button><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
 
     document.body.appendChild(mask);
-    /* v533：三个角色模板——先清空再按模板勾，勾完还能手动微调 */
-    mask.addEventListener('click', function (e) {
-      var b = e.target.closest && e.target.closest('[data-tpl]');
-      if (!b) return;
-      var t = b.getAttribute('data-tpl');
-      mask.querySelectorAll('.pm-grid input[type=checkbox]').forEach(function (i) { i.checked = false; });
-      var set = function (pa, pk, on) {
-        var i = mask.querySelector('input[data-pa="' + pa + '"][data-pk="' + pk + '"]');
-        if (i) i.checked = !!on;
-      };
-      if (t === 'read') { set('data', 'stats', 1); set('data', 'detail', 1); set('info', 'view', 1); }
-      if (t === 'content') { ['view', 'add', 'edit'].forEach(function (k) { set('products', k, 1); }); set('cats', 'view', 1); set('ann', 'view', 1); }
-      if (t === 'collect') { ['view', 'add', 'edit', 'fetch', 'export'].forEach(function (k) { set('external', k, 1); }); }
-      b.parentNode.querySelectorAll('[data-tpl]').forEach(function (x) { x.classList.toggle('on', x === b); });
-    });
     requestAnimationFrame(function () {
       mask.classList.add('open');
       try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll: true }); } catch (eF) {}
@@ -1431,8 +1423,7 @@
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="自动采集">' +
       '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
       '<div class="modal-title">自动采集</div>' +
-      '<p class="imp-lead">在「资源采集 → 我的平台 → 编辑」里勾上「每天自动采集一次」，这个平台就会被自动采。' +
-      '<b>不用配任何东西</b>——和系统自带的「清理 60 天前数据」是同一个机制。</p>' +
+      '<p class="imp-lead">你录进去的平台，系统<b>每天自动全采一遍</b>，不用手动点，也不用配任何东西——和系统自带的「清理 60 天前数据」是同一个机制。</p>' +
       '<div class="cron-step"><b>1</b><span>每天第一次有人打开站点（前台或后台都算），系统就在后台把所有勾了「每天自动」的平台采一遍，页面不会变慢。</span></div>' +
       '<div class="cron-step"><b>2</b><span>一次最多跑 15 秒左右；平台多的，这次没采完的下次访问自动接着采，不会漏。</span></div>' +
       '<div class="cron-step"><b>3</b><span>同一个平台一天只自动采一次，重复的按标题自动跳过，不会把库塞满。</span></div>' +
@@ -1452,7 +1443,7 @@
       if (!host) return;
       if (!st) { host.innerHTML = '<span class="cs-bad">状态读取失败，关掉重开试试</span>'; return; }
       var line = [];
-      line.push('<div class="cs-row"><span>开了自动采集的平台</span><b>' + (st.autoOn || 0) + ' 个</b></div>');
+      line.push('<div class="cs-row"><span>会自动采的平台</span><b>' + (st.total || st.autoOn || 0) + ' 个</b></div>');
       line.push('<div class="cs-row"><span>今天</span><b class="' + (st.todayDone ? 'cs-ok' : '') + '">' +
         (st.todayDone ? '已自动采完' : '还没采（下次有人访问就会跑）') + '</b></div>');
       if (st.progress && st.progress.total) {
@@ -1503,7 +1494,7 @@
     var old = document.getElementById('logsMask'); if (old) old.remove();
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'logsMask';
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="操作日志">' +
+    mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="操作日志">' /* v537（老板）：600px 装四列太挤，改用加宽档 */ +
       '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
       '<div class="modal-title">操作日志</div>' +
       '<p class="imp-lead">记录谁在什么时候改了什么，保留 60 天。只记「改动类」动作（新增 / 编辑 / 删除 / 批量操作 / 登录），浏览不计。</p>' +
@@ -1575,10 +1566,9 @@
     if (panel && !document.getElementById('batchImportBtn')) {
       /* v443 条15（老板反馈：模块要分开，像基本设置那样独立卡片不粘连）：
          三组各自独立 setting-group 白卡；「账号与安全」卡内末尾挪入修改密码组 */
-      /* v530：按钮分级——每组只留一个主键（蓝实心 46px），其余用行内键（白底描边 30px）。
-         原来 8 个入口全是同款大蓝键，一眼看过去像一堵按钮墙。 */
-      var btnHtml = function (id, lab, extra, primary) {
-        return '<button type="button" class="' + (primary ? 'btn-blue btn-inline-pd' : 'row-btn') + '" id="' + id + '"' + (extra || '') + '>' + lab + '</button>';
+      /* v537（老板）：一列里"第一颗蓝、后面白"看着像两套东西——整列统一成行内键，只靠位置和文字区分。 */
+      var btnHtml = function (id, lab, extra) {
+        return '<button type="button" class="row-btn" id="' + id + '"' + (extra || '') + '>' + lab + '</button>';
       };
       var row = function (lab, btnStr) { return '<div class="setting-row is-inline"><label>' + lab + '</label>' + btnStr + '</div>'; };
       var mkGroup = function (title, rowsHtml) {
@@ -1590,7 +1580,7 @@
       };
       mkGroup('内容管理', row('批量导入（Excel 一次导多条）', btnHtml('batchImportBtn', '批量导入', '', 1))
         + row('数据缓存（删除的内容保留 60 天）', btnHtml('recycleBtn', '数据缓存'))
-        + row('每天自动采集（每个平台可单独开关）', btnHtml('cronBtn', '自动采集')));
+        + row('每天自动采集（录进去的平台全部自动采）', btnHtml('cronBtn', '自动采集')));
       panel.querySelector('#cronBtn').addEventListener('click', function () { openCronHelp(); });
       mkGroup('系统维护', row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1)));
       var accGrp = mkGroup('账号与安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
@@ -1630,10 +1620,29 @@
             g.scrollIntoView({ behavior: 'smooth', block: 'start' });
             [].forEach.call(nav.children, function (x) { x.classList.toggle('on', x === b); });
           });
-          /* 点组标题折叠/展开；默认全展开，只记状态不强制收 */
+          /* 点组标题折叠/展开；默认全展开，只记状态不强制收。
+             v537（老板）：三角换成全站那枚 20px 蓝色箭头（与「资源明细」折叠键同款），
+             折叠动效用与「资源明细」相同的 grid 轨道过渡，开合两个方向都有动画。 */
           groups.forEach(function (g) {
             var h = g.querySelector('h3');
             if (!h) return;
+            if (!h.querySelector('.set-caret')) {
+              var sp = document.createElement('span');
+              sp.className = 'set-caret';
+              sp.setAttribute('aria-hidden', 'true');
+              sp.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>';
+              h.appendChild(sp);
+            }
+            if (!g.querySelector('.set-body')) {
+              var body = document.createElement('div');
+              body.className = 'set-body';
+              var inner = document.createElement('div');
+              inner.className = 'set-body-inner';
+              var kids = [].slice.call(g.children).filter(function (c) { return c !== h; });
+              kids.forEach(function (c) { inner.appendChild(c); });
+              body.appendChild(inner);
+              g.appendChild(body);
+            }
             h.addEventListener('click', function () { g.classList.toggle('collapsed'); });
           });
         }

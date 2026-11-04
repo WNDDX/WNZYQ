@@ -2035,6 +2035,9 @@ refreshCatCnts();
       mask.classList.add('open');
       if (!fr.dataset.started) {
         fr.dataset.started = '1';
+        /* v537（老板：第一次点预览，弹窗里先闪一下整页资源页）——iframe 是现加载的，
+           前台脚本没跑完之前会把整张资源页露出来。先盖一层"正在准备预览"，等对面喊 ready 再撤。 */
+        box.classList.add('pv-loading');
         fr.addEventListener('load', function () { setTimeout(__pvSend, 150); });
         fr.src = '/shop?preview=1';
       } else {
@@ -2060,7 +2063,11 @@ refreshCatCnts();
       var d = ev.data || {};
       if (d.type !== 'wnzyq-preview-ready') return;
       var m = document.getElementById('previewMask');
-      if (m && m.classList.contains('open')) __pvSend();
+      if (m && m.classList.contains('open')) {
+        __pvSend();
+        var _bx = m.querySelector('.preview-box');
+        if (_bx) _bx.classList.remove('pv-loading');
+      }
     });
 
     document.getElementById('previewProductBtn').addEventListener('click', function () {

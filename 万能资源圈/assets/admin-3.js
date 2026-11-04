@@ -2183,7 +2183,7 @@ document.addEventListener('click', function (e) {
         if (!url) return;
         document.getElementById('fContactQr').value = url;
         __edContactRefresh();
-        toast('二维码已就绪，点「收起」后保存生效', 'info');
+        toast('二维码已就绪，点下面的「保存修改」生效', 'info');
         if (window.__haptic) window.__haptic();
       });
     });
@@ -2197,7 +2197,7 @@ document.addEventListener('click', function (e) {
     if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
     document.getElementById('fContactQr').value = v;
     __edContactRefresh();
-    if (v) { toast('网络图已就绪，点「收起」后保存生效', 'info'); if (window.__haptic) window.__haptic(); }
+    if (v) { toast('网络图已就绪，点下面的「保存修改」生效', 'info'); if (window.__haptic) window.__haptic(); }
   });
   /* 行内保存=部分更新（只动专属客服两列，不碰表单其余字段；新增未入库资源提示先点确定）
      v450：绑在「收起」上——先存后收；新增未入库时只提示、不收起（资源还没确定，收了会丢信息） */
@@ -2223,5 +2223,6 @@ document.addEventListener('click', function (e) {
     }).catch(function () { b.disabled = false; b.textContent = _t; toast('网络开小差了，请稍后再试', 'error'); });
     return true;
   }
-  if (col) col.addEventListener('click', function () { __edContactSaveNow(toggle); });
+  /* v537（老板）：编辑信息里的「收起」只负责收起，保存走弹窗下面的「保存修改」 */
+  if (col) col.addEventListener('click', function () { toggle(); });
 })();

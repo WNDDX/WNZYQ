@@ -190,6 +190,7 @@
       '<div class="extc-tabs">' +
       '<button type="button" class="extc-tab on" data-tab="goods">采集到的资源 <i id="extcNGoods">0</i></button>' +
       '<button type="button" class="extc-tab" data-tab="pf">我的平台 <i id="extcNPf">0</i></button>' +
+      '<button type="button" class="extc-tab" data-tab="runs">采集记录 <i id="extcNRuns2">0</i></button>' + /* v537（老板）：把合并掉的采集记录页签恢复回来 */
 
       '<button type="button" class="row-btn extc-addpf" id="extcAddPf" title="添加一个平台档案">添加平台</button>' +
       '</div>' +
@@ -286,12 +287,14 @@
     var nG = m.querySelector('#extcNGoods'); if (nG) nG.textContent = S.goods.length;
     var nP = m.querySelector('#extcNPf'); if (nP) nP.textContent = S.platforms.length;
     var nR = m.querySelector('#extcNRuns'); if (nR) nR.textContent = S.runs.length;
+    var nR2 = m.querySelector('#extcNRuns2'); if (nR2) nR2.textContent = S.runs.length;
     var hint = m.querySelector('#extcHint');
     if (hint) { hint.textContent = S.hint || ''; hint.title = S.hint || ''; }
 
     var body = m.querySelector('#extcBody');
     if (S.tab === 'goods') body.innerHTML = renderGoods();
-    else body.innerHTML = renderPlatforms();   /* v530：采集记录页签已合并进平台行，不再有第三个页签 */
+    else if (S.tab === 'runs') body.innerHTML = renderRuns();
+    else body.innerHTML = renderPlatforms();
     bindSelects(body);   /* v501：新渲染出来的下拉就地升级成系统控件 */
     bindSelects(m);      /* 平台下拉的选中项也要跟着刷新 */
     /* v512：翻页用全站公共组件（带页码跳转），选中态用系统批量条 */
@@ -396,6 +399,21 @@
     return pfNote + head + '<div class="extc-grid">' + cards + '</div>' + pager;
   }
 
+  /* v537：采集记录列表——时间 / 平台 / 结果 / 说明，四列等分、超长省略 */
+  function renderRuns() {
+    if (!S.runs.length) {
+      return empty('还没有采集记录', '点上面的「采集」，或者等每天自动采过之后，这里会记下每次的时间和结果');
+    }
+    return '<div class="extc-runs">' + S.runs.map(function (r) {
+      return '<div class="log-row">' +
+        '<span class="log-t">' + esc(String(r.at || '')) + '</span>' +
+        '<span class="log-w" title="' + esc(r.name || '') + '">' + esc(r.name || '') + '</span>' +
+        '<span class="log-a ' + (r.ok ? 'is-ok' : 'is-bad') + '">' + (r.ok ? '成功' : '失败') + '</span>' +
+        '<span class="log-g" title="' + esc(r.msg || '') + '">' + esc(r.msg || '') + '</span>' +
+        '</div>';
+    }).join('') + '</div>';
+  }
+
   function renderPlatforms() {
     if (!S.platforms.length) {
       return empty('还没有平台', '点右上「+ 添加平台」，填平台名和商城地址（你在那边看资源列表的那一页）');
@@ -405,7 +423,7 @@
       /* v530：原「采集记录」页签合并到这里——每个平台下面直接显示它自己的上次结果 */
       var last = S.runs.filter(function (x) { return Number(x.pid) === Number(p.id); })[0];
       var meta = [];
-      if (Number(p.auto_collect)) meta.push('<i class="extc-auto">每天自动</i>');
+      meta.push('<i class="extc-auto">每天自动</i>'); /* v537：全部平台都自动采 */
       if (p.last_auto_at) meta.push('<span>上次自动：' + esc(bjShort(p.last_auto_at)) + '</span>');
       if (last) meta.push('<span class="' + (last.ok ? 'is-ok' : 'is-bad') + '">上次手动：' + esc(String(last.at).slice(5, 16)) + ' · ' + esc(String(last.msg || '').slice(0, 46)) + '</span>');
       return '<div class="extc-prow" data-pid="' + p.id + '">' +
@@ -542,6 +560,8 @@
   /* ================= 采集 ================= */
   function runCollect() {
     if (S.busy) return;
+    /* v537（老板）：左上选的是「全部平台」时，就别再拦着让人去选——直接一个接一个全采 */
+    if (!S.curPf) return collectAll();
     var p = S.platforms.filter(function (x) { return Number(x.id) === Number(S.curPf); })[0];
     if (!p) { toast('先在左上选一个平台', 'error'); return; }
     if (!p.mall_url) { toast('这个平台还没填商城地址，去「我的平台 → 改」补一下', 'error'); return; }
@@ -574,6 +594,45 @@
         render();
       }
     });
+  }
+
+  /* v537：全部平台依次采集——串行跑，不并发，避免同时打对方站点被限流 */
+  function collectAll() {
+    var list = S.platforms.filter(function (x) { return String(x.mall_url || '').trim(); });
+    if (!list.length) { toast('还没有填了商城地址的平台，先去「我的平台」补一个', 'error'); return; }
+    S.busy = true;
+    var btn = S.mask && S.mask.querySelector('#extcRun');
+    if (btn) { btn.disabled = true; btn.textContent = '采集中…'; }
+    var i = 0, added = 0, fails = [];
+    var step = function () {
+      if (i >= list.length) {
+        S.busy = false;
+        if (btn) { btn.disabled = false; btn.textContent = '采集'; }
+        S.hint = '全部采完：新增 ' + added + ' 条' + (fails.length ? '，' + fails.length + ' 个平台没采到' : '');
+        var h0 = S.mask && S.mask.querySelector('#extcHint'); if (h0) h0.textContent = S.hint;
+        toast(S.hint, fails.length ? 'error' : 'success');
+        loadGoods();
+        return;
+      }
+      var p = list[i]; i++;
+      S.hint = '正在采集「' + p.name + '」（' + i + '/' + list.length + '）…';
+      var h = S.mask && S.mask.querySelector('#extcHint'); if (h) h.textContent = S.hint;
+      api('admin/external', { method: 'POST', body: { op: 'collect', platform_id: p.id } }).then(function (r) {
+        if (r && r.ok) {
+          added += (r.added || 0);
+          S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: true, msg: '新增 ' + (r.added || 0) + ' 条' + (r.found ? '，抓到 ' + r.found + ' 条' : '') });
+        } else {
+          fails.push(p.name);
+          S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: false, msg: (r && r.msg) || '采集失败' });
+        }
+        setTimeout(step, 250);
+      }).catch(function () {
+        fails.push(p.name);
+        S.runs.unshift({ at: nowStr(), pid: p.id, name: p.name, ok: false, msg: '网络中断' });
+        setTimeout(step, 250);
+      });
+    };
+    step();
   }
 
   function openPlatform() {
@@ -864,7 +923,7 @@
       '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="https://... 点「手机登录」复制过来的地址">' +
       '<div class="extc-formhint">只填<b>手机登录</b>那一行链接（点「打开平台」直接到登录页），不填就跳商城。</div>' +
       /* v534：定时采集改成系统自带机制（与 60 天清理同一套），不再需要任何配置 */
-      '<label class="checkbox-row" style="margin-top:10px"><input type="checkbox" id="epAuto"' + (isEdit && Number(p.auto_collect) ? ' checked' : '') + '> 每天自动采集一次</label>' +
+      '' + /* v537（老板）：自动采集改成全平台每天必采，平台表单里不再放这个开关 */
       '<div class="extc-formhint">勾上就行，不用配任何东西：每天第一次有人打开站点时，系统在后台自动采一遍（和自带的「清理 60 天前数据」同一个机制）。不勾就只能手动点「采集」。</div>' +
       '<label>我的说明</label>' +
       '<div id="epNoteHost"></div>' +
@@ -882,7 +941,7 @@
         name: m.querySelector('#epName').value.trim(),
         mall_url: m.querySelector('#epMall').value.trim(),
         login_url: m.querySelector('#epAdmin').value.trim(),
-        auto_collect: m.querySelector('#epAuto') && m.querySelector('#epAuto').checked ? 1 : 0,
+        auto_collect: 1, /* v537：全平台自动采 */
         note: ed ? ed.innerHTML.slice(0, 20000) : ''
       };
       if (!body.name) { toast('平台名不能为空', 'error'); return; }

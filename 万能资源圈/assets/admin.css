@@ -251,12 +251,14 @@
     .ct-since { margin-top: 8px; font-size: 12px; color: var(--text-light); text-align: center; }
     .ct-detail-cap { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text); text-align: left; }
     .ct-list { display: flex; flex-direction: column; max-height: 320px; overflow-y: auto; overscroll-behavior: auto; }
-    .ct-row { display: grid; grid-template-columns: 52px minmax(0, 1.4fr) auto minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--border); font-size: 13px; } /* v386 规整：grid 固定轨道——四列跨行对齐 + 轨道间距天然等分（gap 8px） */
+    /* v537（老板）：原来「谁」占 1.4fr、「动作」auto、「对象」1fr，三列宽窄不一；改成四列等分，超长一律省略号 */
+    .ct-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 76px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .ct-row > * { min-width: 0; }
     .ct-row:last-child { border-bottom: none; }
     .ct-row .ct-time { color: var(--text-light); display: flex; flex-direction: column; line-height: 1.3; } /* v386 规整：时间两行 MM-DD / HH:MM */
     .ct-row .ct-time i { font-style: normal; font-variant-numeric: tabular-nums; }
     .ct-row .ct-who { color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ct-row .ct-what { color: var(--blue1); white-space: nowrap; }
+    .ct-row .ct-what { color: var(--blue1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ct-row .ct-target { min-width: 0; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
     .ct-today { margin-top: 10px; font-size: 12px; color: var(--text-light); text-align: center; }
     @media (max-width: 600px) {
@@ -2264,6 +2266,8 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .info-url-flex { display: flex; align-items: center; gap: 8px; }
 .info-url-flex .input { flex: 1 1 auto; min-width: 0; }
 .info-test { flex: 0 0 auto; white-space: nowrap; }
+/* v537（老板）：旁边输入框 42px，「测一下」只有 30px，一高一矮。这行里两者等高。 */
+.info-url-flex .info-test { height: 42px; min-height: 42px; padding: 0 14px; font-size: 13px; align-self: center; }
 .info-panel-btns { display: flex; gap: 8px; margin-top: 12px; }
 /* v385 条2：保存/收起严格等分（原 .modal-close 自带 padding 0 24px 参与布局致两键不等宽） */
 .info-panel-btns > button { flex: 0 0 calc(50% - 4px) !important; min-width: 0 !important; width: calc(50% - 4px) !important; padding-left: 8px !important; padding-right: 8px !important; box-sizing: border-box; margin: 0 !important; } /* v385 条2：对半公式严格等分（原 .modal-close 自带 padding 参与 flex 致不等宽）；v385 条6：margin-bottom 归零 */
@@ -2337,6 +2341,8 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .pm-catkids { margin: 0 0 6px 22px; padding-left: 10px; border-left: 2px solid var(--border-soft, #eef2f6); }
 .pm-catrow.is-kid { font-size: 12px; color: var(--text-light); padding: 4px 2px; }
 .pm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+/* v537（老板）：数据范围里的分类树被挤成弹窗三分之一宽——它是整块列表，必须占满一整行 */
+.pm-chips > .pm-cattree { flex: 1 1 100%; width: 100%; box-sizing: border-box; }
 .pm-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--r-pill, 999px); cursor: pointer; background: var(--card-bg); }
 .pm-chip input { width: 14px; height: 14px; accent-color: var(--blue1); cursor: pointer; }
 .pm-chip.is-off { opacity: .55; }
@@ -2462,6 +2468,9 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
    后台不再另画预览（那套样式永远会跟前台漂移）。直接把前台 ?preview=1 装进 iframe，
    由前台自己的 openModal 渲染，所见即访客所见。 */
 .preview-box.pv-real { height: min(86vh, 920px); overflow: hidden; }
+/* v537：首开预览时 iframe 还没跑完，先遮住，避免露出整页资源页 */
+.preview-box.pv-loading .preview-frame { opacity: 0; }
+.preview-box.pv-loading::before { content: '正在准备预览…'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 5; color: var(--text-light); font-size: 13px; background: var(--card-bg); }
 .preview-box.pv-real > *:not(.preview-frame):not(.modal-close-x) { display: none !important; }
 .preview-frame { display: none; position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: inherit; background: var(--card-bg); }
 .preview-box.pv-real .preview-frame { display: block; }
@@ -2578,12 +2587,12 @@ label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left:
 .logs-tools .input { flex: 1 1 auto; min-width: 0; }
 .logs-tools .btn-blue { flex: 0 0 auto; }
 .logs-body { max-height: 46vh; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); }
-.log-row { display: grid; grid-template-columns: 118px 96px minmax(88px, 150px) 1fr; gap: 8px; align-items: center;
+.log-row { display: grid; grid-template-columns: 108px 92px minmax(0, 1fr) minmax(0, 1.5fr); gap: 8px; align-items: center;
   padding: 8px 10px; font-size: 12px; border-bottom: 1px solid var(--border-soft, #eef2f6); }
 .log-row:last-child { border-bottom: none; }
 .log-t { color: var(--text-faint); font-variant-numeric: tabular-nums; }
 .log-w { color: var(--blue1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.log-a { font-weight: 600; color: var(--text); }
+.log-a { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .log-g { color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 560px) {
   .log-row { grid-template-columns: 1fr 1fr; row-gap: 2px; }
@@ -2671,17 +2680,24 @@ label .req { color: var(--red-strong, #c62828); font-style: normal; margin-left:
    原来 8 件事竖排到底，账号管理在 y≈896 才出现。现在顶部一条横向导航，点哪组滚哪组；
    组标题可点折叠，页面宽度不够时导航自己横滑。 */
 .set-nav { position: sticky; top: 0; z-index: 6; display: flex; gap: 6px; padding: 8px 0; margin-bottom: 10px;
-  background: var(--page-bg, #f5f7fa); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  background: var(--page-bg, #f5f7fa); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none;
+  justify-content: center; } /* v537（老板）：这排"基本设置/内容管理/…"要居中，原来贴着左边 */
+@media (max-width: 600px) { .set-nav { justify-content: flex-start; } } /* 手机上居中会截掉两头，改为靠左可滑 */
 .set-nav::-webkit-scrollbar { display: none; }
 .set-nav button { flex: 0 0 auto; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border);
   background: var(--card-bg); color: var(--text-light); font-size: 12px; cursor: pointer; white-space: nowrap; }
 .set-nav button:hover { border-color: var(--blue1); color: var(--blue1); }
 .set-nav button.on { background: var(--blue1); border-color: var(--blue1); color: var(--text-on-brand, #fff); }
 
-.setting-group > h3 { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; }
-.setting-group > h3::after { content: '▾'; font-size: 12px; color: var(--text-faint); transition: transform var(--dur-mid) var(--ease-out); }
-.setting-group.collapsed > h3::after { transform: rotate(-90deg); }
-.setting-group.collapsed > *:not(h3) { display: none !important; }
+.setting-group > h3 { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+/* v537：三角改用全站统一那枚（20px 蓝色 SVG 箭头，与「资源明细」折叠键同款），不再是 12px 的字符 ▾ */
+.set-caret { width: 20px; height: 20px; color: var(--blue1); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; transition: transform var(--dur-mid) var(--ease-out); }
+.set-caret svg { width: 100%; height: 100%; display: block; }
+.setting-group.collapsed .set-caret { transform: rotate(-90deg); }
+/* v537：折叠动效复用「资源明细」那套 grid 轨道过渡——开、合两个方向都是 0.18s 缓出，不再瞬间闪现 */
+.setting-group > .set-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out); }
+.setting-group > .set-body > .set-body-inner { min-height: 0; overflow: hidden; }
+.setting-group.collapsed > .set-body { grid-template-rows: 0fr; opacity: 0; }
 
 /* 设置行里的次键（row-btn）右侧对齐，跟主键同右边界 */
 .setting-row > .row-btn { flex: 0 0 auto; align-self: center; }

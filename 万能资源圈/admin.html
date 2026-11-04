@@ -378,7 +378,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           <!-- v490：资源采集（老板：统一叫资源；放在平台设置里，一个按键点出弹窗） -->
           <div class="setting-row is-inline">
             <label>资源采集（从别家平台抓资源，挑着上架）</label>
-            <button type="button" class="btn-blue btn-inline-pd" id="openExtCollectBtn" data-perm="external.view">资源采集</button>
+            <button type="button" class="row-btn" id="openExtCollectBtn" data-perm="external.view">资源采集</button>
           </div>
           <div class="setting-row info-setting-row is-inline">
             <label>设置信息</label>
@@ -549,7 +549,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
                 <button type="button" class="row-btn info-test" data-test="infoUrlContact">测一下</button>
               </div>
             </div>
-            <div class="info-panel-btns is-single">
+            <div class="info-panel-btns">
+              <button type="button" class="btn-blue" id="infoSaveContact">保存</button>
               <button type="button" class="modal-close" id="infoCollapseContact">收起</button>
             </div>
           </div>
@@ -577,7 +578,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
                 <button type="button" class="row-btn info-test" data-test="infoUrlGroup">测一下</button>
               </div>
             </div>
-            <div class="info-panel-btns is-single">
+            <div class="info-panel-btns">
+              <button type="button" class="btn-blue" id="infoSaveGroup">保存</button>
               <button type="button" class="modal-close" id="infoCollapseGroup">收起</button>
             </div>
           </div>
@@ -598,7 +600,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <label for="infoNetGzh">图片网络地址</label>
               <input class="input" id="infoNetGzh" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...（二维码网络图）" />
             </div>
-            <div class="info-panel-btns is-single">
+            <div class="info-panel-btns">
+              <button type="button" class="btn-blue" id="infoSaveGzh">保存</button>
               <button type="button" class="modal-close" id="infoCollapseGzh">收起</button>
             </div>
           </div>

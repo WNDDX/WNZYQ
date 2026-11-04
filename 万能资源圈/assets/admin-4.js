@@ -2008,7 +2008,7 @@
     function __infoPreview(k) {
       var c = __infoCfg[k], C = __infoCap(k);
       var meta = {
-        contact: { title: '咨询客服', tip: '长按图片识别-添加人工客服', btn: '跳转-咨询在线客服' },
+        contact: { title: '咨询客服', tip: '长按图片识别-添加人工客服', btn: '跳转-咨询在线客服', green: true }, /* v537：导航页那颗是绿的，这里原来漏了 green，全系统客服跳转键统一绿 */
         group:   { title: '交流群聊', tip: '长按图片识别-加入交流群聊', btn: '跳转-加入交流群聊' },
         gzh:     { title: '公众号讯', tip: '长按图片识别-关注公众号讯', btn: '' }
       }[k];
@@ -2087,7 +2087,7 @@
               if (!url) return;
               __infoPending[k] = url; /* 只到页面，保存才入库 */
               __infoRefreshPanel(k);
-              toast('二维码已就绪，点「收起」后保存生效', 'info');
+              toast('二维码已就绪，点「保存」后生效', 'info');
               if (window.__haptic) window.__haptic();
             });
           });
@@ -2105,7 +2105,7 @@
             if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
             __infoPending[k] = v;
             __infoRefreshPanel(k);
-            if (v) { toast('网络图已就绪，点「收起」后保存生效', 'info'); if (window.__haptic) window.__haptic(); }
+            if (v) { toast('网络图已就绪，点「保存」后生效', 'info'); if (window.__haptic) window.__haptic(); }
           });
         }
         /* v385 条1：点行首三键=实时预览导航页对应弹窗（值取 pending||已保存，所见即所得） */
@@ -2135,7 +2135,10 @@
             else { toast((res && res.msg) || '保存失败', 'error'); }
           }).catch(function () { b.disabled = false; b.textContent = _t; toast('网络开小差了，请稍后再试', 'error'); });
         }
-        if (col) col.addEventListener('click', function () { __infoSaveRow(toggle); });
+        /* v537（老板）：「收起」恢复成单纯的收起，不再顺手保存；保存交给旁边的「保存」键 */
+        var sv = document.getElementById('infoSave' + C);
+        if (sv) sv.addEventListener('click', function () { __infoSaveRow(); });
+        if (col) col.addEventListener('click', function () { toggle(); });
       });
     })();
 

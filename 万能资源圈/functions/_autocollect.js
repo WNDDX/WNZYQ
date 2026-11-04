@@ -108,7 +108,7 @@ export async function collectOne(env, p) {
 
 export async function listAutoPlatforms(env) {
   try {
-    const r = await env.DB.prepare('SELECT id, name, mall_url FROM external_platforms WHERE auto_collect=1 ORDER BY sort ASC, id ASC').all();
+    const r = await env.DB.prepare("SELECT id, name, mall_url FROM external_platforms WHERE COALESCE(mall_url,'')<>'' OR auto_collect=1 ORDER BY sort ASC, id ASC").all(); /* v537（老板）：录进去的平台每天全采，不再依赖每个平台的开关 */
     return (r && r.results) || [];
   } catch (e) { return []; }
 }
