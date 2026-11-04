@@ -1,14 +1,15 @@
 /**
  * v530 操作日志（老板：谁在什么时候改了设置/删了资源，保留 60 天）
+ * v540 加「员工操作日报」：按人 / 按动作 / 按天汇总，可选今天 / 近 7 天 / 近 30 天。
  *
- * GET /api/admin/logs?page=1&size=30&who=&q=
- *   → { ok, list:[{id, at, who, action, target}], total, page, size, days:60 }
+ * GET /api/admin/logs?page=1&size=20&who=&q=&days=7
+ *   → { ok, list:[{id, at, who, action, target}], total, page, size, days,
+ *       summary:{ range, total, people:[{who,n}], actions:[{action,n}], byDay:[{day,n}] } }
  *
- * 数据源：复用已有的 audit_log 表（系统本来就在写，只是操作者写死成 'admin'）。
- * v530 起 _utils.js 的 audit() 会记录真实账号；60 天清理由 /api/track 里的清理清单负责。
+ * 数据源：复用已有的 audit_log 表（系统本来就在写）。
  * 不建新表、不新增写入点——20 多个业务调用点自动被覆盖。
  */
-import { json, requireAuth, requirePerm, ensureAdminUsers } from '../../_utils.js';
+import { json, requirePerm, ensureAdminUsers } from '../../_utils.js';
 
 export async function onRequestGet(context) {
   try {
@@ -21,22 +22,29 @@ export async function onRequestGet(context) {
 
     const url = new URL(request.url);
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
-    const size = Math.min(100, Math.max(5, parseInt(url.searchParams.get('size') || '30', 10) || 30));
+    /* v540：一页固定 20 条（老板：所有长列表只显示 20 条 + 翻页） */
+    const size = Math.min(100, Math.max(5, parseInt(url.searchParams.get('size') || '20', 10) || 20));
     const who = (url.searchParams.get('who') || '').slice(0, 40);
     const q = (url.searchParams.get('q') || '').slice(0, 60);
+    /* 时间范围：1=今天 7=近 7 天 30=近 30 天（其它值按 7 处理） */
+    let days = parseInt(url.searchParams.get('days') || '7', 10) || 7;
+    if ([1, 7, 30].indexOf(days) === -1) days = 7;
 
     /* 表可能还没建（全新库）：建一次空表，返回空列表而不是 500 */
     try {
       await env.DB.prepare("CREATE TABLE IF NOT EXISTS audit_log (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT (datetime('now')), admin TEXT NOT NULL DEFAULT 'admin', action TEXT NOT NULL, target TEXT NOT NULL DEFAULT '')").run();
     } catch (e) {}
 
-    const where = [];
+    /* 时间窗口：1 天 = 北京时间今天 0 点起；7 / 30 天 = 滚动 N 天 */
+    const RANGE = days === 1
+      ? "created_at >= datetime('now', '+8 hours', 'start of day', '-8 hours')"
+      : "created_at >= datetime('now', '-" + days + " day')";
+
+    const where = [RANGE];
     const binds = [];
     if (who) { where.push('admin = ?'); binds.push(who); }
     if (q) { where.push('(action LIKE ? OR target LIKE ?)'); binds.push('%' + q + '%'); binds.push('%' + q + '%'); }
-    /* 只给最近 60 天（与清理口径一致，避免看到已被清理边界外的残留） */
-    where.push("created_at >= datetime('now', '-60 day')");
-    const w = where.length ? ('WHERE ' + where.join(' AND ')) : '';
+    const w = 'WHERE ' + where.join(' AND ');
 
     let q1 = env.DB.prepare('SELECT COUNT(*) AS n FROM audit_log ' + w);
     if (binds.length) q1 = q1.bind.apply(q1, binds);
@@ -46,11 +54,35 @@ export async function onRequestGet(context) {
     q2 = q2.bind.apply(q2, binds.concat([size, (page - 1) * size]));
     const rows = await q2.all();
 
+    /* ===== 员工操作日报：同一时间窗口内按人 / 按动作 / 按天汇总（搜索词也算进去） ===== */
+    const sumWhere = [RANGE];
+    const sumBinds = [];
+    if (q) { sumWhere.push('(action LIKE ? OR target LIKE ?)'); sumBinds.push('%' + q + '%'); sumBinds.push('%' + q + '%'); }
+    const sw = 'WHERE ' + sumWhere.join(' AND ');
+    const runAgg = async (sql) => {
+      try {
+        let st = env.DB.prepare(sql);
+        if (sumBinds.length) st = st.bind.apply(st, sumBinds);
+        const r = await st.all();
+        return (r && r.results) || [];
+      } catch (e) { return []; }
+    };
+    const people = await runAgg('SELECT admin AS who, COUNT(*) AS n FROM audit_log ' + sw + ' GROUP BY admin ORDER BY n DESC LIMIT 20');
+    const actions = await runAgg('SELECT action, COUNT(*) AS n FROM audit_log ' + sw + ' GROUP BY action ORDER BY n DESC LIMIT 8');
+    const byDay = await runAgg("SELECT strftime('%Y-%m-%d', created_at, '+8 hours') AS day, COUNT(*) AS n FROM audit_log " + sw + ' GROUP BY day ORDER BY day DESC LIMIT 31');
+
     return json({
       ok: true,
       list: (rows && rows.results) || [],
       total: (totalRow && totalRow.n) || 0,
-      page, size, days: 60
+      page, size, days,
+      summary: {
+        range: days,
+        total: (totalRow && totalRow.n) || 0,
+        people: people || [],
+        actions: actions || [],
+        byDay: byDay || []
+      }
     });
   } catch (e) {
     return json({ ok: false, msg: '日志读取失败：' + (e && e.message || '未知错误') }, 500);
