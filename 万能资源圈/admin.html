@@ -43,7 +43,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <link rel="preload" href="/assets/images/logo.png" as="image">
   <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
   <link rel="preload" href="/assets/ui-common.js" as="script">
-  <link rel="preload" href="/assets/admin-1.js" as="script">
+  <link rel="preload" href="/assets/admin-shell.js" as="script">
   <link rel="stylesheet" href="/assets/admin.css">
 <!-- v348 条1：此处原为第二份首屏样式（顶栏另一颜色+60px、底色 #eef3f9），与上方 critical-css 互相覆盖；已合并删除，首屏样式只剩一处 -->
 </head>
@@ -615,7 +615,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     </div>
   </div>
   <!-- ============ 设置信息实时预览弹窗：v402 条7 已并入 ui-common kf-box 唯一源（openContactModal），
-       与导航页/资源页同一份弹窗；本地结构/样式整体删除（admin-4.js __infoPreview 直接调用唯一源） ============ -->
+       与导航页/资源页同一份弹窗；本地结构/样式整体删除（admin-media.js __infoPreview 直接调用唯一源） ============ -->
   <!-- ============ 信息中心弹窗（v386：总统计+三角展开细项列表；红点=距上次有新绑定/咨询） ============ -->
   <div class="modal-mask" id="infoCtMask">
     <div class="modal-box">
@@ -1025,11 +1025,11 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <script src="/assets/ui-common.js" defer></script>
   <script src="/assets/motion.js" defer></script>
   <script src="/assets/qrcode.min.js" defer></script><!-- v349：同上，改 defer 不挡首屏 -->
-  <script src="/assets/admin-1.js" defer></script>
-  <script src="/assets/admin-2.js" defer></script>
-  <script src="/assets/admin-3.js" defer></script>
-  <script src="/assets/admin-4.js" defer></script>
-  <script src="/assets/admin-5.js" defer></script><script src="/assets/admin-import.js" defer></script>
+  <script src="/assets/admin-shell.js" defer></script>
+  <script src="/assets/admin-list.js" defer></script>
+  <script src="/assets/admin-edit.js" defer></script>
+  <script src="/assets/admin-media.js" defer></script>
+  <script src="/assets/admin-data.js" defer></script><script src="/assets/admin-import.js" defer></script>
   <script src="/assets/ext-collect.js" defer></script>
   <!-- v307：bfcache 恢复时不再强制刷新——根治"切回来闪一下" -->
   <script>window.addEventListener('pageshow', function (e) { if (e.persisted) { try { if (window.__saveEditingDraft) window.__saveEditingDraft(); } catch (e) {} } });</script>

@@ -1313,7 +1313,7 @@
       var restore = function () { btn.disabled = false; btn.textContent = isEdit ? '保存修改' : '创建账号'; };
       if (isEdit) {
         usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
-          if (window.showToast) window.showToast('已保存', 'success');
+          if (window.showToast) window.showToast(window.T('saved'), 'success');
           mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); renderUsersList();
         }, restore);
       } else {
@@ -1351,8 +1351,8 @@
     var old = document.getElementById('recycleMask'); if (old) old.remove();
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'recycleMask';
-    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="数据缓存"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
-      '<h2 class="modal-title">数据缓存</h2>' +
+    mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="数据缓存">' +
+      (window.__frag ? window.__frag.modalHead('数据缓存') : '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">数据缓存</h2>') +
       '<div class="rc-tools"><label class="rc-all"><input type="checkbox" id="rcAll" aria-label="全选"> 全选</label><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜资源 / 分类 / 公告的名字"></div>' +
       /* v538（老板：回收站要能批量恢复、批量删除）——复用全站批量条组件，不新造样式 */
       '<div class="batch-bar" id="rcBar"><span class="batch-count-label">已选 <b id="rcCount">0</b> 项</span>' +
@@ -1556,8 +1556,7 @@
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'logsMask';
     mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="操作日志">' /* v537（老板）：600px 装四列太挤，改用加宽档 */ +
-      '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
-      '<div class="modal-title">操作日志</div>' +
+      (window.__frag ? window.__frag.modalHead('操作日志') : '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><div class="modal-title">操作日志</div>') +
       '<p class="imp-lead">记录谁在什么时候改了什么，保留 60 天。只记「改动类」动作（新增 / 编辑 / 删除 / 批量操作 / 登录），浏览不计。</p>' +
       '<div class="logs-tools">' +
         '<input class="input" id="logsQ" type="search" autocomplete="off" placeholder="搜动作或对象，比如 删除 / 分类 / 资源">' +

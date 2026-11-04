@@ -44,7 +44,7 @@
   }
   /* v501：下拉一律用系统的自制下拉（.select-picker）——
      老板原话「比如下拉选择的组件，都不会复用吗，现在你又新做了，要复用啊」。
-     makeSelectPicker 是 admin-3.js 的全局函数：会插显示层、隐藏原生 select，并返回 {refresh}。 */
+     makeSelectPicker 是 admin-edit.js 的全局函数：会插显示层、隐藏原生 select，并返回 {refresh}。 */
   function bindSelects(root) {
     if (!root) return;
     /* v518：走系统唯一入口（admin-3 暴露的 __upgradeSelects，幂等）；
@@ -922,7 +922,7 @@
           g.descr = m.querySelector('#edDescr').value.trim();
           g.buy_url = m.querySelector('#edBuy').value.trim();
           g.src_url = m.querySelector('#edUrl').value.trim();
-          toast('已保存', 'success'); closeM(m); render();
+          toast(window.T('saved'), 'success'); closeM(m); render();
         } else toast((r && r.msg) || '保存失败', 'error');
       });
     });
@@ -963,7 +963,7 @@
       var btn = this; btn.disabled = true; btn.textContent = '保存中…';
       api('admin/external', { method: 'POST', body: body }).then(function (r) {
         if (r && r.ok) {
-          toast('已保存', 'success');
+          toast(window.T('saved'), 'success');
           if (isEdit) {
             S.platforms.forEach(function (x) {
               if (Number(x.id) === Number(p.id)) { x.name = body.name; x.note = body.note; x.mall_url = body.mall_url; x.login_url = body.login_url; x.auto_collect = body.auto_collect; }

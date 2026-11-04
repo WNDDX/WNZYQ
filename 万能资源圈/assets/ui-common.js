@@ -17,6 +17,23 @@ window.__COPY = window.__COPY || {
   noData: '该列表暂无内容',
   pickCatFirst: '请选择资源分类'
 };
+/* v539：页面片段（26）——弹窗头、空状态、行按钮组，全站共用一份，别再各写各的。
+   目前先用起来两处（操作日志、回收站），新写的弹窗请直接用这里的。 */
+window.__frag = window.__frag || {
+  /* 弹窗右上角关闭键 + 标题 */
+  modalHead: function (title, aria) {
+    return '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1">'
+      + '<svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>'
+      + '<h2 class="modal-title">' + (title || '') + '</h2>';
+  },
+  /* 一行两键（主 + 关） */
+  footer2: function (primaryId, primaryText, closeText) {
+    return '<div class="modal-footer"><button type="button" class="btn-blue btn-inline" id="' + primaryId + '">'
+      + (primaryText || '确定') + '</button><button type="button" class="modal-close" data-x="1">'
+      + (closeText || '关闭') + '</button></div>';
+  }
+};
+
 window.T = window.T || function (key, vars) {
   var s = (window.__COPY && window.__COPY[key]) || key;
   if (vars) Object.keys(vars).forEach(function (k) { s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]); });
