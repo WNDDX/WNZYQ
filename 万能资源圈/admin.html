@@ -460,11 +460,11 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <button aria-label="关闭" class="modal-close-x" data-close="pwdMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title">修改密码</h2>
       <div class="form">
-        <label>原密码</label>
+        <label for="oldPwd">原密码</label>
         <div class="pwd-wrap"><input class="input input-pwd" id="oldPwd" type="password" autocomplete="current-password" maxlength="50" /><button type="button" id="oldPwdEye" class="pwd-toggle" onclick="if(typeof toggleModalPwdVisibility==='function')toggleModalPwdVisibility('oldPwd','oldPwdEye');" aria-label="显示密码"><svg aria-hidden="true" class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button></div>
-        <label>新密码</label>
+        <label for="newPwd">新密码</label>
         <div class="pwd-wrap"><input class="input input-pwd" id="newPwd" type="password" autocomplete="new-password" maxlength="50" /><button type="button" id="newPwdEye" class="pwd-toggle" onclick="if(typeof toggleModalPwdVisibility==='function')toggleModalPwdVisibility('newPwd','newPwdEye');" aria-label="显示密码"><svg aria-hidden="true" class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button></div>
-        <label>确认新密码</label>
+        <label for="confirmPwd">确认新密码</label>
         <div class="pwd-wrap"><input class="input input-pwd" id="confirmPwd" type="password" maxlength="50" /><button type="button" id="confirmPwdEye" class="pwd-toggle" onclick="if(typeof toggleModalPwdVisibility==='function')toggleModalPwdVisibility('confirmPwd','confirmPwdEye');" aria-label="显示密码"><svg aria-hidden="true" class="pwd-eye-ico" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C7 5 2.73 8.11 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5 17.5 8.96 17.5 12 15.04 17.5 12 17.5zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button></div>
       </div>
       <div class="modal-footer">
