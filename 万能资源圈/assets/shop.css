@@ -1010,8 +1010,10 @@
     .product-card { animation: cardIn var(--dur-mid) cubic-bezier(0.2, 0.9, 0.25, 1); } /* R231 条20：入场节奏前快后缓（前段快起、尾段缓收） */
     .ann-modal .ann-body img, .ann-modal .ann-body video { opacity: 1; }
     .modal-mask #modalBox { max-height: 88vh; max-height: 88dvh; /* R159；v404 条14：84→88 三页统一 */ }
-    .modal-mask#annModal > .ann-box { height: min(72vh, 600px) !important; height: min(72dvh, 600px) !important; /* R159 */ max-height: none !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
+    .modal-mask#annModal > .ann-box { height: auto !important; /* v535：高度随内容走，内容少时不再撑出一大片空白 */ max-height: min(72vh, 600px) !important; max-height: min(72dvh, 600px) !important; /* R159 */ display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; overflow: hidden; overflow-x: hidden; max-width: 520px !important; width: 100% !important; margin: auto !important; box-sizing: border-box; }
     .modal-mask#annModal > .ann-box > * { box-sizing: border-box; max-width: 100%; }
+    /* v535：公告正文自己滚（弹窗高度自适应后，长内容不能让确定键跟着滚走） */
+    .modal-mask#annModal .ann-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
     .modal-mask#annModal .ann-title, .modal-mask#annModal .ann-tabs, .modal-mask#annModal .ann-ok { flex-shrink: 0; }
     .modal-mask#annModal .ann-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--empty-text); /* v404 条6：写死 #5b6b7b 入令牌 */ padding: 24px 0; box-sizing: border-box; text-align: center; }
 .modal-mask#annModal .ann-empty .ann-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 1; color: var(--empty-icon, #b9c6d4); } /* v356 条12：图标色对齐 */

@@ -535,7 +535,8 @@
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
       '<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xlsx,.xls,.xml" style="display:none"></div>' +
       '<div id="impPrev" style="margin-top:10px"></div>' +
-      '<div class="imp-hist" id="impHist"></div></div></div>';
+      '<div class="imp-hist" id="impHist"></div></div>' +
+      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
     document.body.appendChild(mask);
     renderImpHist(mask.querySelector('#impHist'));
     requestAnimationFrame(function () {
@@ -1066,7 +1067,7 @@
       var me = x.me || {}; window.__usMe = me; window.__usList = x.list || [];
       var isSuper = me.role === 'super';
       var list = window.__usList;
-      if (!list.length) { body.innerHTML = '<div style="text-align:center;color:#8aa0b5;font-size:12px;padding:14px 0">还没有子账号</div>'; return; }
+      if (!list.length) { body.innerHTML = (window.__adminEmpty ? window.__adminEmpty('还没有子账号', '上面填账号密码就能加一个，可以只给他看的范围') : '还没有子账号'); return; }
       /* v454：按 parentId 铺成树（同分类管理：展开/收起、缩进表示层级） */
       var byParent = {};
       list.forEach(function (u) { var pid = Number(u.parentId || 0); (byParent[pid] = byParent[pid] || []).push(u); });
@@ -1407,7 +1408,7 @@
       var as = (x.announcements || []).map(function (a) { return row('ann', a.id, a.title || '公告', a.deleted_at); }).join('');
       var none = !ps && !cs && !as;
       body.innerHTML = '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
-        (none ? '<div style="text-align:center;color:#2e7d32;font-size:13px;padding:20px 0">回收站是空的 ✓</div>'
+        (none ? (window.__adminEmpty ? window.__adminEmpty('回收站是空的', '删掉的资源、分类、公告会在这里保留 60 天，随时可以恢复') : '回收站是空的')
           : sec('资源 ' + (x.products || []).length, ps) + sec('分类 ' + (x.categories || []).length, cs) + sec('公告 ' + (x.announcements || []).length, as));
       body.addEventListener('click', function (e) {
         var b = e.target.closest && e.target.closest('[data-rc]'); if (!b) return;
