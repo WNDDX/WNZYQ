@@ -1043,7 +1043,15 @@ fetchRemote({ page: 1, cid: currentCat, subCid: currentSubCat, kw: '', force: tr
 emptyTip.appendChild(__retry);
 return;
 }
-emptyTitle.textContent = kw ? '该搜索暂无资源' : '该分类暂无资源';
+
+var _curCatName = '';
+if (kw && Number(currentCat)) {
+var _cc = (DATA.categories || []).filter(function (x) { return Number(x.id) === Number(currentCat); })[0];
+_curCatName = _cc ? String(_cc.name || '') : '';
+}
+emptyTitle.textContent = kw
+? (_curCatName ? '「' + _curCatName + '」里没有「' + kw + '」' : '该搜索暂无资源')
+: '该分类暂无资源';
 
 if (!kw) {
 var __all = document.createElement('button');
@@ -1066,9 +1074,24 @@ renderProducts();
 });
 emptyTip.appendChild(__clr);
 
+if (_curCatName) {
+var __allSearch = document.createElement('button');
+__allSearch.type = 'button'; __allSearch.className = 'empty-clear-btn';
+__allSearch.textContent = '在全部资源里搜';
+__allSearch.addEventListener('click', function () {
+var _kw = searchInput.value.trim();
+currentCat = 0; currentSubCat = 0; currentPage = 1;
+renderCategories();
+fetchRemote({ page: 1, cid: 0, subCid: 0, kw: _kw }).then(function () { renderAll(); }).catch(function () {});
+});
+emptyTip.appendChild(__allSearch);
+}
+
 var __tip2 = document.createElement('div');
 __tip2.className = 'empty-desc';
-__tip2.textContent = '没找到？换个关键词，或浏览全部资源';
+__tip2.textContent = _curCatName
+? '搜索只在当前分类里进行。要么换个词，要么点上面的「在全部资源里搜」'
+: '没找到？换个关键词，或浏览全部资源';
 emptyTip.appendChild(__tip2);
 }
 
