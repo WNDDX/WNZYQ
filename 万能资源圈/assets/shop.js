@@ -2074,8 +2074,16 @@ resourceCodeError.style.display = 'block';
 
 var searchClear = document.getElementById('searchClear');
 var searchTimer = null;
+
+var __searchNow = function () {
+clearTimeout(searchTimer);
+currentPage = 1;
+__pageTurning = false;
+__pendingSearchOpts = null;
+__fadeRenderProducts();
+};
 searchInput.addEventListener('keydown', function (e) {
-if (e.key === 'Enter') { clearTimeout(searchTimer); currentPage = 1; __fadeRenderProducts(); }
+if (e.key === 'Enter') { e.preventDefault(); __searchNow(); }
 });
 searchInput.addEventListener('input', function () {
 searchClear.classList.toggle('show', this.value.length > 0);
