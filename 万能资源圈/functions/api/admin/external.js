@@ -414,7 +414,7 @@ export async function onRequestPost(context) {
            标题长这样：Sina Visitor System、闲鱼 - 闲不住？上闲鱼、阿里巴巴-1688商品无法查看或已下架、
            拼多多。这些还被判成成功，入库就是垃圾。现在一律判失败并说清楚。 */
         const junkTitle = /(Sina Visitor System|访客系统|安全验证|滑动验证|人机验证|访问验证|验证码|无法查看|已下架|商品不存在|宝贝不存在|页面不存在)/i.test(title)
-          || /^(拼多多|闲鱼|淘宝|淘宝网|天猫|京东|微博|小红书|抖音|快手|阿里巴巴|1688)$/.test(String(title).trim());
+          || /^(拼多多|闲鱼|淘宝|淘宝网|天猫|京东|微博|小红书|抖音|快手|阿里巴巴|1688)(\s*[-－|｜].*)?$/.test(String(title).trim());
         if (junkTitle) {
           return json({ ok: false, junk: true, msg: '抓到的是验证页或站点首页，不是商品本身——对方把服务器挡在外面了。改用「粘贴整页内容」。' }, 200);
         }
