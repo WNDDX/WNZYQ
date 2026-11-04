@@ -832,12 +832,18 @@ export function plainText(s) {
   return decodeEnt(String(s || '').replace(/<[^<>]*(?:(?:"[^"]*"|'[^']*')[^<>]*)*>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
-const NOISE = /(查单|收集信息|订单查询|客服|登录|注册|公告|须知|说明|规则|提示|注意|首页|全部商品|搜索|分享|下载|返回顶部|关于我们)/;
+const NOISE = /(查单|收集信息|订单查询|客服|登录|注册|公告|须知|说明|规则|提示|注意|首页|全部商品|搜索|分享|下载|返回顶部|关于我们|资讯|新闻|攻略|百科|教程)/;
 const GOODS_WORD = /(卡|WiFi|WIFI|wifi|宽带|流量包|套餐|随身|物联)/;
 const OP_WORD = /(联通|电信|移动|广电|5G|4G|三网|虚拟)/;
 function looksLikeGoods(t) {
   if (!t || t.length < 5 || t.length > 90) return false;
   if (!/[\u4e00-\u9fa5]/.test(t)) return false;
+  /* v546v（实测 172hk.com.cn / m.wywlhk.cn）：页面里的广告链接、导航碎片被当成商品存进去，
+     标题长这样：`172 号卡资讯, rget="_blank" title="飞利猫随身`、`z-link" href="https://…`。
+     带 HTML 属性、引号、网址的一律不是商品名。 */
+  if (/[=<>]/.test(t)) return false;
+  if (/(href|target|_blank|src|class|title)\s*=/i.test(t)) return false;
+  if (/https?:\/\//i.test(t)) return false;
   if (NOISE.test(t)) return false;
   if (!GOODS_WORD.test(t)) return false;
   return OP_WORD.test(t) || /\d/.test(t);
