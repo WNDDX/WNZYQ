@@ -615,6 +615,9 @@ _shell.className = 'modal-mask'; _shell.id = 'sysCheckMask';
 _shell.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
 '<h2 class="modal-title">系统体检</h2>' +
 '<div style="font-size:13px;color:var(--text-light);margin:0 0 12px">正在逐张检查图片、逐条探测外链，最长约半分钟，请稍候…</div>' +
+
+'<div style="margin:0 0 14px"><div style="height:6px;border-radius:99px;background:var(--border,#e6ecf5);overflow:hidden"><i id="chkProgFill" style="display:block;height:100%;width:0;border-radius:99px;background:var(--blue1,#1E88E5);transition:width .25s ease"></i></div>' +
+'<div id="chkProgTxt" style="font-size:12px;color:var(--text-light);margin-top:6px">正在准备检查清单…</div></div>' +
 '<div class="chk-scroll"><div class="chk-skel">' +
 '<div class="sk-line" style="height:14px;width:70%"></div>' +
 '<div class="sk-line" style="height:14px;width:50%"></div>' +
@@ -661,6 +664,20 @@ imgs.forEach(function (it) { (refMap[it.src] = refMap[it.src] || []).push(it); }
 var testList = Object.keys(refMap).map(function (src) { return { src: src, refs: refMap[src] }; });
 var broken = [], oversize = [], done = 0, total = testList.length;
 
+var _pgFill = document.getElementById('chkProgFill');
+var _pgTxt = document.getElementById('chkProgTxt');
+var _linkCnt = 0, _pTotal = total + links.length, _pLast = -1;
+function __tickProg(stage) {
+if (!_pgFill) return;
+var d = done + _linkCnt;
+var pct = _pTotal ? Math.round(d / _pTotal * 100) : 100;
+if (pct === _pLast && !stage) return;
+_pLast = pct;
+try { _pgFill.style.width = pct + '%'; } catch (eP) {}
+if (_pgTxt) _pgTxt.textContent = stage || ('正在检查：图片 ' + done + ' / ' + total + ' 张 · 外链 ' + _linkCnt + ' / ' + links.length + ' 条（' + pct + '%）');
+}
+__tickProg();
+
 var imgDone = new Promise(function (res) { window.__sysImgFinish = res; });
 
 var linkDone = Promise.all(links.map(function (L) {
@@ -668,13 +685,13 @@ return new Promise(function (res) {
 var href = String(L.href || '');
 if (/\.(png|jpe?g|gif|webp|svg|ico|bmp)(\?|#|$)/i.test(href)) {
 var imL = new Image(), settled = false;
-var done2 = function (v) { if (settled) return; settled = true; L.ok = v; res(L); };
+var done2 = function (v) { if (settled) return; settled = true; L.ok = v; _linkCnt++; __tickProg(); res(L); };
 imL.onload = function () { done2(true); };
 imL.onerror = function () { done2(false); };
 setTimeout(function () { done2(null); }, 6000);
 imL.src = href;
 } else {
-L.ok = null; L.unchecked = true; res(L);
+L.ok = null; L.unchecked = true; _linkCnt++; __tickProg(); res(L);
 }
 });
 })).then(function () { return links; });
@@ -687,7 +704,7 @@ var done2 = 0;
 var finish2 = function () { done2++; };
 testList.forEach(function (it) {
 var im = new Image();
-var fin = function (ok) { done++; if (!ok) broken.push(it); finish(); };
+var fin = function (ok) { done++; if (!ok) broken.push(it); __tickProg(); finish(); };
 im.onload = function () { fin(true); };
 im.onerror = function () { fin(false); };
 setTimeout(function () { if (!im.complete) fin(false); }, 8000);
@@ -705,6 +722,7 @@ setTimeout(function () { clearInterval(t); res(); }, 9000);
 });
 if (!total) finish();
 Promise.all([imgDone, linkDone, sizeDone]).then(function () {
+__tickProg('图片和外链已查完，正在核对运行环境…');
 
 var dups = testList.filter(function (t) { return t.refs.length > 1; });
 

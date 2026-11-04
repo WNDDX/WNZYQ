@@ -1767,6 +1767,14 @@ this.textContent = state.statsCmpPrev ? '显示本期' : '对比上期';
 var _ll = document.querySelector('.line-legend'); if (_ll) _ll.classList.toggle('show-prev', state.statsCmpPrev);
 var _tl = document.querySelector('.trend-legend'); if (_tl) _tl.classList.toggle('show-prev', state.statsCmpPrev);
 if (state.statsOverview) renderStatCards(state.statsOverview, state.statsOverviewPrev || null);
+
+try {
+if (state.statsCmpPrev) {
+var _pv = state.statsOverviewPrev || {};
+var _hasPrev = ['views', 'contacts', 'resource_unlocks'].some(function (k) { return Number(_pv[k] || 0) > 0; });
+toast(_hasPrev ? '已开启对比：虚线是上期，卡片小字是涨跌' : '已开启对比，但上期这段时间没有数据（虚线贴在最下面）', 'success');
+}
+} catch (eC) { if (window.__silent) window.__silent(eC); }
 if (state.statsTrend && state.statsTrend.length) {
 renderLineChart(state.statsTrend, state.statsCmpPrev ? state.statsTrendPrev : null);
 
