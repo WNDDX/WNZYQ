@@ -1825,14 +1825,9 @@ body: JSON.stringify({ confirm: '清空' })
 go.disabled = false; go.textContent = t0;
 if (!d || !d.ok) { if (window.showToast) window.showToast((d && d.msg) || '清空失败', 'error'); return; }
 close();
-if (window.showToast) window.showToast('已清空，可以重新开始了', 'success');
+if (window.showToast) window.showToast('已清空，正在刷新…', 'success');
 
-try {
-if (window.state) { window.state.products = []; window.state.categories = []; }
-if (window.loadProducts) window.loadProducts(true);
-if (window.loadCategories) window.loadCategories(true);
-if (window.__reloadAdminProducts) window.__reloadAdminProducts();
-} catch (e0) { if (window.__silent) window.__silent(e0); }
+setTimeout(function () { try { location.reload(); } catch (e0) { if (window.__silent) window.__silent(e0); } }, 500);
 }).catch(function () {
 go.disabled = false; go.textContent = t0;
 if (window.showToast) window.showToast('网络没连上，没清成', 'error');

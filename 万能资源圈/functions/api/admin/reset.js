@@ -47,11 +47,14 @@ export async function onRequestPost(context) {
       }
     }
 
-    /* 公告在设置表里（announcements / announcement 两个键），清内容但保留店铺名、客服二维码等 */
+    /* 公告 + 客服（二维码、企微链接、群二维码、群链接）都在设置表里。
+       v545b（老板：客服二维码也不用留）：这几项一并清空；只留店铺名、Logo、公告弹出频率这类外观配置。 */
     try {
-      await env.DB.prepare("UPDATE settings SET value = '' WHERE key IN ('announcement', 'announcements')").run();
-      counts['公告'] = 1;
-    } catch (e) { counts['公告'] = -1; }
+      await env.DB.prepare(
+        "UPDATE settings SET value = '' WHERE key IN ('announcement','announcements','contact_qr','contact_url','group_qr','group_url')"
+      ).run();
+      counts['公告与客服'] = 1;
+    } catch (e) { counts['公告与客服'] = -1; }
 
     /* 自增 id 归零，新数据从 1 开始（看着清爽，也便于比对测试结果） */
     for (const t of ['products', 'product_variants', 'categories', 'stats', 'external_goods', 'external_platforms']) {
