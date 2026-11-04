@@ -358,18 +358,18 @@
     var sheets = [
       { name: '资源', rows: mk(resHeads), widths: [26, 18, 30, 40, 12, 30, 8, 12, 18, 18, 30, 30], dv: [
         { sqref: 'B2:B' + (ROWSN + 1), formula: CAT_DV, promptTitle: '所属分类', prompt: '点右边小三角选已有分类；没有就先到后台分类管理里加一个。' },
-        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”= 前台立刻能看到；选“隐藏”= 前台不显示。' }
+        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选「显示」= 前台立刻能看到；选「隐藏」= 前台不显示。' }
       ] },
       { name: '类型', rows: mk(varHeads), widths: [26, 18, 12, 30, 24, 40, 12, 12, 8], dv: [
-        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”或“隐藏”。' }
+        { sqref: 'H2:H' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选「显示」或「隐藏」。' }
       ] },
       { name: '分类', rows: mk(catHeads), widths: [22, 14, 22, 12, 12], dv: [
-        { sqref: 'B2:B' + (ROWSN + 1), formula: LV_DV, promptTitle: '分类级别', prompt: '只有“一级分类 / 二级分类”两种。' },
+        { sqref: 'B2:B' + (ROWSN + 1), formula: LV_DV, promptTitle: '分类级别', prompt: '只有「一级分类 / 二级分类」两种。' },
         { sqref: 'C2:C' + (ROWSN + 1), formula: CAT_DV, promptTitle: '所属一级分类', prompt: '二级分类才填；从列表里选一个已有的一级分类。' },
-        { sqref: 'E2:E' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”或“隐藏”。' }
+        { sqref: 'E2:E' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选「显示」或「隐藏」。' }
       ] },
       { name: '公告', rows: mk(annHeads), widths: [26, 50, 12, 12], dv: [
-        { sqref: 'D2:D' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选“显示”或“隐藏”。' }
+        { sqref: 'D2:D' + (ROWSN + 1), formula: ST_DV, promptTitle: '显示状态', prompt: '选「显示」或「隐藏」。' }
       ] },
       /* v530：选项表设为隐藏工作表——它只是下拉源，用户填表时看不到，下拉照常能用 */
       { name: '选项', rows: optRows, widths: [24, 16, 16, 22], dv: [], names: OPT_NAMES, hidden: true }

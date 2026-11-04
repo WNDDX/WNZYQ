@@ -285,9 +285,7 @@ mark.hl { background: rgba(var(--green-rgb, 1,192,0), .16); color: inherit; font
 /* R192 二②：卡片/行错峰入场；R211 二批（用户 09-20）升级：位移 10→16px、时长 0.18→0.30s（--dur-slow）、缓动换 --ease-emphasized，逐张 20ms 落位 180ms 封顶（JS 侧配合）；系统「减少动态效果」自动关闭 */
 @keyframes staggerIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 .stagger-in { animation: staggerIn var(--dur-slow) var(--ease-emphasized) both; }
-@media (prefers-reduced-motion: reduce) {
-  /* v336 条81：加载指示类动画保留（转圈停了分不清加载还是卡死） */
-  .sk-spin, .loading-spin, .btn-busy .spin, [class*="spin"] { animation-duration: 1.2s !important; animation-iteration-count: infinite !important; } .stagger-in { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .btn-busy .spin, [class*="spin"] { animation-duration: 1.2s !important; animation-iteration-count: infinite !important; } .stagger-in { animation: none !important; } }
 
 /* v400 条4：原「全站统一关闭 ×（R186 回退标准）」整段（.modal-close-x/.kf-x 基础+hover+active）已并入上方唯一源块，此处不再重复 */
 
@@ -627,12 +625,10 @@ mark.hl { background: rgba(var(--green-rgb, 1,192,0), .16); color: inherit; font
 .empty-tip .empty-title { font-size: 16px; color: var(--text-light, #999); font-weight: 600 /* v336 条115 */; }
 /* v434 #32：空态单一来源——.wn-empty（列表内小空态）并入 .empty-tip 组件族同处定义，视觉令牌共享 */
 .wn-empty { padding: 20px 0; text-align: center; }
-.wn-empty .wn-empty-ico { font-size: 30px; opacity: .5; display: block; margin-bottom: 8px; }
-.wn-empty .wn-empty-t { font-size: 13px; color: var(--text-light, #666); }
 /* 条27：价格/统计/表格数字等宽（跳动对齐） */
 .p-price, .v-price, .cp-price, .variant-price, .stat-card .num, .stat-card .delta, table td, table th { font-variant-numeric: tabular-nums; }
 /* R184 条27 延伸（全系统检查）：翻页数字、趋势图轴数字（柱图 .tg-num + 折线 SVG text）一并等宽——轴数字宽度一致后网格线间距视觉均等，翻页数字不再随位数抖动 */
-.uni-pager button.pg-btn, .trend-grid-svg text, .line-chart svg text { font-variant-numeric: tabular-nums; } /* v376：旧 .tg-num 死规则已删，等宽改覆盖两图 SVG 轴数字 */
+.uni-pager button.pg-btn, .line-chart svg text { font-variant-numeric: tabular-nums; } /* v376：旧 .tg-num 死规则已删，等宽改覆盖两图 SVG 轴数字 */
 /* 条8：全站弹窗关闭收缩——ui-common.js 观察者在 .open 被移除的当帧补挂 .mask-closing 维持可见并播 var(--dur-mid) 收缩
    （与入场对称：入场 box 展开 scale 0.92→1（modalIn），关闭 1→0.92（boxOut）；遮罩层双向 var(--dur-mid) 淡入淡出；
    关闭动画期间重新打开会自动撤掉收缩态、重放入场） */
@@ -918,8 +914,8 @@ input::placeholder, textarea::placeholder { color: var(--text-light, #999); opac
 /* ===================== v330 体验优化批次（用户 10-09 拍板） ===================== */
 
 /* 条1：数字等宽（tabular-nums）——统计/价格/计数刷新时不再左右抖动 */
-.num, .pg-info, .stat-num, .badge-count, .batch-count, .card-price,
-.uni-pager .pg-info, .overview-num, .ui-toast {
+.num, .pg-info, .batch-count, .card-price,
+.uni-pager .pg-info, .ui-toast {
   font-variant-numeric: tabular-nums;
 }
 
@@ -978,9 +974,6 @@ svg.toggle-arrow { display: block; }
   a[href]:after { content: ' (' attr(href) ')'; font-size: 12px; }
 }
 
-/* v336 条159：二维码弹窗图片加载中/失败都先显示浅蓝占位底，不再一片空白 */
-img.qph { background: var(--bg-light,#f5f7fa); min-height: 120px; }
-
 /* v336 条190：键盘直达正文 */
 .skip-link { position: absolute; left: -9999px; top: 0; z-index: 200000; background: var(--blue1, #1E88E5); color: var(--text-on-brand, #fff); padding: 8px 16px; border-radius: 0 0 var(--r-m) 0; }
 .skip-link:focus { left: 0; }
@@ -996,13 +989,11 @@ img.qph { background: var(--bg-light,#f5f7fa); min-height: 120px; }
 .ann-body ul, .ann-body ol,
 .variant-detail ul, .variant-detail ol,
 .resource-content ul, .resource-content ol,
-.rte-editor ul, .rte-editor ol,
-.rte-body ul, .rte-body ol,
-.rte-content ul, .rte-content ol {
+.rte-editor ul, .rte-editor ol{
   padding-left: 1.6em; margin: 6px 0;
 }
 .modal-detail li, .ann-body li, .variant-detail li, .resource-content li,
-.rte-editor li, .rte-body li, .rte-content li { margin: 3px 0; }
+.rte-editor li{ margin: 3px 0; }
 
 /* v336 条203：表单控件边框加深到 3:1 可辨（装饰性分隔线保持浅色） */
 input, select, textarea { border-color: var(--input-border, #a9b8c6); }
@@ -1010,10 +1001,7 @@ input:hover, select:hover, textarea:hover { border-color: var(--input-border-hov
 
 /* v336 条65：悬浮件与弹窗避让 home 条/刘海 */
 .modal-mask, .share-mask, .kf-mask, .lightbox, .cp-mask { padding-left: max(16px, var(--safe-l)) !important; padding-right: max(16px, var(--safe-r)) !important; padding-bottom: max(16px, var(--safe-b)) !important; }
-body { padding-bottom: var(--safe-b); }
-
-/* v336 条130：门面大标题唯一规格（导航页/错误页共用） */
-.display-title, .page-title, .code { font-weight: 600; }
+body { padding-bottom: var(--safe-b); } .page-title, .code { font-weight: 600; }
 
 /* v359 条1：小件 40×44 扩大热区已按老板要求全面移除——可点范围=视觉大小 */
 
@@ -1066,7 +1054,7 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 }
 
 /* v343 条30：放大到 200% 或窄屏时，避免写死宽度导致错位——关键容器允许收缩换行 */
-.topbar-inner, .toolbar, .filter-bar, .modal-footer, .row { min-width: 0; }
+.topbar-inner, .toolbar, .modal-footer, .row { min-width: 0; }
 .card, .product-card, .stat-card, .modal-box { max-width: 100%; }
 .modal-footer { flex-wrap: wrap; }
 
@@ -1079,18 +1067,17 @@ textarea:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible,
 .empty-tip .empty-icon svg, .empty-state .empty-icon svg { width: 48px; height: 48px; display: block; }
 .empty-tip .empty-title, .empty-state .empty-title { font-size: 16px; font-weight: 600; color: var(--empty-text, #5b6b7b); }
 .empty-tip .empty-desc, .empty-state .empty-desc { font-size: 13px; color: var(--empty-desc, #8395a6); }
-.empty-tip .empty-clear-btn, .empty-tip .empty-action, .empty-state .empty-action { margin-top: 8px; border: 1px solid var(--blue1, #1E88E5); background: var(--card-bg, var(--card-bg, #fff)); /* v390-3：硬编码白底→语义变量（深色模式适配） */ color: var(--blue1, #1E88E5); font-size: 13px; font-weight: 600; border-radius: var(--r-pill); padding: 0 16px; /* v350 条1：与基础规则同高（33px/行高31px）——原 8px 上下内边距叠在固定高度上，把「重试」文字挤出按钮中心 7.5px */ cursor: pointer; }
+.empty-tip .empty-clear-btn, .empty-tip .empty-action{ margin-top: 8px; border: 1px solid var(--blue1, #1E88E5); background: var(--card-bg, var(--card-bg, #fff)); /* v390-3：硬编码白底→语义变量（深色模式适配） */ color: var(--blue1, #1E88E5); font-size: 13px; font-weight: 600; border-radius: var(--r-pill); padding: 0 16px; /* v350 条1：与基础规则同高（33px/行高31px）——原 8px 上下内边距叠在固定高度上，把「重试」文字挤出按钮中心 7.5px */ cursor: pointer; }
 .empty-tip .empty-clear-btn:hover, .empty-tip .empty-action:hover { background: var(--blue1, #1E88E5); color: var(--text-on-brand, #fff); }
 
 /* v343 条40b：列表/表格里的过长文字统一打省略号（鼠标移上去看全称），避免顶破布局 */
-.p-title, .cell-title, .cell-ellip,
-.admin-table td.td-title, .stat-table td:first-child, .bind-table td:first-child {
+.p-title, .stat-table td:first-child, .bind-table td:first-child {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
 }
 
 /* v368 条10 → v388 改动1：slNext/slPrev 定义与全部使用规则已收归 motion.css 唯一源（弹簧盖入版，并补齐 variant-detail 失效规则） */
 /* ===== v370 条9：内部滚动区滑到底不再带动外层（全系统补 contain）===== */
-.topbar-inner .tabs, .category-bar, .cat-bar, .sub-category-bar, .recent-bar, .stat-table-wrap, .bind-table-wrap, .table-scroll, .admin-table-wrap,
+.topbar-inner .tabs, .category-bar, .sub-category-bar, .recent-bar, .stat-table-wrap, .bind-table-wrap, .table-scroll,
 /* v415 拆分：页面级容器保持 v375 auto（滑动到头带窗滚）；v416 条4：弹窗内容滚动区改 contain——弹窗内滑到底不再把整个弹窗带出屏（老板复检反馈） */
 .modal-mask, .share-mask, .kf-mask, .cp-mask, [id="bindingsScroll"], .upman-host { overscroll-behavior: auto; }
 .modal-box, .form { overscroll-behavior: contain; } /* v421 分层：弹窗主滚区到头不带动整页 */

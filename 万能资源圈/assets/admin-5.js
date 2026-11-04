@@ -1499,7 +1499,7 @@ refreshCatCnts();
     });
     // 执行批量操作
     function batchCatAction(ids, action, closeConfirm) {
-      if (ids.indexOf(0) !== -1) { if (closeConfirm) closeConfirm(); toast('“全部”为保底根分类，不可隐藏/显示/删除', 'error'); return; }
+      if (ids.indexOf(0) !== -1) { if (closeConfirm) closeConfirm(); toast('「全部」为保底根分类，不可隐藏/显示/删除', 'error'); return; }
       var targetIds = ids.slice();
       if (action === 'hide' || action === 'show') {
         ids.forEach(function (pid) {

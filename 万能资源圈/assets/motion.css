@@ -16,15 +16,10 @@
   --dur-fx-big: 0.32s;  /* 强调档（滑切提交/图标描画/滑入滑出/封面入场）——v404 条5：原 0.34 秒三处已并入本档，强调动效全站统一 0.32 秒 */
   --wn-skel-hi: rgba(255, 255, 255, 0.55);
 }
-html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop: 0 6px 20px rgba(0,0,0,.55); --shadow-card: 0 2px 10px rgba(0,0,0,.4); --avatar-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 4px 14px rgba(0,0,0,.5);}
-
-/* ===== D1 触感按压（全站可按元素统一手感） ===== */
-/* 规则：只对「非禁用」的按键类元素生效；transform 不碰布局 */
-.wn-press, .row-btn, .batch-btn, .tab:not(.info-ct-btn), .view-btn, .btn-fit,
+html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop: 0 6px 20px rgba(0,0,0,.55); --shadow-card: 0 2px 10px rgba(0,0,0,.4); --avatar-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 4px 14px rgba(0,0,0,.5);} .row-btn, .batch-btn, .tab:not(.info-ct-btn), .view-btn, .btn-fit,
 .cat-tag, .p-ops .row-btn, .modal-footer button, .pager button, .undo-btn {
   transition: transform var(--dur-press) var(--ease-press), box-shadow var(--dur-press) var(--ease-press);
-}
-.wn-press:active, .row-btn:active, .batch-btn:active, .tab:active:not(.info-ct-btn),
+} .row-btn:active, .batch-btn:active, .tab:active:not(.info-ct-btn),
 .view-btn:active, .btn-fit:active, .cat-tag:active, .modal-footer button:active,
 .pager button:active, .undo-btn:active {
   transform: scale(0.95);
@@ -114,13 +109,12 @@ html[data-theme="dark"] { --wn-skel-hi: rgba(255, 255, 255, 0.09);  --shadow-pop
    兼容管理页 .product-row.skel 系与资源页 .card-skeleton 系 */
 .product-row.skel .row-check, .product-row.skel .p-title, .product-row.skel .p-sub,
 .product-row.skel .row-btn, .product-row.skel .thumb,
-.card-skeleton .sk-img, .card-skeleton .sk-line,
-.skel-block {
+.card-skeleton .sk-img, .card-skeleton .sk-line{
   position: relative; overflow: hidden;
 }
 .product-row.skel .row-check::after, .product-row.skel .p-title::after, .product-row.skel .p-sub::after,
 .product-row.skel .row-btn::after, .product-row.skel .thumb::after,
-.card-skeleton .sk-img::after, .card-skeleton .sk-line::after, .skel-block::after {
+.card-skeleton .sk-img::after, .card-skeleton .sk-line::after{
   content: ""; position: absolute; inset: 0; transform: translateX(-100%);
   background: linear-gradient(100deg, transparent 30%, var(--wn-skel-hi) 50%, transparent 70%);
   animation: wnShimmer 1.5s infinite;
@@ -346,8 +340,7 @@ html[data-theme="dark"] {
 }
 /* 深色下个别硬编码白底的定点覆写（仅覆盖高流量表面） */
 html[data-theme="dark"] .topbar { background-color: #14202e; } /* v394-fix：顶栏深色底保留 */
-html[data-theme="dark"] .topbar-right .info-ct-btn { background: rgba(255,255,255,.14); } /* v394-fix：信息键深色=按键底色（与浅色同逻辑），不再没入顶栏 */
-html[data-theme="dark"] .wn-divider, html[data-theme="dark"] hr { border-color: #2b3a4c; }
+html[data-theme="dark"] .topbar-right .info-ct-btn { background: rgba(255,255,255,.14); }
 /* 主题切换辉光（View Transition 降级为 fade） */
 html.wn-theme-anim, html.wn-theme-anim * { transition: background-color var(--dur-slow,.28s) ease, border-color var(--dur-slow,.28s) ease, color .18s ease !important; }
 

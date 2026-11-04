@@ -286,9 +286,6 @@
     /* 视图切换动画（管理页/资源页一致） */
     /* R231 条22：viewSwitch keyframes 抽公共到 ui-common.css（本处删除防三份重复） */
     .view-switch-anim { animation: viewSwitch var(--dur-mid) ease; }
-    /* v315（用户 10-05 17:33）：进度条全删——老板不要进度条 */
-    /* R243（用户 09-22 23:18）：条6 详情弹窗类型切换淡出 */
-    .variant-fade-out { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); /* R285 条32：0.1s 手写走标准档 */ }
     /* R243（用户 09-22 23:18）：条6 价格数字闪一下强调变化 */
     .modal-price { transition: opacity var(--dur-fast) ease; } /* v297（用户 10-04 02:14）：C-043 动画时长统一→0.15s收归fast档 */
     .modal-price.price-flash { opacity: 0.3; }
@@ -1339,7 +1336,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    .sub-cat-toggle:hover{ color: var(--blue1); }  /* v336 条72 */
 
 /* v336 条148：分类/变体/公告/类型胶囊统一按压反馈 */
-.category-tag:active, .variant-tab:active, .ann-tab:active, .type-tag:active { transform: scale(0.94); opacity:.8; transition-duration: var(--dur-fast); }
+.category-tag:active, .variant-tab:active, .ann-tab:active{ transform: scale(0.94); opacity:.8; transition-duration: var(--dur-fast); }
     /* v404 条4：上行的孤儿 80ms 已并入全站快档 0.10s。v404 条16：这组是「缩小 0.94」按压族；弹窗底部键是「变暗不缩放」族——两种并存是 R17/R231 有意设计（弹窗键并排、缩放会挤到相邻键），勿互相「统一」。 */
 
 /* v336 条165：卡片悬停阴影预置，hover 只动透明度（一屏几十张不再掉帧） */
