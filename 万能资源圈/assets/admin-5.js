@@ -1136,6 +1136,18 @@
 
     /* v512：暴露到全局——账号权限表单/其它模块要能主动刷一次分类（原先只在 admin-5 块内可见） */
     window.loadCategories = loadCategories;
+    /* v538：分类搜索框（防抖 150ms，输入即过滤，不重新请求） */
+    (function () {
+      var el = document.getElementById('catSearch');
+      if (!el) return;
+      var tmr = 0;
+      el.addEventListener('input', function () {
+        var v = this.value;
+        clearTimeout(tmr);
+        tmr = setTimeout(function () { window.__catQ = v; renderCategories(state.categories || []); }, 150);
+      });
+      el.addEventListener('search', function () { window.__catQ = this.value; renderCategories(state.categories || []); });
+    })();
     function loadCategories(silent) { if (window.__catLoading) { if (!silent) window.__catLoading.then(function () { renderCategories(state.categories); }); return window.__catLoading; } /* R281：silent=切回窗口静默重拉——不发重复请求、不弹 toast；diff 没变不重画 */
       /* R230（老板 09-21 21:10）：分类列表首载先铺骨架（分类无分页——按常显 8 行铺，真行不足收尾） */
       var _cbox0 = document.getElementById('catList');
@@ -1185,6 +1197,18 @@ refreshCatCnts();
     }
     function renderCategories(list) {
       var box = document.getElementById('catList'); var _minH = box.offsetHeight; if (_minH > 0) box.style.minHeight = _minH + 'px';
+      /* v538：分类搜索——命中二级分类时把它的一级父级也留下，别把树拆散 */
+      var __q = String(window.__catQ || '').trim().toLowerCase();
+      if (__q) {
+        var __hit = {};
+        list.forEach(function (c) { if (String(c.name || '').toLowerCase().indexOf(__q) >= 0) __hit[c.id] = 1; });
+        list = list.filter(function (c) { return __hit[c.id] || __hit[c.parent_id]; });
+        if (!list.length) {
+          box.style.minHeight = '';
+          box.innerHTML = window.__adminEmpty ? window.__adminEmpty('该搜索暂无分类', '换个词试试，或清空搜索框看全部分类') : '该搜索暂无分类';
+          return;
+        }
+      }
       /* R230：骨架检测（资源页同款）——骨架行同位置替换、真行不足收尾；骨架期空数据不抢跑 */
       var __skels = box.querySelectorAll('.admin-skel'); var __reuse = __skels.length > 0;
       if (window.__catSkelP && !list.length) return;

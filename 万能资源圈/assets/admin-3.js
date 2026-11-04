@@ -642,6 +642,24 @@
       // R209（用户 09-19 00:46）：根因→cid=0（「全部/未分类」）被 !data.cid 当成未选拦截；修法→cid=0 是合法选项，只拦 undefined/null
       if (data.cid === undefined || data.cid === null) { toast('请选择资源分类', 'error'); document.getElementById('fCidDisplay').style.borderColor = '#ff4444'; document.getElementById('fCidDisplay').style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)'; return; }
 
+      /* v538（老板：手工新增容易同一个资源录两遍）——保存前查一遍同名，先问一句再存；
+         采集入库那条路本来就按标题去重，这里只管手工。 */
+      try {
+        if (!window.__dupConfirmed) {
+          var _dup = (state.products || []).filter(function (p) {
+            return String(p.title || '').trim() === data.title && Number(p.id) !== Number(state.editingId || 0);
+          });
+          if (_dup.length && window.showConfirm) {
+            window.showConfirm('标题重复', '已经有一条同名资源「' + data.title + '」，确定还要再存一条吗？', function (closeConfirm) {
+              closeConfirm();
+              window.__dupConfirmed = true;
+              try { saveProduct(); } finally { setTimeout(function () { window.__dupConfirmed = false; }, 1200); }
+            });
+            return;
+          }
+        }
+      } catch (eD) { if (window.__silent) window.__silent(eD); }
+
       saving = true;
       var isNewSave = !state.editingId; // 记录本次是否为新增（editingId 之后会被赋值）
       // R293（用户 09-30）：恢复「确定中」忙碌态——R292 撤掉，老板要求恢复并全系统排查补齐

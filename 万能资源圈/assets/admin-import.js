@@ -522,7 +522,7 @@
     var a = impHistRead();
     var h = '<div class="imp-hist-h">导入历史（最近 10 次，只记在这台电脑上）</div>';
     if (!a.length) {
-      h += '<div class="imp-hist-empty">还没有导入记录。导一次之后，这里会显示时间、文件名、成功几条、哪条失败。</div>';
+      h += '<div class="imp-hist-empty">该列表暂无导入记录。导一次之后，这里会显示时间、文件名、成功几条、哪条失败。</div>';
     } else {
       h += a.map(function (r) {
         var bad = Number(r.bad) || 0;
@@ -1078,7 +1078,7 @@
       var me = x.me || {}; window.__usMe = me; window.__usList = x.list || [];
       var isSuper = me.role === 'super';
       var list = window.__usList;
-      if (!list.length) { body.innerHTML = (window.__adminEmpty ? window.__adminEmpty('还没有子账号', '上面填账号密码就能加一个，可以只给他看的范围') : '还没有子账号'); return; }
+      if (!list.length) { body.innerHTML = (window.__adminEmpty ? window.__adminEmpty('该列表暂无子账号', '上面填账号密码就能加一个，可以只给他看的范围') : '该列表暂无子账号'); return; }
       /* v454：按 parentId 铺成树（同分类管理：展开/收起、缩进表示层级） */
       var byParent = {};
       list.forEach(function (u) { var pid = Number(u.parentId || 0); (byParent[pid] = byParent[pid] || []).push(u); });
@@ -1280,7 +1280,7 @@
       var arr = [];
       try { arr = JSON.parse(st.announcements || '[]') || []; } catch (e) { arr = []; }
       var box = mask.querySelector('#ufAnnChips'); if (!box) return;
-      if (!arr.length) { box.innerHTML = '<span class="pm-hint">还没有公告，可先到「设置公告」发一条</span>'; return; }
+      if (!arr.length) { box.innerHTML = '<span class="pm-hint">该列表暂无公告，可先到「设置公告」发一条</span>'; return; }
       box.innerHTML = arr.map(function (a, i) {
         var id = String(a.id || ('a' + i));
         var on = annScope !== 'all' && Array.isArray(annScope) && annScope.indexOf(id) !== -1;
@@ -1353,7 +1353,12 @@
     mask.className = 'modal-mask'; mask.id = 'recycleMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="数据缓存"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">数据缓存</h2>' +
-      '<div class="rc-tools"><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜资源 / 分类 / 公告的名字"></div>' +
+      '<div class="rc-tools"><label class="rc-all"><input type="checkbox" id="rcAll" aria-label="全选"> 全选</label><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜资源 / 分类 / 公告的名字"></div>' +
+      /* v538（老板：回收站要能批量恢复、批量删除）——复用全站批量条组件，不新造样式 */
+      '<div class="batch-bar" id="rcBar"><span class="batch-count-label">已选 <b id="rcCount">0</b> 项</span>' +
+      '<div class="batch-group"><button type="button" class="batch-btn" id="rcRestoreAll">恢复选中</button>' +
+      '<button type="button" class="batch-btn danger" id="rcPurgeAll">彻底删除</button>' +
+      '<button type="button" class="batch-btn" id="rcClearSel">取消选中</button></div></div>' +
       '<div class="form" id="rcBody">' +
       '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
       '<div style="padding:10px 0">' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '</div></div></div>' /* v443 条13：加载统一为全站骨架 */;
@@ -1388,7 +1393,8 @@
       if (!x || !x.ok) { body.innerHTML = '<div class="imp-err">加载失败，请关掉重试</div>'; return; }
       var sec = function (title, rows) { return '<div class="rc-sec" style="margin-bottom:12px"><b style="display:block;font-size:13px;color:var(--text-light);margin-bottom:6px">' + title + '</b>' + (rows || '<div style="color:var(--text-faint);font-size:12px;padding:4px 0">这一项没有内容</div>') + '</div>'; };
       var row = function (kind, id, name, t) {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eef2f6">' +
+        return '<div class="rc-row" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-soft, #eef2f6)">' +
+          '<input type="checkbox" class="rc-ck" data-kind="' + kind + '" data-id="' + esc(String(id)) + '" aria-label="选中" style="width:16px;height:16px;flex:0 0 16px;margin:0;accent-color:var(--blue1);cursor:pointer">' +
           '<span style="flex:1;min-width:0;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(name) + '<span style="color:var(--text-faint);font-size:11px;margin-left:8px">' + fmtDelTime(t) + ' 删除</span></span>' +
           /* v512（老板：这里删除是四个字，跟别处不一样）：按键统一为系统行内键 .row-btn / .row-btn.danger，
              文案统一两字「删除」；「删了不能恢复」这层意思放到确认框里说，不用四个字吓人 */
@@ -1400,8 +1406,63 @@
       var as = (x.announcements || []).map(function (a) { return row('ann', a.id, a.title || '公告', a.deleted_at); }).join('');
       var none = !ps && !cs && !as;
       body.innerHTML = '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
-        (none ? (window.__adminEmpty ? window.__adminEmpty('回收站是空的', '删掉的资源、分类、公告会在这里保留 60 天，随时可以恢复') : '回收站是空的')
+        (none ? (window.__adminEmpty ? window.__adminEmpty('该回收站暂无内容', '删掉的资源、分类、公告会在这里保留 60 天，随时可以恢复') : '该回收站暂无内容')
           : sec('资源 ' + (x.products || []).length, ps) + sec('分类 ' + (x.categories || []).length, cs) + sec('公告 ' + (x.announcements || []).length, as));
+      /* v538：批量勾选 —— 计数、批量条显隐、全选联动 */
+      var _bar = mask.querySelector('#rcBar');
+      var _cnt = mask.querySelector('#rcCount');
+      var _allBox = mask.querySelector('#rcAll');
+      var _syncSel = function () {
+        var cks = body.querySelectorAll('.rc-ck');
+        var on = 0;
+        cks.forEach(function (c) { if (c.checked) on++; });
+        if (_cnt) _cnt.textContent = on;
+        if (_bar) { _bar.classList.toggle('show', on > 0); _bar.style.maxHeight = on > 0 ? '80px' : '0px'; }
+        if (_allBox) _allBox.checked = on > 0 && on === cks.length;
+      };
+      body.addEventListener('change', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('rc-ck')) _syncSel();
+      });
+      if (_allBox) _allBox.addEventListener('change', function () {
+        var on = this.checked;
+        body.querySelectorAll('.rc-ck').forEach(function (c) { if (c.parentNode.style.display !== 'none') c.checked = on; });
+        _syncSel();
+      });
+      var _clearSel = function () { body.querySelectorAll('.rc-ck').forEach(function (c) { c.checked = false; }); _syncSel(); };
+      var _cs = mask.querySelector('#rcClearSel'); if (_cs) _cs.addEventListener('click', _clearSel);
+      var _picked = function () { return Array.prototype.slice.call(body.querySelectorAll('.rc-ck')).filter(function (c) { return c.checked; }); };
+      /* 批量跑：一条条来，失败也继续，最后给一句总数 */
+      var _runBatch = function (op, label) {
+        var list = _picked();
+        if (!list.length) return;
+        if (op === 'purge' && window.showConfirm) {
+          window.showConfirm('彻底删除', '选中的 ' + list.length + ' 项会被永久清掉，恢复不了，确定继续？', function (closeConfirm) {
+            closeConfirm(); _doBatch(op, list, label);
+          });
+        } else _doBatch(op, list, label);
+      };
+      var _doBatch = function (op, list, label) {
+        var okN = 0, failN = 0;
+        var step = function (i) {
+          if (i >= list.length) {
+            if (window.showToast) window.showToast(label + '：成功 ' + okN + ' 项' + (failN ? '，失败 ' + failN + ' 项' : ''), failN ? 'error' : 'success');
+            openRecycle();
+            return;
+          }
+          var c = list[i];
+          fetch('/api/admin/recycle', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+            body: JSON.stringify({ op: op, kind: c.getAttribute('data-kind'), id: c.getAttribute('data-id') })
+          }).then(function (r) { return r.json(); }).then(function (x) {
+            if (x && x.ok) okN++; else failN++;
+          }).catch(function () { failN++; }).then(function () { step(i + 1); });
+        };
+        step(0);
+      };
+      _syncSel();
+      var _ra = mask.querySelector('#rcRestoreAll'); if (_ra) _ra.addEventListener('click', function () { _runBatch('restore', '恢复'); });
+      var _pa = mask.querySelector('#rcPurgeAll'); if (_pa) _pa.addEventListener('click', function () { _runBatch('purge', '彻底删除'); });
+
       body.addEventListener('click', function (e) {
         var b = e.target.closest && e.target.closest('[data-rc]'); if (!b) return;
         var op = b.getAttribute('data-rc'), kind = b.getAttribute('data-kind'), id = b.getAttribute('data-id');
@@ -1515,6 +1576,17 @@
       setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
     };
     mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+    /* v538：点名字筛人（本页内过滤，不重新请求） */
+    mask.addEventListener('click', function (e) {
+      var chip = e.target.closest && e.target.closest('.log-chip'); if (!chip) return;
+      var who = chip.getAttribute('data-who');
+      var on = chip.classList.toggle('on');
+      var body2 = mask.querySelector('#logsBody'); if (!body2) return;
+      body2.querySelectorAll('.log-row').forEach(function (r) {
+        r.style.display = (!on || r.getAttribute('data-who') === who) ? '' : 'none';
+      });
+      body2.querySelectorAll('.log-chip').forEach(function (c) { if (c !== chip) c.classList.remove('on'); });
+    });
 
     var page = 1, q = '';
     function bjTime(v) {
@@ -1526,10 +1598,21 @@
       var body = mask.querySelector('#logsBody');
       var list = (d && d.list) || [];
       if (!list.length) {
-        body.innerHTML = '<div class="extc-loading">' + (q ? '没有匹配的记录，换个词试试' : '还没有操作记录。改一次设置或删一条资源，这里就会出现。') + '</div>';
+        body.innerHTML = '<div class="extc-loading">' + (q ? '该搜索暂无记录，换个词试试' : '该列表暂无操作记录。改一次设置或删一条资源，这里就会出现。') + '</div>';
       } else {
-        body.innerHTML = list.map(function (r) {
-          return '<div class="log-row">' +
+        /* v538（老板：想看"谁今天动了什么"）——本页按人汇总，点名字直接筛这个人 */
+        var _by = {};
+        list.forEach(function (r) { var k = r.who || 'admin'; _by[k] = (_by[k] || 0) + 1; });
+        var _chips = Object.keys(_by).sort(function (a, b) { return _by[b] - _by[a]; }).map(function (k) {
+          return '<button type="button" class="log-chip" data-who="' + esc(k) + '">' + esc(k) + ' <b>' + _by[k] + '</b></button>';
+        }).join('');
+        var _td = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+        var _yd = new Date(Date.now() + 8 * 3600e3 - 86400e3).toISOString().slice(0, 10);
+        var _nT = 0, _nY = 0;
+        list.forEach(function (r) { var d0 = bjTime(r.at).slice(0, 10); if (d0 === _td) _nT++; else if (d0 === _yd) _nY++; });
+        var _sum = '<div class="logs-sum"><span class="logs-sum-t">本页 ' + list.length + ' 条｜今天 ' + _nT + ' 条 · 昨天 ' + _nY + ' 条</span>' + _chips + '</div>';
+        body.innerHTML = _sum + list.map(function (r) {
+          return '<div class="log-row" data-who="' + esc(r.who || 'admin') + '">' +
             '<span class="log-t">' + esc(bjTime(r.at)) + '</span>' +
             '<span class="log-w">' + esc(r.who || 'admin') + '</span>' +
             '<span class="log-a">' + esc(r.action || '') + '</span>' +

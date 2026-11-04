@@ -349,7 +349,7 @@
   function renderGoods() {
     var list = filtered();
     if (!S.goods.length) {
-      return empty('采集到的资源还没有内容', '选一个平台点「采集」一次抓一批；抓不到的点「粘贴」，粘链接或整页内容一条条加');
+      return empty('该列表暂无采集到的资源', '选一个平台点「采集」一次抓一批；抓不到的点「粘贴」，粘链接或整页内容一条条加');
     }
     /* v509：有数据但被搜索/状态筛空时，原来是整片空白（老板看到只会以为坏了） */
     if (!list.length) {
@@ -399,24 +399,35 @@
     return pfNote + head + '<div class="extc-grid">' + cards + '</div>' + pager;
   }
 
+  /* v538（老板：失败只说一句原文，不知道该干嘛）——按原文归成三类，给出下一步动作 */
+  function reasonOf(msg) {
+    var m = String(msg || '');
+    if (/登录|登入|未登录|密码|账号/.test(m)) return { k: 'login', t: '需要登录', tip: '点「打开」登录一次再采' };
+    if (/404|不存在|下架|已删除|失效|找不到/.test(m)) return { k: 'dead', t: '地址失效', tip: '去「我的平台 → 编辑」换商城地址' };
+    if (/频率|频繁|限流|too many|429|稍后/.test(m)) return { k: 'limit', t: '被限流', tip: '过半小时再采一次' };
+    if (/超时|timeout|网络|fetch|EOF/.test(m)) return { k: 'net', t: '网络不稳', tip: '换个时间再试' };
+    return { k: 'other', t: '没采到', tip: '点这一行「打开」看看对方页面还在不在' };
+  }
+  window.__extcReason = reasonOf;
+
   /* v537：采集记录列表——时间 / 平台 / 结果 / 说明，四列等分、超长省略 */
   function renderRuns() {
     if (!S.runs.length) {
-      return empty('还没有采集记录', '点上面的「采集」，或者等每天自动采过之后，这里会记下每次的时间和结果');
+      return empty('该列表暂无采集记录', '点上面的「采集」，或者等每天自动采过之后，这里会记下每次的时间和结果');
     }
     return '<div class="extc-runs">' + S.runs.map(function (r) {
       return '<div class="log-row">' +
         '<span class="log-t">' + esc(String(r.at || '')) + '</span>' +
         '<span class="log-w" title="' + esc(r.name || '') + '">' + esc(r.name || '') + '</span>' +
-        '<span class="log-a ' + (r.ok ? 'is-ok' : 'is-bad') + '">' + (r.ok ? '成功' : '失败') + '</span>' +
-        '<span class="log-g" title="' + esc(r.msg || '') + '">' + esc(r.msg || '') + '</span>' +
+        '<span class="log-a ' + (r.ok ? 'is-ok' : 'is-bad') + '">' + (r.ok ? '成功' : (reasonOf(r.msg).t)) + '</span>' +
+        '<span class="log-g" title="' + esc(r.msg || '') + '">' + esc(r.ok ? (r.msg || '') : reasonOf(r.msg).tip) + '</span>' +
         '</div>';
     }).join('') + '</div>';
   }
 
   function renderPlatforms() {
     if (!S.platforms.length) {
-      return empty('还没有平台', '点右上「+ 添加平台」，填平台名和商城地址（你在那边看资源列表的那一页）');
+      return empty('该列表暂无平台', '点右上「+ 添加平台」，填平台名和商城地址（你在那边看资源列表的那一页）');
     }
     var rows = S.platforms.map(function (p) {
       var cnt = S.goods.filter(function (g) { return Number(g.platform_id) === Number(p.id); }).length;
@@ -425,7 +436,11 @@
       var meta = [];
       meta.push('<i class="extc-auto">每天自动</i>'); /* v537：全部平台都自动采 */
       if (p.last_auto_at) meta.push('<span>上次自动：' + esc(bjShort(p.last_auto_at)) + '</span>');
-      if (last) meta.push('<span class="' + (last.ok ? 'is-ok' : 'is-bad') + '">上次手动：' + esc(String(last.at).slice(5, 16)) + ' · ' + esc(String(last.msg || '').slice(0, 46)) + '</span>');
+      if (last) {
+        var _rs = last.ok ? null : reasonOf(last.msg);
+        meta.push('<span class="' + (last.ok ? 'is-ok' : 'is-bad') + '">上次手动：' + esc(String(last.at).slice(5, 16))
+          + (_rs ? ' · ' + _rs.t + '（' + _rs.tip + '）' : ' · ' + esc(String(last.msg || '').slice(0, 46))) + '</span>');
+      }
       return '<div class="extc-prow" data-pid="' + p.id + '">' +
         '<div class="extc-pmain"><b>' + esc(p.name) + ' <i class="extc-cnt">' + cnt + ' 个资源</i></b>' +
         '<span class="extc-plink">' + esc(p.mall_url || '（没填商城地址，采集不了）') + '</span>' +
@@ -599,7 +614,7 @@
   /* v537：全部平台依次采集——串行跑，不并发，避免同时打对方站点被限流 */
   function collectAll() {
     var list = S.platforms.filter(function (x) { return String(x.mall_url || '').trim(); });
-    if (!list.length) { toast('还没有填了商城地址的平台，先去「我的平台」补一个', 'error'); return; }
+    if (!list.length) { toast('该列表暂无可用平台（没填商城地址），先去「我的平台」补一个', 'error'); return; }
     S.busy = true;
     var btn = S.mask && S.mask.querySelector('#extcRun');
     if (btn) { btn.disabled = true; btn.textContent = '采集中…'; }

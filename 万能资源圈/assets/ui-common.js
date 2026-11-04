@@ -2590,7 +2590,11 @@ window.__autoDecorate = function (root) {
       [/复制/, 'copy'], [/显示|查看|预览/, 'show'], [/隐藏/, 'hide'], [/新增|添加/, 'add'],
       [/重试|刷新|换一?张/, 'refresh'], [/导出/, 'export'], [/上传/, 'up'], [/下载/, 'down'],
       [/改分类|分类/, 'cat'], [/改价格|价格/, 'price'], /* v375：批量条改分类/改价格此前无图标可配，落不到 btn-fit 机制里 */
-      [/搜索/, 'search'], [/分享|发送/, 'share'], [/客服|咨询/, 'service'], [/登录/, 'check'], [/全选/, 'check']
+      [/搜索/, 'search'], [/分享|发送/, 'share'], [/客服|咨询/, 'service'], [/登录/, 'check'], [/全选/, 'check'],
+      /* v538（老板：每个键都要有图标，放不下才只留图标）——补齐业务动词 */
+      [/采集|抓取/, 'refresh'], [/打开|前往|访问/, 'show'], [/粘贴|录入/, 'add'], [/上架|发布/, 'up'],
+      [/恢复|还原/, 'refresh'], [/清空|清除/, 'close'], [/批量/, 'list'], [/统计|报表/, 'stats'],
+      [/设置|配置/, 'gear'], [/排序/, 'list'], [/测试|测一下/, 'check'], [/移动|分类/, 'cat']
     ];
     var skip = '.btn-fit, .view-btn, .rte-btn, .rte-expand, .cat-fold, .search-clear, .modal-close-x, .fc-arrow, [data-noico]';
     var btns = scope.querySelectorAll('button, .btn-blue, .batch-btn');
@@ -2621,8 +2625,26 @@ window.__autoDecorateTabs = function () {
     });
   } catch (e) { if (window.__silent) window.__silent(e); }
 };
+/* v538（老板）：不区分手机/电脑——每个键都带图标，只有"这一排放不下全文字"时才收成图标。
+   做法：把常见按钮容器都登记成 .btn-fit-group（__btnFit 本来就按容器宽度决定收不收），
+   再补扫一遍新渲染出来的按钮（弹窗/列表是动态插入的）。 */
+window.__markFitGroups = function () {
+  try {
+    var SEL = '.setting-row.is-inline, .modal-footer, .extc-pops, .extc-bar, .logs-tools, .info-panel-btns, .batch-group, .tbl-opbar, .usf-body .pm-actions';
+    var list = document.querySelectorAll(SEL);
+    for (var i = 0; i < list.length; i++) list[i].classList.add('btn-fit-group');
+  } catch (e) { if (window.__silent) window.__silent(e); }
+};
+window.__refreshIcons = function () {
+  try { window.__autoDecorate(); window.__markFitGroups(); if (window.__btnFit) window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); }
+};
 window.addEventListener('DOMContentLoaded', function () {
-  setTimeout(function () { window.__autoDecorate(); window.__autoDecorateTabs(); if (window.__btnFit) window.__btnFit(); }, 60);
+  setTimeout(function () { window.__refreshIcons(); window.__autoDecorateTabs(); }, 60);
+  /* 动态内容：前 20 秒内每 1.2 秒补一次，之后靠 resize/点击触发 */
+  var n = 0;
+  var t = setInterval(function () { window.__refreshIcons(); if (++n > 16) clearInterval(t); }, 1200);
+  window.addEventListener('resize', function () { clearTimeout(window.__icoT); window.__icoT = setTimeout(window.__refreshIcons, 200); });
+  document.addEventListener('click', function () { clearTimeout(window.__icoT); window.__icoT = setTimeout(window.__refreshIcons, 300); }, true);
 });
 
 /* ===== v370 条2：批量条精确高度平滑展开——把下方列表"缓缓推下"，不再瞬跳 =====

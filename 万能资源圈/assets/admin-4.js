@@ -1998,7 +1998,7 @@
       if (img) {
         var _tip = document.getElementById('infoQrTip' + C);
         if (qr) { img.src = qr; img.style.display = ''; if (_tip) _tip.remove(); }
-        else { img.removeAttribute('src'); img.style.display = 'none'; if (!_tip && img.parentNode) { _tip = document.createElement('div'); _tip.id = 'infoQrTip' + C; _tip.style.cssText = 'font-size:12px;color:var(--text-light);padding:10px 0;line-height:1.7'; _tip.textContent = '还没有上传二维码——点上方「上传二维码」添加，访客长按图片即可识别'; img.parentNode.appendChild(_tip); } } /* v443 条10：空面板给引导不再干等 */
+        else { img.removeAttribute('src'); img.style.display = 'none'; if (!_tip && img.parentNode) { _tip = document.createElement('div'); _tip.id = 'infoQrTip' + C; _tip.style.cssText = 'font-size:12px;color:var(--text-light);padding:10px 0;line-height:1.7'; _tip.textContent = '该行暂无二维码——点上方「上传二维码」添加，访客长按图片即可识别'; img.parentNode.appendChild(_tip); } } /* v443 条10：空面板给引导不再干等 */
       }
       if (del) del.style.display = qr ? '' : 'none';   /* ×只在有图时出现 */
       if (add) add.style.display = qr ? 'none' : '';
