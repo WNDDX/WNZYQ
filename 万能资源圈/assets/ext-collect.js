@@ -10,9 +10,10 @@ pfPage: 1, runsPage: 1,
 runs: [], cats: []
 };
 
-function esc(s) {
+
+var esc = window.escapeHtml || function (s) {
 return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+};
 function api(path, opt) {
 opt = opt || {};
 var o = { method: opt.method || 'GET', credentials: 'same-origin', headers: {} };
