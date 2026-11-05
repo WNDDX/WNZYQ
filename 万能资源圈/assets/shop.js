@@ -640,6 +640,10 @@ topCats.forEach(function (c) {
 var tag = document.createElement('div');
 tag.className = 'category-tag' + (c.id === currentCat ? ' active' : '');
 tag.textContent = c.name;
+
+tag.setAttribute('role', 'button');
+tag.tabIndex = 0;
+tag.setAttribute('aria-pressed', c.id === currentCat ? 'true' : 'false');
 tag.addEventListener('click', function () {
 currentCat = c.id;
 currentSubCat = 0;
@@ -702,6 +706,9 @@ subBar.innerHTML = '';
 var allTag = document.createElement('div');
 allTag.className = 'sub-category-tag' + (currentSubCat === 0 ? ' active' : '');
 allTag.textContent = '全部';
+allTag.setAttribute('role', 'button');
+allTag.tabIndex = 0;
+allTag.setAttribute('aria-pressed', currentSubCat === 0 ? 'true' : 'false');
 allTag.addEventListener('click', function () {
 currentSubCat = 0;
 currentPage = 1;
@@ -714,6 +721,9 @@ subCats.forEach(function (c) {
 var tag = document.createElement('div');
 tag.className = 'sub-category-tag' + (c.id === currentSubCat ? ' active' : '');
 tag.textContent = c.name;
+tag.setAttribute('role', 'button');
+tag.tabIndex = 0;
+tag.setAttribute('aria-pressed', c.id === currentSubCat ? 'true' : 'false');
 tag.addEventListener('click', function () {
 currentSubCat = c.id;
 currentPage = 1;
@@ -3109,6 +3119,22 @@ window.__shopGetData = typeof DATA !== 'undefined' ? function () { return DATA; 
 (function () {
 function bindBar(bar, getTags) {
 if (!bar || bar.__edgeSw) return; bar.__edgeSw = 1;
+
+bar.addEventListener('keydown', function (e) {
+var key = e.key;
+var isAct = key === 'Enter' || key === ' ' || key === 'Spacebar';
+var isMove = key === 'ArrowLeft' || key === 'ArrowRight' || key === 'Home' || key === 'End';
+if (!isAct && !isMove) return;
+var tags = (getTags() || []).filter(function (t) { return t && t.offsetParent !== null; });
+if (!tags.length) return;
+var i = tags.indexOf(document.activeElement);
+if (i < 0) return;
+if (isAct) { e.preventDefault(); tags[i].click(); return; }
+e.preventDefault();
+var ni = key === 'Home' ? 0 : key === 'End' ? tags.length - 1 : i + (key === 'ArrowRight' ? 1 : -1);
+if (ni < 0 || ni >= tags.length) return;
+tags[ni].focus();
+});
 var sx = 0, sy = 0;
 bar.addEventListener('touchstart', function (e) { if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } }, { passive: true });
 bar.addEventListener('touchend', function (e) {

@@ -480,6 +480,8 @@ var cb = document.createElement('input');
 cb.type = 'checkbox';
 cb.className = 'row-check';
 cb.dataset.id = p.id;
+
+cb.setAttribute('aria-label', '选择资源：' + String(p.title || '未命名').slice(0, 40));
 cb.style.flexShrink = '0';
 cb.style.width = '20px';
 cb.style.height = '20px';
