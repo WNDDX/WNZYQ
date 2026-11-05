@@ -1971,7 +1971,11 @@ if (pid) box = document.querySelector('.cat-picker-panel[data-picker-id="' + pid
 }
 if (!box) return;
 var items = Array.prototype.filter.call(box.querySelectorAll('.cp-item'), function (x) { return x.offsetParent !== null; });
-if (items.length) { try { items[0].focus(); } catch (e0) {} }
+if (!items.length) items = Array.prototype.slice.call(box.querySelectorAll('.cp-item'));
+if (!items.length) return;
+var f = items[0];
+if (!f.hasAttribute('tabindex')) f.setAttribute('tabindex', '0');
+try { f.focus(); } catch (e0) {}
 }, 130);
 }
 return;
