@@ -2748,3 +2748,99 @@ root.style.setProperty('--vvh', Math.round(vv.height) + 'px');
 try { vv.addEventListener('resize', apply); vv.addEventListener('scroll', apply); } catch (e) {}
 apply();
 })();
+(function () {
+if (window.__errHookOn) return;
+window.__errHookOn = 1;
+var API = '/api/error';
+var MAX_PER_PAGE = 8;
+var sent = {};
+var sentCount = 0;
+var lastAt = 0;
+var queue = [];
+var flushTimer = null;
+var NOISE = [
+/ResizeObserver loop/i,
+/^Script error\.?$/i,
+/chrome-extension:|moz-extension:|safari-extension:/i,
+/The operation was aborted|AbortError/i,
+/Failed to fetch|NetworkError when attempting to fetch/i,
+/Load failed|Network request failed/i,
+/^undefined is not an object \(evaluating '.*\.parentNode'\)$/i,
+/Cannot read propert.*of (null|undefined) \(reading 'appendChild'\)/i,
+/Non-Error promise rejection/i
+];
+function isNoise(msg, src) {
+var s = String(msg || '') + ' ' + String(src || '');
+for (var i = 0; i < NOISE.length; i++) if (NOISE[i].test(s)) return true;
+if (/hm\.baidu|cnzz|google-analytics|googletagmanager|gtag|umeng|51\.la|sentry/i.test(String(src || ''))) return true;
+return false;
+}
+function fp(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36); }
+function push(kind, msg, stack, src) {
+try {
+msg = String(msg || '').slice(0, 300);
+if (!msg) return;
+if (isNoise(msg, src) || isNoise('', src)) return;
+if (sentCount >= MAX_PER_PAGE) return;
+var key = fp(kind + '|' + msg);
+if (sent[key]) return;
+sent[key] = 1;
+sentCount++;
+queue.push({
+kind: kind,
+msg: msg,
+stack: String(stack || '').slice(0, 2000),
+page: String(location.pathname + location.search).slice(0, 300)
+});
+scheduleFlush();
+} catch (e) {}
+}
+function scheduleFlush() {
+if (flushTimer) return;
+var wait = Math.max(300, 300 - (Date.now() - lastAt));
+flushTimer = setTimeout(function () { flushTimer = null; flush(); }, wait);
+}
+function flush() {
+try {
+while (queue.length) {
+var one = queue.shift();
+var body = JSON.stringify(one);
+lastAt = Date.now();
+if (navigator.sendBeacon) {
+var okBeacon = navigator.sendBeacon(API, new Blob([body], { type: 'text/plain;charset=UTF-8' }));
+if (okBeacon) continue;
+}
+try {
+fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+} catch (e2) {}
+}
+} catch (e) {}
+}
+window.addEventListener('error', function (ev) {
+try {
+if (ev && ev.target && ev.target !== window && ev.target.tagName) {
+var tag = String(ev.target.tagName).toUpperCase();
+if (tag === 'SCRIPT' || tag === 'LINK') {
+push('resource', '资源加载失败：' + (ev.target.src || ev.target.href || '').slice(0, 160), '', ev.target.src || ev.target.href);
+}
+return;
+}
+var msg = ev && ev.message ? ev.message : '';
+var stack = (ev && ev.error && ev.error.stack) ? ev.error.stack : '';
+var src = ev && ev.filename ? ev.filename : '';
+push('js', (src ? msg + ' @ ' + src.split('/').pop() + ':' + (ev.lineno || 0) : msg), stack, src);
+} catch (e) {}
+}, true);
+window.addEventListener('unhandledrejection', function (ev) {
+try {
+var r = ev && ev.reason;
+var msg = r && (r.message || r.msg) ? (r.message || r.msg) : String(r);
+var stack = r && r.stack ? r.stack : '';
+push('promise', msg, stack, '');
+} catch (e) {}
+});
+window.__reportError = function (msg, err) {
+try { push('custom', msg, (err && err.stack) || String(err || ''), ''); } catch (e) {}
+};
+window.addEventListener('pagehide', function () { try { flush(); } catch (e) {} });
+})();

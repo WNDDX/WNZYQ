@@ -1636,6 +1636,148 @@ load();
 }
 
 
+
+function openErrs() {
+var old = document.getElementById('errMask'); if (old) old.remove();
+var mask = document.createElement('div');
+mask.className = 'modal-mask'; mask.id = 'errMask';
+mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="前端报错">' +
+(window.__frag ? window.__frag.modalHead('前端报错') : '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><div class="modal-title">前端报错</div>') +
+'<p class="imp-lead">访客的页面出错时会自动记在这里（同一句话一次访问只报一次，最多 8 条）。<b>这里为空代表线上一直没出错</b>；有记录说明真的有人在某个页面撞上了，按「次数」从多到少看。</p>' +
+'<div class="logs-range" id="errRange">' +
+'<span class="logs-range-t">时间范围</span>' +
+'<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
+'<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
+'<button type="button" class="row-btn" id="errClear" style="margin-left:auto">清空记录</button>' +
+'</div>' +
+'<div class="logs-daily" id="errSum"><div class="logs-d-empty">正在读取…</div></div>' +
+'<div class="logs-tools">' +
+'<input class="input" id="errQ" type="search" autocomplete="off" placeholder="搜报错内容或页面，比如 TypeError / shop">' +
+'<button type="button" class="btn-blue btn-inline" id="errGo">搜索</button>' +
+'</div>' +
+'<div class="logs-body" id="errBody"><div class="extc-loading">正在读取…</div></div>' +
+'<div class="uni-pager" id="errPager"></div>' +
+'<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+'</div>';
+document.body.appendChild(mask);
+requestAnimationFrame(function () { mask.classList.add('open'); });
+if (window.syncBodyLock) window.syncBodyLock();
+
+var close = function () {
+mask.classList.remove('open');
+setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
+};
+mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
+var days = 7, page = 1, q = '';
+function bjTime(v) {
+var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
+if (isNaN(d.getTime())) return String(v || '');
+return new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ');
+}
+var KIND_TXT = { js: '脚本错', promise: '异步错', resource: '加载失败', custom: '业务错' };
+
+function paintSum(d) {
+var box = mask.querySelector('#errSum');
+if (!box) return;
+var byPage = d.byPage || [];
+if (!d.total) {
+box.innerHTML = '<div class="logs-d-empty">这段时间没有前端报错，说明线上是干净的 ✓</div>';
+return;
+}
+var maxH = 1;
+byPage.forEach(function (x) { if ((x.hits || 0) > maxH) maxH = x.hits; });
+var ph = byPage.map(function (x) {
+var w = Math.max(4, Math.round((x.hits / maxH) * 100));
+return '<span class="log-who" title="' + esc(x.page || '') + '">' +
+'<span class="lw-n">' + esc(String(x.page || '/').slice(0, 26)) + '</span>' +
+'<span class="lw-bar"><i style="width:' + w + '%"></i></span>' +
+'<b>' + x.hits + '</b></span>';
+}).join('');
+box.innerHTML =
+'<div class="logs-d-head"><b>报错概览</b>' +
+'<span>共 ' + d.hits + ' 次 · ' + d.total + ' 种 · ' + d.devices + ' 台设备</span>' +
+'</div>' +
+(ph ? '<div class="logs-d-people">' + ph + '</div>' : '');
+}
+
+function paint(d) {
+var body = mask.querySelector('#errBody');
+var list = d.list || [];
+if (!list.length) {
+body.innerHTML = '<div class="logs-d-empty">没有记录</div>';
+mask.querySelector('#errPager').innerHTML = '';
+return;
+}
+body.innerHTML = list.map(function (x) {
+var stack = String(x.stack || '').trim();
+return '<div class="err-row">' +
+'<div class="err-top">' +
+'<span class="err-kind k-' + esc(x.kind || 'js') + '">' + esc(KIND_TXT[x.kind] || x.kind || '脚本错') + '</span>' +
+'<span class="err-msg">' + esc(x.msg || '') + '</span>' +
+(Number(x.cnt) > 1 ? '<span class="err-cnt">×' + x.cnt + '</span>' : '') +
+'</div>' +
+'<div class="err-meta">' +
+'<span>' + esc(bjTime(x.last_at)) + '</span>' +
+'<span class="err-page">' + esc(x.page || '/') + '</span>' +
+(x.ua ? '<span class="err-ua" title="' + esc(x.ua) + '">' + esc(String(x.ua).slice(0, 46)) + '</span>' : '') +
+'</div>' +
+(stack ? '<details class="err-stack"><summary>看调用栈</summary><pre>' + esc(stack) + '</pre></details>' : '') +
+'</div>';
+}).join('');
+
+var total = Number(d.total) || 0, size = Number(d.size) || 20;
+var pages = Math.max(1, Math.ceil(total / size));
+mask.querySelector('#errPager').innerHTML = pages > 1
+? '<button type="button" class="row-btn" data-pg="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+'<span class="uni-pager-info">' + page + ' / ' + pages + '　共 ' + total + ' 种</span>' +
+'<button type="button" class="row-btn" data-pg="' + (page + 1) + '"' + (page >= pages ? ' disabled' : '') + '>下一页</button>'
+: '';
+}
+
+function load() {
+fetch('/api/admin/errors?days=' + days + '&page=' + page + '&q=' + encodeURIComponent(q), { credentials: 'include' })
+.then(function (r) { return r.json(); })
+.then(function (d) {
+if (!d || !d.ok) { mask.querySelector('#errBody').innerHTML = '<div class="logs-d-empty">读取失败（可能没权限）</div>'; return; }
+paintSum(d); paint(d);
+})
+.catch(function () { mask.querySelector('#errBody').innerHTML = '<div class="logs-d-empty">网络异常，读取失败</div>'; });
+}
+
+mask.querySelector('#errRange').addEventListener('click', function (e) {
+var b = e.target.closest('.logs-rbtn'); if (!b) return;
+mask.querySelectorAll('#errRange .logs-rbtn').forEach(function (x) { x.classList.toggle('on', x === b); });
+days = Number(b.getAttribute('data-days')) || 7; page = 1; load();
+});
+mask.querySelector('#errGo').addEventListener('click', function () {
+q = String(mask.querySelector('#errQ').value || '').trim(); page = 1; load();
+});
+mask.querySelector('#errQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); mask.querySelector('#errGo').click(); } });
+mask.querySelector('#errPager').addEventListener('click', function (e) {
+var b = e.target.closest('[data-pg]'); if (!b || b.disabled) return;
+page = Math.max(1, Number(b.getAttribute('data-pg')) || 1); load();
+});
+mask.querySelector('#errClear').addEventListener('click', function () {
+var btn = this;
+var go = function () {
+btn.disabled = true;
+fetch('/api/admin/errors', { method: 'DELETE', credentials: 'include' })
+.then(function (r) { return r.json(); })
+.then(function (d) {
+btn.disabled = false;
+toast(d && d.ok ? '已清空' : '清空失败', d && d.ok ? 'success' : 'error');
+page = 1; load();
+})
+.catch(function () { btn.disabled = false; toast('网络异常', 'error'); });
+};
+if (window.showConfirm) window.showConfirm('清空全部前端报错记录？清空后无法恢复。', go, null, '清空', '取消', true);
+else go();
+});
+load();
+}
+
 function openLogs() {
 var old = document.getElementById('logsMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -1884,6 +2026,7 @@ mkGroup('内容管理', row('批量导入（Excel 一次导多条）', btnHtml('
 panel.querySelector('#cronBtn').addEventListener('click', function () { openCronHelp(); });
 mkGroup('系统维护',
 row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1))
++ row('前端报错（访客页面出错会自动记下来）', btnHtml('errLogBtn', '前端报错', ' data-perm="sensitive.super"'))
 + row('清空测试数据（重新开始测试时用）', btnHtml('resetBtn', '清空数据', ' data-perm="sensitive.super"')));
 var accGrp = mkGroup('账号安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
 + row('谁改了什么（保留 60 天）', btnHtml('logsBtn', '操作日志', ' data-perm="users"')));
@@ -1896,6 +2039,8 @@ if (pwdGrp) { pwdGrp.className = ''; pwdGrp.style.marginTop = '6px'; accGrp.appe
 panel.querySelector('#batchImportBtn').addEventListener('click', openWizard);
 panel.querySelector('#resetBtn').addEventListener('click', function () { openReset(); });
 panel.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });
+var _errBtn = panel.querySelector('#errLogBtn');
+if (_errBtn) _errBtn.addEventListener('click', function () { openErrs(); });
 panel.querySelector('#recycleBtn').addEventListener('click', openRecycle);
 panel.querySelector('#usersBtn').addEventListener('click', openUsers);
 var _lgBtn = panel.querySelector('#logsBtn');
