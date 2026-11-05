@@ -482,6 +482,8 @@ if (window.setBodyLock) setBodyLock(true);
 window.__annShown = true;
 renderAnnContent();
 showAnnDefault();
+
+if (window.__annMarkAllRead) window.__annMarkAllRead();
 } catch (e) { if (window.__silent) window.__silent(e); }
 if (window.__haptic) window.__haptic();
 };
@@ -1833,19 +1835,51 @@ var _ta = document.getElementById('topAnn'); var _am = document.getElementById('
 
 try {
 
-window.__annReadList = function () { try { return JSON.parse(localStorage.getItem('wnzyq_ann_read') || '[]') || []; } catch (e0) { return []; } };
-window.__annIsRead = function (id) {
-var idS = String(id);
-if (window.__annReadList().indexOf(idS) >= 0) return true;
 
+var ANN_READ_KEY = 'wnzyq_ann_read2';
+window.__annFp = function (a) {
+var src = String((a && a.id) || '') + '|' + String((a && a.title) || '') + '|' + String((a && a.content) || '') + '|' + String((a && a.level) || 2);
+var h = 5381;
+for (var i = 0; i < src.length; i++) { h = ((h * 33) ^ src.charCodeAt(i)) >>> 0; }
+return String((a && a.id) || '') + '@' + h.toString(36);
+};
+window.__annReadList = function () { try { return JSON.parse(localStorage.getItem(ANN_READ_KEY) || '[]') || []; } catch (e0) { return []; } };
+window.__annById = function (id) {
+var idS = String(id), list = DATA.announcements || [];
+for (var i = 0; i < list.length; i++) { if (String(list[i] && list[i].id) === idS) return list[i]; }
+return null;
+};
+window.__annIsRead = function (id) {
+var a = window.__annById(id);
+if (!a) return true;
+if (window.__annReadList().indexOf(window.__annFp(a)) >= 0) return true;
+
+if (window.__annReadList().length) return false;
+var idS = String(id);
+try { if ((JSON.parse(localStorage.getItem('wnzyq_ann_read') || '[]') || []).indexOf(idS) >= 0) return false; } catch (e0) {}
 var seen = parseInt(localStorage.getItem('wnzyq_ann_seen') || '0', 10) || 0;
 var v = parseInt(idS) || 0;
 return seen > 0 && v > 0 && v <= seen;
 };
-window.__annMarkRead = function (id) {
-try { var idS = String(id); var rl = window.__annReadList(); if (rl.indexOf(idS) < 0) { rl.push(idS); localStorage.setItem('wnzyq_ann_read', JSON.stringify(rl)); } } catch (e0) { if (window.__silent) window.__silent(e0); }
+window.__annMarkRead = function (id, silent) {
+try {
+var a = window.__annById(id); if (!a) return;
+var fp = window.__annFp(a); var rl = window.__annReadList();
+if (rl.indexOf(fp) < 0) { rl.push(fp); if (rl.length > 200) rl = rl.slice(-200); localStorage.setItem(ANN_READ_KEY, JSON.stringify(rl)); }
+} catch (e0) { if (window.__silent) window.__silent(e0); }
 
-try { var num = parseInt(idS) || 0; if (num > 0 && typeof track === 'function' && usingRemote) track(num, 'ann_read'); } catch (e1) { if (window.__silent) window.__silent(e1); }
+try { var num = parseInt(id) || 0; if (!silent && num > 0 && typeof track === 'function' && usingRemote) track(num, 'ann_read'); } catch (e1) { if (window.__silent) window.__silent(e1); }
+if (window.__annUnread) window.__annUnread();
+};
+
+window.__annMarkAllRead = function () {
+var list = DATA.announcements || [];
+try {
+var rl = window.__annReadList();
+list.forEach(function (a) { if (!a) return; var fp = window.__annFp(a); if (rl.indexOf(fp) < 0) rl.push(fp); });
+if (rl.length > 200) rl = rl.slice(-200);
+localStorage.setItem(ANN_READ_KEY, JSON.stringify(rl));
+} catch (e0) { if (window.__silent) window.__silent(e0); }
 if (window.__annUnread) window.__annUnread();
 };
 window.__annUnread = function () {

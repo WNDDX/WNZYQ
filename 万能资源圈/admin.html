@@ -176,7 +176,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       <!-- 数据统计 -->
       <section id="panel-stats" style="display:none">
         <!-- v539（老板：每天一封"昨天发生了什么"）——一行摘要，取自统计接口已有的按天趋势，不新增请求 -->
-        <div class="day-sum" id="daySum" hidden></div>
+        <!-- v551 条7（老板：数据统计上面那个昨日…去掉不必要的）：昨日小结条已撤，
+             访问量等口径统一看下方统计卡与「今日概览」 -->
         <div class="stat-cards" id="statCards">
     </div>
         <div class="trend-chart">
@@ -652,8 +653,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     <div class="modal-box modal-wide">
       <button aria-label="关闭" class="modal-close-x" data-close="editMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>      <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
-        <label for="fTitle">标题<em class="req" aria-hidden="true">*</em></label><input id="fTitle" maxlength="100" />
-        <label>分类<em class="req" aria-hidden="true">*</em></label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
+        <label for="fTitle">标题</label><input id="fTitle" maxlength="100" />
+        <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
         <!-- R256：封面多图轮播——横排小图列表 -->
         <label>资源封面图 </label>
         <div class="cover-gallery" id="coverGallery"></div>
@@ -731,7 +732,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           </h4>
           <div id="variantList"></div>
         </div>
-        <label>价格<em class="req" aria-hidden="true">*</em></label>
+        <label>价格</label>
         <input id="fPrice" type="number" step="0.01" min="0" inputmode="decimal" />
         <!-- v385 条11：专属咨询客服——整套 UI 搬运设置信息行（绿键+三角+二维码上传/网络图/跳转链接/保存/收起），未设置默认用平台设置 -->
         <div class="info-item ed-contact" id="edContactItem">

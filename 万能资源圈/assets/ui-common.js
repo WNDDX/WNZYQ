@@ -1114,12 +1114,13 @@ if (navigator.vibrate && window.matchMedia && window.matchMedia('(pointer: coars
 window.__btnBusy = function (btn, text) {
 if (!btn) return;
 
-if (!btn.querySelector('.btn-spin')) {
+if (!btn.__busy) {
+btn.__busy = 1;
 btn.__busyOrig = (btn.querySelector('.btn-lab') || {}).textContent != null ? btn.querySelector('.btn-lab').textContent : null;
 if (btn.__busyTimer) { clearTimeout(btn.__busyTimer); btn.__busyTimer = null; }
 btn.__busyTimer = setTimeout(function () {
 btn.__busyTimer = null;
-if (btn.querySelector('.btn-spin')) window.__btnIdle(btn);
+if (btn.__busy) window.__btnIdle(btn);
 }, 12000);
 }
 
@@ -1134,14 +1135,12 @@ if (n.nodeType === 3 && String(n.nodeValue || '').trim()) { if (!txt) txt = n; e
 if (txt) txt.nodeValue = text;
 else btn.insertBefore(document.createTextNode(text), btn.firstChild);
 }
-if (btn.querySelector('.btn-spin')) return;
-var s = document.createElement('span');
-s.className = 'btn-spin';
-btn.appendChild(s);
+
 };
 
 window.__btnIdle = function (btn) {
 if (!btn) return;
+btn.__busy = 0;
 if (btn.__busyTimer) { clearTimeout(btn.__busyTimer); btn.__busyTimer = null; }
 var sp = btn.querySelector('.btn-spin');
 if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
