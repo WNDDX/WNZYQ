@@ -1125,6 +1125,17 @@ if (btn.__busy) window.__btnIdle(btn);
 }
 
 
+var lab = btn.querySelector('.btn-lab');
+if (lab) { lab.textContent = text; }
+else {
+var txt = null;
+for (var i = 0; i < btn.childNodes.length; i++) {
+var n = btn.childNodes[i];
+if (n.nodeType === 3 && String(n.nodeValue || '').trim()) { if (!txt) txt = n; else n.nodeValue = ''; }
+}
+if (txt) txt.nodeValue = text;
+else btn.insertBefore(document.createTextNode(text), btn.firstChild);
+}
 btn.classList.add('is-busy');
 btn.setAttribute('aria-busy', 'true');
 
