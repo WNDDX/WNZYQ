@@ -1841,6 +1841,21 @@ return true;
 window.uiToast = (function () {
 var q = [], busy = false;
 
+
+var __srLive = null;
+function __srLiveEl() {
+if (__srLive && __srLive.parentNode) return __srLive;
+__srLive = document.createElement('div');
+__srLive.id = 'srLive';
+__srLive.className = 'sr-only';
+__srLive.setAttribute('role', 'status');
+__srLive.setAttribute('aria-live', 'polite');
+__srLive.setAttribute('aria-atomic', 'true');
+(document.body || document.documentElement).appendChild(__srLive);
+return __srLive;
+}
+try { if (document.body) __srLiveEl(); else document.addEventListener('DOMContentLoaded', __srLiveEl); } catch (e) { if (window.__silent) window.__silent(e); }
+window.__srSay = function (msg) { try { __srLiveEl().textContent = String(msg == null ? '' : msg); } catch (e) {} };
 var __undoStack = [];
 function __relayoutUndo() {
 var base = __toastTop() + 8;
