@@ -1515,6 +1515,8 @@ __after7();
 }
 
 function openCatEdit(c) {
+
+try { var _ok = document.getElementById('catOk'); if (_ok) { _ok.disabled = false; _ok.style.opacity = ''; if (window.__btnIdle) window.__btnIdle(_ok); } } catch (e0) {}
 if (catDraftPending && catDraftFor === (c ? c.id : null)) { catDraftPending = false; catModalTitle.textContent = c ? '编辑分类' : '新增分类'; catMask.classList.add('open'); if (window.__modalScroll) __modalScroll.open(catMask, c ? c.id : 'new'); return; }
 state.catEditingId = c ? c.id : null;
 catDraftFor = c ? c.id : null;
@@ -1603,6 +1605,18 @@ catOk.style.opacity = '';
 return;
 }
 var data = { name: name, sort: sort, parent_id: parentId, is_hidden: isHidden };
+
+var _dupCat = (state.categories || []).filter(function (c) {
+return String(c.name || '').trim() === name
+&& Number(c.parent_id || 0) === Number(parentId || 0)
+&& Number(c.id) !== Number(state.catEditingId || 0);
+});
+if (_dupCat.length) {
+toast('已经有叫「' + name + '」的分类了', 'error');
+catSaving = false; catOk.disabled = false; catOk.style.opacity = '';
+if (window.__btnIdle) window.__btnIdle(catOk);
+return;
+}
 var _catOkText = catOk.textContent;
 if (window.__btnBusy) window.__btnBusy(catOk, '确定中');
 var req = state.catEditingId
@@ -1612,6 +1626,9 @@ var req = state.catEditingId
 req.then(function (res) {
 catSaving = false;
 if (res && res.ok) {
+
+catOk.disabled = false; catOk.style.opacity = ''; catOk.textContent = _catOkText;
+if (window.__btnIdle) window.__btnIdle(catOk);
 catDraftPending = false; catMask.classList.remove('open');
 toast('分类已保存', 'success'); if (window.__haptic) window.__haptic();
 clearCache();
