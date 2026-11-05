@@ -651,25 +651,6 @@ __fadeRenderProducts();
 categoryBar.appendChild(tag);
 });
 
-try {
-var _known = {};
-(DATA.categories || []).forEach(function (c) { _known[Number(c.id)] = 1; });
-var _uncatN = (DATA.products || []).filter(function (p) {
-var cid = Number(p.cid) || 0;
-return (p.is_online === true || p.is_online === 1) && !(p.is_hidden === true || p.is_hidden === 1) && (!cid || !_known[cid]);
-}).length;
-if (_uncatN > 0) {
-var utag = document.createElement('div');
-utag.className = 'category-tag' + (currentCat === -1 ? ' active' : '');
-utag.textContent = '未分类';
-utag.addEventListener('click', function () {
-currentCat = -1; currentSubCat = 0; currentPage = 1;
-try { localStorage.removeItem('wnzyq_shop_category'); } catch (e) {}
-renderCategories(); __fadeRenderProducts();
-});
-categoryBar.appendChild(utag);
-}
-} catch (eU) {}
 
 
 var act = categoryBar.querySelector('.category-tag.active');
@@ -782,13 +763,7 @@ var subCatIds = DATA.categories
 return DATA.products.filter(function (p) {
 if (p.is_online !== true && p.is_online !== 1) return false;
 if (p.is_hidden === true || p.is_hidden === 1) return false;
-if (currentCat === -1) {
-var _cidU = Number(p.cid) || 0;
-if (_cidU) {
-var _exist = (DATA.categories || []).some(function (c) { return Number(c.id) === _cidU; });
-if (_exist) return false;
-}
-} else if (currentCat !== 0) {
+if (currentCat !== 0) {
 if (currentSubCat !== 0) {
 if (Number(p.cid) !== currentSubCat) return false;
 } else {

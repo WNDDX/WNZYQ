@@ -569,6 +569,12 @@ updated_at: (state.editingProduct && state.editingProduct.updated_at) || ''
 if (!validateField(fTitle, '请填写资源标题')) return;
 if (data.cid === undefined || data.cid === null) { toast('请选择资源分类', 'error'); document.getElementById('fCidDisplay').style.borderColor = '#ff4444'; document.getElementById('fCidDisplay').style.boxShadow = '0 0 0 3px rgba(255,68,68,0.15)'; return; }
 
+if (!Number(data.cid)) {
+setTimeout(function () {
+try { window.showToast('这条没选分类，只会出现在资源页「全部」里，分类里找不到——建议补一个分类', 'info'); } catch (e) {}
+}, 900);
+}
+
 
 try {
 if (!window.__dupConfirmed) {
