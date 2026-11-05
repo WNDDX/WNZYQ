@@ -19,7 +19,7 @@
 <meta name="robots" content="noindex,nofollow">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#1E88E5">
+<meta name="theme-color" content="#1976D2">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="万能资源圈">
@@ -33,7 +33,7 @@
 <link rel="stylesheet" href="/assets/motion.css"> <!-- v392-1：错误页接入全站动效/深色轻量层（41KB，仍不加载 ui-common 170KB，v336 精简决策保留） -->
 <style>/* v336 条43：错误页精简（原引用 ui-common.js/css 已移除）（不再下载 170KB 公共层）
    v350 条7：本页用了 --card-bg/--avatar-shadow/--shadow-pop/--shadow-card 四个变量但本页从未定义（此前不引公共层）→ 整条声明失效，logo 白描边和悬停阴影一直没生效；现补上 */
-:root{--r-s:4px;--r-m:8px;--r-l:12px;--r-pill:999px;--ls-head:1.2px;--card-bg:#fff;--avatar-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);--shadow-pop:0 4px 16px rgba(0,0,0,0.14);--shadow-card:0 1px 4px rgba(0,0,0,0.07);--text:#222;--text-light:#666;--text-faint:#767676;--bg-light:#f5f7fa;--border:#d0d0d0;--dur-fast:.1s;--dur-mid:.18s;--dur-slow:.3s;--ease-out:cubic-bezier(.25,1,.5,1);--ease-press:cubic-bezier(.4,0,.2,1);--blue1:#1E88E5;--blue2:#64B5F6;--blue3:#BBDEFB;--red-strong:#c62828;--green-strong:#2e7d32;--grad-brand:linear-gradient(180deg,var(--blue1,#1E88E5) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%)}
+:root{--r-s:4px;--r-m:8px;--r-l:12px;--r-pill:999px;--ls-head:1.2px;--card-bg:#fff;--avatar-shadow:0 0 0 2px rgba(255,255,255,0.3),0 4px 14px rgba(30,80,140,0.22);--shadow-pop:0 4px 16px rgba(0,0,0,0.14);--shadow-card:0 1px 4px rgba(0,0,0,0.07);--text:#222;--text-light:#666;--text-faint:#767676;--bg-light:#f5f7fa;--border:#d0d0d0;--dur-fast:.1s;--dur-mid:.18s;--dur-slow:.3s;--ease-out:cubic-bezier(.25,1,.5,1);--ease-press:cubic-bezier(.4,0,.2,1);--blue1:#1976D2;--blue2:#64B5F6;--blue3:#BBDEFB;--red-strong:#c62828;--green-strong:#2e7d32;--grad-brand:linear-gradient(180deg,var(--blue1,#1976D2) 0%,var(--blue2,#64B5F6) 48%,var(--blue3,#BBDEFB) 100%)}
 /* v400 条19：原两个 :root 块合并为一块（变量本就零重叠，非重复定义）；v400 条8：--dur-slow 原 .28s 与公共层 0.30s 不一致，已对齐 */
 body{margin:0;font-family:"Microsoft YaHei",system-ui,sans-serif;background:#f2f7fd;color:#222} /* v404 条1：字体栈四页统一 */
 /* v350 条7：删除此处第一份 .btn（下面 40 行还有一份更全的会整体覆盖它，这份是死代码，改样式容易改错地方） */
@@ -49,7 +49,7 @@ body{background:var(--grad-brand);min-height:100vh;min-height:100dvh;display:fle
 .code{font-size:36px;font-weight:600;letter-spacing:var(--ls-head,1.2px);opacity:0.95;margin:0 0 24px;line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中 */}
 .title{font-size:24px;font-weight:600;margin-bottom:12px;}
 .desc{font-size:14px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1E88E5;border-radius: 10px; text-decoration:none;font-size:16px; /* v293（用户 10-04 02:14）：017错误页按钮圆角999→10px→跟全站普通按钮统一 */font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1976D2;border-radius: 10px; text-decoration:none;font-size:16px; /* v293（用户 10-04 02:14）：017错误页按钮圆角999→10px→跟全站普通按钮统一 */font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow: var(--shadow-pop);} /* R231 条7：放大式并入微亮+浮起 */
 .btn:active{transform:scale(0.94);} /* R231 条7：按下缩下去（全站统一） */
 .err-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;} /* v400 条10：底部跳转键弹性布局+统一间距（原各键内联 margin-left:14px） */

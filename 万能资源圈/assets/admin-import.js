@@ -616,7 +616,7 @@ _shell.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-
 '<h2 class="modal-title">系统体检</h2>' +
 '<div style="font-size: 14px;color:var(--text-light);margin:0 0 12px">正在逐张检查图片、逐条探测外链，最长约半分钟，请稍候…</div>' +
 
-'<div style="margin:0 0 14px"><div style="height:6px;border-radius:99px;background:var(--border,#e6ecf5);overflow:hidden"><i id="chkProgFill" style="display:block;height:100%;width:0;border-radius:99px;background:var(--blue1,#1E88E5);transition:width .25s ease"></i></div>' +
+'<div style="margin:0 0 14px"><div style="height:6px;border-radius:99px;background:var(--border,#e6ecf5);overflow:hidden"><i id="chkProgFill" style="display:block;height:100%;width:0;border-radius:99px;background:var(--blue1,#1976D2);transition:width .25s ease"></i></div>' +
 '<div id="chkProgTxt" style="font-size:12px;color:var(--text-light);margin-top:6px">正在准备检查清单…</div></div>' +
 '<div class="chk-scroll"><div class="chk-skel">' +
 '<div class="sk-line" style="height:14px;width:70%"></div>' +

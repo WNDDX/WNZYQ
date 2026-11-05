@@ -32,7 +32,7 @@ setTimeout(function () { el.classList.remove('wn-shake'); }, 480);
 }
 
 
-var CF_COLORS = ['#F2B84B', '#EF6C6C', '#4CAF93', '#7E57C2', '#1E88E5', '#F57C00'];
+var CF_COLORS = ['#F2B84B', '#EF6C6C', '#4CAF93', '#7E57C2', '#1976D2', '#F57C00'];
 var cfLast = 0;
 function confetti(x, y, n) {
 if (REDUCED) return;
@@ -434,7 +434,7 @@ var mq = window.matchMedia('(prefers-color-scheme: dark)');
 
 function syncMeta() {
 var meta = document.querySelector('meta[name="theme-color"]');
-if (meta) meta.setAttribute('content', document.documentElement.getAttribute('data-theme') === 'dark' ? '#0d1420' : '#1E88E5');
+if (meta) meta.setAttribute('content', document.documentElement.getAttribute('data-theme') === 'dark' ? '#0d1420' : '#1976D2');
 }
 var apply = function () {
 var root = document.documentElement;

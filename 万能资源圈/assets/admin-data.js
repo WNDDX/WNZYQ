@@ -117,7 +117,7 @@ var tr = document.createElement('tr');
 var mk = function (txt) { var td = document.createElement('td'); td.textContent = txt; return td; };
 var tdCode = document.createElement('td');
 if (m.issue) {
-tdCode.style.cssText = 'font-family:monospace;letter-spacing:.5px;color:#1e88e5;cursor:pointer;';
+tdCode.style.cssText = 'font-family:monospace;letter-spacing:.5px;color:#1976D2;cursor:pointer;';
 tdCode.textContent = m.issue.code;
 tdCode.title = '点击复制该资源码';
 tdCode.onclick = function (ev) {
@@ -134,7 +134,7 @@ tr.appendChild(tdCode);
 var tdStatus = document.createElement('td');
 var _spTxt = '', _spColor = '';
 if (m.binding) { _spTxt = '已绑定'; _spColor = 'var(--green-strong)'; }
-else if (m.issue && m.issue.status === '待用') { _spTxt = '剩 ' + m.issue.remaining_days + ' 天'; _spColor = '#1e88e5'; }
+else if (m.issue && m.issue.status === '待用') { _spTxt = '剩 ' + m.issue.remaining_days + ' 天'; _spColor = '#1976D2'; }
 else if (m.issue) { _spTxt = '已过期'; _spColor = '#999'; }
 if (_spTxt) {
 var sp = document.createElement('span');
@@ -270,7 +270,7 @@ ln.setAttribute('stroke', '#c3ccd9'); ln.setAttribute('stroke-width', '1'); ln.s
 g.appendChild(ln);
 var lines = [{ text: fmtPointLabel(d.day), color: '#555', center: true }];
 [
-{ name: '浏览', key: 'views', color: '#1E88E5' },
+{ name: '浏览', key: 'views', color: '#1976D2' },
 { name: '咨询客服', key: 'contacts', color: '#ff9900' },
 { name: '解锁', key: 'resource_unlocks', color: '#4CAF50' }
 ].forEach(function (s) {
@@ -367,7 +367,7 @@ html += '<text x="' + px + '" y="' + (H - 8) + '" text-anchor="middle" font-size
 });
 if (hasPrev) {
 var seriesPrev = [
-{ key: 'views', color: '#1E88E5', name: '浏览' },
+{ key: 'views', color: '#1976D2', name: '浏览' },
 { key: 'contacts', color: '#ff9900', name: '咨询客服' },
 { key: 'resource_unlocks', color: '#4CAF50', name: '资源码解锁' }
 ];
@@ -379,7 +379,7 @@ html += '<path d="' + pPrev + '" fill="none" stroke="' + s.color + '" stroke-wid
 }
 var pathV = '';
 trend.forEach(function (d, i) { var p = pt(i, d.views); pathV += (i === 0 ? 'M' : 'L') + p.x + ',' + p.y + ' '; });
-html += '<path d="' + pathV + '" fill="none" stroke="#1E88E5" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+html += '<path d="' + pathV + '" fill="none" stroke="#1976D2" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
 var pathC = '';
 trend.forEach(function (d, i) { var p = pt(i, d.contacts); pathC += (i === 0 ? 'M' : 'L') + p.x + ',' + p.y + ' '; });
 html += '<path d="' + pathC + '" fill="none" stroke="#ff9900" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
@@ -390,7 +390,7 @@ trend.forEach(function (d, i) {
 var pv = pt(i, d.views);
 var pc = pt(i, d.contacts);
 var pr = pt(i, d.resource_unlocks || 0);
-html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="3.5" fill="#fff" stroke="#1E88E5" stroke-width="2"><title>浏览: ' + d.views + '</title></circle>';
+html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="3.5" fill="#fff" stroke="#1976D2" stroke-width="2"><title>浏览: ' + d.views + '</title></circle>';
 html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="3.5" fill="#fff" stroke="#ff9900" stroke-width="2"><title>咨询客服: ' + d.contacts + '</title></circle>';
 html += '<circle cx="' + pr.x + '" cy="' + pr.y + '" r="3.5" fill="#fff" stroke="#4CAF50" stroke-width="2"><title>资源码解锁: ' + (d.resource_unlocks || 0) + '</title></circle>';
 });

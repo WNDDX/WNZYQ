@@ -645,7 +645,7 @@ if (typeof window.toast === 'function') { window.toast(msg, 'success'); return; 
 } catch (e) { if (window.__silent) window.__silent(e); }
 var t = document.createElement('div');
 t.textContent = msg;
-t.style.cssText = 'position:fixed;top:' + ((typeof window.__toastTop === 'function') ? window.__toastTop() : 80) + 'px;left:50%;transform:translateX(-50%);color:var(--blue1,#1E88E5);background:var(--toast-bg,rgba(255,255,255,0.92));border:1px solid var(--blue2,#64B5F6);border-radius:999px; /* v293（用户 10-04 02:14）：071toast圆角20→999px→跟胶囊形统一 */padding:6px 16px;font-size:12px;line-height:18px;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14));z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;';
+t.style.cssText = 'position:fixed;top:' + ((typeof window.__toastTop === 'function') ? window.__toastTop() : 80) + 'px;left:50%;transform:translateX(-50%);color:var(--blue1,#1976D2);background:var(--toast-bg,rgba(255,255,255,0.92));border:1px solid var(--blue2,#64B5F6);border-radius:999px; /* v293（用户 10-04 02:14）：071toast圆角20→999px→跟胶囊形统一 */padding:6px 16px;font-size:12px;line-height:18px;box-shadow:var(--shadow-pop,0 4px 16px rgba(0,0,0,0.14));z-index:100002;pointer-events:none;opacity:0;transition:opacity .2s ease;max-width:90%;text-align:center;';
 document.body.appendChild(t);
 requestAnimationFrame(function () { t.style.opacity = '1'; });
 setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { try { document.body.removeChild(t); } catch (e) { if (window.__silent) window.__silent(e); } }, 300); }, 2000);
@@ -2721,7 +2721,7 @@ var W = 420, H = 580;
 var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
 var g = cv.getContext('2d');
 g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
-g.fillStyle = '#1E88E5'; g.fillRect(0, 0, W, 84);
+g.fillStyle = '#1976D2'; g.fillRect(0, 0, W, 84);
 g.textAlign = 'center'; g.textBaseline = 'middle';
 g.fillStyle = '#ffffff';
 g.font = '600 24px system-ui, "Microsoft YaHei", sans-serif';
