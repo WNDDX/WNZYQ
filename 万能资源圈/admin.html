@@ -462,7 +462,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 修改密码弹窗 ============ -->
   <div class="modal-mask" id="pwdMask">
-    <div class="modal-box">
+    <div role="dialog" aria-modal="true" class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="pwdMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title">修改密码</h2>
       <div class="form">
@@ -481,7 +481,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 公告设置弹窗 ============ -->
   <div class="modal-mask" id="annMask">
-    <div class="modal-box modal-wide">
+    <div role="dialog" aria-modal="true" class="modal-box modal-wide">
       <button aria-label="关闭" class="modal-close-x" data-close="annMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title">设置公告</h2>
       <div class="form">
@@ -529,7 +529,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 设置信息弹窗（v384：三行=绿/蓝/青键+右缘三角，展开配二维码+链接，各行独立保存/收起） ============ -->
   <div class="modal-mask" id="infoMask">
-    <div class="modal-box">
+    <div role="dialog" aria-modal="true" class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="infoMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title">设置信息</h2>
       <div class="info-items">
@@ -620,7 +620,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
        与导航页/资源页同一份弹窗；本地结构/样式整体删除（admin-media.js __infoPreview 直接调用唯一源） ============ -->
   <!-- ============ 信息中心弹窗（v386：总统计+三角展开细项列表；红点=距上次有新绑定/咨询） ============ -->
   <div class="modal-mask" id="infoCtMask">
-    <div class="modal-box">
+    <div role="dialog" aria-modal="true" class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="infoCtMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title">信息</h2>
       <div class="ct-summary" id="ctSummary">
@@ -650,7 +650,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 资源编辑弹窗 ============ -->
   <div class="modal-mask" id="editMask">
-    <div class="modal-box modal-wide">
+    <div role="dialog" aria-modal="true" class="modal-box modal-wide">
       <button aria-label="关闭" class="modal-close-x" data-close="editMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>      <h2 class="modal-title" id="editTitle">编辑资源</h2>
       <div class="form">
         <label for="fTitle">标题</label><input id="fTitle" maxlength="100" />
@@ -783,7 +783,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 分类编辑弹窗（名称 + 排序 + 级别 + 隐藏） ============ -->
   <div class="modal-mask" id="catMask">
-    <div class="modal-box">
+    <div role="dialog" aria-modal="true" class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="catMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="catModalTitle">新增分类</h2>
       <div class="form">
@@ -812,7 +812,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 批量改分类弹窗（下拉选择） ============ -->
   <div class="modal-mask" id="batchCatMask">
-    <div class="modal-box">
+    <div role="dialog" aria-modal="true" class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="batchCatMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title">批量改分类</h2>
       <div style="font-size: 14px;color:var(--text-light);margin-bottom:12px;">选择目标分类，将选中的资源移动到该分类下</div>
@@ -825,7 +825,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 通用输入弹窗 ============ -->
   <div class="modal-mask" id="inputMask" style="z-index:6002;">
-    <div class="modal-box">
+    <div role="dialog" aria-modal="true" class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="inputMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="inputTitle">请输入</h2>
       <div id="inputTip" style="font-size: 14px;color:var(--text-light);margin-bottom:12px;line-height:1.6;"></div>
@@ -840,7 +840,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ R92 绑定设备管理弹窗（类型行「绑定 N」徽章进入） ============ -->
   <div class="modal-mask" id="bindingsMask">
-    <div class="modal-box">
+    <div role="dialog" aria-modal="true" class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="bindingsMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="bindingsTitle">绑定设备</h2>
       <div style="font-size: 14px;color:var(--text-faint);margin:6px 0 12px;text-align:center;" id="bindingsSummary"></div>
@@ -870,7 +870,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 资源类型编辑弹窗 ============ -->
   <div class="modal-mask" id="variantMask">
-    <div class="modal-box modal-wide">
+    <div role="dialog" aria-modal="true" class="modal-box modal-wide">
       <button aria-label="关闭" class="modal-close-x" data-close="variantMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="variantModalTitle">新增类型</h2>
       <div class="form">
@@ -1011,7 +1011,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
   <!-- ============ 通用确认弹窗 ============ -->
   <div class="modal-mask" id="confirmMask">
-    <div class="modal-box">
+    <div role="dialog" aria-modal="true" class="modal-box">
       <button aria-label="关闭" class="modal-close-x" data-close="confirmMask"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <h2 class="modal-title" id="confirmTitle">确认操作</h2>
       <div id="confirmMsg" style="font-size:14px;color:var(--text-light);line-height:1.7;margin-bottom:20px;text-align:left;"></div>
@@ -1073,7 +1073,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   <!-- v296（用户 10-04）：四页 warn 函数统一从 ui-common.js 加载，admin.html 不再内联定义 -->
   <!-- v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮 -->
 <div class="modal-mask" id="previewMask">
-    <div class="modal-box preview-box" style="padding:0;">
+    <div role="dialog" aria-modal="true" class="modal-box preview-box" style="padding:0;">
       <!-- v518（老板：预览要跟前台资源页一模一样）：这里嵌入前台资源页本身，不再自己画一套预览 DOM -->
       <iframe class="preview-frame" id="previewFrame" title="前台真实预览" src="about:blank"></iframe>
       <button aria-label="关闭" class="modal-close-x" id="previewCloseX"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
@@ -1131,5 +1131,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
       </div>
     </div>
   </div>
+  </div><!-- /mainView（v582 补齐：这个容器从第 73 行开始一直没闭合，靠浏览器在 body 末尾自动容错，
+       结构上一直是错的。显式补上，与自动闭合等价，不改任何渲染。 -->
 </body>
 </html>
