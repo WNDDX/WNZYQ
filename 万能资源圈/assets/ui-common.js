@@ -1164,6 +1164,34 @@ btn.__busyOrig = null;
 }
 btn.disabled = false;
 };
+
+(function () {
+function sweep(mask) {
+if (!mask || !mask.querySelectorAll) return;
+try {
+Array.prototype.forEach.call(mask.querySelectorAll('button'), function (b) {
+if (b && b.__busy) { try { window.__btnIdle(b); } catch (e) {} }
+});
+} catch (e) {}
+}
+function boot() {
+try {
+var mo = new MutationObserver(function (muts) {
+for (var i = 0; i < muts.length; i++) {
+var m = muts[i];
+if (m.type !== 'attributes' || m.attributeName !== 'class') continue;
+var el = m.target;
+if (!el || !el.classList || !el.classList.contains('modal-mask')) continue;
+if (!el.classList.contains('open')) sweep(el);
+}
+});
+mo.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+} catch (e) {}
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+})();
+
 window.__copyOk = function (el) {
 if (!el) return;
 window.__haptic();
