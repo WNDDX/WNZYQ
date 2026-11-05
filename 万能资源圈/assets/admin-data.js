@@ -1226,7 +1226,7 @@ var name = document.createElement('span');
 name.className = 'c-name';
 name.style.fontWeight = isTop ? '700' : '400';
 name.style.fontSize = isTop ? '16px' : '14px';
-name.style.color = isTop ? '#1a1a1a' : '#333';
+name.style.color = isTop ? 'var(--ink-strong, #1a1a1a)' : 'var(--ink-normal, #333)';
 name.textContent = c.name;
 
 if (isTop && c.id !== 0) {
@@ -1240,7 +1240,7 @@ toggleBtn.title = state.catExpanded[c.id] === false ? '展开子分类' : '收�
 } else {
 toggleBtn.textContent = '•';
 toggleBtn.style.cursor = 'default';
-toggleBtn.style.color = '#ccc';
+toggleBtn.style.color = 'var(--ink-disabled, #ccc)';
 }
 toggleBtn.addEventListener('click', function (e) {
 e.stopPropagation();

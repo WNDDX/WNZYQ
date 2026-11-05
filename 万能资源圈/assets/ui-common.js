@@ -561,10 +561,10 @@ pEl.textContent = '';
 var i = s.lastIndexOf(' · ');
 if (i < 0) { pEl.appendChild(document.createTextNode(s)); return; }
 var nEl = document.createElement('span');
-nEl.style.color = '#1565c0';
+nEl.style.color = 'var(--ink-link, #1565c0)';
 nEl.textContent = s.slice(0, i);
 var dEl = document.createElement('span');
-dEl.style.color = '#000';
+dEl.style.color = 'var(--ink-normal, #000)';
 dEl.textContent = ' · ';
 pEl.appendChild(nEl); pEl.appendChild(dEl);
 pEl.appendChild(document.createTextNode(s.slice(i + 3)));

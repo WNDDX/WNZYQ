@@ -1248,9 +1248,9 @@ setupFileDialog(__rte.editor || document.getElementById('fDetail'));
 
 function updateRtePlaceholder() {
 if (!rteEditor.innerHTML || rteEditor.innerHTML === '<br>' || rteEditor.innerHTML === '<p><br></p>') {
-rteEditor.style.color = '#999';
+rteEditor.style.color = 'var(--ink-weak, #999)';
 } else {
-rteEditor.style.color = '#333';
+rteEditor.style.color = 'var(--ink-normal, #333)';
 }
 }
 rteEditor.addEventListener('input', updateRtePlaceholder);
@@ -2159,9 +2159,9 @@ brushBtn.classList.remove('active');
 
 function updateAnnPlaceholder() {
 if (!annEditor.innerHTML || annEditor.innerHTML === '<br>' || annEditor.innerHTML === '<p><br></p>') {
-annEditor.style.color = '#999';
+annEditor.style.color = 'var(--ink-weak, #999)';
 } else {
-annEditor.style.color = '#333';
+annEditor.style.color = 'var(--ink-normal, #333)';
 }
 }
 annEditor.addEventListener('input', updateAnnPlaceholder);
