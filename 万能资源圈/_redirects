@@ -1,0 +1,12 @@
+# v580：带 .html 后缀的地址统一跳到干净 URL
+#
+# 为什么加：实测 https://wnzyq.pages.dev/ 会 302 到 /index（正常），
+# 但直接访问 /index.html、/shop.html 一律 404（Pages 的 html_handling 严格模式）。
+# 后果很实在：谁把带 .html 的链接发出去，对方看到的就是「页面访问异常」。
+# 这里补三条 301，把后缀地址导到能用的那个地址上。
+#
+# error.html 不在此列——它本身就是错误页，保持可直接访问。
+
+/index.html  /index  301
+/shop.html   /shop   301
+/admin.html  /admin  301
