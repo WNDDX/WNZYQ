@@ -413,8 +413,19 @@ export async function onRequestPost(context) {
         /* v547（实测拼多多/闲鱼/微博/1688）：抓到的是「验证页 / 站点首页 / 已下架页」，
            标题长这样：Sina Visitor System、闲鱼 - 闲不住？上闲鱼、阿里巴巴-1688商品无法查看或已下架、
            拼多多。这些还被判成成功，入库就是垃圾。现在一律判失败并说清楚。 */
+        /* v561（36 个平台横评实测）：两类"假成功"必须拦下——
+           ① 链接本身就是站点首页（京东首页 / Shopify 官网 / 有赞官网…），采到的标题是站点名、没有商品；
+           ② 标题是「站点名 + 副标题」的落地页（京东全球版-…、博客园-开发者的网上家园、rednote-…）。
+           判首页用 URL 路径最稳（根路径一定是首页）；判落地页用"站点名开头 + 分隔符"。 */
+        const SITE_RE = '拼多多|闲鱼|淘宝网?|淘寶|天猫|天貓|京东|微博|小红书|rednote|抖音|快手|阿里巴巴|1688|唯品会|苏宁|当当|shopify|博客园|花瓣|站酷|游民星空|小鹅通|有赞|豆瓣|知乎';
+        let _path = '/';
+        try { _path = new URL(one).pathname || '/'; } catch (e0) {}
+        const isSiteRoot = (_path === '/' || _path === '' || /^\/(index|home)\.(html?|php|aspx?)$/i.test(_path));
+        if (isSiteRoot) {
+          return json({ ok: false, home: true, msg: '这个链接是站点首页，不是具体商品/内容页——请点进具体那一件商品（或那篇文章）再复制链接。' }, 200);
+        }
         const junkTitle = /(Sina Visitor System|访客系统|安全验证|滑动验证|人机验证|访问验证|验证码|无法查看|已下架|商品不存在|宝贝不存在|页面不存在|创作你的创作)/i.test(title)
-          || /^(拼多多|闲鱼|淘宝|淘宝网|天猫|京东|微博|小红书|抖音|快手|阿里巴巴|1688)(\s*[-－|｜].*)?$/.test(String(title).trim());
+          || new RegExp('^(' + SITE_RE + ')\s*(?:[-－|｜:：,，]|\s|$)', 'i').test(String(title).trim());
         if (junkTitle) {
           return json({ ok: false, junk: true, msg: '抓到的是验证页或站点首页，不是商品本身——对方把服务器挡在外面了。改用「粘贴整页内容」。' }, 200);
         }
