@@ -1980,16 +1980,21 @@ try { f.focus(); } catch (e0) {}
 }
 return;
 }
-if (item && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End')) {
-var box = item.closest('.cat-picker-panel');
+if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End') {
+var ae = document.activeElement;
+var it2 = ae && ae.closest ? ae.closest('.cp-item') : null;
+if (!it2) return;
+var box = it2.closest('.cat-picker-panel');
 if (!box) return;
-var list = Array.prototype.filter.call(box.querySelectorAll('.cp-item'), function (x) { return x.offsetParent !== null; });
-var i = list.indexOf(item);
+var list = Array.prototype.filter.call(box.querySelectorAll('.cp-item'), function (x) { return x.getClientRects().length > 0; });
+var i = list.indexOf(it2);
 if (i < 0) return;
 e.preventDefault();
 var ni = e.key === 'Home' ? 0 : e.key === 'End' ? list.length - 1 : i + (e.key === 'ArrowDown' ? 1 : -1);
 if (ni < 0 || ni >= list.length) return;
-list[ni].focus();
+var nx = list[ni];
+if (!nx.hasAttribute('tabindex')) nx.setAttribute('tabindex', '0');
+nx.focus();
 }
 });
 })();
