@@ -2799,9 +2799,14 @@ __pidHandled = true;
 var p = (DATA.products || []).find(function (x) { return Number(x.id) === pid; });
 if (p) {
 try { openModal(p); } catch (e) { if (window.__silent) window.__silent(e); }
-} else if (fromRemote) {
+} else {
 
-var __fail = function () { showToast('该资源已隐藏或不存在', 'error'); };
+var __fail = function () { showToast('这条资源的链接已失效（可能已删除或已下架）', 'error'); };
+if (!fromRemote) {
+
+if ((DATA.products || []).length) __fail();
+} else {
+
 __dedupFetch('/api/products?id=' + encodeURIComponent(pid), { cache: 'no-cache', credentials: 'include' })
 .then(function (r) { return r.ok ? r.json() : null; })
 .then(function (res) {
@@ -2811,6 +2816,7 @@ if (!(DATA.products || []).some(function (x) { return Number(x.id) === Number(fu
 try { openModal(full); } catch (e) { if (window.__silent) window.__silent(e); }
 } else __fail();
 }).catch(__fail);
+}
 }
 try {
 var u = new URL(window.location.href);
