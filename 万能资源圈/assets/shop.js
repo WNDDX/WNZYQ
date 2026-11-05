@@ -2832,7 +2832,19 @@ window.__sharePid = null;
 function updateTopbarHeight() {
 var h = document.querySelector('.topbar').offsetHeight;
 document.documentElement.style.setProperty('--topbar-h', h + 'px');
+
+try {
+var cb = document.querySelector('.category-bar');
+if (cb) document.documentElement.style.setProperty('--catbar-h', cb.offsetHeight + 'px');
+} catch (e0) {}
 }
+
+try {
+if (window.MutationObserver) {
+var _cbWatch = document.querySelector('.category-bar');
+if (_cbWatch) new MutationObserver(function () { updateTopbarHeight(); }).observe(_cbWatch, { childList: true, subtree: true });
+}
+} catch (eW) {}
 window.addEventListener('resize', updateTopbarHeight);
 window.addEventListener('resize', function () {
 
