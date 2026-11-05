@@ -1042,8 +1042,8 @@ m.addEventListener('click', function (e) { if (e.target === m || e.target.closes
 m.querySelector('#usAskOk').addEventListener('click', function () {
 var v = m.querySelector('#usAskInput') ? m.querySelector('#usAskInput').value : '';
 if (opts.input && !String(v).trim()) { if (window.showToast) window.showToast('请填写内容', 'error'); return; }
-var btn = this; btn.disabled = true; btn.textContent = '处理中…';
-onOk(String(v).trim(), function () { close(); }, function () { btn.disabled = false; btn.textContent = opts.okText || '确定'; });
+var btn = this; btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn);
+onOk(String(v).trim(), function () { close(); }, function () { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); });
 });
 }
 function usersPwd(u) {
@@ -1355,8 +1355,8 @@ pv.annScope = annMode === 'all' ? 'all' : annIds;
 pv.codeScope = (mask.querySelector('input[name="ufCode"]:checked') || {}).value || 'own';
 var note = (mask.querySelector('#ufNote') || {}).value || '';
 var btn = this;
-btn.disabled = true; btn.textContent = '保存中…';
-var restore = function () { btn.disabled = false; btn.textContent = isEdit ? '确定' : '创建账号'; };
+btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn);
+var restore = function () { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); };
 if (isEdit) {
 usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
 if (window.showToast) window.showToast(window.T('saved'), 'success');
