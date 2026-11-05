@@ -154,6 +154,14 @@ export async function onRequestGet(context) {
     return res;
   }
   const name = path.split('/').pop(); // 取最后一段作为页面名
+  /* v581：带 .html 后缀的地址统一 301 到干净 URL。
+     原来 PAGES 里只有 error.html，于是 /index.html /shop.html /admin.html 全落到 serveError 返回 404——
+     谁把带后缀的链接发出去，对方看到的就是「页面访问异常」。
+     （另外试过用 _redirects 文件，实测被这个 catch-all 抢在前面，不生效，已删掉那个文件。） */
+  const LEGACY_HTML = { 'index.html': '/index', 'shop.html': '/shop', 'admin.html': '/admin' };
+  if (LEGACY_HTML[name] && path === '/' + name) {
+    return Response.redirect(new URL(LEGACY_HTML[name], context.request.url).toString(), 301);
+  }
   if (PAGES[name]) {
     return servePage(context, PAGES[name]);
   }
