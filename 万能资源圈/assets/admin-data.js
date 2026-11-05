@@ -1986,6 +1986,12 @@ window.__openRealPreview = __openRealPreview;
 
 window.addEventListener('message', function (ev) {
 var d = ev.data || {};
+
+if (d.type === 'wnzyq-preview-closed') {
+var _pm = document.getElementById('previewMask');
+if (_pm) { _pm.classList.remove('open'); try { _pm.querySelectorAll('video').forEach(function (v) { v.pause(); }); } catch (e5) {} }
+return;
+}
 if (d.type !== 'wnzyq-preview-ready') return;
 var m = document.getElementById('previewMask');
 if (m && m.classList.contains('open')) {

@@ -2404,6 +2404,17 @@ __pvProduct = p;
 try { openModal(p); } catch (e1) {}
 });
 
+try {
+var _pvMask = document.getElementById('modalMask');
+if (_pvMask && window.MutationObserver) {
+new MutationObserver(function () {
+if (!_pvMask.classList.contains('open')) {
+try { parent.postMessage({ type: 'wnzyq-preview-closed' }, '*'); } catch (e3) {}
+}
+}).observe(_pvMask, { attributes: true, attributeFilter: ['class'] });
+}
+} catch (e4) {}
+
 try { parent.postMessage({ type: 'wnzyq-preview-ready' }, '*'); } catch (e2) {}
 }
 
