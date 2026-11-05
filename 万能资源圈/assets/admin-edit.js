@@ -2058,3 +2058,44 @@ return true;
 
 if (col) col.addEventListener('click', function () { toggle(); });
 })();
+(function () {
+function ensurePickable() {
+document.querySelectorAll('.cat-picker-display').forEach(function (d) {
+if (!d.hasAttribute('tabindex')) {
+d.setAttribute('tabindex', '0');
+d.setAttribute('role', 'button');
+}
+});
+document.querySelectorAll('.cp-item').forEach(function (it) {
+if (!it.hasAttribute('tabindex')) it.setAttribute('tabindex', '0');
+if (!it.hasAttribute('role')) it.setAttribute('role', 'option');
+if (it.classList.contains('selected')) it.setAttribute('aria-selected', 'true');
+});
+}
+document.addEventListener('keydown', function (e) {
+if (e.key === 'Tab') { try { ensurePickable(); } catch (e0) { if (window.__silent) window.__silent(e0); } }
+}, true);
+document.addEventListener('keydown', function (e) {
+var t = e.target;
+if (!t || !t.closest) return;
+var isAct = e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar';
+var disp = t.closest('.cat-picker-display');
+var item = t.closest('.cp-item');
+if (isAct && (disp || item)) {
+e.preventDefault();
+(disp || item).click();
+return;
+}
+if (item && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End')) {
+var box = item.closest('.cat-picker-panel');
+if (!box) return;
+var list = Array.prototype.filter.call(box.querySelectorAll('.cp-item'), function (x) { return x.offsetParent !== null; });
+var i = list.indexOf(item);
+if (i < 0) return;
+e.preventDefault();
+var ni = e.key === 'Home' ? 0 : e.key === 'End' ? list.length - 1 : i + (e.key === 'ArrowDown' ? 1 : -1);
+if (ni < 0 || ni >= list.length) return;
+list[ni].focus();
+}
+});
+})();
