@@ -3129,7 +3129,14 @@ var tags = (getTags() || []).filter(function (t) { return t && t.offsetParent !=
 if (!tags.length) return;
 var i = tags.indexOf(document.activeElement);
 if (i < 0) return;
-if (isAct) { e.preventDefault(); tags[i].click(); return; }
+if (isAct) {
+e.preventDefault();
+tags[i].click();
+
+var act0 = bar.querySelector('.active');
+if (act0 && document.activeElement !== act0) { try { act0.focus(); } catch (e0) { if (window.__silent) window.__silent(e0); } }
+return;
+}
 e.preventDefault();
 var ni = key === 'Home' ? 0 : key === 'End' ? tags.length - 1 : i + (key === 'ArrowRight' ? 1 : -1);
 if (ni < 0 || ni >= tags.length) return;
