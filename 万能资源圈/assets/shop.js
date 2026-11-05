@@ -2272,7 +2272,8 @@ if (sh) mo.observe(sh, { attributes: true, attributeFilter: ['class'] });
 observe();
 if (window.openContactModal) {
 var _orig = window.openContactModal;
-window.openContactModal = function (a, b, c, d) { var r = _orig.call(this, a, b, c, d); observe(); return r; };
+
+window.openContactModal = function () { var r = _orig.apply(this, arguments); observe(); return r; };
 }
 
 })();
