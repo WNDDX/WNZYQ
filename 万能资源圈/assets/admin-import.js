@@ -632,8 +632,14 @@ var imgs = [];
 products.forEach(function (p) {
 var pname = '「' + (p.title || ('资源#' + p.id)) + '」';
 var addImg = function (src, pos, field, idx) { if (src) imgs.push({ src: src, where: pname + pos, pid: p.id, field: field, idx: idx }); };
-addImg(p.img, '封面', 'img', -1);
-(p.coverImages || []).forEach(function (u, i) { addImg(u, '封面组', 'cover_images', i); });
+
+var _cov = p.img || '';
+addImg(_cov, '封面', 'img', -1);
+(p.coverImages || []).forEach(function (u, i) {
+if (!u) return;
+if (u === _cov) return;
+addImg(u, '封面组', 'cover_images', i);
+});
 (p.detailImages || []).forEach(function (u, i) { addImg(u, '详情图', 'detail_images', i); });
 });
 
@@ -1879,7 +1885,7 @@ panel.querySelector('#cronBtn').addEventListener('click', function () { openCron
 mkGroup('系统维护',
 row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1))
 + row('清空测试数据（重新开始测试时用）', btnHtml('resetBtn', '清空数据', ' data-perm="sensitive.super"')));
-var accGrp = mkGroup('账号与安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
+var accGrp = mkGroup('账号安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
 + row('谁改了什么（保留 60 天）', btnHtml('logsBtn', '操作日志', ' data-perm="users"')));
 var grp = accGrp;
 
