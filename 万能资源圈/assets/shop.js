@@ -626,6 +626,15 @@ renderAnnContent();
 mask.classList.add('open');
 setBodyLock(true); } catch (e) { if (window.__silent) window.__silent(e); }
 }
+
+function __announceList(name) {
+setTimeout(function () {
+try {
+var n = document.querySelectorAll('.product-card[data-pid]').length;
+if (window.__srSay) window.__srSay((name || '') + '，' + n + ' 个资源');
+} catch (e0) { if (window.__silent) window.__silent(e0); }
+}, 700);
+}
 function renderCategories() {
 var cats = DATA.categories.slice();
 
@@ -650,6 +659,7 @@ currentSubCat = 0;
 currentPage = 1;
 try { if (c.id) localStorage.setItem('wnzyq_shop_category', String(c.id)); else localStorage.removeItem('wnzyq_shop_category'); } catch (e) { if (window.__silent) window.__silent(e); }
 renderCategories();
+__announceList(c.name);
 __fadeRenderProducts();
 });
 categoryBar.appendChild(tag);
@@ -713,6 +723,7 @@ allTag.addEventListener('click', function () {
 currentSubCat = 0;
 currentPage = 1;
 renderSubCategories();
+__announceList('全部');
 __fadeRenderProducts();
 });
 subBar.appendChild(allTag);
@@ -728,6 +739,7 @@ tag.addEventListener('click', function () {
 currentSubCat = c.id;
 currentPage = 1;
 renderSubCategories();
+__announceList(c.name);
 __fadeRenderProducts();
 });
 subBar.appendChild(tag);
