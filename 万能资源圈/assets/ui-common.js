@@ -580,7 +580,7 @@ mask.innerHTML =
 '<div class="share-box" style="background:var(--card-bg);border-radius:12px;position:relative;padding:24px 20px;width:100%;max-width:var(--modal-w-xs);text-align:center;box-shadow:var(--shadow-modal); /* v293（用户 10-04 02:14）：044JS生成阴影收归5档→0 10px 40px rgba(0,0,0,0.3)改var(--shadow-modal) */ animation:modalIn var(--dur-mid) var(--ease-out); /* v356 条2：12px/24px/统一时长缓动 */">' +
 '<button class="modal-close-x" data-share-x type="button" aria-label="关闭" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:var(--danger-bg,#fdecea);color:var(--red-strong,#c62828);font-size:16px; /* v356 条4：×键纳入全站红系 */cursor:pointer;line-height:1;transition:transform var(--dur-fast) var(--ease-press), opacity var(--dur-fast) var(--ease-press);"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
 '<div data-share-title style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:10px;letter-spacing:1px;padding:0 34px;"></div>' +
-'<div data-share-tip style="font-size:13px;color:var(--gray-mid);margin-bottom:10px;">资源链接已复制</div>' +
+'<div data-share-tip style="font-size: 14px;color:var(--gray-mid);margin-bottom:10px;">资源链接已复制</div>' +
 '<div data-share-url style="font-size:14px;color:var(--blue1);word-break:break-all;overflow-wrap:anywhere;background:var(--gray-bg);border-radius:8px;padding:10px 12px;margin-bottom:18px;line-height:1.5;"></div>' +
 '<button data-share-ok type="button" class="share-ok">确定</button>' +
 '</div>';
@@ -2617,7 +2617,7 @@ else if (mq.addListener) mq.addListener(on);
 window.__adminEmpty = function (title, hint) {
 return '<div style="text-align:center;padding:26px 12px;">'
 + '<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.45;margin-bottom:8px;color:var(--text-faint,#999);display:inline-block;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'
-+ '<div style="font-size:13px;font-weight:600;color:var(--text-light,#666);">' + String(title || '该栏目暂无内容') + '</div>'
++ '<div style="font-size: 14px;font-weight:600;color:var(--text-light,#666);">' + String(title || '该栏目暂无内容') + '</div>'
 + (hint ? '<div style="font-size:12px;color:var(--text-faint,#999);margin-top:4px;">' + String(hint) + '</div>' : '')
 + '</div>';
 };

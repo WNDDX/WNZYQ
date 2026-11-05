@@ -790,17 +790,17 @@ onPage: __adminTurnPage
 } else if (totalPages > 1) {
 var prev = document.createElement('button');
 prev.textContent = '上一页';
-prev.style.cssText = 'padding:6px 14px;border:1px solid var(--border,#ddd);background:var(--card-bg,#fff);color:var(--text,#222);border-radius:8px; /* v293（用户 10-04 02:14）：054圆角统一→6px不在5档阶梯，改8px跟全站最小档统一 */ cursor:pointer;font-size:13px;';
+prev.style.cssText = 'padding:6px 14px;border:1px solid var(--border,#ddd);background:var(--card-bg,#fff);color:var(--text,#222);border-radius:8px; /* v293（用户 10-04 02:14）：054圆角统一→6px不在5档阶梯，改8px跟全站最小档统一 */ cursor:pointer;font-size: 14px;';
 window.__setPagerDisabled(prev, adminPage === 1);
 prev.onclick = function () { if (adminPage > 1) { adminPage--; if (state._backendPaged) loadProducts(); else renderProducts(); } };
 pager.appendChild(prev);
 var info = document.createElement('span');
 info.textContent = adminPage + ' / ' + totalPages + '（共' + (state._backendPaged ? (state.total || list.length) : list.length) + '件）';
-info.style.cssText = 'color:var(--text-light,#666);font-size:13px;';
+info.style.cssText = 'color:var(--text-light,#666);font-size: 14px;';
 pager.appendChild(info);
 var next = document.createElement('button');
 next.textContent = '下一页';
-next.style.cssText = 'padding:6px 14px;border:1px solid var(--border,#ddd);background:var(--card-bg,#fff);color:var(--text,#222);border-radius:8px; /* v293（用户 10-04 02:14）：054圆角统一→6px不在5档阶梯，改8px跟全站最小档统一 */ cursor:pointer;font-size:13px;';
+next.style.cssText = 'padding:6px 14px;border:1px solid var(--border,#ddd);background:var(--card-bg,#fff);color:var(--text,#222);border-radius:8px; /* v293（用户 10-04 02:14）：054圆角统一→6px不在5档阶梯，改8px跟全站最小档统一 */ cursor:pointer;font-size: 14px;';
 window.__setPagerDisabled(next, adminPage === totalPages);
 next.onclick = function () { if (adminPage < totalPages) { adminPage++; if (state._backendPaged) loadProducts(); else renderProducts(); } };
 pager.appendChild(next);

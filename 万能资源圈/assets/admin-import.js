@@ -614,7 +614,7 @@ _shell = document.createElement('div');
 _shell.className = 'modal-mask'; _shell.id = 'sysCheckMask';
 _shell.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
 '<h2 class="modal-title">系统体检</h2>' +
-'<div style="font-size:13px;color:var(--text-light);margin:0 0 12px">正在逐张检查图片、逐条探测外链，最长约半分钟，请稍候…</div>' +
+'<div style="font-size: 14px;color:var(--text-light);margin:0 0 12px">正在逐张检查图片、逐条探测外链，最长约半分钟，请稍候…</div>' +
 
 '<div style="margin:0 0 14px"><div style="height:6px;border-radius:99px;background:var(--border,#e6ecf5);overflow:hidden"><i id="chkProgFill" style="display:block;height:100%;width:0;border-radius:99px;background:var(--blue1,#1E88E5);transition:width .25s ease"></i></div>' +
 '<div id="chkProgTxt" style="font-size:12px;color:var(--text-light);margin-top:6px">正在准备检查清单…</div></div>' +
@@ -841,7 +841,7 @@ function renderOversizeRowState(row, it) {
 var act = row.querySelector('[data-osact]');
 if (!act) return;
 if (it.replaced) {
-act.innerHTML = '<span style="color:#2e7d32;font-size:11px">✓ 已替换</span> <button type="button" class="btn-blue btn-inline-pd" data-osrestore="1">恢复原图</button>';
+act.innerHTML = '<span style="color:#2e7d32;font-size: 12px">✓ 已替换</span> <button type="button" class="btn-blue btn-inline-pd" data-osrestore="1">恢复原图</button>';
 var rb = act.querySelector('[data-osrestore]');
 rb.addEventListener('click', function () { restoreOversize(it, rb); });
 } else {
@@ -1004,7 +1004,7 @@ var mask = document.createElement('div');
 mask.className = 'modal-mask'; mask.id = 'usPwdMask';
 mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="重置密码"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
 '<h2 class="modal-title">重置密码：' + esc(u.username || '') + '</h2><div class="form">' +
-'<label style="display:block;font-size:13px;color:var(--text-light);margin-bottom:4px">新密码（6-50 位）</label>' +
+'<label style="display:block;font-size: 14px;color:var(--text-light);margin-bottom:4px">新密码（6-50 位）</label>' +
 '<input id="usPwdInput" type="text" maxlength="50" class="input w-full-mb10" autocomplete="off">' +
 '<button type="button" class="btn-blue" id="usPwdGo" style="width:100%">确认重置</button></div></div>';
 document.body.appendChild(mask);
@@ -1032,7 +1032,7 @@ m.className = 'modal-mask'; m.id = 'usAskMask';
 m.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" style="max-width:var(--modal-w-xs)">'
 + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
 + '<h2 class="modal-title">' + esc(title) + '</h2>'
-+ '<p style="font-size:13px;color:var(--text-light);margin:0 0 10px;line-height:1.6">' + msg + '</p>'
++ '<p style="font-size: 14px;color:var(--text-light);margin:0 0 10px;line-height:1.6">' + msg + '</p>'
 + (opts.input ? '<input class="input w-full-mb10" id="usAskInput" type="' + (opts.inputType || 'text') + '"  maxlength="' + (opts.maxlength || 50) + '" placeholder="' + esc(opts.placeholder || '') + '">' : '')
 + '<div class="modal-footer"><button class="modal-inner-btn" id="usAskOk">' + esc(opts.okText || '确定') + '</button><button class="modal-close" data-x="1">关闭</button></div></div>';
 document.body.appendChild(m);
@@ -1140,7 +1140,7 @@ var ops = canManage && !isMe ? '<button type="button" class="row-btn" data-ua="e
 + '<button type="button" class="row-btn danger" data-ua="del" data-id="' + u.id + '" data-n="' + (u.childrenCount || 0) + '" data-nsub="' + (u.subtreeCount || 0) + '">删除</button>' : '';
 return '<div class="u-row" data-uid="' + u.id + '" data-pid="' + Number(u.parentId || 0) + '" data-depth="' + it.depth + '">'
 + '<button type="button" class="u-fold' + (hasKids ? '' : ' is-leaf') + (collapsed ? ' collapsed' : '') + '" data-fold="' + u.id + '" aria-label="展开或收起下级"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>'
-+ '<span class="u-name" style="margin-left:' + (it.depth * 18) + 'px"><b>' + esc(u.username) + '</b>' + (isMe ? ' <span style="color:var(--blue1);font-size:11px">（我）</span>' : '')
++ '<span class="u-name" style="margin-left:' + (it.depth * 18) + 'px"><b>' + esc(u.username) + '</b>' + (isMe ? ' <span style="color:var(--blue1);font-size: 12px">（我）</span>' : '')
 + '<span class="u-sub">' + (u.note ? esc(u.note) + ' · ' : '') + (u.status ? '启用' : '已停用') + (hasKids ? ' · 下级 ' + (u.subtreeCount || 0) + ' 个' : ' · 无下级') + ' · 最近活跃 ' + esc(String(u.lastSeen || '—').slice(0, 16)) + '</span></span>'
 + '<span class="u-ops">' + ops + '</span></div>';
 }).join('');
