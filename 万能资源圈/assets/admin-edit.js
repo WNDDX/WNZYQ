@@ -1950,6 +1950,9 @@ if (it.classList.contains('selected')) it.setAttribute('aria-selected', 'true');
 document.addEventListener('keydown', function (e) {
 if (e.key === 'Tab') { try { ensurePickable(); } catch (e0) { if (window.__silent) window.__silent(e0); } }
 }, true);
+function __bootPickable() { try { ensurePickable(); } catch (e0) { if (window.__silent) window.__silent(e0); } }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(__bootPickable, 800); });
+else setTimeout(__bootPickable, 800);
 document.addEventListener('keydown', function (e) {
 var t = e.target;
 if (!t || !t.closest) return;
