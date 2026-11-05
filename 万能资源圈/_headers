@@ -6,6 +6,9 @@
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  # v585：显式关掉用不到的硬件/隐私权限（摄像头/麦克风/定位/支付/USB）。
+  # 本站只用剪贴板写（复制链接），而 clipboard-write 默认对同源放行，所以不必额外声明。
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
 # v349 条10：删除了对 /api/* 的规则——本文件只对"静态文件"生效，
