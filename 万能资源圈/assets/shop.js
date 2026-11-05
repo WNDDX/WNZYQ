@@ -2778,7 +2778,10 @@ var _run = function () { __preloadReal(_cats); };
 if (window.requestIdleCallback) requestIdleCallback(_run, { timeout: 4000 }); else setTimeout(_run, 2500);
 }
 function __preloadReal(_cats) {
-var cats = (DATA.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
+
+var cats = (Array.isArray(_cats) && _cats.length)
+? _cats
+: (DATA.categories || []).filter(function (c) { return !c.parent_id || Number(c.parent_id) === 0; });
 var totalItems = (DATA.products || []).length + cats.length;
 if (totalItems > 500) {
 

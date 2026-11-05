@@ -32,7 +32,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 <link rel="stylesheet" href="/assets/ui-common.css">
   <script>/* v389-1：深色模式纯跟随设备系统（不再读取/存储手动偏好） */(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
 <style>/* v436：首屏画布保底——外层 CSS 到位前 html 画布即正确深浅色，杜绝首次加载闪深色/闪白（深色由头部主题脚本先行置 data-theme 联动） */html{color-scheme:light;background:#f2f7fd}html[data-theme="dark"]{color-scheme:dark;background:#0e1621}</style>
-<link rel="stylesheet" href="/assets/motion.css">
+<!-- v568（性能）：motion.css 只放动效，不参与首屏布局。改成 preload 异步转样式表，
+     不再阻塞首次渲染；noscript 环境和旧内核仍能正常拿到。 -->
+<link rel="preload" href="/assets/motion.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/assets/motion.css"></noscript>
   <link rel="canonical" href="https://wnzyq.pages.dev/shop"> <!-- v338 条212 -->
 <link rel="manifest" href="/manifest.json">
   <link rel="alternate" type="application/rss+xml" title="最新资源订阅" href="/rss">
