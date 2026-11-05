@@ -1886,7 +1886,15 @@ try {
 var tb = document.querySelector('.topbar');
 if (tb) {
 var b = tb.getBoundingClientRect().bottom;
-if (b > 0) return Math.round(b + 12);
+if (b > 0) {
+var cb = document.querySelector('.category-bar');
+if (cb) {
+var cr = cb.getBoundingClientRect();
+
+if (cr.bottom > b && cr.height > 0 && cr.bottom < window.innerHeight * 0.55) b = cr.bottom;
+}
+return Math.round(b + 12);
+}
 }
 } catch (e) { if (window.__silent) window.__silent(e); }
 return 80;
@@ -2748,9 +2756,12 @@ root.style.setProperty('--vvh', Math.round(vv.height) + 'px');
 try { vv.addEventListener('resize', apply); vv.addEventListener('scroll', apply); } catch (e) {}
 apply();
 })();
+
+
 (function () {
 if (window.__errHookOn) return;
 window.__errHookOn = 1;
+
 var API = '/api/error';
 var MAX_PER_PAGE = 8;
 var sent = {};
@@ -2758,6 +2769,8 @@ var sentCount = 0;
 var lastAt = 0;
 var queue = [];
 var flushTimer = null;
+
+
 var NOISE = [
 /ResizeObserver loop/i,
 /^Script error\.?$/i,
@@ -2772,10 +2785,13 @@ var NOISE = [
 function isNoise(msg, src) {
 var s = String(msg || '') + ' ' + String(src || '');
 for (var i = 0; i < NOISE.length; i++) if (NOISE[i].test(s)) return true;
+
 if (/hm\.baidu|cnzz|google-analytics|googletagmanager|gtag|umeng|51\.la|sentry/i.test(String(src || ''))) return true;
 return false;
 }
+
 function fp(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36); }
+
 function push(kind, msg, stack, src) {
 try {
 msg = String(msg || '').slice(0, 300);
@@ -2795,11 +2811,13 @@ page: String(location.pathname + location.search).slice(0, 300)
 scheduleFlush();
 } catch (e) {}
 }
+
 function scheduleFlush() {
 if (flushTimer) return;
 var wait = Math.max(300, 300 - (Date.now() - lastAt));
 flushTimer = setTimeout(function () { flushTimer = null; flush(); }, wait);
 }
+
 function flush() {
 try {
 while (queue.length) {
@@ -2807,6 +2825,7 @@ var one = queue.shift();
 var body = JSON.stringify(one);
 lastAt = Date.now();
 if (navigator.sendBeacon) {
+
 var okBeacon = navigator.sendBeacon(API, new Blob([body], { type: 'text/plain;charset=UTF-8' }));
 if (okBeacon) continue;
 }
@@ -2816,8 +2835,11 @@ fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, bo
 }
 } catch (e) {}
 }
+
+
 window.addEventListener('error', function (ev) {
 try {
+
 if (ev && ev.target && ev.target !== window && ev.target.tagName) {
 var tag = String(ev.target.tagName).toUpperCase();
 if (tag === 'SCRIPT' || tag === 'LINK') {
@@ -2831,6 +2853,8 @@ var src = ev && ev.filename ? ev.filename : '';
 push('js', (src ? msg + ' @ ' + src.split('/').pop() + ':' + (ev.lineno || 0) : msg), stack, src);
 } catch (e) {}
 }, true);
+
+
 window.addEventListener('unhandledrejection', function (ev) {
 try {
 var r = ev && ev.reason;
@@ -2839,8 +2863,12 @@ var stack = r && r.stack ? r.stack : '';
 push('promise', msg, stack, '');
 } catch (e) {}
 });
+
+
 window.__reportError = function (msg, err) {
 try { push('custom', msg, (err && err.stack) || String(err || ''), ''); } catch (e) {}
 };
+
+
 window.addEventListener('pagehide', function () { try { flush(); } catch (e) {} });
 })();
