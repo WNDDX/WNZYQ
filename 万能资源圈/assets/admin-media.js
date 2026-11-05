@@ -2462,7 +2462,7 @@ try {
 var a = JSON.parse(localStorage.getItem('wnzyq_syscheck_alert') || 'null');
 if (!a || !a.n) return '';
 return '<div id="ctSysAlert" style="margin:0 0 10px;padding:9px 11px;background:#fff6e8;border:1px solid #f0c896;border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px">' +
-'<span style="flex:1;color:#8a5a00;line-height:1.6"><b>⚠ 系统体检发现 ' + a.n + ' 个问题</b><br><span style="font-size:11px;color:#a07b2a">可能含失效图片 / 失效外链 / 超大图片 / 环境异常</span></span>' +
+'<span style="flex:1;color:#8a5a00;line-height:1.6"><b>⚠ 系统体检发现 ' + a.n + ' 个问题</b><br><span style="font-size: 12px;color:#a07b2a">可能含失效图片 / 失效外链 / 超大图片 / 环境异常</span></span>' +
 '<button type="button" class="btn-blue btn-inline-pd" id="ctSysAlertGo" style="flex:none">去查看</button></div>';
 } catch (e) { return ''; }
 }
