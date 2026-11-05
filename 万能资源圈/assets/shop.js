@@ -955,6 +955,8 @@ return out + esc(s.slice(i));
 function buildProductCard(p) {
 var card = document.createElement('div');
 card.className = 'product-card'; card.setAttribute('role', 'button'); card.tabIndex = 0;
+
+card.setAttribute('aria-label', String(p.title || '').trim() + '，' + Number(p.price || 0) + ' 元');
 card.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openModal(p); } });
 card.setAttribute('data-pid', p.id || 0);
 var img = document.createElement('img');
