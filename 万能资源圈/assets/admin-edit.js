@@ -1962,10 +1962,13 @@ var wasItem = !!item;
 (disp || item).click();
 if (disp && !wasItem) {
 setTimeout(function () {
+var openPk = document.querySelector('.cat-picker.open, .select-picker.open');
+var box = (openPk && openPk.querySelector('.cat-picker-panel')) || document.querySelector('.cat-picker-panel.open');
+if (!box) {
 var pk = disp.closest ? disp.closest('.cat-picker, .select-picker') : null;
 var pid = pk && pk.dataset.pickerId;
-var box = document.querySelector('.cat-picker-panel.open');
-if (!box && pid) box = document.querySelector('.cat-picker-panel[data-picker-id="' + pid + '"]');
+if (pid) box = document.querySelector('.cat-picker-panel[data-picker-id="' + pid + '"]');
+}
 if (!box) return;
 var items = Array.prototype.filter.call(box.querySelectorAll('.cp-item'), function (x) { return x.offsetParent !== null; });
 if (items.length) { try { items[0].focus(); } catch (e0) {} }
