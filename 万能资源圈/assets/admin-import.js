@@ -1637,6 +1637,123 @@ load();
 
 
 
+
+function openVitals() {
+var old = document.getElementById('vitalsMask'); if (old) old.remove();
+var mask = document.createElement('div');
+mask.className = 'modal-mask'; mask.id = 'vitalsMask';
+mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="性能实测">' +
+'<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
+'<div class="modal-title">性能实测（真实访客）</div>' +
+'<p class="imp-lead">数据来自访客浏览器自己上报，按 <b>p75</b> 看——意思是「75% 的访客比这个数更好」，比平均值更接近真实体感。' +
+'判定线：LCP ≤2500ms 良好、CLS ≤0.1 良好、INP ≤200ms 良好。新接口，要有人访问过才会有数据。</p>' +
+'<div class="logs-range" id="vitalsRange">' +
+'<span class="logs-range-t">时间范围</span>' +
+'<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
+'<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
+'</div>' +
+'<div class="logs-body" id="vitalsBody"><div class="extc-loading">正在读取…</div></div>' +
+'<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+'</div>';
+document.body.appendChild(mask);
+requestAnimationFrame(function () { mask.classList.add('open'); });
+if (window.syncBodyLock) window.syncBodyLock();
+
+var close = function () {
+mask.classList.remove('open');
+setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
+};
+mask.addEventListener('click', function (e) {
+if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close();
+});
+document.addEventListener('keydown', function esc(e) {
+if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+});
+
+var body = mask.querySelector('#vitalsBody');
+var _color = function (k) {
+return k === 'good' ? 'var(--ok-ink,#2e7d32)' : k === 'mid' ? 'var(--warn-ink,#b26a00)' : k === 'bad' ? 'var(--bad-ink,#c62828)' : 'var(--text-light,#666)';
+};
+var _word = function (k) { return k === 'good' ? '良好' : k === 'mid' ? '待改进' : k === 'bad' ? '较差' : ''; };
+function card(label, val, unit, k, rate) {
+var v = (val == null || val === 0) ? '—' : val;
+return '<div style="flex:1 1 132px;background:var(--bg-light,#f5f7fa);border-radius:10px;padding:10px 12px;min-width:0">' +
+'<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:2px">' + label + '</div>' +
+'<div style="font-size:24px;font-weight:700;line-height:1.2">' + v + '<span style="font-size:12px;font-weight:400">' + (v === '—' ? '' : unit) + '</span></div>' +
+'<div style="font-size:12px;margin-top:2px"><span style="color:' + _color(k) + '">' + (_word(k) || '无数据') + '</span>' +
+(rate == null ? '' : '<span style="color:var(--text-light,#666)"> · 达标 ' + rate + '%</span>') + '</div>' +
+'</div>';
+}
+
+function paint(d) {
+if (!d || !d.total) {
+body.innerHTML = '<div class="logs-d-empty">这段时间还没有访客数据。' +
+'接口已就位（/api/vitals），访客离开页面时自动上报；过一两天再看就有数了。</div>';
+return;
+}
+var o = d.overall || {}, g = d.grade || {}, good = d.good || {};
+var html = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px">' +
+card('LCP 最大内容绘制', o.lcp, ' ms', g.lcp, good.lcp) +
+card('CLS 布局偏移', o.cls, '', g.cls, good.cls) +
+card('INP 交互延迟', o.inp, ' ms', g.inp, good.inp) +
+card('TTFB 首字节', o.ttfb, ' ms', g.ttfb, good.ttfb) +
+'</div>';
+
+html += '<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:6px">样本 ' + d.total + ' 次；手机端 vs 桌面端</div>';
+var sp = d.split || {};
+var rows = [['手机（<768px）', sp.mobile], ['桌面', sp.desktop]];
+html += '<table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px">' +
+'<tr style="color:var(--text-light,#666);font-size:12px"><th style="text-align:left;font-weight:400;padding:4px 6px">设备</th>' +
+'<th style="text-align:right;font-weight:400;padding:4px 6px">样本</th><th style="text-align:right;font-weight:400;padding:4px 6px">LCP</th>' +
+'<th style="text-align:right;font-weight:400;padding:4px 6px">CLS</th><th style="text-align:right;font-weight:400;padding:4px 6px">INP</th></tr>';
+rows.forEach(function (r) {
+var m = r[1] || {};
+html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td style="padding:6px">' + r[0] + '</td>' +
+'<td style="text-align:right;padding:6px">' + (m.n || 0) + '</td>' +
+'<td style="text-align:right;padding:6px">' + (m.lcp == null ? '—' : m.lcp) + '</td>' +
+'<td style="text-align:right;padding:6px">' + (m.cls == null ? '—' : m.cls) + '</td>' +
+'<td style="text-align:right;padding:6px">' + (m.inp == null ? '—' : m.inp) + '</td></tr>';
+});
+html += '</table>';
+
+if ((d.pages || []).length) {
+html += '<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:6px">按页面（样本多的排前面）</div>';
+html += '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
+'<tr style="color:var(--text-light,#666);font-size:12px"><th style="text-align:left;font-weight:400;padding:4px 6px">页面</th>' +
+'<th style="text-align:right;font-weight:400;padding:4px 6px">样本</th><th style="text-align:right;font-weight:400;padding:4px 6px">LCP</th>' +
+'<th style="text-align:right;font-weight:400;padding:4px 6px">CLS</th><th style="text-align:right;font-weight:400;padding:4px 6px">TTFB</th></tr>';
+d.pages.forEach(function (p) {
+html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td style="padding:6px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.path + '</td>' +
+'<td style="text-align:right;padding:6px">' + p.n + '</td>' +
+'<td style="text-align:right;padding:6px">' + (p.lcp == null ? '—' : p.lcp) + '</td>' +
+'<td style="text-align:right;padding:6px">' + (p.cls == null ? '—' : p.cls) + '</td>' +
+'<td style="text-align:right;padding:6px">' + (p.ttfb == null ? '—' : p.ttfb) + '</td></tr>';
+});
+html += '</table>';
+}
+body.innerHTML = html;
+}
+
+function load(days) {
+body.innerHTML = '<div class="extc-loading">正在读取…</div>';
+fetch('/api/admin/vitals?days=' + days, { credentials: 'same-origin' })
+.then(function (r) { return r.json(); })
+.then(function (d) { paint(d); })
+.catch(function () { body.innerHTML = '<div class="logs-d-empty">读取失败，请稍后再试。</div>'; });
+}
+
+mask.querySelector('#vitalsRange').addEventListener('click', function (e) {
+var b = e.target.closest && e.target.closest('.logs-rbtn');
+if (!b) return;
+mask.querySelectorAll('#vitalsRange .logs-rbtn').forEach(function (x) { x.classList.remove('on'); });
+b.classList.add('on');
+load(b.getAttribute('data-days'));
+});
+
+load(7);
+}
+
 function openErrs() {
 var old = document.getElementById('errMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -2027,6 +2144,7 @@ panel.querySelector('#cronBtn').addEventListener('click', function () { openCron
 mkGroup('系统维护',
 row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1))
 + row('前端报错（访客页面出错会自动记下来）', btnHtml('errLogBtn', '前端报错', ' data-perm="sensitive.super"'))
++ row('性能实测（真实访客的加载速度 p75）', btnHtml('vitalsBtn', '性能实测', ' data-perm="sensitive.super"'))
 + row('清空测试数据（重新开始测试时用）', btnHtml('resetBtn', '清空数据', ' data-perm="sensitive.super"')));
 var accGrp = mkGroup('账号安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
 + row('谁改了什么（保留 60 天）', btnHtml('logsBtn', '操作日志', ' data-perm="users"')));
@@ -2041,6 +2159,8 @@ panel.querySelector('#resetBtn').addEventListener('click', function () { openRes
 panel.querySelector('#imgCheckBtn').addEventListener('click', function () { try { this.querySelector('.dot-badge') && this.querySelector('.dot-badge').remove(); } catch (eC) {} sysCheck(); });
 var _errBtn = panel.querySelector('#errLogBtn');
 if (_errBtn) _errBtn.addEventListener('click', function () { openErrs(); });
+var _vBtn = panel.querySelector('#vitalsBtn');
+if (_vBtn) _vBtn.addEventListener('click', function () { openVitals(); });
 panel.querySelector('#recycleBtn').addEventListener('click', openRecycle);
 panel.querySelector('#usersBtn').addEventListener('click', openUsers);
 var _lgBtn = panel.querySelector('#logsBtn');
