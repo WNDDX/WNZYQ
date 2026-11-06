@@ -73,7 +73,11 @@ export async function onRequestGet(context) {
       'SELECT path, lcp, cls, inp, fcp, ttfb, vw FROM web_vitals WHERE ' + RANGE + ' ORDER BY id DESC LIMIT ' + MAX_ROWS
     ).all();
 
-    const list = (rows && rows.results) || [];
+    const all = (rows && rows.results) || [];
+    /* 自检脚本会用 /__p75_probe 这类路径灌已知值来验 p75 算法。
+       这些样本必须从**真实统计**里排除，否则会把 p75 拉高（10 条探针能占 18% 的权重），
+       老板看到的就是假数字。但 pages 里保留它们（带标记），方便排查"测试到底写没写进去"。 */
+    const list = all.filter(x => !/^\/__/.test(x.path || ''));
     const total = list.length;
 
     const overall = {
@@ -92,9 +96,9 @@ export async function onRequestGet(context) {
       return Math.round((ok / vals.length) * 100);
     };
 
-    /* 按页面分组：哪个页面最慢，一眼看出来 */
+    /* 按页面分组：哪个页面最慢，一眼看出来（含探针，标记出来） */
     const byPath = {};
-    list.forEach(x => {
+    all.forEach(x => {
       const k = x.path || '/';
       (byPath[k] = byPath[k] || []).push(x);
     });
@@ -102,6 +106,7 @@ export async function onRequestGet(context) {
       const arr = byPath[k];
       return {
         path: k,
+        test: /^\/__/.test(k),
         n: arr.length,
         lcp: r1(p75(arr.map(x => x.lcp))),
         cls: r1(p75(arr.map(x => x.cls))),
