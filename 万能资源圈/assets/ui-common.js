@@ -2887,3 +2887,51 @@ try { push('custom', msg, (err && err.stack) || String(err || ''), ''); } catch 
 
 window.addEventListener('pagehide', function () { try { flush(); } catch (e) {} });
 })();
+(function () {
+try {
+if (location.protocol !== 'https:' && location.protocol !== 'http:') return;
+if (/^(localhost|127\.0\.0\.1|file)$/.test(location.hostname)) return;
+var v = { path: location.pathname, lcp: 0, cls: 0, inp: 0, fcp: 0, ttfb: 0, vw: window.innerWidth || 0, conn: '' };
+try { v.conn = (navigator.connection && navigator.connection.effectiveType) || ''; } catch (e) {}
+try {
+var nav = performance.getEntriesByType('navigation')[0];
+if (nav) v.ttfb = Math.round(nav.responseStart || 0);
+var fcp = performance.getEntriesByName('first-contentful-paint')[0];
+if (fcp) v.fcp = Math.round(fcp.startTime);
+} catch (e) {}
+try {
+new PerformanceObserver(function (l) {
+var es = l.getEntries();
+if (es.length) v.lcp = Math.round(es[es.length - 1].startTime);
+}).observe({ type: 'largest-contentful-paint', buffered: true });
+} catch (e) {}
+try {
+new PerformanceObserver(function (l) {
+l.getEntries().forEach(function (e) { if (!e.hadRecentInput) v.cls += e.value; });
+}).observe({ type: 'layout-shift', buffered: true });
+} catch (e) {}
+try {
+new PerformanceObserver(function (l) {
+l.getEntries().forEach(function (e) { if (e.duration > v.inp) v.inp = Math.round(e.duration); });
+}).observe({ type: 'event', buffered: true, durationThreshold: 40 });
+} catch (e) {}
+var sent = false;
+function send() {
+if (sent) return;
+sent = true;
+try {
+v.cls = Math.round(v.cls * 1000) / 1000;
+if (!v.lcp && !v.cls && !v.inp && !v.fcp && !v.ttfb) return;
+var body = JSON.stringify(v);
+if (navigator.sendBeacon) {
+if (navigator.sendBeacon('/api/vitals', new Blob([body], { type: 'text/plain;charset=UTF-8' }))) return;
+}
+fetch('/api/vitals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+} catch (e) {}
+}
+document.addEventListener('visibilitychange', function () {
+if (document.visibilityState === 'hidden') send();
+});
+window.addEventListener('pagehide', send);
+} catch (e) {}
+})();
