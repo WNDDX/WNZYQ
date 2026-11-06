@@ -1,0 +1,19 @@
+# 干净网址直出静态文件（v585）
+#
+# 背景：/index 和 /error 原来没命中静态文件，落到了 functions/[[path]].js 这个兜底函数里，
+# 每次请求都要跑一次 Function。实测 TTFB：
+#   /index  1.86s   /error  1.63s     ← 走函数
+#   /shop   0.77s   /admin  0.82s     ← 命中静态
+#   /index.html 0.69s                 ← 静态直出的真实水平
+# 也就是说首页白等 1.2 秒。原因不是"函数写得慢"，是跨境往返 + 函数冷启动；
+# 能直出就别绕一圈。下面四条把它们都指向静态文件（URL 不变，200 重写不跳转）。
+#
+# 安全头不会丢：函数里内置的 CSP / X-Frame-Options / nosniff / Referrer-Policy / HSTS，
+# _headers 对静态文件同样下发（favicon 等静态资源已验证带齐）。
+#
+# / 仍然走函数做 302 到 /index（保持既有 URL 规范），一次小响应，代价可忽略。
+
+/index    /index.html   200
+/shop     /shop.html    200
+/admin    /admin.html   200
+/error    /error.html   200
