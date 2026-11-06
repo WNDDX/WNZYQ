@@ -50,15 +50,27 @@ async function serveError(context) {
   );
 }
 
-/** 站点根：302 重定向到导航页（必须用重定向而非 rewrite，否则 URL 停留在根级，页面内相对图片路径会全部加载失败） */
+/** 站点根：直接返回导航页内容（v585 改）
+ *
+ *  旧实现是 302 跳到 /index，旧注释写的理由是「必须用重定向而非 rewrite，否则 URL 停在根级，
+ *  页面内相对图片路径会全部加载失败」。这个顾虑现在已经不成立，三点核实：
+ *    ① index.html 的 9 个资源引用**全是绝对路径**（/assets/...），相对路径 0 个；
+ *    ② canonical 写的就是 https://wnzyq.pages.dev/（根），直出 200 与它一致 ——
+ *       反倒是原来「/ 跳 /index」和 canonical 自相矛盾（声明规范地址是 /，却把 / 跳走）；
+ *    ③ 没有任何脚本依赖「pathname 必须是 /index」：唯一用到 pathname 的是分享链接拼接、
+ *       /shop 判定、报错与性能上报的页面路径，都不受影响。
+ *
+ *  收益：首页原来要发两次串行请求（/ 的 302 约 1.7s，再请求 /index 约 1.7s，合计 3.4s 才见到内容）；
+ *  现在一次请求直接出内容。
+ *
+ *  回滚方式：把函数体换回
+ *    return new Response(null, { status: 302, headers: { location: '/index', ...SECURITY_HEADERS } });
+ */
 async function serveHome(context) {
   try {
-    const candidates = ['/index']; /* v336 条21 */
-    for (const u of candidates) {
-      const res = await context.env.ASSETS.fetch(new URL(u + '.html', context.request.url));
-      if (res && res.ok) {
-        return new Response(null, { status: 302, headers: { location: u, ...SECURITY_HEADERS } });
-      }
+    const res = await context.env.ASSETS.fetch(new URL('/index.html', context.request.url));
+    if (res && res.ok) {
+      return new Response(res.body, { status: 200, headers: HTML_HEADERS });
     }
   } catch (e) {
     /* 忽略，走错误页兜底 */
