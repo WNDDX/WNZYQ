@@ -184,5 +184,12 @@ export async function onRequestPost(context) { return serveError(context); }
 export async function onRequestPut(context) { return serveError(context); }
 export async function onRequestPatch(context) { return serveError(context); }
 export async function onRequestDelete(context) { return serveError(context); }
-export async function onRequestHead(context) { return serveError(context); }
+/* v585：HEAD 以前直接走 serveError（返回 404 错误页），导致监控探活、部分爬虫/预加载的 HEAD 预检
+   把整站判成不可用（实测 `HEAD /` 拿 404、`GET /` 拿 200，同一个地址两种结论）。
+   HEAD 的语义本来就是「要 GET 的状态码和响应头，但不要 body」，所以它应该和 GET 走同一条路，
+   只是最后把 body 丢掉。 */
+export async function onRequestHead(context) {
+  const res = await onRequestGet(context);
+  return new Response(null, { status: res.status, headers: res.headers });
+}
 export async function onRequestOptions(context) { return new Response(null, { status: 204 }); }
