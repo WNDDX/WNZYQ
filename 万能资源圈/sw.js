@@ -11,7 +11,7 @@
  */
 /* 变更说明统一维护在 HANDOVER.md「修订记录」；本文件只保留运行所需代码与最新一条摘要。
    v538：设置键统一蓝色、图标全覆盖、空态口径、分类搜索、回收站批量、深色修复。 */
-const CACHE_NAME = 'wnzyq-v586';
+const CACHE_NAME = 'wnzyq-v587';
 
 /* 预缓存只留访客必需——后台页面/样式/二维码库改为运行时按需入缓存（普通访客省约 700KB）；
    三个图标（192/512/苹果）必须预缓存，否则「装到桌面」时图标会裂。 */
@@ -36,35 +36,21 @@ const STATIC_ASSETS = [
   /* v383：kefu/qun/gzh.png 三张二维码移出预缓存并删除文件——二维码改走后台「设置信息」（/img/ 动态地址，访客端按需加载） */
 ];
 
-// 安装：逐项缓存静态资源（单项失败不影响整体）
+// 安装：**不做批量预缓存**（v585 定稿）
 self.addEventListener('install', function (event) {
-  /* v585：预缓存必须「推迟」，不能在 install 里立刻做。
-     实测（同一台机器、同一份页面）：
-       走 SW 时 FCP 9836ms / DCL 13287ms；绕开 SW 只要 FCP 1504ms / DCL 2176ms —— 慢 6.5 倍。
-     原因不是文件大（qrcode.min.js 才 8KB 却耗 10 秒），而是两条叠加：
-       ① install 里 Promise.all 一次性 cache.add 几十个文件，把 Cache API 的写锁占满；
-       ② 紧接着 skipWaiting + clients.claim 让新 SW 立刻接管**当前这个还在加载的页面**，
-          于是页面的每个资源请求都排在预缓存后面等锁 → 首屏被拖到 9 秒以上。
-     改成延迟 6 秒再预热：页面早就加载完了，用户多停留几秒离线能力照样有。
-     真要极致，可以把 STATIC_ASSETS 拆成两批，但这版先用延迟，收益已经足够。 */
-  event.waitUntil(
-    new Promise(function (res) { setTimeout(res, 6000); })
-      .then(function () { return caches.open(CACHE_NAME); })
-      .then(function (cache) {
-        return Promise.all(STATIC_ASSETS.map(function (url) {
-          return cache.add(url).catch(function () {});
-        }));
-      })
-      .catch(function () {})
-  );
-  /* v585：这里**不能** skipWaiting()。
-     它会让新装的 SW 立刻接管「当前这个还在加载的页面」，页面剩下的每个请求都要先过 SW 的
-     caches.match，而此刻缓存正在被写入 → 请求排队。实测同一页面：走 SW 的 FCP 9836ms，
-     绕开 SW 只要 1504ms，差 6.5 倍。
-     不调用 skipWaiting：本次访问完全不受 SW 影响（页面关掉后它自然激活），
-     下次访问才由它接管 —— 那时缓存已就绪，二次访问才是真的快。
-     代价是「改了 sw.js 要等下次访问才生效」，这个代价远小于首访慢 6 秒。 */
-  // self.skipWaiting();
+  /* 这里原本是 Promise.all(STATIC_ASSETS.map(url => cache.add(url))) —— 一次性下几十个文件。
+     实测它把首屏拖垮了，而且换几种写法都救不回来：
+       ① 立刻预缓存 + skipWaiting：新 SW 接管正在加载的页面，请求全排在缓存写入后面
+          → 同一页面 FCP 9836ms，绕开 SW 只有 1504ms（差 6.5 倍）；
+       ② 延迟 6 秒再预缓存：刚好撞上页面加载末期，qrcode.min.js（才 8KB）排队 8 秒，DCL 反而到 14 秒；
+       ③ 不 skipWaiting + 延迟预缓存：仍受 ①② 的残余影响。
+     结论：**install 阶段一个字节都不下**。缓存完全交给 fetch handler 按需填充
+     （它本来就是「缓存优先 + 后台静默更新」），用户浏览到哪就缓存到哪：
+       · 首访：SW 完全不参与 → 快
+       · 二访：访问过的资源都在缓存里 → 快
+       · 离线：访问过的页面能用，没访问过的打不开
+     代价只有最后一条，换来的是首屏不再慢 6 秒 —— 这个交换明显划算。
+     以后要恢复完整离线能力，别放回 install，改成页面空闲时（requestIdleCallback）再分批预热。 */
 });
 
 // 激活：清理全部旧版本缓存，立即接管页面
