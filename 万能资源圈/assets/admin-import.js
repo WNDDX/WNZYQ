@@ -1724,7 +1724,8 @@ html += '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
 '<th style="text-align:right;font-weight:400;padding:4px 6px">样本</th><th style="text-align:right;font-weight:400;padding:4px 6px">LCP</th>' +
 '<th style="text-align:right;font-weight:400;padding:4px 6px">CLS</th><th style="text-align:right;font-weight:400;padding:4px 6px">TTFB</th></tr>';
 d.pages.forEach(function (p) {
-html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td style="padding:6px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.path + '</td>' +
+html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td style="padding:6px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.path +
+(p.test ? ' <span style="color:var(--text-light,#666);font-size:12px">测试</span>' : '') + '</td>' +
 '<td style="text-align:right;padding:6px">' + p.n + '</td>' +
 '<td style="text-align:right;padding:6px">' + (p.lcp == null ? '—' : p.lcp) + '</td>' +
 '<td style="text-align:right;padding:6px">' + (p.cls == null ? '—' : p.cls) + '</td>' +
