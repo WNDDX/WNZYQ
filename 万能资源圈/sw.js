@@ -11,7 +11,7 @@
  */
 /* 变更说明统一维护在 HANDOVER.md「修订记录」；本文件只保留运行所需代码与最新一条摘要。
    v538：设置键统一蓝色、图标全覆盖、空态口径、分类搜索、回收站批量、深色修复。 */
-const CACHE_NAME = 'wnzyq-v583';
+const CACHE_NAME = 'wnzyq-v585';
 
 /* 预缓存只留访客必需——后台页面/样式/二维码库改为运行时按需入缓存（普通访客省约 700KB）；
    三个图标（192/512/苹果）必须预缓存，否则「装到桌面」时图标会裂。 */
@@ -38,12 +38,24 @@ const STATIC_ASSETS = [
 
 // 安装：逐项缓存静态资源（单项失败不影响整体）
 self.addEventListener('install', function (event) {
+  /* v585：预缓存必须「推迟」，不能在 install 里立刻做。
+     实测（同一台机器、同一份页面）：
+       走 SW 时 FCP 9836ms / DCL 13287ms；绕开 SW 只要 FCP 1504ms / DCL 2176ms —— 慢 6.5 倍。
+     原因不是文件大（qrcode.min.js 才 8KB 却耗 10 秒），而是两条叠加：
+       ① install 里 Promise.all 一次性 cache.add 几十个文件，把 Cache API 的写锁占满；
+       ② 紧接着 skipWaiting + clients.claim 让新 SW 立刻接管**当前这个还在加载的页面**，
+          于是页面的每个资源请求都排在预缓存后面等锁 → 首屏被拖到 9 秒以上。
+     改成延迟 6 秒再预热：页面早就加载完了，用户多停留几秒离线能力照样有。
+     真要极致，可以把 STATIC_ASSETS 拆成两批，但这版先用延迟，收益已经足够。 */
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function (cache) {
-      return Promise.all(STATIC_ASSETS.map(function (url) {
-        return cache.add(url).catch(function () {});
-      }));
-    })
+    new Promise(function (res) { setTimeout(res, 6000); })
+      .then(function () { return caches.open(CACHE_NAME); })
+      .then(function (cache) {
+        return Promise.all(STATIC_ASSETS.map(function (url) {
+          return cache.add(url).catch(function () {});
+        }));
+      })
+      .catch(function () {})
   );
   self.skipWaiting();
 });
