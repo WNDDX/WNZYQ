@@ -1403,7 +1403,15 @@ if (row.querySelector('.cat-fold') || row.querySelector('.cat-check') === null) 
 var fold = document.createElement('button');
 fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '展开/收起操作'; fold.setAttribute('aria-label', '展开/收起操作');
 fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
-fold.addEventListener('click', function (e) { e.stopPropagation(); row.classList.toggle('cat-open'); });
+fold.addEventListener('click', function (e) {
+e.stopPropagation();
+var _open = row.classList.toggle('cat-open');
+
+var _cm = row.querySelector('.c-meta');
+if (_cm && getComputedStyle(_cm).display !== 'contents') {
+_cm.style.maxHeight = _open ? (_cm.scrollHeight + 'px') : '0px';
+}
+});
 row.appendChild(fold);
 });
 }

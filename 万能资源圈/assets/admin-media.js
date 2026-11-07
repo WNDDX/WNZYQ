@@ -1674,7 +1674,13 @@ item.appendChild(handle); item.appendChild(_agMain); item.appendChild(_agAct);
 var fold = document.createElement('button');
 fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '展开/收起操作'; fold.setAttribute('aria-label', '展开/收起操作');
 fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
-fold.addEventListener('click', function (e) { e.stopPropagation(); item.classList.toggle('cat-open'); });
+fold.addEventListener('click', function (e) {
+e.stopPropagation();
+var _op = item.classList.toggle('cat-open');
+
+var _ag = item.querySelector('.ann-act-group');
+if (_ag) _ag.style.maxHeight = _op ? (_ag.scrollHeight + 'px') : '0px';
+});
 item.appendChild(fold);
 annListEl.appendChild(item);
 });
