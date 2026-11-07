@@ -229,6 +229,11 @@
                子分类一展开内容变高，这个高度没跟着变，超出的部分直接被面板 overflow 裁掉——
                看起来就是「点了展开没反应」。展开后必须重算一次面板高度。 */
             try { positionCatPanel(pickerEl); } catch (ePC) { if (window.__silent) window.__silent(ePC); }
+            /* 上面那次是在 max-height 过渡刚开始时算的，scrollHeight 量到的还是过渡中的中间值（实测 260 vs 真实 302），
+               面板高度就按旧的算小了、最后一个一级分类被挤出可视区。过渡结束后再量一次。 */
+            setTimeout(function () {
+              try { if (pickerEl.classList.contains('open')) positionCatPanel(pickerEl); } catch (ePC2) { if (window.__silent) window.__silent(ePC2); }
+            }, 320);
           });
           row.appendChild(chev);
         }
