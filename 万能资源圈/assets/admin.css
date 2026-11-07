@@ -2289,7 +2289,7 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .info-item.open .info-fold .toggle-arrow { transform: rotate(0deg); }
 /* 展开面板：统一 max-height 过渡 */
 .info-panel { overflow: hidden; max-height: 0; opacity: 0; visibility: hidden; /* v385：收起态不可命中（A6b 死键扫描：max-height:0 裁剪下子键仍占布局 rect 被 elementFromPoint 误判） */ transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), margin var(--dur-mid) var(--ease-out), visibility 0s var(--dur-mid); margin-top: 0; }
-.info-item.open .info-panel { max-height: 560px; opacity: 1; visibility: visible; transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), margin var(--dur-mid) var(--ease-out), visibility 0s; }
+.info-item.open .info-panel { max-height: 1200px; opacity: 1; visibility: visible; transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out), margin var(--dur-mid) var(--ease-out), visibility 0s; } /* v587：原 560px 是 CSS 兜底，细项动态一页 20 条 × 42px ≈ 840px 会被它裁；JS 会设真实高度覆盖它，这里把兜底也放大到同量级 */
 /* 二维码区：132px 方框；有图=图+右上角×；无图=复用 .cg-add（只有＋号） */
 .info-qr-box { position: relative; width: 132px; height: 132px; margin: 12px auto 0; /* v389-8：与上方键行保持间距 */ border-radius: var(--r-m); overflow: hidden; background: var(--bg-light,#f5f7fa); }
 /* v385 条11：编辑资源弹窗内复用 info 行结构——块级独占一行（表单是纵向流，无需 grid 修正），宽度吃满 */
