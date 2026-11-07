@@ -192,6 +192,10 @@ ev.stopPropagation();
 var childBox = row.nextElementSibling;
 var expanded = childBox.classList.toggle('show');
 row.classList.toggle('cp-expanded', expanded);
+
+childBox.style.maxHeight = expanded ? (childBox.scrollHeight + 'px') : '0px';
+
+try { positionCatPanel(pickerEl); } catch (ePC) { if (window.__silent) window.__silent(ePC); }
 });
 row.appendChild(chev);
 }

@@ -2571,6 +2571,12 @@ return '<div class="ct-row wn-tl' + (r.unread ? ' ct-unread' : '') + '"' + _d + 
 }).join('');
 list.innerHTML = _alert + html;
 bindSysAlertGo();
+
+try {
+var _pnl = document.getElementById('ctDetailPanel');
+var _itm = document.getElementById('ctDetailItem');
+if (_pnl && _itm && _itm.classList.contains('open')) _pnl.style.maxHeight = (_pnl.scrollHeight + 24) + 'px';
+} catch (eH) { if (window.__silent) window.__silent(eH); }
 }
 function fetchInfo(cb, who) {
 var last = '';
@@ -2622,6 +2628,9 @@ var item = document.getElementById('ctDetailItem');
 if (fold && item) fold.addEventListener('click', function () {
 var willOpen = !item.classList.contains('open');
 item.classList.toggle('open', willOpen);
+
+var panel = item.querySelector('.info-panel');
+if (panel) panel.style.maxHeight = willOpen ? (panel.scrollHeight + 24 + 'px') : '0px';
 fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 if (window.__haptic) window.__haptic();
 });

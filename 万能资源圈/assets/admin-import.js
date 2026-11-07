@@ -1847,11 +1847,14 @@ return '<div class="err-row">' +
 
 var total = Number(d.total) || 0, size = Number(d.size) || 20;
 var pages = Math.max(1, Math.ceil(total / size));
-mask.querySelector('#errPager').innerHTML = pages > 1
-? '<button type="button" class="row-btn" data-pg="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + '>上一页</button>' +
-'<span class="uni-pager-info">' + page + ' / ' + pages + '　共 ' + total + ' 种</span>' +
-'<button type="button" class="row-btn" data-pg="' + (page + 1) + '"' + (page >= pages ? ' disabled' : '') + '>下一页</button>'
-: '';
+
+var _errPager = mask.querySelector('#errPager');
+if (window.buildUniPager) {
+window.buildUniPager(_errPager, {
+page: page, totalPages: pages, total: total, unit: '种',
+onPage: function (p) { page = p; load(); }
+});
+} else { _errPager.innerHTML = ''; }
 }
 
 function load() {
