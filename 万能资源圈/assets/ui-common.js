@@ -2289,6 +2289,9 @@ window.__btnFit = function () {
       if (!avail) {
         if (!grp.__btnFitRO && window.ResizeObserver) {
           grp.__btnFitRO = new ResizeObserver(function () {
+            var wNow = grp.clientWidth;
+            if (grp.__roW === wNow) return; /* v587：宽度没变不重算（内容变化不该引起图标切换） */
+            grp.__roW = wNow;
             clearTimeout(window.__btnFitTimer);
             window.__btnFitTimer = setTimeout(function () { window.__btnFit(); }, 120);
           });
@@ -2296,12 +2299,21 @@ window.__btnFit = function () {
         }
         continue;
       }
-      var btns = Array.prototype.slice.call(grp.querySelectorAll('.btn-fit[data-pri]'));
+      /* v587 用户 11-07：图标只该由「屏幕/容器放不下」决定，不能由「点了一下」决定。
+         原来忙碌态（文字变「保存中…」）会让 scrollWidth 变长，于是这个按钮自己、有时连带旁边按钮
+         当场被收成图标，刷新后文字又回来——用户看到的就是「一点就变图标，刷新又变回文字」。
+         忙碌态按钮直接不参与本轮判定（所在状态原样保留），等它闲下来再按真实布局算。 */
+      var btns = Array.prototype.slice.call(grp.querySelectorAll('.btn-fit[data-pri]')).filter(function (b2) {
+        return !b2.__busy && !b2.classList.contains('is-busy');
+      });
       if (!btns.length) continue;
       /* v382 条13：可见组也挂 RO（幂等）——容器宽度因视图切换/侧栏/软键盘等变化时自觉重跑，
          与 window.resize 互为补充（RO 防抖复用同一计时器） */
       if (!grp.__btnFitRO && window.ResizeObserver) {
         grp.__btnFitRO = new ResizeObserver(function () {
+          var wNow = grp.clientWidth;
+          if (grp.__roW === wNow) return; /* v587：同上一处——容器宽度没变就不重算 */
+          grp.__roW = wNow;
           clearTimeout(window.__btnFitTimer);
           window.__btnFitTimer = setTimeout(function () { window.__btnFit(); }, 120);
         });

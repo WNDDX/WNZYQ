@@ -803,6 +803,18 @@
         }
         // v372b：展开/收起状态恢复后重定位指示线（旧 updateCatIndicator 撤，cat-line 接管）
         if (window.__fsCatLineUpdate) window.__fsCatLineUpdate(false);
+        /* v587 用户 11-07：展开下拉里选完分类，选中的那个不一定会跳到看得见的地方。
+           根因是上面那次 scrollIntoView 发生在「状态恢复之前」：
+           此时栏可能还挂着 expanded（flex-wrap:wrap、overflow:visible），没有横向可滚区，inline:'center' 什么也没做。
+           所以必须在状态恢复之后再补一次，且按当前形态选滚动方向：
+           收起态是单行横滑 → 横向居中；展开态是多行换行 → 只需纵向把它带进视口（横向不用动）。 */
+        try {
+          var actNow = categoryBar.querySelector('.category-tag.active');
+          if (actNow) {
+            var isExp = categoryBar.classList.contains('expanded');
+            actNow.scrollIntoView({ block: 'nearest', inline: isExp ? 'nearest' : 'center', behavior: 'smooth' });
+          }
+        } catch (eAct) { if (window.__silent) window.__silent(eAct); }
       }, 50);
     }
 
@@ -884,6 +896,14 @@
             if (arrow2) arrow2.style.transform = 'rotate(-90deg)';
           }
         }
+        /* v587：与一级分类同理——状态恢复后再定位一次，否则展开态下选中的子分类可能留在视口外 */
+        try {
+          var sAct = subBar.querySelector('.sub-category-tag.active');
+          if (sAct) {
+            var sExp = subBar.classList.contains('expanded');
+            sAct.scrollIntoView({ block: 'nearest', inline: sExp ? 'nearest' : 'center', behavior: 'smooth' });
+          }
+        } catch (eSAct) { if (window.__silent) window.__silent(eSAct); }
       }, 50);
     }
 

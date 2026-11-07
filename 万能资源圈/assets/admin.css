@@ -2643,7 +2643,11 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .logs-tools { display: flex; gap: 8px; margin-bottom: 10px; }
 .logs-tools .input { flex: 1 1 auto; min-width: 0; }
 .logs-tools .btn-blue { flex: 0 0 auto; }
-.logs-body { max-height: 46vh; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); }
+/* v587 用户 11-07：内容区不许左右晃——原来只有 overflow-y，表格一宽就整块横滑，
+   用户明确表态「宁可缩小内容也不要横滑」。裁掉横向滚动，表格改固定列宽自行省略。 */
+.logs-body { max-height: 46vh; overflow-y: auto; overflow-x: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); }
+.vitals-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14px; }
+.vitals-table th, .vitals-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ===== v540 操作日志：时间范围 + 员工操作日报 ===== */
 .logs-range { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 10px; }
@@ -2807,6 +2811,20 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 /* v538：分类搜索框 */
 .cat-search { width: 200px; height: 36px; margin-left: auto; }
 @media (max-width: 600px) { .cat-search { width: 100%; margin-left: 0; margin-top: 8px; } }
+/* v587 用户 11-07：全站搜索框以「资源管理」那个为准——同高度、同圆角、同搜索图标。
+   原来分类搜索是裸长条、回收站/报错/日志/扩展采集各写一套，占位文字也各喊各的（搜分类名 / 搜资源 / 分类 / 公告的名字…）。
+   这里用背景图补图标，不动 DOM 结构：改结构要动五个动态生成的弹窗，风险远大于收益。 */
+.cat-search,
+#rcQ, #errQ, #logsQ,
+.extc-search {
+  height: 36px;
+  padding-left: 32px;
+  border-radius: var(--r-sm, 8px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 9px center;
+  background-size: 15px 15px;
+}
 /* v533：回收站搜索框 */
 .rc-tools { margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
 .rc-tools .input { flex: 1 1 auto; min-width: 0; }

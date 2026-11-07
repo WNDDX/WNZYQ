@@ -391,7 +391,7 @@
     var pfNote = cur && cur.note ? '<div class="extc-pfnote"><b>' + esc(cur.name) + ' 的说明</b><div class="extc-pfnote-b">' + cur.note + '</div></div>' : '';
 
     var head = '<div class="extc-tools">' +
-      '<input id="extcQ" class="input extc-search" type="search" autocomplete="off" placeholder="搜标题 / 平台 / 链接" value="' + esc(S.q) + '">' +
+      '<input id="extcQ" class="input extc-search" type="search" autocomplete="off" placeholder="搜索标题、平台或链接" value="' + esc(S.q) + '">' +
       '<select id="extcSt" class="extc-sel-input">' +
       '<option value="">全部状态</option>' +
       '<option value="new"' + (S.status === 'new' ? ' selected' : '') + '>未上架</option>' +

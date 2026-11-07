@@ -341,15 +341,15 @@
       var mbr = mb ? mb.getBoundingClientRect() : null;
       var limTop = mbr ? Math.max(8, mbr.top + 8) : 8;
       var limBot = mbr ? Math.min((window.innerHeight || 900) - 8, mbr.bottom - 8) : (window.innerHeight || 900) - 8;
-      var want = Math.min(panel.scrollHeight || 240, 264);
+      var want = panel.scrollHeight || 240;
       var spaceBelow = limBot - (r.bottom + 4);
       var spaceAbove = (r.top - 4) - limTop;
       var top, maxH;
       if (spaceBelow >= want || spaceBelow >= spaceAbove) {
         top = r.bottom + 4;
-        maxH = Math.max(96, Math.min(264, spaceBelow));
+        maxH = Math.max(96, Math.min(want, spaceBelow));
       } else {
-        maxH = Math.max(96, Math.min(264, spaceAbove));
+        maxH = Math.max(96, Math.min(want, spaceAbove));
         top = Math.max(limTop, r.top - 4 - maxH);
       }
       panel.style.maxHeight = maxH + 'px';
