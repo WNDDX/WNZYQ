@@ -1634,7 +1634,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .cat-row.cat-open .cat-fold .toggle-arrow, .ann-item.cat-open .cat-fold .toggle-arrow { transform: rotate(0deg); } /* 展开=朝下 */
     /* v368 条6：绑定一组不换行（类型行/公告项） */
     .v-group { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
-    .variant-item .v-main-group { flex: 1 1 auto; gap: 10px; min-width: 0; }
+    .variant-item .v-main-group { flex: 1 1 auto; gap: 8px; min-width: 0; } /* v587：10→8 与全站行内间距统一 */
     .variant-item .v-act-group { margin-left: auto; gap: 8px; flex-shrink: 0; }
     .ann-item .ann-main-group, .ann-item .ann-act-group { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
     .ann-item .ann-main-group { flex: 1 1 auto; gap: 10px; min-width: 0; }
@@ -1656,8 +1656,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     .variant-item .v-name { padding-right: 8px; }
     .variant-item .v-price { flex: 0 0 72px; width: 72px; min-width: 0; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
     .variant-item .price-slot-ph { flex: 0 0 72px; width: 72px; }
-    .variant-item .v-sort { flex: 0 0 56px; width: 56px; min-width: 0; max-width: 56px; overflow: hidden; white-space: nowrap; margin-left: 10px; } /* v372b 条1：与金额列拉开 10px（列宽仍固定，跨行对齐不变） */
-    .variant-item .v-code-group { gap: 6px; }
+    .variant-item .v-sort { flex: 0 0 56px; width: 56px; min-width: 0; max-width: 56px; overflow: hidden; white-space: nowrap; margin-left: 0; } /* v587：原 margin-left:10 与同组 gap:8 混用，相邻间距一边 10 一边 8；改由 gap 统一控制 */
+    .variant-item .v-code-group { gap: 8px; } /* v587：6→8 统一 */
     .variant-item .code-slot { flex: 0 0 112px; width: 112px; min-width: 0; max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     /* v385 条10：「资源码」键宽统一以「无资源码」为准（原 76px，两键并存跨行不齐） */
     .variant-item .bind-slot { flex: 0 0 112px; width: 112px; min-width: 0; max-width: 112px; overflow: hidden; white-space: nowrap; justify-content: center; }
