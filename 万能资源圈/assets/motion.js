@@ -436,12 +436,13 @@ function syncMeta() {
 var meta = document.querySelector('meta[name="theme-color"]');
 if (meta) meta.setAttribute('content', document.documentElement.getAttribute('data-theme') === 'dark' ? '#0d1420' : '#1976D2');
 }
-var apply = function () {
+var apply = function (animate) {
 var root = document.documentElement;
-root.classList.add('wn-theme-anim');
+
+if (animate !== false) root.classList.add('wn-theme-anim');
 if (mq.matches) root.setAttribute('data-theme', 'dark');
 else root.removeAttribute('data-theme');
-setTimeout(function () { root.classList.remove('wn-theme-anim'); }, 420);
+if (animate !== false) setTimeout(function () { root.classList.remove('wn-theme-anim'); }, 420);
 syncMeta();
 };
 if (!mq.__wnTheme) {
@@ -449,6 +450,8 @@ mq.__wnTheme = 1;
 if (mq.addEventListener) mq.addEventListener('change', apply);
 else if (mq.addListener) mq.addListener(apply);
 }
+
+apply(false);
 syncMeta();
 }
 
