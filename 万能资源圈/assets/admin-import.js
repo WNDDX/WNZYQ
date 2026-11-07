@@ -1398,7 +1398,7 @@ var mask = document.createElement('div');
 mask.className = 'modal-mask'; mask.id = 'recycleMask';
 mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="回收站点">' +
 (window.__frag ? window.__frag.modalHead('回收站点') : '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">回收站点</h2>') +
-'<div class="rc-tools"><label class="rc-all"><input type="checkbox" id="rcAll" aria-label="全选"> 全选</label><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜资源 / 分类 / 公告的名字"></div>' +
+'<div class="rc-tools"><label class="rc-all"><input type="checkbox" id="rcAll" aria-label="全选"> 全选</label><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜索资源、分类或公告的名称"></div>' +
 
 '<div class="batch-bar" id="rcBar"><span class="batch-count-label">已选 <b id="rcCount">0</b> 项</span>' +
 '<div class="batch-group"><button type="button" class="batch-btn" id="rcRestoreAll">恢复选中</button>' +
@@ -1703,7 +1703,7 @@ card('TTFB 首字节', o.ttfb, ' ms', g.ttfb, good.ttfb) +
 html += '<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:6px">样本 ' + d.total + ' 次；手机端 vs 桌面端</div>';
 var sp = d.split || {};
 var rows = [['手机（<768px）', sp.mobile], ['桌面', sp.desktop]];
-html += '<table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px">' +
+html += '<table class="vitals-table" style="margin-bottom:16px">' +
 '<tr style="color:var(--text-light,#666);font-size:12px"><th style="text-align:left;font-weight:400;padding:4px 6px">设备</th>' +
 '<th style="text-align:right;font-weight:400;padding:4px 6px">样本</th><th style="text-align:right;font-weight:400;padding:4px 6px">LCP</th>' +
 '<th style="text-align:right;font-weight:400;padding:4px 6px">CLS</th><th style="text-align:right;font-weight:400;padding:4px 6px">INP</th></tr>';
@@ -1719,7 +1719,7 @@ html += '</table>';
 
 if ((d.pages || []).length) {
 html += '<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:6px">按页面（样本多的排前面）</div>';
-html += '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
+html += '<table class="vitals-table">' +
 '<tr style="color:var(--text-light,#666);font-size:12px"><th style="text-align:left;font-weight:400;padding:4px 6px">页面</th>' +
 '<th style="text-align:right;font-weight:400;padding:4px 6px">样本</th><th style="text-align:right;font-weight:400;padding:4px 6px">LCP</th>' +
 '<th style="text-align:right;font-weight:400;padding:4px 6px">CLS</th><th style="text-align:right;font-weight:400;padding:4px 6px">TTFB</th></tr>';
@@ -1771,7 +1771,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '</div>' +
 '<div class="logs-daily" id="errSum"><div class="logs-d-empty">正在读取…</div></div>' +
 '<div class="logs-tools">' +
-'<input class="input" id="errQ" type="search" autocomplete="off" placeholder="搜报错内容或页面，比如 TypeError / shop">' +
+'<input class="input" id="errQ" type="search" autocomplete="off" placeholder="搜索报错内容或页面，比如 TypeError">' +
 '<button type="button" class="btn-blue btn-inline" id="errGo">搜索</button>' +
 '</div>' +
 '<div class="logs-body" id="errBody"><div class="extc-loading">正在读取…</div></div>' +
@@ -1914,7 +1914,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '</div>' +
 '<div class="logs-daily" id="logsDaily"><div class="logs-d-empty">正在统计…</div></div>' +
 '<div class="logs-tools">' +
-'<input class="input" id="logsQ" type="search" autocomplete="off" placeholder="搜动作或对象，比如 删除 / 分类 / 资源">' +
+'<input class="input" id="logsQ" type="search" autocomplete="off" placeholder="搜索动作或对象，比如 删除、分类、资源">' +
 '<button type="button" class="btn-blue btn-inline" id="logsGo">搜索</button>' +
 '</div>' +
 '<div class="logs-body" id="logsBody"><div class="extc-loading">正在读取…</div></div>' +

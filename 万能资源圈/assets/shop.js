@@ -691,6 +691,14 @@ var arrow2 = catToggle.querySelector('.toggle-arrow');
 if (arrow2) arrow2.style.transform = 'rotate(-90deg)';
 }
 if (window.__fsCatLineUpdate) window.__fsCatLineUpdate(false);
+
+try {
+var actNow = categoryBar.querySelector('.category-tag.active');
+if (actNow) {
+var isExp = categoryBar.classList.contains('expanded');
+actNow.scrollIntoView({ block: 'nearest', inline: isExp ? 'nearest' : 'center', behavior: 'smooth' });
+}
+} catch (eAct) { if (window.__silent) window.__silent(eAct); }
 }, 50);
 }
 
@@ -764,6 +772,14 @@ var arrow2 = subCatToggle.querySelector('.toggle-arrow');
 if (arrow2) arrow2.style.transform = 'rotate(-90deg)';
 }
 }
+
+try {
+var sAct = subBar.querySelector('.sub-category-tag.active');
+if (sAct) {
+var sExp = subBar.classList.contains('expanded');
+sAct.scrollIntoView({ block: 'nearest', inline: sExp ? 'nearest' : 'center', behavior: 'smooth' });
+}
+} catch (eSAct) { if (window.__silent) window.__silent(eSAct); }
 }, 50);
 }
 
