@@ -2519,7 +2519,7 @@ var tSel0 = filterBar.querySelector('#ctTypeSel');
 tSel0.innerHTML = TYPE_OPTS.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
 tSel0.value = window.__ctType || '';
 tSel0.addEventListener('change', function () {
-window.__ctType = this.value;
+window.__ctType = this.value; window.__ctPage = 1;
 var d3 = window.__lastInfo; if (d3) render(d3);
 });
 filterBar.querySelector('#ctWhoSel').addEventListener('change', function () {
@@ -2557,7 +2557,14 @@ _allZero ? '说明：您自己在前台资源页的浏览/解锁不计入统计�
 bindSysAlertGo();
 return;
 }
-var html = d.recent.map(function (r, ri) {
+
+var __CT_SIZE = 20;
+var _allRows = d.recent || [];
+var _tPages = Math.max(1, Math.ceil(_allRows.length / __CT_SIZE));
+if (!window.__ctPage || window.__ctPage > _tPages) window.__ctPage = 1;
+var _pStart = (window.__ctPage - 1) * __CT_SIZE;
+var _pageRows = _allRows.slice(_pStart, _pStart + __CT_SIZE);
+var html = _pageRows.map(function (r, ri) {
 var tp = fmtTime(r.at).split(' ');
 var rl = regionLabel(r.region);
 var who = maskIP(r.who);
@@ -2569,8 +2576,23 @@ return '<div class="ct-row wn-tl' + (r.unread ? ' ct-unread' : '') + '"' + _d + 
 (rl ? rl + ' ' : '') + String(who).replace(/</g, '&lt;') + '</span><span class="ct-what">' + (WHAT[r.type] || r.type) +
 '</span><span class="ct-target">' + String(target).replace(/</g, '&lt;') + '</span></div>';
 }).join('');
-list.innerHTML = _alert + html;
+list.innerHTML = (_pStart === 0 ? _alert : '') + html;
 bindSysAlertGo();
+
+var _ctPager = document.getElementById('ctPager');
+if (!_ctPager) {
+_ctPager = document.createElement('div');
+_ctPager.id = 'ctPager';
+_ctPager.className = 'uni-pager';
+if (list.parentNode) list.parentNode.insertBefore(_ctPager, list.nextSibling);
+}
+if (window.buildUniPager && _tPages > 1) {
+_ctPager.style.display = '';
+window.buildUniPager(_ctPager, {
+page: window.__ctPage, totalPages: _tPages, total: _allRows.length, unit: '条',
+onPage: function (p) { window.__ctPage = p; if (window.__lastInfo) render(window.__lastInfo); }
+});
+} else if (_ctPager) { _ctPager.innerHTML = ''; _ctPager.style.display = 'none'; }
 
 try {
 var _pnl = document.getElementById('ctDetailPanel');
