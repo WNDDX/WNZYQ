@@ -320,6 +320,16 @@ top = Math.max(limTop, r.top - 4 - maxH);
 panel.style.maxHeight = maxH + 'px';
 panel.style.top = top + 'px';
 
+try {
+var _selItem = panel.querySelector('.cp-item.selected');
+if (_selItem) {
+var _pr = panel.getBoundingClientRect(), _sr = _selItem.getBoundingClientRect();
+if (_sr.top < _pr.top + 4 || _sr.bottom > _pr.bottom - 4) {
+panel.scrollTop = _selItem.offsetTop - Math.max(0, (panel.clientHeight - _selItem.offsetHeight) / 2);
+}
+}
+} catch (eSel) { if (window.__silent) window.__silent(eSel); }
+
 var left = r.left;
 var w = Math.max(r.width, 180);
 if (picker.classList.contains('code-picker')) {
