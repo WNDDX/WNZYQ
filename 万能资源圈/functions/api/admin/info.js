@@ -28,11 +28,13 @@ export async function onRequestGet(context) {
   const floor = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
   if (last < floor) last = floor;
   /* v454：明细流窗口 = 最近 7 天（和「距上次查看」解耦） */
-  const windowStart = new Date(Date.now() - 1 * 86400000).toISOString().slice(0, 19).replace('T', ' '); /* v458：老板拍板「一天内的可以了」——明细窗口 7 天收成 24 小时 */
-
   // 今日 0 点（北京口径，与统计页一致）
   const todayBJ = new Date(Date.now() + BJ).toISOString().slice(0, 10);
   const todayStartUTC = new Date(new Date(todayBJ + 'T00:00:00+08:00').getTime() - 0).toISOString().slice(0, 19).replace('T', ' ');
+
+  /* v587 用户 11-08：「全部统一 0 点刻度」。明细窗口原为「最近 24 小时」滚动窗口，与「今日概览」的自然日口径对不上，两个数永远打架。 */
+  const windowStart = todayStartUTC; /* v458：老板拍板「一天内的可以了」——明细窗口 7 天收成 24 小时 */
+
 
   await ensureBindingsTable(env);
   try { await ensureStatsColumns(env); } catch (eS) {} /* v441b：stats.region 幂等补列（明细 SQL 用 s.region，缺列即报错） */
@@ -45,10 +47,10 @@ export async function onRequestGet(context) {
   const whoFilter = (url.searchParams.get('who') || '').slice(0, 20); /* #116：按人筛选留痕 */
   const isSub = auth.role !== 'super';
   const [dView, dContact, dUnlock, dBind, dLogin, dAudit, tView, tContact, tUnlock, tBind, recent] = await Promise.all([ /* v439：+登录增量+#116 下级动作增量 */
-    env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='view' AND created_at > ?1").bind(last).first(),
-    env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='contact' AND created_at > ?1").bind(last).first(),
-    env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='resource_unlock' AND created_at > ?1").bind(last).first(),
-    env.DB.prepare('SELECT COUNT(*) AS n FROM resource_bindings WHERE created_at > ?1').bind(last).first(),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='view' AND created_at > ?1").bind(todayStartUTC).first(),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='contact' AND created_at > ?1").bind(todayStartUTC).first(),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='resource_unlock' AND created_at > ?1").bind(todayStartUTC).first(),
+    env.DB.prepare('SELECT COUNT(*) AS n FROM resource_bindings WHERE created_at > ?1').bind(todayStartUTC).first(),
     env.DB.prepare('SELECT COUNT(*) AS n FROM admin_logins WHERE created_at > ?1').bind(last).first().catch(() => ({ n: 0 })),
     env.DB.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE created_at > ?1 AND admin != 'admin'").bind(last).first().catch(() => ({ n: 0 })), /* #116：下级动作增量（排除超管自己的 admin 记录） */
     env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='view' AND created_at > ?1").bind(todayStartUTC).first(),

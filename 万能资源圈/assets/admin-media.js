@@ -2503,7 +2503,8 @@ setDelta('ctDView', d.delta.view);
 
 var _now = new Date();
 var _hhmm = ('0' + _now.getHours()).slice(-2) + ':' + ('0' + _now.getMinutes()).slice(-2);
-document.getElementById('ctSince').textContent = '数据截至 ' + _hhmm + '（每次打开自动同步）· 上方四格 = 较上次查看（' + fmtTime(d.lastSeen) + '）新增 ·「今日概览」= 今天 0 点起 · 下方明细 = 最近 24 小时（带蓝点的是上次查看后新增）';
+
+document.getElementById('ctSince').textContent = '数据截至 ' + _hhmm + '· 上方四格与下方明细 = 今日 0 点起 · 带蓝点的是上次查看后新增';
 document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
 var list = document.getElementById('ctList');
 var _alert = sysAlertEntry();
@@ -2558,7 +2559,7 @@ window.__lastInfo = d;
 if (!(d.recent || []).length) {
 
 var _allZero = !(d.delta && (d.delta.view || d.delta.contact || d.delta.unlock || d.delta.bind));
-list.innerHTML = _alert + window.__adminEmpty('最近 24 小时暂无动态',
+list.innerHTML = _alert + window.__adminEmpty('今日 0 点起暂无动态',
 _allZero ? '说明：您自己在前台资源页的浏览/解锁不计入统计（管理身份自动排除）；数字只来自真实访客。' : '');
 bindSysAlertGo();
 return;
