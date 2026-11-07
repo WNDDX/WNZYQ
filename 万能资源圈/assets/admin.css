@@ -1242,6 +1242,12 @@
     /* v538（老板）：这排入口统一成蓝色主键，别再一白一蓝 */
     .setting-row.is-inline > button { flex: 0 0 auto; margin: 0; border: 1px solid var(--blue1); background: var(--blue1); color: var(--text-on-brand, #fff); font-weight: 600; padding: 0 14px; border-radius: var(--radius-btn, 10px); /* v536：跟全站按钮同圆角，v535 误用了 8px 最小档 */ height: var(--btn-h-sm); min-height: var(--btn-h-sm); padding-top: 0; padding-bottom: 0; } /* 主键自带的 8px 下边距会把这一行顶高 12px，和一键一行的高度对不上 */
     /* 主键在这一行里只靠颜色区分，不再靠"变大"——否则同一列里一高一矮，看着像两套按钮 */
+    /* v587 用户 11-07：设置面板右侧这排按钮出现「一个只剩符号、另两个是文字」的宽窄不一。
+       查不到是哪个环节把文字收掉的（sysCheck 不碰按钮、setting-row 也不在 btn-fit 体系内），
+       所以从样式侧兜死：统一最小宽度、文字不换行、放不下就用省略号，绝不允许退化成纯符号。 */
+    .setting-row.is-inline > button { min-width: 96px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .setting-row.is-inline > button .btn-lab,
+    .setting-row.is-inline > button .btn-ico { flex: 0 0 auto; }
     .setting-row.is-inline .btn-inline-pd { height: var(--btn-h-sm); min-height: var(--btn-h-sm); padding: 0 16px; font-size: 14px; }
     /* 平台公告那行带富文本工具条：标签+按钮在第一行，工具条另起一行占满 */
     .setting-row.is-inline > .rte-toolbar { flex: 1 1 100%; margin-top: 8px; }
