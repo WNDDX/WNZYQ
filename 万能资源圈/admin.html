@@ -140,8 +140,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           <div class="batch-group"><!-- v371 条5：批量按键=同一组，组内不拆散；v371b：显示优先序=取消选中>批量删除>改分类>改价格>批量显示>批量隐藏（放不下先藏后面的） -->
           <button class="batch-btn" data-action="online" data-pri="5">批量显示</button>
           <button class="batch-btn" data-action="offline" data-pri="6">批量隐藏</button>
-          <button class="batch-btn" data-action="changeCat" data-pri="3">改分类</button>
-          <button class="batch-btn" data-action="changePrice" data-pri="4">改价格</button>
+          <button class="batch-btn" data-action="changeCat" data-pri="3">修改分类</button>
+          <button class="batch-btn" data-action="changePrice" data-pri="4">修改价格</button>
           <button class="batch-btn danger" data-action="delete" data-pri="2">批量删除</button>
           <button class="batch-btn" data-action="clearSel" data-pri="1">取消选中</button>
           </div>
@@ -171,7 +171,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <div class="empty-tip" id="productEmpty">
           <div class="empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.8v10.4L12 22l9-4.8V6.8L12 2zm7.5 5.3L12 10.9 4.5 7.3 12 3.3l7.5 4zM5 9l6.2 3.3v8.1L5 17.1V9zm8.8 11.4v-8.1L20 9v8.1l-6.2 3.3z"/></svg></div> <!-- R285 条18：文字表情换固定 SVG -->
           <div class="empty-title" id="productEmptyTitle">该列表暂无资源</div>
-          <button class="empty-clear-btn" type="button" onclick="(function(){var b=[].slice.call(document.querySelectorAll('button')).filter(function(x){return /新增|添加/.test(x.textContent||'')});if(b[0])b[0].click();})()">去添加资源</button>
+          <button class="empty-clear-btn" type="button" onclick="(function(){var b=[].slice.call(document.querySelectorAll('button')).filter(function(x){return /新增|添加/.test(x.textContent||'')});if(b[0])b[0].click();})()">前往添加资源</button>
         </div>
       </section>
       <!-- 数据统计 -->
@@ -188,7 +188,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <div class="time-filter">
                 <button class="time-btn active" data-days="1">1天</button>
                 <button class="time-btn" data-days="7">7天</button>
-                <button class="time-btn" data-days="30">30天</button>
+                <button class="time-btn" data-days="30">近30天</button>
               </div>
               <!-- R68：对比上期键独立于时间档组（1/7/30天三键一组不动），紧跟其后；复用应用键样式；文字随状态切换：关闭=对比上期 / 开启=显示本期 -->
               <button class="btn-blue btn-inline cmp-btn" id="cmpPrevBtn" title="开启后卡片小字、折线虚线、柱状浅色对比柱及悬浮数值显示与上期的对比；再点一次恢复只看本期">对比上期</button>
@@ -495,7 +495,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         </select>
         <p class="imp-lead ann-mode-hint" id="annModeHint"></p>
         <label>公告项（拖拽 ⋮⋮ 调整顺序；点击某项即可编辑；隐藏的项不在资源页显示）</label>
-        <button type="button" class="btn-blue" id="addAnnBtn" data-perm="ann.add" style="width:auto;padding:0 20px;margin:2px 0 10px;">新增公告项</button>
+        <button type="button" class="btn-blue" id="addAnnBtn" data-perm="ann.add" style="width:auto;padding:0 20px;margin:2px 0 10px;">新增公告</button>
         <div id="annList" class="ann-list">
     <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>
     <div class="ann-skel-item" aria-hidden="true"><span class="ann-skel-line w60"></span><span class="ann-skel-line w30"></span></div>
@@ -554,7 +554,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <label for="infoUrlContact">跳转链接</label>
               <div class="info-url-flex">
                 <input class="input" id="infoUrlContact" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
-                <button type="button" class="row-btn info-test" data-test="infoUrlContact">测一下</button>
+                <button type="button" class="row-btn info-test" data-test="infoUrlContact">测试一下</button>
               </div>
             </div>
             <div class="info-panel-btns">
@@ -583,7 +583,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <label for="infoUrlGroup">跳转链接</label>
               <div class="info-url-flex">
                 <input class="input" id="infoUrlGroup" maxlength="500" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://..." />
-                <button type="button" class="row-btn info-test" data-test="infoUrlGroup">测一下</button>
+                <button type="button" class="row-btn info-test" data-test="infoUrlGroup">测试一下</button>
               </div>
             </div>
             <div class="info-panel-btns">

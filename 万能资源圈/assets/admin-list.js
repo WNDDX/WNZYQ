@@ -419,7 +419,7 @@ var __fcv = document.getElementById('filterCat').value;
 var __fsv = document.getElementById('filterStatus').value;
 if (!__kw && (!__fcv || __fcv === '0') && !__fsv) {
 var __add = document.createElement('button');
-__add.type = 'button'; __add.className = 'empty-clear-btn'; __add.textContent = '去添加资源';
+__add.type = 'button'; __add.className = 'empty-clear-btn'; __add.textContent = '前往添加资源';
 __add.addEventListener('click', function () { var __b = document.getElementById('addProductBtn'); if (__b) __b.click(); });
 empty.appendChild(__add);
 }

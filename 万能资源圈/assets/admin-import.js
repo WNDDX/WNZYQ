@@ -991,7 +991,7 @@ var USERS_ACTS = [
 ['products.view', '看资源'], ['products.add', '新增资源'], ['products.edit', '编辑资源'], ['products.price', '改价'],
 ['products.online', '上下架'], ['products.del', '删除（进回收站点）'], ['products.restore', '恢复'], ['products.purge', '彻底删除'],
 ['products.moveCat', '挪分类'],
-['cats.view', '看分类'], ['cats.add', '新增分类'], ['cats.edit', '改分类'], ['cats.del', '删分类'],
+['cats.view', '看分类'], ['cats.add', '新增分类'], ['cats.edit', '修改分类'], ['cats.del', '删分类'],
 ['ann.view', '看公告'], ['ann.add', '发公告'], ['ann.edit', '改公告'], ['ann.del', '删公告'],
 ['batch.import', '批量导入'], ['batch.price', '批量改价'], ['batch.online', '批量上下架'], ['batch.del', '批量删除'],
 ['data.stats', '看统计总量'], ['data.detail', '看逐条明细'], ['data.ip', '看访客 IP'], ['data.export', '数据导出'],
@@ -1199,8 +1199,8 @@ body.innerHTML = '<div class="imp-err">网络没连上，稍后再试</div>';
 
 
 var PM_GROUPS = [
-{ t: '资源', k: 'products', items: [['view', '看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '改价格'], ['online', '上下架'], ['del', '删除资源'], ['restore', '恢复回收站点'], ['purge', '彻底删除'], ['moveCat', '挪分类']] },
-{ t: '分类', k: 'cats', items: [['view', '看分类'], ['add', '新增分类'], ['edit', '改分类'], ['del', '删分类']] },
+{ t: '资源', k: 'products', items: [['view', '看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '修改价格'], ['online', '上下架'], ['del', '删除资源'], ['restore', '恢复回收站点'], ['purge', '彻底删除'], ['moveCat', '挪分类']] },
+{ t: '分类', k: 'cats', items: [['view', '看分类'], ['add', '新增分类'], ['edit', '修改分类'], ['del', '删分类']] },
 { t: '公告', k: 'ann', items: [['view', '看公告'], ['add', '发公告'], ['edit', '改公告'], ['del', '删公告']] },
 { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
 { t: '数据', k: 'data', items: [['stats', '看总量'], ['detail', '看逐条明细'], ['ip', '看访客 IP'], ['export', '导出数据']] },
@@ -1651,7 +1651,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<span class="logs-range-t">时间范围</span>' +
 '<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
 '<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
-'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">近30天</button>' +
 '</div>' +
 '<div class="logs-body" id="vitalsBody"><div class="extc-loading">正在读取…</div></div>' +
 '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
@@ -1766,7 +1766,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<span class="logs-range-t">时间范围</span>' +
 '<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
 '<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
-'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">近30天</button>' +
 '<button type="button" class="row-btn" id="errClear" style="margin-left:auto">清空记录</button>' +
 '</div>' +
 '<div class="logs-daily" id="errSum"><div class="logs-d-empty">正在读取…</div></div>' +
@@ -1911,7 +1911,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<span class="logs-range-t">时间范围</span>' +
 '<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
 '<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
-'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">近30天</button>' +
 
 '<button type="button" class="row-btn logs-exp" id="logsExport">导出 Excel</button>' +
 '</div>' +
@@ -1935,7 +1935,7 @@ setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBody
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
 
 var page = 1, q = '', days = 7, who = '';
-var RANGE_TXT = { 1: '1天', 7: '7天', 30: '30天' };
+var RANGE_TXT = { 1: '1天', 7: '7天', 30: '近30天' };
 function bjTime(v) {
 var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
 if (isNaN(d.getTime())) return String(v || '');
