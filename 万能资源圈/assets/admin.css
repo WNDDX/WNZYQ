@@ -2526,7 +2526,8 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
 .preview-box.pv-loading .preview-frame { opacity: 0; }
 .preview-box.pv-loading::before { content: '正在准备预览…'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 5; color: var(--text-light); font-size: 14px; background: var(--card-bg); }
 /* v557：原规则保留 .modal-close-x（外层叉）已废止，见文件末尾 v557 段 */
-.preview-frame { display: none; position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: inherit; background: var(--card-bg); }
+.preview-frame { display: none; position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: inherit; background: #000; } /* v587 用户 11-07：背景原为 --card-bg（白）——预览框比里面的卡片高时，
+   卡片下方会露出 iframe 自己的白底，在纯黑遮罩上就是一根白线。改纯黑与 #previewMask 连成一片。 */
 .preview-box.pv-real .preview-frame { display: block; }
 .preview-box.pv-real .modal-close-x { z-index: 12; }
 
