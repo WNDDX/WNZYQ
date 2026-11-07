@@ -459,12 +459,14 @@
       var meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute('content', document.documentElement.getAttribute('data-theme') === 'dark' ? '#0d1420' : '#1976D2');
     }
-    var apply = function () {
+    var apply = function (animate) {
       var root = document.documentElement;
-      root.classList.add('wn-theme-anim');
+      /* v587：初始化纠正时不加过渡动画——那次调用是「静默对齐」，不是用户切换主题，
+         加 420ms 渐变会在首屏看到一层颜色爬升。change 事件回传的是 Event 对象（!== false），照常带动画。 */
+      if (animate !== false) root.classList.add('wn-theme-anim');
       if (mq.matches) root.setAttribute('data-theme', 'dark');
       else root.removeAttribute('data-theme');
-      setTimeout(function () { root.classList.remove('wn-theme-anim'); }, 420);
+      if (animate !== false) setTimeout(function () { root.classList.remove('wn-theme-anim'); }, 420);
       syncMeta();
     };
     if (!mq.__wnTheme) {
@@ -472,6 +474,12 @@
       if (mq.addEventListener) mq.addEventListener('change', apply);
       else if (mq.addListener) mq.addListener(apply);
     }
+    /* v587 用户 11-07（「第一次进错误页是深色的，刷新后恢复」）根因：
+       首帧主题只由各页头部那段内联脚本判定一次。某些系统在页面极早期会先把
+       prefers-color-scheme 报成 dark、稍后才稳定成真实偏好——内联脚本那一刻写成 dark，
+       之后就一直停在深色，因为这里只注册了 change 监听、从不主动对齐当前状态，要等用户刷新重跑内联脚本。
+       补一次无动画的初始化同步，把状态拉回系统真实偏好。 */
+    apply(false);
     syncMeta();
   }
 
