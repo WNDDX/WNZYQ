@@ -2759,6 +2759,13 @@
     }).join('');
     list.innerHTML = _alert + html;
     bindSysAlertGo();
+    /* v587：细项动态是异步渲染的——展开那一刻 panel 还是空的，按空高度设的 max-height 会把后到的内容裁掉。
+       内容落地后补一次真实高度。 */
+    try {
+      var _pnl = document.getElementById('ctDetailPanel');
+      var _itm = document.getElementById('ctDetailItem');
+      if (_pnl && _itm && _itm.classList.contains('open')) _pnl.style.maxHeight = (_pnl.scrollHeight + 24) + 'px';
+    } catch (eH) { if (window.__silent) window.__silent(eH); }
   }
   function fetchInfo(cb, who) {
     var last = '';
@@ -2814,6 +2821,9 @@
   if (fold && item) fold.addEventListener('click', function () {
     var willOpen = !item.classList.contains('open');
     item.classList.toggle('open', willOpen);
+    /* v587：内容展开按真实高度过渡，否则 CSS 的 0→560px 定值在内容只有一两百像素时等于瞬开 */
+    var panel = item.querySelector('.info-panel');
+    if (panel) panel.style.maxHeight = willOpen ? (panel.scrollHeight + 24 + 'px') : '0px';
     fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     if (window.__haptic) window.__haptic();
   });

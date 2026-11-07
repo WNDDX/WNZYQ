@@ -258,7 +258,13 @@
     .ct-detail-cap { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text); text-align: left; }
     .ct-list { display: flex; flex-direction: column; max-height: 320px; overflow-y: auto; overscroll-behavior: auto; }
     /* v537（老板）：原来「谁」占 1.4fr、「动作」auto、「对象」1fr，三列宽窄不一；改成四列等分，超长一律省略号 */
-    .ct-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 76px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    /* v587 用户 11-07：「字段要在一行、要等分、不能换行」。
+       原来是 grid-template-columns: 52px 1fr 76px 1fr 四列，但每行实际有 5 个子元素
+       （未读圆点 + 时间 + 标题 + 动作 + IP）——圆点一出现就占掉第一列，整行错位一格，
+       最后一个字段被挤到第二行；列宽又是 52/1fr/76/1fr 混排，中间自然空出一大块。
+       现在：四列严格等分，圆点改绝对定位不占列。 */
+    .ct-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: center; padding: 8px 2px 8px 14px; border-bottom: 1px solid var(--border); font-size: 14px; position: relative; }
+    .ct-row .ct-dot { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); margin: 0; }
     .ct-row > * { min-width: 0; }
     .ct-row:last-child { border-bottom: none; }
     .ct-row .ct-time { color: var(--text-light); display: flex; flex-direction: column; line-height: 1.3; } /* v386 规整：时间两行 MM-DD / HH:MM */
@@ -268,7 +274,7 @@
     .ct-row .ct-target { min-width: 0; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
     .ct-today { margin-top: 10px; font-size: 12px; color: var(--text-light); text-align: center; }
     @media (max-width: 600px) {
-      .ct-row { grid-template-columns: 52px minmax(0, 1.3fr) auto minmax(0, 1fr); } /* v386 规整：窄屏压缩「谁」列占比，留省份前缀宽度 */
+      .ct-row { grid-template-columns: repeat(4, minmax(0, 1fr)); } /* v587：窄屏同样四列等分，不再用 auto 让 IP 列按内容抢宽 */
       .ct-cell b { font-size: 16px; }
     }
     /* R36：退出按钮专用类——之前误用 .tab（无 data-tab），点击触发 switchTab(undefined) 把主内容切成空白。
@@ -823,7 +829,7 @@
 
     .cp-item.cp-expanded .cp-chevron { transform: rotate(0deg); }
     .cp-children { display: block; max-height: 0; opacity: 0; overflow: hidden; transition: max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out); } /* v416 条3：二级分类展开/收起双向滑动（原 display 瞬切） */
-    .cp-children.show { max-height: 400px; opacity: 1; }
+    .cp-children.show { max-height: 1200px; opacity: 1; } /* v587：原 400px 装不下十几个子分类，展开后底部被裁；过渡用 max-height 需要具体值，给足余量 */
     .cp-empty { padding: 12px; color: var(--text-light); font-size: 14px; text-align: center; } /* R285 条40：提示灰统一一档 var(--text-light) */
     /* ===== 通用自制下拉选择器（替代原生 select，与分类选择器同风格） ===== */
     .select-picker { position: relative; width: 100%; user-select: none; }
@@ -2825,6 +2831,15 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
   background-repeat: no-repeat;
   background-position: 9px center;
   background-size: 15px 15px;
+}
+/* v587：焦点态也跟资源管理那个对齐（同样的聚焦光晕），否则「一模一样的搜索框」在点进去后还是两种观感 */
+.cat-search:focus,
+#rcQ:focus, #errQ:focus, #logsQ:focus,
+.extc-search:focus {
+  outline: none;
+  border-color: var(--blue1);
+  box-shadow: 0 0 0 3px rgba(var(--blue1-rgb, 30, 136, 229), .25);
+  transition: box-shadow var(--dur-mid) var(--ease-out);
 }
 /* v533：回收站搜索框 */
 .rc-tools { margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }

@@ -221,6 +221,14 @@
             var childBox = row.nextElementSibling;
             var expanded = childBox.classList.toggle('show');
             row.classList.toggle('cp-expanded', expanded);
+            /* v587：max-height 用真实内容高度。原来靠 CSS 的 0→1200px 定值过渡，
+               内容只有几百像素时动画在前 1/6 就走完了，肉眼等于「啪」地瞬开，看不出动效。 */
+            childBox.style.maxHeight = expanded ? (childBox.scrollHeight + 'px') : '0px';
+            /* v587 用户 11-07（「点了展开还不显示内容」「再展开还把一级分类挤出去」）根因：
+               面板的 max-height 是「打开下拉那一刻」按当时的 scrollHeight 算死的；
+               子分类一展开内容变高，这个高度没跟着变，超出的部分直接被面板 overflow 裁掉——
+               看起来就是「点了展开没反应」。展开后必须重算一次面板高度。 */
+            try { positionCatPanel(pickerEl); } catch (ePC) { if (window.__silent) window.__silent(ePC); }
           });
           row.appendChild(chev);
         }

@@ -1899,11 +1899,16 @@
       /* 分页 */
       var total = Number(d.total) || 0, size = Number(d.size) || 20;
       var pages = Math.max(1, Math.ceil(total / size));
-      mask.querySelector('#errPager').innerHTML = pages > 1
-        ? '<button type="button" class="row-btn" data-pg="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + '>上一页</button>' +
-          '<span class="uni-pager-info">' + page + ' / ' + pages + '　共 ' + total + ' 种</span>' +
-          '<button type="button" class="row-btn" data-pg="' + (page + 1) + '"' + (page >= pages ? ' disabled' : '') + '>下一页</button>'
-        : '';
+      /* v587 用户 11-07（「你说的翻页组件统一？」）：这里原来是手写的一对 row-btn，
+         容器虽然叫 uni-pager，里面却是自己画的按钮 + uni-pager-info，跟全站 buildUniPager 的胶囊翻页根本不是一套。
+         统一走公共组件，unit 用「种」保持原语义。 */
+      var _errPager = mask.querySelector('#errPager');
+      if (window.buildUniPager) {
+        window.buildUniPager(_errPager, {
+          page: page, totalPages: pages, total: total, unit: '种',
+          onPage: function (p) { page = p; load(); }
+        });
+      } else { _errPager.innerHTML = ''; }
     }
 
     function load() {
