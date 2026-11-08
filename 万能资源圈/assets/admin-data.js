@@ -1132,7 +1132,16 @@ return;
 }
 
 var __skels = box.querySelectorAll('.admin-skel'); var __reuse = __skels.length > 0;
-if (window.__catSkelP && !list.length) return;
+
+var __stillLoading = !!window.__catLoading;
+if ((window.__catSkelP || __stillLoading) && !list.length) return;
+if (!list.length) {
+box.style.minHeight = '';
+box.innerHTML = window.__adminEmpty
+? window.__adminEmpty('还没有分类', '点右上方「新增分类」建第一个；建好之后这里能按住左边的六点拖动排序')
+: '<div style="padding:28px 0;text-align:center;color:var(--text-light)">还没有分类</div>';
+return;
+}
 if (!__reuse) box.innerHTML = '';
 
 var topLevel = list.filter(function (c) { return c.parent_id === 0; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
