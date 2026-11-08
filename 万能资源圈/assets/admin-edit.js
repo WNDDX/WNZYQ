@@ -195,11 +195,14 @@ row.classList.toggle('cp-expanded', expanded);
 
 childBox.style.maxHeight = expanded ? (childBox.scrollHeight + 'px') : '0px';
 
-try { positionCatPanel(pickerEl); } catch (ePC) { if (window.__silent) window.__silent(ePC); }
 
+if (expanded) {
 setTimeout(function () {
 try { if (pickerEl.classList.contains('open')) positionCatPanel(pickerEl); } catch (ePC2) { if (window.__silent) window.__silent(ePC2); }
-}, 320);
+}, 300);
+} else {
+try { positionCatPanel(pickerEl); } catch (ePC) { if (window.__silent) window.__silent(ePC); }
+}
 });
 row.appendChild(chev);
 }
@@ -488,8 +491,8 @@ selected, { allowUncategorized: true, }
 }
 
 saveProductBtn.addEventListener('click', saveProduct);
-editCancel.addEventListener('click', function () { try { if (window.__fcSweepEdit) window.__fcSweepEdit(editMask); } catch (e) {} editMask.classList.remove('open'); clearDraft(); });
-editMask.addEventListener('click', function (e) { if (e.target === editMask) { saveDraft(); editMask.classList.remove('open'); } });
+editCancel.addEventListener('click', function () { try { if (window.__fcSweepEdit) window.__fcSweepEdit(editMask); } catch (e) {} editMask.classList.remove('open'); clearDraft(); try { if (window.__extAfterEditClose) window.__extAfterEditClose(); } catch (eRC) {} });
+editMask.addEventListener('click', function (e) { if (e.target === editMask) { saveDraft(); editMask.classList.remove('open'); try { if (window.__extAfterEditClose) window.__extAfterEditClose(); } catch (eRC) {} } });
 
 function validateField(input, msg) {
 if (!input || !input.value || !String(input.value).trim()) {
@@ -649,7 +652,7 @@ variants: (state.variants || []).slice() });
 }
 
 if (window.__btnSuccess) window.__btnSuccess(saveProductBtn, window.T('saved'));
-setTimeout(function () { editMask.classList.remove('open'); }, 400);
+setTimeout(function () { editMask.classList.remove('open'); try { if (window.__extAfterEditClose) window.__extAfterEditClose(); } catch (eRC) {} }, 400);
 if (isNewSave) { try { delete __editDrafts['new']; } catch (e) { if (window.__silent) window.__silent(e); } }
 clearDraft();
 try { window.__clearEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); }

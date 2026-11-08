@@ -403,10 +403,28 @@ export async function onRequestPost(context) {
           return /\/\/([\w-]+\.)*(360buyimg|alicdn|bdimg|qpic|hdslb|xiaohongshu|byteimg|sinaimg|zhimg|doubanio)\b/i.test(u)
             || /\/\/(img|image|img\d|pic|pics|static|cdn|oss|res)[\w.-]*\./i.test(u);
         };
-        const buyCand = (pg.text.match(/href=["']([^"']*(?:buy|order|goods|goodsId=|pid=)[^"']*)["']/gi) || [])
+        /* v587 用户 11-08（第 11 条：「下单链接都不对啊」）真根因：
+           原来只要 href 里出现 buy|order|goods|pid 就算候选，然后**取第一个**，找不到就退回商品页原链接。
+           于是「商品详情页」被当成「下单页」存了下来——用户点进去看到的不是下单。
+           现在按「像不像下单页」打分排序，分数最高者胜：
+             带 /order/ 路径  +10（下单页的典型路径）
+             带 uid= 参数     +6（分销/下单页几乎必带 uid）
+             带 pid= 参数     +6（商品 id，下单页必带）
+             buy|pay 关键词   +4
+           全部为 0 分（没有一个是下单特征）时才退回原链接，并在字段上留痕，便于排查。 */
+        const buyCand = (pg.text.match(/href=["']([^"']*(?:buy|order|goods|goodsId=|pid=|uid=)[^"']*)["']/gi) || [])
           .map(function (x) { return absUrl(x.replace(/^href=["']|["']$/gi, ''), one); })
-          .filter(function (u) { return u && !isAssetUrl(u); })[0];
-        const buyHref = buyCand || one;
+          .filter(function (u) { return u && !isAssetUrl(u); })
+          .map(function (u) {
+            var sc = 0;
+            if (/\/order(\/|\?|$)/i.test(u)) sc += 10;
+            if (/[?&]uid=/i.test(u)) sc += 6;
+            if (/[?&]pid=/i.test(u)) sc += 6;
+            if (/buy|pay|cart/i.test(u)) sc += 4;
+            return { u: u, sc: sc };
+          })
+          .sort(function (a2, b2) { return b2.sc - a2.sc; });
+        const buyHref = (buyCand[0] && buyCand[0].sc > 0) ? buyCand[0].u : one;
         /* v546p：京东/淘宝这类站，服务端拿到的常常是「登录墙 / 站点首页」而不是商品本身——
            标题是站点名、一张商品图都没有。这种别报成功，说清楚，让老板换「粘贴」。 */
         const weak = (!imgs.length) && (!desc || desc.length < 40);

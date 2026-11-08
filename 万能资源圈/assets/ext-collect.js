@@ -692,7 +692,8 @@ var html = String(detailHtml || g.detail_html || '');
 var buyLine = '';
 if (buy) {
 var already = html.indexOf(buy) >= 0;
-if (!already) buyLine = '<p><a href="' + buy + '" target="_blank" rel="noopener">点此前往原平台下单</a></p>';
+
+if (!already) buyLine = '<p><a href="' + buy + '" target="_blank" rel="noopener">' + buy + '</a></p>';
 }
 
 var _ex = {};
@@ -714,6 +715,8 @@ is_online: 1
 if (typeof window.__openEdit !== 'function') { toast('打不开新增资源，请刷新后台再试', 'error'); return; }
 
 try { window.__openEdit(payload); } catch (eOE) { toast('打不开新增资源：' + (eOE && eOE.message || '未知错误'), 'error'); return; }
+
+window.__extReturnAfterEdit = true;
 setTimeout(function () {
 var em = document.getElementById('editMask');
 if (em && em.classList.contains('open')) {
@@ -1076,6 +1079,13 @@ btn.setAttribute('aria-label', on ? '收起平台说明' : '展开平台说明')
 var body = box.querySelector('.extc-pfnote-b');
 if (body) body.style.maxHeight = on ? (body.scrollHeight + 8 + 'px') : '0px';
 });
+
+
+window.__extAfterEditClose = function () {
+if (!window.__extReturnAfterEdit) return;
+window.__extReturnAfterEdit = false;
+try { if (typeof window.__extOpenCollect === 'function') window.__extOpenCollect(); } catch (e) {}
+};
 
 window.__extOpenCollect = open;
 })();
