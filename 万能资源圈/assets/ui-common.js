@@ -1994,17 +1994,6 @@ if (grp.scrollWidth <= avail + 1) break;
 btns[j].classList.add('ico-only');
 }
 
-for (var k = 0; k < btns.length; k++) {
-var bt = btns[k];
-if (bt.classList.contains('ico-only')) continue;
-
-var clipped = bt.scrollWidth > bt.clientWidth + 3;
-if (!clipped) {
-var lab = bt.querySelector('.btn-lab');
-if (lab && lab.scrollWidth > lab.clientWidth + 3) clipped = true;
-}
-if (clipped) bt.classList.add('ico-only');
-}
 }
 } catch (e) { if (window.__silent) window.__silent(e); }
 };
@@ -2476,7 +2465,7 @@ btn.textContent = '';
 btn.appendChild(lab);
 }
 btn.insertAdjacentHTML('afterbegin', svg);
-btn.classList.add('btn-fit');
+
 
 if (pri && !btn.hasAttribute('data-pri')) btn.setAttribute('data-pri', String(pri));
 } catch (e) { if (window.__silent) window.__silent(e); }

@@ -424,7 +424,22 @@ export async function onRequestPost(context) {
             return { u: u, sc: sc };
           })
           .sort(function (a2, b2) { return b2.sc - a2.sc; });
-        const buyHref = (buyCand[0] && buyCand[0].sc > 0) ? buyCand[0].u : one;
+        let buyHref = (buyCand[0] && buyCand[0].sc > 0) ? buyCand[0].u : one;
+        /* v587（第 11 条）：平台配了下单链接模板时，按模板拼——比"猜 href"可靠得多。
+           参数只从「原链接」和「原页面」里取，原链接 itself 一个字符都不改。 */
+        try {
+          const _pf = await env.DB.prepare('SELECT buy_pattern FROM external_platforms WHERE domain=? OR mall_url LIKE ?')
+            .bind(new URL(one).hostname, '%' + new URL(one).hostname + '%').first();
+          const _tpl = (_pf && String(_pf.buy_pattern || '').trim()) || '';
+          if (_tpl) {
+            const _u = new URL(one);
+            const _k = _u.searchParams.get('k') || _u.searchParams.get('uid') || '';
+            const _pidM = pg.text.match(/[?&]pid=(\d+)/i) || pg.text.match(/["']pid["']\s*[:=]\s*["']?(\d+)/i);
+            const _pid = _pidM ? _pidM[1] : '';
+            let _built = _tpl.replace(/\{k\}/g, _k).replace(/\{pid\}/g, _pid).replace(/\{url\}/g, one);
+            if (_k || _pid) buyHref = _built;   /* 模板里用到的参数至少要有一个有着落才采用 */
+          }
+        } catch (eTpl) {}
         /* v546p：京东/淘宝这类站，服务端拿到的常常是「登录墙 / 站点首页」而不是商品本身——
            标题是站点名、一张商品图都没有。这种别报成功，说清楚，让老板换「粘贴」。 */
         const weak = (!imgs.length) && (!desc || desc.length < 40);
@@ -923,6 +938,14 @@ export async function ensureCollect(env) {
   try { await env.DB.prepare('ALTER TABLE external_goods ADD COLUMN missing INTEGER NOT NULL DEFAULT 0').run(); } catch (e) {}
   try { await env.DB.prepare('ALTER TABLE external_goods ADD COLUMN auto_hidden INTEGER NOT NULL DEFAULT 0').run(); } catch (e) {}
   try { await env.DB.prepare('ALTER TABLE external_platforms ADD COLUMN auto_hide INTEGER NOT NULL DEFAULT 1').run(); } catch (e) {}
+  /* v587 用户 11-08（第 11 条）：下单链接模板。
+     很多平台的下单页是 JS 动态拼的，服务端抓 HTML 抓不到那条链接（实测夏沐号卡：页面里只有
+     onclick="openPopup('good?pid=1954')"，没有任何 order href）。
+     但它们有规律：https://kk.sviphk.cn/order/index?uid={k}&pid={pid}
+       {k}   = 你给我的那条链接里的 k 参数（= 分销 uid）
+       {pid} = 页面里商品的 pid
+     所以让平台自己配一条模板，采集时按模板拼——参数全部**取自原链接和原页面**，不改原链接一个字符。 */
+  try { await env.DB.prepare("ALTER TABLE external_platforms ADD COLUMN buy_pattern TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
   /* v501：老板要「描述」和「下单链接」——原来只有标题/封面/详情图，上架后还得自己补 */
   try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN descr TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
   try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN buy_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
