@@ -575,14 +575,15 @@ if (!(DATA.announcements || []).length && !String(DATA.announcement || '').trim(
 
 if (window.__skelPhase) {
 
-if (_annSkel) {
-_annSkel.style.display = 'none';
+
 clearTimeout(window.__annSkelT);
-window.__annSkelT = setTimeout(function () { if (window.__skelPhase && _annSkel.isConnected) _annSkel.style.display = ''; }, 250);
-}
+window.__annSkelT = setTimeout(function () {
+if (!window.__skelPhase || !mask.isConnected) return;
+if (_annSkel) _annSkel.style.display = '';
 mask.classList.add('open');
 if (window.setBodyLock) setBodyLock(true);
 window.__annShown = true;
+}, 250);
 return;
 }
 mask.classList.remove('open');

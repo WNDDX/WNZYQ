@@ -1760,6 +1760,20 @@ var _ct = document.querySelector('.rte-count[data-for="setAnnouncement"]');
 if (_ct) { _ct.style.display = ''; slot.appendChild(_ct); }
 }
 document.getElementById('annMask').classList.add('open');
+
+if (!stateAnn.loaded) {
+var _alSkel = document.getElementById('annList');
+if (_alSkel && !_alSkel.querySelector('.ann-item')) {
+var _sk = '';
+for (var _si = 0; _si < 3; _si++) {
+_sk += '<div class="ann-skel-item">'
++ '<span style="width:14px;height:14px;border-radius:4px;background:var(--bg-light,#eef2f7)"></span>'
++ '<span style="flex:1;height:14px;border-radius:4px;background:linear-gradient(90deg,var(--bg-light,#eef2f7) 55%,var(--sk-hi,#e3e9f2) 75%,var(--bg-light,#eef2f7) 95%);background-size:200% 100%;animation:skShimmer 1.2s linear infinite"></span>'
++ '</div>';
+}
+_alSkel.innerHTML = _sk;
+}
+}
 var _draftRestored = false;
 try { _draftRestored = window.__restoreEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); }
 if (_draftRestored && stateAnn.list && stateAnn.list.length) {
