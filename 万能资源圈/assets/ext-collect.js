@@ -981,8 +981,8 @@ var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加
 
 '<label>自动采集 / 自动隐藏</label>' +
 '<div class="extc-sw-row">' +
-'<label class="extc-sw"><input type="checkbox" id="epAutoCollect"' + (!isEdit || Number(p.auto_collect) ? ' checked' : '') + '><i></i><span>每天自动采集</span></label>' +
-'<label class="extc-sw"><input type="checkbox" id="epAutoHide"' + (!isEdit || Number(p.auto_hide) ? ' checked' : '') + '><i></i><span>对方下架时自动隐藏本店资源</span></label>' +
+'<label class="extc-sw"><input type="checkbox" id="epAutoCollect"' + (!isEdit || Number(p.auto_collect) ? ' checked' : '') + '><i><b></b></i><span>每天自动采集</span></label>' +
+'<label class="extc-sw"><input type="checkbox" id="epAutoHide"' + (!isEdit || Number(p.auto_hide) ? ' checked' : '') + '><i><b></b></i><span>对方下架时自动隐藏本店资源</span></label>' +
 '</div>' +
 '<div class="extc-formhint">「自动采集」勾上后，每天第一次有人打开站点时系统在后台把这个平台采一遍；' +
 '「自动隐藏」勾上后，某条资源这次没采到（对方下架/删了），本店对应的已上架资源会一起自动隐藏，对方恢复后自动放出来。</div>' +
