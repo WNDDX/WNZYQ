@@ -1,9 +1,9 @@
 window.__fillHourly = function (raw) {
-var nowH = new Date().getHours();
+
 var byH = {};
 (raw || []).forEach(function (x) { byH[Number(x.hour)] = x; });
 var out = [];
-for (var hi = 0; hi <= nowH; hi++) {
+for (var hi = 0; hi < 24; hi++) {
 var f = byH[hi];
 out.push({ hour: hi, views: (f && f.views) || 0, contacts: (f && f.contacts) || 0, resource_unlocks: (f && f.resource_unlocks) || 0 });
 }
