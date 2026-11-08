@@ -1,17 +1,3 @@
-document.getElementById('addProductBtn').addEventListener('click', function () { openEdit(null); });
-
-function openEdit(p) {
-state.editingId = p ? p.id : null;
-state.editingProduct = p;
-editTitle.textContent = p ? '编辑资源' : '新增资源';
-
-try { if (typeof loadCategories === 'function') loadCategories(true); } catch (eLC) {}
-fillCidSelect(p ? p.cid : 0);
-fillProductForm(p);
-try {
-var dd = __editDrafts[p ? p.id : 'new'];
-if (dd) {
-
 window.__linkify = function (html) {
 try {
 var doc = new DOMParser().parseFromString('<div id="__lw">' + html + '</div>', 'text/html');
@@ -46,6 +32,21 @@ p.replaceChild(frag, n);
 return root.innerHTML;
 } catch (e) { return html; }
 };
+
+
+document.getElementById('addProductBtn').addEventListener('click', function () { openEdit(null); });
+
+function openEdit(p) {
+state.editingId = p ? p.id : null;
+state.editingProduct = p;
+editTitle.textContent = p ? '编辑资源' : '新增资源';
+
+try { if (typeof loadCategories === 'function') loadCategories(true); } catch (eLC) {}
+fillCidSelect(p ? p.cid : 0);
+fillProductForm(p);
+try {
+var dd = __editDrafts[p ? p.id : 'new'];
+if (dd) {
 
 fTitle.value = dd.title || ''; fDesc.value = dd.desc || ''; fDetail.innerHTML = window.__linkify(sanitizeHTML(dd.detail || ''));
 try { if (window.__setCoverImages) window.__setCoverImages(JSON.parse(dd.cover_images || '[]')); } catch(e) { if (window.__setCoverImages) window.__setCoverImages([]); }
