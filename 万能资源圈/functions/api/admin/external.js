@@ -425,6 +425,29 @@ export async function onRequestPost(context) {
           })
           .sort(function (a2, b2) { return b2.sc - a2.sc; });
         let buyHref = (buyCand[0] && buyCand[0].sc > 0) ? buyCand[0].u : one;
+        /* v587 用户 11-08（第 4 条：「我要的是下单链接，不是商品详情链接；下单那个链接也会有商品信息」）：
+           有些平台的下单页是 JS 拼的，HTML 里抓不到（实测夏沐号卡页面 20 个 href 里一个 order 都没有）。
+           它们的下单链接有固定形状，按域名内置规则直接拼：
+             kk.sviphk.cn/order/index?uid={k}&pid={pid}
+               {k}   = 原链接里的 k 参数（= 分销 uid）
+               {pid} = 商品页上的 pid（在 onclick="openPopup('good?pid=1954')" 里）
+           参数全部取自原链接和原页面，原链接一个字都不改。 */
+        const BUY_PATTERNS = {
+          'kk.sviphk.cn': 'https://kk.sviphk.cn/order/index?uid={k}&pid={pid}'
+        };
+        try {
+          const _host = new URL(one).hostname.toLowerCase();
+          const _rule = BUY_PATTERNS[_host];
+          if (_rule) {
+            const _uu = new URL(one);
+            const _kk = _uu.searchParams.get('k') || _uu.searchParams.get('uid') || '';
+            const _pm = pg.text.match(/[?&]pid=(\d+)/i) || pg.text.match(/pid["']?\s*[:=]\s*["']?(\d+)/i);
+            const _pp = _pm ? _pm[1] : '';
+            if (_kk && _pp) {
+              buyHref = _rule.replace(/\{k\}/g, _kk).replace(/\{pid\}/g, _pp);
+            }
+          }
+        } catch (eRule) {}
         /* v587（第 11 条）：平台配了下单链接模板时，按模板拼——比"猜 href"可靠得多。
            参数只从「原链接」和「原页面」里取，原链接 itself 一个字符都不改。 */
         try {
@@ -627,10 +650,24 @@ export async function onRequestPost(context) {
           const hit = await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?')
             .bind(pid, g.title).first();
           if (hit) {
-            /* v587（第 9 条「以对方平台实时信息为主」）：这条还在对方平台上——刷新「最后见到」时间，
-               并把「连续缺失」清零。不刷新的话，下次盘点会把它当成已下架误报。 */
+            /* v587 用户 11-08（第 3 条「我再次点击采集如果有更新的话就要更新啊，我看怎么没变化」）：
+               原来命中就只 dup++ 跳过，对方改了封面/价格/详情，我们这边永远是第一次采到的老样子。
+               现在按「以对方平台实时信息为主」覆盖：封面、描述、下单链接、详情图文、附加参数全部刷新。
+               标题不动——标题是用户可能手动改过的，也是最容易误伤的一项。 */
             dup++;
-            try { await env.DB.prepare("UPDATE external_goods SET last_seen_at=datetime('now'), missing=0 WHERE id=?").bind(hit.id).run(); } catch (eUP) {}
+            const _dHtmlOld = (g.detail && g.detail.length)
+              ? g.detail.map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('')
+              : '';
+            try {
+              await env.DB.prepare(
+                "UPDATE external_goods SET last_seen_at=datetime('now'), missing=0, cover=?, descr=?, buy_url=?, detail_html=?, detail_media=?, extra=? WHERE id=?"
+              ).bind(
+                g.cover || '', g.desc || '', g.buy || g.link || '',
+                _dHtmlOld, JSON.stringify(g.detail || []), g.extra || '', hit.id
+              ).run();
+            } catch (eUP) {
+              try { await env.DB.prepare("UPDATE external_goods SET last_seen_at=datetime('now'), missing=0 WHERE id=?").bind(hit.id).run(); } catch (eUP2) {}
+            }
             continue;
           }
           const dHtml = (g.detail && g.detail.length)
@@ -1058,7 +1095,20 @@ export function parseGoodsList(html, baseUrl) {
        用 link|title 去重挡不住（无链接时 key 相同但 title 相同却各占一条）——实测「联通陕西山暮卡」重复出现。 */
     const key = title.replace(/\s+/g, '');
     if (seen[key]) { if (!seen[key].link && link) seen[key].link = link; continue; }
-    const rec = { title: title.slice(0, 90), cover: src, link: link || '' };
+    /* v587 用户 11-08（第 4 条）：这里原来只产出 link（商品详情页），没有 buy——入库时 g.buy 为空就退回 link，
+       于是「下单链接」永远等于「商品页链接」。现在每条商品单独算下单链接：
+       从它自己的 pid + 原链接里的 k，按平台规则拼出来（参数全部取自原页面和原链接）。 */
+    let _buy = '';
+    try {
+      const _host0 = new URL(baseUrl).hostname.toLowerCase();
+      const _pidM0 = (link || '').match(/[?&]pid=(\d+)/i) || (ctx.match(/[?&]pid=(\d+)/i) || []);
+      const _pid0 = _pidM0 ? _pidM0[1] : '';
+      if (_host0 === 'kk.sviphk.cn' && _pid0) {
+        const _k0 = new URL(baseUrl).searchParams.get('k') || new URL(baseUrl).searchParams.get('uid') || '';
+        if (_k0) _buy = 'https://kk.sviphk.cn/order/index?uid=' + _k0 + '&pid=' + _pid0;
+      }
+    } catch (eBuy) {}
+    const rec = { title: title.slice(0, 90), cover: src, link: link || '', buy: _buy, pid: '' };
     seen[key] = rec;
     out.push(rec);
     if (out.length >= 200) break;

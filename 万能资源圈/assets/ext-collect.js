@@ -328,19 +328,16 @@ if (!bar) return;
 var n = selIds().length;
 bar.innerHTML = '已选 <span class="batch-count">' + n + '</span> 个' +
 '<div class="batch-group">' +
-'<button type="button" class="batch-btn" data-act="batchuse" data-pri="4">上架选中</button>' +
-'<button type="button" class="batch-btn" data-act="selpage" data-pri="3">选中本页</button>' +
-'<button type="button" class="batch-btn danger" data-act="delbatch" data-pri="2">批量删除</button>' +
-'<button type="button" class="batch-btn" data-act="selnone" data-pri="1">取消选中</button>' +
+
+'<button type="button" class="batch-btn" data-act="batchuse" data-noico="1">上架选中</button>' +
+'<button type="button" class="batch-btn" data-act="selpage" data-noico="1">选中本页</button>' +
+'<button type="button" class="batch-btn danger" data-act="delbatch" data-noico="1">批量删除</button>' +
+'<button type="button" class="batch-btn" data-act="selnone" data-noico="1">取消选中</button>' +
 '</div>';
 
 try {
-var iconMap = { batchuse: 'save', selpage: 'show', delbatch: 'del', selnone: 'hide' };
-var priMap = { batchuse: 5, selpage: 4, delbatch: 3, selnone: 2 };
-Array.prototype.forEach.call(bar.querySelectorAll('.batch-btn'), function (b) {
-var act = b.getAttribute('data-act');
-if (window.__decorateBtn && iconMap[act]) window.__decorateBtn(b, iconMap[act], priMap[act] || 5);
-});
+
+
 } catch (eI) {}
 if (window.__setBatchBar) window.__setBatchBar(bar, n > 0);
 else bar.classList.toggle('show', n > 0);

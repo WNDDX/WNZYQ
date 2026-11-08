@@ -193,7 +193,14 @@ var childBox = row.nextElementSibling;
 var expanded = childBox.classList.toggle('show');
 row.classList.toggle('cp-expanded', expanded);
 
-childBox.style.maxHeight = expanded ? (childBox.scrollHeight + 'px') : '0px';
+
+if (expanded) {
+childBox.style.maxHeight = '0px';
+void childBox.offsetHeight;
+childBox.style.maxHeight = childBox.scrollHeight + 'px';
+} else {
+childBox.style.maxHeight = '0px';
+}
 
 
 if (expanded) {
