@@ -2619,7 +2619,12 @@ onPage: function (p) { window.__ctPage = p; if (window.__lastInfo) render(window
 try {
 var _pnl = document.getElementById('ctDetailPanel');
 var _itm = document.getElementById('ctDetailItem');
-if (_pnl && _itm && _itm.classList.contains('open')) _pnl.style.maxHeight = (_pnl.scrollHeight + 24) + 'px';
+if (_pnl && _itm && _itm.classList.contains('open')) {
+
+_pnl.style.height = '';
+var _h = _pnl.scrollHeight + 24;
+_pnl.style.height = _h + 'px';
+}
 } catch (eH) { if (window.__silent) window.__silent(eH); }
 }
 function fetchInfo(cb, who) {
@@ -2674,7 +2679,15 @@ var willOpen = !item.classList.contains('open');
 item.classList.toggle('open', willOpen);
 
 var panel = item.querySelector('.info-panel');
-if (panel) panel.style.maxHeight = willOpen ? (panel.scrollHeight + 24 + 'px') : '0px';
+if (panel) {
+if (willOpen) {
+panel.style.height = '0px';
+void panel.offsetHeight;
+panel.style.height = (panel.scrollHeight + 24) + 'px';
+} else {
+panel.style.height = '0px';
+}
+}
 fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 if (window.__haptic) window.__haptic();
 });
