@@ -1391,6 +1391,8 @@ var _mdSkel = document.getElementById('modalSkeleton'); if (_mdSkel) _mdSkel.sty
 var _covArr = Array.isArray(p.coverImages) ? p.coverImages : (p.img ? [p.img] : []);
 renderCarousel(document.getElementById('modalCarousel'), document.getElementById('modalCcTrack'), document.getElementById('modalCcDots'), modalCover, _covArr);
 var _mainImg = _covArr[0] || p.img || '';
+
+try { modalCover.alt = (p.title ? p.title + ' 封面图' : '资源封面图'); } catch (eAlt) {}
 if (_covArr.length <= 1) {
 loadImg(modalCover, _mainImg);
 modalCover.style.cursor = 'zoom-in';
