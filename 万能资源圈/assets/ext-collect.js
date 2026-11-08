@@ -403,6 +403,10 @@ return '<div class="extc-card' + (on ? ' on' : '') + (used ? ' is-used' : '') + 
 '<span class="extc-ck">' + (on ? '✓' : '') + '</span>' +
 '</div>' +
 '<div class="extc-t" title="' + esc(g.title) + '">' + esc(g.title) + '</div>' +
+
+(Number(g.missing || 0) >= 2
+? '<div class="extc-gone">⚠ 对方已下架' + (Number(g.auto_hidden) ? '（本店已自动隐藏）' : '') + '</div>'
+: '') +
 '<div class="extc-m">' + esc(g.platform || '未归平台') + '</div>' +
 '<div class="extc-ops">' +
 '<button type="button" class="row-btn primary" data-act="use">' + (used ? '再上架' : '上架') + '</button>' +

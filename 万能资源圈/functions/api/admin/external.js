@@ -611,7 +611,13 @@ export async function onRequestPost(context) {
         try {
           const hit = await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?')
             .bind(pid, g.title).first();
-          if (hit) { dup++; continue; }
+          if (hit) {
+            /* v587（第 9 条「以对方平台实时信息为主」）：这条还在对方平台上——刷新「最后见到」时间，
+               并把「连续缺失」清零。不刷新的话，下次盘点会把它当成已下架误报。 */
+            dup++;
+            try { await env.DB.prepare("UPDATE external_goods SET last_seen_at=datetime('now'), missing=0 WHERE id=?").bind(hit.id).run(); } catch (eUP) {}
+            continue;
+          }
           const dHtml = (g.detail && g.detail.length)
             ? g.detail.map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('')
             : '';
@@ -625,8 +631,47 @@ export async function onRequestPost(context) {
       if (fixedAddr) {
         try { await env.DB.prepare('UPDATE external_platforms SET mall_url=? WHERE id=?').bind(fixedAddr, pid).run(); } catch (e) {}
       }
+      /* ===== v587 用户 11-08（第 9 条）：采完做一次盘点 =====
+         「以对方平台实时信息为主」——这次没采到的，说明对方那边可能没了。
+         判定口径：
+           ① 只盘「采到过的」（last_seen_at 非空），老数据第一次采之前不算缺失，避免误报
+           ② 最后一次见到早于 5 分钟前 → missing + 1（5 分钟是给同一次采集留的余量）
+           ③ 连续 2 次缺失才认定「对方已下架」——1 次可能是网络抖动或对方临时抽风
+           ④ 平台开了 auto_hide 且这条已经上架过 → 把我们这边的资源也自动藏起来
+        不清空、不删除：数据还在，只是标记 + 隐藏，对方恢复后下次采集会自动恢复。 */
+      let _missMarked = 0, _autoHidden = 0;
+      try {
+        const _upd = await env.DB.prepare(
+          "UPDATE external_goods SET missing = missing + 1 WHERE platform_id = ? AND last_seen_at <> '' AND last_seen_at < datetime('now', '-5 minutes') AND missing < 99"
+        ).bind(pid).run();
+        _missMarked = (_upd && _upd.meta && _upd.meta.changes) || 0;
+        /* 上次见到过、这次又见到 → 恢复：清零缺失，并把系统自动藏的资源放出来 */
+        try {
+          const _back = await env.DB.prepare(
+            "SELECT id, used_product_id FROM external_goods WHERE platform_id = ? AND missing = 0 AND auto_hidden = 1"
+          ).bind(pid).all();
+          for (const g of (_back.results || [])) {
+            if (g.used_product_id) {
+              try { await env.DB.prepare('UPDATE products SET is_hidden = 0 WHERE id = ?').bind(g.used_product_id).run(); } catch (eB1) {}
+            }
+            try { await env.DB.prepare('UPDATE external_goods SET auto_hidden = 0 WHERE id = ?').bind(g.id).run(); } catch (eB2) {}
+          }
+        } catch (eBack) {}
+        if (p && Number(p.auto_hide)) {
+          const _bad = await env.DB.prepare(
+            "SELECT id, used_product_id FROM external_goods WHERE platform_id = ? AND missing >= 2 AND used_product_id > 0 AND auto_hidden = 0"
+          ).bind(pid).all();
+          for (const g of (_bad.results || [])) {
+            try { await env.DB.prepare('UPDATE products SET is_hidden = 1 WHERE id = ?').bind(g.used_product_id).run(); } catch (eH1) {}
+            try { await env.DB.prepare('UPDATE external_goods SET auto_hidden = 1 WHERE id = ?').bind(g.id).run(); } catch (eH2) {}
+            _autoHidden++;
+          }
+        }
+      } catch (eAudit) {}
+
       return json({
         ok: true, found: list.length, added, dup, saved: cap, bytes: pg.text.length,
+        missing_marked: _missMarked, auto_hidden: _autoHidden,
         via: via, fixed_addr: fixedAddr, own_params: _ownN, own_links: _ownList,
         samples: list.slice(0, 5).map(function (x) { return x.title; })
       });
@@ -869,6 +914,15 @@ export async function ensureCollect(env) {
   /* v530：定时采集——每个平台可单独开关；last_auto_at 记录上次自动采的时间 */
   try { await env.DB.prepare('ALTER TABLE external_platforms ADD COLUMN auto_collect INTEGER NOT NULL DEFAULT 0').run(); } catch (e) {}
   try { await env.DB.prepare("ALTER TABLE external_platforms ADD COLUMN last_auto_at TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  /* v587 用户 11-08（第 9 条）：「以对方平台实时信息为主」
+     · last_seen_at  最后一次在对方平台「还看得到」的时间——用来判断谁消失了
+     · missing       连续采不到的轮次。1 次可能是网络抖动，连续 2 次才认定下架
+     · auto_hidden   是否被系统自动隐藏（用于恢复时区分「人手动藏的」和「系统藏的」）
+     · auto_hide     平台级开关：采到对方下架时，是否自动把我们也藏起来 */
+  try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN last_seen_at TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
+  try { await env.DB.prepare('ALTER TABLE external_goods ADD COLUMN missing INTEGER NOT NULL DEFAULT 0').run(); } catch (e) {}
+  try { await env.DB.prepare('ALTER TABLE external_goods ADD COLUMN auto_hidden INTEGER NOT NULL DEFAULT 0').run(); } catch (e) {}
+  try { await env.DB.prepare('ALTER TABLE external_platforms ADD COLUMN auto_hide INTEGER NOT NULL DEFAULT 1').run(); } catch (e) {}
   /* v501：老板要「描述」和「下单链接」——原来只有标题/封面/详情图，上架后还得自己补 */
   try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN descr TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
   try { await env.DB.prepare("ALTER TABLE external_goods ADD COLUMN buy_url TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
