@@ -688,7 +688,7 @@ export async function onRequestPost(context) {
          判定口径：
            ① 只盘「采到过的」（last_seen_at 非空），老数据第一次采之前不算缺失，避免误报
            ② 最后一次见到早于 5 分钟前 → missing + 1（5 分钟是给同一次采集留的余量）
-           ③ 连续 2 次缺失才认定「对方已下架」——1 次可能是网络抖动或对方临时抽风
+           ③ **1 次缺失就认定「对方已下架」**（用户 2026-11-09 明确要求：宁可误报也别漏报，宁可我们这边先藏起来）
            ④ 平台开了 auto_hide 且这条已经上架过 → 把我们这边的资源也自动藏起来
         不清空、不删除：数据还在，只是标记 + 隐藏，对方恢复后下次采集会自动恢复。 */
       let _missMarked = 0, _autoHidden = 0;
@@ -711,7 +711,7 @@ export async function onRequestPost(context) {
         } catch (eBack) {}
         if (p && Number(p.auto_hide)) {
           const _bad = await env.DB.prepare(
-            "SELECT id, used_product_id FROM external_goods WHERE platform_id = ? AND missing >= 2 AND used_product_id > 0 AND auto_hidden = 0"
+            "SELECT id, used_product_id FROM external_goods WHERE platform_id = ? AND missing >= 1 AND used_product_id > 0 AND auto_hidden = 0"
           ).bind(pid).all();
           for (const g of (_bad.results || [])) {
             try { await env.DB.prepare('UPDATE products SET is_hidden = 1 WHERE id = ?').bind(g.used_product_id).run(); } catch (eH1) {}

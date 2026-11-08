@@ -401,7 +401,7 @@ return '<div class="extc-card' + (on ? ' on' : '') + (used ? ' is-used' : '') + 
 '</div>' +
 '<div class="extc-t" title="' + esc(g.title) + '">' + esc(g.title) + '</div>' +
 
-(Number(g.missing || 0) >= 2
+(Number(g.missing || 0) >= 1
 ? '<div class="extc-gone">⚠ 对方已下架' + (Number(g.auto_hidden) ? '（本店已自动隐藏）' : '') + '</div>'
 : '') +
 '<div class="extc-m">' + esc(g.platform || '未归平台') + '</div>' +
@@ -979,8 +979,13 @@ var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加
 '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="https://... 点「手机登录」复制过来的地址">' +
 '<div class="extc-formhint">只填<b>手机登录</b>那一行链接（点「打开平台」直接到登录页），不填就跳商城。</div>' +
 
-'' +
-'<div class="extc-formhint">勾上就行，不用配任何东西：每天第一次有人打开站点时，系统在后台自动采一遍（和自带的「清理 60 天前数据」同一个机制）。不勾就只能手动点「采集」。</div>' +
+'<label>自动采集 / 自动隐藏</label>' +
+'<div class="extc-sw-row">' +
+'<label class="extc-sw"><input type="checkbox" id="epAutoCollect"' + (!isEdit || Number(p.auto_collect) ? ' checked' : '') + '><i></i><span>每天自动采集</span></label>' +
+'<label class="extc-sw"><input type="checkbox" id="epAutoHide"' + (!isEdit || Number(p.auto_hide) ? ' checked' : '') + '><i></i><span>对方下架时自动隐藏本店资源</span></label>' +
+'</div>' +
+'<div class="extc-formhint">「自动采集」勾上后，每天第一次有人打开站点时系统在后台把这个平台采一遍；' +
+'「自动隐藏」勾上后，某条资源这次没采到（对方下架/删了），本店对应的已上架资源会一起自动隐藏，对方恢复后自动放出来。</div>' +
 '<label>我的说明</label>' +
 '<div id="epNoteHost"></div>' +
 '<div class="extc-formhint">写给自己看的：账号、结算规则、注意事项。支持加粗、颜色、表格、插图。</div>',
@@ -997,7 +1002,8 @@ id: isEdit ? p.id : 0,
 name: m.querySelector('#epName').value.trim(),
 mall_url: m.querySelector('#epMall').value.trim(),
 login_url: m.querySelector('#epAdmin').value.trim(),
-auto_collect: 1,
+auto_collect: m.querySelector('#epAutoCollect') && m.querySelector('#epAutoCollect').checked ? 1 : 0,
+auto_hide: m.querySelector('#epAutoHide') && m.querySelector('#epAutoHide').checked ? 1 : 0,
 note: ed ? ed.innerHTML.slice(0, 20000) : ''
 };
 if (!body.name) { toast('平台名不能为空', 'error'); return; }
@@ -1007,10 +1013,10 @@ if (r && r.ok) {
 toast(window.T('saved'), 'success');
 if (isEdit) {
 S.platforms.forEach(function (x) {
-if (Number(x.id) === Number(p.id)) { x.name = body.name; x.note = body.note; x.mall_url = body.mall_url; x.login_url = body.login_url; x.auto_collect = body.auto_collect; }
+if (Number(x.id) === Number(p.id)) { x.name = body.name; x.note = body.note; x.mall_url = body.mall_url; x.login_url = body.login_url; x.auto_collect = body.auto_collect; x.auto_hide = body.auto_hide; }
 });
 } else if (r.id) {
-S.platforms.push({ id: r.id, name: body.name, mall_url: body.mall_url, login_url: body.login_url, note: body.note, auto_collect: body.auto_collect });
+S.platforms.push({ id: r.id, name: body.name, mall_url: body.mall_url, login_url: body.login_url, note: body.note, auto_collect: body.auto_collect, auto_hide: body.auto_hide });
 S.curPf = r.id;
 }
 closeM(m);
