@@ -283,8 +283,8 @@ g.appendChild(ln);
 var lines = [{ text: fmtPointLabel(d.day), color: '#555', center: true }];
 [
 { name: '浏览', key: 'views', color: '#1976D2' },
-{ name: '咨询客服', key: 'contacts', color: '#ff9900' },
-{ name: '资源码解锁', key: 'resource_unlocks', color: '#4CAF50' }
+{ name: '咨询', key: 'contacts', color: '#ff9900' },
+{ name: '解锁', key: 'resource_unlocks', color: '#4CAF50' }
 ].forEach(function (s) {
 var txt = s.name + ': ' + (d[s.key] || 0);
 var prevTxt = (lineHover.hasPrev && p && p[i]) ? '（上期 ' + (p[i][s.key] || 0) + '）' : '';
@@ -380,8 +380,8 @@ html += '<text x="' + px + '" y="' + (H - 8) + '" text-anchor="middle" font-size
 if (hasPrev) {
 var seriesPrev = [
 { key: 'views', color: '#1976D2', name: '浏览' },
-{ key: 'contacts', color: '#ff9900', name: '咨询客服' },
-{ key: 'resource_unlocks', color: '#4CAF50', name: '资源码解锁' }
+{ key: 'contacts', color: '#ff9900', name: '咨询' },
+{ key: 'resource_unlocks', color: '#4CAF50', name: '解锁' }
 ];
 seriesPrev.forEach(function (s) {
 var pPrev = '';
@@ -523,10 +523,10 @@ var iRows = [['所属资源', '类型', '资源码', '发放时间', '状态', '
 iRows.push([__xl(it.product_title), __xl(it.variant_name), __xl(it.code), L(it.issued_at), __xl(it.status), it.remaining_days || 0, it.bound_at ? L(it.bound_at) : '']);
 });
 sheets.push({ name: '发码记录', rows: iRows });
-var tRows = [['日期', '浏览量', '咨询客服', '资源码解锁']];
+var tRows = [['日期', '浏览量', '咨询', '解锁']];
 (res.trend || []).forEach(function (d) { tRows.push([__xl(d.day), d.views || 0, d.contacts || 0, d.resource_unlocks || 0]); });
 sheets.push({ name: '每日趋势', rows: tRows });
-var sRows = [['资源名称', '浏览量', '咨询客服', '资源码解锁', '绑定设备']];
+var sRows = [['资源名称', '浏览量', '咨询', '解锁', '绑定设备']];
 (res.byProduct || []).forEach(function (p) { sRows.push([__xl(p.title), p.views || 0, p.contacts || 0, p.resource_unlocks || 0, p.bindings || 0]); });
 sheets.push({ name: '按资源统计', rows: sRows });
 var rRows = [['时间', '访问类型', '资源', 'IP']];
@@ -592,8 +592,8 @@ var cards = [
 { label: '显示资源', num: ov.online || 0 },
 { label: '隐藏资源', num: ov.hidden || 0 },
 { label: '总浏览', num: ov.views || 0, prev: ovp ? (ovp.views || 0) : null },
-{ label: '咨询客服', num: ov.contacts || 0, prev: ovp ? (ovp.contacts || 0) : null },
-{ label: '资源码解锁', num: ov.resource_unlocks || 0, prev: ovp ? (ovp.resource_unlocks || 0) : null },
+{ label: '咨询', num: ov.contacts || 0, prev: ovp ? (ovp.contacts || 0) : null },
+{ label: '解锁', num: ov.resource_unlocks || 0, prev: ovp ? (ovp.resource_unlocks || 0) : null },
 ];
 var cbox = document.getElementById('statCards');
 cbox.innerHTML = '';

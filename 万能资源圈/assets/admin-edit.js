@@ -11,7 +11,43 @@ fillProductForm(p);
 try {
 var dd = __editDrafts[p ? p.id : 'new'];
 if (dd) {
-fTitle.value = dd.title || ''; fDesc.value = dd.desc || ''; fDetail.innerHTML = sanitizeHTML(dd.detail || '');
+
+window.__linkify = function (html) {
+try {
+var doc = new DOMParser().parseFromString('<div id="__lw">' + html + '</div>', 'text/html');
+var root = doc.getElementById('__lw');
+if (!root) return html;
+var walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+var nodes = [];
+while (walker.nextNode()) nodes.push(walker.currentNode);
+nodes.forEach(function (n) {
+var p = n.parentNode;
+if (p && p.tagName === 'A') return;
+var v = n.nodeValue || '';
+if (v.indexOf('http') < 0) return;
+var parts = v.split(/(https?:\/\/[^\s<>"'，。；）】\]]+)/g);
+if (parts.length < 2) return;
+var frag = doc.createDocumentFragment();
+parts.forEach(function (t) {
+if (!t) return;
+if (/^https?:\/\//.test(t)) {
+var a = doc.createElement('a');
+a.setAttribute('href', t);
+a.setAttribute('target', '_blank');
+a.setAttribute('rel', 'noopener');
+a.textContent = t;
+frag.appendChild(a);
+} else {
+frag.appendChild(doc.createTextNode(t));
+}
+});
+p.replaceChild(frag, n);
+});
+return root.innerHTML;
+} catch (e) { return html; }
+};
+
+fTitle.value = dd.title || ''; fDesc.value = dd.desc || ''; fDetail.innerHTML = window.__linkify(sanitizeHTML(dd.detail || ''));
 try { if (window.__setCoverImages) window.__setCoverImages(JSON.parse(dd.cover_images || '[]')); } catch(e) { if (window.__setCoverImages) window.__setCoverImages([]); }
 }
 } catch (e) { if (window.__silent) window.__silent(e); }
@@ -33,7 +69,7 @@ fTitle.value = p ? (p.title || '') : '';
 clearFieldErr(fTitle);
 clearFieldErr(document.getElementById('fCidDisplay'));
 fDesc.value = p ? (p.desc || '') : '';
-fDetail.innerHTML = p ? sanitizeHTML(p.detail || '') : '';
+fDetail.innerHTML = p ? window.__linkify(sanitizeHTML(p.detail || '')) : '';
 var _covArr = p ? (p.coverImages || (p.img ? [p.img] : [])) : [];
 if (window.__setCoverImages) window.__setCoverImages(_covArr);
 else { fImg.value = p ? (p.img || '') : ''; }
