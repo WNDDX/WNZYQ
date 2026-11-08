@@ -31,7 +31,26 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 @keyframes skShimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 </style>
 <link rel="stylesheet" href="/assets/ui-common.css">
-  <script>/* v389-1：深色模式纯跟随设备系统（不再读取/存储手动偏好） */(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>
+  <script>/* v587 用户 11-08（错误页首帧闪深色）同一根因，四页统一：
+   首帧主题只判一次，而纠正要等 motion.js 加载完——有些系统早期会把 prefers-color-scheme
+   先报成 dark、稍后才稳定，导致首帧深色、加载完才恢复。这里在渲染前连判三次（0/60/180ms）。 */
+(function () {
+  try {
+    var mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    if (!mq) return;
+    var apply = function () {
+      var root = document.documentElement;
+      if (mq.matches) root.setAttribute('data-theme', 'dark');
+      else root.removeAttribute('data-theme');
+    };
+    apply();
+    if (mq.addEventListener) mq.addEventListener('change', apply);
+    else if (mq.addListener) mq.addListener(apply);
+    setTimeout(apply, 0);
+    setTimeout(apply, 60);
+    setTimeout(apply, 180);
+  } catch (e) {}
+})();</script>
 <style>/* v436：首屏画布保底——外层 CSS 到位前 html 画布即正确深浅色，杜绝首次加载闪深色/闪白（深色由头部主题脚本先行置 data-theme 联动） */html{color-scheme:light;background:#f2f7fd}html[data-theme="dark"]{color-scheme:dark;background:#0e1621}</style>
 <link rel="stylesheet" href="/assets/motion.css">
   <link rel="manifest" href="/manifest.json">
