@@ -1,3 +1,15 @@
+window.__fillHourly = function (raw) {
+var nowH = new Date().getHours();
+var byH = {};
+(raw || []).forEach(function (x) { byH[Number(x.hour)] = x; });
+var out = [];
+for (var hi = 0; hi <= nowH; hi++) {
+var f = byH[hi];
+out.push({ hour: hi, views: (f && f.views) || 0, contacts: (f && f.contacts) || 0, resource_unlocks: (f && f.resource_unlocks) || 0 });
+}
+return out;
+};
+
 var _bindingsVariant = null;
 var __bindingsCache = {};
 function __saveBindingsCache() { try { sessionStorage.setItem('wnzyq_admin_bindings', JSON.stringify(__bindingsCache)); } catch (e) { if (window.__silent) window.__silent(e); } }
@@ -708,10 +720,10 @@ var allTrendPrev = res.trend_prev || [];
 var days = state.statsDays || 7;
 var trendData, trendPrev;
 if (res.hourly && res.hourly.length) {
-trendData = res.hourly.map(function (h) {
+trendData = window.__fillHourly(res.hourly).map(function (h) {
 return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
 });
-trendPrev = (res.hourly_prev && res.hourly_prev.length === res.hourly.length) ? res.hourly_prev.map(function (h) {
+trendPrev = (res.hourly_prev && res.hourly_prev.length) ? window.__fillHourly(res.hourly_prev).map(function (h) {
 return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
 }) : null;
 } else {
@@ -749,10 +761,10 @@ var allTrendPrev = res.trend_prev || [];
 var days = state.statsDays || 7;
 var trendData, trendPrev;
 if (res.hourly && res.hourly.length) {
-trendData = res.hourly.map(function (h) {
+trendData = window.__fillHourly(res.hourly).map(function (h) {
 return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
 });
-trendPrev = (res.hourly_prev && res.hourly_prev.length === res.hourly.length) ? res.hourly_prev.map(function (h) {
+trendPrev = (res.hourly_prev && res.hourly_prev.length) ? window.__fillHourly(res.hourly_prev).map(function (h) {
 return { day: String(Number(h.hour)), views: h.views, contacts: h.contacts, resource_unlocks: h.resource_unlocks };
 }) : null;
 } else {

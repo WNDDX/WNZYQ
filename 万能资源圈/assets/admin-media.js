@@ -2507,8 +2507,9 @@ var _m = window.__motion;
 function setDelta(id, n) {
 var el = document.getElementById(id);
 if (!el) return;
-if (_m && n <= 999) _m.countUp(el, n, { prefix: '+', dur: 700 });
-else el.textContent = '+' + fmtNum(n);
+
+if (_m && n <= 999) _m.countUp(el, n, { dur: 700 });
+else el.textContent = fmtNum(n);
 }
 setDelta('ctDBind', d.delta.bind);
 setDelta('ctDContact', d.delta.contact);
