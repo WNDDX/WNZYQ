@@ -1651,7 +1651,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<span class="logs-range-t">时间范围</span>' +
 '<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
 '<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
-'<button type="button" class="logs-rbtn" data-days="30">近30天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
 '</div>' +
 '<div class="logs-body" id="vitalsBody"><div class="extc-loading">正在读取…</div></div>' +
 '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
@@ -1766,7 +1766,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<span class="logs-range-t">时间范围</span>' +
 '<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
 '<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
-'<button type="button" class="logs-rbtn" data-days="30">近30天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
 '<button type="button" class="row-btn" id="errClear" style="margin-left:auto">清空记录</button>' +
 '</div>' +
 '<div class="logs-daily" id="errSum"><div class="logs-d-empty">正在读取…</div></div>' +
@@ -1911,7 +1911,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<span class="logs-range-t">时间范围</span>' +
 '<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
 '<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
-'<button type="button" class="logs-rbtn" data-days="30">近30天</button>' +
+'<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
 
 '<button type="button" class="row-btn logs-exp" id="logsExport">导出 Excel</button>' +
 '</div>' +
@@ -1935,7 +1935,7 @@ setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBody
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
 
 var page = 1, q = '', days = 7, who = '';
-var RANGE_TXT = { 1: '1天', 7: '7天', 30: '近30天' };
+var RANGE_TXT = { 1: '1天', 7: '7天', 30: '30天' };
 function bjTime(v) {
 var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
 if (isNaN(d.getTime())) return String(v || '');
@@ -2130,8 +2130,9 @@ var panel = document.getElementById('panel-settings');
 if (panel && !document.getElementById('batchImportBtn')) {
 
 
+
 var btnHtml = function (id, lab, extra) {
-return '<button type="button" class="row-btn" id="' + id + '"' + (extra || '') + '>' + lab + '</button>';
+return '<button type="button" class="row-btn" id="' + id + '" data-noico="1"' + (extra || '') + '>' + lab + '</button>';
 };
 var row = function (lab, btnStr) { return '<div class="setting-row is-inline"><label>' + lab + '</label>' + btnStr + '</div>'; };
 var mkGroup = function (title, rowsHtml) {
@@ -2141,10 +2142,12 @@ g.innerHTML = '<h3>' + title + '</h3>' + rowsHtml;
 panel.appendChild(g);
 return g;
 };
-mkGroup('内容管理', row('批量导入（Excel 一次导多条）', btnHtml('batchImportBtn', '批量导入', '', 1))
+mkGroup('内容管理',
+row('资源采集（从别家平台抓资源，挑着上架）', btnHtml('openExtCollectBtn', '资源采集', ' data-perm="external.view"'))
++ row('批量导入（Excel 一次导多条）', btnHtml('batchImportBtn', '批量导入', '', 1))
 + row('回收站点（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站点'))
-+ row('每天自动采集（录进去的平台全部自动采）', btnHtml('cronBtn', '自动采集')));
-panel.querySelector('#cronBtn').addEventListener('click', function () { openCronHelp(); });
+);
+
 mkGroup('系统维护',
 row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1))
 + row('前端报错（访客页面出错会自动记下来）', btnHtml('errLogBtn', '前端报错', ' data-perm="sensitive.super"'))

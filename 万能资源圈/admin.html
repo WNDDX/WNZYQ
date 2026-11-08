@@ -188,7 +188,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <div class="time-filter">
                 <button class="time-btn active" data-days="1">1天</button>
                 <button class="time-btn" data-days="7">7天</button>
-                <button class="time-btn" data-days="30">近30天</button>
+                <button class="time-btn" data-days="30">30天</button>
               </div>
               <!-- R68：对比上期键独立于时间档组（1/7/30天三键一组不动），紧跟其后；复用应用键样式；文字随状态切换：关闭=对比上期 / 开启=显示本期 -->
               <button class="btn-blue btn-inline cmp-btn" id="cmpPrevBtn" title="开启后卡片小字、折线虚线、柱状浅色对比柱及悬浮数值显示与上期的对比；再点一次恢复只看本期">对比上期</button>
@@ -382,11 +382,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         <div class="setting-group">
           <h3>基本设置</h3>
           <!-- v384：「设置信息」单入口键（与「设置公告」同款）——点击打开弹窗，弹窗内三行（绿/蓝/青键+右缘三角），展开配置二维码+链接，各行独立保存 -->
-          <!-- v490：资源采集（老板：统一叫资源；放在平台设置里，一个按键点出弹窗） -->
-          <div class="setting-row is-inline">
-            <label>资源采集（从别家平台抓资源，挑着上架）</label>
-            <button type="button" class="row-btn" id="openExtCollectBtn" data-perm="external.view">资源采集</button>
-          </div>
+          <!-- v587 用户 11-08：资源采集已移到「内容管理」组（它属于内容管理，不属于基本设置） -->
           <div class="setting-row info-setting-row is-inline">
             <label>设置信息</label>
             <button type="button" class="row-btn" id="openInfoBtn">设置信息</button>

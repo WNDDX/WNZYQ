@@ -365,7 +365,18 @@ return empty('没有符合条件的资源', '换个平台、清掉搜索词或�
 }
 var n = selIds().length;
 var cur = S.platforms.filter(function (p) { return Number(p.id) === Number(S.curPf); })[0];
-var pfNote = cur && cur.note ? '<div class="extc-pfnote"><b>' + esc(cur.name) + ' 的说明</b><div class="extc-pfnote-b">' + cur.note + '</div></div>' : '';
+
+var pfNote = cur && cur.note
+? '<div class="extc-pfnote">'
++ '<div class="extc-pfnote-hd">'
++ '<b>' + esc(cur.name) + ' 的说明</b>'
++ '<button type="button" class="extc-note-fold" aria-expanded="false" aria-label="展开平台说明">'
++ '<svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>'
++ '</button>'
++ '</div>'
++ '<div class="extc-pfnote-b">' + cur.note + '</div>'
++ '</div>'
+: '';
 
 var head = '<div class="extc-tools">' +
 '<input id="extcQ" class="input extc-search" type="search" autocomplete="off" placeholder="搜索标题、平台或链接" value="' + esc(S.q) + '">' +
@@ -1052,5 +1063,19 @@ S.goods.forEach(function (x) { if (Number(x.id) === gid) { x.status = 'used'; x.
 if (S.mask) render();
 });
 };
+
+document.addEventListener('click', function (e) {
+var btn = e.target.closest && e.target.closest('.extc-note-fold');
+if (!btn) return;
+e.preventDefault();
+var box = btn.closest('.extc-pfnote');
+if (!box) return;
+var on = box.classList.toggle('open');
+btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+btn.setAttribute('aria-label', on ? '收起平台说明' : '展开平台说明');
+var body = box.querySelector('.extc-pfnote-b');
+if (body) body.style.maxHeight = on ? (body.scrollHeight + 8 + 'px') : '0px';
+});
+
 window.__extOpenCollect = open;
 })();
