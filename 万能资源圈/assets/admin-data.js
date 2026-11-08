@@ -283,8 +283,8 @@ g.appendChild(ln);
 var lines = [{ text: fmtPointLabel(d.day), color: '#555', center: true }];
 [
 { name: '浏览', key: 'views', color: '#1976D2' },
-{ name: '咨询', key: 'contacts', color: '#ff9900' },
-{ name: '解锁', key: 'resource_unlocks', color: '#4CAF50' }
+{ name: '咨询客服', key: 'contacts', color: '#ff9900' },
+{ name: '资源码解锁', key: 'resource_unlocks', color: '#4CAF50' }
 ].forEach(function (s) {
 var txt = s.name + ': ' + (d[s.key] || 0);
 var prevTxt = (lineHover.hasPrev && p && p[i]) ? '（上期 ' + (p[i][s.key] || 0) + '）' : '';
