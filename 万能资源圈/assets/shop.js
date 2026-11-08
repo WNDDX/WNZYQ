@@ -984,7 +984,8 @@ img.classList.add('media-fail');
 loadImg(img, __thumb, __orig);
 }
 
-if (__thumb && __orig && __thumb !== __orig) { img.srcset = __thumb + ' 1x, ' + __orig + ' 2x'; img.sizes = '(max-width:600px) 50vw, (max-width:900px) 33vw, 20vw'; }
+
+if (__thumb && __orig && __thumb !== __orig && (window.devicePixelRatio || 1) > 1.2) { img.srcset = __thumb + ' 1x, ' + __orig + ' 2x'; img.sizes = '(max-width:600px) 50vw, (max-width:900px) 33vw, 20vw'; }
 var body = document.createElement('div');
 body.className = 'card-body';
 var title = document.createElement('div');
