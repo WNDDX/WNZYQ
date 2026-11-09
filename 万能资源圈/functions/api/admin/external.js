@@ -1163,7 +1163,48 @@ export function parseGoodsList(html, baseUrl) {
     out.push(rec);
     if (out.length >= 200) break;
   }
+  /* v591（老板 11-09 第 9 条）：图文路径抓不到 / 抓太少时，再补一轮「按商品链接抓」——
+     很多发卡站、独立商城的列表卡是纯 `<a>文字</a>`，没有商品图，图文规则一条都命中不了。 */
+  if (out.length < 3) {
+    try {
+      parseGoodsByLinks(html, baseUrl).forEach(function (r) {
+        const k2 = String(r.title || '').replace(/\s+/g, '');
+        if (!k2) return;
+        if (out.some(function (x) { return String(x.title || '').replace(/\s+/g, '') === k2; })) return;
+        out.push(r);
+      });
+    } catch (eL) {}
+  }
   return out;
+}
+
+/* v591：「按链接抓」——从商品类 <a> 里取标题/封面/链接。
+   只认商品形态的地址（product/goods/item/detail/buy/pid=/id=数字），
+   并且要求整页至少 3 个，避免把导航、页脚当商品。 */
+export function parseGoodsByLinks(html, baseUrl) {
+  const out = [], seen = {};
+  const A_RE = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]{0,500}?)<\/a>/gi;
+  const NAV = /^(首页|全部|更多|上一页|下一页|登录|注册|购物车|我的|订单|搜索|分类|关于|联系我们|帮助|公告|店铺首页|会员|充值|退出|返回|查看全部)$/;
+  let m;
+  while ((m = A_RE.exec(html))) {
+    const href = absUrl(m[1], baseUrl);
+    if (!href || !/^https?:/i.test(href)) continue;
+    if (!/(\/product|\/products|\/goods|\/item|\/detail|\/buy|\/p\/|\/sku|pid=|goodsId=|[?&]id=\d+)/i.test(href)) continue;
+    const inner = m[2];
+    const parts = stripTags(inner).split('\u0001').map(plainText).filter(Boolean);
+    let title = parts.filter(function (t) { return t.length >= 2 && t.length <= 60 && !NAV.test(t); })[0] || '';
+    if (!title) {
+      const alt = (inner.match(/alt=["']([^"']{2,60})["']/i) || [])[1] || '';
+      title = String(alt).trim();
+    }
+    if (!title) continue;
+    const img = (inner.match(/<img[^>]*(?:data-src|data-original|data-lazy-src|src)=["']([^"']+)["']/i) || [])[1] || '';
+    if (seen[href]) continue;
+    seen[href] = 1;
+    out.push({ title: title.slice(0, 90), cover: absUrl(img, baseUrl), link: href, buy: href, pid: '', gone: 0 });
+    if (out.length >= 200) break;
+  }
+  return out.length >= 3 ? out : [];
 }
 
 /* ================= v501 商站接口适配器（老板：「很多平台都采集不到」） =================
@@ -1195,6 +1236,15 @@ function haokaCodes(u) {
     const segs = o.pathname.split('/').filter(Boolean);
     const last = segs[segs.length - 1] || '';
     if (last && !/^(shop|index|h5|web|login|s|r|m|product)$/i.test(last)) add(last);
+    /* v591（老板 11-09 第 9 条，多平台实测补齐）：hash 路由里的段也要当渠道码候选——
+       实测飞利猫是 #/index/0e99ec3bec8eec3d/1，真正的店铺码是中间那段 16 位十六进制，
+       按 pathname 只能拿到 "1"（拿 "1" 去问接口当然要不到东西）。 */
+    try {
+      const hs = String(o.hash || '').replace(/^#\/?/, '').split('?')[0].split('/').filter(Boolean);
+      hs.forEach(function (seg) {
+        if (/^[A-Za-z0-9_-]{10,64}$/.test(seg) && !/^\d+$/.test(seg)) add(seg);
+      });
+    } catch (eHS) {}
     ['promoCode', 'promocode', 'code', 'id', 'agent_id', 'mall_id', 'userCode', 'shop_id'].forEach(function (k) {
       add(o.searchParams.get(k));
     });
