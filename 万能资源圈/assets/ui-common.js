@@ -3045,7 +3045,10 @@ if (sc && d.s) { try { sc.scrollTop = d.s; } catch (e2) {} }
 return hit;
 }
 function blank(mask) {
-fields(mask).forEach(function (el) {
+[].slice.call(mask.querySelectorAll('input,select,textarea,[contenteditable="true"]')).filter(function (el) {
+var t = (el.type || '').toLowerCase();
+return t !== 'password' && t !== 'file' && t !== 'hidden';
+}).forEach(function (el) {
 try {
 if (el.isContentEditable) { if (el.innerHTML.trim()) el.innerHTML = ''; }
 else if (el.type === 'checkbox' || el.type === 'radio') el.checked = el.defaultChecked;
@@ -3119,10 +3122,11 @@ if (e.key !== 'Escape' || e.__escPre) return;
 var open = document.querySelectorAll('.modal-mask.open');
 if (!open.length) return;
 e.__escPre = true;
+e.stopPropagation();
 var top = open[open.length - 1];
 if (top.id === 'editMask') { try { top.click(); return; } catch (e1) {} }
 window.__closeMaskTop(top, { keep: true });
-});
+}, true);
 document.addEventListener('click', function (e) {
 var t = e.target;
 if (!t || !t.closest) return;
