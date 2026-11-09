@@ -157,7 +157,9 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
   </div>
 
   <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
-  <div class="modal-mask ann-modal" id="annModal">
+  <!-- v587 用户 11-09 深入测试：公告弹窗原来一个 aria 属性都没有——读屏用户不会被告知"弹出了对话框"，
+       也不知道这个框叫什么。按资源详情弹窗同一套口径补上：role/aria-modal/aria-labelledby。 -->
+  <div class="modal-mask ann-modal" id="annModal" role="dialog" aria-modal="true" aria-labelledby="annTitleTab">
     <div class="ann-box" onclick="event.stopPropagation()">
       <button aria-label="关闭" class="modal-close-x" id="annCloseX" type="button" onclick="closeAnnModal()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="showAnnDefault()">公告<i class="dot-badge" hidden></i></button>

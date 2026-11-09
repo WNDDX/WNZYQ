@@ -129,6 +129,15 @@ export async function onRequestPut(context) {
   const detailImages = JSON.stringify(Array.isArray(b.detailImages) ? b.detailImages : []);
   const detailVideos = JSON.stringify(Array.isArray(b.detailVideos) ? b.detailVideos : []);
 
+  /* v587 用户 11-09 深入测试：接口层补两道校验。
+     ① 标题不能为空——前端有 validateField，但接口层原来什么都不查，空标题能直接入库，
+        入库后前台卡片没有标题、详情弹窗 aria-labelledby 指向空元素（读屏念不出这是哪个资源）。
+     ② PUT 是整体覆盖语义（UPDATE ... SET title=?），只传部分字段会把没传的清空——
+        实测我自己传 {schedule_off,is_online} 就把标题和分类清成了空。这里对「什么都没传」的情况直接拒绝，
+        避免脚本或第三方集成误清数据。 */
+  const _inTitle = String(b.title || '').trim();
+  if (!_inTitle) return json({ ok: false, msg: '资源标题不能为空' }, 400);
+
   await env.DB.prepare(
     `UPDATE products SET cid=?, title=?, "desc"=?, detail=?, img=?,
        cover_images=?, detail_images=?, detail_videos=?, contact_url=?, contact_qr=?, price=?, is_online=?, is_hidden=?,
