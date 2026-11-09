@@ -1558,31 +1558,31 @@ html += '<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:6
 var sp = d.split || {};
 var rows = [['手机（<768px）', sp.mobile], ['桌面', sp.desktop]];
 html += '<table class="vitals-table" style="margin-bottom:16px">' +
-'<tr style="color:var(--text-light,#666);font-size:12px"><th style="text-align:left;font-weight:400;padding:4px 6px">设备</th>' +
-'<th style="text-align:right;font-weight:400;padding:4px 6px">样本</th><th style="text-align:right;font-weight:400;padding:4px 6px">LCP</th>' +
-'<th style="text-align:right;font-weight:400;padding:4px 6px">CLS</th><th style="text-align:right;font-weight:400;padding:4px 6px">INP</th></tr>';
+'<tr style="color:var(--text-light,#666);font-size:12px"><th style="text-align:left;font-weight:400">设备</th>' +
+'<th style="text-align:right;font-weight:400">样本</th><th style="text-align:right;font-weight:400">LCP</th>' +
+'<th style="text-align:right;font-weight:400">CLS</th><th style="text-align:right;font-weight:400">INP</th></tr>';
 rows.forEach(function (r) {
 var m = r[1] || {};
-html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td style="padding:6px">' + r[0] + '</td>' +
-'<td style="text-align:right;padding:6px">' + (m.n || 0) + '</td>' +
-'<td style="text-align:right;padding:6px">' + (m.lcp == null ? '—' : m.lcp) + '</td>' +
-'<td style="text-align:right;padding:6px">' + (m.cls == null ? '—' : m.cls) + '</td>' +
-'<td style="text-align:right;padding:6px">' + (m.inp == null ? '—' : m.inp) + '</td></tr>';
+html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td>' + r[0] + '</td>' +
+'<td style="text-align:right">' + (m.n || 0) + '</td>' +
+'<td style="text-align:right">' + (m.lcp == null ? '—' : m.lcp) + '</td>' +
+'<td style="text-align:right">' + (m.cls == null ? '—' : m.cls) + '</td>' +
+'<td style="text-align:right">' + (m.inp == null ? '—' : m.inp) + '</td></tr>';
 });
 html += '</table>';
 if ((d.pages || []).length) {
 html += '<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:6px">按页面（样本多的排前面）</div>';
 html += '<table class="vitals-table">' +
-'<tr style="color:var(--text-light,#666);font-size:12px"><th style="text-align:left;font-weight:400;padding:4px 6px">页面</th>' +
-'<th style="text-align:right;font-weight:400;padding:4px 6px">样本</th><th style="text-align:right;font-weight:400;padding:4px 6px">LCP</th>' +
-'<th style="text-align:right;font-weight:400;padding:4px 6px">CLS</th><th style="text-align:right;font-weight:400;padding:4px 6px">TTFB</th></tr>';
+'<tr style="color:var(--text-light,#666);font-size:12px"><th style="text-align:left;font-weight:400">页面</th>' +
+'<th style="text-align:right;font-weight:400">样本</th><th style="text-align:right;font-weight:400">LCP</th>' +
+'<th style="text-align:right;font-weight:400">CLS</th><th style="text-align:right;font-weight:400">TTFB</th></tr>';
 d.pages.forEach(function (p) {
-html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td style="padding:6px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.path +
+html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.path +
 (p.test ? ' <span style="color:var(--text-light,#666);font-size:12px">测试</span>' : '') + '</td>' +
-'<td style="text-align:right;padding:6px">' + p.n + '</td>' +
-'<td style="text-align:right;padding:6px">' + (p.lcp == null ? '—' : p.lcp) + '</td>' +
-'<td style="text-align:right;padding:6px">' + (p.cls == null ? '—' : p.cls) + '</td>' +
-'<td style="text-align:right;padding:6px">' + (p.ttfb == null ? '—' : p.ttfb) + '</td></tr>';
+'<td style="text-align:right">' + p.n + '</td>' +
+'<td style="text-align:right">' + (p.lcp == null ? '—' : p.lcp) + '</td>' +
+'<td style="text-align:right">' + (p.cls == null ? '—' : p.cls) + '</td>' +
+'<td style="text-align:right">' + (p.ttfb == null ? '—' : p.ttfb) + '</td></tr>';
 });
 html += '</table>';
 }

@@ -3005,8 +3005,10 @@ document.addEventListener('keydown', function (e) {
 if (e.key !== 'Escape' || e.__escPre) return;
 var open = document.querySelectorAll('.modal-mask.open');
 if (!open.length) return;
-window.__closeMaskTop(open[open.length - 1]);
+var _top = open[open.length - 1];
 e.__escPre = true;
+if (_top.id === 'editMask') { try { _top.click(); return; } catch (e1) {} }
+window.__closeMaskTop(_top);
 });
 document.addEventListener('click', function (e) {
 var m = e.target;
@@ -3014,4 +3016,4 @@ if (!m || !m.classList || !m.classList.contains('modal-mask')) return;
 if (!m.classList.contains('open')) return;
 if (m.hasAttribute('data-no-backdrop')) return;
 window.__closeMaskTop(m);
-}, true);
+});
