@@ -290,6 +290,27 @@ var body = m.querySelector('#extcBody');
 if (S.tab === 'goods') body.innerHTML = renderGoods();
 else if (S.tab === 'runs') body.innerHTML = renderRuns();
 else body.innerHTML = renderPlatforms();
+
+(function bindLazyThumbs() {
+var imgs = [].slice.call(document.querySelectorAll('#extcBody .extc-thumb img[data-src]'));
+if (!imgs.length) return;
+if (!('IntersectionObserver' in window)) {
+imgs.forEach(function (i) { i.src = i.getAttribute('data-src'); i.removeAttribute('data-src'); });
+return;
+}
+if (window.__extcThumbIO) { try { window.__extcThumbIO.disconnect(); } catch (eIO) {} }
+window.__extcThumbIO = new IntersectionObserver(function (entries) {
+entries.forEach(function (en) {
+if (!en.isIntersecting) return;
+var i = en.target;
+var u = i.getAttribute('data-src');
+if (u) { i.src = u; i.removeAttribute('data-src'); }
+try { window.__extcThumbIO.unobserve(i); } catch (eU) {}
+});
+}, { root: null, rootMargin: '200px 0px', threshold: 0.01 });
+imgs.forEach(function (i) { window.__extcThumbIO.observe(i); });
+})();
+
 bindSelects(body);
 bindSelects(m);
 
@@ -397,7 +418,7 @@ var on = !!S.sel[g.id];
 var used = g.status === 'used';
 return '<div class="extc-card' + (on ? ' on' : '') + (used ? ' is-used' : '') + '" data-id="' + g.id + '">' +
 '<div class="extc-thumb" data-act="pick">' +
-(g.cover ? '<img src="' + esc(g.cover) + '" alt="' + esc(g.title || '资源封面') + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' : '<span class="extc-noimg">无图</span>') +
+(g.cover ? '<img data-src="' + esc('/api/img-proxy?u=' + encodeURIComponent(g.cover)) + '" alt="' + esc(g.title || '资源封面') + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' : '<span class="extc-noimg">无图</span>') +
 (used ? '<span class="extc-used">已上架</span>' : '') +
 '<span class="extc-ck">' + (on ? '✓' : '') + '</span>' +
 '</div>' +
