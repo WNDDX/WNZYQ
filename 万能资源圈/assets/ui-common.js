@@ -2978,7 +2978,7 @@ el.style.overflow = prevOverflow;
 window.__zTop = window.__zTop || 5000;
 window.__raiseMask = function (el) {
 if (!el || !el.classList) return;
-try { el.style.zIndex = String(++window.__zTop); } catch (e) {}
+try { el.style.setProperty('z-index', String(++window.__zTop), 'important'); } catch (e) {}
 };
 (function () {
 if (!window.MutationObserver || !document.body) return;
@@ -2988,8 +2988,30 @@ for (var i = 0; i < list.length; i++) {
 var el = list[i].target;
 if (!el || !el.classList || !el.classList.contains('modal-mask')) continue;
 if (el.classList.contains('open')) window.__raiseMask(el);
-else if (el.style && el.style.zIndex) el.style.zIndex = '';
+else if (el.style && el.style.zIndex) el.style.removeProperty('z-index');
 }
 }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
 } catch (e) {}
 })();
+window.__closeMaskTop = function (mask) {
+if (!mask || !mask.classList) return false;
+var btn = mask.querySelector('[data-close], [data-x]');
+if (btn) { try { btn.click(); return true; } catch (e) {} }
+mask.classList.remove('open');
+try { if (window.syncBodyLock) window.syncBodyLock(); else if (window.setBodyLock) window.setBodyLock(false); } catch (e2) {}
+return true;
+};
+document.addEventListener('keydown', function (e) {
+if (e.key !== 'Escape' || e.__escPre) return;
+var open = document.querySelectorAll('.modal-mask.open');
+if (!open.length) return;
+window.__closeMaskTop(open[open.length - 1]);
+e.__escPre = true;
+});
+document.addEventListener('click', function (e) {
+var m = e.target;
+if (!m || !m.classList || !m.classList.contains('modal-mask')) return;
+if (!m.classList.contains('open')) return;
+if (m.hasAttribute('data-no-backdrop')) return;
+window.__closeMaskTop(m);
+}, true);
