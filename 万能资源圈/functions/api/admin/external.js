@@ -368,6 +368,32 @@ export async function onRequestPost(context) {
       return json({ ok: true });
     }
 
+    /* ---------- v591：只探不写（老板 11-09 第 9 条）----------
+       给「这个地址到底能不能采」和平台横评用：拉一次页面、走同一套解析，只返回条数和样例，
+       一条都不入库。这样测十个八个平台不会污染采集库。 */
+    if (op === 'probe') {
+      const authP = await requirePerm(env, request, 'external.fetch');
+      if (authP instanceof Response) return authP;
+      const one = String(b.url || '').trim().slice(0, 1200);
+      if (!/^https?:\/\//i.test(one)) return json({ ok: false, msg: '链接要以 http 开头' }, 400);
+      const out = { ok: true, url: one, via: '', count: 0, samples: [], bytes: 0 };
+      let ha = null;
+      try { ha = await tryHaokaWeb(one); } catch (eH) {}
+      if (ha && ha.items && ha.items.length) {
+        out.via = 'api'; out.count = ha.items.length;
+        out.samples = ha.items.slice(0, 5).map(function (x) { return x.title; });
+        return json(out);
+      }
+      const pg = await fetchPage(one, 15000);
+      out.bytes = (pg.text || '').length;
+      if (!pg.ok) return json({ ok: false, msg: '打不开（HTTP ' + pg.status + '）', url: one, bytes: out.bytes }, 200);
+      const list = parseGoodsList(pg.text, one);
+      out.via = 'html'; out.count = list.length;
+      out.gone = list.filter(function (x) { return x.gone; }).length;
+      out.samples = list.slice(0, 5).map(function (x) { return x.title; });
+      return json(out);
+    }
+
     /* ---------- v470 采集：抓某平台的商城页 → 商品池 ---------- */
     if (op === 'collect' || op === 'find.one') {
       const authC = await requirePerm(env, request, 'external.fetch');
@@ -709,7 +735,12 @@ export async function onRequestPost(context) {
       try {
         if (_partial) throw { __skip: 1 };
         const _upd = await env.DB.prepare(
-          "UPDATE external_goods SET missing = missing + 1 WHERE platform_id = ? AND last_seen_at <> '' AND last_seen_at < datetime('now', '-5 minutes') AND missing < 99"
+          /* v591（老板 11-09 第 6 条「很多下架了，你还有数据的」）：
+             原来这条判据要求 `last_seen_at <> ''`——也就是「从没被采集确认过」的条目**永远不参与判定**。
+             实测平台 1 有 3 条正是这种（当初手工/导入进来的，last_seen_at 为空），对方页面早没了，
+             我们这边永远显示在架。现在把空值也纳入：本次采到的条目已被刷新成当前时间，
+             剩下的空值/旧时间就说明「这次确实没见到」→ 记一次缺失。 */
+          "UPDATE external_goods SET missing = missing + 1 WHERE platform_id = ? AND (last_seen_at = '' OR last_seen_at < datetime('now', '-5 minutes')) AND missing < 99"
         ).bind(pid).run();
         _missMarked = (_upd && _upd.meta && _upd.meta.changes) || 0;
         /* 上次见到过、这次又见到 → 恢复：清零缺失，并把系统自动藏的资源放出来 */
