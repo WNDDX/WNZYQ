@@ -619,15 +619,8 @@ sessionStorage.setItem('wnzyq_ann_session', '1');
 window.__annShown = true;
 renderAnnContent();
 
-var _annDelayMs = 2500;
-setTimeout(function () {
-try {
-var _mm = document.getElementById('modalMask');
-if (_mm && _mm.classList.contains('open')) return;
 mask.classList.add('open');
 setBodyLock(true);
-} catch (e2) { if (window.__silent) window.__silent(e2); }
-}, _annDelayMs);
 } catch (e) { if (window.__silent) window.__silent(e); }
 }
 
