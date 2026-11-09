@@ -332,6 +332,8 @@ bar.innerHTML = '已选 <span class="batch-count">' + n + '</span> 个' +
 '<button type="button" class="batch-btn" data-act="batchuse" data-noico="1">上架选中</button>' +
 '<button type="button" class="batch-btn" data-act="selpage" data-noico="1">选中本页</button>' +
 '<button type="button" class="batch-btn danger" data-act="delbatch" data-noico="1">批量删除</button>' +
+
+'<button type="button" class="batch-btn" data-act="delunused" data-noico="1">清理未上架</button>' +
 '<button type="button" class="batch-btn" data-act="selnone" data-noico="1">取消选中</button>' +
 '</div>';
 
@@ -533,6 +535,24 @@ done();
 Promise.all(ids.map(function (x) { return api('admin/external', { method: 'POST', body: { op: 'goods.del', id: x } }); })).then(function () {
 S.goods = S.goods.filter(function (g) { return ids.indexOf(Number(g.id)) < 0; });
 S.sel = {}; render(); toast('已删除 ' + ids.length + ' 条', 'success');
+});
+});
+return;
+}
+if (act === 'delunused') {
+var unused = (S.goods || []).filter(function (g) { return g.status !== 'used'; });
+if (!unused.length) { toast('没有可清理的：采集到的资源要么已上架，要么库是空的', 'info'); return; }
+if (!window.showConfirm) { toast(window.T('needRefresh'), 'error'); return; }
+window.showConfirm('清理未上架',
+'将删除 ' + unused.length + ' 条「还没上架」的采集记录。已上架的 ' + ((S.goods || []).length - unused.length) + ' 条不会动，对方平台也不受影响。',
+function (done) {
+done();
+var uids = unused.map(function (g) { return Number(g.id); });
+Promise.all(uids.map(function (x) { return api('admin/external', { method: 'POST', body: { op: 'goods.del', id: x } }); }))
+.then(function () {
+S.goods = (S.goods || []).filter(function (g) { return uids.indexOf(Number(g.id)) < 0; });
+S.sel = {}; render();
+toast('已清理 ' + uids.length + ' 条未上架记录', 'success');
 });
 });
 return;

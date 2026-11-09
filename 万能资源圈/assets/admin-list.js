@@ -447,7 +447,10 @@ row.classList.add('stagger-in'); row.style.animationDelay = Math.min(idx * 20, 1
 row.draggable = false;
 row.dataset.id = p.id;
 row.dataset.idx = idx;
-var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.tabIndex = 0; handle.setAttribute('role', 'button'); handle.setAttribute('aria-label', '拖动排序（也可用方向键）');
+var handle = document.createElement('span'); handle.className = 'drag-handle'; handle.tabIndex = 0; handle.setAttribute('role', 'button');
+
+handle.draggable = true;
+handle.setAttribute('aria-label', '拖动排序（也可用方向键）');
 handle.addEventListener('keydown', function (ev) { if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') { ev.preventDefault(); var row = handle.closest('[data-id]'); var sib = ev.key === 'ArrowUp' ? row.previousElementSibling : row.nextElementSibling; if (row && sib && row.parentNode) { row.parentNode.insertBefore(ev.key === 'ArrowUp' ? row : sib, ev.key === 'ArrowUp' ? sib : row); try { toast('已' + (ev.key === 'ArrowUp' ? '上移' : '下移') + '，记得保存顺序', 'success'); } catch (e) { if (window.__silent) window.__silent(e); } } } });; handle.draggable = true; handle.title = '拖动排序'; handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.8"/><circle cx="15" cy="5" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="19" r="1.8"/><circle cx="15" cy="19" r="1.8"/></svg>'; row.appendChild(handle);
 
 row.addEventListener('dragstart', function (e) {
