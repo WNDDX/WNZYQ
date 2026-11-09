@@ -971,18 +971,16 @@ if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('
 
 
 function gotoEditProduct(pid) {
-var mask = document.getElementById('sysCheckMask');
-if (mask) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
-var tab = document.querySelector('.tab[data-tab="products"]'); if (tab) tab.click();
-setTimeout(function () {
-var row = document.querySelector('#productList [data-id="' + pid + '"]');
-if (!row) { if (window.showToast) window.showToast('该资源不在当前列表页（可能被筛选/翻页），请找到后编辑', 'info'); return; }
-try { row.scrollIntoView({ block: 'center' }); } catch (e1) {}
-row.style.boxShadow = '0 0 0 3px rgba(30,136,229,.55)'; row.style.transition = 'box-shadow .3s';
-setTimeout(function () { row.style.boxShadow = ''; }, 1600);
-var eb = null; Array.prototype.forEach.call(row.querySelectorAll('button'), function (b) { if (!eb && b.textContent.trim() === '编辑') eb = b; });
-if (eb) eb.click(); else if (window.showToast) window.showToast('已定位到资源行', 'success');
-}, 500);
+
+if (!pid) return;
+if (typeof window.__openEdit !== 'function') { if (window.showToast) window.showToast('编辑弹窗还没准备好，稍等再点', 'error'); return; }
+fetch('/api/admin/products/' + encodeURIComponent(pid), { credentials: 'include' })
+.then(function (r) { return r.json(); })
+.then(function (j) {
+if (!j || !j.ok || !j.product) { if (window.showToast) window.showToast((j && j.msg) || '这条资源取不到（可能已删除）', 'error'); return; }
+window.__openEdit(j.product);
+})
+.catch(function () { if (window.showToast) window.showToast('打开编辑失败，检查网络后重试', 'error'); });
 }
 
 
@@ -1649,8 +1647,8 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '判定线：LCP ≤2500ms 良好、CLS ≤0.1 良好、INP ≤200ms 良好。新接口，要有人访问过才会有数据。</p>' +
 '<div class="logs-range" id="vitalsRange">' +
 '<span class="logs-range-t">时间范围</span>' +
-'<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
-'<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
+'<button type="button" class="logs-rbtn on" data-days="1">1天</button>' +
+'<button type="button" class="logs-rbtn" data-days="7">7天</button>' +
 '<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
 '</div>' +
 '<div class="logs-body" id="vitalsBody"><div class="extc-loading">正在读取…</div></div>' +
@@ -1764,8 +1762,8 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<p class="imp-lead">访客的页面出错时会自动记在这里（同一句话一次访问只报一次，最多 8 条）。<b>这里为空代表线上一直没出错</b>；有记录说明真的有人在某个页面撞上了，按「次数」从多到少看。</p>' +
 '<div class="logs-range" id="errRange">' +
 '<span class="logs-range-t">时间范围</span>' +
-'<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
-'<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
+'<button type="button" class="logs-rbtn on" data-days="1">1天</button>' +
+'<button type="button" class="logs-rbtn" data-days="7">7天</button>' +
 '<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
 '<button type="button" class="row-btn" id="errClear" style="margin-left:auto">清空记录</button>' +
 '</div>' +
@@ -1788,7 +1786,7 @@ setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBody
 };
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
 
-var days = 7, page = 1, q = '';
+var days = 1, page = 1, q = '';
 function bjTime(v) {
 var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
 if (isNaN(d.getTime())) return String(v || '');
@@ -1909,8 +1907,8 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 
 '<div class="logs-range" id="logsRange">' +
 '<span class="logs-range-t">时间范围</span>' +
-'<button type="button" class="logs-rbtn" data-days="1">1天</button>' +
-'<button type="button" class="logs-rbtn on" data-days="7">7天</button>' +
+'<button type="button" class="logs-rbtn on" data-days="1">1天</button>' +
+'<button type="button" class="logs-rbtn" data-days="7">7天</button>' +
 '<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
 
 '<button type="button" class="row-btn logs-exp" id="logsExport">导出 Excel</button>' +
@@ -1934,7 +1932,7 @@ setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBody
 };
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
 
-var page = 1, q = '', days = 7, who = '';
+var page = 1, q = '', days = 1, who = '';
 var RANGE_TXT = { 1: '1天', 7: '7天', 30: '30天' };
 function bjTime(v) {
 var d = new Date(String(v || '').replace(' ', 'T') + 'Z');

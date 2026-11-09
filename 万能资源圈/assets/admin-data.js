@@ -1108,15 +1108,6 @@ return out;
 }
 function renderCategories(list) {
 
-try {
-
-var __catPanel = document.getElementById('panel-categories');
-var __catVisible = __catPanel && __catPanel.style.display !== 'none';
-if (__catVisible && !localStorage.getItem('wnzyq_cat_drag_tip')) {
-localStorage.setItem('wnzyq_cat_drag_tip', '1');
-setTimeout(function () { if (window.showToast) window.showToast('按住左边的六点可以拖动排序', 'info'); }, 600);
-}
-} catch (eT) {}
 var box = document.getElementById('catList'); var _minH = box.offsetHeight; if (_minH > 0) box.style.minHeight = _minH + 'px';
 
 var __q = String(window.__catQ || '').trim().toLowerCase();

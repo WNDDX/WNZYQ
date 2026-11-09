@@ -2392,6 +2392,8 @@ for (var i = 0; i < btns.length; i++) {
 var b = btns[i];
 
 if (b.querySelector('svg')) continue;
+
+if (b.querySelector('.dot-badge, .badge, .wn-badge')) continue;
 if (b.matches(skip) || b.closest('.ctx-menu, .rte-toolbar') || b.querySelector('.btn-ico')) continue;
 var t = (b.textContent || '').trim();
 if (!t) continue;
@@ -2460,9 +2462,23 @@ var lab = btn.querySelector('.btn-lab');
 if (!lab) {
 lab = document.createElement('span');
 lab.className = 'btn-lab';
-lab.textContent = btn.textContent;
+
+var KEEP = '.dot-badge, .badge, .wn-badge, .count, .cnt, .badge-dot, img, video, canvas';
+var kept = [];
+for (var ci = 0; ci < btn.childNodes.length; ci++) {
+var nd = btn.childNodes[ci];
+if (nd.nodeType === 1) {
+if (nd.classList && nd.classList.contains('btn-ico')) continue;
+try { if (nd.matches(KEEP)) { kept.push(nd); continue; } } catch (eK) {}
+lab.textContent += nd.textContent || '';
+} else if (nd.nodeType === 3) {
+lab.textContent += nd.nodeValue || '';
+}
+}
 btn.textContent = '';
 btn.appendChild(lab);
+for (var ki = 0; ki < kept.length; ki++) btn.appendChild(kept[ki]);
+lab.textContent = lab.textContent.trim();
 }
 btn.insertAdjacentHTML('afterbegin', svg);
 

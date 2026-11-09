@@ -940,17 +940,47 @@ var urls = imgs.map(function (t) { return (t.match(/src=["']([^"']+)["']/i) || [
 var all = (g.cover ? [g.cover] : []).concat(urls, media);
 var uniq = [];
 all.forEach(function (u) { if (u && uniq.indexOf(u) < 0) uniq.push(u); });
-mkModal('extcSeeMask', '查看资源', 'modal-wide',
-'<div class="extc-formhint"><b>' + esc(g.title) + '</b><br>' + esc(g.platform || '未归平台') + '</div>' +
-(g.descr ? '<label>描述</label><div class="extc-see-desc">' + esc(g.descr) + '</div>' : '') +
-(g.extra ? '<label>更多信息（对方平台上的参数，填不进资源卡的放这儿）</label><div class="extc-see-desc">' + esc(g.extra) + '</div>' : '') +
-((g.buy_url || g.src_url) ? '<label>下单链接</label><div class="extc-see-desc"><a href="' + esc(g.buy_url || g.src_url) + '" target="_blank" rel="noopener">' + esc(g.buy_url || g.src_url) + '</a></div>' : '') +
-'<div class="extc-seeimgs">' + (uniq.length
+
+(function () {
+var _ex = {};
+try { _ex = JSON.parse(g.extra || '{}') || {}; } catch (eX) { _ex = {}; }
+var _kv = Object.keys(_ex).filter(function (k) { return k !== 'raw' && _ex[k] !== '' && _ex[k] != null; });
+var _rawText = String(_ex.raw || '');
+var _buy = String(g.buy_url || g.src_url || '');
+var _badge = Number(g.missing || 0) >= 1
+? '<span class="extc-badge bad">对方已下架</span>'
+: (g.status === 'used' ? '<span class="extc-badge ok">已上架</span>' : '<span class="extc-badge">未上架</span>');
+var _meta = [esc(g.platform || '未归平台'), g.collected_at ? ('采集于 ' + esc(String(g.collected_at))) : ''].filter(Boolean).join(' · ');
+var NAMES = { price: '价格', pid: '商品号（pid）', k: '店铺参数（k）', title: '原标题', shop: '店铺名', uid: '分销号（uid）' };
+var _kvHtml = _kv.map(function (k) {
+return '<div class="extc-kv-row"><span class="extc-kv-k">' + esc(NAMES[k] || k) + '</span><span class="extc-kv-v">' + esc(String(_ex[k]).slice(0, 400)) + '</span></div>';
+}).join('');
+var _see = '<div class="extc-see-head">' +
+'<div class="extc-see-title">' + esc(g.title) + '</div>' +
+'<div class="extc-see-sub">' + _badge + '<span class="extc-see-meta">' + _meta + '</span></div>' +
+'</div>' +
+(g.descr ? '<div class="extc-sec"><div class="extc-sec-h">描述</div><div class="extc-see-desc">' + esc(g.descr) + '</div></div>' : '') +
+((_kvHtml || _rawText) ? '<div class="extc-sec"><div class="extc-sec-h">对方参数</div>' +
+(_kvHtml ? '<div class="extc-kv">' + _kvHtml + '</div>' : '') +
+(_rawText ? '<details class="extc-raw"><summary>套餐资料全文（' + _rawText.length + ' 字）</summary><div>' + esc(_rawText) + '</div></details>' : '') +
+'</div>' : '') +
+(_buy ? '<div class="extc-sec"><div class="extc-sec-h">下单链接</div><div class="extc-linkrow">' +
+'<a href="' + esc(_buy) + '" target="_blank" rel="noopener">' + esc(_buy) + '</a>' +
+'<button type="button" class="row-btn" data-copy="' + esc(_buy) + '">复制</button></div></div>' : '') +
+'<div class="extc-sec"><div class="extc-sec-h">详情图 <i class="extc-sec-n">' + uniq.length + ' 张</i></div><div class="extc-seeimgs">' + (uniq.length
 ? uniq.map(function (u) { return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.remove()"></a>'; }).join('')
 : (g.__fetching ? '<div class="extc-formhint">正在按原页面地址抓详情图…</div>'
-: '<div class="extc-formhint">这条还没抓到详情图。点下面「补抓详情」我按原页面地址去拿；拿不到就只能用封面。</div>')) + '</div>',
+: '<div class="extc-formhint">这条还没抓到详情图。点下面「补抓详情」我按原页面地址去拿；拿不到就只能用封面。</div>')) + '</div></div>';
+var mSee = mkModal('extcSeeMask', '查看资源', 'modal-wide', _see,
 (uniq.length <= 1 && g.src_url && !g.__fetching ? '<button class="modal-inner-btn" id="seeFetch">补抓详情</button>' : '') +
 '<button class="modal-close" data-x="1">关闭</button>');
+var cp = mSee.querySelector('[data-copy]');
+if (cp) cp.addEventListener('click', function () {
+var t = this.getAttribute('data-copy');
+try { navigator.clipboard.writeText(t); toast('链接已复制', 'success'); }
+catch (e) { try { var i = document.createElement('textarea'); i.value = t; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); toast('链接已复制', 'success'); } catch (e2) { toast('复制失败，手动选中吧', 'error'); } }
+});
+})();
 
 
 if (uniq.length <= 1 && g.src_url && !g.__fetching) {

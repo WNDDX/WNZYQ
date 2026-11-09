@@ -483,7 +483,7 @@ window.__annShown = true;
 renderAnnContent();
 showAnnDefault();
 
-if (window.__annMarkAllRead) window.__annMarkAllRead();
+if (window.__annMarkActiveRead) window.__annMarkActiveRead();
 } catch (e) { if (window.__silent) window.__silent(e); }
 if (window.__haptic) window.__haptic();
 };
@@ -521,6 +521,7 @@ subs.forEach(function (a, i) {
 var t = document.createElement('button');
 t.type = 'button';
 t.className = 'ann-tab';
+t.setAttribute('data-noico', '1');
 t.textContent = a.title || '公告';
 t.dataset.annId = String(a.id);
 var _ad = document.createElement('i'); _ad.className = 'dot-badge'; _ad.hidden = true; t.appendChild(_ad);
@@ -617,10 +618,14 @@ sessionStorage.setItem('wnzyq_ann_session', '1');
 } catch (e) { if (window.__silent) window.__silent(e); }
 }
 window.__annShown = true;
-renderAnnContent();
 
 mask.classList.add('open');
 setBodyLock(true);
+
+try {
+renderAnnContent();
+if (window.__annMarkActiveRead) window.__annMarkActiveRead();
+} catch (e0) { if (window.__silent) window.__silent(e0); }
 } catch (e) { if (window.__silent) window.__silent(e); }
 }
 
@@ -1877,7 +1882,7 @@ var _ta = document.getElementById('topAnn'); var _am = document.getElementById('
 try {
 
 
-var ANN_READ_KEY = 'wnzyq_ann_read2';
+var ANN_READ_KEY = 'wnzyq_ann_read3';
 window.__annFp = function (a) {
 var src = String((a && a.id) || '') + '|' + String((a && a.title) || '') + '|' + String((a && a.content) || '') + '|' + String((a && a.level) || 2);
 var h = 5381;
@@ -1922,6 +1927,15 @@ if (rl.length > 200) rl = rl.slice(-200);
 localStorage.setItem(ANN_READ_KEY, JSON.stringify(rl));
 } catch (e0) { if (window.__silent) window.__silent(e0); }
 if (window.__annUnread) window.__annUnread();
+};
+
+window.__annMarkActiveRead = function () {
+try {
+var act = document.querySelector('#annTabs .ann-tab.active');
+var id = act && act.dataset ? act.dataset.annId : '';
+if (!id) { var tt = document.getElementById('annTitleTab'); id = tt && tt.dataset ? tt.dataset.annId : ''; }
+if (id && window.__annMarkRead) window.__annMarkRead(id, true);
+} catch (e0) { if (window.__silent) window.__silent(e0); }
 };
 window.__annUnread = function () {
 var btn = document.getElementById('topAnn');
