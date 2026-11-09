@@ -1139,7 +1139,13 @@ var ops = canManage && !isMe ? '<button type="button" class="row-btn" data-ua="e
 return '<div class="u-row" data-uid="' + u.id + '" data-pid="' + Number(u.parentId || 0) + '" data-depth="' + it.depth + '">'
 + '<button type="button" class="u-fold' + (hasKids ? '' : ' is-leaf') + (collapsed ? ' collapsed' : '') + '" data-fold="' + u.id + '" aria-label="展开或收起下级"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>'
 + '<span class="u-name" style="margin-left:' + (it.depth * 18) + 'px"><b>' + esc(u.username) + '</b>' + (isMe ? ' <span style="color:var(--blue1);font-size: 12px">（我）</span>' : '')
-+ '<span class="u-sub">' + (u.note ? esc(u.note) + ' · ' : '') + (u.status ? '启用' : '已停用') + (hasKids ? ' · 下级 ' + (u.subtreeCount || 0) + ' 个' : ' · 无下级') + ' · 最近活跃 ' + esc(String(u.lastSeen || '—').slice(0, 16)) + '</span></span>'
++ '<span class="u-tags">'
++ '<span class="u-tag u-tag-role">' + (u.role === 'super' ? '超级管理员' : (Number(u.parentId || 0) ? '子账号' : '管理员')) + '</span>'
++ '<span class="u-tag">' + (u.status ? '启用' : '已停用') + '</span>'
++ '<span class="u-tag">' + (hasKids ? '下级 ' + (u.subtreeCount || 0) + ' 个' : '无下级') + '</span>'
++ '<span class="u-tag">最近活跃 ' + esc(String(u.lastSeen || '—').slice(0, 16)) + '</span>'
++ (u.note ? '<span class="u-tag u-tag-note">' + esc(u.note) + '</span>' : '')
++ '</span></span>'
 + '<span class="u-ops">' + ops + '</span></div>';
 }).join('');
 body.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
@@ -1933,6 +1939,25 @@ setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBody
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
 
 var page = 1, q = '', days = 1, who = '';
+var actF = '', dayF = '', lastSum = null;
+function paintWithSum(sm) { paintSum(sm); }
+function applyRowFilter() {
+var rows = mask.querySelectorAll('#logsBody .log-row');
+var shown = 0;
+rows.forEach(function (r) {
+var a = (r.querySelector('.log-a') || {}).textContent || '';
+var t = (r.querySelector('.log-t') || {}).textContent || '';
+var ok = (!actF || a.replace(/\s+/g, '') === String(actF).replace(/\s+/g, '')) && (!dayF || t.indexOf(dayF) >= 0);
+r.style.display = ok ? '' : 'none';
+if (ok) shown++;
+});
+var body = mask.querySelector('#logsBody'); if (!body) return;
+var emp = body.querySelector('#logsFilterEmpty');
+if (!shown && rows.length) {
+if (!emp) { emp = document.createElement('div'); emp.id = 'logsFilterEmpty'; emp.className = 'logs-d-empty'; body.appendChild(emp); }
+emp.textContent = '本页没有「' + (actF || dayF) + '」的记录，翻页或换时间范围再试';
+} else if (emp) emp.remove();
+}
 var RANGE_TXT = { 1: '1天', 7: '7天', 30: '30天' };
 function bjTime(v) {
 var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
@@ -1945,6 +1970,7 @@ function paintSum(sm) {
 var box = mask.querySelector('#logsDaily');
 if (!box) return;
 sm = sm || {};
+lastSum = sm || {};
 var people = sm.people || [], acts = sm.actions || [], byDay = sm.byDay || [];
 if (!sm.total) {
 box.innerHTML = '<div class="logs-d-empty">' + RANGE_TXT[days] + '内没有操作记录</div>';
@@ -1959,8 +1985,8 @@ return '<button type="button" class="log-who' + (who === p.who ? ' on' : '') + '
 '<span class="lw-bar"><i style="width:' + w + '%"></i></span>' +
 '<b>' + p.n + '</b></button>';
 }).join('');
-var ah = acts.map(function (a) { return '<span class="logs-act">' + esc(a.action || '') + ' <b>' + a.n + '</b></span>'; }).join('');
-var dh = byDay.slice(0, 10).map(function (x) { return '<span class="logs-day">' + esc(String(x.day || '').slice(5)) + ' <b>' + x.n + '</b></span>'; }).join('');
+var ah = acts.map(function (a) { return '<button type="button" class="logs-act' + (actF === a.action ? ' on' : '') + '" data-actf="' + esc(a.action || '') + '">' + esc(a.action || '') + ' <b>' + a.n + '</b></button>'; }).join('');
+var dh = byDay.slice(0, 10).map(function (x) { var _d = String(x.day || '').slice(5); return '<button type="button" class="logs-day' + (dayF === _d ? ' on' : '') + '" data-dayf="' + esc(_d) + '">' + esc(_d) + ' <b>' + x.n + '</b></button>'; }).join('');
 box.innerHTML =
 '<div class="logs-d-head"><b>操作日报 · ' + RANGE_TXT[days] + '</b>' +
 '<span>共 ' + sm.total + ' 条 · ' + people.length + ' 人参与</span>' +
@@ -1997,7 +2023,15 @@ onPage: function (p2) { page = p2; load(); }
 });
 }
 paintSum(d && d.summary);
+applyRowFilter();
 }
+var _daily = mask.querySelector('#logsDaily');
+if (_daily) _daily.addEventListener('click', function (e) {
+var a1 = e.target.closest && e.target.closest('[data-actf]');
+if (a1) { var v1 = a1.getAttribute('data-actf'); actF = (actF === v1) ? '' : v1; paintSum(lastSum || {}); applyRowFilter(); return; }
+var a2 = e.target.closest && e.target.closest('[data-dayf]');
+if (a2) { var v2 = a2.getAttribute('data-dayf'); dayF = (dayF === v2) ? '' : v2; paintSum(lastSum || {}); applyRowFilter(); }
+});
 
 function load() {
 var body = mask.querySelector('#logsBody');

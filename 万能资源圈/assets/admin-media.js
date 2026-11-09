@@ -2622,7 +2622,7 @@ var _itm = document.getElementById('ctDetailItem');
 if (_pnl && _itm && _itm.classList.contains('open')) {
 
 _pnl.style.height = '';
-var _h = _pnl.scrollHeight + 24;
+var _h = _pnl.scrollHeight;
 _pnl.style.height = _h + 'px';
 }
 } catch (eH) { if (window.__silent) window.__silent(eH); }
@@ -2683,7 +2683,7 @@ if (panel) {
 if (willOpen) {
 panel.style.height = '0px';
 void panel.offsetHeight;
-panel.style.height = (panel.scrollHeight + 24) + 'px';
+panel.style.height = (panel.scrollHeight) + 'px';
 } else {
 panel.style.height = '0px';
 }

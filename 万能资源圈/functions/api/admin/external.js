@@ -650,6 +650,10 @@ export async function onRequestPost(context) {
           const hit = await env.DB.prepare('SELECT id FROM external_goods WHERE platform_id=? AND title=?')
             .bind(pid, g.title).first();
           if (hit) {
+            if (g.gone) { /* v590（第 6 条）：对方页面自己标了「已下架/售罄/失效」——按采不到处理 */
+              try { await env.DB.prepare('UPDATE external_goods SET missing = missing + 1 WHERE id=?').bind(hit.id).run(); } catch (eG) {}
+              continue;
+            }
             /* v587 用户 11-08（第 3 条「我再次点击采集如果有更新的话就要更新啊，我看怎么没变化」）：
                原来命中就只 dup++ 跳过，对方改了封面/价格/详情，我们这边永远是第一次采到的老样子。
                现在按「以对方平台实时信息为主」覆盖：封面、描述、下单链接、详情图文、附加参数全部刷新。
@@ -673,6 +677,7 @@ export async function onRequestPost(context) {
           const dHtml = (g.detail && g.detail.length)
             ? g.detail.map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('')
             : '';
+          if (g.gone) continue; /* v590（第 6 条）：新采到的这条页面自己写着已下架，不入库 */
           await env.DB.prepare('INSERT INTO external_goods (platform_id, platform, src_url, title, cover, descr, buy_url, detail_html, detail_media, extra, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
             .bind(pid, p.name, g.link || '', g.title, g.cover, g.desc || '', g.buy || g.link || '', dHtml,
               JSON.stringify(g.detail || []), g.extra || '', auth0.username).run();
@@ -692,7 +697,17 @@ export async function onRequestPost(context) {
            ④ 平台开了 auto_hide 且这条已经上架过 → 把我们这边的资源也自动藏起来
         不清空、不删除：数据还在，只是标记 + 隐藏，对方恢复后下次采集会自动恢复。 */
       let _missMarked = 0, _autoHidden = 0;
+      /* v590（老板 11-09 第 6 条）：分页保护——很多平台一页 20 条、要翻页才全。
+         只抓到第一页就按「没出现＝下架」判定，会把第 2 页起的所有商品误判成下架。
+         规则：这个平台原本有 ≥8 条在架，而这次采到的条数不到原来的 6 成 → 认为没抓全，本轮不判定。 */
+      let _partial = false;
       try {
+        const _alive = await env.DB.prepare("SELECT COUNT(*) AS n FROM external_goods WHERE platform_id=? AND missing=0 AND last_seen_at<>''").bind(pid).first();
+        const _n0 = (_alive && Number(_alive.n)) || 0;
+        if (_n0 >= 8 && list.length < Math.ceil(_n0 * 0.6)) _partial = true;
+      } catch (ePA) {}
+      try {
+        if (_partial) throw { __skip: 1 };
         const _upd = await env.DB.prepare(
           "UPDATE external_goods SET missing = missing + 1 WHERE platform_id = ? AND last_seen_at <> '' AND last_seen_at < datetime('now', '-5 minutes') AND missing < 99"
         ).bind(pid).run();
@@ -723,7 +738,7 @@ export async function onRequestPost(context) {
 
       return json({
         ok: true, found: list.length, added, dup, saved: cap, bytes: pg.text.length,
-        missing_marked: _missMarked, auto_hidden: _autoHidden,
+        missing_marked: _missMarked, auto_hidden: _autoHidden, partial: _partial,
         via: via, fixed_addr: fixedAddr, own_params: _ownN, own_links: _ownList,
         samples: list.slice(0, 5).map(function (x) { return x.title; })
       });
@@ -1108,7 +1123,11 @@ export function parseGoodsList(html, baseUrl) {
         if (_k0) _buy = 'https://kk.sviphk.cn/order/index?uid=' + _k0 + '&pid=' + _pid0;
       }
     } catch (eBuy) {}
-    const rec = { title: title.slice(0, 90), cover: src, link: link || '', buy: _buy, pid: '' };
+    /* v590（老板 11-09 第 6 条）：页面自己写着「已下架/售罄/失效」的，别再当在架商品——
+       直接从记录里带出 gone 标记，入库时按「采不到」处理（不进新库、命中的记一次缺失）。 */
+    const GONE_RE = /已下架|已售罄|售罄|已抢光|已抢完|暂停销售|已失效|已删除|活动结束|该商品不存在|商品已过期/i;
+    const _gone = GONE_RE.test(plainText(ctx)) ? 1 : 0;
+    const rec = { title: title.slice(0, 90), cover: src, link: link || '', buy: _buy, pid: '', gone: _gone };
     seen[key] = rec;
     out.push(rec);
     if (out.length >= 200) break;
