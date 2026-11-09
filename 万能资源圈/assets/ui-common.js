@@ -3069,7 +3069,7 @@ window.__maskDraftDrop = function (mask) {
 if (!mask) return;
 var k = keyOf(mask);
 if (k) delete window.__maskDraft[k];
-setTimeout(function () { try { blank(mask); } catch (e) {} }, 30);
+setTimeout(function () { if (mask.classList.contains('open')) return; try { blank(mask); } catch (e) {} }, 30);
 };
 window.__maskDraftApply = function (mask) {
 if (!mask || SELF_MANAGED[mask.id]) return;
