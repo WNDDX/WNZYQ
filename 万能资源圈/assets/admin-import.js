@@ -1081,10 +1081,17 @@ var wasCollapsed = window.__usCollapsed[id] !== false;
 window.__usCollapsed[id] = !wasCollapsed;
 this.classList.toggle('collapsed', !wasCollapsed);
 this.setAttribute('aria-expanded', wasCollapsed ? 'true' : 'false');
-applyFold();
 });
 });
 applyFold();
+body.querySelectorAll('.u-tags-box').forEach(function (bx) {
+var tg = bx.querySelector('.u-tags');
+if (tg && tg.scrollHeight <= 24) {
+bx.classList.remove('is-clipped');
+var f0 = bx.querySelector('.u-tagfold');
+if (f0) f0.classList.add('is-leaf');
+}
+});
 body.querySelectorAll('[data-tagfold]').forEach(function (b) {
 b.addEventListener('click', function (ev) {
 ev.stopPropagation();
