@@ -2494,9 +2494,10 @@ go.addEventListener('click', function () {
 try { localStorage.removeItem('wnzyq_syscheck_alert'); } catch (e) {}
 mask.classList.remove('open');
 if (dot) dot.hidden = true;
-var tab = document.querySelector('.tab[data-tab="settings"]');
-if (tab) tab.click();
-setTimeout(function () { var icb = document.getElementById('imgCheckBtn'); if (icb) icb.click(); }, 600);
+
+var icb = document.getElementById('imgCheckBtn');
+if (icb) icb.click();
+else if (window.showToast) window.showToast('体检入口没加载出来，刷新页面后再试', 'error');
 });
 }
 
