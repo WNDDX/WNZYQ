@@ -1679,7 +1679,7 @@ e.stopPropagation();
 var _op = item.classList.toggle('cat-open');
 
 var _ag = item.querySelector('.ann-act-group');
-if (_ag) _ag.style.maxHeight = _op ? (_ag.scrollHeight + 'px') : '0px';
+if (_ag) _ag.style.maxHeight = _op ? ((window.__foldHeight ? window.__foldHeight(_ag) : _ag.scrollHeight) + 'px') : '0px';
 });
 item.appendChild(fold);
 annListEl.appendChild(item);

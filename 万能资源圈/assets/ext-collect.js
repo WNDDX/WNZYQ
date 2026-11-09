@@ -1049,6 +1049,7 @@ var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加
 '<label>平台名（必填）</label><input class="input" id="epName" maxlength="40" value="' + esc(isEdit ? p.name : '') + '" placeholder="比如 五湖通信">' +
 '<label>商城地址（对方后台里的「在线商城」那一条）</label><input class="input" id="epMall" maxlength="600" value="' + esc(isEdit ? (p.mall_url || '') : '') + '" placeholder="https://... 点「在线商城」复制过来的地址">' +
 '<div class="extc-formhint">只填<b>在线商城</b>那一行链接（资源从这里抓）。不要填「注册」「资料」那种地址；填错我也会自动试同域的列表页。</div>' +
+'<div class="extc-probe-row"><button type="button" class="row-btn" id="epProbe">试采这个地址</button><span class="extc-probe-tip" id="epProbeTip">不确定能不能采？先点这里试一下（不会入库）</span></div>' +
 '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="https://... 点「手机登录」复制过来的地址">' +
 '<div class="extc-formhint">只填<b>手机登录</b>那一行链接（点「打开平台」直接到登录页），不填就跳商城。</div>' +
 
@@ -1067,6 +1068,26 @@ function () {
 mountRte(m.querySelector('#epNoteHost'), 'epNote', isEdit ? String(p.note || '') : '', '100px');
 });
 
+(function () {
+var pb = m.querySelector('#epProbe'); if (!pb) return;
+pb.addEventListener('click', function () {
+var tip = m.querySelector('#epProbeTip');
+var u = m.querySelector('#epMall').value.trim();
+if (!/^https?:\/\//i.test(u)) { tip.textContent = '先在上面填好商城地址再试'; tip.className = 'extc-probe-tip is-bad'; return; }
+var old = pb.textContent; pb.disabled = true; pb.textContent = '试采中…';
+tip.textContent = '正在试着抓一次…'; tip.className = 'extc-probe-tip';
+api('admin/external', { method: 'POST', body: { op: 'probe', url: u } }).then(function (r) {
+pb.disabled = false; pb.textContent = old;
+if (r && r.ok && Number(r.count) > 0) {
+tip.textContent = '能采：这次拿到 ' + r.count + ' 条' + (r.via ? '（' + (r.via === 'api' ? '对方接口' : '页面解析') + '）' : '') + (r.samples && r.samples[0] ? '，比如「' + r.samples[0] + '」' : '');
+tip.className = 'extc-probe-tip is-ok';
+} else {
+tip.textContent = '采不到：' + ((r && r.msg) || '这个地址解析不出商品，换列表页地址，或用「粘贴」兜底');
+tip.className = 'extc-probe-tip is-bad';
+}
+}).catch(function () { pb.disabled = false; pb.textContent = old; tip.textContent = '试采失败，检查网络后重试'; tip.className = 'extc-probe-tip is-bad'; });
+});
+})();
 m.querySelector('#epSave').addEventListener('click', function () {
 var ed = m.querySelector('#epNote');
 var body = {

@@ -1421,7 +1421,7 @@ var _open = row.classList.toggle('cat-open');
 
 var _cm = row.querySelector('.c-meta');
 if (_cm && getComputedStyle(_cm).display !== 'contents') {
-_cm.style.maxHeight = _open ? (_cm.scrollHeight + 'px') : '0px';
+_cm.style.maxHeight = _open ? ((window.__foldHeight ? window.__foldHeight(_cm) : _cm.scrollHeight) + 'px') : '0px';
 }
 });
 row.appendChild(fold);

@@ -2960,3 +2960,18 @@ if (document.visibilityState === 'hidden') send();
 window.addEventListener('pagehide', send);
 } catch (e) {}
 })();
+window.__foldHeight = function (el, extra) {
+if (!el) return 0;
+var prevMax = el.style.maxHeight;
+var prevOverflow = el.style.overflow;
+try {
+el.style.maxHeight = 'none';
+var h = el.scrollHeight + (extra || 0);
+return h;
+} catch (e) {
+return 0;
+} finally {
+el.style.maxHeight = prevMax;
+el.style.overflow = prevOverflow;
+}
+};
