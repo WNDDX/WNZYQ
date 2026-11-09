@@ -2993,10 +2993,123 @@ else if (el.style && el.style.zIndex) el.style.removeProperty('z-index');
 }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
 } catch (e) {}
 })();
-window.__closeMaskTop = function (mask) {
+window.__maskDraft = window.__maskDraft || {};
+window.__draftKeep = false;
+(function () {
+var SELF_MANAGED = { editMask: 1 };
+function keyOf(mask) {
+if (!mask) return '';
+if (mask.id) return 'id:' + mask.id;
+var t = mask.querySelector('.modal-title');
+return 'tt:' + ((t && t.textContent.trim()) || 'mask');
+}
+function fields(mask) {
+return [].slice.call(mask.querySelectorAll('input,select,textarea,[contenteditable="true"]')).filter(function (el) {
+var t = (el.type || '').toLowerCase();
+return t !== 'password' && t !== 'file' && t !== 'hidden' && el.offsetParent !== null;
+});
+}
+function fkey(el, i) {
+return el.id ? 'id:' + el.id : (el.name ? 'n:' + el.name + ':' + i : 'i:' + i);
+}
+function scrollBox(mask) {
+return mask.querySelector('.logs-body, #logsBody, .modal-body, .extc-body, .ct-list');
+}
+function snapshot(mask) {
+var data = {}, n = 0;
+fields(mask).forEach(function (el, i) {
+var k = fkey(el, i);
+data[k] = el.isContentEditable ? { h: el.innerHTML } : { v: el.value, c: !!el.checked, t: el.type || '' };
+n++;
+});
+var sc = scrollBox(mask);
+return { n: n, d: data, s: sc ? sc.scrollTop : 0, at: Date.now() };
+}
+function restore(mask, d) {
+if (!d) return 0;
+var hit = 0;
+fields(mask).forEach(function (el, i) {
+var r = d.d[fkey(el, i)];
+if (!r || el === document.activeElement) return;
+try {
+if (el.isContentEditable) {
+if (r.h != null && el.innerHTML !== r.h) { el.innerHTML = r.h; hit++; }
+} else {
+if (r.c != null) el.checked = r.c;
+if (r.v != null && el.value !== r.v) { el.value = r.v; hit++; }
+}
+} catch (e) {}
+});
+var sc = scrollBox(mask);
+if (sc && d.s) { try { sc.scrollTop = d.s; } catch (e2) {} }
+return hit;
+}
+function blank(mask) {
+fields(mask).forEach(function (el) {
+try {
+if (el.isContentEditable) { if (el.innerHTML.trim()) el.innerHTML = ''; }
+else if (el.type === 'checkbox' || el.type === 'radio') el.checked = el.defaultChecked;
+else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+else el.value = '';
+} catch (e) {}
+});
+}
+window.__maskDraftSave = function (mask) {
+if (!mask || SELF_MANAGED[mask.id]) return null;
+var k = keyOf(mask); if (!k) return null;
+var d = snapshot(mask);
+if (!d.n) { delete window.__maskDraft[k]; return null; }
+window.__maskDraft[k] = d;
+return d;
+};
+window.__maskDraftDrop = function (mask) {
+if (!mask) return;
+var k = keyOf(mask);
+if (k) delete window.__maskDraft[k];
+setTimeout(function () { try { blank(mask); } catch (e) {} }, 30);
+};
+window.__maskDraftApply = function (mask) {
+if (!mask || SELF_MANAGED[mask.id]) return;
+var d = window.__maskDraft[keyOf(mask)];
+if (!d) return;
+if (!mask.__dwired) {
+mask.__dwired = 1;
+mask.addEventListener('input', function () { mask.__dguard = 1; }, true);
+mask.addEventListener('change', function () { mask.__dguard = 1; }, true);
+}
+[80, 320, 900].forEach(function (ms) {
+setTimeout(function () {
+if (!mask.__dguard && mask.classList.contains('open')) restore(mask, d);
+}, ms);
+});
+};
+if (window.MutationObserver && document.body) {
+try {
+new MutationObserver(function (list) {
+for (var i = 0; i < list.length; i++) {
+var el = list[i].target;
+if (!el || !el.classList || !el.classList.contains('modal-mask')) continue;
+if (el.classList.contains('open')) window.__maskDraftApply(el);
+}
+}).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+} catch (e) {}
+}
+})();
+window.__closeMaskTop = function (mask, opts) {
 if (!mask || !mask.classList) return false;
+var keep = !!(opts && opts.keep);
+if (keep) window.__maskDraftSave(mask);
 var btn = mask.querySelector('[data-close], [data-x]');
-if (btn) { try { btn.click(); return true; } catch (e) {} }
+if (btn) {
+window.__draftKeep = keep;
+try { btn.click(); } catch (e) {}
+window.__draftKeep = false;
+if (!mask.classList.contains('open')) {
+if (keep && window.showToast) window.showToast('已暂存，下次打开会恢复', 'info');
+return true;
+}
+}
+if (!keep) window.__maskDraftDrop(mask);
 mask.classList.remove('open');
 try { if (window.syncBodyLock) window.syncBodyLock(); else if (window.setBodyLock) window.setBodyLock(false); } catch (e2) {}
 return true;
@@ -3005,15 +3118,31 @@ document.addEventListener('keydown', function (e) {
 if (e.key !== 'Escape' || e.__escPre) return;
 var open = document.querySelectorAll('.modal-mask.open');
 if (!open.length) return;
-var _top = open[open.length - 1];
 e.__escPre = true;
-if (_top.id === 'editMask') { try { _top.click(); return; } catch (e1) {} }
-window.__closeMaskTop(_top);
+var top = open[open.length - 1];
+if (top.id === 'editMask') { try { top.click(); return; } catch (e1) {} }
+window.__closeMaskTop(top, { keep: true });
 });
+document.addEventListener('click', function (e) {
+var t = e.target;
+if (!t || !t.closest) return;
+var btn = t.closest('[data-close], [data-x], button, a');
+if (!btn) return;
+var mask = btn.closest('.modal-mask');
+if (!mask) return;
+var txt = (btn.textContent || '').trim();
+var isClose = btn.hasAttribute('data-x') || btn.hasAttribute('data-close') || /^(关闭|取消|暂不|放弃|返回)$/.test(txt);
+var isSave = /^(保存|确定|提交|发布|完成|导入|导出|应用)/.test(txt);
+if (!isClose && !isSave) return;
+if (window.__draftKeep) return;
+window.__maskDraftDrop(mask);
+}, true);
 document.addEventListener('click', function (e) {
 var m = e.target;
 if (!m || !m.classList || !m.classList.contains('modal-mask')) return;
 if (!m.classList.contains('open')) return;
 if (m.hasAttribute('data-no-backdrop')) return;
-window.__closeMaskTop(m);
-});
+if (m.id === 'editMask') return;
+e.stopPropagation();
+window.__closeMaskTop(m, { keep: true });
+}, true);
