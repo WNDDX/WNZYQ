@@ -2183,7 +2183,7 @@ var c = [
 { lab: '新增分类', tag: '操作', kw: '新增分类 新建分类 add', run: function () { document.getElementById('addCatBtn').click(); } },
 { lab: '设置信息', tag: '操作', kw: '设置信息 客服 群聊 公众号 二维码 链接 contact', run: function () { var b = document.getElementById('openInfoBtn'); if (b) b.click(); } },
 { lab: '设置公告', tag: '操作', kw: '设置公告 公告 ann', run: function () { document.getElementById('openAnnBtn').click(); } },
-{ lab: '新增公告', tag: '操作', kw: '新增公告项 公告 add', run: function () { document.getElementById('addAnnBtn').click(); } },
+{ lab: '新增公告', tag: '操作', kw: '新增公告项 公告 add', run: function () { var a=document.getElementById('openAnnBtn'); if(a)a.click(); setTimeout(function(){ var b=document.getElementById('addAnnBtn'); if(b)b.click(); }, 450); } },
 { lab: '修改密码', tag: '操作', kw: '修改密码 密码 pwd', run: function () { document.getElementById('showPwdFormBtn').click(); } }
 ];
 (state.products || []).forEach(function (p) {
