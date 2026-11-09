@@ -1049,7 +1049,7 @@ var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加
 '<label>平台名（必填）</label><input class="input" id="epName" maxlength="40" value="' + esc(isEdit ? p.name : '') + '" placeholder="比如 五湖通信">' +
 '<label>商城地址（对方后台里的「在线商城」那一条）</label><input class="input" id="epMall" maxlength="600" value="' + esc(isEdit ? (p.mall_url || '') : '') + '" placeholder="https://... 点「在线商城」复制过来的地址">' +
 '<div class="extc-formhint">只填<b>在线商城</b>那一行链接（资源从这里抓）。不要填「注册」「资料」那种地址；填错我也会自动试同域的列表页。</div>' +
-'<div class="extc-probe-row"><button type="button" class="row-btn" id="epProbe">试采这个地址</button><span class="extc-probe-tip" id="epProbeTip">不确定能不能采？先点这里试一下（不会入库）</span></div>' +
+'<div class="extc-probe-row"><button type="button" class="row-btn" id="epProbe">试采地址</button><span class="extc-probe-tip" id="epProbeTip">不确定能不能采？先点这里试一下（不会入库）</span></div>' +
 '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="https://... 点「手机登录」复制过来的地址">' +
 '<div class="extc-formhint">只填<b>手机登录</b>那一行链接（点「打开平台」直接到登录页），不填就跳商城。</div>' +
 

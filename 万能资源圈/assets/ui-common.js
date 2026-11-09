@@ -2975,3 +2975,21 @@ el.style.maxHeight = prevMax;
 el.style.overflow = prevOverflow;
 }
 };
+window.__zTop = window.__zTop || 5000;
+window.__raiseMask = function (el) {
+if (!el || !el.classList) return;
+try { el.style.zIndex = String(++window.__zTop); } catch (e) {}
+};
+(function () {
+if (!window.MutationObserver || !document.body) return;
+try {
+new MutationObserver(function (list) {
+for (var i = 0; i < list.length; i++) {
+var el = list[i].target;
+if (!el || !el.classList || !el.classList.contains('modal-mask')) continue;
+if (el.classList.contains('open')) window.__raiseMask(el);
+else if (el.style && el.style.zIndex) el.style.zIndex = '';
+}
+}).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+} catch (e) {}
+})();

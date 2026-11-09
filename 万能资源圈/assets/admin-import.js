@@ -1024,15 +1024,15 @@ __shown = __ups[__usPage - 1];
 } else { window.__usPage = 1; }
 var rows = __shown.map(function (it) {
 var u = it.u, hasKids = (byParent[u.id] || []).length > 0;
-var collapsed = !!window.__usCollapsed[u.id];
+var collapsed = hasKids ? (window.__usCollapsed[u.id] !== false) : false;
 var isMe = u.username === me.username;
 var canManage = isSuper || Number(u.parentId) === Number(me.id);
 var ops = canManage && !isMe ? '<button type="button" class="row-btn" data-ua="edit" data-id="' + u.id + '">编辑</button>'
 + '<button type="button" class="row-btn" data-ua="pwd" data-id="' + u.id + '">改密</button>'
 + '<button type="button" class="row-btn" data-ua="status" data-id="' + u.id + '" data-st="' + (u.status ? 0 : 1) + '">' + (u.status ? '冻结' : '解冻') + '</button>'
 + '<button type="button" class="row-btn danger" data-ua="del" data-id="' + u.id + '" data-n="' + (u.childrenCount || 0) + '" data-nsub="' + (u.subtreeCount || 0) + '">删除</button>' : '';
+var foldHtml = '<button type="button" class="u-fold' + (hasKids ? '' : ' is-leaf') + (collapsed ? ' collapsed' : '') + '" data-fold="' + u.id + '" aria-label="展开或收起下级"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>';
 return '<div class="u-row" data-uid="' + u.id + '" data-pid="' + Number(u.parentId || 0) + '" data-depth="' + it.depth + '">'
-+ '<button type="button" class="u-fold' + (hasKids ? '' : ' is-leaf') + (collapsed ? ' collapsed' : '') + '" data-fold="' + u.id + '" aria-label="展开或收起下级"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>'
 + '<span class="u-name" style="margin-left:' + (it.depth * 18) + 'px"><b>' + esc(u.username) + '</b>' + (isMe ? ' <span style="color:var(--blue1);font-size: 12px">（我）</span>' : '')
 + '<span class="u-tags">'
 + '<span class="u-tag u-tag-role">' + (u.role === 'super' ? '超级管理员' : (Number(u.parentId || 0) ? '子账号' : '管理员')) + '</span>'
@@ -1041,7 +1041,7 @@ return '<div class="u-row" data-uid="' + u.id + '" data-pid="' + Number(u.parent
 + '<span class="u-tag">最近活跃 ' + esc(String(u.lastSeen || '—').slice(0, 16)) + '</span>'
 + (u.note ? '<span class="u-tag u-tag-note">' + esc(u.note) + '</span>' : '')
 + '</span></span>'
-+ '<span class="u-ops">' + ops + '</span></div>';
++ '<span class="u-ops">' + ops + '</span>' + foldHtml + '</div>';
 }).join('');
 body.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
 + '<button type="button" class="btn-blue btn-inline-pd" id="usAdd">新增账号</button>'
@@ -1058,18 +1058,26 @@ onPage: function (p8) { window.__usPage = p8; renderUsersList(); }
 }
 })();
 function applyFold() {
-var hidden = {};
+var byId = {};
+body.querySelectorAll('.u-row').forEach(function (r) { byId[r.getAttribute('data-uid')] = r; });
 body.querySelectorAll('.u-row').forEach(function (r) {
 var pid = Number(r.getAttribute('data-pid') || 0);
-if (hidden[pid]) { r.style.display = 'none'; hidden[Number(r.getAttribute('data-uid'))] = 1; }
-else { r.style.display = ''; }
+var hide = false, guard = 0;
+while (pid && guard++ < 30) {
+if (window.__usCollapsed[pid] !== false) { hide = true; break; }
+var pr = byId[pid]; if (!pr) break;
+pid = Number(pr.getAttribute('data-pid') || 0);
+}
+r.style.display = hide ? 'none' : '';
 });
 }
 body.querySelectorAll('[data-fold]').forEach(function (b) {
 b.addEventListener('click', function () {
 var id = Number(this.getAttribute('data-fold'));
-window.__usCollapsed[id] = !window.__usCollapsed[id];
-this.classList.toggle('collapsed', !!window.__usCollapsed[id]);
+var wasCollapsed = window.__usCollapsed[id] !== false;
+window.__usCollapsed[id] = !wasCollapsed;
+this.classList.toggle('collapsed', !wasCollapsed);
+this.setAttribute('aria-expanded', wasCollapsed ? 'true' : 'false');
 applyFold();
 });
 });
