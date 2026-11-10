@@ -2210,3 +2210,26 @@ nx.focus();
 }
 });
 })();
+(function () {
+if (!window.MutationObserver || !window.__upgradeSelects) return;
+var timer = null;
+function sweep() {
+timer = null;
+try { window.__upgradeSelects(document); } catch (e) {}
+}
+try {
+new MutationObserver(function (list) {
+for (var i = 0; i < list.length; i++) {
+var n = list[i];
+for (var j = 0; j < n.addedNodes.length; j++) {
+var el = n.addedNodes[j];
+if (el.nodeType !== 1) continue;
+if (el.tagName === 'SELECT' || el.querySelector && el.querySelector('select:not([data-sp])')) {
+if (!timer) timer = setTimeout(sweep, 60);
+return;
+}
+}
+}
+}).observe(document.body, { childList: true, subtree: true });
+} catch (e) {}
+})();
