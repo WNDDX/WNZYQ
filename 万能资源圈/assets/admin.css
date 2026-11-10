@@ -26,3 +26,12 @@
 /* v601：收起态三角改成 sticky 后，原来为「absolute 浮层」预留的 44px 右内边距就不需要了——
    留着会在三角右边露出 44px 被裁一半的内容（截图里看像「三角后面还有按钮」）。归零，三角贴边。 */
 .rte-toolbar.rte-collapsed { padding-right: 0 !important; }
+
+/* v601：工具条内容在三角左侧 18px 做渐隐（三角本身不透明+分隔线），
+   被裁的那颗按钮从「硬切一半」变成「淡出」，与前台分类条同一套观感。 */
+.rte-toolbar .rte-expand { position: relative; }
+.rte-toolbar.rte-collapsed .rte-expand::before {
+  content: ''; position: absolute; right: 100%; top: 0; bottom: 0; width: 18px;
+  background: linear-gradient(to right, rgba(255,255,255,0), var(--card-bg));
+  pointer-events: none;
+}
