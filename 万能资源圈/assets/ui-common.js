@@ -3442,6 +3442,12 @@ window.__zTop = window.__zTop || 5000;
 window.__raiseMask = function (el) {
   if (!el || !el.classList || !el.classList.contains('modal-mask')) return;
   try {
+    /* v604：记住「是谁打开的」——关闭后焦点要还回去（WCAG 2.4.3 焦点顺序）。
+       只记有意义的目标（body/html 不算），并且只记第一次（叠层打开时不覆盖底层记录）。 */
+    if (!el.__focusReturn) {
+      var _a = document.activeElement;
+      if (_a && _a !== document.body && _a !== document.documentElement) el.__focusReturn = _a;
+    }
     /* ① 唯一的「物理层级」修正：如果这个弹窗被塞在别的 mask / 容器里（嵌套 = 自成层叠上下文，
           z-index 再高也跳不出父级），把它提到 body 末尾。已经在 body 的不动，避免移动导致滚动位置清零。 */
     if (el.parentNode && el.parentNode !== document.body) document.body.appendChild(el);
@@ -3449,6 +3455,22 @@ window.__raiseMask = function (el) {
     el.style.setProperty('z-index', String(++window.__zTop), 'important');
   } catch (e) {}
 };
+/* v604：关闭后把焦点还给打开它的那个控件。
+   只在这一个弹窗关掉、并且没有别的弹窗还开着的时候还（叠层时焦点属于上层）。
+   延迟 80ms：等收起动画开始、元素的 display 恢复，否则 focus() 会静默失败。 */
+window.__restoreFocus = function (el) {
+  var f = el && el.__focusReturn;
+  if (f) el.__focusReturn = null;
+  if (!f) return;
+  setTimeout(function () {
+    try {
+      if (document.querySelector('.modal-mask.open')) return;
+      if (!document.contains(f)) return;
+      if (f.focus) f.focus({ preventScroll: true });
+    } catch (e) {}
+  }, 80);
+};
+
 (function () {
   if (!window.MutationObserver || !document.body) return;
   function onOpen(node) {
@@ -3464,12 +3486,20 @@ window.__raiseMask = function (el) {
         if (rec.type === 'attributes') {
           var el = rec.target;
           if (!el || !el.classList || !el.classList.contains('modal-mask')) continue;
-          if (el.classList.contains('open')) window.__raiseMask(el);
-          else if (el.style && el.style.zIndex) el.style.removeProperty('z-index');
+          if (el.classList.contains('open')) { window.__raiseMask(el); }
+          else {
+            if (el.style && el.style.zIndex) el.style.removeProperty('z-index');
+            window.__restoreFocus(el);
+          }
           continue;
         }
         /* v601（老板 11-10 第 4 条）：childList 也要管——很多弹窗是「建出来就带着 open 类」插进 DOM 的，
            这种不会触发 class 属性变化，旧的观察器完全看不到 → 层级不抬高 → 被前面的窗盖住。 */
+        /* v604：弹窗被整个移除（不是隐藏）时，同样还焦点 */
+        for (var m0 = 0; m0 < rec.removedNodes.length; m0++) {
+          var rn = rec.removedNodes[m0];
+          if (rn && rn.nodeType === 1 && rn.classList && rn.classList.contains('modal-mask')) window.__restoreFocus(rn);
+        }
         for (var k = 0; k < rec.addedNodes.length; k++) {
           var nd = rec.addedNodes[k];
           onOpen(nd);
