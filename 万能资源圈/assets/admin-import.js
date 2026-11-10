@@ -2037,7 +2037,7 @@
       '</div>' +
       '<div class="logs-body" id="logsBody"><div class="extc-loading">正在读取…</div></div>' +
       '<div class="uni-pager" id="logsPager"></div>' +
-      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+      '<div class="modal-footer"><span class="log-tip">点一行看全文</span><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
       '</div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); });
@@ -2048,6 +2048,47 @@
       setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
     };
     mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
+    /* ---------- v602 · 点行展开看全文 ----------
+       背景：390px 下四列被压到 74/80/71/67px，对象列真实内容 122px，
+             永远显示成「5（开启每天自动采…」。手机上没有 hover，title 也没用。
+       做法：整行当按钮（role=button + tabindex），点一下在行下方铺一块完整信息，
+             再点收起；同屏只留一条展开（列表本来就密，展开多条要来回滚）。
+       为什么不用换行：规范 9.120 明令列表行不换行，行高会从 32 变成 48，扫读变慢。 */
+    function closeLogRow(r) {
+      r.classList.remove('is-open');
+      r.setAttribute('aria-expanded', 'false');
+      var n = r.nextElementSibling;
+      if (n && n.classList && n.classList.contains('log-more')) n.remove();
+    }
+    function toggleLogRow(r) {
+      var wasOpen = r.classList.contains('is-open');
+      Array.prototype.forEach.call(mask.querySelectorAll('#logsBody .log-row.is-open'), closeLogRow);
+      if (wasOpen) return;
+      r.classList.add('is-open');
+      r.setAttribute('aria-expanded', 'true');
+      var full = r.querySelector('.log-t-full');
+      var t = (full && getComputedStyle(full).display !== 'none' ? full : r.querySelector('.log-t')) || {};
+      var w = r.querySelector('.log-w') || {}, a = r.querySelector('.log-a') || {}, g = r.querySelector('.log-g') || {};
+      var more = document.createElement('div');
+      more.className = 'log-more';
+      more.innerHTML =
+        '<div class="lm-r"><span class="lm-k">时间</span>' + esc((t.textContent || '').trim()) + '</div>' +
+        '<div class="lm-r"><span class="lm-k">账号</span>' + esc((w.textContent || '').trim()) + '</div>' +
+        '<div class="lm-r"><span class="lm-k">做了什么</span>' + esc((a.textContent || '').trim()) + '</div>' +
+        '<div class="lm-r"><span class="lm-k">对象</span>' + esc((g.textContent || '').trim()) + '</div>';
+      r.parentNode.insertBefore(more, r.nextSibling);
+    }
+    mask.querySelector('#logsBody').addEventListener('click', function (e) {
+      var r = e.target.closest ? e.target.closest('.log-row') : null;
+      if (r) toggleLogRow(r);
+    });
+    mask.querySelector('#logsBody').addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var r = e.target.closest ? e.target.closest('.log-row') : null;
+      if (!r) return;
+      e.preventDefault(); toggleLogRow(r);
+    });
 
     var page = 1, q = '', days = 1, who = '';
     /* v590（老板 11-09 第 15 条）：做什么 / 按天两类标签也做成可点的筛选，和账号标签一致——
@@ -2061,6 +2102,7 @@
         var a = (r.querySelector('.log-a') || {}).textContent || '';
         var t = (r.querySelector('.log-t') || {}).textContent || '';
         var ok = (!actF || a.replace(/\s+/g, '') === String(actF).replace(/\s+/g, '')) && (!dayF || t.indexOf(dayF) >= 0);
+        if (!ok && r.classList.contains('is-open')) closeLogRow(r); /* v602：被筛掉的行走开就一起收起，别留下孤零零的展开块 */
         r.style.display = ok ? '' : 'none';
         if (ok) shown++;
       });
@@ -2117,8 +2159,10 @@
         body.innerHTML = '<div class="extc-loading">' + (q ? '该搜索暂无记录，换个词试试'
           : (who ? '该账号在这段时间没有操作记录' : '该列表暂无操作记录。改一次设置或删一个资源，这里就会出现。')) + '</div>';
       } else {
+        /* v602：窄屏四列挤到 67px，对象列 122px 的内容被省略号切掉（规范 11.6 第 1 条）。
+           现在整行可点/可聚焦，点开在行下方就地铺一条完整信息（时间/账号/做了什么/对象）。 */
         body.innerHTML = '<div class="log-head" aria-hidden="true"><span>时间</span><span>账号</span><span>做了什么</span><span>对象</span></div>' + list.map(function (r) {
-          return '<div class="log-row" data-who="' + esc(r.who || 'admin') + '">' +
+          return '<div class="log-row" data-who="' + esc(r.who || 'admin') + '" role="button" tabindex="0" aria-expanded="false">' +
             '<span class="log-t"><i class="log-t-full">' + esc(bjTime(r.at)) + '</i><i class="log-t-short">' + esc(String(bjTime(r.at)).replace(/^\d{4}-/, '')) + '</i></span>' +
             '<span class="log-w">' + esc(r.who || 'admin') + '</span>' +
             '<span class="log-a">' + esc(r.action || '') + '</span>' +

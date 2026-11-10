@@ -35,3 +35,20 @@
   background: linear-gradient(to right, rgba(255,255,255,0), var(--card-bg));
   pointer-events: none;
 }
+
+/* ── v602 · 操作日志「点行展开看全文」──────────────────────────────
+   背景：390px 下四列 74/80/71/67px，对象列真实内容 122px，永远被省略号切掉；
+        手机没有 hover，title 提示对触屏无效。规范 11.6 第 1 条记的这个缺口在这里补。
+   取舍：不换行（9.120 明令列表行单行），改成点一行就地铺一块完整信息，再点收起。 */
+#logsBody .log-row{cursor:pointer}
+#logsBody .log-row:focus-visible{outline:2px solid var(--blue1);outline-offset:-2px;border-radius:6px}
+#logsBody .log-row.is-open{background:rgba(25,118,210,.06);border-radius:6px}
+#logsBody .log-row.is-open .log-a,
+#logsBody .log-row.is-open .log-g{color:var(--blue-ink,var(--blue1))}
+#logsBody .log-row[aria-expanded="true"] .log-t{color:var(--blue-ink,var(--blue1))}
+.log-more{display:block;margin:2px 0 8px;padding:8px 10px;border:1px solid var(--border-soft,#eef2f6);
+  border-radius:8px;background:var(--bg-light,#f7f9fb);font-size:12px;line-height:1.65;
+  color:var(--text);word-break:break-word}
+.log-more .lm-k{display:inline-block;min-width:56px;color:var(--text-faint)}
+.log-tip{display:none;margin-right:auto;align-self:center;font-size:12px;color:var(--text-faint)}
+@media (max-width:640px){.log-tip{display:inline-block}}
