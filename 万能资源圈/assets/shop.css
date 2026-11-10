@@ -7,3 +7,43 @@
 .toggle-arrow,.cpd-arrow,.set-caret{transition:transform var(--dur-tri) var(--ease-tri) !important;transform-origin:50% 50%}
 /* 折叠键被 [hidden] 标记时必须真的消失（display:inline-flex 会压掉 hidden 属性） */
 .ann-tabs-fold[hidden],.recent-toggle[hidden],.cat-toggle[hidden]{display:none !important}
+
+/* ===== v601（布局不变量第一次跑出来的真 bug）：分类栏的展开三角「盖住」了胶囊，点不到 =====
+   实测 390 宽：`#catToggle` 是 absolute right:26px、28~32px 见方，正好压在「物联卡」胶囊上，
+   那个胶囊 100% 被覆盖——看得见、点不动。二级分类/最近浏览是同一套写法，同样有隐患。
+   改法：不再用「浮在上面」，改成「并排留槽」——
+     · wrapper 变成 flex 行，bar 占满剩余宽度，三角是独立的固定宽槽位；
+     · 为了让外观还是一整张白卡片，白底/圆角/阴影上移到 wrapper，bar 自身透明；
+     · 槽位宽 40（前台手机）/44（桌面），点击热区顺手达标（原来 28 < 36）。
+   全部用覆盖写法，不动原有规则，方便回退（搜 v601 布局不变量）。 */
+.category-bar-wrap {
+  position: sticky; top: var(--topbar-h, 60px); z-index: 90;
+  display: flex; align-items: stretch;
+  max-width: 1200px; margin: 0 auto;
+  background: var(--card-bg); border-radius: 14px;
+  box-shadow: var(--shadow-pop); overflow: hidden;
+}
+.category-bar {
+  position: static; flex: 1 1 auto; min-width: 0;
+  background: transparent; box-shadow: none; border-radius: 0;
+}
+.cat-toggle {
+  position: static; flex: 0 0 44px; width: 44px; height: auto; min-height: 44px;
+  border: none; border-left: 1px solid var(--border-soft, #eef2f6);
+  background: var(--card-bg); border-radius: 0; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--blue-ink, var(--blue1)); cursor: pointer;
+}
+.sub-category-bar-wrap, .recent-bar-wrap {
+  display: flex; align-items: center;
+}
+.sub-category-bar, .recent-bar { flex: 1 1 auto; min-width: 0; }
+.sub-cat-toggle, .recent-toggle {
+  position: static; flex: 0 0 36px; width: 36px; height: 36px; min-width: 36px; min-height: 36px;
+  margin-left: 2px; background: transparent; border: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--blue-ink, var(--blue1)); cursor: pointer;
+}
+@media (max-width: 600px) {
+  .cat-toggle { flex-basis: 40px; width: 40px; min-height: 40px; }
+}
