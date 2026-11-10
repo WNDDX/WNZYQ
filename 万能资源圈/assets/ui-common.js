@@ -3488,13 +3488,14 @@ window.__restoreFocus = function (el) {
 };
 
 (function () {
-  if (!window.MutationObserver || !document.body) return;
+  if (!window.MutationObserver) return;
   function onOpen(node) {
     if (!node || node.nodeType !== 1) return;
     if (node.classList && node.classList.contains('modal-mask') && node.classList.contains('open')) {
       window.__raiseMask(node);
     }
   }
+  function boot() {
   try {
     new MutationObserver(function (list) {
       for (var i = 0; i < list.length; i++) {
@@ -3527,6 +3528,12 @@ window.__restoreFocus = function (el) {
       }
     }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'], childList: true });
   } catch (e) {}
+  }
+  /* v604c：shop.html / index.html 把 ui-common.js 放在 <head>，脚本执行时 document.body 还是 null——
+     旧代码在这里直接 return，于是「前台从来没有弹窗层级管理、也没有焦点归还」（后台因为脚本在 body 末尾所以正常）。
+     改成 body 没就绪就等 DOMContentLoaded，再装观察器。 */
+  if (document.body) boot();
+  else document.addEventListener('DOMContentLoaded', boot, { once: true });
 })();
 
 /* ===== v596（老板 11-10 第 4 条）：「关闭 / 暂存」全站唯一口径 =====
