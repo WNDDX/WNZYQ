@@ -22,3 +22,7 @@
   background: var(--card-bg); border-left: 1px solid var(--border-soft, #eef2f6);
 }
 .rte-toolbar:not(.rte-collapsed) { padding-right: 44px; }
+
+/* v601：收起态三角改成 sticky 后，原来为「absolute 浮层」预留的 44px 右内边距就不需要了——
+   留着会在三角右边露出 44px 被裁一半的内容（截图里看像「三角后面还有按钮」）。归零，三角贴边。 */
+.rte-toolbar.rte-collapsed { padding-right: 0 !important; }
