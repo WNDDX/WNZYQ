@@ -1875,7 +1875,7 @@ body.innerHTML = '<div class="extc-loading">' + (q ? '该搜索暂无记录，�
 } else {
 body.innerHTML = '<div class="log-head" aria-hidden="true"><span>时间</span><span>账号</span><span>做了什么</span><span>对象</span></div>' + list.map(function (r) {
 return '<div class="log-row" data-who="' + esc(r.who || 'admin') + '">' +
-'<span class="log-t">' + esc(bjTime(r.at)) + '</span>' +
+'<span class="log-t"><i class="log-t-full">' + esc(bjTime(r.at)) + '</i><i class="log-t-short">' + esc(String(bjTime(r.at)).replace(/^\d{4}-/, '')) + '</i></span>' +
 '<span class="log-w">' + esc(r.who || 'admin') + '</span>' +
 '<span class="log-a">' + esc(r.action || '') + '</span>' +
 '<span class="log-g" title="' + esc(r.target || '') + '">' + esc(r.target || '') + '</span>' +
