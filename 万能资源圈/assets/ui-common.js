@@ -3442,6 +3442,18 @@ window.__zTop = window.__zTop || 5000;
 /* v604：兜底记「最后一次点在弹窗外的可聚焦元素」。
    鼠标打开弹窗时 activeElement 常常是 body，没有这条，关掉后焦点只能落回 body，
    读屏/键盘用户直接丢失位置（WCAG 2.4.3）。 */
+/* v604d：键盘打开（Enter/空格）时没有 pointerdown，单独记一次。
+   必须在同一事件里记——等到弹窗真的出现时，焦点已经被送进弹窗内部了。 */
+document.addEventListener('keydown', function (e) {
+  try {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    var a = document.activeElement;
+    if (!a || a === document.body) return;
+    if (a.closest && a.closest('.modal-mask, .share-mask, .kf-mask')) return;
+    window.__lastOuterHit = a;
+  } catch (e0) {}
+}, true);
+
 document.addEventListener('pointerdown', function (e) {
   try {
     var inMask = e.target && e.target.closest ? e.target.closest('.modal-mask, .share-mask, .kf-mask') : null;
@@ -3475,8 +3487,9 @@ window.__raiseMask = function (el) {
    只在这一个弹窗关掉、并且没有别的弹窗还开着的时候还（叠层时焦点属于上层）。
    延迟 80ms：等收起动画开始、元素的 display 恢复，否则 focus() 会静默失败。 */
 window.__restoreFocus = function (el) {
-  var f = el && el.__focusReturn;
-  if (f) el.__focusReturn = null;
+  var f = (el && el.__focusReturn) || window.__lastOuterHit || null;
+  if (el) el.__focusReturn = null;
+  if (f === window.__lastOuterHit) window.__lastOuterHit = null;
   if (!f) return;
   setTimeout(function () {
     try {
