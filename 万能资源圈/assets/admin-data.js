@@ -1403,6 +1403,7 @@ refreshCatCnts();
           if (String(c.name || '').trim() !== '全部') { var cb = document.createElement('input');
           cb.type = 'checkbox';
           cb.className = 'cat-check';
+          cb.setAttribute('aria-label', '选择分类：' + String(c.name || ''));
           cb.dataset.id = c.id;
           cb.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--blue1);';
           cb.checked = !!state.catSelected[c.id]; cb.addEventListener('change', function () { state.catSelected[c.id] = this.checked; updateCatBatchBar(); });
@@ -1500,7 +1501,7 @@ refreshCatCnts();
         cnt.className = 'c-count';
         cnt.textContent = (c.totalCnt !== undefined ? c.totalCnt : (c.cnt || 0)) + ' 个资源';
         cnt.style.cursor = 'pointer';
-        cnt.style.color = 'var(--gray-mid)';
+        cnt.style.color = 'var(--text-light)';
         cnt.style.textDecoration = 'none';
         cnt.title = '点击查看该分类下的资源';
         cnt.addEventListener('click', function (e) {

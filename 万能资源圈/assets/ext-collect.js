@@ -1132,7 +1132,7 @@
             tip.textContent = '能采：这次拿到 ' + r.count + ' 条' + (r.via ? '（' + (r.via === 'api' ? '对方接口' : '页面解析') + '）' : '') + (r.samples && r.samples[0] ? '，比如「' + r.samples[0] + '」' : '');
             tip.className = 'extc-probe-tip is-ok';
           } else {
-            tip.textContent = '采不到：' + ((r && r.msg) || '这个地址解析不出商品，换列表页地址，或用「粘贴」兜底');
+            tip.textContent = '采不到：' + ((r && r.msg) || '这个地址解析不出资源，换列表页地址，或用「粘贴」兜底');
             tip.className = 'extc-probe-tip is-bad';
           }
         }).catch(function () { pb.disabled = false; pb.textContent = old; tip.textContent = '试采失败，检查网络后重试'; tip.className = 'extc-probe-tip is-bad'; });

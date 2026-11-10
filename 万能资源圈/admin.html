@@ -212,9 +212,9 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
               <!-- R68：对比上期键独立于时间档组（1/7/30天三键一组不动），紧跟其后；复用应用键样式；文字随状态切换：关闭=对比上期 / 开启=显示本期 -->
               <button class="btn-blue btn-inline cmp-btn" id="cmpPrevBtn" title="开启后卡片小字、折线虚线、柱状浅色对比柱及悬浮数值显示与上期的对比；再点一次恢复只看本期">对比上期</button>
               <div class="stat-head-label">
-                <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime"  />
+                <input type="text" readonly id="statStartDate" class="stat-date-input dt-field" data-dt="datetime" aria-label="统计开始日期" />
                 <span>至</span>
-                <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime"  />
+                <input type="text" readonly id="statEndDate" class="stat-date-input dt-field" data-dt="datetime" aria-label="统计结束日期" />
                 <button class="btn-blue btn-inline" id="statCustomBtn">应用</button>
               </div>
               <button class="export-btn" id="exportBtn" data-perm="data.export">导出数据统计</button>
@@ -680,7 +680,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
         </div>
         <div class="form-note">建议使用 WebP 格式，体积比 JPG 小 30-50%，加载更快</div>
         <img class="img-preview" id="fImgPreview" alt="预览" decoding="async" style="display:none;" />
-        <label>简介 </label><input id="fDesc" maxlength="200" />
+        <label for="fDesc">简介 </label><input id="fDesc" maxlength="200" />
         <label>详细描述 </label>
         <div class="rte-toolbar rte-collapsed" id="detailRteToolbar" data-editor="fDetail"><span class="rte-group">
           <select class="rte-select" data-cmd="fontName" data-target="fDetail" title="字体">
@@ -748,7 +748,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           </h4>
           <div id="variantList"></div>
         </div>
-        <label>价格</label>
+        <label for="fPrice">价格</label>
         <input id="fPrice" type="number" step="0.01" min="0" inputmode="decimal" />
         <!-- v385 条11：专属咨询客服——整套 UI 搬运设置信息行（绿键+三角+二维码上传/网络图/跳转链接/保存/收起），未设置默认用平台设置 -->
         <div class="info-item ed-contact" id="edContactItem">
@@ -777,11 +777,11 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
           </div>
         </div>
         <input type="hidden" id="fContactQr" />
-        <label>排序 </label><input id="fSort" type="number" step="any" value="0" inputmode="numeric" />
+        <label for="fSort">排序 </label><input id="fSort" type="number" step="any" value="0" inputmode="numeric" />
         <label class="checkbox-row"><input type="checkbox" id="fOnline" checked /> 显示（勾选后资源页可见，取消则隐藏）</label>
         <div class="sch-row">
           <div class="sch-col">
-            <label>定时显示 </label>
+            <label for="fScheduleOn">定时显示 </label>
             <input id="fScheduleOn" type="text" readonly class="dt-field" data-dt="datetime" />
           </div>
           <div class="sch-col">
