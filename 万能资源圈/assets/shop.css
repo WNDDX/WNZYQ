@@ -47,3 +47,6 @@
 @media (max-width: 600px) {
   .cat-toggle { flex-basis: 40px; width: 40px; min-height: 40px; }
 }
+
+/* v601：二级分类栏的折叠兜底值也不再写死 36（JS 会按真实芯片算，这里只需保证不与 JS 打架） */
+.sub-category-bar { max-height: none; }

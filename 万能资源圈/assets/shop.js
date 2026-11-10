@@ -1520,7 +1520,9 @@
             if (open) { bar.style.maxHeight = bar.scrollHeight + 'px'; setTimeout(function () { if (bar.classList.contains('expanded')) bar.style.maxHeight = 'none'; }, 200); }
             else {
               var _chip = bar.querySelector('.recent-chip, .recent-title');
-              var _line = (_chip ? _chip.offsetHeight : 26) + 8; /* 单行高=芯片高+上下 padding 4×2 */
+              /* v601：不再用「芯片高 + 8」猜一行高度（实测裁掉 4px）。按真实几何算：芯片底边 + 下内边距。 */
+              var _line = 36;
+              if (_chip) { var _cr = _chip.getBoundingClientRect(), _br = bar.getBoundingClientRect(); _line = Math.ceil(_cr.bottom - _br.top + 4); }
               bar.style.maxHeight = bar.scrollHeight + 'px'; void bar.offsetHeight; bar.style.maxHeight = _line + 'px';
             }
           } catch (e) { if (window.__silent) window.__silent(e); }
@@ -3404,7 +3406,13 @@
         subCatExpanded = _subOverflow ? !subCatExpanded : false;
         subCategoryBar.classList.toggle('expanded', subCatExpanded);
         /* v597：二级分类栏同理——按真实内容高度做 max-height 过渡 */
-        try { subCategoryBar.style.maxHeight = subCatExpanded ? (subCategoryBar.scrollHeight + 12) + 'px' : '36px'; } catch (eMH2) {}
+        try {
+          /* v601（布局不变量抓到的）：'36px' 写死，实际内容 38 → 胶囊底部被裁 4px。
+             改成按第一个胶囊的真实底边 + 下内边距算，换字号/换皮肤都不会再裁。 */
+          var _lh = 36, _sc = subCategoryBar.querySelector('.sub-category-tag');
+          if (_sc) { var _cr2 = _sc.getBoundingClientRect(), _br2 = subCategoryBar.getBoundingClientRect(); _lh = Math.ceil(_cr2.bottom - _br2.top + 4); }
+          subCategoryBar.style.maxHeight = subCatExpanded ? (subCategoryBar.scrollHeight + 12) + 'px' : _lh + 'px';
+        } catch (eMH2) {}
         this.classList.toggle('open', subCatExpanded);
         var arrow = this.querySelector('.toggle-arrow');
         if (arrow) {
