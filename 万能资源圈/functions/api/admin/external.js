@@ -1159,18 +1159,24 @@ export function parseGoodsList(html, baseUrl) {
        从它自己的 pid + 原链接里的 k，按平台规则拼出来（参数全部取自原页面和原链接）。 */
     let _buy = '';
     try {
-      const _host0 = new URL(baseUrl).hostname.toLowerCase();
+      /* v597（老板 11-10 第 7 条「平台5的采集链接也是错的」）：
+         原来这里把下单链接硬编码成 kk.sviphk.cn 一家，别的图文站（55555.wang 等）直接把
+         「商品详情页」当订单页存。现在只要拿到 pid 且有 k/uid，就按通用形状拼：
+         {origin}/order/index?uid={k}&pid={pid}；拼不出来才退回 link。 */
+      const _u0 = new URL(baseUrl);
       const _pidM0 = (link || '').match(/[?&]pid=(\d+)/i) || (ctx.match(/[?&]pid=(\d+)/i) || []);
       const _pid0 = _pidM0 ? _pidM0[1] : '';
-      if (_host0 === 'kk.sviphk.cn' && _pid0) {
-        const _k0 = new URL(baseUrl).searchParams.get('k') || new URL(baseUrl).searchParams.get('uid') || '';
-        if (_k0) _buy = 'https://kk.sviphk.cn/order/index?uid=' + _k0 + '&pid=' + _pid0;
+      const _k0 = _u0.searchParams.get('k') || _u0.searchParams.get('uid') || '';
+      if (_pid0 && _k0) {
+        _buy = _u0.origin + '/order/index?uid=' + encodeURIComponent(_k0) + '&pid=' + encodeURIComponent(_pid0);
       }
     } catch (eBuy) {}
-    /* v590（老板 11-09 第 6 条）：页面自己写着「已下架/售罄/失效」的，别再当在架商品——
-       直接从记录里带出 gone 标记，入库时按「采不到」处理（不进新库、命中的记一次缺失）。 */
+    /* v597（老板 11-10 第 7 条「下架了你还能采集到？现在采集的数据都显示已下架」）：
+       原来拿「商品图周边一整块上下文」去测下架词，隔壁商品/筛选栏上有个「已下架」，
+       这一条就被标成下架——于是整页商品全变「对方已下架」。
+       现在只认「标题里写着已下架/售罄/失效」的，页面其它位置的字不再牵连。 */
     const GONE_RE = /已下架|已售罄|售罄|已抢光|已抢完|暂停销售|已失效|已删除|活动结束|该商品不存在|商品已过期/i;
-    const _gone = GONE_RE.test(plainText(ctx)) ? 1 : 0;
+    const _gone = GONE_RE.test(title) ? 1 : 0;
     const rec = { title: title.slice(0, 90), cover: src, link: link || '', buy: _buy, pid: '', gone: _gone };
     seen[key] = rec;
     out.push(rec);
