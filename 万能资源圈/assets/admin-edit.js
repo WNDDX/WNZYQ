@@ -2375,9 +2375,9 @@ document.addEventListener('click', function (e) {
          混进一个 button 就是结构错误（axe: children not allowed）。这种情况退成 group，
          option 的父级允许是 group，读屏照样能念。 */
       var hasOpt = !!p.querySelector('.cp-item');
-      var hasCtl = Array.prototype.some.call(p.children || [], function (c) {
-        return c.matches && c.matches('button,a[href],input,select,textarea');
-      });
+      /* 注意是「任意后代」不是「直接子元素」：选项行里有「复制码」按钮时，那个 button 依然算 listbox
+         拥有的子元素（ARIA 的所有关系是整棵子树），所以只要面板里出现原生控件就退成 group。 */
+      var hasCtl = !!p.querySelector('button,a[href],input,select,textarea');
       var role = (hasOpt && !hasCtl) ? 'listbox' : 'group';
       if (p.getAttribute('role') !== role) p.setAttribute('role', role);
       if (!p.hasAttribute('aria-label')) p.setAttribute('aria-label', '选择分类');
