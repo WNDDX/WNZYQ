@@ -3045,23 +3045,43 @@ var fold = document.getElementById('annTabsFold');
 var body = document.getElementById('annBody');
 if (!tabs || !fold) return;
 function syncFold() {
-var pill = tabs.firstElementChild ? tabs.firstElementChild.getBoundingClientRect().height : 0;
-var lineH = Math.max(36, Math.round(pill) + 6);
-if (!tabs.classList.contains('is-open')) tabs.style.maxHeight = lineH + 'px';
-if (fold) fold.style.top = Math.max(2, Math.round((lineH - 24) / 2)) + 'px';
-var prev = tabs.style.maxHeight;
-tabs.style.maxHeight = 'none';
-var full = tabs.scrollHeight;
-tabs.style.maxHeight = prev;
-var need = full > lineH + 6;
-fold.hidden = !need;
-if (!need) { tabs.classList.remove('is-open'); fold.classList.remove('open'); }
+var pills = tabs.children;
+var lineH = 0, foldTop = 8, multi = false;
+if (pills.length) {
+var first = pills[0].getBoundingClientRect();
+var tr = tabs.getBoundingClientRect();
+lineH = Math.ceil(first.height + 20);
+foldTop = Math.max(2, Math.round((first.top + first.height / 2) - tr.top - 12));
+var top0 = Math.round(first.top);
+for (var i = 1; i < pills.length; i++) {
+if (Math.abs(Math.round(pills[i].getBoundingClientRect().top) - top0) > 3) { multi = true; break; }
+}
+}
+fold.style.top = foldTop + 'px';
+fold.hidden = !multi;
+if (!multi) {
+tabs.classList.remove('is-open', 'is-clipped');
+tabs.classList.remove('is-clipped');
+tabs.style.maxHeight = '';
+fold.classList.remove('open');
+fold.setAttribute('aria-expanded', 'false');
+} else if (!tabs.classList.contains('is-open')) {
+tabs.classList.add('is-clipped');
+tabs.style.maxHeight = lineH + 'px';
+}
 }
 fold.addEventListener('click', function () {
-var open = tabs.classList.toggle('is-open');
+var open = !tabs.classList.contains('is-open');
+tabs.classList.toggle('is-open', open);
 fold.classList.toggle('open', open);
 fold.setAttribute('aria-expanded', open ? 'true' : 'false');
-if (open) syncFold();
+if (open) {
+tabs.classList.remove('is-clipped');
+tabs.style.maxHeight = '320px';
+} else {
+tabs.classList.add('is-clipped');
+tabs.style.maxHeight = (Math.ceil((tabs.firstElementChild ? tabs.firstElementChild.getBoundingClientRect().height : 36) + 20)) + 'px';
+}
 });
 if (window.MutationObserver) {
 try { new MutationObserver(syncFold).observe(tabs, { childList: true }); } catch (e) {}

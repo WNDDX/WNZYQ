@@ -820,21 +820,35 @@ var line = window.__fsTabLine;
 if (!line || !line.parentNode) { line = document.createElement('div'); line.className = 'tabs-line'; tabs.appendChild(line); window.__fsTabLine = line; }
 if (!act) { line.style.opacity = '0'; return; }
 line.style.transition = anim ? 'left .2s var(--ease-out, ease), width .2s var(--ease-out, ease)' : 'none';
-line.style.left = act.offsetLeft + 'px';
-line.style.width = act.offsetWidth + 'px';
+
+var lab = act.querySelector('span') || act;
+var br = tabs.getBoundingClientRect();
+var lr = lab.getBoundingClientRect();
+var pad = lab === act ? 0 : 2;
+line.style.left = Math.round(lr.left - br.left - pad) + 'px';
+line.style.width = Math.round(lr.width + pad * 2) + 'px';
 line.style.opacity = '1';
 };
 window.__fsTabLineTo = function (fromEl, toEl, p) {
 var line = window.__fsTabLine;
 if (!line || !fromEl || !toEl) return;
+
+var tabs = document.querySelector('.tabs');
+var br = tabs ? tabs.getBoundingClientRect() : { left: 0 };
+function box(el) { var t = el.querySelector('span') || el; var r = t.getBoundingClientRect(); return { l: r.left - br.left, w: r.width }; }
+var A = box(fromEl), B = box(toEl);
 line.style.transition = 'none';
-line.style.left = (fromEl.offsetLeft + (toEl.offsetLeft - fromEl.offsetLeft) * p) + 'px';
-line.style.width = (fromEl.offsetWidth + (toEl.offsetWidth - fromEl.offsetWidth) * p) + 'px';
+line.style.left = Math.round(A.l + (B.l - A.l) * p) + 'px';
+line.style.width = Math.round(A.w + (B.w - A.w) * p) + 'px';
 line.style.opacity = '1';
 };
 try {
 window.__fsTabLineUpdate(false);
 window.addEventListener('resize', function () { window.__fsTabLineUpdate(false); });
+
+setTimeout(function () { window.__fsTabLineUpdate(false); }, 300);
+setTimeout(function () { window.__fsTabLineUpdate(false); }, 1200);
+try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { window.__fsTabLineUpdate(false); }); } catch (eF) {}
 } catch (e) { if (window.__silent) window.__silent(e); }
 window.__followSwipe({
 panel: function () {

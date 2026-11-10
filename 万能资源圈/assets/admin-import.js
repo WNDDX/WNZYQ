@@ -496,7 +496,7 @@ var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分
 body.innerHTML = '<div class="imp-log">' + esc(pv.lines.join('\n')) + '</div>' +
 '<button class="btn-blue" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
 body.querySelector('#impGo').addEventListener('click', function () {
-this.disabled = true; this.textContent = '导入中…';
+this.disabled = true; this.textContent = '导入中';
 body.innerHTML = '<div id="impLive" class="imp-log imp-log-live"></div>';
 var live = body.querySelector('#impLive');
 var onLog = function (line) {
@@ -709,7 +709,7 @@ im.src = src;
 });
 }
 function replaceOversize(it, btn) {
-if (btn) { btn.disabled = true; btn.textContent = '压缩中…'; }
+if (btn) { btn.disabled = true; btn.textContent = '压缩中'; }
 compressBlob(it.src).then(function (nb) {
 if (!window.__uploadToBucket) throw new Error('上传组件未就绪');
 var fname = 'c' + Date.now() + (/png/i.test(nb.type) ? '.png' : '.jpg');
@@ -735,7 +735,7 @@ if (btn) { btn.disabled = false; btn.textContent = '压缩替换'; }
 });
 }
 function restoreOversize(it, btn) {
-if (btn) { btn.disabled = true; btn.textContent = '恢复中…'; }
+if (btn) { btn.disabled = true; btn.textContent = '恢复中'; }
 var seq = Promise.resolve();
 it.refs.forEach(function (ref) {
 seq = seq.then(function () {
@@ -929,7 +929,7 @@ m.addEventListener('click', function (e) { if (e.target === m || e.target.closes
 m.querySelector('#usAskOk').addEventListener('click', function () {
 var v = m.querySelector('#usAskInput') ? m.querySelector('#usAskInput').value : '';
 if (opts.input && !String(v).trim()) { if (window.showToast) window.showToast('请填写内容', 'error'); return; }
-var btn = this; btn.disabled = true; btn.textContent = '处理中…';
+var btn = this; btn.disabled = true; btn.textContent = '处理中';
 onOk(String(v).trim(), function () { close(); }, function () { btn.disabled = false; btn.textContent = opts.okText || '确定'; });
 });
 }
@@ -1267,7 +1267,7 @@ pv.annScope = annMode === 'all' ? 'all' : annIds;
 pv.codeScope = (mask.querySelector('input[name="ufCode"]:checked') || {}).value || 'own';
 var note = (mask.querySelector('#ufNote') || {}).value || '';
 var btn = this;
-btn.disabled = true; btn.textContent = '保存中…';
+btn.disabled = true; btn.textContent = '保存中';
 var restore = function () { btn.disabled = false; btn.textContent = isEdit ? '确定' : '创建账号'; };
 if (isEdit) {
 usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
@@ -1514,7 +1514,7 @@ fetch('/api/cron/collect?op=status', { credentials: 'same-origin' })
 load();
 var btn = mask.querySelector('#cronRunNow');
 btn.addEventListener('click', function () {
-btn.disabled = true; btn.textContent = '正在采…';
+btn.disabled = true; btn.textContent = '正在采';
 if (host) host.innerHTML = '<span class="cs-bad">正在采，平台多的要十几秒，别关窗口…</span>';
 fetch('/api/cron/collect', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
 .then(function (r) { return r.json(); })
@@ -1927,7 +1927,7 @@ if (window.showToast) window.showToast('导出组件还没加载好，刷新页�
 return;
 }
 var oldTxt = expBtn.textContent;
-expBtn.disabled = true; expBtn.textContent = '导出中…';
+expBtn.disabled = true; expBtn.textContent = '导出中';
 var back = function () { expBtn.disabled = false; expBtn.textContent = oldTxt; };
 fetch('/api/admin/logs?page=1&size=0&days=' + days
 + '&q=' + encodeURIComponent(q) + '&who=' + encodeURIComponent(who),
@@ -1981,7 +1981,7 @@ else if (window.showToast) window.showToast('导出入口没找到，请先关�
 });
 go.addEventListener('click', function () {
 if (String(inp.value).trim() !== '清空') return;
-go.disabled = true; var t0 = go.textContent; go.textContent = '正在清空…';
+go.disabled = true; var t0 = go.textContent; go.textContent = '正在清空';
 fetch('/api/admin/reset', {
 method: 'POST', credentials: 'same-origin',
 headers: { 'Content-Type': 'application/json' },

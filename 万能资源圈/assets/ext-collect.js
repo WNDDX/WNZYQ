@@ -897,7 +897,7 @@ else toast((r2 && r2.msg) || '保存失败', 'error');
 } else {
 var got2 = P.lastClip;
 if (!got2 || (!got2.title && !got2.media.length)) { tip.textContent = '先在上面的框里 Ctrl+V 粘一下内容'; return; }
-btn.disabled = true; btn.textContent = '保存中…';
+btn.disabled = true; btn.textContent = '保存中';
 api('admin/external', { method: 'POST', body: { op: 'goods.add', platform_id: pfId, title: got2.title || '（未命名资源）', cover: got2.media[0] || '', src_url: '', media: got2.media.slice(1) } }).then(function (r2) {
 btn.disabled = false; btn.textContent = '加进资源池';
 if (r2 && r2.ok) { toast(r2.dup ? '资源池里已经有了' : '已加进资源池', 'success'); closeM(m); loadGoods(); }
@@ -1017,7 +1017,7 @@ var m = mkModal('extcEditMask', '编辑资源', '',
 '<div class="extc-formhint">详情图不用手填：点「查看」能预览，上架时会按原页面地址去抓。</div>',
 '<button class="modal-inner-btn" id="edSave">确定</button><button class="modal-close" data-x="1">关闭</button>');
 m.querySelector('#edSave').addEventListener('click', function () {
-var btn = this; btn.disabled = true; btn.textContent = '保存中…';
+var btn = this; btn.disabled = true; btn.textContent = '保存中';
 api('admin/external', {
 method: 'POST',
 body: {
@@ -1101,7 +1101,7 @@ auto_hide: m.querySelector('#epAutoHide') && m.querySelector('#epAutoHide').chec
 note: ed ? ed.innerHTML.slice(0, 20000) : ''
 };
 if (!body.name) { toast('平台名不能为空', 'error'); return; }
-var btn = this; btn.disabled = true; btn.textContent = '保存中…';
+var btn = this; btn.disabled = true; btn.textContent = '保存中';
 api('admin/external', { method: 'POST', body: body }).then(function (r) {
 if (r && r.ok) {
 toast(window.T('saved'), 'success');
