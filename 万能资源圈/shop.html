@@ -163,7 +163,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
     <div class="ann-box" onclick="event.stopPropagation()">
       <button aria-label="关闭" class="modal-close-x" id="annCloseX" type="button" onclick="closeAnnModal()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>
       <button type="button" class="ann-title" id="annTitleTab" style="text-align:center;" onclick="showAnnDefault()">公告<i class="dot-badge" hidden></i></button>
-      <div class="ann-tabs" id="annTabs"></div>
+      <div class="ann-tabs-wrap" id="annTabsWrap">
+        <div class="ann-tabs" id="annTabs"></div>
+        <button type="button" class="ann-tabs-fold" id="annTabsFold" hidden aria-label="展开或收起公告项" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
+      </div>
       <div class="ann-body" id="annBody"></div>
       <div class="ann-skeleton" id="annSkeleton" aria-hidden="true">
         <div class="ann-skel-tab sk-piece"></div>

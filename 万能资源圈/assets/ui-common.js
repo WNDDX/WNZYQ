@@ -192,7 +192,6 @@ m.innerHTML =
 '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
 '<div class="kf-actions">' +
 '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
-'<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
 '</div>' +
 '</div>';
 document.body.appendChild(m);

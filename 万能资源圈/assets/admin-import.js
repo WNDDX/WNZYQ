@@ -1071,7 +1071,24 @@ if (window.__usCollapsed[pid] !== false) { hide = true; break; }
 var pr = byId[pid]; if (!pr) break;
 pid = Number(pr.getAttribute('data-pid') || 0);
 }
-r.style.display = hide ? 'none' : '';
+if (hide) {
+if (r.style.display !== 'none' && !r.classList.contains('is-folding')) {
+r.classList.add('is-folding');
+setTimeout(function () {
+if (r.classList.contains('is-folding') && r.getAttribute('data-hide') === '1') r.style.display = 'none';
+}, 180);
+}
+r.setAttribute('data-hide', '1');
+} else {
+r.setAttribute('data-hide', '0');
+if (r.style.display === 'none') {
+r.style.display = '';
+void r.offsetHeight;
+setTimeout(function () { r.classList.remove('is-folding'); }, 20);
+} else {
+r.classList.remove('is-folding');
+}
+}
 });
 }
 body.querySelectorAll('[data-fold]').forEach(function (b) {
@@ -1125,7 +1142,11 @@ var PM_GROUPS = [
 { t: '公告', k: 'ann', items: [['view', '看公告'], ['add', '发公告'], ['edit', '改公告'], ['del', '删公告']] },
 { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
 { t: '数据', k: 'data', items: [['stats', '看总量'], ['detail', '看逐条明细'], ['ip', '看访客 IP'], ['export', '导出数据']] },
-{ t: '资源采集', k: 'external', items: [['view', '打开资源采集'], ['add', '加平台/粘一条'], ['edit', '改资源/改平台'], ['del', '删资源/删平台'], ['fetch', '采集/上架'], ['export', '导出']] }
+{ t: '资源采集', k: 'external', items: [['view', '打开资源采集'], ['add', '加平台/粘一条'], ['edit', '改资源/改平台'], ['del', '删资源/删平台'], ['fetch', '采集/上架'], ['export', '导出']] },
+{ t: '账号', k: 'account', items: [['view', '看账号列表'], ['add', '新增账号'], ['edit', '改账号与权限'], ['pwd', '重置他人密码'], ['del', '删账号']] },
+{ t: '日志与体检', k: 'system', items: [['logs', '看操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错记录']] },
+{ t: '备份与危险操作', k: 'danger', items: [['backup', '导出备份'], ['restore', '导入恢复'], ['clear', '清空测试数据']] },
+{ t: '设置', k: 'settings', items: [['view', '看平台设置'], ['edit', '改店铺信息'], ['contact', '改客服二维码'], ['ann', '改公告设置']] }
 ];
 function usersForm(u) {
 var isEdit = !!(u && u.id);

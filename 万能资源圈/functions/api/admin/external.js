@@ -474,6 +474,19 @@ export async function onRequestPost(context) {
             }
           }
         } catch (eRule) {}
+        /* v597（老板 11-10 第 7 条「平台5的采集链接也是错的」）：号卡图文站（/article/good?pid=…&k=…）
+           的下单页固定是 {origin}/order/index?uid={k}&pid={pid}。原来只给 kk.sviphk.cn 写死了一个域名，
+           换一家（如 55555.wang）就把「商品详情页」当订单页存，点进去根本不是下单。
+           现在改成通用规则：只要链接里同时有 k/uid 与 pid，就按这个形状拼；已经指向 /order/ 的不动。 */
+        try {
+          const _au = new URL(one);
+          if (!/\/order(\/|\?|$)/i.test(buyHref)) {
+            const _k2 = _au.searchParams.get('k') || _au.searchParams.get('uid') || '';
+            let _pid2 = _au.searchParams.get('pid') || '';
+            if (!_pid2) { const m2 = pg.text.match(/[?&]pid=(\d+)/i); if (m2) _pid2 = m2[1]; }
+            if (_k2 && _pid2) buyHref = _au.origin + '/order/index?uid=' + encodeURIComponent(_k2) + '&pid=' + encodeURIComponent(_pid2);
+          }
+        } catch (eArt) {}
         /* v587（第 11 条）：平台配了下单链接模板时，按模板拼——比"猜 href"可靠得多。
            参数只从「原链接」和「原页面」里取，原链接 itself 一个字符都不改。 */
         try {
@@ -1269,7 +1282,10 @@ export async function tryHaokaWeb(mall) {
     if (!j || j.code !== 0 || !j.data || !Array.isArray(j.data.list)) continue;
     const items = j.data.list.map(function (g) {
       const id = g.id;
-      const buy = origin + '/#/pages/goods/index?id=' + encodeURIComponent(id) + '&promoCode=' + encodeURIComponent(c);
+      /* v597（老板 11-10 第 7 条）：老板给了标准形态 —— https://sznxwl.com/shop#/pages/goods/index?promoCode=fK9OCsg6&goodsId=2189
+         原来拼的是 {origin}/#/pages/goods/index?id={id}&promoCode={code}：少了 /shop 挂载路径、参数名是 id 不是 goodsId、顺序也反了，
+         点进去是空页 —— 这就是「采集链接不是我想要的」的根因。 */
+      const buy = origin + '/shop#/pages/goods/index?promoCode=' + encodeURIComponent(c) + '&goodsId=' + encodeURIComponent(id);
       const imgs = (Array.isArray(g.details) ? g.details : []).filter(Boolean).slice(0, 20);
       /* v512：能拿到的都拿——月租/优惠价/通用流量/定向流量/通话/结算方式/归属/标签，
          上架时填不进去的字段放进「更多信息」，老板要看的时候不用再跑回对方平台 */
