@@ -10,3 +10,15 @@
    浏览器把它滚进视口 → 整个弹窗跳回顶部。给 label 加 position:relative 就钉在原地了。 */
 .extc-sw { position: relative; }
 .extc-sw input { left: 0; top: 50%; margin-top: -0.5px; }
+
+/* ===== v601（布局不变量抓到的第二个真 bug）：编辑器工具条最后一颗按钮被展开三角压住 =====
+   实测：`.rte-toolbar.rte-collapsed` 是横向滚动条，`.rte-expand` 用 absolute 浮在 right:22 上，
+   最后一个按钮（字色/清除格式那一类）与它重叠 96%，点下去命中的是三角——按钮看得见、按不动。
+   改法：收起态把三角改成 sticky 参与布局（占自己那一格，滚到哪都贴右），不再盖住按钮；
+   展开态（会换行、不横向滚）给工具条右侧留 44px 给 absolute 三角。 */
+.rte-toolbar.rte-collapsed .rte-expand {
+  position: sticky; right: 0; top: auto; margin: 0 0 0 4px;
+  flex: 0 0 34px; width: 34px; height: 32px;
+  background: var(--card-bg); border-left: 1px solid var(--border-soft, #eef2f6);
+}
+.rte-toolbar:not(.rte-collapsed) { padding-right: 44px; }
