@@ -186,7 +186,7 @@ m.id = 'kfMask';
 m.setAttribute('role', 'dialog');
 m.innerHTML =
 '<div class="kf-box">' +
-'<button class="kf-x" id="kfCloseX" type="button" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
+'<button class="kf-x" id="kfCloseX" data-x="1" type="button" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
 '<div class="kf-title" id="kfTitle">咨询客服</div>' +
 '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
 '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
@@ -204,7 +204,6 @@ if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overfl
 m.addEventListener('click', function (e) { if (e.target === m) close(); });
 if (window.__modalKit) window.__modalKit.register(m, { discard: close, stash: close });
 document.getElementById('kfCloseX').addEventListener('click', close);
-document.getElementById('kfCloseBtn').addEventListener('click', close);
 document.getElementById('kfJumpBtn').addEventListener('click', function () {
 var u = this.getAttribute('data-url') || '';
 if (u) { try { window.open(u, '_blank'); } catch (e) { if (window.__silent) window.__silent(e); } }
@@ -258,6 +257,7 @@ if (tipEl) tipEl.textContent = tip || '长按图片识别-添加人工客服';
 var btn = document.getElementById('kfJumpBtn');
 if (btn) {
 btn.style.display = btnText ? '' : 'none'; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
+var _acts = btn.parentNode; if (_acts && _acts.classList.contains('kf-actions')) _acts.style.display = btnText ? '' : 'none';
 btn.classList.toggle('kf-jump-green', !!(opts && opts.green));
 
 }
