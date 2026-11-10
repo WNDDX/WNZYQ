@@ -2363,23 +2363,29 @@ document.addEventListener('click', function (e) {
       }
     });
     /* v602（axe-core 查出来的）：.cp-item 一直是「孤儿 option」——
-       role=option 必须挂在 listbox / group 里，否则读屏念「选项 1/24」但不知道是哪个列表，
-       而且父项里又套着可聚焦的子项 → nested-interactive。这里补齐容器语义：
-         面板 = listbox，子级容器 .cp-children = group（规范允许 option 的父级是 group）。
-       子项改为 tabindex=-1：Tab 只停面板第一项，面板内用 ↑↓ 走（标准 listbox 行为，
+       role=option 必须挂在 listbox / group 里，否则读屏念「选项 1/24」但不知道是哪个列表。
+       这里补齐容器语义，并处理两类例外：
+         · 空面板（还没加载出分类）→ role=group，否则 listbox 没有 option 子项，属于结构错误
+         · 行内含按钮的（规格行里有「复制码」按钮）→ 这一行改成 group，
+           否则 option 里套 button 就是 nested-interactive（读屏会念成「按钮 按钮」）。
+       子项 tabindex=-1：Tab 只停面板第一项，面板内用 ↑↓ 走（标准 listbox 行为，
        focus() 对 -1 依然有效，所以既有的方向键逻辑不用动）。 */
     document.querySelectorAll('.cat-picker-panel').forEach(function (p) {
-      if (!p.hasAttribute('role')) p.setAttribute('role', 'listbox');
+      var role = p.querySelector('.cp-item') ? 'listbox' : 'group';
+      if (p.getAttribute('role') !== role) p.setAttribute('role', role);
       if (!p.hasAttribute('aria-label')) p.setAttribute('aria-label', '选择分类');
     });
     document.querySelectorAll('.cat-picker-panel .cp-children').forEach(function (g) {
       if (!g.hasAttribute('role')) g.setAttribute('role', 'group');
     });
     document.querySelectorAll('.cp-item').forEach(function (it) {
+      var hasCtl = !!it.querySelector('button,a[href],input,select,textarea');
+      var role = hasCtl ? 'group' : 'option';
+      if (it.getAttribute('role') !== role) it.setAttribute('role', role);
       var nested = !!(it.parentNode && it.parentNode.closest && it.parentNode.closest('.cp-children'));
       if (!it.hasAttribute('tabindex')) it.setAttribute('tabindex', nested ? '-1' : '0');
-      if (!it.hasAttribute('role')) it.setAttribute('role', 'option');
-      if (it.classList.contains('selected')) it.setAttribute('aria-selected', 'true');
+      if (role === 'option' && it.classList.contains('selected')) it.setAttribute('aria-selected', 'true');
+      else if (it.hasAttribute('aria-selected')) it.removeAttribute('aria-selected');
     });
   }
   /* 捕获阶段先补属性，浏览器随后的默认 Tab 行为才能停到这些元素上 */
