@@ -2067,8 +2067,10 @@
       if (wasOpen) return;
       r.classList.add('is-open');
       r.setAttribute('aria-expanded', 'true');
+      /* 时间取「带年份」那份：≤560px 时 .log-t-full 是 display:none，
+         但这里要的是完整信息，不能拿父节点 textContent（会把长短两份拼起来）。 */
       var full = r.querySelector('.log-t-full');
-      var t = (full && getComputedStyle(full).display !== 'none' ? full : r.querySelector('.log-t')) || {};
+      var t = full || r.querySelector('.log-t') || {};
       var w = r.querySelector('.log-w') || {}, a = r.querySelector('.log-a') || {}, g = r.querySelector('.log-g') || {};
       var more = document.createElement('div');
       more.className = 'log-more';
