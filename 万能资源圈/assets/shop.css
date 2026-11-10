@@ -50,3 +50,10 @@
 
 /* v601：二级分类栏的折叠兜底值也不再写死 36（JS 会按真实芯片算，这里只需保证不与 JS 打架） */
 .sub-category-bar { max-height: none; }
+
+/* v601：横向滚动的分类条右侧加一层渐隐（不是盖一层东西，是给内容本身做 mask），
+   被裁的胶囊从「硬切一半」变成「淡出」，一眼就知道还能往右滑。 */
+.category-bar, .sub-category-bar, .recent-bar {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
+}
