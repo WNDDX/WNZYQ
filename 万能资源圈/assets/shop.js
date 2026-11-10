@@ -3045,11 +3045,15 @@ var fold = document.getElementById('annTabsFold');
 var body = document.getElementById('annBody');
 if (!tabs || !fold) return;
 function syncFold() {
+var pill = tabs.firstElementChild ? tabs.firstElementChild.getBoundingClientRect().height : 0;
+var lineH = Math.max(36, Math.round(pill) + 6);
+if (!tabs.classList.contains('is-open')) tabs.style.maxHeight = lineH + 'px';
+if (fold) fold.style.top = Math.max(2, Math.round((lineH - 24) / 2)) + 'px';
 var prev = tabs.style.maxHeight;
 tabs.style.maxHeight = 'none';
 var full = tabs.scrollHeight;
 tabs.style.maxHeight = prev;
-var need = full > 40;
+var need = full > lineH + 6;
 fold.hidden = !need;
 if (!need) { tabs.classList.remove('is-open'); fold.classList.remove('open'); }
 }

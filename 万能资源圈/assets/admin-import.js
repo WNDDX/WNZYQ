@@ -1137,16 +1137,16 @@ body.innerHTML = '<div class="imp-err">网络没连上，稍后再试</div>';
 });
 }
 var PM_GROUPS = [
-{ t: '资源管理', k: 'products', items: [['view', '查看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '修改价格'], ['online', '上架下架'], ['del', '删除资源'], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['moveCat', '移动分类']] },
-{ t: '分类管理', k: 'cats', items: [['view', '查看分类'], ['add', '新增分类'], ['edit', '编辑分类'], ['del', '删除分类']] },
-{ t: '公告', k: 'ann', items: [['view', '查看公告'], ['add', '发布公告'], ['edit', '编辑公告'], ['del', '删除公告']] },
+{ t: '资源管理', k: 'products', items: [['view', '查看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '修改价格'], ['online', '上架下架'], ['del', '删除资源'], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['moveCat', '移动分类'], ['code', '资源码与发码'], ['bind', '绑定设备'], ['copy', '复制资源']] },
+{ t: '分类管理', k: 'cats', items: [['view', '查看分类'], ['add', '新增分类'], ['edit', '编辑分类'], ['del', '删除分类'], ['sort', '拖动排序']] },
+{ t: '公告', k: 'ann', items: [['view', '查看公告'], ['add', '发布公告'], ['edit', '编辑公告'], ['del', '删除公告'], ['preview', '预览公告'], ['hide', '显示与隐藏']] },
 { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
 { t: '数据统计', k: 'data', items: [['stats', '查看总量'], ['detail', '查看明细'], ['ip', '查看访客IP'], ['export', '导出数据']] },
-{ t: '资源采集', k: 'external', items: [['view', '打开采集'], ['add', '添加平台'], ['edit', '编辑资源与平台'], ['del', '删除资源与平台'], ['fetch', '采集与上架'], ['export', '导出采集']] },
-{ t: '账号管理', k: 'account', items: [['view', '查看账号'], ['add', '新增账号'], ['edit', '编辑账号与权限'], ['pwd', '重置密码'], ['del', '删除账号']] },
-{ t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错']] },
-{ t: '备份与恢复', k: 'danger', items: [['backup', '导出备份'], ['restore', '导入恢复'], ['clear', '清空测试数据']] },
-{ t: '平台设置', k: 'settings', items: [['view', '查看设置'], ['edit', '店铺信息'], ['contact', '客服与二维码'], ['ann', '公告设置']] }
+{ t: '资源采集', k: 'external', items: [['view', '打开采集'], ['add', '添加平台'], ['edit', '编辑资源与平台'], ['del', '删除资源与平台'], ['fetch', '采集与上架'], ['probe', '试采地址'], ['platform', '平台设置'], ['export', '导出采集']] },
+{ t: '账号管理', k: 'account', items: [['view', '查看账号'], ['add', '新增账号'], ['edit', '编辑账号与权限'], ['pwd', '重置密码'], ['status', '停用与启用'], ['sub', '管理下级'], ['del', '删除账号']] },
+{ t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错'], ['cache', '清理缓存'], ['file', '清理无用文件']] },
+{ t: '备份与恢复', k: 'danger', items: [['backup', '导出备份'], ['restore', '导入恢复'], ['recycle', '回收站'], ['clear', '清空测试数据']] },
+{ t: '平台设置', k: 'settings', items: [['view', '查看设置'], ['edit', '店铺信息'], ['contact', '客服与二维码'], ['ann', '公告设置'], ['style', '页面风格'], ['logo', '店铺名与Logo']] }
 ];
 function usersForm(u) {
 var isEdit = !!(u && u.id);
