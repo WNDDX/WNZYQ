@@ -2362,8 +2362,22 @@ document.addEventListener('click', function (e) {
         d.setAttribute('role', 'button');
       }
     });
+    /* v602（axe-core 查出来的）：.cp-item 一直是「孤儿 option」——
+       role=option 必须挂在 listbox / group 里，否则读屏念「选项 1/24」但不知道是哪个列表，
+       而且父项里又套着可聚焦的子项 → nested-interactive。这里补齐容器语义：
+         面板 = listbox，子级容器 .cp-children = group（规范允许 option 的父级是 group）。
+       子项改为 tabindex=-1：Tab 只停面板第一项，面板内用 ↑↓ 走（标准 listbox 行为，
+       focus() 对 -1 依然有效，所以既有的方向键逻辑不用动）。 */
+    document.querySelectorAll('.cat-picker-panel').forEach(function (p) {
+      if (!p.hasAttribute('role')) p.setAttribute('role', 'listbox');
+      if (!p.hasAttribute('aria-label')) p.setAttribute('aria-label', '选择分类');
+    });
+    document.querySelectorAll('.cat-picker-panel .cp-children').forEach(function (g) {
+      if (!g.hasAttribute('role')) g.setAttribute('role', 'group');
+    });
     document.querySelectorAll('.cp-item').forEach(function (it) {
-      if (!it.hasAttribute('tabindex')) it.setAttribute('tabindex', '0');
+      var nested = !!(it.parentNode && it.parentNode.closest && it.parentNode.closest('.cp-children'));
+      if (!it.hasAttribute('tabindex')) it.setAttribute('tabindex', nested ? '-1' : '0');
       if (!it.hasAttribute('role')) it.setAttribute('role', 'option');
       if (it.classList.contains('selected')) it.setAttribute('aria-selected', 'true');
     });
