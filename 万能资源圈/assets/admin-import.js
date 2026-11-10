@@ -886,16 +886,6 @@ if (em && em.parentNode) em.parentNode.appendChild(em);
 })
 .catch(function () { if (window.showToast) window.showToast('打开编辑失败，检查网络后重试', 'error'); });
 }
-var USERS_ACTS = [
-['products.view', '看资源'], ['products.add', '新增资源'], ['products.edit', '编辑资源'], ['products.price', '改价'],
-['products.online', '上下架'], ['products.del', '删除（进回收站点）'], ['products.restore', '恢复'], ['products.purge', '彻底删除'],
-['products.moveCat', '挪分类'],
-['cats.view', '看分类'], ['cats.add', '新增分类'], ['cats.edit', '修改分类'], ['cats.del', '删分类'],
-['ann.view', '看公告'], ['ann.add', '发公告'], ['ann.edit', '改公告'], ['ann.del', '删公告'],
-['batch.import', '批量导入'], ['batch.price', '批量改价'], ['batch.online', '批量上下架'], ['batch.del', '批量删除'],
-['data.stats', '看统计总量'], ['data.detail', '看逐条明细'], ['data.ip', '看访客 IP'], ['data.export', '数据导出'],
-['info.view', '信息'], ['users', '管理下级账号'],
-];
 function openResetPwd(u, onOk) {
 var old = document.getElementById('usPwdMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -1170,7 +1160,7 @@ return '<div class="pm-sec" data-sec="' + g.k + '"><div class="pm-sec-hd"><b>' +
 + '<div class="pm-grid">' + chks + '</div></div>';
 }).join('');
 secHtml += '<div class="pm-sec"><div class="pm-sec-hd"><b>其它</b></div><div class="pm-grid">'
-+ '<label class="pm-chk"><input type="checkbox" data-pa="info" data-pk="view"' + (isEdit ? (gval('info', 'view') ? ' checked' : '') : ' checked') + '><span>信息中心</span></label>'
++ '<label class="pm-chk"><input type="checkbox" data-pa="info" data-pk="view"' + (isEdit ? (gval('info', 'view') ? ' checked' : '') : ' checked') + '><span>信息</span></label>'
 + '<label class="pm-chk"><input type="checkbox" data-pa="users" data-pk="_"' + (isEdit && perms.users ? ' checked' : '') + '><span>管理下级账号</span></label>'
 + '</div></div>';
 var catHtml = (function () {
