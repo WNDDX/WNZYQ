@@ -2037,7 +2037,10 @@
       '</div>' +
       '<div class="logs-body" id="logsBody"><div class="extc-loading">正在读取…</div></div>' +
       '<div class="uni-pager" id="logsPager"></div>' +
-      '<div class="modal-footer"><span class="log-tip">点一行看全文</span><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+      /* 提示说明的是「下面这张表」，所以贴表格上方；放底部会跟「关闭」挤在一行，
+         而且弹窗底部只有一个按键时它是撑满整行的（等分规则），插东西进去会破坏那个布局。 */
+      '<div class="log-tip">点一行看全文</div>' +
+      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
       '</div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); });

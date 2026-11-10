@@ -50,5 +50,5 @@
   border-radius:8px;background:var(--bg-light,#f7f9fb);font-size:12px;line-height:1.65;
   color:var(--text);word-break:break-word}
 .log-more .lm-k{display:inline-block;min-width:56px;color:var(--text-faint)}
-.log-tip{display:none;margin-right:auto;align-self:center;font-size:12px;color:var(--text-faint)}
-@media (max-width:640px){.log-tip{display:inline-block}}
+.log-tip{display:none;font-size:12px;color:var(--text-faint);margin:-2px 0 6px 2px}
+@media (max-width:640px){.log-tip{display:block}}
