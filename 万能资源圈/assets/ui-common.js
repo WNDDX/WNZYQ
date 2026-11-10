@@ -192,6 +192,7 @@ m.innerHTML =
 '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
 '<div class="kf-actions">' +
 '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
+'<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
 '</div>' +
 '</div>';
 document.body.appendChild(m);
@@ -204,6 +205,7 @@ if (window.syncBodyLock) window.syncBodyLock(); else (document.body.style.overfl
 m.addEventListener('click', function (e) { if (e.target === m) close(); });
 if (window.__modalKit) window.__modalKit.register(m, { discard: close, stash: close });
 document.getElementById('kfCloseX').addEventListener('click', close);
+document.getElementById('kfCloseBtn').addEventListener('click', close);
 document.getElementById('kfJumpBtn').addEventListener('click', function () {
 var u = this.getAttribute('data-url') || '';
 if (u) { try { window.open(u, '_blank'); } catch (e) { if (window.__silent) window.__silent(e); } }
@@ -256,8 +258,7 @@ var tipEl = document.getElementById('kfTip');
 if (tipEl) tipEl.textContent = tip || '长按图片识别-添加人工客服';
 var btn = document.getElementById('kfJumpBtn');
 if (btn) {
-btn.style.display = btnText ? '' : 'none'; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
-var _acts = btn.parentNode; if (_acts && _acts.classList.contains('kf-actions')) _acts.style.display = btnText ? '' : 'none';
+btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
 btn.classList.toggle('kf-jump-green', !!(opts && opts.green));
 
 }

@@ -894,7 +894,7 @@ var USERS_ACTS = [
 ['ann.view', '看公告'], ['ann.add', '发公告'], ['ann.edit', '改公告'], ['ann.del', '删公告'],
 ['batch.import', '批量导入'], ['batch.price', '批量改价'], ['batch.online', '批量上下架'], ['batch.del', '批量删除'],
 ['data.stats', '看统计总量'], ['data.detail', '看逐条明细'], ['data.ip', '看访客 IP'], ['data.export', '数据导出'],
-['info.view', '信息中心'], ['users', '管理下级账号'],
+['info.view', '信息'], ['users', '管理下级账号'],
 ];
 function openResetPwd(u, onOk) {
 var old = document.getElementById('usPwdMask'); if (old) old.remove();
@@ -1137,16 +1137,16 @@ body.innerHTML = '<div class="imp-err">网络没连上，稍后再试</div>';
 });
 }
 var PM_GROUPS = [
-{ t: '资源', k: 'products', items: [['view', '看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '修改价格'], ['online', '上下架'], ['del', '删除资源'], ['restore', '恢复回收站点'], ['purge', '彻底删除'], ['moveCat', '挪分类']] },
-{ t: '分类', k: 'cats', items: [['view', '看分类'], ['add', '新增分类'], ['edit', '修改分类'], ['del', '删分类']] },
-{ t: '公告', k: 'ann', items: [['view', '看公告'], ['add', '发公告'], ['edit', '改公告'], ['del', '删公告']] },
+{ t: '资源管理', k: 'products', items: [['view', '查看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '修改价格'], ['online', '上架下架'], ['del', '删除资源'], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['moveCat', '移动分类']] },
+{ t: '分类管理', k: 'cats', items: [['view', '查看分类'], ['add', '新增分类'], ['edit', '编辑分类'], ['del', '删除分类']] },
+{ t: '公告', k: 'ann', items: [['view', '查看公告'], ['add', '发布公告'], ['edit', '编辑公告'], ['del', '删除公告']] },
 { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
-{ t: '数据', k: 'data', items: [['stats', '看总量'], ['detail', '看逐条明细'], ['ip', '看访客 IP'], ['export', '导出数据']] },
-{ t: '资源采集', k: 'external', items: [['view', '打开资源采集'], ['add', '加平台/粘一条'], ['edit', '改资源/改平台'], ['del', '删资源/删平台'], ['fetch', '采集/上架'], ['export', '导出']] },
-{ t: '账号', k: 'account', items: [['view', '看账号列表'], ['add', '新增账号'], ['edit', '改账号与权限'], ['pwd', '重置他人密码'], ['del', '删账号']] },
-{ t: '日志与体检', k: 'system', items: [['logs', '看操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错记录']] },
-{ t: '备份与危险操作', k: 'danger', items: [['backup', '导出备份'], ['restore', '导入恢复'], ['clear', '清空测试数据']] },
-{ t: '设置', k: 'settings', items: [['view', '看平台设置'], ['edit', '改店铺信息'], ['contact', '改客服二维码'], ['ann', '改公告设置']] }
+{ t: '数据统计', k: 'data', items: [['stats', '查看总量'], ['detail', '查看明细'], ['ip', '查看访客IP'], ['export', '导出数据']] },
+{ t: '资源采集', k: 'external', items: [['view', '打开采集'], ['add', '添加平台'], ['edit', '编辑资源与平台'], ['del', '删除资源与平台'], ['fetch', '采集与上架'], ['export', '导出采集']] },
+{ t: '账号管理', k: 'account', items: [['view', '查看账号'], ['add', '新增账号'], ['edit', '编辑账号与权限'], ['pwd', '重置密码'], ['del', '删除账号']] },
+{ t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错']] },
+{ t: '备份与恢复', k: 'danger', items: [['backup', '导出备份'], ['restore', '导入恢复'], ['clear', '清空测试数据']] },
+{ t: '平台设置', k: 'settings', items: [['view', '查看设置'], ['edit', '店铺信息'], ['contact', '客服与二维码'], ['ann', '公告设置']] }
 ];
 function usersForm(u) {
 var isEdit = !!(u && u.id);
@@ -1970,8 +1970,8 @@ mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-la
 '<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份（Excel）</button></div>' +
 '<label for="rsConfirm">确认请原样输入「清空」两个字</label>' +
 '<input class="input" id="rsConfirm" type="text" autocomplete="off" placeholder="清空" aria-label="输入清空二字以确认">' +
-'<div class="modal-footer"><button type="button" class="row-btn danger-solid" id="rsGo" disabled>确认清空</button>' +
-'<button type="button" class="row-btn" data-x="1">关闭</button></div>' +
+'<div class="modal-footer"><button type="button" class="modal-inner-btn" id="rsGo" disabled>确认清空</button>' +
+'<button type="button" class="modal-close" data-x="1">关闭</button></div>' +
 '</div>';
 document.body.appendChild(mask);
 requestAnimationFrame(function () { mask.classList.add('open'); });
