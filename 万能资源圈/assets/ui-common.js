@@ -3179,14 +3179,17 @@ function mirror(el) {
 if (!el || el.nodeType !== 1) return;
 var cs;
 try { cs = getComputedStyle(el); } catch (e) { return; }
-if (cs.textOverflow !== 'ellipsis' && cs.overflow !== 'hidden') return;
 var txt = (el.textContent || '').trim();
 if (!txt) return;
 var t = el.getAttribute('title');
 var isMirror = t != null && t.trim() === txt;
 var cut = el.scrollWidth > el.clientWidth + 1;
-if (cut && !t) el.setAttribute('title', txt);
-else if (!cut && isMirror) el.removeAttribute('title');
+if (cut) {
+var canTip = cs.textOverflow === 'ellipsis' || cs.overflow === 'hidden' || cs.whiteSpace === 'nowrap';
+if (!t && canTip) el.setAttribute('title', txt);
+} else if (isMirror) {
+el.removeAttribute('title');
+}
 }
 function sweep(root) {
 var scope = root && root.querySelectorAll ? root : document;

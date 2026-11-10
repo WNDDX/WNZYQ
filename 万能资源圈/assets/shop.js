@@ -1159,8 +1159,8 @@ if (_rt.length > 8) {
 var _cut = _rt.slice(0, 8);
 if (/[【（(\[]$/.test(_cut)) _cut = _cut.slice(0, -1);
 b.textContent = _cut + '…';
-} else b.textContent = _rt;
-b.title = p.title || '';
+b.title = _rt;
+} else { b.textContent = _rt; b.removeAttribute('title'); }
 b.addEventListener('click', function () { openModal(p); });
 bar.appendChild(b);
 });
