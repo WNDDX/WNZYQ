@@ -3439,6 +3439,18 @@ window.__foldHeight = function (el, extra) {
    做法：任何一个 .modal-mask 变成 .open 的那一刻，给它一个递增的 z-index（内联），
    后开的永远在上；关闭时把它降回 0，避免越叠越高。 */
 window.__zTop = window.__zTop || 5000;
+/* v604：兜底记「最后一次点在弹窗外的可聚焦元素」。
+   鼠标打开弹窗时 activeElement 常常是 body，没有这条，关掉后焦点只能落回 body，
+   读屏/键盘用户直接丢失位置（WCAG 2.4.3）。 */
+document.addEventListener('pointerdown', function (e) {
+  try {
+    var inMask = e.target && e.target.closest ? e.target.closest('.modal-mask, .share-mask, .kf-mask') : null;
+    if (inMask) return;
+    var hit = e.target && e.target.closest ? e.target.closest('button,a,[role="button"],[tabindex]') : null;
+    window.__lastOuterHit = hit || e.target;
+  } catch (e0) {}
+}, true);
+
 window.__raiseMask = function (el) {
   if (!el || !el.classList || !el.classList.contains('modal-mask')) return;
   try {
@@ -3446,7 +3458,11 @@ window.__raiseMask = function (el) {
        只记有意义的目标（body/html 不算），并且只记第一次（叠层打开时不覆盖底层记录）。 */
     if (!el.__focusReturn) {
       var _a = document.activeElement;
-      if (_a && _a !== document.body && _a !== document.documentElement) el.__focusReturn = _a;
+      /* v604b：必须排除「已经在弹窗里」的元素——很多弹窗是「加 open 类 → 同一帧把焦点送进关闭键」，
+         观察器这时读到的 activeElement 已经是弹窗内部的按钮，关掉后再把焦点"还给"它 = 还给了隐藏元素。 */
+      var _outside = _a && _a !== document.body && _a !== document.documentElement && !el.contains(_a);
+      if (_outside) el.__focusReturn = _a;
+      else if (window.__lastOuterHit && document.contains(window.__lastOuterHit)) el.__focusReturn = window.__lastOuterHit;
     }
     /* ① 唯一的「物理层级」修正：如果这个弹窗被塞在别的 mask / 容器里（嵌套 = 自成层叠上下文，
           z-index 再高也跳不出父级），把它提到 body 末尾。已经在 body 的不动，避免移动导致滚动位置清零。 */
