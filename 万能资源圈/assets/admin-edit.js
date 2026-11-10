@@ -2371,7 +2371,14 @@ document.addEventListener('click', function (e) {
        子项 tabindex=-1：Tab 只停面板第一项，面板内用 ↑↓ 走（标准 listbox 行为，
        focus() 对 -1 依然有效，所以既有的方向键逻辑不用动）。 */
     document.querySelectorAll('.cat-picker-panel').forEach(function (p) {
-      var role = p.querySelector('.cp-item') ? 'listbox' : 'group';
+      /* 面板里有「搜索/清空」这类原生控件时不能当 listbox——listbox 只允许 option / group 两种子角色，
+         混进一个 button 就是结构错误（axe: children not allowed）。这种情况退成 group，
+         option 的父级允许是 group，读屏照样能念。 */
+      var hasOpt = !!p.querySelector('.cp-item');
+      var hasCtl = Array.prototype.some.call(p.children || [], function (c) {
+        return c.matches && c.matches('button,a[href],input,select,textarea');
+      });
+      var role = (hasOpt && !hasCtl) ? 'listbox' : 'group';
       if (p.getAttribute('role') !== role) p.setAttribute('role', role);
       if (!p.hasAttribute('aria-label')) p.setAttribute('aria-label', '选择分类');
     });
