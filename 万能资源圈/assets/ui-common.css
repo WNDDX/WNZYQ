@@ -15,14 +15,10 @@
   .row-btn::before,.batch-btn::before,.pg-btn::before{left:2px;right:2px}
 }
 
-/* 滚动条（第十五章 15.11）：纵向一律用**系统**滚动条，不设宽度、不自绘
-   —— 自绘会把系统 17px 压成 10px，整页内容向右移 7px，属于“为了好看把布局弄坏”，不做。
-   横向（分类条/页签/工具条）已经有各自的 display:none，这里不重复。 */
-.category-bar::-webkit-scrollbar,.sub-category-bar::-webkit-scrollbar,
-.recent-bar::-webkit-scrollbar,.ann-tabs::-webkit-scrollbar,.rte-toolbar::-webkit-scrollbar,
-.table-scroll::-webkit-scrollbar,.admin-table-wrap::-webkit-scrollbar{display:none}
-.category-bar,.sub-category-bar,.recent-bar,.ann-tabs,.rte-toolbar,
-.table-scroll,.admin-table-wrap{scrollbar-width:none}
+/* 滚动条（第十五章 15.11）：本站在文件前部已统一 `*::-webkit-scrollbar{width:0;height:0;display:none}`
+   —— 全站（含纵向）都不显示滚动条，是既定设计，不在本处再覆盖。
+   所以这里**不新增**任何滚动条样式：新增宽度会让系统 17px 的条重新出现，整页右移、像素差 15%。 */
+
 
 
 /* ===== v612 遮罩统一（第十五章 15.6） =====
