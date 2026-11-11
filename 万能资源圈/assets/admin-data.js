@@ -2263,6 +2263,8 @@ refreshCatCnts();
         fr.addEventListener('load', function () { setTimeout(__pvSend, 150); });
         fr.src = '/shop?preview=1';
       } else {
+        /* v609：预热过的 iframe 已经加载完，直接出内容，不再盖"正在准备预览" */
+        if (fr.dataset.loaded) box.classList.remove('pv-loading'); else box.classList.add('pv-loading');
         __pvSend();
       }
       if (window.__modalScroll) { try { __modalScroll.open(mask, 'preview'); } catch (e2) {} }
@@ -2291,12 +2293,37 @@ refreshCatCnts();
       }
       if (d.type !== 'wnzyq-preview-ready') return;
       var m = document.getElementById('previewMask');
+      var _fr = document.getElementById('previewFrame');
+      if (_fr) _fr.dataset.loaded = '1';
       if (m && m.classList.contains('open')) {
         __pvSend();
         var _bx = m.querySelector('.preview-box');
         if (_bx) _bx.classList.remove('pv-loading');
       }
     });
+
+    /* ===== v609：预览预热（老板："以前是秒开的，现在都要加载"） =====
+       原因：iframe 是「点了才去加载整页 /shop」，点一下等于开一个新页面，必然要等。
+       做法：后台空闲时先把 iframe 的 src 设好、加载完、把当前数据渲染一遍；
+       点预览只是把已经画好的框打开——观感回到"秒开"。
+       只做一次（fr.dataset.started 守住），不影响后台首屏。 */
+    function __pvWarm() {
+      var fr = document.getElementById('previewFrame');
+      if (!fr || fr.dataset.started) return;
+      fr.dataset.started = '1';
+      fr.dataset.warm = '1';
+      fr.addEventListener('load', function () {
+        fr.dataset.loaded = '1';
+        setTimeout(__pvSend, 120);
+      });
+      fr.src = '/shop?preview=1';
+    }
+    window.__pvWarm = __pvWarm;
+    try {
+      var _pw = function () { try { __pvWarm(); } catch (e6) {} };
+      if (window.requestIdleCallback) requestIdleCallback(_pw, { timeout: 5000 });
+      else setTimeout(_pw, 3000);
+    } catch (e7) {}
 
     document.getElementById('previewProductBtn').addEventListener('click', function () {
       /* v518：走「真页面预览」；iframe 缺失才回退旧的自绘预览 */

@@ -1203,6 +1203,7 @@
         prow.className = 'card-price-row';
         var pEl = document.createElement('span');
         pEl.className = 'card-price';
+        pEl.setAttribute('data-contrast-skip', 'brand-orange'); /* v609：价格用品牌橙（老板定稿） */
         pEl.textContent = window.formatPrice ? window.formatPrice(_pr) : ('¥' + (String(_pr).indexOf('.') !== -1 ? _pr.toFixed(2) : _pr)); /* v336 条10：统一走公共价格格式 */
         prow.appendChild(pEl);
         body.appendChild(prow);
@@ -1952,6 +1953,7 @@
       if (vPriceText) {
         var vp = document.createElement('span');
         vp.className = 'variant-price';
+        vp.setAttribute('data-contrast-skip', 'brand-orange');
         vp.textContent = vPriceText;
         header.appendChild(vp);
       }

@@ -58,3 +58,35 @@
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
   mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
 }
+
+/* ===== v609 间距统一（老板 11-12 第 13 条） =====
+   间距只用四档：4 / 8 / 12 / 16。卡片间距 12、块间 12、页边 16。
+   顺手修掉三处「看不见但量得出来」的不齐：
+   ① 分类胶囊比卡片左边界右缩 16px（.category-bar 自身又加了 16 内边距）；
+   ② 二级分类行再右缩 8px（padding-left 24 而非 16）；
+   ③ 1600px 以上资源列表放宽到 1500，分类条还停在 1200 —— 1920 屏上左右错开 150px。 */
+@media (min-width:1600px){
+  .category-bar-wrap{max-width:1500px}
+}
+/* 胶囊与卡片左对齐：外层 wrap 已有 16，条内不再重复加 */
+.category-bar{padding-left:0;padding-right:0}
+.sub-category-bar{padding:6px 0 6px}
+/* 分类条到第一排卡片：16 → 12，与卡片间距同一档 */
+.product-grid{padding-top:12px}
+/* 列表视图行距 8 → 12（原来比网格视图紧，两种视图手感不一致） */
+.product-grid.list-view{gap:12px}
+
+/* 列表视图：把价格移到行右端。
+   一行宽 1168，原来文字只占左侧 300，右边 800 全是空白——价格右对齐后
+   ① 空白被填上；② 一屏内的价格能竖着扫（电商列表的常规做法）。 */
+@media (min-width:601px){
+  .product-grid.list-view .product-card{position:relative}
+  .product-grid.list-view .card-body{padding-right:132px}
+  .product-grid.list-view .card-price-row{position:absolute;right:20px;top:50%;transform:translateY(-50%);margin:0}
+  .product-grid.list-view .card-price{font-size:17px;letter-spacing:0.4px}
+}
+
+/* 手机端：卡片间距 8 → 12，与桌面同一档 */
+@media (max-width:600px){
+  .product-grid{gap:12px}
+}
