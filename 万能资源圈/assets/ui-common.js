@@ -284,6 +284,9 @@ if ('serviceWorker' in navigator) {
       /* v383：二维码全量走后台「设置信息」（window.__contactQr 由 shop/admin 设置加载点写入）——
          没配置时不再回退到已删除的 kefu.png，直接走 KF_QR_FAIL 失败占位 */
       var _qrSrc = qrImg || window.__kefuQrSrc();
+      /* v608（老板 11-12 第 11 条）：有的客服弹窗不出图——二维码如果是外链，直接 <img src> 会被对方防盗链/Referer 拦掉，
+         表现就是灰块或失败占位。外链统一走站内图片代理（和采集封面同一套），base64 不动。 */
+      if (_qrSrc && /^https?:\/\//i.test(_qrSrc)) _qrSrc = '/api/img-proxy?u=' + encodeURIComponent(_qrSrc);
       if (_qrSrc) {
         img.src = _qrSrc;
         if (img.complete) {
