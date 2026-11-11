@@ -2715,6 +2715,22 @@ var __PH_DARK_80 = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/sv
 Object.defineProperty(window, '__IMG_PLACEHOLDER', { configurable: true, get: function () {
   try { return document.documentElement.getAttribute('data-theme') === 'dark' ? __PH_DARK_80 : __PH_LIGHT_80; } catch (e) { return __PH_LIGHT_80; }
 } });
+/* v612：图片失败统一占位（第十五章 15.13 · S-14 / S-27）
+   以前只有 Logo 和部分封面挂了 onerror，客服二维码、公告图、后台缩略图失败就是一块灰。
+   这里用捕获阶段的全局兜底：任何 <img> 报错都换成唯一占位图，只换一次，不会死循环。 */
+document.addEventListener('error', function (e) {
+  var t = e.target;
+  if (!t || t.tagName !== 'IMG') return;
+  if (t.getAttribute('data-ph-done') === '1') return;
+  t.setAttribute('data-ph-done', '1');
+  try {
+    t.classList.add('media-fail');
+    t.removeAttribute('srcset');
+    t.src = window.__IMG_PLACEHOLDER || '';
+    t.style.opacity = '1';
+  } catch (e0) {}
+}, true);
+
 window.__logoFail = function (im) {
   try {
     im.onerror = null;
