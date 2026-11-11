@@ -15,17 +15,14 @@
   .row-btn::before,.batch-btn::before,.pg-btn::before{left:2px;right:2px}
 }
 
-/* 滚动条统一：横向一律隐藏（触屏本来就没有），纵向用系统细条，不自绘 */
-html{scrollbar-width:thin;scrollbar-color:rgba(25,118,210,.35) transparent}
-*::-webkit-scrollbar{width:10px;height:10px}
-*::-webkit-scrollbar-thumb{
-  background:rgba(25,118,210,.28);border-radius:999px;
-  border:2px solid transparent;background-clip:content-box;
-}
-*::-webkit-scrollbar-thumb:hover{background:rgba(25,118,210,.45);background-clip:content-box}
-*::-webkit-scrollbar-track{background:transparent}
+/* 滚动条（第十五章 15.11）：纵向一律用**系统**滚动条，不设宽度、不自绘
+   —— 自绘会把系统 17px 压成 10px，整页内容向右移 7px，属于“为了好看把布局弄坏”，不做。
+   横向（分类条/页签/工具条）已经有各自的 display:none，这里不重复。 */
 .category-bar::-webkit-scrollbar,.sub-category-bar::-webkit-scrollbar,
-.recent-bar::-webkit-scrollbar,.ann-tabs::-webkit-scrollbar,.rte-toolbar::-webkit-scrollbar{display:none}
+.recent-bar::-webkit-scrollbar,.ann-tabs::-webkit-scrollbar,.rte-toolbar::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar,.admin-table-wrap::-webkit-scrollbar{display:none}
+.category-bar,.sub-category-bar,.recent-bar,.ann-tabs,.rte-toolbar,
+.table-scroll,.admin-table-wrap{scrollbar-width:none}
 
 
 /* ===== v612 遮罩统一（第十五章 15.6） =====
