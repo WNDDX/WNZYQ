@@ -584,7 +584,16 @@
          弹窗里就挂着一张灰色占位图（老板反馈的「打开就是空公告」）。全都为空时才退回原样，
          让手动打开能看到「该公告暂无内容」的状态提示。 */
       var _annReal = list.filter(__annHasContent);
-      if (_annReal.length) list = _annReal;
+      /* v608（老板 11-12 第 9 条「新加的公告不显示」）：这里原来把「没有正文的公告」整条丢掉——
+         只要库里有一条带正文的，新建但还没写正文的那条就永远不出现（老板看到的就是这个）。
+         改成：一条都不丢，只把「有正文的」稳定地排到前面，这样默认选中仍然是有内容的那条。 */
+      if (_annReal.length && _annReal.length < list.length) {
+        var _annIdx = {};
+        _annReal.forEach(function (x, i2) { _annIdx[String(x.id)] = i2; });
+        list = list.map(function (x, i2) { return { x: x, i: i2, has: __annHasContent(x) ? 0 : 1 }; })
+          .sort(function (p1, p2) { return p1.has - p2.has || p1.i - p2.i; })
+          .map(function (o) { return o.x; });
+      }
       /* v499：这条「默认公告」本身也要判空——否则补进去一条空公告，弹窗就成了「该公告暂无内容」 */
       if (!list.some(function (x) { return x.level === 1; })) {
         var _defA = { id: 'def', title: '公告', content: DATA.announcement || '', hidden: 0, sort: 0, level: 1 };

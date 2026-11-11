@@ -1426,6 +1426,13 @@
       var st = (x && x.settings) || {};
       var arr = [];
       try { arr = JSON.parse(st.announcements || '[]') || []; } catch (e) { arr = []; }
+      /* v608（老板 11-12 第 7 条）：系统默认公告优先级最高，永远排最前；
+         其余按原有顺序不动（稳定排序），别因为一个排序把人工排好的顺序打乱。 */
+      arr = arr.map(function (a2, i2) { return { a: a2, i: i2 }; }).sort(function (x, y) {
+        var dx = (Number(x.a.id) === 0 || x.a.isDefault || String(x.a.title || '').trim() === '公告') ? 0 : 1;
+        var dy = (Number(y.a.id) === 0 || y.a.isDefault || String(y.a.title || '').trim() === '公告') ? 0 : 1;
+        return dx - dy || x.i - y.i;
+      }).map(function (o) { return o.a; });
       var box = mask.querySelector('#ufAnnChips'); if (!box) return;
       if (!arr.length) { box.innerHTML = '<span class="pm-hint">该列表暂无公告，可先到「设置公告」发一条</span>'; return; }
       box.innerHTML = arr.map(function (a, i) {
