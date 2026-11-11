@@ -915,7 +915,20 @@
             if (window.__catSkelHTML) _cb0.innerHTML = window.__catSkelHTML.repeat(8);
           }
         } catch (e) { if (window.__silent) window.__silent(e); }
-        if (!window.__plC) { window.__plC = 1; loadCategories(); }
+        if (!window.__plC) {
+          window.__plC = 1;
+          /* v608：admin-data.js 没到位时直接调用会 ReferenceError，整页后续操作全断
+             （journey-admin 的「分类页没渲染」就是这个：切页签时 loadCategories 还不存在）。
+             改成：没有就等它加载完再补一次，最多等 10 秒。 */
+          if (typeof loadCategories === 'function') loadCategories();
+          else {
+            var _t0 = Date.now();
+            var _w = setInterval(function () {
+              if (typeof loadCategories === 'function') { clearInterval(_w); try { loadCategories(); } catch (eL) {} }
+              else if (Date.now() - _t0 > 10000) clearInterval(_w);
+            }, 250);
+          }
+        }
         else { loadCategories(true).catch(function () {}); } // 切回后台静默刷新
       }
       if (name === 'settings') { if (!window.__plSet) loadSettings(); }
