@@ -1747,7 +1747,7 @@ window.__swipeExclude = 'input, textarea, select, video, .rte-editor, .line-char
 window.__swipeHardExclude = 'input, textarea, select, video, .rte-editor, .file-folder-wrap, .cat-picker-panel, .ctx-menu, .dt-pop, .pg-jump, .modal-nav-arrow, .cover-carousel'; /* v401 条9：.lightbox 移出硬排除——它把灯箱自己的滑动切图也一并杀死了（灯箱内的 touch 目标 closest 恒命中 .lightbox）。弹窗滑切不会误触：灯箱全屏置顶，事件目标在灯箱子树内不会进弹窗/页面手势的元素判定 */
 window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
   if (!el || !onSwipe) return;
-  var sx = 0, sy = 0, on = false;
+  var sx = 0, sy = 0, on = false, sT = 0;   /* v613：sT 记录起手时间，用来算甩动速度 */
   el.addEventListener('touchstart', function (e) {
     if (e.touches.length !== 1) { on = false; return; }
     if (isActive && !isActive()) { on = false; return; }
@@ -1759,7 +1759,7 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
       var sc = t.closest(window.__swipeExclude);
       if (sc && sc.scrollWidth > sc.clientWidth + 1) { on = false; return; }
     }
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY; on = true;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; on = true; sT = Date.now();
   }, { passive: true });
   el.addEventListener('touchmove', function (e) {
     /* v360 条9：竖向主导（上下滚页面）取消；v362 条6：横向达阈值立即触发（不等 touchend，真机更可靠） */
@@ -1770,14 +1770,24 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     if (Math.abs(mx) >= 10 && Math.abs(mx) >= Math.abs(my) * 1.5) e.preventDefault();
     /* v416 条7：跟手回调——横向意图锁定后把当前位移交给宿主做跟手位移（灯箱拖图等），未传=行为不变 */
     if (el.__swipeOnMove && Math.abs(mx) >= 10 && Math.abs(mx) > Math.abs(my) * 1.5) { try { el.__swipeOnMove(mx); } catch (e0) { if (window.__silent) window.__silent(e0); } }
-    if (Math.abs(mx) >= 48 && Math.abs(mx) > Math.abs(my) * 1.5) { on = false; onSwipe(mx < 0 ? 1 : -1); } /* v406：60px/2倍 → 48px/1.5倍（真机斜滑友好，与跟手滑切同口径） */
+    /* v613（第十五章 15.7）：判定统一为「位移 > 25% 宽 或 速度 > 0.35px/ms」。
+       以前是固定 48px：慢慢拖一点点也会翻（误触），快速轻甩反而没反应。 */
+    (function () {
+      if (Math.abs(mx) <= Math.abs(my) * 1.5) return;
+      var w = el.clientWidth || window.innerWidth || 375;
+      var dt = Math.max(1, Date.now() - sT);
+      var v = Math.abs(mx) / dt;
+      if (Math.abs(mx) > w * 0.25 || v > 0.35) { on = false; onSwipe(mx < 0 ? 1 : -1); }
+    })();
   }, { passive: false });
   el.addEventListener('touchend', function (e) {
     if (!on) return; on = false;
     if (el.__swipeOnMove) { try { el.__swipeOnMove(0); } catch (e9) { if (window.__silent) window.__silent(e9); } } /* v416 条7：未达阈值松手=宿主复位 */
     var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
-    onSwipe(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) <= Math.abs(dy) * 1.5) return;
+    var _w2 = el.clientWidth || window.innerWidth || 375;
+    var _v2 = Math.abs(dx) / Math.max(1, Date.now() - sT);
+    if (Math.abs(dx) > _w2 * 0.25 || _v2 > 0.35) onSwipe(dx < 0 ? 1 : -1);
   }, { passive: true });
   /* ===== v405 条9：电脑端鼠标拖拽切图（此前只监听触摸，电脑上灯箱拖图无响应） ===== */
   var lsx = 0, lsy = 0, lon = false;
@@ -1796,7 +1806,7 @@ window.__bindSwipeSwitch = function (el, onSwipe, isActive) {
     if (Math.abs(my) > 24 && Math.abs(my) > Math.abs(mx)) { lon = false; if (el.__swipeOnMove) { try { el.__swipeOnMove(0); } catch (e9) {} } return; }
     /* v416 条7：鼠标横向意图锁定后跟手（dx=0 复位语义同触摸） */
     if (el.__swipeOnMove && Math.abs(mx) >= 10 && Math.abs(mx) > Math.abs(my) * 1.5) { try { el.__swipeOnMove(mx); } catch (e9) {} }
-    if (Math.abs(mx) >= 60 && Math.abs(mx) > Math.abs(my) * 2) { lon = false; onSwipe(mx < 0 ? 1 : -1); }
+    if (Math.abs(mx) > Math.abs(my) * 1.5 && Math.abs(mx) > (el.clientWidth || window.innerWidth || 375) * 0.25) { lon = false; onSwipe(mx < 0 ? 1 : -1); }
   }, { passive: true });
   el.addEventListener('mouseup', function () { if (lon && el.__swipeOnMove) { try { el.__swipeOnMove(0); } catch (e9) {} } }, { passive: true });
   el.addEventListener('mouseup', function () { if (lon) { lon = false; try { document.body.style.userSelect = ''; } catch (e3) {} } }, { passive: true });
@@ -2681,14 +2691,34 @@ window.__renderCarousel = function (carouselEl, trackEl, dotsEl, fallbackImgEl, 
     carouselEl.addEventListener('mouseenter', function () { pause(); });
     carouselEl.addEventListener('mouseleave', function () { restartTimer(); });
     carouselEl.addEventListener('touchstart', function () { pause(); }, { passive: true });
-    carouselEl.addEventListener('touchend', function () { restartTimer(); });
-    trackEl.addEventListener('touchstart', function (e) { trackEl.__ccStartX = e.touches[0].clientX; trackEl.__ccDrag = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); }, { passive: true });
-    trackEl.addEventListener('touchmove', function (e) { if (!trackEl.__ccDrag) return; trackEl.__ccDragged = true; var dx = e.touches[0].clientX - trackEl.__ccStartX; trackEl.style.transform = 'translateX(calc(-' + (st.idx * 100) + '% + ' + dx + 'px))'; }, { passive: true });
+    carouselEl.addEventListener('touchend', function () {
+      /* v613（D2 定稿）：3 秒自动翻保留，但手指碰过之后 8 秒内不再自动翻，
+         否则用户正在看第 2 张的参数图就被翻走。 */
+      clearTimeout(carouselEl.__ccResume);
+      carouselEl.__ccResume = setTimeout(function () { restartTimer(); }, 8000);
+    });
+    trackEl.addEventListener('touchstart', function (e) {
+      trackEl.__ccStartX = e.touches[0].clientX;
+      trackEl.__ccStartT = Date.now();
+      trackEl.__ccDrag = true; trackEl.__ccDragged = false;
+      trackEl.classList.add('dragging');
+    }, { passive: true });
+    trackEl.addEventListener('touchmove', function (e) {
+      if (!trackEl.__ccDrag) return;
+      trackEl.__ccDragged = true;
+      var dx = e.touches[0].clientX - trackEl.__ccStartX;
+      /* v613：到头给 0.16 阻尼（手指走 180px，画面只走约 29px），不再“照拖不误” */
+      if ((st.idx === 0 && dx > 0) || (st.idx === st.len - 1 && dx < 0)) dx = dx * 0.16;
+      trackEl.style.transform = 'translateX(calc(-' + (st.idx * 100) + '% + ' + dx + 'px))';
+    }, { passive: true });
     trackEl.addEventListener('touchend', function (e) {
       trackEl.__ccDrag = false; trackEl.classList.remove('dragging');
       var dx = (e.changedTouches[0] || e.touches[0]).clientX - trackEl.__ccStartX;
-      if (dx < -40) goToSlide(st.idx + 1);
-      else if (dx > 40) goToSlide(st.idx - 1);
+      var w = carouselEl.clientWidth || 375;
+      var v = Math.abs(dx) / Math.max(1, Date.now() - (trackEl.__ccStartT || Date.now()));
+      /* v613（15.7）：位移 > 25% 宽 或 速度 > 0.35px/ms 才翻；否则回弹归位 */
+      if ((dx < 0 && (Math.abs(dx) > w * 0.25 || v > 0.35)) ) goToSlide(st.idx + 1);
+      else if ((dx > 0 && (Math.abs(dx) > w * 0.25 || v > 0.35))) goToSlide(st.idx - 1);
       else goToSlide(st.idx);
     });
     trackEl.addEventListener('mousedown', function (e) { trackEl.__ccStartX = e.clientX; trackEl.__ccDrag = true; trackEl.__ccDragged = false; trackEl.classList.add('dragging'); e.preventDefault(); });
@@ -2696,8 +2726,9 @@ window.__renderCarousel = function (carouselEl, trackEl, dotsEl, fallbackImgEl, 
     trackEl.addEventListener('mouseup', function (e) {
       trackEl.__ccDrag = false; trackEl.classList.remove('dragging');
       var dx = e.clientX - trackEl.__ccStartX;
-      if (dx < -40) goToSlide(st.idx + 1);
-      else if (dx > 40) goToSlide(st.idx - 1);
+      var w2 = carouselEl.clientWidth || 375;
+      if (dx < 0 && Math.abs(dx) > w2 * 0.25) goToSlide(st.idx + 1);
+      else if (dx > 0 && Math.abs(dx) > w2 * 0.25) goToSlide(st.idx - 1);
       else goToSlide(st.idx);
     });
     trackEl.addEventListener('mouseleave', function () { if (trackEl.__ccDrag) { trackEl.__ccDrag = false; trackEl.classList.remove('dragging'); goToSlide(st.idx); } });
@@ -3498,6 +3529,22 @@ window.__raiseMask = function (el) {
       if (_outside) el.__focusReturn = _a;
       else if (window.__lastOuterHit && document.contains(window.__lastOuterHit)) el.__focusReturn = window.__lastOuterHit;
     }
+    /* v613（D4 定稿）：浮层从「触发它的那个控件」长出。
+       把缩放起点挪到触发点上，关闭时自然缩回原处。
+       取不到触发点（刷新自动弹、快捷键、URL 直达）就回落到 50% 50%，即居中放大。 */
+    try {
+      var _tg = el.__focusReturn;
+      var _bx = el.querySelector('.modal-box,.kf-box,.share-box,.ann-box,.cp-box,.lightbox-box');
+      if (_tg && _bx && _tg.getBoundingClientRect) {
+        var _tb = _tg.getBoundingClientRect(), _bb = _bx.getBoundingClientRect();
+        if (_bb.width > 4 && _bb.height > 4) {
+          var _ox = ((_tb.left + _tb.width / 2) - _bb.left) / _bb.width * 100;
+          var _oy = ((_tb.top + _tb.height / 2) - _bb.top) / _bb.height * 100;
+          _bx.style.transformOrigin = Math.max(-30, Math.min(130, _ox)).toFixed(0) + '% ' + Math.max(-30, Math.min(130, _oy)).toFixed(0) + '%';
+        }
+      }
+    } catch (eO) {}
+
     /* ① 唯一的「物理层级」修正：如果这个弹窗被塞在别的 mask / 容器里（嵌套 = 自成层叠上下文，
           z-index 再高也跳不出父级），把它提到 body 末尾。已经在 body 的不动，避免移动导致滚动位置清零。 */
     if (el.parentNode && el.parentNode !== document.body) document.body.appendChild(el);

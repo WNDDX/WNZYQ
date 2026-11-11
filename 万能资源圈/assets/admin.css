@@ -80,3 +80,35 @@ html[data-theme="dark"] .row-btn.status-hidden{background:var(--blue-ink-strong)
 
 /* v608：没内容时「确定」不可点（视觉也别装成可按） */
 .btn-blue:disabled,.btn-blue.is-empty{opacity:.45;cursor:not-allowed;filter:none;box-shadow:none}
+
+
+/* ===== v613 折叠与三角统一（第十五章 15.2 / 15.5 · 第 2 批） =====
+   ① 折叠一律 height:auto 过渡：不再写死 240/200/1200 的“猜高度”，
+      内容再长也不会被切；不支持的浏览器直接跳到位（仍然完整显示）。
+   ② 三角图标统一 20px、统一 220ms 进场曲线（原来 18/20/24 混用、260/320ms 两套）。
+   ③ 触屏下行内工具键抬到 44 高（行本身 90+，有空间，不动布局）。 */
+.cp-children,.batch-bar,.cat-row .c-meta,.ann-item .ann-act-group.c-meta,
+.extc-pfnote-b,.u-tags-box .u-tags{
+  max-height:none !important;
+  height:0;
+  overflow:hidden;
+  transition:height var(--dur-base) var(--ease-out),
+             opacity var(--dur-fast) var(--ease-out),
+             margin var(--dur-base) var(--ease-out),
+             padding var(--dur-base) var(--ease-out) !important;
+}
+.cp-children,.batch-bar,.cat-row .c-meta,.ann-item .ann-act-group.c-meta,
+.extc-pfnote-b,.u-tags-box .u-tags{opacity:0}
+.cp-children.show,.batch-bar.show,.cat-row.cat-open .c-meta,
+.ann-item.cat-open .ann-act-group.c-meta,.extc-pfnote.open .extc-pfnote-b,
+.u-tags-box .u-tags.is-open,.u-tags-box.is-open .u-tags{height:auto;opacity:1}
+
+/* 三角：尺寸/时长/曲线统一（旋转角各自基准不变，都是转 90°） */
+.toggle-arrow,.cpd-arrow,.cp-chevron,.set-caret{width:20px !important;height:20px !important;
+  transition:transform var(--dur-base) var(--ease-out) !important}
+.extc-note-fold .toggle-arrow,.ann-tabs-fold .toggle-arrow{width:20px !important;height:20px !important}
+
+@media (pointer:coarse){
+  .row-btn,.batch-btn,.pg-btn{min-height:44px}
+  .modal-close-x{min-width:44px;min-height:44px}
+}
