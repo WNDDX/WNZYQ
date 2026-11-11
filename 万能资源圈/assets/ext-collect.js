@@ -459,7 +459,9 @@
         '<div class="extc-t" title="' + esc(g.title) + '">' + esc(g.title) + '</div>' +
         /* v587（第 9 条）：连续两次采不到 → 标「对方已下架」。只是提示，不删数据；
            如果平台开了自动隐藏，对应的已上架资源也被藏起来了，这里一并说明。 */
-        (Number(g.missing || 0) >= 1
+        /* v608（老板 11-12 第 5 条）：判定太激进——注释写的是「连续两次采不到」，代码却 >=1，
+           即一次网络抖动/对方风控就标成「对方已下架」，整列表都是红字。改成真的两次。 */
+        (Number(g.missing || 0) >= 2
           ? '<div class="extc-gone">⚠ 对方已下架' + (Number(g.auto_hidden) ? '（本店已自动隐藏）' : '') + '</div>'
           : '') +
         '<div class="extc-m">' + esc(g.platform || '未归平台') + '</div>' +
