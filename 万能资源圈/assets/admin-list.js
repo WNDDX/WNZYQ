@@ -614,6 +614,7 @@ function renderProducts() {
         _pdot.textContent = ' · ';
         var _pp = document.createElement('span');
         _pp.className = 'p-price';
+        _pp.setAttribute('data-contrast-skip', 'brand-orange'); /* v609：价格统一品牌橙（老板定稿） */
         _pp.textContent = _pPriceText;
         s.appendChild(_pdot);
         s.appendChild(_pp);
@@ -744,6 +745,7 @@ function renderProducts() {
           if (_vPriceText) {
             var _vp = document.createElement('span');
             _vp.className = 'cp-price';
+            _vp.setAttribute('data-contrast-skip', 'brand-orange');
             _vp.textContent = _vPriceText;
             item.appendChild(_vp);
           } else { /* R154：无金额行保留金额槽位（空占位），¥/码键跨行对齐 */

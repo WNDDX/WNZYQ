@@ -891,6 +891,7 @@ window.__linkify = function (html) {
         if (_viPriceText) {
           var _vip = document.createElement('span');
           _vip.className = 'v-price';
+          _vip.setAttribute('data-contrast-skip', 'brand-orange');
           _vip.textContent = _viPriceText;
           _vipEl = _vip; /* R148（用户 01:26）：金额位置修正——不在创建时 append（会排到行最左），挪到 name 之后、码键之前 */
         }
