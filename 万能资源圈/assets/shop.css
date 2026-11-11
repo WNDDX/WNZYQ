@@ -29,7 +29,8 @@
 }
 .cat-toggle {
   position: static; flex: 0 0 44px; width: 44px; height: auto; min-height: 44px;
-  border: none; border-left: 1px solid var(--border-soft);
+  /* v608（老板 11-12 第 10 条）：三角左边那根 1px 竖线去掉——它让白卡片像被切开，影响美观 */
+  border: none;
   background: var(--card-bg); border-radius: 0; padding: 0;
   display: flex; align-items: center; justify-content: center;
   color: var(--blue-ink, var(--blue1)); cursor: pointer;

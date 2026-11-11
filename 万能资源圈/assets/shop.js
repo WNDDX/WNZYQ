@@ -847,7 +847,10 @@
         return;
       }
 
-      subWrap.style.display = 'block';
+      /* v608（老板 11-12 第 2 条）：原来这里写死 block，把 CSS 的 flex 顶掉——
+         二级栏因此变成块级容器，三角（position:static 的固定槽位）被挤到下一行最左边，
+         截图里那个「孤立小三角」就是它。置空 = 让 CSS 的 flex 生效，三角回到右端槽位。 */
+      subWrap.style.display = '';
       subBar.innerHTML = '';
 
       // "全部"选项

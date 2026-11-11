@@ -58,3 +58,25 @@
 /* v604 · 深色档的「隐藏」状态键：浅蓝底白字只有 2.13:1。
    深色主题里 --blue-ink 是给「深底上的蓝字」用的浅蓝，拿来当按钮底色会翻车，所以这里单独钉死深蓝底。 */
 html[data-theme="dark"] .row-btn.status-hidden{background:var(--blue-ink-strong);border-color:var(--blue-ink-strong);color:#fff}
+
+
+/* ── v608（老板 11-12 第 4 条）：采集详情里「描述 / 对方参数」必须自己换行 ──
+   现场：描述是一整行长中文（用 | 分隔），原来被 nowrap / 单行裁切挤成一条，右边直接截断。
+   这里显式放开换行，并且用 anywhere 兜底没有空格的长串（链接、代码）。
+   只作用于这几处，不影响全站「列表行不换行」的规矩（9.120 管的是列表行，不是正文）。 */
+.extc-see-desc,
+.extc-kv-v,
+.extc-raw > div,
+.extc-see-title {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.extc-kv-row { align-items: flex-start; }
+.extc-kv { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+/* 描述块给一点呼吸：与上下模块区分开 */
+.extc-see-desc { margin: 2px 0 4px; }
+
+
+/* v608：没内容时「确定」不可点（视觉也别装成可按） */
+.btn-blue:disabled,.btn-blue.is-empty{opacity:.45;cursor:not-allowed;filter:none;box-shadow:none}

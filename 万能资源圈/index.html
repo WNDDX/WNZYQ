@@ -156,7 +156,10 @@ body{
     transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease, filter var(--dur-fast) ease; /* v400 条9：0.15s 散数改统一快档令牌 */
 }
 /* 四色按钮（v327 用户拍板：导航页特殊页恢复原配色与字号，仅保留光斑背景等新增氛围效果） */
-.btn-orange{background-color: var(--brand-orange-ink, #B45309);}
+/* v608（老板 11-12 第 1 条）：橙色恢复成品牌亮橙 #F06C00（上一版为了对比度调暗了，老板否掉）。
+   副标题 14px 白字在亮橙上只有 3.07:1，靠字重 + 阴影保证可读性（v587 原方案），
+   并给这两处挂 data-contrast-skip，让对比度扫描知道「这是老板拍板的品牌色，别反复报」。 */
+.btn-orange{background-color: var(--brand-orange, #F06C00);}
 .btn-green{background-color: var(--brand-green);}
 .btn-blue{background-color: #1976D2;}
 .btn-cyan{background-color: var(--brand-cyan);}
@@ -238,7 +241,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
         <svg class="icon-svg" viewBox="0 0 24 24" fill="white" aria-hidden="true">
             <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
         </svg>
-        <span class="btn-txt">获取资源<span class="btn-sub" id="subRes"></span></span><!-- v400 条11：HTML 初始文案清空（v387 只做了 JS 侧），网慢时不再闪现「优质资源聚合平台」；SEO 描述保留在 og/twitter meta -->
+        <span class="btn-txt">获取资源<span class="btn-sub" id="subRes" data-contrast-skip="brand-orange"></span></span><!-- v400 条11：HTML 初始文案清空（v387 只做了 JS 侧），网慢时不再闪现「优质资源聚合平台」；SEO 描述保留在 og/twitter meta -->
     </button>
 
     <button class="btn-item btn-green" onclick="openService()">
@@ -437,7 +440,7 @@ window.__pullRefresh = { refresh: function (done) { try { loadImg(dom.logoImage,
       if (el) { el.innerHTML = html; el.style.visibility = 'visible'; } /* v416 条5：填充后显示 */
     }
     /* v436b（老板拍板）：「共 个资源」四字跟「获取资源」键文字同帧出现（数字留位），数字等接口回来再填——不再是接口回来才整句冒出 */
-    setSubHtml('共 <span id="resTotal"></span> 个资源');
+    setSubHtml('共 <span id="resTotal" data-contrast-skip="brand-orange"></span> 个资源');
     function fetchTotal() {
       try {
         var ctrl = ('AbortController' in window) ? new AbortController() : null;

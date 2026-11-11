@@ -960,8 +960,7 @@
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检" style="max-width:var(--modal-w-xl)"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
       '<h2 class="modal-title">系统体检</h2>' +
       '<div class="chk-sum">' + chips + '</div>' +
-      '<div class="chk-scroll">' + body + '</div>' +
-      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
+      '<div class="chk-scroll">' + body + '</div></div>'; /* v608（老板 11-12 第 14 条）：系统体检底部不要关闭键，头部 × 已够 */
     document.body.appendChild(mask);
     requestAnimationFrame(function () {
       mask.classList.add('open');
@@ -1244,6 +1243,9 @@
           window.__usCollapsed[id] = !wasCollapsed;
           this.classList.toggle('collapsed', !wasCollapsed);
           this.setAttribute('aria-expanded', wasCollapsed ? 'true' : 'false');
+          /* v608（老板 11-12 第 6 条）：这里原来只改 window.__usCollapsed 和类名，**没有重算行显示**——
+             所以点下去什么都不会发生。补一次 applyFold()（它负责按祖先链隐藏/显示子行 + 淡出动画）。 */
+          applyFold();
         });
       });
       applyFold();
@@ -1766,8 +1768,7 @@
       '<button type="button" class="logs-rbtn" data-days="7">7天</button>' +
       '<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
       '</div>' +
-      '<div class="logs-body" id="vitalsBody"><div class="extc-loading">正在读取…</div></div>' +
-      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+      '<div class="logs-body" id="vitalsBody"><div class="extc-loading">正在读取…</div></div>' + /* v608：性能实测底部不要关闭键 */
       '</div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); });
@@ -1888,8 +1889,7 @@
         '<button type="button" class="btn-blue btn-inline" id="errGo">搜索</button>' +
       '</div>' +
       '<div class="logs-body" id="errBody"><div class="extc-loading">正在读取…</div></div>' +
-      '<div class="uni-pager" id="errPager"></div>' +
-      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+      '<div class="uni-pager" id="errPager"></div>' + /* v608：前端报错底部不要关闭键 */
       '</div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); });
@@ -2039,8 +2039,7 @@
          而且弹窗底部只有一个按键时它是撑满整行的（等分规则），插东西进去会破坏那个布局。 */
       '<div class="log-tip">点一行看全文</div>' +
       '<div class="logs-body" id="logsBody"><div class="extc-loading">正在读取…</div></div>' +
-      '<div class="uni-pager" id="logsPager"></div>' +
-      '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div>' +
+      '<div class="uni-pager" id="logsPager"></div>' + /* v608：操作日志底部不要关闭键 */
       '</div>';
     document.body.appendChild(mask);
     requestAnimationFrame(function () { mask.classList.add('open'); });

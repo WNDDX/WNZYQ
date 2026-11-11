@@ -2093,6 +2093,7 @@
       }
       if (del) del.style.display = qr ? '' : 'none';   /* ×只在有图时出现 */
       if (add) add.style.display = qr ? 'none' : '';
+      if (window.__syncInfoSave) window.__syncInfoSave(k);   /* v608：有内容才让「确定」可按 */
     }
     /* v385 条1：实时预览导航页弹窗 → v402 条7 归一：直接走 ui-common kf-box 唯一源（openContactModal），
        与导航页/资源页同一份弹窗；二维码取「暂存||已保存」（改了没保存也能预览到），跳转链接取输入框当前值||已保存||出厂默认，所见即所得 */
@@ -2136,6 +2137,25 @@
         if (mk && !mk.classList.contains('open')) mk.classList.add('open');
         if (window.__haptic) window.__haptic();
       });
+      /* v608（老板 11-12 第 3 条）：没填任何内容时「确定」不该是可按的亮键。
+         判定口径：二维码（本地图/网络图）+ 跳转链接 三者都空 = 没有任何可保存的内容。
+         输入时实时重算（下面的 input 监听），避免"填了还不能点"。 */
+      function syncInfoSave(k) {
+        var cap = k.charAt(0).toUpperCase() + k.slice(1);
+        var btn = document.getElementById('infoSave' + cap);
+        if (!btn) return;
+        var qr = document.getElementById('infoQrImg' + cap);
+        var net = document.getElementById('infoNet' + cap);
+        var url = document.getElementById('infoUrl' + cap);
+        var hasQr = !!(qr && qr.getAttribute('src') && qr.style.display !== 'none');
+        var hasNet = !!(net && String(net.value || '').trim());
+        var hasUrl = !!(url && String(url.value || '').trim());
+        var empty = !hasQr && !hasNet && !hasUrl;
+        btn.disabled = empty;
+        btn.setAttribute('aria-disabled', empty ? 'true' : 'false');
+        btn.classList.toggle('is-empty', empty);
+      }
+      window.__syncInfoSave = syncInfoSave;
       ['contact', 'group', 'gzh'].forEach(function (k) {
         var c = __infoCfg[k], C = __infoCap(k);
         var toggle = function () {
@@ -2236,6 +2256,12 @@
         /* v537（老板）：「收起」恢复成单纯的收起，不再顺手保存；保存交给旁边的「保存」键 */
         var sv = document.getElementById('infoSave' + C);
         if (sv) sv.addEventListener('click', function () { __infoSaveRow(); });
+        /* v608：填/清空输入框时重算「确定」可用性（不填不能点，填了立刻能点） */
+        ['infoNet' + C, 'infoUrl' + C].forEach(function (id) {
+          var inp = document.getElementById(id);
+          if (inp) inp.addEventListener('input', function () { syncInfoSave(k); });
+        });
+        syncInfoSave(k);
         if (col) col.addEventListener('click', function () { toggle(); });
       });
     })();

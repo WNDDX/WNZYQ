@@ -2823,6 +2823,9 @@ window.__refreshIcons = function () {
   try { window.__autoDecorate(); window.__markFitGroups(); if (window.__btnFit) window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); }
 };
 window.addEventListener('DOMContentLoaded', function () {
+  /* v608（老板 11-12 第 8 条）：刷新瞬间公告/信息图标会短暂不见——图标原来要等 60ms 才注入。
+     现在 DOM 一就绪立刻补一次；60ms 那次保留，兜住异步渲染出来的按钮。 */
+  try { window.__refreshIcons(); window.__autoDecorateTabs(); } catch (e0) {}
   setTimeout(function () { window.__refreshIcons(); window.__autoDecorateTabs(); }, 60);
   /* 动态内容：前 20 秒内每 1.2 秒补一次，之后靠 resize/点击触发 */
   var n = 0;
