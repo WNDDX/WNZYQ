@@ -4,22 +4,13 @@
    视觉尺寸不变，把真实可点区域撑到 44（触屏），解决“按钮看着 36、手指点不准”。
    用 ::after 撑：不影响布局、不改变截图像素（透明）。 */
 @media (pointer:coarse){
-  .row-btn,.batch-btn,.tab,.pg-btn,.view-btn,.btn-fit,.modal-close-x,.cat-tag,.undo-btn{position:relative}
-  /* 用 ::before 撑热区，不能占 ::after——.tab.btn-fit / .btn-fit 的 ::after 正在放手机档的短标签（admin.css） */
-  .row-btn::before,.batch-btn::before,.tab::before,.pg-btn::before,.view-btn::before,
-  .btn-fit::before,.modal-close-x::before,.cat-tag::before,.undo-btn::before{
-    content:'';position:absolute;left:0;right:0;top:50%;
-    height:44px;transform:translateY(-50%);
-  }
-  /* 行内工具键彼此间距 8px，44 会重叠 4px：把热区宽度收进去，避免抢隔壁的点击 */
-  .row-btn::before,.batch-btn::before,.pg-btn::before{left:2px;right:2px}
+  /* 横向补足：行内密集键视觉 36 高，但宽度补到 40，拇指更容易压中 */
+  .row-btn,.batch-btn,.pg-btn{min-width:40px}
+  /* 竖向不再用 ::before 撑 44 —— 实测被 .product-row 的 overflow:hidden 裁掉，
+     elementFromPoint 在按钮上方 3px 命中的还是行本身（等于没生效）。
+     真要把高度做到 44，只能把行高改成 44（改变布局），那是第 2 批的事，已登记在规范 15.5。 */
+  .modal-close-x,.cat-tag,.undo-btn,.view-btn{min-height:40px;min-width:40px}
 }
-
-/* 滚动条（第十五章 15.11）：本站在文件前部已统一 `*::-webkit-scrollbar{width:0;height:0;display:none}`
-   —— 全站（含纵向）都不显示滚动条，是既定设计，不在本处再覆盖。
-   所以这里**不新增**任何滚动条样式：新增宽度会让系统 17px 的条重新出现，整页右移、像素差 15%。 */
-
-
 
 /* ===== v612 遮罩统一（第十五章 15.6） =====
    遮罩淡入一律 180ms：比内容快一点，让"框"先出现、内容再长出来，视觉上更稳。 */
