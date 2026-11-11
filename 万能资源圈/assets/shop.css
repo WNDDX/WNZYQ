@@ -86,6 +86,11 @@
   .product-grid.list-view .card-price{font-size:17px;letter-spacing:0.4px}
 }
 
+/* 列表视图标题去掉 min-height:36px——
+   网格视图留 36 是为了两行标题时卡片一样高，但列表视图标题只有一行，
+   那 36px 会在标题和描述之间凭空多出 16px，就是"有的地方空太多"的由来。 */
+.product-grid.list-view .card-title{min-height:0}
+
 /* 手机端：卡片间距 8 → 12，与桌面同一档 */
 @media (max-width:600px){
   .product-grid{gap:12px}
