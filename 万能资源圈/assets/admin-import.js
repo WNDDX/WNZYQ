@@ -2296,7 +2296,7 @@
  '<b>将保留：</b>账号、店铺名、客服码、风格设置</p>' +
  '<p class="imp-lead">删除后无法找回，请先备份</p>' +
  '<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份表格</button></div>' +
- '<label for="rsConfirm">确认请原样输入「清空」两个字</label>' +
+ '<label for="rsConfirm">输入「清空」两个字确认</label>' +
  '<input class="input" id="rsConfirm" type="text" autocomplete="off" placeholder="清空" aria-label="输入清空二字以确认">' +
  '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="rsGo" disabled>确认清空</button>' +
  '<button type="button" class="modal-close" data-x="1">关闭</button></div>' +
