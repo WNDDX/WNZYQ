@@ -1273,6 +1273,16 @@
         if (first) first.click();
       }
     };
+    /* v614（X-08）：列表是动态渲染的，行内键后补进来时也要套用「置灰 + 说明」。
+       否则子账号第一次看到的是“按钮在、点了没反应”，刷新一次才变灰。 */
+    (function () {
+      var t = 0;
+      function soon() { clearTimeout(t); t = setTimeout(function () { try { window.__applyPermUI(); } catch (e) {} }, 180); }
+      try {
+        new MutationObserver(soon).observe(document.body, { childList: true, subtree: true });
+      } catch (e) {}
+    })();
+
     /* 统一未开放拦截：带 data-perm 的按钮点击时校验 */
     document.addEventListener('click', function (e) {
       var el = e.target.closest && e.target.closest('[data-perm]');
