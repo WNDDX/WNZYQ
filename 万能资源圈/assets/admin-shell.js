@@ -1174,6 +1174,8 @@
             if (_local) { toast(window.T('netFail'), 'error'); }
             else if (res._status === 429) { var waitMin = res && res.retryAfter ? Math.ceil(res.retryAfter / 60) : 10;
             toast('尝试次数过多，请 ' + waitMin + ' 分钟后再试', 'error'); } // v294：125 提示加等待时间 // v298（用户 10-04 20:30）：修复 v297 注释笔误致语法错误
+            /* v616：数据库维护中不是「你输错了」，别在提示前加「登录失败：」，直接说清在维护 */
+            else if (res.code === 'DB_BUSY') { toast(res.msg || '系统正在维护，请稍后重试', 'error'); }
             else { toast('登录失败：' + (res.msg || window.T('netFail')), 'error'); }
           }
         })

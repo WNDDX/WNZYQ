@@ -126,6 +126,13 @@ export async function onRequestPost(context) {
   } catch (e) {
     // R27：错误细节只进服务端日志，对外返回通用提示（与 _middleware.js 全局错误策略对齐，避免泄露内部信息）
     console.error('登录失败:', e);
+    /* v616：数据库不可用（D1 额度用尽/连接失败/表缺失）时不能只说「开小差了」——
+       老板和用户会一直重试，也看不出是维护。给一个明确、可等待的提示。 */
+    const _m = String((e && e.message) || e).toLowerCase();
+    const _dbDown = ['exceeded d1', 'daily row read limit', 'd1_error', 'database is locked', 'no such table', 'network connection lost', 'storage operation exceeded'].some(function (p) { return _m.indexOf(p) >= 0; });
+    if (_dbDown) {
+      return json({ ok: false, code: 'DB_BUSY', msg: '系统正在维护（数据库繁忙），请稍后重试' }, 503, { 'Retry-After': '600' });
+    }
     return json({ ok: false, msg: '服务器开小差了，请重试' }, 500);
   }
 }
