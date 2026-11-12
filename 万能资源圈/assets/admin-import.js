@@ -888,7 +888,12 @@
   /* 恢复历史：刷新体检时若上次替换过，从后端 original_urls 读不回前端状态——改为结果行打开时查一次（简化：本次会话内 it.replaced 记忆，跨会话点「压缩替换」重新替换原图也无损） */
 
   function renderSysResult(R0) {
-    var old = document.getElementById('sysCheckMask'); if (old) old.remove();
+    /* v614d：这里原来先无条件 remove 掉「体检中」弹窗，后面才去读它判断“用户关没关”——
+       元素都没了，判断永远是“没关”，于是点了关闭结果弹窗又冒回来（journey-admin 的间歇性失败）。
+       先在移除前把状态记下来。 */
+    var _prev = document.getElementById('sysCheckMask');
+    window.__chkClosedEarly = !!(_prev && (_prev.dataset.userClosed === '1' || !_prev.classList.contains('open')));
+    if (_prev) _prev.remove();
     var brokenRows = R0.broken.map(function (it) {
       return '<div class="chk-row">' +
         '<span class="chk-thumb chk-thumb-bad">✕</span>' +
@@ -957,7 +962,8 @@
     /* v614c：判“用户已经关了”要三种情况都算：显式点过 ×（userClosed）、
        或者弹窗已经不在 DOM、或者已经不含 open 类。原来只看 userClosed，
        结果“程序化把 open 拿掉”的关闭方式（以及遮罩被别处收起）会让结果弹窗又冒回来。 */
-    var _wasClosed = !!(_prevMask && (_prevMask.dataset.userClosed === '1' || !_prevMask.classList.contains('open')));
+    var _wasClosed = !!window.__chkClosedEarly || !!(_prevMask && (_prevMask.dataset.userClosed === '1' || !_prevMask.classList.contains('open')));
+    window.__chkClosedEarly = false;
     if (_wasClosed) { document.getElementById('sysCheckMask').remove(); resolve(R0); return; }
     mask.className = 'modal-mask'; mask.id = 'sysCheckMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检" style="max-width:var(--modal-w-xl)"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
