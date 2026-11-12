@@ -2786,7 +2786,17 @@ function boot() {
       // R30-#4：登录态改由 HttpOnly Cookie 携带
       if (!isLocal) {
         api('admin/session').then(function (s) {
-          if (s.ok) { showMain(s.username); if (window.__applyMe) window.__applyMe(s.username); } /* v439 #116 */
+          if (s.ok) {
+            showMain(s.username); if (window.__applyMe) window.__applyMe(s.username); /* v439 #116 */
+            /* v614（Y-02）：刷新后走的是这条「自动登录」分支，不是登录按钮那条，
+               所以恢复必须挂在这里——否则会话过期跳登录、重新登录回来，草稿永远恢复不了。 */
+            setTimeout(function () {
+              try {
+                var n = window.__restoreForms401 ? window.__restoreForms401() : 0;
+                if (n && window.showToast) window.showToast('已恢复登录过期前填写的 ' + n + ' 项内容', 'success');
+              } catch (eR) {}
+            }, 900);
+          }
           else { showLogin(); }
         });
       } else {
