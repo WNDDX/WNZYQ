@@ -313,7 +313,11 @@ window.__linkify = function (html) {
           srow.addEventListener('click', function () { pickCatValue(pickerEl, hiddenInput, displayEl, sub.id, sub.name); });
           childBox.appendChild(srow);
         });
-        panelEl.appendChild(childBox);
+        /* v614：一级分类下一个子分类都没有时，不要把这个空的 .cp-children 塞进面板。
+           它带 role="group"，ARIA 规定 group 必须有自己的成员；空 group 会被 axe 判成
+           「aria-required-children」（严重级），今天无障碍测试就是这么红的。
+           有子项才 append，没子项整块不渲染（视觉一致：本来也是空的）。 */
+        if (childBox.childElementCount > 0) panelEl.appendChild(childBox);
       });
       var sel = Number(selected);
       var found = (state.categories || []).find(function (c) { return Number(c.id) === sel && !(opts.excludeZero && Number(c.id) === 0); });
