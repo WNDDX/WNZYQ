@@ -74,7 +74,7 @@ export async function onRequestPost(context) {
                  WHERE p.deleted_at < datetime('now', '-60 days') AND p.deleted_at IS NOT NULL`
               ).all();
               for (const r of (expRows || [])) sources.push(r.img, r.detail, r.detail_images, r.detail_videos, r.vd, r.vi, r.vv, r.vrc);
-            } catch (e1) { console.error('到期清理收集图仓地址失败(继续):', e1 && e1.message); }
+            } catch (e1) { console.error('到期清理收集图仓地址失败（继续):', e1 && e1.message); }
             /* ② 派生行清理：类型/码 + 绑定（在删主表前删，靠 product_id 关联） */
             try {
               await env.DB.prepare(
@@ -83,7 +83,7 @@ export async function onRequestPost(context) {
               await env.DB.prepare(
                 `DELETE FROM resource_bindings WHERE product_id IN (SELECT id FROM products WHERE deleted_at < datetime('now', '-60 days') AND deleted_at IS NOT NULL)`
               ).run();
-            } catch (e2) { console.error('到期清理派生行失败(继续):', e2 && e2.message); }
+            } catch (e2) { console.error('到期清理派生行失败（继续):', e2 && e2.message); }
           }
           await env.DB.prepare(
             `DELETE FROM ${t.name} WHERE ${t.dateCol} < datetime('now', '-60 days') ${t.extra || ''}`
@@ -94,13 +94,13 @@ export async function onRequestPost(context) {
             try {
               const { deleteBucketImages } = await import('../_utils.js');
               await deleteBucketImages(env, sources);
-            } catch (e3) { console.error('到期清理图仓失败(不影响删行):', e3 && e3.message); }
+            } catch (e3) { console.error('到期清理图仓失败（不影响删行):', e3 && e3.message); }
           }
         }
       }
       await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('last_cleanup_date', ?)").bind(today).run();
     }
-  } catch (e) { console.error('每日清理失败(不影响埋点):', e); }
+  } catch (e) { console.error('每日清理失败（不影响埋点):', e); }
 
   // R169：去重口径统一到全部类型——「同设备+同资源+同类型」1 小时窗口内已有记录则本次不记
   // （created_at 为 UTC，与 datetime('now','-1 hour') 同系直接比较，窗口 1 小时与时区无关）
@@ -109,7 +109,7 @@ export async function onRequestPost(context) {
       "SELECT id FROM stats WHERE type = ? AND product_id = ? AND ip = ? AND created_at >= datetime('now', '-1 hour') LIMIT 1"
     ).bind(type, pid, ip).first();
     if (dup) return json({ ok: true, deduped: true });
-  } catch (e) { console.error('埋点去重查询失败(降级为记录):', e); }
+  } catch (e) { console.error('埋点去重查询失败（降级为记录):', e); }
 
   await env.DB.prepare('INSERT INTO stats (product_id, type, ip, region) VALUES (?, ?, ?, ?)')
     .bind(pid, type, ip, (request.cf && request.cf.region) || '')
@@ -120,9 +120,9 @@ export async function onRequestPost(context) {
   try {
     const job = import('../_autocollect.js')
       .then(function (m) { return m.maybeAutoCollect(context); })
-      .catch(function (e) { console.error('自动采集失败(不影响埋点):', e && e.message); });
+      .catch(function (e) { console.error('自动采集失败（不影响埋点):', e && e.message); });
     if (context.waitUntil) context.waitUntil(job);
-  } catch (eA) { console.error('自动采集挂载失败(不影响埋点):', eA && eA.message); }
+  } catch (eA) { console.error('自动采集挂载失败（不影响埋点):', eA && eA.message); }
 
   return json({ ok: true });
 }

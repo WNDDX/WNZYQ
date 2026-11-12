@@ -223,7 +223,7 @@
  listEl.querySelectorAll(':scope > .file-folder-item > .fc-row-head > .fname, :scope > .file-folder-item > .fname').forEach(function (n) { set.add(n.textContent); });
  return set;
  }
- /* 文件夹统计：N 项 · 合计大小（递归） */
+ /* 文件夹统计：N 项，合计大小（递归） */
  function fcFolderStats(listEl) {
  var n = 0, total = 0;
  if (!listEl) return { n: 0, total: 0 };
@@ -403,7 +403,7 @@
  });
  }
 
- /* ===== v351：文件/文件夹卡（支持多级嵌套 · 默认收起 · 管理员/客户端双形态）===== */
+ /* ===== v351：文件/文件夹卡（支持多级嵌套，默认收起，管理员/客户端双形态）===== */
  function buildFileCardHTML(data) {
  var id = escapeHtml(data.id || genFileId());
  var type = data.type || 'file';
@@ -460,7 +460,7 @@
  return '<div class="file-folder-item is-folder" data-ftype="folder">' +
  '<div class="fc-row-head">' + fcFolderIconSvg() +
  '<span class="fname" data-action="rename" title="点一下改名">' + escapeHtml(node.name || '未命名') + '</span>' +
- '<span class="fmeta">' + stats.n + ' 项' + (stats.total ? ' · ' + fmtFileSize(stats.total) : '') + '</span>' +
+ '<span class="fmeta">' + stats.n + ' 项' + (stats.total ? '，' + fmtFileSize(stats.total) : '') + '</span>' +
  '<span class="fc-admin-only">' +
  '<button type="button" class="fc-btn" data-action="add-file-here" title="往这个文件夹里加文件">＋文</button>' +
  '<button type="button" class="fc-btn" data-action="add-folder-here" title="在这个文件夹里补个子文件夹">＋夹</button>' +
@@ -747,13 +747,13 @@
  });
  }
 
- /* v351：加/删文件后刷新所属文件夹的「N 项 · 合计大小」 */
+ /* v351：加/删文件后刷新所属文件夹的「N 项，合计大小」 */
  function fcRefreshMeta(listEl) {
  var ownerRow = listEl.closest ? listEl.closest('.file-folder-item.is-folder') : null;
  if (!ownerRow) return;
  var st = fcFolderStats(listEl);
  var m = ownerRow.querySelector(':scope > .fc-row-head > .fmeta');
- if (m) m.textContent = st.n + ' 项' + (st.total ? ' · ' + fmtFileSize(st.total) : '');
+ if (m) m.textContent = st.n + ' 项' + (st.total ? '，' + fmtFileSize(st.total) : '');
  }
  /* 展开某一行所在的父级链（上传完成后让新文件露出来） */
  function fcExpandParents(node) {
@@ -1085,7 +1085,7 @@
  var nm = fcUniqueName(x.name, taken); taken.add(nm);
  return { ftype: 'file', name: nm, size: x.size, key: '', oversize: x.oversize };
  });
- rteInsert(editor, buildFileCardHTML({ id: pid, type: 'folder', name: folderName || ('文件包 (' + items.length + ')'), items: kids }));
+ rteInsert(editor, buildFileCardHTML({ id: pid, type: 'folder', name: folderName || ('文件包（' + items.length + ')'), items: kids }));
  var fcard = editor.querySelector('[data-file-id="' + pid + '"]');
  var rows = fcard ? fcard.querySelectorAll('.file-folder-item:not(.is-folder)') : [];
  items.forEach(function (it, idx) {
@@ -1288,7 +1288,7 @@
  var ext = m ? m[1] : '';
  var risky = { mov: 1, avi: 1, wmv: 1, flv: 1, mkv: 1, m4v: 1, mpg: 1, mpeg: 1, ts: 1, '3gp': 1 };
  if (risky[ext]) {
- toast('已插入。注意：' + ext.toUpperCase() + ' 格式部分浏览器（Chrome/安卓）可能无法播放，建议转成 MP4 (H.264)', 'error');
+ toast('已插入。注意：' + ext.toUpperCase() + ' 格式部分浏览器（Chrome/安卓）可能无法播放，建议转成 MP4 (H.264）', 'error');
  }
  }
 
@@ -1726,9 +1726,9 @@
  txt.value = a.level === 1 ? '公告' : (a.title || '');
  txt.addEventListener('click', function (e) { e.stopPropagation(); });
  txt.addEventListener('input', function () { a.title = this.value; });
- txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '(未命名公告)'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
+ txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '（未命名公告）'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
  // 公告隐藏状态由下方状态下拉框直接切换
- var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:var(--text-faint);font-size:12px;min-width:40px;text-align:left;flex-shrink:0;'; /* v416 条8：排序标签 56→40px，与名称框同主行 */ sortEl.textContent = '排序:' + (idx + 1);
+ var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:var(--text-faint);font-size:12px;min-width:40px;text-align:left;flex-shrink:0;'; /* v416 条8：排序标签 56→40px，与名称框同主行 */ sortEl.textContent = '排序：' + (idx + 1);
  // R82：显示/隐藏切换改用与编辑同款的胶囊按钮（点击直接切换），不再用下拉框
  var annStatusBtn = document.createElement('button');
  annStatusBtn.className = 'row-btn status-btn ' + (a.hidden ? 'status-hidden' : 'status-online');
@@ -1827,7 +1827,7 @@
  if (!a) return;
  stateAnn.curId = id;
  if (annEditor) annEditor.innerHTML = a.content || '';
- if (annEditLabel) annEditLabel.textContent = '编辑公告：' + (a.title || '(未命名)');
+ if (annEditLabel) annEditLabel.textContent = '编辑公告：' + (a.title || '（未命名）');
  var _idxA = -1; for (var _ii = 0; _ii < stateAnn.list.length; _ii++) { if (stateAnn.list[_ii].id === id) { _idxA = _ii; break; } }
  document.querySelectorAll('.ann-item').forEach(function (el) { el.classList.toggle('ann-cur', Number(el.dataset.idx) === _idxA); });
  }
@@ -1852,7 +1852,7 @@
  var _dl = null;
  try { _dl = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; } catch (e) { if (window.__silent) window.__silent(e); }
  if (annEditor) annEditor.innerHTML = _dl ? (_dl.content || '') : '';
- if (annEditLabel) annEditLabel.textContent = _dl ? ('编辑公告：' + (_dl.title || '(未命名)')) : '编辑公告';
+ if (annEditLabel) annEditLabel.textContent = _dl ? ('编辑公告：' + (_dl.title || '（未命名）')) : '编辑公告';
  try { renderAnnList(); } catch (e) { if (window.__silent) window.__silent(e); }
  try { document.getElementById('annMask').classList.remove('open'); } catch (e) { if (window.__silent) window.__silent(e); }
  try { window.__clearEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); } // R248：取消/×关闭时清除草稿
@@ -2736,8 +2736,8 @@
  var _now = new Date();
  var _hhmm = ('0' + _now.getHours()).slice(-2) + ':' + ('0' + _now.getMinutes()).slice(-2);
  /* v587 用户 11-08：原来三种口径混在一起（较上次查看 / 今天0点 / 最近24小时），数字互相打架。全部统一为今日 0 点起。 */
- document.getElementById('ctSince').textContent = '数据截至 ' + _hhmm + '· 上方四格与下方明细 = 今日 0 点起 · 带蓝点的是上次查看后新增'; /* v458 口径：明细窗口 7 天 → 24 小时 */
- document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + ' · 咨询 ' + d.today.contact + ' · 查看内容 ' + d.today.unlock + ' · 绑定 ' + d.today.bind;
+ document.getElementById('ctSince').textContent = '数据截至 ' + _hhmm + '，上方四格与下方明细 = 今日 0 点起，带蓝点的是上次查看后新增'; /* v458 口径：明细窗口 7 天 → 24 小时 */
+ document.getElementById('ctToday').textContent = '今日概览：访问 ' + d.today.view + '，咨询 ' + d.today.contact + '，查看内容 ' + d.today.unlock + '，绑定 ' + d.today.bind;
  var list = document.getElementById('ctList');
  var _alert = sysAlertEntry();
  /* 体检提醒插在筛选与列表之前（视觉顺序：⚠提醒 → 只看筛选 → 动态流） */
@@ -2812,7 +2812,7 @@
  var tp = fmtTime(r.at).split(' '); /* v386 规整：时间两行 MM-DD 换行 HH:MM */
  var rl = regionLabel(r.region); /* v386 规整：省份前缀（能取到才显示） */
  var who = maskIP(r.who);
- var target = r.title + (r.extra ? ' · ' + r.extra : ''); /* extra 仅资源解锁（含类型名）才带 */
+ var target = r.title + (r.extra ? '，' + r.extra : ''); /* extra 仅资源解锁（含类型名）才带 */
  /* v387 A10：时间线圆点逐条弹出（stagger 40ms，cap 12 条） */
  var _d = ' style="--casc-d:' + (Math.min(ri, 12) * 40) + 'ms"';
  /* v454/v458：明细流固定展示最近 24 小时，比上次查看新的行打未读点（原来整条流会随上次查看被清空，进来看一次下次就空了） */

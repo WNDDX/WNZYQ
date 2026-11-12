@@ -590,19 +590,19 @@ function renderProducts() {
  var __lo = String(p.title).toLowerCase(), __k = __kw.toLowerCase(), __o = '', __i = 0, __h;
  if (__k) { while ((__h = __lo.indexOf(__k, __i)) !== -1) { __o += __esc(p.title.slice(__i, __h)) + '<mark class="hl">' + __esc(p.title.slice(__h, __h + __k.length)) + '</mark>'; __i = __h + __k.length; } }
  t.innerHTML = __o + __esc(p.title.slice(__i));
- } else t.textContent = p.title || '(无标题)';
+ } else t.textContent = p.title || '（无标题）';
  var s = document.createElement('div');
  s.className = 'p-sub';
  // R24：简介部分颜色复用资源页弹窗简介的蓝色（var(--blue1)），分类名保持灰色
  // R146（用户 00:34）：分隔点改黑色；简介后追加深色点+橙色金额（无金额整段不渲染）
- /* v536：没有简介时不再挂那个「 · 」——原来列表里会出现「wifi·」「· 简介」这种孤零零的点 */
+ /* v536：没有简介时不再挂那个「，」——原来列表里会出现「wifi·」「，简介」这种孤零零的点 */
  var _catTxt = String(catName[p.cid] || '').trim() || '未分类';
  var _descTxt = String(p.desc || '').trim();
  var _sc = document.createElement('span');
  _sc.textContent = _catTxt;
  var _sdot = document.createElement('span');
  _sdot.className = 'p-dot';
- _sdot.textContent = ' · ';
+ _sdot.textContent = '，';
  var _sd = document.createElement('span');
  _sd.className = 'p-desc';
  _sd.textContent = _descTxt;
@@ -612,7 +612,7 @@ function renderProducts() {
  if (_pPriceText) {
  var _pdot = document.createElement('span');
  _pdot.className = 'p-dot';
- _pdot.textContent = ' · ';
+ _pdot.textContent = '，';
  var _pp = document.createElement('span');
  _pp.className = 'p-price';
  _pp.setAttribute('data-contrast-skip', 'brand-orange'); /* v609：价格统一品牌橙（老板定稿） */
@@ -636,7 +636,7 @@ function renderProducts() {
  if (s.childNodes.length) {
  var _ebDot = document.createElement('span');
  _ebDot.className = 'p-dot';
- _ebDot.textContent = ' · ';
+ _ebDot.textContent = '，';
  s.appendChild(_ebDot);
  }
  var _eb = document.createElement('span');
@@ -734,12 +734,12 @@ function renderProducts() {
  item.className = 'cp-item';
  var nm = document.createElement('span');
  nm.className = 'cp-name'; /* R179：挂类进 uiTip 白名单（资源码面板类型名 R177 起截断省略，此前不在名单点了没反应——「有些省略号点击不显示」漏网主角） */
- nm.textContent = v.name || '(未命名)';
+ nm.textContent = v.name || '（未命名）';
  // R146：类型名不折行（面板窄于内容时截断省略，绝不竖排换行）
  // R177（用户 19:18）：类型名可显示宽度统一上限——原来 flex:1 1 auto 弹性吸收，
  // 长名称一串显示几十字、短名称只显示一点；统一 max-width:150px 截断，全面板口径一致
  nm.style.cssText = 'font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;max-width:150px;';
- nm.title = v.name || '(未命名)'; // 悬停原生提示看全名（超长被截断时）
+ nm.title = v.name || '（未命名）'; // 悬停原生提示看全名（超长被截断时）
  item.appendChild(nm);
  // R146（用户 00:34）：类型名与码键之间加各自金额（橙色，与资源页价格同色）
  var _vPriceText = formatPrice(v.price);
@@ -1076,7 +1076,7 @@ function renderProducts() {
  api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
  closeConfirm();
  if (res && res.ok) {
- toast('批量改分类完成：成功 ' + res.count + ' 项', 'success');
+ toast('已改分类 ' + res.count + ' 项', 'success');
  /* v336 条139：本地已在请求前即时生效，此处只做后台静默对账 */ silentSyncProducts();
  }
  else toast(res.msg || '操作失败', 'error');
@@ -1120,7 +1120,7 @@ function renderProducts() {
  if (res && res.ok) {
  clearCache();
  __undoable(
- '已删除 ' + ids.length + ' 个资源 · 回收站点可找回',
+ '已删除 ' + ids.length + ' 个资源，回收站点可找回',
  function () { silentSyncProducts(); },
  function () {
  var _seq = Promise.resolve();
@@ -1275,7 +1275,7 @@ function renderProducts() {
  if (res && res.ok) {
  clearCache();
  __undoable(
- '已删除「' + (p.title || '未命名') + '」· 回收站点可找回',
+ '已删除「' + (p.title || '未命名') + '」，回收站点可找回',
  function () { silentSyncProducts(); },
  function () {
  api('admin/recycle', { method: 'POST', body: JSON.stringify({ op: 'restore', kind: 'product', id: id }) })
@@ -1286,7 +1286,7 @@ function renderProducts() {
  state.products = _cur3;
  try { refreshCatCnts(); } catch (e0) { if (window.__silent) window.__silent(e0); }
  renderProducts(); clearCache();
- toast('已恢复「' + (p.title || '未命名') + '」', 'success');
+ toast('已恢复 ' + (p.title || '未命名'), 'success');
  } else {
  toast((r2 && r2.msg) || '恢复失败，请手动恢复', 'error');
  }

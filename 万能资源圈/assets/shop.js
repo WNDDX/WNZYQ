@@ -433,7 +433,7 @@
  try {
  if (!p) return;
  var set = function (sel, val) { var m = document.querySelector(sel); if (m && val) m.setAttribute('content', val); };
- set('meta[property="og:title"]', (p.title || '') + ' · 万能资源圈');
+ set('meta[property="og:title"]', (p.title || '') + '，万能资源圈');
  set('meta[name="description"]', p.desc || '');
  set('meta[property="og:description"]', p.desc || '');
  var cover = p.img || (p.coverImages && p.coverImages[0]) || '';
@@ -1197,7 +1197,7 @@
  var _metaParts = [];
  if (_vN > 0) _metaParts.push(_vN + ' 个类型');
  if (_cName) _metaParts.push(_cName);
- _meta.textContent = _metaParts.join(' · ');
+ _meta.textContent = _metaParts.join('，');
  body.appendChild(_meta);
  var _pr = Number(p.price || 0);
  if (_pr > 0) {
@@ -2406,7 +2406,7 @@
  e.stopPropagation();
  if (!currentProduct || !currentProduct.id) { showToast('该资源暂不能分享', 'info'); return; }
  var url = window.location.origin + window.location.pathname + '?pid=' + currentProduct.id;
- if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (currentProduct.title || '') + ' · 资源链接已复制'); // R251：新标题+带资源名灰字
+ if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (currentProduct.title || '') + '，资源链接已复制'); // R251：新标题+带资源名灰字
  else { if (window.__shareCopyText) { try { window.__shareCopyText(url); } catch (e) { if (window.__silent) window.__silent(e); } } showToast(window.T('copied'), 'success'); }
  });
 
@@ -2593,7 +2593,7 @@
  _src.forEach(function (p) {
  if (p.is_online !== true && p.is_online !== 1) return;
  if (p.is_hidden === true || p.is_hidden === 1) return;
- c.push({ lab: String(p.title || '(无标题)'), tag: '资源', kw: String(p.title || ''), run: function () { try { openModal(p); } catch (e) { if (window.__silent) window.__silent(e); } } });
+ c.push({ lab: String(p.title || '（无标题）'), tag: '资源', kw: String(p.title || ''), run: function () { try { openModal(p); } catch (e) { if (window.__silent) window.__silent(e); } } });
  });
  return c;
  }
@@ -3513,7 +3513,7 @@
  function __shareProdFn(p) {
  return function () {
  var url = window.location.origin + window.location.pathname + '?pid=' + p.id;
- if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (p.title || '') + ' · 资源链接已复制'); // R251：新标题+带资源名灰字
+ if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (p.title || '') + '，资源链接已复制'); // R251：新标题+带资源名灰字
  else __cp(url, window.T('copied'));
  };
  }

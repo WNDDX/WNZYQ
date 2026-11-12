@@ -45,7 +45,7 @@ export async function onRequestGet(context) {
 
   return json({ ok: true, list: list });
   } catch (e) {
-    return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
+    return json({ ok: false, msg: '接口错误：' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
   }
 }
 

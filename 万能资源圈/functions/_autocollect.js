@@ -186,7 +186,7 @@ export async function maybeAutoCollect(context, opt) {
       const r = await runAutoCollect(env, { budget: opt.budget });
       out.done = r.done; out.idx = r.idx; out.total = r.total; out.added = r.added;
     } catch (e) {
-      console.error('自动采集失败(不影响访问):', e && e.message);
+      console.error('自动采集失败（不影响访问):', e && e.message);
     } finally {
       try { await writeSetting(env, LOCK_KEY, '1970-01-01 00:00:00'); } catch (e) {}
     }

@@ -160,6 +160,6 @@ export async function onRequestGet(context) {
   __dashSet(__dashKey, __dashPayload); /* v616：60 秒内同版本不再重算 */
   return json(__dashPayload);
   } catch (e) {
-    return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
+    return json({ ok: false, msg: '接口错误：' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
   }
 }

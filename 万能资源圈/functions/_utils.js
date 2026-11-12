@@ -514,7 +514,7 @@ export async function ensureStatsColumns(env) {
       await env.DB.prepare("ALTER TABLE stats ADD COLUMN region TEXT NOT NULL DEFAULT ''").run();
     }
     _statsColsEnsured = true;
-  } catch (e) { console.error('ensureStatsColumns 失败(不影响主流程):', e && e.message); }
+  } catch (e) { console.error('ensureStatsColumns 失败（不影响主流程):', e && e.message); }
 }
 
 // R92：读取平台设置（settings 键值表），失败/未设置返回默认值
@@ -567,7 +567,7 @@ export async function deleteBucketImages(env, sources) {
     if (toDelete.length) await Promise.all(toDelete.map((k) => env.IMAGE_BUCKET.delete(k)));
     /* R213 P2⑤（质检 R212 + 队长拍板）：R36 图仓清理 console.log 已删（质检报告曾建议保留为运维日志，按「调试残留全删」口径执行，如需留痕改 console.error 再议） */
   } catch (e) {
-    console.error('R36 图仓媒体清理失败(不影响资源删除):', e);
+    console.error('R36 图仓媒体清理失败（不影响资源删除):', e);
   }
 }
 

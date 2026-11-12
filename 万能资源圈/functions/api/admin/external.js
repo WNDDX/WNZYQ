@@ -539,7 +539,7 @@ export async function onRequestPost(context) {
 
       let pg;
       try { pg = await fetchPage(mall, 15000); }
-      catch (e) { return json({ ok: false, msg: '抓取超时或对方拒绝（' + (e && e.message || '') + '）' }, 200); }
+      catch (e) { return json({ ok: false, msg: '抓取超时，请稍后再试' }, 200); }
       if (!pg.ok) {
         return json({ ok: false, msg: pg.status >= 500
           ? '对方站点拒绝了服务器抓取（HTTP ' + pg.status + '）——这类站常按机房 IP 拦，只能开浏览器点「打开平台」看，或用「粘贴」'
@@ -1297,8 +1297,8 @@ export async function tryHaokaWeb(mall) {
          上架时填不进去的字段放进「更多信息」，老板要看的时候不用再跑回对方平台 */
       const tags = (Array.isArray(g.tagsSelect) ? g.tagsSelect : []).map(function (t) { return String(t && t.label || ''); }).filter(Boolean).slice(0, 8);
       const ex = {
-        月租: g.monthFee || '', 优惠价: g.favourMonthFee || '', 通用流量: g.commonFlow || '',
-        定向流量: g.fixedFlow || '', 通话: g.callDuration || '', 归属: g.numberRegionName || g.provinceCode || '',
+        月租: g.monthFee || '', 优惠价：g.favourMonthFee || '', 通用流量：g.commonFlow || '',
+        定向流量: g.fixedFlow || '', 通话：g.callDuration || '', 归属：g.numberRegionName || g.provinceCode || '',
         结算方式: g.settleMode === 2 ? '秒返' : (g.settleMode === 1 ? '月返' : ''), 标签: tags
       };
       const exTxt = Object.keys(ex).map(function (k) {

@@ -632,20 +632,20 @@ if ('serviceWorker' in navigator) {
  };
 
  // ===== R14 全站统一「分享链接」弹窗（复刻资源页分享本站弹窗观感：400px 白卡/标题/tip/链接/确定）=====
- // R254（老板 09-23 17:50）：tip 分色渲染——「资源名 · 后文」中资源名用站内链接蓝 #1565c0（与弹窗内链接、share-link 同色；
- // 站内 CSS 无该色变量定义，沿用同一硬编码值）、分隔「·」用黑色、其余文字保持灰 #888；tip 不含「 · 」时整体灰
- // （如无资源名的兜底纯灰字）。lastIndexOf 分割保证资源名内部即使含「 · 」也整段标蓝。
+ // R254（老板 09-23 17:50）：tip 分色渲染——「资源名，后文」中资源名用站内链接蓝 #1565c0（与弹窗内链接、share-link 同色；
+ // 站内 CSS 无该色变量定义，沿用同一硬编码值）、分隔「·」用黑色、其余文字保持灰 #888；tip 不含「，」时整体灰
+ // （如无资源名的兜底纯灰字）。lastIndexOf 分割保证资源名内部即使含「，」也整段标蓝。
  function __renderShareTip(pEl, tip) {
  var s = tip || '资源链接已复制';
  pEl.textContent = '';
- var i = s.lastIndexOf(' · ');
+ var i = s.lastIndexOf('，');
  if (i < 0) { pEl.appendChild(document.createTextNode(s)); return; }
  var nEl = document.createElement('span');
  nEl.style.color = 'var(--ink-link, #1565c0)';
  nEl.textContent = s.slice(0, i);
  var dEl = document.createElement('span');
  dEl.style.color = 'var(--ink-normal, #000)';
- dEl.textContent = ' · ';
+ dEl.textContent = '，';
  pEl.appendChild(nEl); pEl.appendChild(dEl);
  pEl.appendChild(document.createTextNode(s.slice(i + 3)));
  }
@@ -2345,9 +2345,9 @@ window.__btnFit = function () {
  这里原来有一段「单按钮截断检测」——逐个按钮比较 scrollWidth 与 clientWidth，差 1px 就收成纯图标。
  问题是它把**视觉上的细微差异**（字体渲染、加粗、亚像素、图标与文字的 1~2px 间隙）
  当成「真的装不下」，于是按钮会毫无征兆地变成图标：
- · 点一下（激活态字重变粗）→ 变图标
- · __autoDecorate 给它加了图标（宽度多了 20px）→ 变图标
- · 某些字体/缩放下少 1px → 变图标
+，点一下（激活态字重变粗）→ 变图标
+，__autoDecorate 给它加了图标（宽度多了 20px）→ 变图标
+，某些字体/缩放下少 1px → 变图标
  上面那段「容器装不下才按优先级从低到高收」已经覆盖了真正需要收的场景（grp.scrollWidth > avail）。
  这段逐按钮检测纯属误伤来源，整段删除：**只有整组真的放不下时才收，单个按钮内容多到溢出就用省略号**。 */
  }
@@ -2746,7 +2746,7 @@ var __PH_DARK_80 = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/sv
 Object.defineProperty(window, '__IMG_PLACEHOLDER', { configurable: true, get: function () {
  try { return document.documentElement.getAttribute('data-theme') === 'dark' ? __PH_DARK_80 : __PH_LIGHT_80; } catch (e) { return __PH_LIGHT_80; }
 } });
-/* v612：图片失败统一占位（第十五章 15.13 · S-14 / S-27）
+/* v612：图片失败统一占位（第十五章 15.13，S-14 / S-27）
  以前只有 Logo 和部分封面挂了 onerror，客服二维码、公告图、后台缩略图失败就是一块灰。
  这里用捕获阶段的全局兜底：任何 <img> 报错都换成唯一占位图，只换一次，不会死循环。 */
 document.addEventListener('error', function (e) {
@@ -3249,7 +3249,7 @@ document.addEventListener('keydown', function (e) {
  g.drawImage(img, (W - qs) / 2, 172, qs, qs);
  g.fillStyle = '#999';
  g.font = '15px system-ui, "Microsoft YaHei", sans-serif';
- g.fillText('长按识别二维码 · 查看资源', W / 2, 172 + qs + 48);
+ g.fillText('长按识别二维码，查看资源', W / 2, 172 + qs + 48);
  var dataUrl = cv.toDataURL('image/png');
  var a = document.createElement('a');
  a.href = dataUrl; a.download = __qrFileName(pid, name);
@@ -3736,8 +3736,8 @@ window.__restoreFocus = function (el) {
 
 /* ===== v596（老板 11-10 第 4 条）：「关闭 / 暂存」全站唯一口径 =====
  规矩（老板定，硬性）：
- · 点遮罩空白 / 按 Esc → 暂存：现在的一切状态和信息都留着，下次打开原样恢复；
- · 点 × / 关闭 / 取消 → 丢弃：一个字段都不留。
+，点遮罩空白 / 按 Esc → 暂存：现在的一切状态和信息都留着，下次打开原样恢复；
+，点 × / 关闭 / 取消 → 丢弃：一个字段都不留。
  实现要点：
  1. 暂存内容 = 弹窗内所有 input/select/textarea/可编辑区的值（含勾选）+ 内容区滚动位置；
  键优先 id，其次 name，最后用出现顺序。重开时按同样规则回填。
@@ -3920,8 +3920,8 @@ document.addEventListener('click', function (e) {
 
 /* ===== v601（老板 11-10 第 3 条）：文字提示只在「真的被省略」时出现 =====
  线上两个反向毛病：
- · 二级分类明明显示完整，却因为 title 写死等于名字 → 鼠标一放就弹提示（多余）；
- · 最近浏览被截成「移动 19元19」却没有 title → 看不到全名（缺失）。
+，二级分类明明显示完整，却因为 title 写死等于名字 → 鼠标一放就弹提示（多余）；
+，最近浏览被截成「移动 19元19」却没有 title → 看不到全名（缺失）。
  统一口径：`title` 等于自身文字的「镜像提示」，只在 scrollWidth > clientWidth 时保留，
  一旦不省略立即删掉；指示性提示（如"点击复制"）不受影响。
  调用：window.__syncEllipsisTitle(el 或 document)；列表渲染完自动跑（按新增节点扫，不全量重扫）。 */

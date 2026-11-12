@@ -99,5 +99,5 @@ export async function onRequestDelete(context) {
 
   await clearPublicCache(request);
   return json({ ok: true });
-  } catch (eD) { return json({ ok: false, msg: '删除分类错误: ' + (eD && eD.message ? eD.message : String(eD)) }, 500); }
+  } catch (eD) { return json({ ok: false, msg: '删除失败，请重试' }, 500); }
 }

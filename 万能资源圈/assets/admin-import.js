@@ -1,4 +1,4 @@
-/* ===== v431 批量导入（平台设置 · 智能表格）=====
+/* ===== v431 批量导入（平台设置，智能表格）=====
  复用：SpreadsheetML 多工作表格式（与统计导出同源）、现有弹窗骨架、现有 api() 入库接口。
  流程：下载模板（自动带下拉）→ 上传 → 预览纠错 → 确认导入 → 可撤销提示。 */
 (function () {
@@ -689,7 +689,7 @@
  });
  });
  if (!imgs.length && !links.length) { var _eS = document.getElementById('sysCheckMask'); if (_eS) _eS.remove(); if (!silent && window.showToast) window.showToast('没有可检查的内容', 'info'); resolve(null); return; } /* v442：早退先撤「体检中」弹窗 */
- if (!silent && window.showToast) window.showToast('系统体检中：图片 ' + imgs.length + ' 张 · 外链 ' + links.length + ' 条', 'info');
+ if (!silent && window.showToast) window.showToast('系统体检中：图片 ' + imgs.length + ' 张，外链 ' + links.length + ' 条', 'info');
 
  /* 图片按 URL 去重并发检测；引用关系统计重复；同趟 fetch 测体积（#79 超大图） */
  var refMap = {};
@@ -707,7 +707,7 @@
  if (pct === _pLast && !stage) return;
  _pLast = pct;
  try { _pgFill.style.width = (stage ? 96 : pct) + '%'; } catch (eP) {}
- if (_pgTxt) _pgTxt.textContent = stage || ('正在检查：图片 ' + done + ' / ' + total + ' 张 · 外链 ' + _linkCnt + ' / ' + links.length + ' 条（' + pct + '%）');
+ if (_pgTxt) _pgTxt.textContent = stage || ('正在检查：图片 ' + done + ' / ' + total + ' 张，外链 ' + _linkCnt + ' / ' + links.length + ' 条（' + pct + '%）');
  }
  __tickProg();
  /* v438b：双阶段齐活再渲染（图片+外链都回来才算完）；v439 #79：同源图 fetch 测大小 */
@@ -715,8 +715,8 @@
  /* v448 修复「外链检测必然误报」：CSP 的 connect-src 只允许 'self'，原来对每条外链发
  fetch(no-cors) 在线上必被安全策略拦截 —— 结果①控制台刷 CSP 违规 ②所有外链一律被标
  「疑似失效」（误报），体检结论不可信。现改为：
- · 图片类外链（扩展名可判）→ 用 Image 探测（img-src 允许 https:，不受 connect-src 限制）；
- · 网页类外链 → 不发起任何请求，标为「未检测」(ok=null)，不参与失效统计。
+，图片类外链（扩展名可判）→ 用 Image 探测（img-src 允许 https:，不受 connect-src 限制）；
+，网页类外链 → 不发起任何请求，标为「未检测」(ok=null)，不参与失效统计。
  渲染端原本就用 L.ok === false / === true 严格判断，null 天然被排除，无需改动下游。 */
  var linkDone = Promise.all(links.map(function (L) {
  return new Promise(function (res) {
@@ -945,7 +945,7 @@
  sec('疑似失效外链', 'is-bad', 'links', linkRows, '跨域限制下只测图片类外链，网页链接需人工核对', badLinks.length + ' 条') +
  sec('超大图片', 'is-warn', 'os', osRows, '超 1MB 拖慢加载；压缩替换后原图留存可恢复', (R0.oversize || []).length + ' 张');
  var hasIssue = R0.broken.length || R0.dups.length || badLinks.length || (R0.oversize || []).length || badEnv.length;
- if (!hasIssue) body = '<div class="chk-empty">全部正常 ✓ 图片 ' + R0.totalImgs + ' 张 · 外链 ' + okLinks + '/' + R0.links.length + ' 条可达 · 环境 ' + (R0.env || []).length + '/' + (R0.env || []).length + '</div>';
+ if (!hasIssue) body = '<div class="chk-empty">全部正常 ✓ 图片 ' + R0.totalImgs + ' 张，外链 ' + okLinks + '/' + R0.links.length + ' 条可达，环境 ' + (R0.env || []).length + '/' + (R0.env || []).length + '</div>';
  /* v534：顶部摘要改成一行小签（原来是灰字长句，挤成一团看不清哪个数是要紧的） */
  var chip = function (n, label, tone) {
  return '<span class="chk-chip' + (tone ? ' ' + tone : '') + '">' + label + ' <b>' + n + '</b></span>';
@@ -1443,7 +1443,7 @@
  return dx - dy || x.i - y.i;
  }).map(function (o) { return o.a; });
  var box = mask.querySelector('#ufAnnChips'); if (!box) return;
- if (!arr.length) { box.innerHTML = '<span class="pm-hint">还没有公告</span>'; return; }
+ if (!arr.length) { box.innerHTML = '<span class="pm-hint">暂无公告</span>'; return; }
  box.innerHTML = arr.map(function (a, i) {
  var id = String(a.id || ('a' + i));
  var on = annScope !== 'all' && Array.isArray(annScope) && annScope.indexOf(id) !== -1;
@@ -1723,7 +1723,7 @@
  if (st.last && st.last.at) {
  var extra = '新增 ' + (st.last.added || 0) + ' 个资源';
  if (st.last.fails && st.last.fails.length) extra += '，' + st.last.fails.length + ' 个没抓到（' + st.last.fails.join('、') + '）';
- line.push('<div class="cs-row"><span>上次自动</span><b>' + st.last.at + ' · ' + extra + '</b></div>');
+ line.push('<div class="cs-row"><span>上次自动</span><b>' + st.last.at + '，' + extra + '</b></div>');
  } else if (st.lastAutoAt) {
  /* v534：库里是 UTC，这里换算成北京时间再显示 */
  var dT = new Date(String(st.lastAutoAt).replace(' ', 'T') + 'Z');
@@ -1812,7 +1812,7 @@
  '<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:2px">' + label + '</div>' +
  '<div style="font-size:24px;font-weight:700;line-height:1.2">' + v + '<span style="font-size:12px;font-weight:400">' + (v === '—' ? '' : unit) + '</span></div>' +
  '<div style="font-size:12px;margin-top:2px"><span style="color:' + _color(k) + '">' + (_word(k) || '无数据') + '</span>' +
- (rate == null ? '' : '<span style="color:var(--text-light,#666)"> · 达标 ' + rate + '%</span>') + '</div>' +
+ (rate == null ? '' : '<span style="color:var(--text-light,#666)">，达标 ' + rate + '%</span>') + '</div>' +
  '</div>';
  }
 
@@ -1944,7 +1944,7 @@
  }).join('');
  box.innerHTML =
  '<div class="logs-d-head"><b>报错概览</b>' +
- '<span>共 ' + d.hits + ' 次 · ' + d.total + ' 种 · ' + d.devices + ' 台设备</span>' +
+ '<span>共 ' + d.hits + ' 次，' + d.total + ' 种，' + d.devices + ' 台设备</span>' +
  '</div>' +
  (ph ? '<div class="logs-d-people">' + ph + '</div>' : '');
  }
@@ -2067,7 +2067,7 @@
  };
  mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
 
- /* ---------- v602 · 点行展开看全文 ----------
+ /* ---------- v602，点行展开看全文 ----------
  背景：390px 下四列被压到 74/80/71/67px，对象列真实内容 122px，
  永远显示成「5（开启每天自动采」。手机上没有 hover，title 也没用。
  做法：整行当按钮（role=button + tabindex），点一下在行下方铺一块完整信息，
@@ -2163,8 +2163,8 @@
  var ah = acts.map(function (a) { return '<button type="button" class="logs-act' + (actF === a.action ? ' on' : '') + '" data-actf="' + esc(a.action || '') + '">' + esc(a.action || '') + ' <b>' + a.n + '</b></button>'; }).join('');
  var dh = byDay.slice(0, 10).map(function (x) { var _d = String(x.day || '').slice(5); return '<button type="button" class="logs-day' + (dayF === _d ? ' on' : '') + '" data-dayf="' + esc(_d) + '">' + esc(_d) + ' <b>' + x.n + '</b></button>'; }).join('');
  box.innerHTML =
- '<div class="logs-d-head"><b>操作日报 · ' + RANGE_TXT[days] + '</b>' +
- '<span>共 ' + sm.total + ' 条 · ' + people.length + ' 人参与</span>' +
+ '<div class="logs-d-head"><b>操作日报，' + RANGE_TXT[days] + '</b>' +
+ '<span>共 ' + sm.total + ' 条，' + people.length + ' 人参与</span>' +
  (who ? '<button type="button" class="row-btn" id="logsWhoClear">只看「' + esc(who) + '」×</button>' : '') +
  '</div>' +
  (people.length ? '<div class="logs-d-people">' + ph + '</div>' : '') +

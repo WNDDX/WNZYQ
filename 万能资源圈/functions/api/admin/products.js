@@ -113,7 +113,7 @@ export async function onRequestGet(context) {
     total_pages: Math.ceil(total / pageSize)
   });
   } catch (e) {
-    return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
+    return json({ ok: false, msg: '接口错误：' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
   }
 }
 
@@ -197,5 +197,5 @@ export async function onRequestPost(context) {
 
   try { const { audit } = await import('../../_utils.js'); await audit(env, request, '新增资源', String(b.title || '').trim()); } catch (e) {}
   return json({ ok: true, id: r.meta.last_row_id });
-  } catch (e1) { return json({ ok: false, msg: '新增资源错误: ' + (e1 && e1.message ? e1.message : String(e1)) }, 500); }
+  } catch (e1) { return json({ ok: false, msg: '新增资源错误：' + (e1 && e1.message ? e1.message : String(e1)) }, 500); }
 }

@@ -110,6 +110,6 @@ export async function onRequestGet(context) {
     serverNow: new Date().toISOString()
   });
   } catch (e) {
-    return json({ ok: false, msg: '信息中心错误: ' + (e && e.message || String(e)) });
+    return json({ ok: false, msg: '信息中心错误：' + (e && e.message || String(e)) });
   }
 }

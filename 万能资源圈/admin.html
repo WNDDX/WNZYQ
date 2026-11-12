@@ -233,9 +233,9 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <span class="lg-resource-cur"><i></i>解锁</span>
  </span>
  <span class="lg-group lg-group-prev">
- <span class="lg-view-prev"><i></i>浏览·上期</span>
- <span class="lg-contact-prev"><i></i>咨询客服·上期</span>
- <span class="lg-resource-prev"><i></i>资源码解锁·上期</span>
+ <span class="lg-view-prev"><i></i>浏览 上期</span>
+ <span class="lg-contact-prev"><i></i>咨询 上期</span>
+ <span class="lg-resource-prev"><i></i>解锁 上期</span>
  </span>
  </div>
  </div>
@@ -1073,7 +1073,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  window.location.reload();
  } else { if (window.showAlert) window.showAlert((res && res.msg) || '登录失败'); else alert((res && res.msg) || '登录失败'); }
  })
- .catch(function () { var _l = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; var _m = _l ? '本地预览没有后端服务：请部署到线上，或在项目目录运行 npx wrangler dev' : '无法连接后端，请确认已部署到 Cloudflare'; if (window.showAlert) window.showAlert(_m); else alert(_m); })
+ .catch(function () { var _l = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; var _m = _l ? '当前是本地预览，部分功能不可用' : '连接服务器失败，请稍后重试'; if (window.showAlert) window.showAlert(_m); else alert(_m); })
  .then(function () { btn.disabled = false; btn.textContent = '登录'; });
  };
  </script>
@@ -1082,7 +1082,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  setTimeout(function () {
  if (!window.__uiCommonLoaded) { if (window.warn) window.warn('公共脚本 assets/ui-common.js 未部署成功，统一功能失效：请把整个"万能资源圈"文件夹（含 assets、functions、sw.js、config.js）完整重新上传，不要只传 HTML'); }
  var ok = false; for (var i = 0; i < document.styleSheets.length; i++) { var s = document.styleSheets[i]; try { if (s.href && /ui-common\.css/.test(s.href) && s.cssRules && s.cssRules.length) ok = true; } catch (e) { if (s.href && /ui-common\.css/.test(s.href)) ok = true; } }
- if (!ok) { if (window.warn) window.warn('公共样式 assets/ui-common.css 未部署成功：请完整重新上传项目（含 assets 文件夹）'); }
+ if (!ok) { if (window.warn) window.warn('样式文件未加载，请刷新重试'); }
  }, 800);
  });
  </script>

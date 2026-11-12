@@ -159,8 +159,8 @@ export async function onRequestGet(context) {
     if (r.status === 'bound') statusText = '已用';
     else if (ageDays >= 60) statusText = '已过期';
     return {
-      product_title: r.product_title || '(已删除)',
-      variant_name: r.variant_name || '(已删除)',
+      product_title: r.product_title || '（已删除）',
+      variant_name: r.variant_name || '（已删除）',
       code: r.code,
       issued_at: r.issued_at,
       status: statusText,
@@ -191,7 +191,7 @@ export async function onRequestGet(context) {
       created_at: p.created_at,
     })),
     variants: (variantsRes.results || []).map((v) => ({
-      product_title: v.product_title || '(已删除)',
+      product_title: v.product_title || '（已删除）',
       name: v.name || '',
       vtitle: v.vtitle || '',
       desc: v.desc || '',
@@ -213,8 +213,8 @@ export async function onRequestGet(context) {
       product_count: c.product_count || 0,
     })),
     bindings: (bindingsRes.results || []).map((b) => ({
-      product_title: b.product_title || '(已删除)',
-      variant_name: b.variant_name || '(已删除)',
+      product_title: b.product_title || '（已删除）',
+      variant_name: b.variant_name || '（已删除）',
       code: b.code || '',
       created_at: b.created_at,
       last_access: b.last_access,
@@ -239,7 +239,7 @@ export async function onRequestGet(context) {
       return {
         created_at: r.created_at,
         type_text: TYPE_TEXT[r.type] || r.type,
-        product_title: r.product_title || '(已删除)',
+        product_title: r.product_title || '（已删除）',
         ip,
       };
     }),
@@ -257,6 +257,6 @@ export async function onRequestGet(context) {
     },
   });
   } catch (e) {
-    return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
+    return json({ ok: false, msg: '接口错误：' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
   }
 }

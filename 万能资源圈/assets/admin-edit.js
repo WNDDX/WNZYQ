@@ -878,7 +878,7 @@ window.__linkify = function (html) {
 
  var name = document.createElement('span');
  name.className = 'v-name';
- name.textContent = v.name || '(未命名)';
+ name.textContent = v.name || '（未命名）';
  if (v.isHidden) {
  var hideBadge = document.createElement('span');
  hideBadge.style.cssText = 'font-size:12px;color:#b26a00;background:#fff3e0;padding:2px 8px;border-radius:3px; /* v293（用户 10-04 02:14）：054圆角统一→4px不在5档阶梯(3/8/10/14/999)，改3px跟微装饰档统一 */ margin-left:8px;font-weight:600;';
@@ -967,7 +967,7 @@ window.__linkify = function (html) {
 
  var sort = document.createElement('span');
  sort.className = 'v-sort';
- sort.textContent = '排序:' + (idx + 1);
+ sort.textContent = '排序：' + (idx + 1);
 
  var editBtn = document.createElement('button');
  /* R175：加稳定类名 v-edit-btn——手机档 grid area 用 */
@@ -2370,8 +2370,8 @@ document.addEventListener('click', function (e) {
  /* v602（axe-core 查出来的）：.cp-item 一直是「孤儿 option」——
  role=option 必须挂在 listbox / group 里，否则读屏念「选项 1/24」但不知道是哪个列表。
  这里补齐容器语义，并处理两类例外：
- · 空面板（还没加载出分类）→ role=group，否则 listbox 没有 option 子项，属于结构错误
- · 行内含按钮的（规格行里有「复制码」按钮）→ 这一行改成 group，
+，空面板（还没加载出分类）→ role=group，否则 listbox 没有 option 子项，属于结构错误
+，行内含按钮的（规格行里有「复制码」按钮）→ 这一行改成 group，
  否则 option 里套 button 就是 nested-interactive（读屏会念成「按钮 按钮」）。
  子项 tabindex=-1：Tab 只停面板第一项，面板内用 ↑↓ 走（标准 listbox 行为，
  focus() 对 -1 依然有效，所以既有的方向键逻辑不用动）。 */

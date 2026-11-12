@@ -14,7 +14,7 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const productId = Number(url.searchParams.get('product_id') || 0);
-  if (!productId) return json({ ok: false, msg: '缺少 product_id' }, 400);
+  if (!productId) return json({ ok: false, msg: '缺少资源类型' }, 400);
   await ensureVariantColumns(env);
 
   /* #116 范围锁 */
@@ -99,5 +99,5 @@ export async function onRequestPost(context) {
 
   try { const { audit } = await import('../../_utils.js'); await audit(env, request, '新增类型', name); } catch (e) {}
   return json({ ok: true, id: r.meta.last_row_id });
-  } catch (e1) { return json({ ok: false, msg: '新增类型错误: ' + (e1 && e1.message ? e1.message : String(e1)) }, 500); }
+  } catch (e1) { return json({ ok: false, msg: '新增类型错误：' + (e1 && e1.message ? e1.message : String(e1)) }, 500); }
 }

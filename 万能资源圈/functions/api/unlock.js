@@ -178,7 +178,7 @@ export async function onRequestPost(context) {
            WHERE ci.variant_id = ? AND LOWER(ci.code) = ?
            ORDER BY ci.id DESC LIMIT 1`
         ).bind(variantId, codeLower).first();
-      } catch (e) { console.error('R221 迁移发码记录写入失败:', e && e.message); }
+      } catch (e) { console.error('R221 迁移发码记录写入失败：', e && e.message); }
     }
     if (!issue) {
       wrongHit(getCookie(request, DEVICE_COOKIE)); /* v439 #98：错码计数 */

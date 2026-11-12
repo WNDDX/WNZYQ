@@ -403,7 +403,7 @@
  if (!S.mask) return;
  var n = selIds().length;
  var cnt = S.mask.querySelector('.extc-cnt');
- if (cnt) cnt.innerHTML = filtered().length + ' 个' + (n ? ' · 已选 <b>' + n + '</b>' : '');
+ if (cnt) cnt.innerHTML = filtered().length + ' 个' + (n ? '，已选 <b>' + n + '</b>' : '');
  updateBatch();
  }
 
@@ -439,7 +439,7 @@
  '<option value="new"' + (S.status === 'new' ? ' selected' : '') + '>未上架</option>' +
  '<option value="used"' + (S.status === 'used' ? ' selected' : '') + '>已上架</option>' +
  '</select>' +
- '<span class="extc-cnt">' + list.length + ' 个' + (n ? ' · 已选 <b>' + n + '</b>' : '') + '</span>' +
+ '<span class="extc-cnt">' + list.length + ' 个' + (n ? '，已选 <b>' + n + '</b>' : '') + '</span>' +
  '</div>';
 
  var total = list.length;
@@ -525,7 +525,7 @@
  if (last) {
  var _rs = last.ok ? null : reasonOf(last.msg);
  meta.push('<span class="' + (last.ok ? 'is-ok' : 'is-bad') + '">上次手动：' + esc(String(last.at).slice(5, 16))
- + (_rs ? ' · ' + _rs.t + '（' + _rs.tip + '）' : ' · ' + esc(String(last.msg || '').slice(0, 46))) + '</span>');
+ + (_rs ? '，' + _rs.t + '（' + _rs.tip + '）' : '，' + esc(String(last.msg || '').slice(0, 46))) + '</span>');
  }
  return '<div class="extc-prow" data-pid="' + p.id + '">' +
  '<div class="extc-pmain"><b>' + esc(p.name) + ' <i class="extc-cnt">' + cnt + ' 个资源</i></b>' +
@@ -575,7 +575,7 @@
  if (act === 'del') {
  /* v521：换系统的确认框（原生 confirm 样式与全站不一致，且会打断浏览器） */
  if (!window.showConfirm) { toast(window.T('needRefresh'), 'error'); return; }
- window.showConfirm('删除资源', '从「采集到的资源」里删掉这条？不影响对方平台。', function (done) {
+ window.showConfirm('删除资源', '删除这条吗？不影响对方平台。', function (done) {
  done();
  api('admin/external', { method: 'POST', body: { op: 'goods.del', id: id } }).then(function (r) {
  if (r && r.ok) { delete S.sel[id]; S.goods = S.goods.filter(function (g) { return Number(g.id) !== id; }); render(); }
@@ -999,7 +999,7 @@
  var _badge = Number(g.missing || 0) >= 1
  ? '<span class="extc-badge bad">对方已下架</span>'
  : (g.status === 'used' ? '<span class="extc-badge ok">已上架</span>' : '<span class="extc-badge">未上架</span>');
- var _meta = [esc(g.platform || '未归平台'), g.collected_at ? ('采集于 ' + esc(String(g.collected_at))) : ''].filter(Boolean).join(' · ');
+ var _meta = [esc(g.platform || '未归平台'), g.collected_at ? ('采集于 ' + esc(String(g.collected_at))) : ''].filter(Boolean).join('，');
  var NAMES = { price: '价格', pid: '商品号（pid）', k: '店铺参数（k）', title: '原标题', shop: '店铺名', uid: '分销号（uid）' };
  var _kvHtml = _kv.map(function (k) {
  return '<div class="extc-kv-row"><span class="extc-kv-k">' + esc(NAMES[k] || k) + '</span><span class="extc-kv-v">' + esc(String(_ex[k]).slice(0, 400)) + '</span></div>';

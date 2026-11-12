@@ -285,7 +285,7 @@ export async function onRequestGet(context) {
     byCategory,
     recent: recent.map((r) => ({
       id: r.id, type: r.type, created_at: r.created_at,
-      title: r.title || '(已删除)', img: r.img || '',
+      title: r.title || '（已删除）', img: r.img || '',
     })),
   };
   __memoSet(__memoKey, __payload); /* v616：同一份参数 60 秒内不再重算 */
@@ -293,7 +293,7 @@ export async function onRequestGet(context) {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, max-age=300' },
   });
   } catch (e) {
-    return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
+    return json({ ok: false, msg: '接口错误：' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
   }
 }
 

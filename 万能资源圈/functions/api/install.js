@@ -201,7 +201,7 @@ export async function onRequestPost(context) {
         await env.DB.prepare(sql).run();
       } catch (e) {
         // 忽略表已存在等错误
-        console.error('SQL执行错误:', sql.substring(0, 50), e.message);
+        console.error('SQL执行错误：', sql.substring(0, 50), e.message);
       }
     }
 
@@ -301,7 +301,7 @@ export async function onRequestPost(context) {
     return json({ ok: true, msg: '初始化完成' });
   } catch (e) {
     // R29：错误细节只进服务端日志，对外返回通用提示（与全局错误策略对齐）
-    console.error('初始化失败:', e);
+    console.error('初始化失败：', e);
     return json({ ok: false, msg: '初始化失败，请重试' }, 500);
   }
 }

@@ -86,7 +86,7 @@ export async function onRequestPost(context) {
       return json({ ok: false, msg: '账号或密码错误' }, 401);
     }
     if (v.needUpgrade && !isSub) {
-      try { await upgradePasswordHash(env, row.id, password); } catch (e) { console.error('密码哈希升级失败(不影响登录):', e); }
+      try { await upgradePasswordHash(env, row.id, password); } catch (e) { console.error('密码哈希升级失败（不影响登录):', e); }
     }
 
     // 4. 登录成功：清除失败记录
@@ -125,7 +125,7 @@ export async function onRequestPost(context) {
     return json({ ok: true, username: row.username }, 200, { 'Set-Cookie': cookie });
   } catch (e) {
     // R27：错误细节只进服务端日志，对外返回通用提示（与 _middleware.js 全局错误策略对齐，避免泄露内部信息）
-    console.error('登录失败:', e);
+    console.error('登录失败：', e);
     /* v616：数据库不可用（D1 额度用尽/连接失败/表缺失）时不能只说「开小差了」——
        老板和用户会一直重试，也看不出是维护。给一个明确、可等待的提示。 */
     const _m = String((e && e.message) || e).toLowerCase();

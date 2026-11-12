@@ -89,7 +89,7 @@ export async function onRequestGet(context) {
         }
       }
     } catch (e) {
-      console.error('R36 图仓孤儿清理失败(不影响其它清理):', e);
+      console.error('R36 图仓孤儿清理失败（不影响其它清理):', e);
       results.orphan_media_error = e.message;
     }
 
@@ -108,7 +108,7 @@ export async function onRequestGet(context) {
 
     return json({ ok: true, msg: '清理完成', results });
   } catch (err) {
-    return json({ ok: false, msg: '清理失败: ' + err.message }, 500);
+    return json({ ok: false, msg: '清理失败：' + err.message }, 500);
   }
 }
 
