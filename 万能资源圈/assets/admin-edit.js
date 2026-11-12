@@ -2004,7 +2004,7 @@ document.addEventListener('click', function (e) {
  function rteTblDelTable(editor) {
  var at = rteTblAt(editor); if (!at) return;
  /* R231 条27（老板修正）：原生 confirm 换全站统一确认弹窗；正文只写「确定删除整个表格？」，不写撤销提示 */
- showConfirm('删除表格', '表格内容会一起删掉', function (closeConfirm) {
+ showConfirm('删除表格', '表格内容和数据会一起删除', function (closeConfirm) {
  closeConfirm();
  at.table.parentNode && at.table.parentNode.removeChild(at.table);
  rteCloseOpbar();

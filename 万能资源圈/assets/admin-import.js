@@ -1646,7 +1646,7 @@
  var list = _picked();
  if (!list.length) return;
  if (op === 'purge' && window.showConfirm) {
- window.showConfirm('彻底删除', '永久删除，无法恢复', function (closeConfirm) {
+ window.showConfirm('彻底删除', '永久删除后将无法恢复', function (closeConfirm) {
  closeConfirm(); _doBatch(op, list, label);
  });
  } else _doBatch(op, list, label);
@@ -1677,7 +1677,7 @@
  var b = e.target.closest && e.target.closest('[data-rc]'); if (!b) return;
  var op = b.getAttribute('data-rc'), kind = b.getAttribute('data-kind'), id = b.getAttribute('data-id');
  if (op === 'purge' && window.showConfirm) {
- window.showConfirm('删除', '删除后无法恢复，确定继续吗', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
+ window.showConfirm('删除', '删除后无法恢复，是否继续', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
  } else recycleCall(op, kind, id, function () { openRecycle(); });
  });
  }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">服务器忙，稍后再试</div>'; });
@@ -2024,7 +2024,7 @@
  })
  .catch(function () { btn.disabled = false; toast('网络异常', 'error'); });
  };
- if (window.showConfirm) window.showConfirm('清空后无法恢复', go, null, '清空', '取消', true);
+ if (window.showConfirm) window.showConfirm('清空后记录将无法恢复', go, null, '清空', '取消', true);
  else go();
  });
  load();

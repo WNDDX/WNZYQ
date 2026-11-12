@@ -1743,7 +1743,7 @@
  if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); 
  delBtn.addEventListener('click', function (e) {
  e.stopPropagation();
- showConfirm('删除公告', '删除后可在回收站点找回，保留 60 天', function (closeConfirm) {
+ showConfirm('删除公告', '删除后可到回收站点中找回', function (closeConfirm) {
  closeConfirm();
  /* v439 #68：软删——打标记（对象引用同时在 raw 里，保存时随 raw 写回），从编辑列表剔除 */
  a.deleted = 1; a.deletedAt = new Date().toISOString();

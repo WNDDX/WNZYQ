@@ -929,7 +929,7 @@ function renderProducts() {
 
  // ---------- 复制资源 ----------
  function copyProduct(p) {
- showConfirm('复制资源', '复制出一条相同内容，状态为隐藏', function (closeConfirm) {
+ showConfirm('复制资源', '复制出一条相同内容，状态设为隐藏', function (closeConfirm) {
  var newProduct = {
  cid: p.cid,
  // R155（用户 19:36）：复制=全量复制——title 原样（去掉「（副本）」后缀）、sort 保持原值（不再排到末尾）、
@@ -1052,8 +1052,8 @@ function renderProducts() {
  if (ids.length === 0) { __bDone(action); return; }
  var actionNames = { online: '批量显示', offline: '批量隐藏', delete: '批量删除', changeCat: '批量改分类', changePrice: '批量改价格' };
  var msgs = {
- online: '这些资源会重新出现在资源页',
- offline: '隐藏后资源页不再显示这些资源',
+ online: '共 ' + ids.length + ' 个资源，显示后重新出现',
+ offline: '共 ' + ids.length + ' 个资源，隐藏后不再显示',
  delete: '确定删除选中的 ' + ids.length + ' 个资源？其类型和统计数据也会一并删除；删除后进「回收站点」保留 60 天，可恢复。'
  };
 
@@ -1072,7 +1072,7 @@ function renderProducts() {
  if (isNaN(newCid)) { toast('请选择资源分类', 'error'); return; }
  document.getElementById('batchCatMask').classList.remove('open');
  var _catText = document.querySelector('#batchCatDisplay .cpd-text').textContent;
- showConfirm('批量改分类', '改完后立即生效', function (closeConfirm) {
+ showConfirm('批量改分类', '共 ' + ids.length + ' 个资源，改完立即生效', function (closeConfirm) {
  api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changeCat', cid: newCid }) }).then(function (res) {
  closeConfirm();
  if (res && res.ok) {
@@ -1093,7 +1093,7 @@ function renderProducts() {
  if (priceInput === null || priceInput === '') return;
  var newPrice = Number(priceInput);
  if (isNaN(newPrice) || newPrice < 0) { toast('请输入有效的价格', 'error'); return; }
- showConfirm('批量改价格', '改完后立即生效', function (closeConfirm) {
+ showConfirm('批量改价格', '共 ' + ids.length + ' 个资源，改完立即生效', function (closeConfirm) {
  api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: 'changePrice', price: newPrice }) }).then(function (res) {
  closeConfirm();
  if (res && res.ok) {

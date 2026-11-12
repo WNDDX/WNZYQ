@@ -206,7 +206,7 @@ window.__fillHourly = function (raw) {
  unBtn.textContent = '解绑';
  (function (bid) {
  unBtn.addEventListener('click', function () {
- showConfirm('解绑设备', '解绑后要重新输码，确定吗', function (closeConfirm) {
+ showConfirm('解绑设备', '解绑后需重新输码查看，是否解绑', function (closeConfirm) {
  api('admin/bindings/' + bid, { method: 'DELETE' }).then(function (res2) {
  closeConfirm();
  if (res2 && res2.ok) { toast('已解绑', 'success'); refreshBindings(_bindingsVariant && _bindingsVariant.id); loadVariants(state.editingId); }
@@ -1650,7 +1650,7 @@ refreshCatCnts();
  document.getElementById('catBatchHide').addEventListener('click', function () {
  var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
  if (ids.length === 0) return;
- showConfirm('批量隐藏', '隐藏后资源页不再显示这些分类', function (closeConfirm) { /* v336 条151：分类批量操作也在收口名单 */
+ showConfirm('批量隐藏', '共 ' + ids.length + ' 个分类，隐藏后将不再显示', function (closeConfirm) { /* v336 条151：分类批量操作也在收口名单 */
  batchCatAction(ids, 'hide', closeConfirm);
  });
  });
@@ -1658,7 +1658,7 @@ refreshCatCnts();
  document.getElementById('catBatchShow').addEventListener('click', function () {
  var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
  if (ids.length === 0) return;
- showConfirm('批量显示', '这些分类会重新出现在资源页', function (closeConfirm) {
+ showConfirm('批量显示', '共 ' + ids.length + ' 个分类，显示后将重新出现', function (closeConfirm) {
  batchCatAction(ids, 'show', closeConfirm);
  });
  });
@@ -1666,7 +1666,7 @@ refreshCatCnts();
  document.getElementById('catBatchDel').addEventListener('click', function () {
  var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
  if (ids.length === 0) return;
- showConfirm('批量删除', '分类下的资源会转到全部，删除后不可恢复', function (closeConfirm) {
+ showConfirm('批量删除', '共 ' + ids.length + ' 个分类，删除后将无法恢复', function (closeConfirm) {
  batchCatAction(ids, 'delete', closeConfirm);
  });
  });
@@ -1931,7 +1931,7 @@ refreshCatCnts();
  // v294（用户 10-04 02:14）：104 修改密码加二次确认
  /* v346 条19：改用全站统一确认弹窗（原浏览器原生 confirm 观感不一致） */
  var _cpBtn = this, _cpTxt = this.textContent;
- showConfirm('修改密码', '修改后立即生效，请记好新密码', function () {
+ showConfirm('修改密码', '修改后将立即生效，请务必牢记', function () {
  _cpBtn.disabled = true; if (window.__btnBusy) window.__btnBusy(_cpBtn, '修改中'); 
  api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
  .then(function (res) {
@@ -1966,7 +1966,7 @@ refreshCatCnts();
  // ---------- 退出 ----------
  logoutBtn.addEventListener('click', function () {
  logoutBtn.classList.add('active'); // R39：确认弹窗打开期间变白（复用资源页顶栏分享键 .active 白底蓝字）
- showConfirm('退出登录', '退出后需要重新登录', function (closeConfirm) {
+ showConfirm('退出登录', '退出后需重新登录一次', function (closeConfirm) {
  closeConfirm();
  api('admin/logout', { method: 'POST' });
  showLogin();
