@@ -932,7 +932,10 @@
             }, 250);
           }
         }
-        else { loadCategories(true).catch(function () {}); } // 切回后台静默刷新
+        /* v614b：第二次切回分类页时原来直接调 loadCategories——慢网下 admin-data.js 还没到就 ReferenceError，
+           整页后续操作全断（journey-admin 报“loadCategories is not defined”）。补同款等待。 */
+        else if (typeof loadCategories === 'function') { loadCategories(true).catch(function () {}); }
+        else if (window.__plC) { window.__plC = 0; } /* 让下一次点击重新走“等待加载”分支 */
       }
       if (name === 'settings') { if (!window.__plSet) loadSettings(); }
     }
@@ -1279,7 +1282,20 @@
       var t = 0;
       function soon() { clearTimeout(t); t = setTimeout(function () { try { window.__applyPermUI(); } catch (e) {} }, 180); }
       try {
-        new MutationObserver(soon).observe(document.body, { childList: true, subtree: true });
+        new MutationObserver(function (list) {
+          /* v614b：只在“新节点里真的带 data-perm”时才算——否则每次 toast/统计刷新都全量重算一遍，白白拖慢后台 */
+          var hit = false;
+          for (var i = 0; i < list.length && !hit; i++) {
+            var r = list[i];
+            if (r.type !== 'childList') continue;
+            for (var j = 0; j < r.addedNodes.length; j++) {
+              var nd = r.addedNodes[j];
+              if (nd.nodeType !== 1) continue;
+              if ((nd.hasAttribute && nd.hasAttribute('data-perm')) || (nd.querySelector && nd.querySelector('[data-perm]'))) { hit = true; break; }
+            }
+          }
+          if (hit) soon();
+        }).observe(document.body, { childList: true, subtree: true });
       } catch (e) {}
     })();
 
