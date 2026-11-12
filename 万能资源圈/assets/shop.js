@@ -469,7 +469,9 @@
         main.textContent = '添加到桌面-点击可直达';
         var never = document.createElement('span');
         never.textContent = '不再提示';
-        never.style.cssText = 'color:var(--text-light);font-size: 12px;text-decoration:underline;flex:none';
+        /* v617（老板 11-13：不喜欢下划线）：原来这里是 text-decoration:underline，
+           现在改成同色浅一点的次要按钮样式——不用下划线也能看出是可点的。 */
+        never.style.cssText = 'color:var(--text-light);font-size:12px;opacity:.85;flex:none;padding:0 2px';
         t.appendChild(main); t.appendChild(never);
         t.setAttribute('role', 'button'); t.setAttribute('tabindex', '0');
         var gone = false;
