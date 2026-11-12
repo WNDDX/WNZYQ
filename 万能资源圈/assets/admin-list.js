@@ -87,7 +87,8 @@
       var _snapP = silent ? __adminDataSig(state.products) : null;
       var ensureCat = state.categories.length
         ? Promise.resolve()
-        : (window.__catLoading || loadCategories()).then(function (res) {
+        /* v614c：admin-data.js 未到位时 loadCategories 不存在（journey-admin 的 ReferenceError 就是这个） */
+        : (window.__catLoading || (typeof loadCategories === 'function' ? loadCategories() : Promise.resolve())).then(function (res) {
             if (res && res.ok) {
               /* v416 条11：空响应防御——已有非空分类时，偶发空列表不清空（否则筛选面板/分类树全空=「点开是空的」） */
               var _cl = (res.list || []);
@@ -1236,7 +1237,7 @@ function renderProducts() {
     var __silentCatT = null;
     function silentSyncCategories() {
       clearTimeout(__silentCatT);
-      __silentCatT = setTimeout(function () { loadCategories(); }, 600);
+      __silentCatT = setTimeout(function () { if (typeof loadCategories === 'function') loadCategories(); }, 600);
     }
 
 

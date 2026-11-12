@@ -953,8 +953,11 @@
       chip((R0.oversize || []).length, '超大图', (R0.oversize || []).length ? 'is-warn' : '');
     var mask = document.createElement('div');
     /* v442 条3：用户中途关掉了「体检中」弹窗 → 结果不再弹窗打扰（仍照常 resolve 供自动体检用） */
-    var _wasClosed = document.getElementById('sysCheckMask');
-    _wasClosed = !!(_wasClosed && _wasClosed.dataset.userClosed === '1');
+    var _prevMask = document.getElementById('sysCheckMask');
+    /* v614c：判“用户已经关了”要三种情况都算：显式点过 ×（userClosed）、
+       或者弹窗已经不在 DOM、或者已经不含 open 类。原来只看 userClosed，
+       结果“程序化把 open 拿掉”的关闭方式（以及遮罩被别处收起）会让结果弹窗又冒回来。 */
+    var _wasClosed = !!(_prevMask && (_prevMask.dataset.userClosed === '1' || !_prevMask.classList.contains('open')));
     if (_wasClosed) { document.getElementById('sysCheckMask').remove(); resolve(R0); return; }
     mask.className = 'modal-mask'; mask.id = 'sysCheckMask';
     mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检" style="max-width:var(--modal-w-xl)"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
