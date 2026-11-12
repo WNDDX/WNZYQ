@@ -27,7 +27,7 @@ export async function onRequestGet(context) {
   } else {
     const host = new URL(request.url).hostname;
     if (host !== 'localhost' && host !== '127.0.0.1') {
-      return json({ ok: false, msg: '未设置 CLEANUP_TOKEN，公网调用已禁用。请在 Cloudflare Pages 环境变量里设置 CLEANUP_TOKEN 后再使用定时清理' }, 401);
+      return json({ ok: false, msg: '未配置清理口令，暂不可用' }, 401);
     }
   }
 

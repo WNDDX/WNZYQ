@@ -167,7 +167,7 @@ export async function onRequestPost(context) {
   try {
     // 检查数据库绑定是否生效
     if (!env.DB) {
-      return json({ ok: false, msg: '数据库绑定未生效，请检查 wrangler.toml 配置或 Cloudflare 面板绑定' }, 500);
+      return json({ ok: false, msg: '系统未就绪，请联系管理员' }, 500);
     }
 
     /* v333 安全加固①：已初始化站点直接挡回去（原来每次调用都会重跑上百条建表语句，
@@ -190,7 +190,7 @@ export async function onRequestPost(context) {
         }
       } catch (e) { given = ''; }
       if (given !== wantTok) {
-        return json({ ok: false, msg: '缺少或错误的安装令牌（x-install-token）' }, 403);
+        return json({ ok: false, msg: '安装口令不对' }, 403);
       }
     }
 
@@ -273,7 +273,7 @@ export async function onRequestPost(context) {
         if (eu && ep) { initUser = eu; initPass = ep; }
       }
       if (!/^[A-Za-z0-9_]{3,32}$/.test(initUser) || initPass.length < 8 || initPass.length > 64) {
-        return json({ ok: false, msg: '首次初始化需指定管理员：POST /api/install，body 为 {"username":"3-32位字母数字下划线","password":"8-64位"}' }, 400);
+        return json({ ok: false, msg: '请先设置管理员账号' }, 400);
       }
       // R29：新管理员密码一律 PBKDF2 多轮哈希
       const { salt, hash } = await hashPasswordNew(initPass);
@@ -298,7 +298,7 @@ export async function onRequestPost(context) {
 
     // 5.1 R92 迁移：建绑定表（CREATE IF NOT EXISTS 幂等，重跑 install 或任意 unlock/统计请求都会自动补建）
 
-    return json({ ok: true, msg: '初始化完成（管理员账号以本次请求指定的为准，请妥善保管）' });
+    return json({ ok: true, msg: '初始化完成' });
   } catch (e) {
     // R29：错误细节只进服务端日志，对外返回通用提示（与全局错误策略对齐）
     console.error('初始化失败:', e);

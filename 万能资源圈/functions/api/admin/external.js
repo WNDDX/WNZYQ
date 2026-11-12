@@ -92,8 +92,8 @@ function urlShape(url) {
   const raw = String(url || '').trim();
   if (!raw) return { ok: 0, msg: '还没填商品链接' };
   let u;
-  try { u = new URL(raw); } catch (e) { return { ok: 0, msg: '链接格式不对，要以 http 开头' }; }
-  if (!/^https?:$/.test(u.protocol)) return { ok: 0, msg: '只支持 http / https 链接' };
+  try { u = new URL(raw); } catch (e) { return { ok: 0, msg: '填完整网址' }; }
+  if (!/^https?:$/.test(u.protocol)) return { ok: 0, msg: '只支持网页链接' };
   /* v463：实测号卡商城的商品页是 hash 路由 —— https://ck.nxqingxian.cn/shop#/pages/goods/index?goodsId=2163&promoCode=xxx
      pathname 只有 /shop，参数全在 # 后面，原来既读不到 goodsId、又被路径里的 /index 误判成列表页。
      现在：把 hash 一起纳入判断 + 认 goodsId/productId/skuId/itemId 这类驼峰参数 + 去掉 /index 这个危险黑名单
@@ -104,13 +104,13 @@ function urlShape(url) {
   const badPaths = ['/list', '/search', '/category', '/cate', '/shoplist', '/result'];
   for (const b of badPaths) {
     if (full.indexOf(b) >= 0) {
-      return { ok: 0, msg: '这看着是列表页/搜索页，不是商品详情页，结算会对不上' };
+      return { ok: 0, msg: '请打开具体商品页' };
     }
   }
   for (const g of ['/item', '/goods', '/product', '/detail', '/p/']) {
     if (full.indexOf(g) >= 0) return { ok: 1, msg: '' };
   }
-  return { ok: 0, msg: '看不出是商品详情页，确认一下地址栏那条是不是商品页' };
+  return { ok: 0, msg: '请确认是商品页' };
 }
 
 /* 从域名猜平台名（只有平台档案里没匹配上时才用） */
@@ -303,7 +303,7 @@ export async function onRequestPost(context) {
       const platformId = Number(b.platform_id || 0) || 0;
       const rawUrl = String(b.url || '').trim().slice(0, 1200);
       if (!rawUrl) return json({ ok: false, msg: '商品链接不能为空' }, 400);
-      if (!/^https?:\/\//i.test(rawUrl)) return json({ ok: false, msg: '链接要以 http 或 https 开头' }, 400);
+      if (!/^https?:\/\//i.test(rawUrl)) return json({ ok: false, msg: '填完整网址' }, 400);
       let host = '';
       try { host = new URL(rawUrl).host; } catch (e) { return json({ ok: false, msg: '链接格式不对' }, 400); }
 
@@ -375,7 +375,7 @@ export async function onRequestPost(context) {
       const authP = await requirePerm(env, request, 'external.fetch');
       if (authP instanceof Response) return authP;
       const one = String(b.url || '').trim().slice(0, 1200);
-      if (!/^https?:\/\//i.test(one)) return json({ ok: false, msg: '链接要以 http 开头' }, 400);
+      if (!/^https?:\/\//i.test(one)) return json({ ok: false, msg: '填完整网址' }, 400);
       const out = { ok: true, url: one, via: '', count: 0, samples: [], bytes: 0 };
       let ha = null;
       try { ha = await tryHaokaWeb(one); } catch (eH) {}
@@ -403,7 +403,7 @@ export async function onRequestPost(context) {
       if (op === 'find.one') {
         /* 粘一条商品链接来解析（抓不到列表的站用这个兜底） */
         const one = String(b.url || '').trim().slice(0, 1200);
-        if (!/^https?:\/\//i.test(one)) return json({ ok: false, msg: '链接要以 http 开头' }, 400);
+        if (!/^https?:\/\//i.test(one)) return json({ ok: false, msg: '填完整网址' }, 400);
         const pg = await fetchPage(one, 15000);
         if (!pg.ok) return json({ ok: false, msg: '打不开这条链接（HTTP ' + pg.status + '）' }, 400);
         let title = plainText((pg.text.match(/<title[^>]*>([\s\S]{0,300}?)<\/title>/i) || [])[1] || '');
@@ -474,7 +474,7 @@ export async function onRequestPost(context) {
             }
           }
         } catch (eRule) {}
-        /* v597（老板 11-10 第 7 条「平台5的采集链接也是错的」）：号卡图文站（/article/good?pid=…&k=…）
+        /* v597（老板 11-10 第 7 条「平台5的采集链接也是错的」）：号卡图文站（/article/good?pid=&k=）
            的下单页固定是 {origin}/order/index?uid={k}&pid={pid}。原来只给 kk.sviphk.cn 写死了一个域名，
            换一家（如 55555.wang）就把「商品详情页」当订单页存，点进去根本不是下单。
            现在改成通用规则：只要链接里同时有 k/uid 与 pid，就按这个形状拼；已经指向 /order/ 的不动。 */
@@ -509,23 +509,23 @@ export async function onRequestPost(context) {
            标题长这样：Sina Visitor System、闲鱼 - 闲不住？上闲鱼、阿里巴巴-1688商品无法查看或已下架、
            拼多多。这些还被判成成功，入库就是垃圾。现在一律判失败并说清楚。 */
         /* v561（36 个平台横评实测）：两类"假成功"必须拦下——
-           ① 链接本身就是站点首页（京东首页 / Shopify 官网 / 有赞官网…），采到的标题是站点名、没有商品；
-           ② 标题是「站点名 + 副标题」的落地页（京东全球版-…、博客园-开发者的网上家园、rednote-…）。
+           ① 链接本身就是站点首页（京东首页 / Shopify 官网 / 有赞官网），采到的标题是站点名、没有商品；
+           ② 标题是「站点名 + 副标题」的落地页（京东全球版-、博客园-开发者的网上家园、rednote-）。
            判首页用 URL 路径最稳（根路径一定是首页）；判落地页用"站点名开头 + 分隔符"。 */
         const SITE_RE = '拼多多|闲鱼|淘宝网?|淘寶|天猫|天貓|京东|微博|小红书|rednote|抖音|快手|阿里巴巴|1688|唯品会|苏宁|当当|shopify|博客园|花瓣|站酷|游民星空|小鹅通|有赞|豆瓣|知乎';
         let _path = '/';
         try { _path = new URL(one).pathname || '/'; } catch (e0) {}
         const isSiteRoot = (_path === '/' || _path === '' || /^\/(index|home)\.(html?|php|aspx?)$/i.test(_path));
         if (isSiteRoot) {
-          return json({ ok: false, home: true, msg: '这个链接是站点首页，不是具体商品/内容页——请点进具体那一件商品（或那篇文章）再复制链接。' }, 200);
+          return json({ ok: false, home: true, msg: '请点进具体商品再复制' }, 200);
         }
         const junkTitle = /(Sina Visitor System|访客系统|安全验证|滑动验证|人机验证|访问验证|验证码|无法查看|已下架|商品不存在|宝贝不存在|页面不存在|创作你的创作)/i.test(title)
           || new RegExp('^(' + SITE_RE + ')\s*(?:[-－|｜:：,，]|\s|$)', 'i').test(String(title).trim());
         if (junkTitle) {
-          return json({ ok: false, junk: true, msg: '抓到的是验证页或站点首页，不是商品本身——对方把服务器挡在外面了。改用「粘贴整页内容」。' }, 200);
+          return json({ ok: false, junk: true, msg: '抓不到，请粘贴整页' }, 200);
         }
         if (!imgs.length && (!desc || desc.length < 40)) {
-          return json({ ok: false, weak: true, msg: '只抓到了标题，页面里的图和外链都没抓到（对方可能是登录墙或靠浏览器渲染）。改用「粘贴整页内容」。' }, 200);
+          return json({ ok: false, weak: true, msg: '只抓到标题，请粘贴整页' }, 200);
         }
         return json({ ok: true, title: title.slice(0, 90), cover: imgs[0] || '', media: imgs, desc: desc.slice(0, 1000), buy_url: buyHref, weak: weak });
       }
@@ -535,7 +535,7 @@ export async function onRequestPost(context) {
       if (!p) return json({ ok: false, msg: '先选一个平台' }, 400);
       const mall = String(b.url || p.mall_url || '').trim();
       if (!mall) return json({ ok: false, msg: '这个平台还没填「商城地址」' }, 400);
-      if (!/^https?:\/\//i.test(mall)) return json({ ok: false, msg: '商城地址要以 http 开头' }, 400);
+      if (!/^https?:\/\//i.test(mall)) return json({ ok: false, msg: '商城填完整网址' }, 400);
 
       let pg;
       try { pg = await fetchPage(mall, 15000); }
@@ -564,7 +564,7 @@ export async function onRequestPost(context) {
         try {
           const u0 = new URL(mall);
           const cands = ['/article/goods', '/article/goods/', '/goods', '/shop', '/goodslist', '/product', '/list'];
-          /* v546y（实测）：老板粘的是「我店铺」的地址 …/index?k=店铺码，探测真列表页时
+          /* v546y（实测）：老板粘的是「我店铺」的地址 /index?k=店铺码，探测真列表页时
              原来拼成 origin + /article/goods，把 k= 店铺码丢了——采回来的商品全成了平台默认店的，
              佣金算别人。这里把原链接的 query 一起带过去。 */
           for (const c of cands) {
@@ -606,7 +606,7 @@ export async function onRequestPost(context) {
                   .replace(/<script[\s\S]*?<\/script>/gi, ' ')
                   .replace(/<style[\s\S]*?<\/style>/gi, ' ')
                   .replace(/<head[\s\S]*?<\/head>/gi, ' '));
-                /* v546m：直接截正文，抓到的常是站点名/导航（实测「五湖通信号卡系统|…」）。
+                /* v546m：直接截正文，抓到的常是站点名/导航（实测「五湖通信号卡系统|」）。
                    改成按句切开，只留像套餐说明的句子（含流量/套餐/通话/元/G/月租这类词）。 */
                 const cand = String(bodyTxt || '').split(/[。|｜\n\r,，、；;]+/)
                   .map(function (s) { return s.replace(/\s+/g, ' ').trim(); })
@@ -1103,7 +1103,7 @@ function looksLikeGoods(t) {
   if (!t || t.length < 5 || t.length > 90) return false;
   if (!/[\u4e00-\u9fa5]/.test(t)) return false;
   /* v546v（实测 172hk.com.cn / m.wywlhk.cn）：页面里的广告链接、导航碎片被当成商品存进去，
-     标题长这样：`172 号卡资讯, rget="_blank" title="飞利猫随身`、`z-link" href="https://…`。
+     标题长这样：`172 号卡资讯, rget="_blank" title="飞利猫随身`、`z-link" href="https://`。
      带 HTML 属性、引号、网址的一律不是商品名。 */
   if (/[=<>]/.test(t)) return false;
   if (/(href|target|_blank|src|class|title)\s*=/i.test(t)) return false;

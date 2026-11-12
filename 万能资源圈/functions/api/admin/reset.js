@@ -21,7 +21,7 @@ export async function onRequestPost(context) {
 
     const body = await readJSON(request);
     if (!body || String(body.confirm || '').trim() !== '清空') {
-      return json({ ok: false, msg: '确认口令不对：请在输入框里原样打「清空」两个字' }, 400);
+      return json({ ok: false, msg: '请输入「清空」两个字' }, 400);
     }
 
     /* 按依赖顺序删：先明细，后主表 */

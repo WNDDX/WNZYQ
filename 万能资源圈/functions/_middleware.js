@@ -55,7 +55,7 @@ function jsonBusy() {
     JSON.stringify({
       ok: false,
       code: 'DB_BUSY',
-      msg: '系统正在维护（数据库繁忙），请稍后刷新重试',
+      msg: '系统维护中，请稍后',
     }),
     {
       status: 503,

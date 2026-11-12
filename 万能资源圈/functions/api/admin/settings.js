@@ -51,7 +51,7 @@ export async function onRequestPut(context) {
   for (const k of ['contact_url', 'group_url']) {
     if (b && typeof b[k] === 'string') {
       const v = b[k].trim();
-      if (v && !/^https?:\/\//i.test(v)) return json({ ok: false, msg: '跳转链接要以 http:// 或 https:// 开头' }, 400);
+      if (v && !/^https?:\/\//i.test(v)) return json({ ok: false, msg: '跳转填完整网址' }, 400);
       b[k] = v;
     }
   }

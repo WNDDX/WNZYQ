@@ -40,7 +40,7 @@ export async function onRequestGet(context) {
   if (!KEY_RE.test(key)) return new Response('Not found', { status: 404 });
 
   const bucket = env.IMAGE_BUCKET;
-  if (!bucket) return new Response('存储未绑定（IMAGE_BUCKET）', { status: 404 });
+  if (!bucket) return new Response('图片存储未配置', { status: 404 });
 
   let cached = null;
   try { cached = await caches.default.match(request); } catch (e) {}

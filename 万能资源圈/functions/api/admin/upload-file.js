@@ -26,7 +26,7 @@ export async function onRequestPost(context) {
 
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) {
-    return json({ ok: false, msg: '存储未绑定（IMAGE_BUCKET），请检查 Cloudflare Pages 函数绑定设置' }, 400);
+    return json({ ok: false, msg: '图片存储未配置' }, 400);
   }
 
   let form;

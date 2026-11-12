@@ -735,7 +735,7 @@ window.__linkify = function (html) {
  点任何分类都找不到。以前静默保存，管理员以为丢了。这里保存后明确说一句。 */
  if (!Number(data.cid)) {
  setTimeout(function () {
- try { window.showToast('这条没选分类，只会出现在资源页「全部」里，分类里找不到——建议补一个分类', 'info'); } catch (e) {}
+ try { window.showToast('请选择分类', 'info'); } catch (e) {}
  }, 900);
  }
 
@@ -1749,7 +1749,7 @@ document.addEventListener('click', function (e) {
  var rows = parseInt(rowInp.value, 10) || 0;
  var cols = parseInt(colInp.value, 10) || 0;
  if (rows < 1 || rows > 50 || cols < 1 || cols > 50) {
- toast('行数和列数请在 1-50 之间', 'error');
+ toast('行列数 1 到 50', 'error');
  return;
  }
  var html = '<table><tbody>';
@@ -1926,7 +1926,7 @@ document.addEventListener('click', function (e) {
  return (td && at.table.contains(td)) ? td : null;
  }
  var aTd = cellOf(sel.anchorNode), fTd = cellOf(sel.focusNode);
- if (!aTd || !fTd) { toast('请先在表格里拖选要合并的多个单元格', 'info'); return; }
+ if (!aTd || !fTd) { toast('先选中要合并的格子', 'info'); return; }
  var g = rteTblGrid(at.table);
  function posOf(td) {
  for (var r = 0; r < g.rows; r++) if (g.grid[r]) {
@@ -1958,7 +1958,7 @@ document.addEventListener('click', function (e) {
  if (span.c1 > cmax) { cmax = span.c1; changed = true; }
  }
  }
- if (picked.length < 2) { toast('请先在表格里拖选要合并的多个单元格', 'info'); return; }
+ if (picked.length < 2) { toast('先选中要合并的格子', 'info'); return; }
  // 内容按行拼接，全并进矩形左上格
  var first = g.grid[rmin][cmin];
  var parts = [];
@@ -1984,7 +1984,7 @@ document.addEventListener('click', function (e) {
  function rteTblSplit(editor) {
  var at = rteTblAt(editor); if (!at) return;
  var td = at.td, cs = td.colSpan || 1, rs = td.rowSpan || 1;
- if (cs === 1 && rs === 1) { toast('当前单元格没有合并过，无需拆分', 'info'); return; }
+ if (cs === 1 && rs === 1) { toast('这个格子没合并过', 'info'); return; }
  var g = rteTblGrid(at.table);
  var r0 = 0, c0 = 0;
  outer2: for (var r = 0; r < g.rows; r++) { if (g.grid[r]) { var ci = g.grid[r].indexOf(td); if (ci !== -1) { r0 = r; c0 = ci; break outer2; } } }
@@ -2246,9 +2246,9 @@ document.addEventListener('click', function (e) {
  if (sel.rangeCount > 0 && !sel.isCollapsed) {
  detailBrushStyle = rteReadBrushStyle();
  brushBtn.classList.add('active');
- toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
+ toast('格式已复制', 'success');
  } else {
- toast('请先选中要复制格式的内容', 'error');
+ toast('先选中内容', 'error');
  }
  } else {
  var sel2 = window.getSelection();
@@ -2257,7 +2257,7 @@ document.addEventListener('click', function (e) {
  rteFocusStay(rteEditor); /* R240：preventScroll */
  toast('格式已应用', 'success');
  } else {
- toast('请先选中要应用格式的内容', 'error');
+ toast('先选中内容', 'error');
  }
  detailBrushStyle = null;
  brushBtn.classList.remove('active');
@@ -2306,7 +2306,7 @@ document.addEventListener('click', function (e) {
  if (!url) return;
  document.getElementById('fContactQr').value = url;
  __edContactRefresh();
- toast('二维码已就绪，点下面的「确定」生效', 'info');
+ toast('二维码已生成', 'info');
  if (window.__haptic) window.__haptic();
  });
  });
@@ -2317,16 +2317,16 @@ document.addEventListener('click', function (e) {
  });
  if (net) net.addEventListener('change', function () {
  var v = (net.value || '').trim();
- if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
+ if (v && !/^https?:\/\//i.test(v)) { toast('填完整网址', 'error'); return; }
  document.getElementById('fContactQr').value = v;
  __edContactRefresh();
- if (v) { toast('网络图已就绪，点下面的「确定」生效', 'info'); if (window.__haptic) window.__haptic(); }
+ if (v) { toast('图片已生成', 'info'); if (window.__haptic) window.__haptic(); }
  });
  /* 行内保存=部分更新（只动专属客服两列，不碰表单其余字段；新增未入库资源提示先点确定）
  v450：绑在「收起」上——先存后收；新增未入库时只提示、不收起（资源还没确定，收了会丢信息） */
  function __edContactSaveNow(after) {
  var pid = window.state && window.state.editingId;
- if (!pid) { toast('请先点「确定」保存资源，再单独更新客服信息', 'info'); return false; }
+ if (!pid) { toast('先保存资源', 'info'); return false; }
  var b = col, _t = b.textContent;
  b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '保存中');
  api('admin/products/' + pid, { method: 'PUT', body: JSON.stringify({

@@ -30,7 +30,7 @@ export async function onRequestPost(context) {
   try {
     // 检查数据库绑定是否生效
     if (!env.DB) {
-      return json({ ok: false, msg: '数据库绑定未生效，请检查 wrangler.toml 配置' }, 500);
+      return json({ ok: false, msg: '系统未就绪，请联系管理员' }, 500);
     }
 
     const body = await readJSON(request);
@@ -131,7 +131,7 @@ export async function onRequestPost(context) {
     const _m = String((e && e.message) || e).toLowerCase();
     const _dbDown = ['exceeded d1', 'daily row read limit', 'd1_error', 'database is locked', 'no such table', 'network connection lost', 'storage operation exceeded'].some(function (p) { return _m.indexOf(p) >= 0; });
     if (_dbDown) {
-      return json({ ok: false, code: 'DB_BUSY', msg: '系统正在维护（数据库繁忙），请稍后重试' }, 503, { 'Retry-After': '600' });
+      return json({ ok: false, code: 'DB_BUSY', msg: '系统维护中，请稍后' }, 503, { 'Retry-After': '600' });
     }
     return json({ ok: false, msg: '服务器开小差了，请重试' }, 500);
   }

@@ -464,7 +464,7 @@ export async function issueCodeForVariant(env, variantId) {
   const v = await env.DB.prepare('SELECT id, product_id, resource_code FROM product_variants WHERE id = ?').bind(variantId).first();
   if (!v) return { ok: false, msg: '类型不存在' };
   const oldCode = String(v.resource_code || '').trim();
-  if (!oldCode) return { ok: false, msg: '该类型未设置资源码，请先在类型编辑里设置' };
+  if (!oldCode) return { ok: false, msg: '请先设置资源码' };
   await ensureCodeIssuesTable(env);
   const active = await env.DB.prepare(
     "SELECT id FROM code_issues WHERE variant_id = ? AND code = ? AND status = 'issued' AND issued_at >= datetime('now','-60 days') LIMIT 1"

@@ -14,7 +14,7 @@ export async function onRequestPost(context) {
   if (auth instanceof Response) return auth;
 
   const bucket = env.IMAGE_BUCKET;
-  if (!bucket) return json({ ok: false, msg: '存储未绑定（IMAGE_BUCKET）' }, 400);
+  if (!bucket) return json({ ok: false, msg: '图片存储未配置' }, 400);
 
   /* 节流：30 分钟内扫过就跳过 */
   try {

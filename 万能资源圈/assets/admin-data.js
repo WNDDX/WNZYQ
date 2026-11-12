@@ -206,7 +206,7 @@ window.__fillHourly = function (raw) {
  unBtn.textContent = '解绑';
  (function (bid) {
  unBtn.addEventListener('click', function () {
- showConfirm('解绑设备', '确定解绑该设备？解绑后此设备需重新输入资源码才能解锁（其它设备不受影响）。', function (closeConfirm) {
+ showConfirm('解绑设备', '解绑后要重新输码，确定吗', function (closeConfirm) {
  api('admin/bindings/' + bid, { method: 'DELETE' }).then(function (res2) {
  closeConfirm();
  if (res2 && res2.ok) { toast('已解绑', 'success'); refreshBindings(_bindingsVariant && _bindingsVariant.id); loadVariants(state.editingId); }
@@ -616,7 +616,7 @@ window.__fillHourly = function (raw) {
  sheets.push({ name: '访问记录', rows: rRows });
  downloadMultiSheetXLS(__exportStamp() + '-数据统计.xls', sheets);
  var cnt = res.counts || {};
- toast('导出成功（8 个工作表）：资源清单 ' + (cnt.products || 0) + '、资源类型 ' + (cnt.variants || 0) + '、分类清单 ' + (cnt.categories || 0) + '、绑定设备明细 ' + (cnt.bindings || 0) + '、发码记录 ' + (cnt.issues || 0) + '、每日趋势、按资源统计、访问记录 ' + (cnt.recent || 0) + ' 条', 'success');
+ toast('导出完成 ' + (cnt.products || 0) + '、资源类型 ' + (cnt.variants || 0) + '、分类清单 ' + (cnt.categories || 0) + '、绑定设备明细 ' + (cnt.bindings || 0) + '、发码记录 ' + (cnt.issues || 0) + '、每日趋势、按资源统计、访问记录 ' + (cnt.recent || 0) + ' 条', 'success');
  } catch (e) { toast('导出失败：' + e.message, 'error'); }
  done();
  }).catch(function () { toast('导出失败：网络错误', 'error'); done(); });
@@ -1565,7 +1565,7 @@ refreshCatCnts();
  _seqC.then(function () {
  __restoreCat(); clearCache(); silentSyncCategories();
  toast('已恢复分类「' + (c.name || '未命名') + '」', 'success');
- }).catch(function () { toast('恢复失败，请到「回收站点」手动恢复', 'error'); });
+ }).catch(function () { toast('恢复失败，请手动恢复', 'error'); });
  }
  );
  /* v546b（与资源删除同口径）：立即落库，撤销走恢复接口。
@@ -1677,7 +1677,7 @@ refreshCatCnts();
  });
  // 执行批量操作
  function batchCatAction(ids, action, closeConfirm) {
- if (ids.indexOf(0) !== -1) { if (closeConfirm) closeConfirm(); toast('「全部」为保底根分类，不可隐藏/显示/删除', 'error'); return; }
+ if (ids.indexOf(0) !== -1) { if (closeConfirm) closeConfirm(); toast('默认分类不能改', 'error'); return; }
  var targetIds = ids.slice();
  if (action === 'hide' || action === 'show') {
  ids.forEach(function (pid) {
@@ -1771,7 +1771,7 @@ refreshCatCnts();
  var dragged = list.find(function (c) { return c.id === draggedId; });
  var target = list.find(function (c) { return c.id === targetId; });
  if (!dragged || !target) return;
- if (dragged.parent_id !== target.parent_id) { toast('只能在同级别分类内排序', 'error'); return; }
+ if (dragged.parent_id !== target.parent_id) { toast('只能同级排序', 'error'); return; }
  var sameLevel = list.filter(function (c) { return c.parent_id === dragged.parent_id; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
  var di = sameLevel.indexOf(dragged); var ti = sameLevel.indexOf(target); if (di < 0 || ti < 0) return;
  sameLevel.splice(di, 1); sameLevel.splice(ti > di ? ti - 1 : ti, 0, dragged);
@@ -1792,10 +1792,10 @@ refreshCatCnts();
  try { if (_cflip) _cflip(); } catch (e4) { if (window.__silent) window.__silent(e4); }
  silentSyncCategories();
  }
- else toast('排序没保存上：服务器拒绝了这次修改，刷新后再拖一次', 'error');
+ else toast('排序没保存', 'error');
  }).catch(function () {
  __reorderBusy = false;
- toast('排序没存上：网络没连上，稍后再试', 'error');
+ toast('排序没保存，请重试', 'error');
  });
  }
 
@@ -2092,12 +2092,12 @@ refreshCatCnts();
  var s = document.getElementById('statStartDate').value;
  var e = document.getElementById('statEndDate').value;
  if (!s || !e) { toast('请选择开始和结束时间', 'error'); return; }
- if (s.slice(0, 10) > e.slice(0, 10)) { toast('开始时间不能晚于结束时间', 'error'); return; }
+ if (s.slice(0, 10) > e.slice(0, 10)) { toast('开始不能晚于结束', 'error'); return; }
  // 计算30天前的日期（R176：北京时间口径，旧 UTC 在北京 0-8 点会误拦/放错一天）
  var maxStartMs = Date.parse(__bjToday() + 'T00:00:00Z') - 29 * 86400000;
  var maxStartStr = new Date(maxStartMs).toISOString().slice(0, 10);
  if (s.slice(0, 10) < maxStartStr) {
- toast('最多只能查询最近30天的数据，已自动调整开始时间', 'warn');
+ toast('最多查最近 30 天', 'warn');
  document.getElementById('statStartDate').value = maxStartStr + ' 00:00';
  s = maxStartStr + ' 00:00';
  }
@@ -2396,8 +2396,8 @@ refreshCatCnts();
  // 仅编辑已保存资源时可用（新增未保存没有资源 ID）；本地预览模式无部署地址，不生成链接
  document.getElementById('previewShareX').addEventListener('click', function () {
  var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
- if (isLocal) { toast('本地预览模式，部署线上后可分享', 'error'); return; }
- if (!state.editingId) { toast('新增资源请先保存后再分享', 'error'); return; }
+ if (isLocal) { toast('本地预览不能分享', 'error'); return; }
+ if (!state.editingId) { toast('先保存资源', 'error'); return; }
  var url = window.location.origin + '/shop?pid=' + state.editingId;
  var _pn = ''; try { var _pp = (state.products || []).find(function (x) { return Number(x.id) === Number(state.editingId); }); _pn = (_pp && _pp.title) || ''; } catch (e) { if (window.__silent) window.__silent(e); }
  if (window.showShareLinkModal) window.showShareLinkModal('分享资源链接', url, (_pn ? _pn + ' · ' : '') + '资源链接已复制'); // R251：新标题+带资源名灰字
@@ -2412,7 +2412,7 @@ refreshCatCnts();
  if (!url) url = fContactUrl.value.trim();
  if (!url && window.__infoContactUrl) url = window.__infoContactUrl; /* v383：全局客服链接改走「设置信息」 */
  if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); /* v415 条1：客服绿 */ } else { window.openContactFallback(url, { green: true }); } }
- else toast('暂未配置客服链接（资源/全局都没填）', 'warn');
+ else toast('还没填客服链接', 'warn');
  });
  document.querySelector('.preview-close-btn').addEventListener('click', function () {
  __stopPreviewCarousel(); // R280 ③
@@ -2625,7 +2625,7 @@ refreshCatCnts();
  var sel = '';
  try { sel = String(window.getSelection ? window.getSelection() : ''); } catch (e) { if (window.__silent) window.__silent(e); }
  if (sel) __cp(sel, '选中内容已复制');
- else if (typeof toast === 'function') toast('先选中文字，再长按即可复制', 'info');
+ else if (typeof toast === 'function') toast('先选中文字', 'info');
  } }];
  if (full) items.push({ label: '复制全文', fn: function () { __cp(full, '内容已复制'); } });
  if (pid) {
@@ -2793,7 +2793,7 @@ function boot() {
  setTimeout(function () {
  try {
  var n = window.__restoreForms401 ? window.__restoreForms401() : 0;
- if (n && window.showToast) window.showToast('已恢复登录过期前填写的 ' + n + ' 项内容', 'success');
+ if (n && window.showToast) window.showToast('已恢复上次填写 ' + n + ' 项内容', 'success');
  } catch (eR) {}
  }, 900);
  }

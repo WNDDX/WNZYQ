@@ -28,7 +28,7 @@ export async function onRequestPost(context) {
 
   const type = String(file.type || '').toLowerCase();
   const ext = ALLOWED_TYPES[type];
-  if (!ext) return json({ ok: false, msg: '只支持 png / jpg / webp / gif 图片' }, 400);
+  if (!ext) return json({ ok: false, msg: '只支持常见图片格式' }, 400);
 
   const now = new Date();
   const key = 'images/' + now.getUTCFullYear() + '/' + String(now.getUTCMonth() + 1).padStart(2, '0') + '/' + crypto.randomUUID() + '.' + ext;

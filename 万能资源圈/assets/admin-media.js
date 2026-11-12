@@ -34,7 +34,7 @@
  选一张几百 MB 的图会一直转到超时为止。现在与视频/文件同口径：25MB 秒拒。 */
  var MAX_IMAGE_SIZE = 25 * 1024 * 1024;
  if (file.size > MAX_IMAGE_SIZE) {
- toast('该图片超过 25MB，暂不支持上传，请压缩后再试', 'error');
+ toast('图片太大，请压缩', 'error');
  if (cb) cb(null, 'size');
  return;
  }
@@ -101,7 +101,7 @@
  if (!file) return;
  var MAX_VIDEO_SIZE = 25 * 1024 * 1024;
  if (file.size > MAX_VIDEO_SIZE) {
- toast('该视频超过 25MB，暂不支持上传，请压缩或剪辑后再试', 'error');
+ toast('视频太大，请压缩', 'error');
  return;
  }
  var fd = new FormData();
@@ -579,7 +579,7 @@
  var a0 = card ? card.querySelector('a[data-dl]') : null;
  var u0 = a0 ? a0.getAttribute('href') : '';
  if (u0 && window.__shareCopyText) window.__shareCopyText(location.origin + u0, '') || window.__shareCopyText(u0, '');
- if (u0) toast(window.T('copied'), 'success'); else toast('这个文件还没上传，没有链接可复制', 'info');
+ if (u0) toast(window.T('copied'), 'success'); else toast('文件还没上传', 'info');
  e.preventDefault(); e.stopPropagation();
  return;
  }
@@ -653,7 +653,7 @@
  row = target.closest('.file-folder-item');
  var key = row ? (row.getAttribute('data-key') || '') : '';
  if (key && window.__shareCopyText) window.__shareCopyText(location.origin + '/files/' + key, '');
- if (key) toast(window.T('copied'), 'success'); else toast('这个文件还没上传，没有链接可复制', 'info');
+ if (key) toast(window.T('copied'), 'success'); else toast('文件还没上传', 'info');
  e.preventDefault(); e.stopPropagation();
  return;
  }
@@ -727,7 +727,7 @@
  if (hasEntry) {
  fcReadDropped(e.dataTransfer.items, function (files, folderName) {
  if (files && files.length) processLocalFiles(files, editor, folderName);
- else toast('文件夹里没有可上传的文件', 'info'); /* v447：空目录原先静默无反应 */
+ else toast('文件夹是空的', 'info'); /* v447：空目录原先静默无反应 */
  });
  } else {
  processLocalFiles(Array.prototype.slice.call(e.dataTransfer.files), editor, null);
@@ -973,7 +973,7 @@
  // v328（用户 10-06 15:37）：文件弹窗主控——极简设计：一行说明+链接框+上传按钮，无虚线框无二级菜单
  function setupFileDialog(editor) {
  if (!editor) return;
- /* v450（老板实拍：拖文件进「插入文件」弹窗，被全局兜底弹「请把文件拖到正文编辑框里再松手」——
+ /* v450（老板实拍：拖文件进「插入文件」弹窗，被全局兜底弹「请拖到编辑框里」——
  而弹窗自己的文案写着「也可直接拖文件/文件夹到弹窗」，说明承诺了却没接线，功能等于废的）。
  恢复弹窗级拖拽：投到弹窗上按本地文件处理，且优先于全局兜底（兜底见到 #inputMask 就闭嘴）。 */
  if (!window.__fileDropGuard) {
@@ -987,7 +987,7 @@
  var t = e.target;
  if (t && t.closest && t.closest('#inputMask')) return; /* 文件弹窗自己的 drop 负责，兜底不插手 */
  var inEditor = t && t.closest && t.closest('.rte-editor');
- if (!inEditor) toast('请把文件拖到正文编辑框里再松手', 'info');
+ if (!inEditor) toast('请拖到编辑框里', 'info');
  }, true);
  }
  window.__fileDropEditor = editor;
@@ -1022,7 +1022,7 @@
  if (done) return;
  done = true;
  if (files && files.length) processLocalFiles(files, ed, folderName);
- else toast('文件夹里没有可上传的文件', 'info');
+ else toast('文件夹是空的', 'info');
  }
  var hasEntry = false;
  try {
@@ -1257,7 +1257,7 @@
  setTimeout(function () { btn.textContent = _origText; btn.style.background = ''; }, 1200);
  fImg.value = url;
  if (typeof fImg.dispatchEvent === 'function') fImg.dispatchEvent(new Event('input'));
- toast('封面图已上传，链接已自动填入', 'success');
+ toast('封面已上传', 'success');
  },
  onFail: function () { btn.disabled = false; btn.textContent = _origText; },
  onCancel: function () { btn.disabled = false; btn.textContent = _origText; }
@@ -1621,7 +1621,7 @@
  toast(res.msg || '上传失败', 'error');
  }
  })
- .catch(function () { toast('图片没传上去：网络没连上或文件太大，换一张或稍后再试', 'error'); });
+ .catch(function () { toast('上传失败，请换个文件', 'error'); });
  };
  input.click();
  }
@@ -1670,7 +1670,7 @@
  mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="公告预览" style="max-width:var(--modal-w-md)">' +
  '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<h2 class="modal-title">公告预览</h2>' +
- '<div class="pv-ann-tip">这就是访客看到的样子（隐藏的公告不会显示，改完记得点保存）</div>' +
+ '<div class="pv-ann-tip">这是访客看到的样子</div>' +
  '<iframe class="pv-ann-frame" id="annPvFrame" title="公告预览"></iframe>' +
  '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
  document.body.appendChild(mask);
@@ -2033,10 +2033,10 @@
  e.stopPropagation();
  var inp = document.getElementById(b.getAttribute('data-test'));
  var u = inp ? String(inp.value || '').trim() : '';
- if (!u) { if (window.showToast) window.showToast('这条链接还是空的，先填再测', 'info'); return; }
- if (!/^https?:\/\//i.test(u)) { if (window.showToast) window.showToast('链接要以 http:// 或 https:// 开头', 'error'); return; }
+ if (!u) { if (window.showToast) window.showToast('先填链接再测', 'info'); return; }
+ if (!/^https?:\/\//i.test(u)) { if (window.showToast) window.showToast('填完整网址', 'error'); return; }
  var w = window.open(u, '_blank', 'noopener');
- if (!w && window.showToast) window.showToast('浏览器拦了新窗口，允许弹出后再点一次', 'info');
+ if (!w && window.showToast) window.showToast('请允许弹出窗口', 'info');
  });
  document.getElementById('annMask').addEventListener('click', function (e) {
  // R257（老板 09-23 19:08）：点外关闭=暂存当前编辑（选中项+内容+频率保留），重开自动恢复到离开时的样子；
@@ -2100,7 +2100,7 @@
  function __infoPreview(k) {
  var c = __infoCfg[k], C = __infoCap(k);
  var meta = {
- contact: { title: '咨询客服', tip: '长按图片识别-添加人工客服', btn: '跳转-咨询在线客服', green: true }, /* v537：导航页那颗是绿的，这里原来漏了 green，全系统客服跳转键统一绿 */
+ contact: { title: '咨询客服', tip: '长按识别加客服', btn: '跳转-咨询在线客服', green: true }, /* v537：导航页那颗是绿的，这里原来漏了 green，全系统客服跳转键统一绿 */
  group: { title: '交流群聊', tip: '长按图片识别-加入交流群聊', btn: '跳转-加入交流群聊' },
  gzh: { title: '公众号讯', tip: '长按图片识别-关注公众号讯', btn: '' }
  }[k];
@@ -2198,7 +2198,7 @@
  if (!url) return;
  __infoPending[k] = url; /* 只到页面，保存才入库 */
  __infoRefreshPanel(k);
- toast('二维码已就绪，点「保存」后生效', 'info');
+ toast('二维码已生成', 'info');
  if (window.__haptic) window.__haptic();
  });
  });
@@ -2213,10 +2213,10 @@
  if (net) {
  net.addEventListener('change', function () {
  var v = (net.value || '').trim();
- if (v && !/^https?:\/\//i.test(v)) { toast('网络地址需以 http(s):// 开头', 'error'); return; }
+ if (v && !/^https?:\/\//i.test(v)) { toast('填完整网址', 'error'); return; }
  __infoPending[k] = v;
  __infoRefreshPanel(k);
- if (v) { toast('网络图已就绪，点「保存」后生效', 'info'); if (window.__haptic) window.__haptic(); }
+ if (v) { toast('图片已生成', 'info'); if (window.__haptic) window.__haptic(); }
  });
  }
  /* v385 条1：点行首三键=实时预览导航页对应弹窗（值取 pending||已保存，所见即所得） */
@@ -2231,7 +2231,7 @@
  /* v546 修（实测：「abc」和「javascript:alert(1)」都能存进库，前台客服键直接拿它跳转）——
  跳转链接只认 http(s)，别的一律不存，并明说原因。留空＝允许（走默认链接）。 */
  if (body[c.urlKey] && !/^https?:\/\//i.test(body[c.urlKey])) {
- toast('跳转链接要以 http:// 或 https:// 开头', 'error');
+ toast('跳转填完整网址', 'error');
  var _bad = document.getElementById('infoUrl' + C); if (_bad) { try { _bad.focus(); } catch (eF) {} }
  return;
  }
@@ -2343,9 +2343,9 @@
  if (sel.rangeCount > 0 && !sel.isCollapsed) {
  annBrushStyle = rteReadBrushStyle();
  brushBtn.classList.add('active');
- toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
+ toast('格式已复制', 'success');
  } else {
- toast('请先选中要复制格式的内容', 'error');
+ toast('先选中内容', 'error');
  }
  } else {
  var sel2 = window.getSelection();
@@ -2354,7 +2354,7 @@
  rteFocusStay(annEditor); /* R240：preventScroll */
  toast('格式已应用', 'success');
  } else {
- toast('请先选中要应用格式的内容', 'error');
+ toast('先选中内容', 'error');
  }
  annBrushStyle = null;
  brushBtn.classList.remove('active');
@@ -2518,9 +2518,9 @@
  if (sel.rangeCount > 0 && !sel.isCollapsed) {
  formatBrushStyle = rteReadBrushStyle();
  brushBtn.classList.add('active');
- toast('格式已复制，选中其他内容后再次点击格式刷应用', 'success');
+ toast('格式已复制', 'success');
  } else {
- toast('请先选中要复制格式的内容', 'error');
+ toast('先选中内容', 'error');
  }
  } else {
  // 第二次点击：应用样式
@@ -2530,7 +2530,7 @@
  rteFocusStay(editor); /* R240：preventScroll */
  toast('格式已应用', 'success');
  } else {
- toast('请先选中要应用格式的内容', 'error');
+ toast('先选中内容', 'error');
  }
  formatBrushStyle = null;
  brushBtn.classList.remove('active');
@@ -2587,7 +2587,7 @@
  留空仍然允许（表示这个类型不发码/暂未发码）。 */
  var _code = String(vResourceCode.value || '').trim().toUpperCase();
  if (_code && !/^[A-Z0-9]{8}$/.test(_code)) {
- toast('资源码要 8 位字母或数字（现在 ' + _code.length + ' 位）', 'error');
+ toast('资源码要 8 位 ' + _code.length + ' 位）', 'error');
  try { vResourceCode.focus(); vResourceCode.select(); } catch (eS) {}
  return;
  }
@@ -2615,7 +2615,7 @@
  state.variants.forEach(function (vv, i) { vv.sort = i + 1; });
  variantDraftPending = false; variantMask.classList.remove('open');
  try { window.__clearEditingDraft(); } catch (e) { if (window.__silent) window.__silent(e); } // R248：清除 localStorage 草稿
- toast('类型已新增（保存资源后生效）', 'success');
+ toast('类型已新增', 'success');
  renderVariants();
  return;
  }
@@ -2712,7 +2712,7 @@
  现在就地弹体检窗：不切页签、不关当前上下文，看完关掉回原处。 */
  var icb = document.getElementById('imgCheckBtn');
  if (icb) icb.click();
- else if (window.showToast) window.showToast('体检入口没加载出来，刷新页面后再试', 'error');
+ else if (window.showToast) window.showToast('请刷新页面再试', 'error');
  });
  }
  /* v394-29 数字规范：增量>999 用 k 缩写；总量永远全量（统计卡/首页走 countUp 全量） */

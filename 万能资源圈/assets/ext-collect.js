@@ -599,7 +599,7 @@
  }
  if (act === 'delunused') {
  var unused = (S.goods || []).filter(function (g) { return g.status !== 'used'; });
- if (!unused.length) { toast('没有可清理的：采集到的资源要么已上架，要么库是空的', 'info'); return; }
+ if (!unused.length) { toast('没有可清理的资源', 'info'); return; }
  if (!window.showConfirm) { toast(window.T('needRefresh'), 'error'); return; }
  window.showConfirm('清未上架',
  '将删除 ' + unused.length + ' 条「还没上架」的采集记录。已上架的 ' + ((S.goods || []).length - unused.length) + ' 条不会动，对方平台也不受影响。',
@@ -683,7 +683,7 @@
  if (!S.curPf) return collectAll();
  var p = S.platforms.filter(function (x) { return Number(x.id) === Number(S.curPf); })[0];
  if (!p) { toast('先在左上选一个平台', 'error'); return; }
- if (!p.mall_url) { toast('这个平台还没填商城地址，去「我的平台 → 改」补一下', 'error'); return; }
+ if (!p.mall_url) { toast('请先填平台地址', 'error'); return; }
  S.busy = true; S.hint = '正在采集（0 秒 / 最多 20 秒）'; render();
  /* v530：采集时显示真实等待秒数，不再是干等 */
  var __t0 = Date.now();
@@ -719,7 +719,7 @@
  /* v537：全部平台依次采集——串行跑，不并发，避免同时打对方站点被限流 */
  function collectAll() {
  var list = S.platforms.filter(function (x) { return String(x.mall_url || '').trim(); });
- if (!list.length) { toast('该列表暂无可用平台（没填商城地址），先去「我的平台」补一个', 'error'); return; }
+ if (!list.length) { toast('请先添加平台', 'error'); return; }
  S.busy = true;
  var btn = S.mask && S.mask.querySelector('#extcRun');
  if (btn) { btn.disabled = true; btn.textContent = '采集中'; }
@@ -795,7 +795,7 @@
  sort: 0,
  is_online: 1
  };
- if (typeof window.__openEdit !== 'function') { toast('打不开新增资源，请刷新后台再试', 'error'); return; }
+ if (typeof window.__openEdit !== 'function') { toast('请刷新后台再试', 'error'); return; }
  /* v517：老板反馈「点上架之后所有窗口都关了」——
  原来先关采集窗、再延时开新增资源，中间任何一步失败就是「全关了」。
  改成：先开新增资源 → 确认 editMask 真的 open 了 → 才关采集窗；没开起来就保留采集窗并提示。 */
@@ -809,9 +809,9 @@
  var em = document.getElementById('editMask');
  if (em && em.classList.contains('open')) {
  close();
- toast('已填好标题、描述、详情（含下单链接），补上分类和价格点确定就行', 'info');
+ toast('补上分类和价格即可', 'info');
  } else {
- toast('新增资源没打开，采集窗给你留着，再点一次试试', 'error');
+ toast('再点一次试试', 'error');
  }
  }, 260);
  /* v517：**不再**在打开编辑窗时就标「已上架」——老板点了上架又取消，库里已经标成已上架了。
@@ -844,7 +844,7 @@
  function useBatch(ids) {
  ids = (ids || []).filter(Boolean);
  if (!ids.length) { toast('先选资源', 'error'); return; }
- if (ids.length > 1) toast('批量会一条条打开「新增资源」，先做第 1 条', 'info');
+ if (ids.length > 1) toast('批量会逐条打开', 'info');
  var g = S.goods.filter(function (x) { return Number(x.id) === Number(ids[0]); })[0];
  if (g) useGoods(Number(g.id));
  }
@@ -866,12 +866,12 @@
  '<div id="paLinkBox">' +
  '<label>资源页地址（浏览器地址栏那条）</label>' +
  '<input class="input" id="paUrl" placeholder="https://">' +
- '<div class="extc-formhint">我去抓这一条的标题、封面和详情图。前端渲染的站抓不到时会提示改用「粘整页内容」。</div>' +
+ '<div class="extc-formhint">抓不到时可粘贴整页</div>' +
  '</div>' +
  '<div id="paRichBox" style="display:none">' +
  '<label>粘到这里</label>' +
  '<textarea class="input extc-pastearea" id="paRich" placeholder="在对方资源页按 Ctrl+A 全选、Ctrl+C 复制，然后点这里 Ctrl+V"></textarea>' +
- '<div class="extc-formhint">会从粘进来的内容里提标题和图片，小图标自动过滤。</div>' +
+ '<div class="extc-formhint">自动提取标题和图片</div>' +
  '</div>' +
  '<div class="extc-formhint" id="paTip"></div>',
  '<button class="modal-inner-btn" id="paSave">加进资源</button><button class="modal-close" data-x="1">关闭</button>');
@@ -923,7 +923,7 @@
  var tip = m.querySelector('#paTip');
  if (tab === 'link') {
  var url = m.querySelector('#paUrl').value.trim();
- if (!/^https?:\/\//i.test(url)) { toast('地址要以 http 开头', 'error'); return; }
+ if (!/^https?:\/\//i.test(url)) { toast('填完整网址', 'error'); return; }
  btn.disabled = true; btn.textContent = '抓取中';
  tip.textContent = '正在抓这一条';
  api('admin/external', { method: 'POST', body: { op: 'find.one', url: url } }).then(function (r) {
@@ -1018,8 +1018,8 @@
  '<button type="button" class="row-btn" data-copy="' + esc(_buy) + '">复制</button></div></div>' : '') +
  '<div class="extc-sec"><div class="extc-sec-h">详情图 <i class="extc-sec-n">' + uniq.length + ' 张</i></div><div class="extc-seeimgs">' + (uniq.length
  ? uniq.map(function (u) { return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.remove()"></a>'; }).join('')
- : (g.__fetching ? '<div class="extc-formhint">正在按原页面地址抓详情图</div>'
- : '<div class="extc-formhint">这条还没抓到详情图。点下面「补抓详情」我按原页面地址去拿；拿不到就只能用封面。</div>')) + '</div></div>';
+ : (g.__fetching ? '<div class="extc-formhint">正在抓详情图</div>'
+ : '<div class="extc-formhint">可再抓一次详情图</div>')) + '</div></div>';
  var mSee = mkModal('extcSeeMask', '查看资源', 'modal-wide', _see,
  (uniq.length <= 1 && g.src_url && !g.__fetching ? '<button class="modal-inner-btn" id="seeFetch">补抓详情</button>' : '') +
  '<button class="modal-close" data-x="1">关闭</button>');
@@ -1064,7 +1064,7 @@
  '<label>描述（上架时自动带进「简介」）</label><input class="input" id="edDescr" maxlength="300" value="' + esc(g.descr || '') + '">' +
  '<label>下单链接（上架时自动带进「跳转链接」）</label><input class="input" id="edBuy" value="' + esc(g.buy_url || '') + '">' +
  '<label>原页面地址（上架时拿它抓详情图）</label><input class="input" id="edUrl" value="' + esc(g.src_url || '') + '">' +
- '<div class="extc-formhint">详情图不用手填：点「查看」能预览，上架时会按原页面地址去抓。</div>',
+ '<div class="extc-formhint">上架时自动抓详情图</div>',
  '<button class="modal-inner-btn" id="edSave">确定</button><button class="modal-close" data-x="1">关闭</button>');
  m.querySelector('#edSave').addEventListener('click', function () {
  var btn = this; btn.disabled = true; btn.textContent = '保存中';
@@ -1109,11 +1109,11 @@
  '<label class="extc-sw"><input type="checkbox" id="epAutoCollect"' + (!isEdit || Number(p.auto_collect) ? ' checked' : '') + '><i><b></b></i><span>每天自动采集</span></label>' +
  '<label class="extc-sw"><input type="checkbox" id="epAutoHide"' + (!isEdit || Number(p.auto_hide) ? ' checked' : '') + '><i><b></b></i><span>对方下架时自动隐藏本店资源</span></label>' +
  '</div>' +
- '<div class="extc-formhint">「自动采集」勾上后，每天第一次有人打开站点时系统在后台把这个平台采一遍；' +
- '「自动隐藏」勾上后，某条资源这次没采到（对方下架/删了），本店对应的已上架资源会一起自动隐藏，对方恢复后自动放出来。</div>' +
+ '<div class="extc-formhint">' +
+ '对方下架时，本店同款自动隐藏</div>' +
  '<label>我的说明</label>' +
  '<div id="epNoteHost"></div>' +
- '<div class="extc-formhint">写给自己看的：账号、结算规则、注意事项。支持加粗、颜色、表格、插图。</div>',
+ '<div class="extc-formhint">写给自己看的备注</div>',
  '<button class="modal-inner-btn" id="epSave">' + (isEdit ? '确定' : '添加') + '</button><button class="modal-close" data-x="1">关闭</button>',
  function () {
  mountRte(m.querySelector('#epNoteHost'), 'epNote', isEdit ? String(p.note || '') : '', '100px');

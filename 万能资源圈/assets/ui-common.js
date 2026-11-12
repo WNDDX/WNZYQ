@@ -168,7 +168,7 @@ if ('serviceWorker' in navigator) {
  * window.openContactModal(url, qrImg, tip, btnText)
  * - url: 客服跳转链接（优先类型→资源→全局默认，由各页面传入）
  * - qrImg: 客服二维码图片，v383 起走后台「设置信息」的 contact_qr（未配置=失败占位）
- * - tip: 提示文字，默认「长按图片识别-添加人工客服」
+ * - tip: 提示文字，默认「长按识别加客服」
  * - btnText: 跳转按钮文字，默认「跳转-咨询在线客服」
  */
 (function () {
@@ -218,7 +218,7 @@ if ('serviceWorker' in navigator) {
  '<button class="kf-x" id="kfCloseX" data-x="1" type="button" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="kf-title" id="kfTitle">咨询客服</div>' +
  '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
- '<div class="kf-tip" id="kfTip">长按图片识别-添加人工客服</div>' +
+ '<div class="kf-tip" id="kfTip">长按识别加客服</div>' +
  '<div class="kf-actions">' +
  '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
  '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
@@ -298,7 +298,7 @@ if ('serviceWorker' in navigator) {
  if (window.__bindQrLightbox) window.__bindQrLightbox(img);
  }
  var tipEl = document.getElementById('kfTip');
- if (tipEl) tipEl.textContent = tip || '长按图片识别-添加人工客服';
+ if (tipEl) tipEl.textContent = tip || '长按识别加客服';
  var btn = document.getElementById('kfJumpBtn');
  if (btn) {
  btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
@@ -337,7 +337,7 @@ if ('serviceWorker' in navigator) {
  '<button class="kf-x" type="button" aria-label="关闭" onclick="window.__kfFbClose()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="kf-title">咨询客服</div>' +
  '<div class="kf-qr"><img id="kfFallbackImg" alt="客服二维码" /></div>' +
- '<div class="kf-tip">长按图片识别-添加人工客服</div>' +
+ '<div class="kf-tip">长按识别加客服</div>' +
  '<div class="kf-actions">' +
  '<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
  '<button class="kf-close" type="button" onclick="window.__kfFbClose()">关闭</button>' +
@@ -3614,7 +3614,7 @@ window.__restoreForms401 = function () {
  }, 400);
  }
  if (!n) {
- try { if (window.showToast) window.showToast('上次未保存的内容已保留，重新打开编辑窗会自动填回', 'info'); } catch (e) {}
+ try { if (window.showToast) window.showToast('已保留上次内容', 'info'); } catch (e) {}
  }
  return n;
  } catch (e) { return 0; }
@@ -3869,7 +3869,7 @@ window.__closeMaskTop = function (mask, opts) {
  try { btn.click(); } catch (e) {}
  window.__draftKeep = false;
  if (!mask.classList.contains('open')) {
- if (keep && window.showToast) window.showToast('已暂存，下次打开会恢复', 'info');
+ if (keep && window.showToast) window.showToast('已暂存', 'info');
  return true;
  }
  }

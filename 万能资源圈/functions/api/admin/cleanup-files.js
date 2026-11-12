@@ -23,7 +23,7 @@ export async function onRequestPost(context) {
   if (!keys.length) return json({ ok: true, deleted: 0 });
 
   const bucket = env.IMAGE_BUCKET;
-  if (!bucket) return json({ ok: false, msg: '存储未绑定（IMAGE_BUCKET）' }, 400);
+  if (!bucket) return json({ ok: false, msg: '图片存储未配置' }, 400);
 
   /* v354：引用核对升级——一次拉全库内容（资源+类型+设置，公告也在 settings 里），更快也更全 */
   const contentText = await buildContentText(env);

@@ -190,7 +190,7 @@ export async function onRequestPost(context) {
   // 已绑定设备走上方通行证路径不受影响（绑定 = 永久，跨 60 天照常解锁）
   // R243 条3：窗口判定改读合并 SELECT 带回的 in_window（不再单独发窗口查询）
   if (!issue.in_window) {
-    return json({ ok: false, msg: '该资源码已超过 60 天有效期，请联系客服获取新码' }, 200, extraHeaders);
+    return json({ ok: false, msg: '资源码已过期，请联系客服' }, 200, extraHeaders);
   }
 
   // 6. 码正确：检查该码的绑定上限（R221 按"每个码"计数；后台可调，默认 1 台）

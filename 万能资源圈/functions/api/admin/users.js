@@ -92,7 +92,7 @@ export async function onRequestPost(context) {
   const password = String(b.password || '');
   const note = String(b.note || '').slice(0, 100);
   const parentId = me.role === 'super' ? (Number(b.parentId) || 0) : me.id; /* 子管理员只能挂在自己名下 */
-  if (!/^[A-Za-z0-9_\-]{2,20}$/.test(username)) return json({ ok: false, msg: '用户名 2-20 位，仅字母数字下划线横线' }, 400);
+  if (!/^[A-Za-z0-9_\-]{2,20}$/.test(username)) return json({ ok: false, msg: '2 到 20 位字母数字' }, 400);
   if (password.length < 6 || password.length > 50) return json({ ok: false, msg: '密码 6-50 位' }, 400);
 
   const dup = await env.DB.prepare('SELECT id FROM admin_users WHERE username = ?').bind(username).first();

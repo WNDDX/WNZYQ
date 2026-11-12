@@ -621,7 +621,7 @@
  var twentyThreeHours = 23 * 60 * 60 * 1000;
  var twentyFourHours = 24 * 60 * 60 * 1000;
  if (elapsed >= twentyThreeHours && elapsed < twentyFourHours) {
- toast('登录即将过期，请提前保存工作', 'warning');
+ toast('登录即将过期', 'warning');
  }
  }
  } catch (e) { if (window.__silent) window.__silent(e); }
@@ -673,7 +673,7 @@
  // 点复制 → 当前码记一条 issued（60 天兑换窗口起算）→ 立即出新码刷新面板
  // vObj：类型对象（含 id / resourceCode）；redraw：发码完成后的重绘回调（失败也调，用于恢复码键文本）
  function __issueCode(vObj, redraw) {
- if (!vObj || !vObj.id) { toast('参数错误：缺少资源类型', 'error'); if (redraw) { try { redraw(); } catch (e) { if (window.__silent) window.__silent(e); } } return; }
+ if (!vObj || !vObj.id) { toast('请先选资源类型', 'error'); if (redraw) { try { redraw(); } catch (e) { if (window.__silent) window.__silent(e); } } return; }
  if (window.__issueInFlight) return; /* R231 条26：同一时刻只允许一个发码请求在途（含编辑弹窗等全部调用点） */
  window.__issueInFlight = true;
  api('admin/issue-code', { method: 'POST', body: JSON.stringify({ variantId: vObj.id }) }).then(function (res) {
@@ -1162,7 +1162,7 @@
  setTimeout(function () {
  try {
  var n = window.__restoreForms401 ? window.__restoreForms401() : 0;
- if (n) toast('已恢复登录过期前填写的 ' + n + ' 项内容', 'success');
+ if (n) toast('已恢复上次填写 ' + n + ' 项内容', 'success');
  } catch (eR) {}
  }, 600);
  }
@@ -1331,7 +1331,7 @@
  var v = (ft.value || '').trim();
  if (!v || !window.state || !window.state.products) return;
  var dup = window.state.products.some(function (x) { return x && (x.title || '').trim() === v; });
- if (dup && window.showToast) window.showToast('已存在同名资源，请确认是否重复添加', 'info');
+ if (dup && window.showToast) window.showToast('已有同名资源', 'info');
  } catch (e0) { if (window.__silent) window.__silent(e0); }
  });
  })();

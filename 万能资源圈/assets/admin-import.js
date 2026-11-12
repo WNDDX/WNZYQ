@@ -543,7 +543,7 @@
  mask.className = 'modal-mask'; mask.id = 'importMask';
  mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="批量导入"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
  '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
- '<p class="imp-lead">第 1 步：下载模板 → 填好 → 第 2 步上传 → 预览无误后导入。建议顺序：先导「分类」→ 再导「资源」→ 最后导「类型」。</p>' +
+ '<p class="imp-lead">先导分类，再导资源</p>' +
  '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
  '<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xlsx,.xls,.xml" style="display:none"></div>' +
  '<div id="impPrev" style="margin-top:10px"></div>' +
@@ -562,7 +562,7 @@
  mask.querySelector('#impTpl').addEventListener('click', function () {
  var tpl = buildTemplate();
  downloadBlob(tpl.name, tpl.blob);
- if (window.showToast) window.showToast('模板已下载（.xlsx：资源/类型/分类/公告 四张填写表 + 一张「选项」下拉源表，分类与显示状态点单元格右侧小三角直接选）', 'success');
+ if (window.showToast) window.showToast('模板已下载', 'success');
  });
  mask.querySelector('#impUploadBtn').addEventListener('click', function () { mask.querySelector('#impFile').click(); }); /* v443 条5：上传键改 button 与下载键完全同款（原 label 结构渲染发灰） */
  mask.querySelector('#impFile').addEventListener('change', function () {
@@ -688,7 +688,7 @@
  } catch (e0) { if (window.__silent) window.__silent(e0); }
  });
  });
- if (!imgs.length && !links.length) { var _eS = document.getElementById('sysCheckMask'); if (_eS) _eS.remove(); if (!silent && window.showToast) window.showToast('当前没有可检查的图片和外链', 'info'); resolve(null); return; } /* v442：早退先撤「体检中」弹窗 */
+ if (!imgs.length && !links.length) { var _eS = document.getElementById('sysCheckMask'); if (_eS) _eS.remove(); if (!silent && window.showToast) window.showToast('没有可检查的内容', 'info'); resolve(null); return; } /* v442：早退先撤「体检中」弹窗 */
  if (!silent && window.showToast) window.showToast('系统体检中：图片 ' + imgs.length + ' 张 · 外链 ' + links.length + ' 条', 'info');
 
  /* 图片按 URL 去重并发检测；引用关系统计重复；同趟 fetch 测体积（#79 超大图） */
@@ -847,7 +847,7 @@
  return seq.then(function () { return newUrl; });
  }).then(function (newUrl) {
  it.replaced = newUrl;
- if (window.showToast) window.showToast('已压缩替换，原图已留存可恢复', 'success');
+ if (window.showToast) window.showToast('已换成压缩图', 'success');
  /* 就地刷新该行状态 */
  var row = btn && btn.closest('[data-osidx]');
  if (row) renderOversizeRowState(row, it);
@@ -1017,7 +1017,7 @@
  /* v590（老板 11-09 第 11 条）：点「去处理」不许跳走（原来会关掉体检窗、切到资源页、再翻列表点编辑），
  就地在这层弹窗上打开这条资源的编辑弹窗——关掉编辑回到体检，位置一点不丢。 */
  if (!pid) return;
- if (typeof window.__openEdit !== 'function') { if (window.showToast) window.showToast('编辑弹窗还没准备好，稍等再点', 'error'); return; }
+ if (typeof window.__openEdit !== 'function') { if (window.showToast) window.showToast('稍等一下再点', 'error'); return; }
  fetch('/api/admin/products/' + encodeURIComponent(pid), { credentials: 'include' })
  .then(function (r) { return r.json(); })
  .then(function (j) {
@@ -1030,7 +1030,7 @@
  if (em && em.parentNode) em.parentNode.appendChild(em);
  } catch (eR) {}
  })
- .catch(function () { if (window.showToast) window.showToast('打开编辑失败，检查网络后重试', 'error'); });
+ .catch(function () { if (window.showToast) window.showToast('打开失败，请重试', 'error'); });
  }
 
 
@@ -1347,7 +1347,7 @@
  /* v517（老板：一二级分类要有层次感）：原来是一排扁平的胶囊，只靠「└」区分父子。
  现在改成一棵树：一级一行（粗体），它的子分类缩进挂在下面，带竖线。 */
  var catHtml = (function () {
- if (!cats.length) return '<span class="pm-hint">暂无分类可勾</span>';
+ if (!cats.length) return '<span class="pm-hint">还没有分类</span>';
  var isOn = function (c) { return Array.isArray(catsScope) ? catsScope.indexOf(Number(c.id)) !== -1 : false; };
  var tops = cats.filter(function (c) { return !Number(c.parent_id || 0); });
  var kidsOf = function (id) { return cats.filter(function (c) { return Number(c.parent_id || 0) === Number(id); }); };
@@ -1387,7 +1387,7 @@
  + '<div class="pm-grid" style="grid-template-columns:1fr">'
  + '<label class="pm-chk"><input type="radio" name="ufAnn" value="all"' + (annScope === 'all' ? ' checked' : '') + '><span>全部公告</span></label>'
  + '<label class="pm-chk"><input type="radio" name="ufAnn" value="pick"' + (annScope !== 'all' ? ' checked' : '') + '><span>只能改下面勾选的公告</span></label>'
- + '</div><div class="pm-chips" id="ufAnnChips"><span class="pm-hint">读取公告列表</span></div></div>';
+ + '</div><div class="pm-chips" id="ufAnnChips"><span class="pm-hint">正在读取公告</span></div></div>';
 
  var parentOpts = '<option value="0">（我自己这一级）</option>';
  if (me.role === 'super') {
@@ -1404,10 +1404,10 @@
  + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
  + '<h2 class="modal-title" style="margin-bottom:10px">' + (isEdit ? '编辑账号：' + esc(u.username) : '新增账号') + '</h2>'
  + '<div class="form usf-body" id="usFormBody">' /* v537：账号表单里权限有二十多项 + 分类树，520px 太挤，容器上挂 modal-wide */
- + (isEdit ? '' : '<label class="pm-hint pm-hint-block">用户名（2-20 位字母数字）</label><input class="input" id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">')
- + (isEdit ? '' : '<label class="pm-hint pm-hint-block">初始密码（6-50 位）</label><input class="input" id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">')
- + '<label class="pm-hint pm-hint-block">备注（这个人是谁 / 负责什么）</label><input class="input w-full-mb10" id="ufNote" maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">'
- + (me.role === 'super' ? '<label class="pm-hint pm-hint-block">上级账号（决定跟谁是一组）</label><select class="input w-full-mb10" id="ufParent" >' + parentOpts + '</select>' : '')
+ + (isEdit ? '' : '<label class="pm-hint pm-hint-block">2 到 20 位字母数字</label><input class="input" id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">')
+ + (isEdit ? '' : '<label class="pm-hint pm-hint-block">6 到 50 位</label><input class="input" id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">')
+ + '<label class="pm-hint pm-hint-block">备注用途</label><input class="input w-full-mb10" id="ufNote" maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">'
+ + (me.role === 'super' ? '<label class="pm-hint pm-hint-block">上级账号</label><select class="input w-full-mb10" id="ufParent" >' + parentOpts + '</select>' : '')
  + tplHtml + secHtml + scopeHtml + annHtml + codeHtml
  + '</div>'
  + '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="ufSave">' + (isEdit ? '确定' : '创建账号') + '</button><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
@@ -1443,14 +1443,14 @@
  return dx - dy || x.i - y.i;
  }).map(function (o) { return o.a; });
  var box = mask.querySelector('#ufAnnChips'); if (!box) return;
- if (!arr.length) { box.innerHTML = '<span class="pm-hint">该列表暂无公告，可先到「设置公告」发一条</span>'; return; }
+ if (!arr.length) { box.innerHTML = '<span class="pm-hint">还没有公告</span>'; return; }
  box.innerHTML = arr.map(function (a, i) {
  var id = String(a.id || ('a' + i));
  var on = annScope !== 'all' && Array.isArray(annScope) && annScope.indexOf(id) !== -1;
  return '<label class="pm-chip"><input type="checkbox" data-ann="' + esc(id) + '"' + (on ? ' checked' : '') + '><span>' + esc(String(a.title || '未命名公告').slice(0, 14)) + '</span></label>';
  }).join('');
  }).catch(function () {
- var box = mask.querySelector('#ufAnnChips'); if (box) box.innerHTML = '<span class="pm-hint">公告列表读取失败，可稍后重试</span>';
+ var box = mask.querySelector('#ufAnnChips'); if (box) box.innerHTML = '<span class="pm-hint">公告读取失败</span>';
  });
 
  mask.querySelector('#ufSave').addEventListener('click', function () {
@@ -1523,7 +1523,7 @@
  '<button type="button" class="batch-btn danger" id="rcPurgeAll">彻底删除</button>' +
  '<button type="button" class="batch-btn" id="rcClearSel">取消选中</button></div></div>' +
  '<div class="form" id="rcBody">' +
- '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>' +
+ '<p class="imp-lead">保留 60 天，到期清除</p>' +
  '<div style="padding:10px 0">' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '<div class="sk-line" style="height:34px;border-radius:8px;background:linear-gradient(90deg,var(--bg-light,#f5f7fa) 55%,var(--sk-hi,#e8eaef) 75%,var(--bg-light,#f5f7fa) 95%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite"></div>' + '</div></div></div>' /* v443 条13：加载统一为全站骨架 */;
  document.body.appendChild(mask);
  requestAnimationFrame(function () {
@@ -1572,7 +1572,7 @@
 
  RC.render = function () {
  var bodyEl = mask.querySelector('#rcBody'); if (!bodyEl) return;
- var lead = '<p class="imp-lead">删除的资源、分类、公告在这里保留 60 天，到期自动彻底清除。</p>';
+ var lead = '<p class="imp-lead">保留 60 天，到期清除</p>';
  if (!RC.items.length) {
  bodyEl.innerHTML = lead + (window.__adminEmpty ? window.__adminEmpty('该回收站点暂无内容', '删掉的资源、分类、公告会在这里保留 60 天，随时可以恢复') : '该回收站点暂无内容');
  return;
@@ -1677,7 +1677,7 @@
  var b = e.target.closest && e.target.closest('[data-rc]'); if (!b) return;
  var op = b.getAttribute('data-rc'), kind = b.getAttribute('data-kind'), id = b.getAttribute('data-id');
  if (op === 'purge' && window.showConfirm) {
- window.showConfirm('删除', '删除后无法恢复（这条记录会被永久清掉），确定继续？', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
+ window.showConfirm('删除', '删除后无法恢复，确定继续吗', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
  } else recycleCall(op, kind, id, function () { openRecycle(); });
  });
  }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">服务器忙，稍后再试</div>'; });
@@ -1694,7 +1694,7 @@
  mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="自动采集">' +
  '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="modal-title">自动采集</div>' +
- '<p class="imp-lead">你录进去的平台，系统<b>每天自动全采一遍</b>，不用手动点，也不用配任何东西——和系统自带的「清理 60 天前数据」是同一个机制。</p>' +
+ '<p class="imp-lead">你录的平台<b>每天自动全采一遍</b>，不用手动点，也不用配任何东西——和系统自带的「清理 60 天前数据」是同一个机制。</p>' +
  '<div class="cron-step"><b>1</b><span>每天第一次有人打开站点（前台或后台都算），系统就在后台把所有勾了「每天自动」的平台采一遍，页面不会变慢。</span></div>' +
  '<div class="cron-step"><b>2</b><span>一次最多跑 15 秒左右；平台多的，这次没采完的下次访问自动接着采，不会漏。</span></div>' +
  '<div class="cron-step"><b>3</b><span>同一个平台一天只自动采一次，重复的按标题自动跳过，不会把库塞满。</span></div>' +
@@ -1776,7 +1776,7 @@
  mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="性能实测">' +
  '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="modal-title">性能实测（真实访客）</div>' +
- '<p class="imp-lead">数据来自访客浏览器自己上报，按 <b>p75</b> 看——意思是「75% 的访客比这个数更好」，比平均值更接近真实体感。' +
+ '<p class="imp-lead">访客浏览器上报 <b>p75</b> 看——意思是「75% 的访客比这个数更好」，比平均值更接近真实体感。' +
  '判定线：LCP ≤2500ms 良好、CLS ≤0.1 良好、INP ≤200ms 良好。新接口，要有人访问过才会有数据。</p>' +
  '<div class="logs-range" id="vitalsRange">' +
  '<span class="logs-range-t">时间范围</span>' +
@@ -1891,7 +1891,7 @@
  mask.className = 'modal-mask'; mask.id = 'errMask';
  mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="前端报错">' +
  (window.__frag ? window.__frag.modalHead('前端报错') : '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><div class="modal-title">前端报错</div>') +
- '<p class="imp-lead">访客的页面出错时会自动记在这里（同一句话一次访问只报一次，最多 8 条）。<b>这里为空代表线上一直没出错</b>；有记录说明真的有人在某个页面撞上了，按「次数」从多到少看。</p>' +
+ '<p class="imp-lead"><b>这里为空代表线上一直没出错</b>；有记录说明真的有人在某个页面撞上了，按「次数」从多到少看。</p>' +
  '<div class="logs-range" id="errRange">' +
  '<span class="logs-range-t">时间范围</span>' +
  '<button type="button" class="logs-rbtn on" data-days="1">1天</button>' +
@@ -2036,7 +2036,7 @@
  mask.className = 'modal-mask'; mask.id = 'logsMask';
  mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="操作日志">' +
  (window.__frag ? window.__frag.modalHead('操作日志') : '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><div class="modal-title">操作日志</div>') +
- '<p class="imp-lead">记录谁在什么时候改了什么，保留 60 天。只记「改动类」动作（新增 / 编辑 / 删除 / 批量操作 / 登录），浏览不计。</p>' +
+ '<p class="imp-lead"></p>' +
  /* v540（老板：日报改成 1 天 / 7 天 / 30 天）——范围同时作用于上面日报和下面明细 */
  '<div class="logs-range" id="logsRange">' +
  '<span class="logs-range-t">时间范围</span>' +
@@ -2053,7 +2053,7 @@
  '</div>' +
  /* 提示说明的是「下面这张表」，所以贴表格上方；放底部会跟「关闭」挤在一行，
  而且弹窗底部只有一个按键时它是撑满整行的（等分规则），插东西进去会破坏那个布局。 */
- '<div class="log-tip">点一行看全文</div>' +
+ '<div class="log-tip">点开看全文</div>' +
  '<div class="logs-body" id="logsBody"><div class="extc-loading">正在读取</div></div>' +
  '<div class="uni-pager" id="logsPager"></div>' + /* v608：操作日志底部不要关闭键 */
  '</div>';
@@ -2255,7 +2255,7 @@
  var expBtn = mask.querySelector('#logsExport');
  if (expBtn) expBtn.addEventListener('click', function () {
  if (typeof window.__downloadXLS !== 'function' || typeof window.__exportStamp !== 'function') {
- if (window.showToast) window.showToast('导出组件还没加载好，刷新页面再试', 'error');
+ if (window.showToast) window.showToast('请刷新页面再导出', 'error');
  return;
  }
  var oldTxt = expBtn.textContent;
@@ -2295,7 +2295,7 @@
  (window.__frag ? window.__frag.modalHead('清空测试数据') : '<button type="button" class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">清空测试数据</h2>') +
  '<p class="imp-lead"><b>会删掉的：</b>资源、资源类型、分类、访问统计、设备绑定、发码记录、采集到的资源与平台、操作日志、公告内容。<br>' +
  '<b>会留住的：</b>管理员账号和密码、店铺名、客服二维码、页面风格设置。</p>' +
- '<p class="imp-lead">这是不可恢复的删除。建议先点下面的「导出备份」，万一删错了还能对着找回来。</p>' +
+ '<p class="imp-lead">删了就找不回，先备份</p>' +
  '<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份（Excel）</button></div>' +
  '<label for="rsConfirm">确认请原样输入「清空」两个字</label>' +
  '<input class="input" id="rsConfirm" type="text" autocomplete="off" placeholder="清空" aria-label="输入清空二字以确认">' +
@@ -2318,8 +2318,8 @@
 
  mask.querySelector('#rsBackup').addEventListener('click', function () {
  var eb = document.getElementById('exportBtn');
- if (eb) { eb.click(); if (window.showToast) window.showToast('已开始导出，存好后回来点「确认清空」', 'info'); }
- else if (window.showToast) window.showToast('导出入口没找到，请先关掉这个窗，到统计页点「导出数据统计」', 'error');
+ if (eb) { eb.click(); if (window.showToast) window.showToast('导出中，稍后确认清空', 'info'); }
+ else if (window.showToast) window.showToast('请到统计页导出', 'error');
  });
 
  go.addEventListener('click', function () {

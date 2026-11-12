@@ -33,21 +33,21 @@ export async function onRequestPost(context) {
 
   let form;
   try { form = await request.formData(); } catch (e) {
-    return json({ ok: false, msg: '上传格式不对，请通过"上传本地视频"按钮选择视频文件' }, 400);
+    return json({ ok: false, msg: '请用上传按钮选视频' }, 400);
   }
   const file = form.get('file');
   if (!file || typeof file === 'string') return json({ ok: false, msg: '没收到视频文件' }, 400);
 
   const type = String(file.type || '').toLowerCase();
   const ext = ALLOWED_TYPES[type];
-  if (!ext) return json({ ok: false, msg: '文件格式不支持，请上传网站支持的格式' }, 400);
+  if (!ext) return json({ ok: false, msg: '不支持这种格式' }, 400);
   /* v432 #38：文件头魔数校验（防伪装） */
-  if (!(await sniffMatchesType(file, type))) return json({ ok: false, msg: '文件内容与声明的格式不符，已被拒绝' }, 400);
+  if (!(await sniffMatchesType(file, type))) return json({ ok: false, msg: '文件格式不符' }, 400);
 
   // R308：老板拍板视频硬限 25MB（KV 平台硬上限，前端已秒拒，后端双保险防绕过）
   const MAX_VIDEO_SIZE = 25 * 1024 * 1024;
   if (file.size > MAX_VIDEO_SIZE) {
-    return json({ ok: false, msg: '该视频超过 25MB，暂不支持上传，请压缩或剪辑后再试' }, 413);
+    return json({ ok: false, msg: '视频太大，请压缩' }, 413);
   }
 
   const now = new Date();

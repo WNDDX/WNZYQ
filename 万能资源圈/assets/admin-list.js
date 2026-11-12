@@ -977,7 +977,7 @@ function renderProducts() {
  renderProducts(); refreshCatCnts(); silentSyncProducts();
  if (_fail) toast('资源已复制，但有 ' + _fail + ' 个类型复制失败，请检查新资源的类型列表', 'error');
  }).catch(function () { clearCache(); silentSyncProducts(); });
- toast('复制成功，新资源已创建（默认隐藏状态）', 'success');
+ toast('已复制，默认隐藏', 'success');
  } else {
  toast(res.msg || '复制失败', 'error');
  }
@@ -1134,7 +1134,7 @@ function renderProducts() {
  toast('已恢复 ' + ids.length + ' 个资源', 'success');
  silentSyncProducts();
  }).catch(function () {
- toast('恢复失败，请到「回收站点」手动恢复', 'error');
+ toast('恢复失败，请手动恢复', 'error');
  silentSyncProducts();
  });
  }
@@ -1288,10 +1288,10 @@ function renderProducts() {
  renderProducts(); clearCache();
  toast('已恢复「' + (p.title || '未命名') + '」', 'success');
  } else {
- toast((r2 && r2.msg) || '恢复失败，请到「回收站点」手动恢复', 'error');
+ toast((r2 && r2.msg) || '恢复失败，请手动恢复', 'error');
  }
  })
- .catch(function () { toast('恢复失败，请到「回收站点」手动恢复', 'error'); });
+ .catch(function () { toast('恢复失败，请手动恢复', 'error'); });
  }
  );
  } else {

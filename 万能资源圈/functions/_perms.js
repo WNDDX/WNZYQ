@@ -79,7 +79,7 @@ export function catAllowed(catId, role, perms) {
   return perms.catsScope.indexOf(Number(catId)) !== -1;
 }
 
-/* SQL 范围片段：返回 { clause:'cid IN (?,?,…)', ids:[...] } 或 null（=无限制） */
+/* SQL 范围片段：返回 { clause:'cid IN (?,?,)', ids:[...] } 或 null（=无限制） */
 export function catScopeSQL(role, perms) {
   if (role === 'super') return null;
   if (!perms) return { clause: '1=0', ids: [] };
