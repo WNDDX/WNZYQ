@@ -16,10 +16,10 @@
  var __kw = (document.getElementById('adminSearch').value || '').trim();
  var __fc = document.getElementById('filterCat').value;
  var __fs = document.getElementById('filterStatus').value;
- if (__kw) return '该搜索暂无资源';
- if (__fc && __fc !== '0') return '该分类暂无资源';
- if (__fs) return '该状态暂无资源';
- return '该列表暂无资源';
+ if (__kw) return '没找到相关资源';
+ if (__fc && __fc !== '0') return '这个分类下暂无资源';
+ if (__fs) return '这个状态下暂无资源';
+ return '暂无资源';
  }
  function __adminCatSig(list) {
  return JSON.stringify((list || []).map(function (c) { var o = {}; for (var k in c) { if (k !== 'cnt' && k !== 'totalCnt') o[k] = c[k]; } return o; }));
@@ -460,6 +460,10 @@ function renderProducts() {
  if (oldPager) oldPager.parentNode.removeChild(oldPager);
 
  if (list.length === 0) {
+ /* v623：上面为了让刷新时不跳动，给列表锁了一个 min-height（等于上一屏高度）。
+    一旦搜不到东西，这个高度还在，空态就被顶到 2500px 之外，用户看到的是一片空白。
+    空列表时必须把锁解开。 */
+ box.style.minHeight = '';
  /* R230：数据已到但为空——先收掉骨架再走空态（对齐资源页） */
  if (__reuse) box.innerHTML = '';
  // v326（用户 10-06 15:18）：空态文案四档——搜索/分类/状态/全空，对应「该搜索/分类/状态暂无资源」/「暂无资源」。

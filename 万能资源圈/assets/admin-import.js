@@ -2043,7 +2043,7 @@
  '<button type="button" class="logs-rbtn" data-days="7">7天</button>' +
  '<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
  /* v543：导出当前范围的全部记录（不是当前这一页），复用全站那份 XLS 导出器 */
- '<button type="button" class="row-btn logs-exp" id="logsExport">导出 Excel</button>' +
+ '<button type="button" class="row-btn logs-exp" id="logsExport">导出表格</button>' +
  '</div>' +
  '<div class="logs-daily" id="logsDaily"><div class="logs-d-empty">正在统计</div></div>' +
  '<div class="logs-tools">' +
@@ -2246,7 +2246,7 @@
  mask.querySelector('#logsGo').addEventListener('click', function () { q = mask.querySelector('#logsQ').value.trim(); page = 1; load(); });
  mask.querySelector('#logsQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') { q = this.value.trim(); page = 1; load(); } });
 
- /* v543（清单第 20 条）：日志导出 Excel
+ /* v543（清单第 20 条）：日志导出表格
  老板原话：月底核账、给员工做考核，现在只能一页页翻。
  做法：按当前「时间范围 + 搜索词 + 只看某个账号」拉全量（size=0），
  用系统已有的那份导出器（window.__downloadXLS）生成，不另写一套格式；
@@ -2295,7 +2295,7 @@
  '<p class="imp-lead"><b>将删除：</b>资源、分类、统计、绑定、日志、公告<br>' +
  '<b>将保留：</b>账号、店铺名、客服码、风格设置</p>' +
  '<p class="imp-lead">删除后无法找回，请先备份</p>' +
- '<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份（Excel）</button></div>' +
+ '<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份表格</button></div>' +
  '<label for="rsConfirm">确认请原样输入「清空」两个字</label>' +
  '<input class="input" id="rsConfirm" type="text" autocomplete="off" placeholder="清空" aria-label="输入清空二字以确认">' +
  '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="rsGo" disabled>确认清空</button>' +
