@@ -3559,27 +3559,63 @@ window.__snapOpenForms = function () {
     return out.masks.length;
   } catch (e) { return 0; }
 };
+/* v614b：恢复分两步——先把快照记成「待回填」，等用户重新打开那个弹窗时再填。
+   实测教训：弹窗打开会用服务端数据覆盖字段，登录后立刻填进隐藏表单 = 白填。 */
+window.__pending401 = null;
+window.__applyPending401 = function () {
+  var data = window.__pending401;
+  if (!data) return 0;
+  var done = 0, total = 0, n = 0;
+  data.masks.forEach(function (mm) {
+    total++;
+    var mask = document.getElementById(mm.id);
+    if (!mask || !mask.classList.contains('open')) return;
+    done++;
+    Object.keys(mm.fields).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!mm.fields[id];
+      else el.value = mm.fields[id];
+      try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+      n++;
+    });
+  });
+  if (done && done >= total) {
+    window.__pending401 = null;
+    try { sessionStorage.removeItem(window.__DS401_KEY); } catch (e) {}
+    try { if (window.showToast) window.showToast('已填回上次未保存的 ' + n + ' 项内容', 'success'); } catch (e) {}
+  }
+  return n;
+};
 window.__restoreForms401 = function () {
   try {
     var raw = sessionStorage.getItem(window.__DS401_KEY);
     if (!raw) return 0;
     var data = JSON.parse(raw);
-    if (!data || !data.masks || (Date.now() - Number(data.at || 0) > 30 * 60 * 1000)) { sessionStorage.removeItem(window.__DS401_KEY); return 0; }
-    var n = 0;
-    data.masks.forEach(function (mm) {
-      Object.keys(mm.fields).forEach(function (id) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!mm.fields[id];
-        else el.value = mm.fields[id];
-        try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
-        n++;
-      });
-    });
-    sessionStorage.removeItem(window.__DS401_KEY);
+    if (!data || !data.masks || (Date.now() - Number(data.at || 0) > 30 * 60 * 1000)) {
+      sessionStorage.removeItem(window.__DS401_KEY); return 0;
+    }
+    window.__pending401 = data;
+    /* 已经有开着的目标弹窗就当场填；否则等它被打开 */
+    var n = window.__applyPending401();
+    if (!n) {
+      try { if (window.showToast) window.showToast('上次未保存的内容已保留，重新打开编辑窗会自动填回', 'info'); } catch (e) {}
+    }
     return n;
   } catch (e) { return 0; }
 };
+
+/* 监听弹窗打开：打开后等 650ms（让它自己先把数据填完）再回填草稿 */
+(function () {
+  if (!window.MutationObserver || !document.body) return;
+  var t = 0;
+  function check() {
+    if (!window.__pending401) return;
+    clearTimeout(t);
+    t = setTimeout(function () { try { window.__applyPending401(); } catch (e) {} }, 650);
+  }
+  try { new MutationObserver(check).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true }); } catch (e) {}
+})();
 
 window.__raiseMask = function (el) {
   if (!el || !el.classList || !el.classList.contains('modal-mask')) return;
