@@ -1650,7 +1650,7 @@ refreshCatCnts();
  document.getElementById('catBatchHide').addEventListener('click', function () {
  var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
  if (ids.length === 0) return;
- showConfirm('批量隐藏', '确定隐藏选中的 ' + ids.length + ' 个分类？隐藏后资源页不显示。', function (closeConfirm) { /* v336 条151：分类批量操作也在收口名单 */
+ showConfirm('批量隐藏', '隐藏后资源页不再显示这些分类', function (closeConfirm) { /* v336 条151：分类批量操作也在收口名单 */
  batchCatAction(ids, 'hide', closeConfirm);
  });
  });
@@ -1658,7 +1658,7 @@ refreshCatCnts();
  document.getElementById('catBatchShow').addEventListener('click', function () {
  var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
  if (ids.length === 0) return;
- showConfirm('批量显示', '确定显示选中的 ' + ids.length + ' 个分类？', function (closeConfirm) {
+ showConfirm('批量显示', '这些分类会重新出现在资源页', function (closeConfirm) {
  batchCatAction(ids, 'show', closeConfirm);
  });
  });
@@ -1666,7 +1666,7 @@ refreshCatCnts();
  document.getElementById('catBatchDel').addEventListener('click', function () {
  var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
  if (ids.length === 0) return;
- showConfirm('批量删除', '确定删除选中的 ' + ids.length + ' 个分类？其下资源将归入"全部"，子分类也会一并删除，不可恢复。', function (closeConfirm) {
+ showConfirm('批量删除', '分类下的资源会转到全部，删除后不可恢复', function (closeConfirm) {
  batchCatAction(ids, 'delete', closeConfirm);
  });
  });
@@ -1931,7 +1931,7 @@ refreshCatCnts();
  // v294（用户 10-04 02:14）：104 修改密码加二次确认
  /* v346 条19：改用全站统一确认弹窗（原浏览器原生 confirm 观感不一致） */
  var _cpBtn = this, _cpTxt = this.textContent;
- showConfirm('修改密码', '确定修改密码？修改后立即生效，请牢记新密码。', function () {
+ showConfirm('修改密码', '修改后立即生效，请记好新密码', function () {
  _cpBtn.disabled = true; if (window.__btnBusy) window.__btnBusy(_cpBtn, '修改中'); 
  api('admin/password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) })
  .then(function (res) {
@@ -1966,7 +1966,7 @@ refreshCatCnts();
  // ---------- 退出 ----------
  logoutBtn.addEventListener('click', function () {
  logoutBtn.classList.add('active'); // R39：确认弹窗打开期间变白（复用资源页顶栏分享键 .active 白底蓝字）
- showConfirm('退出登录', '确定要退出管理页吗？', function (closeConfirm) {
+ showConfirm('退出登录', '退出后需要重新登录', function (closeConfirm) {
  closeConfirm();
  api('admin/logout', { method: 'POST' });
  showLogin();

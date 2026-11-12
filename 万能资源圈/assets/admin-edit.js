@@ -747,7 +747,7 @@ window.__linkify = function (html) {
  return String(p.title || '').trim() === data.title && Number(p.id) !== Number(state.editingId || 0);
  });
  if (_dup.length && window.showConfirm) {
- window.showConfirm('标题重复', '已经有一条同名资源「' + data.title + '」，确定还要再存一条吗？', function (closeConfirm) {
+ window.showConfirm('标题重复', '已有同名资源，再存会产生两条', function (closeConfirm) {
  closeConfirm();
  window.__dupConfirmed = true;
  try { saveProduct(); } finally { setTimeout(function () { window.__dupConfirmed = false; }, 1200); }
@@ -2004,7 +2004,7 @@ document.addEventListener('click', function (e) {
  function rteTblDelTable(editor) {
  var at = rteTblAt(editor); if (!at) return;
  /* R231 条27（老板修正）：原生 confirm 换全站统一确认弹窗；正文只写「确定删除整个表格？」，不写撤销提示 */
- showConfirm('删除表格', '确定删除整个表格？', function (closeConfirm) {
+ showConfirm('删除表格', '表格内容会一起删掉', function (closeConfirm) {
  closeConfirm();
  at.table.parentNode && at.table.parentNode.removeChild(at.table);
  rteCloseOpbar();

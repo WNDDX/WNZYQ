@@ -1646,7 +1646,7 @@
  var list = _picked();
  if (!list.length) return;
  if (op === 'purge' && window.showConfirm) {
- window.showConfirm('彻底删除', '选中的 ' + list.length + ' 项会被永久清掉，恢复不了，确定继续？', function (closeConfirm) {
+ window.showConfirm('彻底删除', '永久删除，无法恢复', function (closeConfirm) {
  closeConfirm(); _doBatch(op, list, label);
  });
  } else _doBatch(op, list, label);
@@ -2024,7 +2024,7 @@
  })
  .catch(function () { btn.disabled = false; toast('网络异常', 'error'); });
  };
- if (window.showConfirm) window.showConfirm('清空全部前端报错记录？清空后无法恢复。', go, null, '清空', '取消', true);
+ if (window.showConfirm) window.showConfirm('清空后无法恢复', go, null, '清空', '取消', true);
  else go();
  });
  load();
