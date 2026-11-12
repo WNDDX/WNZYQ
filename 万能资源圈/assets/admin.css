@@ -114,3 +114,10 @@ html[data-theme="dark"] .row-btn.status-hidden{background:var(--blue-ink-strong)
   .row-btn,.batch-btn,.pg-btn{min-height:44px !important}
   .modal-close-x{min-width:44px;min-height:44px}
 }
+
+
+/* ===== v614 权限置灰态（第十五章 15.10 · X-08） =====
+   「相关但没有权限」= 保留按钮、置灰、写明缺哪项；只有整行一个能用的都没有才隐藏。 */
+.row-btn.is-perm-off,.batch-btn.is-perm-off,.tab.is-perm-off,
+[data-perm].is-perm-off{opacity:.38;cursor:not-allowed;filter:grayscale(1)}
+.row-btn.is-perm-off:hover,.batch-btn.is-perm-off:hover{transform:none;box-shadow:none}

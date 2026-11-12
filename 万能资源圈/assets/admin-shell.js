@@ -647,8 +647,11 @@
         on401: function () {
           try {
             if (mainView && mainView.style.display !== 'none') {
-              toast('登录已过期，请重新登录', 'error');
-              setTimeout(function () { location.reload(); }, 1200);
+              /* v614（Y-02）：先把手上的活存下来，再跳登录，回来还能接着填 */
+              var kept = 0;
+              try { kept = window.__snapOpenForms ? window.__snapOpenForms() : 0; } catch (eS) {}
+              toast(kept ? '登录已过期，已暂存你填的内容，登录后自动恢复' : '登录已过期，请重新登录', 'error');
+              setTimeout(function () { location.reload(); }, kept ? 1600 : 1200);
             }
           } catch (e) { if (window.__silent) window.__silent(e); }
         }
@@ -1150,7 +1153,16 @@
             // 修复：showMain 内部已统一调用 loadSettings（连同 stats/products/categories），
             // 这里不再单独调一次，避免同一接口登录后被请求两次
             if (window.__haptic) window.__haptic(); /* R183 条12：登录成功 */
-            try { showMain(res.username); window.__applyMe(res.username); } /* v439 #116：身份与权限应用 */
+            try {
+              showMain(res.username); window.__applyMe(res.username); /* v439 #116：身份与权限应用 */
+              /* v614（Y-02）：恢复登录过期前暂存的内容 */
+              setTimeout(function () {
+                try {
+                  var n = window.__restoreForms401 ? window.__restoreForms401() : 0;
+                  if (n) toast('已恢复登录过期前填写的 ' + n + ' 项内容', 'success');
+                } catch (eR) {}
+              }, 600);
+            }
             catch (e) { setTimeout(function () { location.reload(); }, 300); }
           } else {
             // 失败路径只弹一个弹窗（此前 toast+showAlert+分支内 showAlert 会叠出两个弹窗，已修复去重）
@@ -1189,6 +1201,24 @@
       return !!(g && g[String(action).slice(dot + 1)]);
     };
     window.__denyMsg = '该功能未开放';
+    /* v614（X-08）：拒绝时说清「缺哪一项」，而不是一句笼统的「该功能未开放」——
+       子账号问「为什么我不能删」，笼统文案答不了，只能来问老板。 */
+    window.__permLabel = {
+      'products.view': '查看资源', 'products.add': '新增资源', 'products.edit': '编辑资源',
+      'products.price': '修改价格', 'products.online': '上下架', 'products.del': '删除资源',
+      'products.restore': '恢复资源', 'products.purge': '彻底删除', 'products.moveCat': '移动分类',
+      'cats.view': '查看分类', 'cats.add': '新增分类', 'cats.edit': '编辑分类', 'cats.del': '删除分类',
+      'ann.view': '查看公告', 'ann.add': '新增公告', 'ann.edit': '编辑公告', 'ann.del': '删除公告',
+      'batch.import': '批量导入', 'batch.price': '批量改价', 'batch.online': '批量上下架', 'batch.del': '批量删除',
+      'data.stats': '看统计', 'data.detail': '看明细', 'data.ip': '看访客 IP', 'data.export': '导出数据',
+      'info.view': '看联系方式', 'users': '账号管理',
+      'external.view': '看外部台账', 'external.add': '登记台账', 'external.edit': '改台账',
+      'external.del': '删台账', 'external.fetch': '采集', 'external.export': '导出台账'
+    };
+    window.__permWhy = function (action) {
+      var name = window.__permLabel[action] || String(action || '');
+      return name ? ('需要「' + name + '」权限，请联系管理员开通') : window.__denyMsg;
+    };
     window.__applyPermUI = function () {
       var me = window.__me; if (!me) return;
       var tabs = document.querySelectorAll('.tab[data-tab]');
@@ -1202,14 +1232,39 @@
       });
       /* v452：所有带 data-perm 的控件按权限显隐——原来只拦点击（点了弹「该功能未开放」），
          子账号仍看得见「新增资源/编辑/删除/显示切换/资源码」这些键，等于把无关按钮摆在眼前。 */
+      /* v614（X-08）：两种状态分开——
+         ① 整行/整块一个能用的都没有 → 全部不渲染（不占位，界面干净）；
+         ② 同一行里还有能用的 → 没权限的**保留但置灰**，并写明缺哪项权限。
+            理由：直接消失会让人以为「系统没这功能」，置灰才说明「你有这个位置，但没这个权」。 */
+      var __groups = [];
       Array.prototype.forEach.call(document.querySelectorAll('[data-perm]'), function (el) {
-        var allowed = window.__permCan(el.getAttribute('data-perm'));
-        if (!allowed) {
-          if (el.style.display !== 'none') { el.setAttribute('data-perm-hid', el.style.display || ''); el.style.display = 'none'; }
-        } else if (el.hasAttribute('data-perm-hid')) {
-          el.style.display = el.getAttribute('data-perm-hid');
-          el.removeAttribute('data-perm-hid');
-        }
+        var host = el.closest('.product-row, .cat-row, .u-row, .batch-bar, .toolbar, .row-acts, .modal-footer') || document.body;
+        var g = null;
+        for (var i = 0; i < __groups.length; i++) if (__groups[i].host === host) { g = __groups[i]; break; }
+        if (!g) { g = { host: host, items: [] }; __groups.push(g); }
+        g.items.push(el);
+      });
+      __groups.forEach(function (g) {
+        var anyAllowed = g.items.some(function (el) { return window.__permCan(el.getAttribute('data-perm')); });
+        g.items.forEach(function (el) {
+          var act = el.getAttribute('data-perm');
+          var allowed = window.__permCan(act);
+          if (!allowed) {
+            if (anyAllowed) {
+              el.classList.add('is-perm-off');
+              el.setAttribute('aria-disabled', 'true');
+              el.setAttribute('title', window.__permWhy(act));
+              if (el.hasAttribute('data-perm-hid')) { el.style.display = el.getAttribute('data-perm-hid'); el.removeAttribute('data-perm-hid'); }
+            } else if (el.style.display !== 'none') {
+              el.setAttribute('data-perm-hid', el.style.display || ''); el.style.display = 'none';
+            }
+          } else {
+            el.classList.remove('is-perm-off');
+            el.removeAttribute('aria-disabled');
+            if (el.getAttribute('title') && el.getAttribute('title').indexOf('权限') >= 0) el.removeAttribute('title');
+            if (el.hasAttribute('data-perm-hid')) { el.style.display = el.getAttribute('data-perm-hid'); el.removeAttribute('data-perm-hid'); }
+          }
+        });
       });
       /* 当前激活页签若被隐藏 → 切到第一个可见页签 */
       var active = document.querySelector('.tab.active');
@@ -1224,7 +1279,7 @@
       if (!el) return;
       if (window.__permCan(el.getAttribute('data-perm'))) return;
       e.stopPropagation(); e.preventDefault();
-      if (window.showToast) window.showToast(window.__denyMsg || '该功能未开放', 'info');
+      if (window.showToast) window.showToast(window.__permWhy ? window.__permWhy(el.getAttribute('data-perm')) : (window.__denyMsg || '该功能未开放'), 'info');
     }, true);
 
     /* v430 条56：管理页快捷键——N=新增资源、/ =聚焦搜索（输入框聚焦时不触发） */

@@ -3152,6 +3152,26 @@ window.__sanitizeHTML = function (html) {
   return window.__sanitizeCore(html);
 };
 
+/* v614（Y-04）：手机键盘弹起会盖住弹窗下半部分，输入框被压住看不见自己在打什么。
+   聚焦后等键盘动画结束（约 300ms）再把输入框滚到可视区中间偏上，键盘收起后不回弹。 */
+document.addEventListener('focusin', function (e) {
+  var el = e.target;
+  if (!el || !el.tagName) return;
+  var tag = el.tagName;
+  if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') return;
+  if (!el.closest || !el.closest('.modal-mask, .modal-box, .cp-mask, .kf-mask, .share-mask')) return;
+  if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
+  setTimeout(function () {
+    try {
+      var r = el.getBoundingClientRect();
+      var vh = window.innerHeight || 0;
+      /* 只有真的被下半屏/键盘区压住才滚，没被压住就别乱动（避免页面自己跳） */
+      if (r.bottom <= vh * 0.72 && r.top >= 8) return;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    } catch (e0) {}
+  }, 320);
+}, true);
+
 /* v343 条66：弹窗打开时把键盘范围“圈住”——Tab 只在弹窗内循环，不会跑到背后被遮住的按钮上（防误操作） */
 document.addEventListener('keydown', function (e) {
   if (e.key !== 'Tab') return;
@@ -3515,6 +3535,51 @@ document.addEventListener('pointerdown', function (e) {
     window.__lastOuterHit = hit || e.target;
   } catch (e0) {}
 }, true);
+
+/* v614（Y-02）：登录过期时把「正在填的东西」存下来。
+   以前 401 直接 reload，用户填了十分钟的编辑内容一句话都没有就没了。
+   现在：reload 前把打开的弹窗里所有输入值快照进 sessionStorage，登录回来后原样填回去。
+   只存 id + value/checked，不存任何服务端数据，关掉标签页即失效。 */
+window.__DS401_KEY = 'wn_draft_401';
+window.__snapOpenForms = function () {
+  try {
+    var masks = document.querySelectorAll('.modal-mask.open');
+    if (!masks.length) return 0;
+    var out = { at: Date.now(), masks: [] };
+    Array.prototype.forEach.call(masks, function (m) {
+      if (!m.id) return;
+      var fields = {};
+      Array.prototype.forEach.call(m.querySelectorAll('input[id], textarea[id], select[id]'), function (el) {
+        fields[el.id] = (el.type === 'checkbox' || el.type === 'radio') ? (el.checked ? 1 : 0) : el.value;
+      });
+      if (Object.keys(fields).length) out.masks.push({ id: m.id, fields: fields });
+    });
+    if (!out.masks.length) return 0;
+    sessionStorage.setItem(window.__DS401_KEY, JSON.stringify(out));
+    return out.masks.length;
+  } catch (e) { return 0; }
+};
+window.__restoreForms401 = function () {
+  try {
+    var raw = sessionStorage.getItem(window.__DS401_KEY);
+    if (!raw) return 0;
+    var data = JSON.parse(raw);
+    if (!data || !data.masks || (Date.now() - Number(data.at || 0) > 30 * 60 * 1000)) { sessionStorage.removeItem(window.__DS401_KEY); return 0; }
+    var n = 0;
+    data.masks.forEach(function (mm) {
+      Object.keys(mm.fields).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!mm.fields[id];
+        else el.value = mm.fields[id];
+        try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+        n++;
+      });
+    });
+    sessionStorage.removeItem(window.__DS401_KEY);
+    return n;
+  } catch (e) { return 0; }
+};
 
 window.__raiseMask = function (el) {
   if (!el || !el.classList || !el.classList.contains('modal-mask')) return;
