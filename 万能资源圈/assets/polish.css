@@ -1,0 +1,80 @@
+/* ==========================================================================
+   v624 · 视觉工整层（只做「统一」，不改布局结构、不改业务逻辑）
+   规则来源：老板 11-13 定稿的字号 / 灰字 / 按钮 / 输入框 / 数字格式
+   加载位置：必须排在 ui-common.css、motion.css、页面样式之后（四页统一）
+   ========================================================================== */
+
+:root{
+  /* 字号阶梯：只许用这五档 */
+  --fs-xs:12px;   /* 说明、辅助 */
+  --fs-md:14px;   /* 正文、按钮 */
+  --fs-lg:16px;   /* 小标题、品牌 */
+  --fs-xl:18px;   /* 价格、弹窗标题 */
+  --fs-num:28px;  /* 数字卡 */
+
+  /* 灰字两档：说明灰 / 弱化灰 */
+  --grey-1:#666666;
+  --grey-2:#5E7080;
+}
+
+/* ---------- 1. 字号收敛 ---------- */
+
+/* 价格：17 → 18，并统一字重，避免同一列有粗有细 */
+.card-price{
+  font-size:var(--fs-xl) !important;
+  font-weight:600 !important;
+  font-variant-numeric:tabular-nums;
+}
+
+/* 顶部品牌：18 → 16（它是标识，不该比正文大一级以上） */
+.shop-name{
+  font-size:var(--fs-lg) !important;
+}
+
+/* 公告标题：20 → 18（与价格、弹窗标题同级） */
+.ann-title{
+  font-size:var(--fs-xl) !important;
+}
+
+/* ---------- 2. 按钮高度两档 ---------- */
+
+/* 行内小按钮：34 → 30 */
+.row-btn{
+  min-height:30px;
+}
+/* 公告确认键：46 → 36（主按钮档） */
+.ann-ok{
+  height:36px;
+}
+/* 分类折叠箭头：32 → 30（它是行内控件，归小按钮档） */
+.cat-fold{
+  height:30px;
+}
+
+/* ---------- 3. 输入框统一 ---------- */
+
+/* 前台搜索框：33 → 36，圆角 10 */
+.search-input{
+  height:36px;
+  border-radius:10px;
+}
+
+/* 后台表单：单行输入统一 36（原来 42），下拉与日期同样处理；
+   多行文本框不设高度，避免把简介框压扁 */
+.modal-box input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
+.modal-box select,
+.edit-form input:not([type="checkbox"]):not([type="radio"]),
+.edit-form select,
+.input,
+select.input,
+.dt-field{
+  height:36px !important;
+  border-radius:10px !important;
+}
+
+/* ---------- 4. 灰字两档 ---------- */
+
+/* 次级说明（编辑人、来源）统一到弱化灰 */
+.p-edit-by{
+  color:var(--grey-2);
+}

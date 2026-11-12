@@ -1730,8 +1730,12 @@ window.__ctxMenu = (function () {
 window.formatPrice = function (price) {
  var p = Number(price) || 0;
  if (p <= 0) return '';
- if (p === Math.floor(p)) return '¥' + p;
- return '¥' + p.toFixed(2);
+ /* v624：末尾的 0 没有信息量（9.90 → 9.9），整数不带小数点；
+    金额过万加千分位，和统计页保持一致。 */
+ var s = p === Math.floor(p) ? String(p) : String(parseFloat(p.toFixed(2)));
+ var q = s.split('.');
+ q[0] = q[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+ return '¥' + q.join('.');
 };
 // 灯箱绑定：为 root 内所有 img/video 添加单击放大
 /* ===== v359 条2：全站统一横滑切换手势（一套逻辑全站通用） =====
