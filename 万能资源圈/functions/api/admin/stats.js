@@ -4,6 +4,24 @@
  */
 import { ensureBindingsTable, ensureSoftDelete, json, requirePerm } from '../../_utils.js';
 
+/* v616：60 秒同参记忆。
+   背景：2026-11-12 线上 D1 免费额度（每日 500 万行读取）被用光，全站接口 500。
+   元凶是这个接口——它一次要跑十来条 COUNT(*)/GROUP BY 扫 stats 表，
+   而刷新一次页面/连跑几轮自动化就会把同一份统计重复算很多遍。
+   命中记忆时不碰数据库，行数读取直接归零；数据最多旧 60 秒（统计页本来就不是秒级要求）。
+   记忆键带上角色与分类范围，避免子账号读到超管的口径。 */
+const __statsMemo = new Map();
+function __memoGet(k) {
+  const v = __statsMemo.get(k);
+  if (v && Date.now() - v.t < 60000) return v.d;
+  if (v) __statsMemo.delete(k);
+  return null;
+}
+function __memoSet(k, d) {
+  if (__statsMemo.size > 40) __statsMemo.clear();
+  __statsMemo.set(k, { t: Date.now(), d });
+}
+
 export async function onRequestGet(context) {
   try { /* v440 自诊断壳 */
   const { env, request } = context;
@@ -27,6 +45,13 @@ export async function onRequestGet(context) {
 
   // 日期范围参数
   const url = new URL(request.url);
+  const __memoKey = url.searchParams.toString() + '|' + (auth.role || '') + '|' + (scopeIds ? scopeIds.join(',') : 'all');
+  const __memo = __memoGet(__memoKey);
+  if (__memo) {
+    return new Response(JSON.stringify(__memo), {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, max-age=300', 'X-Stats-Cache': 'hit' },
+    });
+  }
   const startDate = url.searchParams.get('start_date') || '';
   const endDate = url.searchParams.get('end_date') || '';
 
@@ -244,7 +269,7 @@ export async function onRequestGet(context) {
     }
   }
 
-  return new Response(JSON.stringify({
+  const __payload = {
     ok: true,
     hourly,
     hourly_prev,
@@ -262,7 +287,9 @@ export async function onRequestGet(context) {
       id: r.id, type: r.type, created_at: r.created_at,
       title: r.title || '(已删除)', img: r.img || '',
     })),
-  }), {
+  };
+  __memoSet(__memoKey, __payload); /* v616：同一份参数 60 秒内不再重算 */
+  return new Response(JSON.stringify(__payload), {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, max-age=300' },
   });
   } catch (e) {

@@ -10,6 +10,21 @@ import { cleanProduct, cleanVariant, ensureBindingsTable, ensureProductColumns, 
 // v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v316全量返回需改回首屏只拿第一页，翻页/搜索/筛选点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置+统计概览，其余前端按需拉取。
 const ADMIN_PAGE_SIZE = 20;
 
+/* v616：首屏聚合结果 60 秒记忆（键含数据版本号，改数据后版本变、立即失效）。
+   原因同 admin/stats：这里一次要跑十几个查询，其中还有对 stats 表的 COUNT(*) 全表扫描，
+   而每刷新一次后台、每跑一轮自动化都会重算一遍——2026-11-12 的 D1 额度就是这么被吃光的。 */
+const __dashMemo = new Map();
+function __dashGet(k) {
+  const v = __dashMemo.get(k);
+  if (v && Date.now() - v.t < 60000) return v.d;
+  if (v) __dashMemo.delete(k);
+  return null;
+}
+function __dashSet(k, d) {
+  if (__dashMemo.size > 20) __dashMemo.clear();
+  __dashMemo.set(k, { t: Date.now(), d });
+}
+
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
 async function attachVariants(env, list) {
   if (!list || !list.length) return list;
@@ -66,6 +81,9 @@ export async function onRequestGet(context) {
   if (clientV && clientV === version) {
     return json({ ok: true, unchanged: true, version });
   }
+  const __dashKey = 'dash|' + version + '|' + (auth.role || '');
+  const __dashHit = __dashGet(__dashKey);
+  if (__dashHit) return json(__dashHit);
 
   await ensureProductColumns(env);
   await ensureVariantColumns(env);
@@ -122,7 +140,7 @@ export async function onRequestGet(context) {
     bindings: oBindings,
   };
 
-  return json({
+  const __dashPayload = {
     ok: true,
     version,
     products: {
@@ -138,7 +156,9 @@ export async function onRequestGet(context) {
       overview,
       // v313：首屏不返回重统计明细，留给 admin/stats 按需拉取
     }
-  });
+  };
+  __dashSet(__dashKey, __dashPayload); /* v616：60 秒内同版本不再重算 */
+  return json(__dashPayload);
   } catch (e) {
     return json({ ok: false, msg: '接口错误: ' + (e && e.message || String(e)) }); /* v440 自诊断：线上真库错误直出 */
   }
