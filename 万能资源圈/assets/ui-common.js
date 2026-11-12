@@ -3598,6 +3598,21 @@ window.__restoreForms401 = function () {
     window.__pending401 = data;
     /* 已经有开着的目标弹窗就当场填；否则等它被打开 */
     var n = window.__applyPending401();
+    /* v614c：不要只靠“弹窗打开那一刻”的事件——实测存在竞态：
+       恢复代码可能在弹窗已经打开之后才跑，观察器就永远等不到那一次变化。
+       改成“有草稿就盯着，直到填上为止”（每 400ms 一次，最多 2 分钟）。 */
+    if (!n && !window.__pending401.__timer) {
+      var tries = 0;
+      window.__pending401.__timer = setInterval(function () {
+        tries++;
+        var got = 0;
+        try { got = window.__applyPending401(); } catch (e) {}
+        if (got || !window.__pending401 || tries > 300) {
+          try { clearInterval(window.__pending401 && window.__pending401.__timer); } catch (e) {}
+          if (window.__pending401) window.__pending401.__timer = null;
+        }
+      }, 400);
+    }
     if (!n) {
       try { if (window.showToast) window.showToast('上次未保存的内容已保留，重新打开编辑窗会自动填回', 'info'); } catch (e) {}
     }
