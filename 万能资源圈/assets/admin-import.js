@@ -521,9 +521,9 @@
  function renderImpHist(host) {
  if (!host) return;
  var a = impHistRead();
- var h = '<div class="imp-hist-h">导入历史（最近 10 次，只记在这台电脑上）</div>';
+ var h = '<div class="imp-hist-h">导入历史，本机最近 10 次</div>';
  if (!a.length) {
- h += '<div class="imp-hist-empty">该列表暂无导入记录。导一次之后，这里会显示时间、文件名、成功几条、哪条失败。</div>';
+ h += '<div class="imp-hist-empty">暂无记录，导入后显示结果</div>';
  } else {
  h += a.map(function (r) {
  var bad = Number(r.bad) || 0;
@@ -543,7 +543,7 @@
  mask.className = 'modal-mask'; mask.id = 'importMask';
  mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="批量导入"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
  '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
- '<p class="imp-lead">先导分类，再导资源</p>' +
+ '<p class="imp-lead">先导入分类，再导资源</p>' +
  '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
  '<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xlsx,.xls,.xml" style="display:none"></div>' +
  '<div id="impPrev" style="margin-top:10px"></div>' +
@@ -1132,7 +1132,7 @@
  var me = x.me || {}; window.__usMe = me; window.__usList = x.list || [];
  var isSuper = me.role === 'super';
  var list = window.__usList;
- if (!list.length) { body.innerHTML = (window.__adminEmpty ? window.__adminEmpty('该列表暂无子账号', '上面填账号密码就能加一个，可以只给他看的范围') : '该列表暂无子账号'); return; }
+ if (!list.length) { body.innerHTML = (window.__adminEmpty ? window.__adminEmpty('暂无子账号', '填好账号密码即可新增') : '暂无子账号'); return; }
  /* v454：按 parentId 铺成树（同分类管理：展开/收起、缩进表示层级） */
  var byParent = {};
  list.forEach(function (u) { var pid = Number(u.parentId || 0); (byParent[pid] = byParent[pid] || []).push(u); });
@@ -1195,7 +1195,7 @@
  }).join('');
  body.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
  + '<button type="button" class="btn-blue btn-inline-pd" id="usAdd">新增账号</button>'
- + '<span class="pm-hint" style="margin:0">可展开三角查看下级；子账号只能挂在自己名下，权限只能在你拥有的范围内再缩小</span></div>'
+ + '<span class="pm-hint" style="margin:0">子账号只能挂在你自己名下</span></div>'
  + '<div class="u-tree">' + rows + '</div>'
  + (__usTotal > __usSize ? '<div class="uni-pager" id="usPager"></div>' : '');
  /* v540：账号多了一页 20 条 */
@@ -1347,7 +1347,7 @@
  /* v517（老板：一二级分类要有层次感）：原来是一排扁平的胶囊，只靠「└」区分父子。
  现在改成一棵树：一级一行（粗体），它的子分类缩进挂在下面，带竖线。 */
  var catHtml = (function () {
- if (!cats.length) return '<span class="pm-hint">还没有分类</span>';
+ if (!cats.length) return '<span class="pm-hint">暂无分类</span>';
  var isOn = function (c) { return Array.isArray(catsScope) ? catsScope.indexOf(Number(c.id)) !== -1 : false; };
  var tops = cats.filter(function (c) { return !Number(c.parent_id || 0); });
  var kidsOf = function (id) { return cats.filter(function (c) { return Number(c.parent_id || 0) === Number(id); }); };
@@ -1404,7 +1404,7 @@
  + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
  + '<h2 class="modal-title" style="margin-bottom:10px">' + (isEdit ? '编辑账号：' + esc(u.username) : '新增账号') + '</h2>'
  + '<div class="form usf-body" id="usFormBody">' /* v537：账号表单里权限有二十多项 + 分类树，520px 太挤，容器上挂 modal-wide */
- + (isEdit ? '' : '<label class="pm-hint pm-hint-block">2 到 20 位字母数字</label><input class="input" id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">')
+ + (isEdit ? '' : '<label class="pm-hint pm-hint-block">2 到 20 位，字母或数字</label><input class="input" id="ufUser" style="width:100%;margin-bottom:8px" maxlength="20">')
  + (isEdit ? '' : '<label class="pm-hint pm-hint-block">6 到 50 位</label><input class="input" id="ufPwd" type="password" style="width:100%;margin-bottom:8px" maxlength="50">')
  + '<label class="pm-hint pm-hint-block">备注用途</label><input class="input w-full-mb10" id="ufNote" maxlength="100" value="' + esc(isEdit ? (u.note || '') : '') + '">'
  + (me.role === 'super' ? '<label class="pm-hint pm-hint-block">上级账号</label><select class="input w-full-mb10" id="ufParent" >' + parentOpts + '</select>' : '')
@@ -1574,7 +1574,7 @@
  var bodyEl = mask.querySelector('#rcBody'); if (!bodyEl) return;
  var lead = '<p class="imp-lead">保留 60 天，到期清除</p>';
  if (!RC.items.length) {
- bodyEl.innerHTML = lead + (window.__adminEmpty ? window.__adminEmpty('该回收站点暂无内容', '删掉的资源、分类、公告会在这里保留 60 天，随时可以恢复') : '该回收站点暂无内容');
+ bodyEl.innerHTML = lead + (window.__adminEmpty ? window.__adminEmpty('暂无内容', '删除后保留 60 天，可恢复') : '暂无内容');
  return;
  }
  var q = RC.q.toLowerCase();
@@ -1694,11 +1694,11 @@
  mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="自动采集">' +
  '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="modal-title">自动采集</div>' +
- '<p class="imp-lead">你录的平台<b>每天自动全采一遍</b>，不用手动点，也不用配任何东西——和系统自带的「清理 60 天前数据」是同一个机制。</p>' +
- '<div class="cron-step"><b>1</b><span>每天第一次有人打开站点（前台或后台都算），系统就在后台把所有勾了「每天自动」的平台采一遍，页面不会变慢。</span></div>' +
- '<div class="cron-step"><b>2</b><span>一次最多跑 15 秒左右；平台多的，这次没采完的下次访问自动接着采，不会漏。</span></div>' +
- '<div class="cron-step"><b>3</b><span>同一个平台一天只自动采一次，重复的按标题自动跳过，不会把库塞满。</span></div>' +
- '<div class="cron-step"><b>4</b><span>只抓列表信息（标题 / 封面 / 描述 / 下单链接）；详情长图仍然在你点「查看 / 上架」时按需补。</span></div>' +
+ '<p class="imp-lead">你录入的平台每天自动采集</p>' +
+ '<div class="cron-step"><b>1</b><span>每天首次访问时，自动采集已开启的平台</span></div>' +
+ '<div class="cron-step"><b>2</b><span>单次最多 15 秒，没采完下次接着采</span></div>' +
+ '<div class="cron-step"><b>3</b><span>同一平台每天只采一次，重名自动跳过</span></div>' +
+ '<div class="cron-step"><b>4</b><span>只取列表信息，详情图在查看时补抓</span></div>' +
  '<div class="cron-status" id="cronStatus">正在读取今天的采集状态</div>' +
  '<div class="modal-footer"><button type="button" class="btn-blue btn-inline-pd" id="cronRunNow">现在采一次</button>' +
  '<button type="button" class="modal-close" data-x="1">关闭</button></div>' +
@@ -1776,8 +1776,8 @@
  mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="性能实测">' +
  '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="modal-title">性能实测（真实访客）</div>' +
- '<p class="imp-lead">访客浏览器上报 <b>p75</b> 看——意思是「75% 的访客比这个数更好」，比平均值更接近真实体感。' +
- '判定线：LCP ≤2500ms 良好、CLS ≤0.1 良好、INP ≤200ms 良好。新接口，要有人访问过才会有数据。</p>' +
+ '<p class="imp-lead">取访客真实数据，数值越小越好<br>' +
+ '有人访问过才会有数据</p>' +
  '<div class="logs-range" id="vitalsRange">' +
  '<span class="logs-range-t">时间范围</span>' +
  '<button type="button" class="logs-rbtn on" data-days="1">1天</button>' +
@@ -1818,16 +1818,15 @@
 
  function paint(d) {
  if (!d || !d.total) {
- body.innerHTML = '<div class="logs-d-empty">这段时间还没有访客数据。' +
- '接口已就位（/api/vitals），访客离开页面时自动上报；过一两天再看就有数了。</div>';
+    body.innerHTML = '<div class="logs-d-empty">还没有访客数据，过两天再看</div>';
  return;
  }
  var o = d.overall || {}, g = d.grade || {}, good = d.good || {};
  var html = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px">' +
- card('LCP 最大内容绘制', o.lcp, ' ms', g.lcp, good.lcp) +
- card('CLS 布局偏移', o.cls, '', g.cls, good.cls) +
- card('INP 交互延迟', o.inp, ' ms', g.inp, good.inp) +
- card('TTFB 首字节', o.ttfb, ' ms', g.ttfb, good.ttfb) +
+ card('首屏加载', o.lcp, ' ms', g.lcp, good.lcp) +
+ card('布局稳定', o.cls, '', g.cls, good.cls) +
+ card('交互响应', o.inp, ' ms', g.inp, good.inp) +
+ card('首字节等待', o.ttfb, ' ms', g.ttfb, good.ttfb) +
  '</div>';
 
  html += '<div class="vt-sec">样本 ' + d.total + ' 次；手机端 vs 桌面端</div>'; /* v596：与表格单元格同一左边线，去掉贴边 */
@@ -1891,7 +1890,7 @@
  mask.className = 'modal-mask'; mask.id = 'errMask';
  mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="前端报错">' +
  (window.__frag ? window.__frag.modalHead('前端报错') : '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><div class="modal-title">前端报错</div>') +
- '<p class="imp-lead"><b>这里为空代表线上一直没出错</b>；有记录说明真的有人在某个页面撞上了，按「次数」从多到少看。</p>' +
+ '<p class="imp-lead">暂无报错，说明线上运行正常</p>' +
  '<div class="logs-range" id="errRange">' +
  '<span class="logs-range-t">时间范围</span>' +
  '<button type="button" class="logs-rbtn on" data-days="1">1天</button>' +
@@ -1944,7 +1943,7 @@
  }).join('');
  box.innerHTML =
  '<div class="logs-d-head"><b>报错概览</b>' +
- '<span>共 ' + d.hits + ' 次，' + d.total + ' 种，' + d.devices + ' 台设备</span>' +
+ '<span>共 ' + (Number(d.hits) || 0) + ' 次，' + (Number(d.total) || 0) + ' 种，' + (Number(d.devices) || 0) + ' 台设备</span>' +
  '</div>' +
  (ph ? '<div class="logs-d-people">' + ph + '</div>' : '');
  }
@@ -2293,9 +2292,9 @@
  mask.className = 'modal-mask'; mask.id = 'resetMask';
  mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="清空测试数据">' +
  (window.__frag ? window.__frag.modalHead('清空测试数据') : '<button type="button" class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">清空测试数据</h2>') +
- '<p class="imp-lead"><b>会删掉的：</b>资源、资源类型、分类、访问统计、设备绑定、发码记录、采集到的资源与平台、操作日志、公告内容。<br>' +
- '<b>会留住的：</b>管理员账号和密码、店铺名、客服二维码、页面风格设置。</p>' +
- '<p class="imp-lead">删了就找不回，先备份</p>' +
+ '<p class="imp-lead"><b>将删除：</b>资源、分类、统计、绑定、日志、公告<br>' +
+ '<b>将保留：</b>账号、店铺名、客服码、风格设置</p>' +
+ '<p class="imp-lead">删除后无法找回，请先备份</p>' +
  '<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份（Excel）</button></div>' +
  '<label for="rsConfirm">确认请原样输入「清空」两个字</label>' +
  '<input class="input" id="rsConfirm" type="text" autocomplete="off" placeholder="清空" aria-label="输入清空二字以确认">' +

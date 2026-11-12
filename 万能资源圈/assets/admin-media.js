@@ -1670,7 +1670,7 @@
  mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="公告预览" style="max-width:var(--modal-w-md)">' +
  '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<h2 class="modal-title">公告预览</h2>' +
- '<div class="pv-ann-tip">这是访客看到的样子</div>' +
+ '<div class="pv-ann-tip">这就是访客看到的样子</div>' +
  '<iframe class="pv-ann-frame" id="annPvFrame" title="公告预览"></iframe>' +
  '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
  document.body.appendChild(mask);
@@ -2100,7 +2100,7 @@
  function __infoPreview(k) {
  var c = __infoCfg[k], C = __infoCap(k);
  var meta = {
- contact: { title: '咨询客服', tip: '长按识别加客服', btn: '跳转-咨询在线客服', green: true }, /* v537：导航页那颗是绿的，这里原来漏了 green，全系统客服跳转键统一绿 */
+ contact: { title: '咨询客服', tip: '长按识别二维码加客服', btn: '咨询在线客服', green: true }, /* v537：导航页那颗是绿的，这里原来漏了 green，全系统客服跳转键统一绿 */
  group: { title: '交流群聊', tip: '长按图片识别-加入交流群聊', btn: '跳转-加入交流群聊' },
  gzh: { title: '公众号讯', tip: '长按图片识别-关注公众号讯', btn: '' }
  }[k];
@@ -2796,7 +2796,7 @@
  /* v434：0 值可解释——管理员自己浏览前台不计入（R168-②拍板），全 0 时说明口径避免「跟实际对不上」的疑惑 */
  var _allZero = !(d.delta && (d.delta.view || d.delta.contact || d.delta.unlock || d.delta.bind));
  list.innerHTML = _alert + window.__adminEmpty('今日 0 点起暂无动态',
- _allZero ? '说明：您自己在前台资源页的浏览/解锁不计入统计（管理身份自动排除）；数字只来自真实访客。' : ''); /* v496：空态统一走 __adminEmpty 唯一源，不再手写图标+灰字 */
+ _allZero ? '自己的浏览不计入统计' : ''); /* v496：空态统一走 __adminEmpty 唯一源，不再手写图标+灰字 */
  bindSysAlertGo();
  return;
  }

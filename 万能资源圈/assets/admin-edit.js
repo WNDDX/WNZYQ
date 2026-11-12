@@ -239,7 +239,7 @@ window.__linkify = function (html) {
  if (!tops.length) {
  var empty = document.createElement('div');
  empty.className = 'cp-empty';
- empty.innerHTML = window.__adminEmpty('该站点暂无分类', '请先到「分类管理」添加分类'); /* v349 条9：统一空态 */
+ empty.innerHTML = window.__adminEmpty('暂无分类', '先到分类管理添加分类'); /* v349 条9：统一空态 */
  panelEl.appendChild(empty);
  }
  tops.forEach(function (top) {

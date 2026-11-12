@@ -144,7 +144,7 @@ window.__fillHourly = function (raw) {
  var pager = document.getElementById('bindingsPager');
 
  if (!total) {
- tbody.innerHTML = '<tr><td colspan="7">' + window.__adminEmpty('该类型暂无资源码与绑定设备', '访客输入正确资源码后将自动绑定其设备') + '</td></tr>'; /* v356 条11：统一空态 */
+ tbody.innerHTML = '<tr><td colspan="7">' + window.__adminEmpty('暂无资源码', '访客输码后会自动绑定') + '</td></tr>'; /* v356 条11：统一空态 */
  if (pager) pager.innerHTML = '';
  return;
  }
@@ -461,9 +461,9 @@ window.__fillHourly = function (raw) {
  var pv = pt(i, d.views);
  var pc = pt(i, d.contacts);
  var pr = pt(i, d.resource_unlocks || 0);
- html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="3.5" fill="#fff" stroke="#1976D2" stroke-width="2"><title>浏览: ' + d.views + '</title></circle>';
- html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="3.5" fill="#fff" stroke="#ff9900" stroke-width="2"><title>咨询客服: ' + d.contacts + '</title></circle>';
- html += '<circle cx="' + pr.x + '" cy="' + pr.y + '" r="3.5" fill="#fff" stroke="#4CAF50" stroke-width="2"><title>资源码解锁: ' + (d.resource_unlocks || 0) + '</title></circle>';
+ html += '<circle cx="' + pv.x + '" cy="' + pv.y + '" r="3.5" fill="#fff" stroke="#1976D2" stroke-width="2"><title>浏览：' + d.views + '</title></circle>';
+ html += '<circle cx="' + pc.x + '" cy="' + pc.y + '" r="3.5" fill="#fff" stroke="#ff9900" stroke-width="2"><title>咨询客服：' + d.contacts + '</title></circle>';
+ html += '<circle cx="' + pr.x + '" cy="' + pr.y + '" r="3.5" fill="#fff" stroke="#4CAF50" stroke-width="2"><title>资源码解锁：' + (d.resource_unlocks || 0) + '</title></circle>';
  });
  svg.innerHTML = html;
  // R59：记录本轮渲染数据/几何，并给 svg 挂悬浮提示（mousemove 最近点 → 参考线+数值框）
@@ -1282,7 +1282,7 @@ refreshCatCnts();
  list = list.filter(function (c) { return __hit[c.id] || __hit[c.parent_id]; });
  if (!list.length) {
  box.style.minHeight = '';
- box.innerHTML = window.__adminEmpty ? window.__adminEmpty('该搜索暂无分类', '换个词试试，或清空搜索框看全部分类') : '该搜索暂无分类';
+ box.innerHTML = window.__adminEmpty ? window.__adminEmpty('没找到相关分类', '换个词，或清空搜索框') : '该搜索暂无分类';
  return;
  }
  }
@@ -1298,8 +1298,8 @@ refreshCatCnts();
  if (!list.length) {
  box.style.minHeight = '';
  box.innerHTML = window.__adminEmpty
- ? window.__adminEmpty('还没有分类', '点右上方「新增分类」建第一个；建好之后这里能按住左边的六点拖动排序')
- : '<div style="padding:28px 0;text-align:center;color:var(--text-light)">还没有分类</div>';
+ ? window.__adminEmpty('暂无分类', '点右上角新增，可拖动排序')
+ : '<div style="padding:28px 0;text-align:center;color:var(--text-light)">暂无分类</div>';
  return;
  }
  if (!__reuse) box.innerHTML = '';

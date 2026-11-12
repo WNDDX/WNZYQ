@@ -726,7 +726,7 @@ function renderProducts() {
  function renderCodePanel(variants) {
  cpPanel.innerHTML = '';
  if (!variants || !variants.length) {
- cpPanel.innerHTML = window.__adminEmpty('该资源暂无类型', '先到「类型管理」新增类型'); /* v349 条9：统一空态 */
+ cpPanel.innerHTML = window.__adminEmpty('暂无类型', '先到类型管理新增类型'); /* v349 条9：统一空态 */
  return;
  }
  variants.forEach(function (v) {

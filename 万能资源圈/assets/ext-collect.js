@@ -866,12 +866,12 @@
  '<div id="paLinkBox">' +
  '<label>资源页地址（浏览器地址栏那条）</label>' +
  '<input class="input" id="paUrl" placeholder="https://">' +
- '<div class="extc-formhint">抓不到时可粘贴整页</div>' +
+ '<div class="extc-formhint">抓不到就粘贴整页内容</div>' +
  '</div>' +
  '<div id="paRichBox" style="display:none">' +
  '<label>粘到这里</label>' +
  '<textarea class="input extc-pastearea" id="paRich" placeholder="在对方资源页按 Ctrl+A 全选、Ctrl+C 复制，然后点这里 Ctrl+V"></textarea>' +
- '<div class="extc-formhint">自动提取标题和图片</div>' +
+ '<div class="extc-formhint">会自动提取标题和图片</div>' +
  '</div>' +
  '<div class="extc-formhint" id="paTip"></div>',
  '<button class="modal-inner-btn" id="paSave">加进资源</button><button class="modal-close" data-x="1">关闭</button>');
@@ -1026,8 +1026,8 @@
  var cp = mSee.querySelector('[data-copy]');
  if (cp) cp.addEventListener('click', function () {
  var t = this.getAttribute('data-copy');
- try { navigator.clipboard.writeText(t); toast('链接已复制', 'success'); }
- catch (e) { try { var i = document.createElement('textarea'); i.value = t; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); toast('链接已复制', 'success'); } catch (e2) { toast('复制失败，手动选中吧', 'error'); } }
+ try { navigator.clipboard.writeText(t); toast('链接已经复制', 'success'); }
+ catch (e) { try { var i = document.createElement('textarea'); i.value = t; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); toast('链接已经复制', 'success'); } catch (e2) { toast('复制失败，手动选中吧', 'error'); } }
  });
  })();
 
@@ -1064,7 +1064,7 @@
  '<label>描述（上架时自动带进「简介」）</label><input class="input" id="edDescr" maxlength="300" value="' + esc(g.descr || '') + '">' +
  '<label>下单链接（上架时自动带进「跳转链接」）</label><input class="input" id="edBuy" value="' + esc(g.buy_url || '') + '">' +
  '<label>原页面地址（上架时拿它抓详情图）</label><input class="input" id="edUrl" value="' + esc(g.src_url || '') + '">' +
- '<div class="extc-formhint">上架时自动抓详情图</div>',
+ '<div class="extc-formhint">上架时会自动抓详情图</div>',
  '<button class="modal-inner-btn" id="edSave">确定</button><button class="modal-close" data-x="1">关闭</button>');
  m.querySelector('#edSave').addEventListener('click', function () {
  var btn = this; btn.disabled = true; btn.textContent = '保存中';
@@ -1098,10 +1098,10 @@
  var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加平台', '',
  '<label>平台名（必填）</label><input class="input" id="epName" maxlength="40" value="' + esc(isEdit ? p.name : '') + '" placeholder="比如 五湖通信">' +
  '<label>商城地址（对方后台里的「在线商城」那一条）</label><input class="input" id="epMall" maxlength="600" value="' + esc(isEdit ? (p.mall_url || '') : '') + '" placeholder="点「在线商城」复制的地址">' +
- '<div class="extc-formhint">只填<b>在线商城</b>那一行链接（资源从这里抓）。不要填「注册」「资料」那种地址；填错我也会自动试同域的列表页。</div>' +
+ '<div class="extc-formhint">只填商城链接，填错会自动纠正</div>' +
  '<div class="extc-probe-row"><button type="button" class="row-btn" id="epProbe">试采地址</button><span class="extc-probe-tip" id="epProbeTip">不确定能不能采？先点这里试一下（不会入库）</span></div>' +
  '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="点「手机登录」复制的地址">' +
- '<div class="extc-formhint">只填<b>手机登录</b>那一行链接（点「打开平台」直接到登录页），不填就跳商城。</div>' +
+ '<div class="extc-formhint">只填登录链接，不填就跳商城</div>' +
  /* v587 用户 11-09：「我的平台的每项平台多一个选择是否开启自动采集和自动隐藏」
  v537 时老板说全平台必采、把开关去掉了；现在要按平台单独控制，加回来两个。 */
  '<label>自动采集 / 自动隐藏</label>' +
@@ -1113,7 +1113,7 @@
  '对方下架时，本店同款自动隐藏</div>' +
  '<label>我的说明</label>' +
  '<div id="epNoteHost"></div>' +
- '<div class="extc-formhint">写给自己看的备注</div>',
+ '<div class="extc-formhint">只给自己看的备注</div>',
  '<button class="modal-inner-btn" id="epSave">' + (isEdit ? '确定' : '添加') + '</button><button class="modal-close" data-x="1">关闭</button>',
  function () {
  mountRte(m.querySelector('#epNoteHost'), 'epNote', isEdit ? String(p.note || '') : '', '100px');

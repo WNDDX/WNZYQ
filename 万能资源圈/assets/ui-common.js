@@ -169,7 +169,7 @@ if ('serviceWorker' in navigator) {
  * - url: 客服跳转链接（优先类型→资源→全局默认，由各页面传入）
  * - qrImg: 客服二维码图片，v383 起走后台「设置信息」的 contact_qr（未配置=失败占位）
  * - tip: 提示文字，默认「长按识别加客服」
- * - btnText: 跳转按钮文字，默认「跳转-咨询在线客服」
+ * - btnText: 跳转按钮文字，默认「咨询在线客服」
  */
 (function () {
  'use strict';
@@ -218,9 +218,9 @@ if ('serviceWorker' in navigator) {
  '<button class="kf-x" id="kfCloseX" data-x="1" type="button" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="kf-title" id="kfTitle">咨询客服</div>' +
  '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
- '<div class="kf-tip" id="kfTip">长按识别加客服</div>' +
+ '<div class="kf-tip" id="kfTip">长按识别二维码加客服</div>' +
  '<div class="kf-actions">' +
- '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
+ '<button class="kf-jump" id="kfJumpBtn" type="button">咨询在线客服</button>' +
  '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
  '</div>' +
  '</div>';
@@ -298,10 +298,10 @@ if ('serviceWorker' in navigator) {
  if (window.__bindQrLightbox) window.__bindQrLightbox(img);
  }
  var tipEl = document.getElementById('kfTip');
- if (tipEl) tipEl.textContent = tip || '长按识别加客服';
+ if (tipEl) tipEl.textContent = tip || '长按识别二维码加客服';
  var btn = document.getElementById('kfJumpBtn');
  if (btn) {
- btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
+ btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '咨询在线客服'; btn.setAttribute('data-url', url || '');
  /* v597：动作键都没有时，底部那一栏一起收掉，不留一条空行 */
 
  btn.classList.toggle('kf-jump-green', !!(opts && opts.green)); /* v415 条1：仅咨询客服传 green=true 走绿；交流群聊/公众号讯默认蓝 */
@@ -337,9 +337,9 @@ if ('serviceWorker' in navigator) {
  '<button class="kf-x" type="button" aria-label="关闭" onclick="window.__kfFbClose()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="kf-title">咨询客服</div>' +
  '<div class="kf-qr"><img id="kfFallbackImg" alt="客服二维码" /></div>' +
- '<div class="kf-tip">长按识别加客服</div>' +
+ '<div class="kf-tip">长按识别二维码加客服</div>' +
  '<div class="kf-actions">' +
- '<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
+ '<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">咨询在线客服</button>' +
  '<button class="kf-close" type="button" onclick="window.__kfFbClose()">关闭</button>' +
  '</div>' +
  '</div>';
