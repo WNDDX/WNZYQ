@@ -109,6 +109,8 @@ html[data-theme="dark"] .row-btn.status-hidden{background:var(--blue-ink-strong)
 .extc-note-fold .toggle-arrow,.ann-tabs-fold .toggle-arrow{width:20px !important;height:20px !important}
 
 @media (pointer:coarse){
-  .row-btn,.batch-btn,.pg-btn{min-height:44px}
+  /* 行内工具键：视觉宽度不变，高度抬到 44（行高 90+，有空间）。
+     必须带 !important：.row-btn 自身有 min-height:36 的规则且选择器更具体。 */
+  .row-btn,.batch-btn,.pg-btn{min-height:44px !important}
   .modal-close-x{min-width:44px;min-height:44px}
 }
