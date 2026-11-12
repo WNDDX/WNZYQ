@@ -1261,7 +1261,9 @@
         /* v335：加载失败时不再假装“没有资源”——直接说明是加载失败，并给一个大大的重试按钮，
            提示出现在屏幕正中（第一眼就能看到），点一下就重新加载。 */
         if (window.__loadFailed && !kw) {
-          emptyTitle.textContent = '网络没连上，稍后再试';
+          /* v616：区分「你的网断了」和「我们在维护」——后端 503+DB_BUSY 时给维护文案，
+             否则用户会反复检查自己的网络。数据恢复后正常渲染会自动覆盖这句。 */
+          emptyTitle.textContent = window.__dbBusy ? '系统维护中，稍后刷新即可' : '网络没连上，稍后再试';
           var __retry = document.createElement('button');
           __retry.type = 'button'; __retry.className = 'empty-clear-btn'; __retry.textContent = '重试';
           __retry.addEventListener('click', function () {
@@ -2991,7 +2993,18 @@
         renderAll();
       }
       return __dedupFetch('/api/shop/home?v=' + encodeURIComponent(cachedVersion) + ts, fetchOpts)
-        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (r) {
+          if (r.ok) return r.json();
+          /* v616：数据库繁忙（D1 额度用尽/连接失败）后端会回 503 + code=DB_BUSY。
+             这时不要说「网络没连上」——用户会以为是自己网断了，其实是我们在维护。 */
+          if (r.status === 503) {
+            return r.clone().json().then(function (j) {
+              if (j && j.code === 'DB_BUSY') window.__dbBusy = true;
+              return null;
+            }).catch(function () { return null; });
+          }
+          return null;
+        })
         .then(function (res) {
           if (!res) { __failFinish(); return; }
           if (res.unchanged === true) {
