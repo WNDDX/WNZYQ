@@ -785,7 +785,7 @@ var SORT_NEWEST = 'newest';
 var SORT_PRICE = 'price';
 var __SORT_TYPES = [
 { v: SORT_DEF, t: '默认', dir: false },
-{ v: SORT_HOT, t: '热门', dir: true, def: 'desc' },
+{ v: SORT_HOT, t: '热度', dir: true, def: 'desc' },
 { v: SORT_NEWEST, t: '最新', dir: true, def: 'desc' },
 { v: SORT_PRICE, t: '价格', dir: true, def: 'asc' }
 ];
@@ -893,15 +893,22 @@ sortType = v;
 if (def.dir) sortDir = def.def;
 __applySort();
 }
-function __flipSortDir() {
-for (var i = 0; i < __SORT_TYPES.length; i++) {
-if (__SORT_TYPES[i].v === sortType && !__SORT_TYPES[i].dir) return;
+function __sortTypeDef() {
+for (var i = 0; i < __SORT_TYPES.length; i++) if (__SORT_TYPES[i].v === sortType) return __SORT_TYPES[i];
+return __SORT_TYPES[0];
 }
-sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+function __setSortDir(d) {
+var cur = __sortTypeDef();
+if (!cur.dir) {
+if (window.showToast) window.showToast('「默认」按后台顺序排，没有升降序', 'success');
+return;
+}
+if (sortDir === d) return;
+sortDir = d;
 __applySort();
-var map = { hot: '热门', newest: '最新', price: '价格' };
+var map = { hot: '热度', newest: '最新', price: '价格' };
 if (window.showToast) {
-window.showToast((map[sortType] || '') + '：' + (sortDir === 'asc' ? '从低到高 / 从旧到新' : '从高到低 / 从新到旧'), 'success');
+window.showToast((map[sortType] || '') + '：' + (d === 'asc' ? '从低到高 / 从旧到新' : '从高到低 / 从新到旧'), 'success');
 }
 }
 function __syncSortUI() {
@@ -912,12 +919,14 @@ if (t) t.textContent = cur.t;
 var dirBtn = document.getElementById('sortDirBtn');
 if (dirBtn) {
 var usable = !!cur.dir;
-dirBtn.disabled = !usable;
 dirBtn.classList.toggle('asc', usable && sortDir === 'asc');
-dirBtn.classList.toggle('off', !usable);
-var next = sortDir === 'asc' ? '从高到低' : '从低到高';
-dirBtn.setAttribute('aria-label', usable ? ('切换排序顺序，当前' + (sortDir === 'asc' ? '从低到高 / 从旧到新' : '从高到低 / 从新到旧')) : '默认排序没有升降序');
-dirBtn.title = usable ? ('点击改为' + next) : '默认排序按后台顺序，没有升降序';
+dirBtn.classList.toggle('desc', usable && sortDir === 'desc');
+dirBtn.classList.toggle('none', !usable);
+dirBtn.setAttribute('aria-disabled', usable ? 'false' : 'true');
+dirBtn.setAttribute('aria-label', usable
+? ('排序方向：上箭头＝从低到高/从旧到新，下箭头＝从高到低/从新到旧，当前' + (sortDir === 'asc' ? '上箭头（升序）' : '下箭头（降序）'))
+: '排序方向：默认档按后台顺序，未点亮');
+dirBtn.title = usable ? '点上半根：从低到高 / 从旧到新；点下半根：从高到低 / 从新到旧' : '「默认」按后台顺序，没有升降序';
 }
 var panel = document.getElementById('sortPanel');
 if (panel) {
@@ -1018,7 +1027,28 @@ close(false);
 });
 window.addEventListener('resize', function () { if (picker.classList.contains('open')) close(false); });
 window.addEventListener('scroll', function () { if (picker.classList.contains('open')) close(false); }, true);
-if (dirBtn) dirBtn.addEventListener('click', function () { __flipSortDir(); });
+if (dirBtn) {
+var __hoverDir = function (e) {
+var r = dirBtn.getBoundingClientRect();
+return (e.clientY - r.top) < r.height / 2 ? 'up' : 'down';
+};
+dirBtn.addEventListener('mousemove', function (e) { dirBtn.setAttribute('data-hover', __hoverDir(e)); });
+dirBtn.addEventListener('mouseleave', function () { dirBtn.removeAttribute('data-hover'); });
+dirBtn.addEventListener('touchstart', function (e) {
+var t = e.touches && e.touches[0];
+if (t) dirBtn.setAttribute('data-hover', __hoverDir(t));
+}, { passive: true });
+dirBtn.addEventListener('click', function (e) {
+var r = dirBtn.getBoundingClientRect();
+var y = (e.clientY === undefined || e.clientY === 0) ? (r.top + r.height / 2 + 1) : e.clientY;
+__setSortDir(y - r.top < r.height / 2 ? 'asc' : 'desc');
+dirBtn.removeAttribute('data-hover');
+});
+dirBtn.addEventListener('keydown', function (e) {
+if (e.key === 'ArrowUp') { e.preventDefault(); __setSortDir('asc'); }
+else if (e.key === 'ArrowDown') { e.preventDefault(); __setSortDir('desc'); }
+});
+}
 __sortCloseFn = close;
 __syncSortUI();
 }
