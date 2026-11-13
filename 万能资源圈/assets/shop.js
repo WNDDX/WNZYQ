@@ -1028,25 +1028,13 @@ close(false);
 window.addEventListener('resize', function () { if (picker.classList.contains('open')) close(false); });
 window.addEventListener('scroll', function () { if (picker.classList.contains('open')) close(false); }, true);
 if (dirBtn) {
-var __hoverDir = function (e) {
-var r = dirBtn.getBoundingClientRect();
-return (e.clientY - r.top) < r.height / 2 ? 'up' : 'down';
-};
-dirBtn.addEventListener('mousemove', function (e) { dirBtn.setAttribute('data-hover', __hoverDir(e)); });
-dirBtn.addEventListener('mouseleave', function () { dirBtn.removeAttribute('data-hover'); });
-dirBtn.addEventListener('touchstart', function (e) {
-var t = e.touches && e.touches[0];
-if (t) dirBtn.setAttribute('data-hover', __hoverDir(t));
-}, { passive: true });
-dirBtn.addEventListener('click', function (e) {
-var r = dirBtn.getBoundingClientRect();
-var y = (e.clientY === undefined || e.clientY === 0) ? (r.top + r.height / 2 + 1) : e.clientY;
-__setSortDir(y - r.top < r.height / 2 ? 'asc' : 'desc');
-dirBtn.removeAttribute('data-hover');
+dirBtn.addEventListener('click', function () {
+__setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
 });
 dirBtn.addEventListener('keydown', function (e) {
 if (e.key === 'ArrowUp') { e.preventDefault(); __setSortDir('asc'); }
 else if (e.key === 'ArrowDown') { e.preventDefault(); __setSortDir('desc'); }
+else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); __setSortDir(sortDir === 'asc' ? 'desc' : 'asc'); }
 });
 }
 __sortCloseFn = close;
