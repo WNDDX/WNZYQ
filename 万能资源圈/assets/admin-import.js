@@ -830,7 +830,8 @@ var mask = document.createElement('div');
 var _prevMask = document.getElementById('sysCheckMask');
 var _wasClosed = !!window.__chkClosedEarly || !!(_prevMask && (_prevMask.dataset.userClosed === '1' || !_prevMask.classList.contains('open')));
 window.__chkClosedEarly = false;
-if (_wasClosed) { document.getElementById('sysCheckMask').remove(); resolve(R0); return; }
+if (_wasClosed) {
+var _m0 = document.getElementById('sysCheckMask'); if (_m0) _m0.remove(); resolve(R0); return; }
 mask.className = 'modal-mask'; mask.id = 'sysCheckMask';
 mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检" style="max-width:var(--modal-w-xl)"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
 '<h2 class="modal-title">系统体检</h2>' +
