@@ -154,6 +154,17 @@ export async function onRequestGet(context) {
   if (path === '/sitemap.xml' || path === '/robots.txt') {
     return serveAsset(context, path);
   }
+  /* v631b：version.json 是部署脚本判断"线上是否已换成新版"的探针（deploy.cjs 写、推送后轮询比对）。
+     它原来也被本 catch-all 吃掉，线上一直是 404，于是每次部署都读不到版本 → 跳过等待 → 在构建还没完成时
+     就去跑验收，测出过一批假红。这里放行，且强制 no-store：这个文件存在的唯一意义就是"每次都要最新"。 */
+  if (path === '/version.json') {
+    const res = await serveAsset(context, path);
+    if (res.status === 404) return new Response('{"v":0}', { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
+    return new Response(res.body, {
+      status: 200,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+    });
+  }
   // config.js：存在则正常返回；缺失时返回空配置（页面自动用内置默认，杜绝 console 404 报错）
   if (path === '/config.js') {
     const res = await serveAsset(context, path);
