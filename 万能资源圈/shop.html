@@ -156,16 +156,18 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  </button>
  </div>
 
- <!-- v631j：列表排序（原生下拉，与后台筛选栏同款；老板 02:17 要求选项做全） -->
+ <!-- v631L：列表排序。下拉直接复用后台「分类筛选」那一套 .cat-picker 组件
+      （同样的 cpd-text / cpd-arrow 箭头 / .cp-item 选中态与开合动效），不新造任何控件样式。 -->
  <div class="sort-bar">
- <label class="sort-bar-label" for="sortSelect">排序</label>
- <select class="sort-bar-sel" id="sortSelect" aria-label="列表排序">
- <option value="def">默认排序</option>
- <option value="price">价格从低到高</option>
- <option value="price_desc">价格从高到低</option>
- <option value="newest">最新上架</option>
- <option value="free">免费优先</option>
- </select>
+ <span class="sort-bar-label" id="sortLabel">排序</span>
+ <div class="cat-picker sort-picker" id="sortPicker" data-picker-id="sortPicker">
+ <div class="cat-picker-display" id="sortDisplay" role="button" tabindex="0"
+ aria-haspopup="listbox" aria-expanded="false" aria-labelledby="sortLabel">
+ <span class="cpd-text" id="sortText">默认排序</span>
+ <span class="cpd-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span>
+ </div>
+ </div>
+ <div class="cat-picker-panel" id="sortPanel" data-picker-id="sortPicker" role="listbox" aria-label="排序方式"></div>
  </div>
 
  <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->

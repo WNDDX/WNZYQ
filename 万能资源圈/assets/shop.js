@@ -813,6 +813,13 @@ return tb.localeCompare(ta);
 });
 } else if (sortMode === SORT_FREE) {
 arr.sort(function (a, b) { return (priceOf(a) > 0 ? 1 : 0) - (priceOf(b) > 0 ? 1 : 0); });
+} else if (__isHotMode(sortMode)) {
+var fld = __hotField();
+var val = function (p) {
+var h = __hotMap && __hotMap[String(p && p.id)];
+return h ? (Number(h[fld]) || 0) : 0;
+};
+arr.sort(function (a, b) { return val(b) - val(a); });
 }
 return arr;
 }
@@ -849,25 +856,151 @@ if (__sortCache && __sortCache.key === __sortKey() && !__sortCache.list) return;
 __sortFetch().then(function (list) { if (list && __sortActive()) renderProducts(); });
 }
 function __applySortMode(mode) {
-var m = (mode === SORT_PRICE || mode === SORT_PRICE_DESC || mode === SORT_NEWEST || mode === SORT_FREE) ? mode : SORT_DEF;
+var ok = false;
+for (var i = 0; i < __SORT_OPTS.length; i++) if (__SORT_OPTS[i].v === mode) { ok = true; break; }
+var m = ok ? mode : SORT_DEF;
 sortMode = m;
 currentPage = 1;
+__syncSortUI();
 if (m === SORT_DEF) {
 __sortCache = null; __sortPromise = null; __sortLoadingKey = '';
 renderProducts();
 return;
 }
+var prep = __isHotMode(m) && !__hotMap ? __hotFetch() : Promise.resolve(null);
+prep.then(function () {
 if (__sortCache && __sortCache.key === __sortKey() && __sortCache.list) { renderProducts(); return; }
 __sortFetch().then(function (list) {
 if (!list && window.showToast) window.showToast(window.T ? window.T('netFail') : '网络没连上，稍后再试', 'error');
 renderProducts();
 });
+});
+}
+var SORT_HOT = 'hot', SORT_VIEWS = 'views', SORT_CONTACTS = 'contacts', SORT_UNLOCKS = 'unlocks';
+var __sortCloseFn = null;
+var __hotMap = null;
+var __hotPromise = null;
+var __SORT_OPTS = [
+{ v: 'def', t: '默认排序' },
+{ v: 'hot', t: '热门优先' },
+{ v: 'views', t: '浏览最多' },
+{ v: 'contacts', t: '咨询最多' },
+{ v: 'unlocks', t: '解锁最多' },
+{ v: 'newest', t: '最新上架' },
+{ v: 'price', t: '价格从低到高' },
+{ v: 'price_desc', t: '价格从高到低' },
+{ v: 'free', t: '免费优先' }
+];
+function __isHotMode(m) { return m === SORT_HOT || m === SORT_VIEWS || m === SORT_CONTACTS || m === SORT_UNLOCKS; }
+function __hotField() {
+return sortMode === SORT_VIEWS ? 'views' : sortMode === SORT_CONTACTS ? 'contacts' : sortMode === SORT_UNLOCKS ? 'unlocks' : 'hot';
+}
+function __hotFetch() {
+if (__hotMap) return Promise.resolve(__hotMap);
+if (__hotPromise) return __hotPromise;
+var req = window.__dedupFetch
+? window.__dedupFetch('/api/shop/hot', { credentials: 'include' })
+: fetch('/api/shop/hot', { credentials: 'include' });
+__hotPromise = req.then(function (r) { return r && r.ok ? r.json() : null; })
+.then(function (j) {
+var map = {};
+((j && j.list) || []).forEach(function (x) { map[String(x.id)] = x; });
+__hotMap = map; __hotPromise = null; return map;
+})
+.catch(function () { __hotMap = {}; __hotPromise = null; return __hotMap; });
+return __hotPromise;
+}
+function __syncSortUI() {
+var cur = null;
+for (var i = 0; i < __SORT_OPTS.length; i++) if (__SORT_OPTS[i].v === sortMode) cur = __SORT_OPTS[i];
+var t = document.getElementById('sortText');
+if (t) t.textContent = cur ? cur.t : '默认排序';
+var panel = document.getElementById('sortPanel');
+if (panel) {
+Array.prototype.forEach.call(panel.children, function (el) {
+var on = el.getAttribute('data-v') === sortMode;
+el.classList.toggle('selected', on);
+el.setAttribute('aria-selected', on ? 'true' : 'false');
+});
+}
+}
+function __pickSort(v) {
+if (__sortCloseFn) __sortCloseFn(true);
+__applySortMode(v);
 }
 function __initSortControl() {
-var sel = document.getElementById('sortSelect');
-if (!sel) return;
-sel.value = sortMode;
-sel.addEventListener('change', function () { __applySortMode(this.value); });
+var picker = document.getElementById('sortPicker');
+var disp = document.getElementById('sortDisplay');
+var panel = document.getElementById('sortPanel');
+if (!picker || !disp || !panel) return;
+panel.innerHTML = '';
+__SORT_OPTS.forEach(function (o) {
+var it = document.createElement('div');
+it.className = 'cp-item';
+it.setAttribute('role', 'option');
+it.setAttribute('tabindex', '-1');
+it.setAttribute('data-v', o.v);
+it.textContent = o.t;
+it.addEventListener('click', function () { __pickSort(o.v); });
+panel.appendChild(it);
+});
+function items() { return Array.prototype.slice.call(panel.querySelectorAll('.cp-item')); }
+function place() {
+var r = disp.getBoundingClientRect();
+var w = Math.max(160, Math.round(r.width));
+panel.style.width = w + 'px';
+panel.classList.add('open');
+var ph = panel.offsetHeight || 0;
+var below = (window.innerHeight || 800) - r.bottom - 8;
+var top = (ph && below < ph && r.top > ph + 8) ? (r.top - ph - 6) : (r.bottom + 6);
+panel.style.top = Math.round(top) + 'px';
+panel.style.left = Math.round(Math.min(r.left, Math.max(8, (window.innerWidth || 400) - w - 8))) + 'px';
+}
+function open() {
+if (picker.classList.contains('open')) return;
+picker.classList.add('open');
+disp.setAttribute('aria-expanded', 'true');
+place();
+setTimeout(function () {
+if (!picker.classList.contains('open')) return;
+var cur = panel.querySelector('.cp-item.selected') || panel.children[0];
+if (cur) cur.focus({ preventScroll: true });
+}, 80);
+}
+function close(back) {
+picker.classList.remove('open');
+panel.classList.remove('open');
+panel.style.top = ''; panel.style.left = ''; panel.style.width = '';
+disp.setAttribute('aria-expanded', 'false');
+if (back) disp.focus({ preventScroll: true });
+}
+disp.addEventListener('click', function () {
+if (picker.classList.contains('open')) close(false); else open();
+});
+disp.addEventListener('keydown', function (e) {
+if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); open(); }
+else if (e.key === 'Escape') { e.preventDefault(); close(false); }
+});
+panel.addEventListener('keydown', function (e) {
+var list = items(), i = list.indexOf(document.activeElement);
+if (e.key === 'ArrowDown') { e.preventDefault(); (list[i + 1] || list[0]).focus(); }
+else if (e.key === 'ArrowUp') { e.preventDefault(); (list[i - 1] || list[list.length - 1]).focus(); }
+else if (e.key === 'Enter' || e.key === ' ') {
+e.preventDefault();
+var v = document.activeElement && document.activeElement.getAttribute('data-v');
+if (v) __pickSort(v);
+} else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); }
+else if (e.key === 'Tab') { close(false); }
+});
+document.addEventListener('click', function (e) {
+if (!picker.classList.contains('open')) return;
+if (picker.contains(e.target) || panel.contains(e.target)) return;
+close(false);
+});
+window.addEventListener('resize', function () { if (picker.classList.contains('open')) close(false); });
+window.addEventListener('scroll', function () { if (picker.classList.contains('open')) close(false); }, true);
+__sortCloseFn = close;
+__syncSortUI();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', __initSortControl);
 else __initSortControl();
