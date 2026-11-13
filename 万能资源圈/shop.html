@@ -90,7 +90,10 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <a class="shop-logo-link" href="admin" title="进入管理页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
  <img class="shop-logo" id="shopLogo" src="/assets/images/logo.png" alt="Logo" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror="window.__logoFail&&window.__logoFail(this)" />
  </a>
- <div class="shop-name" id="shopName" role="heading" aria-level="1">万能资源圈，资源</div>
+ <!-- v631e：原来是 div + role="heading" aria-level="1"——读屏软件认，但搜索引擎和结构化解析不认。
+      换成真 h1，样式仍由 .shop-name 控制（class 特异性高于元素选择器，视觉不变）。
+      role/aria-level 一并删掉，h1 自带语义，留着反而是冗余声明。 -->
+ <h1 class="shop-name" id="shopName">万能资源圈，资源</h1>
  </div>
  <div class="tb-group-a"></div><div class="tb-group-b" hidden></div><div class="topbar-actions">
  <button class="tab" id="topContact" title="咨询客服">

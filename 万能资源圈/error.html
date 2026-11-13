@@ -109,7 +109,8 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 <body><a class="skip-link" href="#mainContent">跳到主要内容</a>
 <div class="box" id="mainContent" role="main"><!-- v346 条70/67：skip-link 目标 + 主区语义 -->
  <div class="logo"><!-- R51：logo 去掉链接纯展示（跳转由下方「导航页」按钮承担） --><img id="errLogo" alt="万能资源圈" decoding="async" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></div>
- <div class="code" id="errorCode" role="heading" aria-level="1">万能资源圈，错误</div>
+ <!-- v631e：与资源页同样处理——div + role 只有读屏认，改成真 h1。样式由 .code / #errorCode 控制，视觉不变。 -->
+ <h1 class="code" id="errorCode">万能资源圈，错误</h1>
  <div class="title" id="errorTitle">页面不存在</div>
  <div class="desc" id="errorDesc">地址有误或已删除</div><!-- v626 B3：只留一句副句，①②③ 三行原因与感叹号已删 -->
 <div class="err-actions"><!-- v400 条10：按钮间距由内联 margin-left:14px 改弹性布局统一 gap（窄窗口不挤压变形；隐藏键不留空隙，行为与原先一致） -->
