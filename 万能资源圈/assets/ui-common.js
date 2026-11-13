@@ -171,7 +171,7 @@ m.innerHTML =
 '<div class="kf-tip" id="kfTip">' + window.__kfTipText() + '</div>' +
 '<div class="kf-actions">' +
 '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
-'<button class="kf-jump" id="kfJumpBtn" type="button">咨询在线客服</button>' +
+'<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
 '</div>' +
 '</div>';
 document.body.appendChild(m);
@@ -235,7 +235,7 @@ var tipEl = document.getElementById('kfTip');
 if (tipEl) tipEl.textContent = tip || window.__kfTipText();
 var btn = document.getElementById('kfJumpBtn');
 if (btn) {
-btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '咨询在线客服'; btn.setAttribute('data-url', url || '');
+btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
 btn.classList.toggle('kf-jump-green', !!(opts && opts.green));
 }
 var mask = document.getElementById('kfMask');
@@ -267,7 +267,7 @@ m.innerHTML =
 '<div class="kf-tip">' + window.__kfTipText() + '</div>' +
 '<div class="kf-actions">' +
 '<button class="kf-close" type="button" onclick="window.__kfFbClose()">关闭</button>' +
-'<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">咨询在线客服</button>' +
+'<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
 '</div>' +
 '</div>';
 document.body.appendChild(m);
@@ -515,14 +515,14 @@ try { console.warn('[提示] ' + msg); } catch (e3) {}
 function __renderShareTip(pEl, tip) {
 var s = tip || '资源链接已复制';
 pEl.textContent = '';
-var i = s.lastIndexOf('，');
+var i = s.lastIndexOf(' · ');
 if (i < 0) { pEl.appendChild(document.createTextNode(s)); return; }
 var nEl = document.createElement('span');
 nEl.style.color = 'var(--ink-link, #1565c0)';
 nEl.textContent = s.slice(0, i);
 var dEl = document.createElement('span');
 dEl.style.color = 'var(--ink-normal, #000)';
-dEl.textContent = '，';
+dEl.textContent = ' · ';
 pEl.appendChild(nEl); pEl.appendChild(dEl);
 pEl.appendChild(document.createTextNode(s.slice(i + 3)));
 }
