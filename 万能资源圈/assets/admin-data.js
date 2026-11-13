@@ -548,14 +548,19 @@ box.innerHTML = '<b>昨天 ' + yest.slice(5) + '</b>'
 } catch (e) { box.hidden = true; }
 }
 window.__renderDaySum = renderDaySum;
+function __rangeLabel() {
+var btn = document.querySelector('.time-btn.active[data-days]');
+var d = Number(btn && btn.getAttribute('data-days')) || 1;
+return d === 1 ? '今日' : ('近' + d + '天');
+}
 function renderStatCards(ov, ovp) {
 var cards = [
 { label: '资源总数', num: ov.products || 0 },
 { label: '显示资源', num: ov.online || 0 },
 { label: '隐藏资源', num: ov.hidden || 0 },
-{ label: '今日浏览', num: ov.views || 0, prev: ovp ? (ovp.views || 0) : null },
-{ label: '今日咨询', num: ov.contacts || 0, prev: ovp ? (ovp.contacts || 0) : null },
-{ label: '今日解锁', num: ov.resource_unlocks || 0, prev: ovp ? (ovp.resource_unlocks || 0) : null },
+{ label: __rangeLabel() + '浏览', num: ov.views || 0, prev: ovp ? (ovp.views || 0) : null },
+{ label: __rangeLabel() + '咨询', num: ov.contacts || 0, prev: ovp ? (ovp.contacts || 0) : null },
+{ label: __rangeLabel() + '解锁', num: ov.resource_unlocks || 0, prev: ovp ? (ovp.resource_unlocks || 0) : null },
 ];
 var cbox = document.getElementById('statCards');
 cbox.innerHTML = '';

@@ -780,46 +780,59 @@ var __annTransitioning = false;
 var PAGE_SIZE = 20;
 var __pendingSearchOpts = null;
 var SORT_DEF = 'def';
-var SORT_PRICE = 'price';
-var SORT_PRICE_DESC = 'price_desc';
+var SORT_HOT = 'hot';
 var SORT_NEWEST = 'newest';
-var SORT_FREE = 'free';
-var sortMode = SORT_DEF;
+var SORT_PRICE = 'price';
+var __SORT_TYPES = [
+{ v: SORT_DEF, t: '默认', dir: false },
+{ v: SORT_HOT, t: '热门', dir: true, def: 'desc' },
+{ v: SORT_NEWEST, t: '最新', dir: true, def: 'desc' },
+{ v: SORT_PRICE, t: '价格', dir: true, def: 'asc' }
+];
+var sortType = SORT_DEF;
+var sortDir = 'desc';
 var __sortCache = null;
 var __sortPromise = null;
 var __sortLoadingKey = '';
 function __sortKey() {
 return (Number(currentCat) || 0) + ':' + (Number(currentSubCat) || 0) + ':' + String((searchInput && searchInput.value) || '').trim().toLowerCase();
 }
-function __sortActive() { return sortMode !== SORT_DEF; }
+function __sortActive() { return sortType !== SORT_DEF; }
 function __sortReady() {
 return !!__sortActive() && !!__sortCache && __sortCache.key === __sortKey() && !!__sortCache.list;
 }
+function __sortMode() {
+if (sortType === SORT_HOT) return sortDir === 'asc' ? 'hot_asc' : 'hot';
+if (sortType === SORT_NEWEST) return sortDir === 'asc' ? 'newest_asc' : 'newest';
+if (sortType === SORT_PRICE) return sortDir === 'asc' ? 'price' : 'price_desc';
+return SORT_DEF;
+}
 function __sortApply(list) {
 var arr = (list || []).slice();
+var mode = __sortMode();
 var priceOf = function (p) { var n = Number(p && p.price); return isFinite(n) ? n : 0; };
-if (sortMode === SORT_PRICE) {
+var timeOf = function (p) { return String(p && (p.updated_at || p.created_at) || ''); };
+if (mode === 'price') {
 arr.sort(function (a, b) { return priceOf(a) - priceOf(b); });
-} else if (sortMode === SORT_PRICE_DESC) {
+} else if (mode === 'price_desc') {
 arr.sort(function (a, b) { return priceOf(b) - priceOf(a); });
-} else if (sortMode === SORT_NEWEST) {
+} else if (mode === 'newest' || mode === 'newest_asc') {
+var sign = mode === 'newest' ? 1 : -1;
 arr.sort(function (a, b) {
-var ta = String(a.updated_at || a.created_at || '');
-var tb = String(b.updated_at || b.created_at || '');
+var ta = timeOf(a), tb = timeOf(b);
 if (!ta && !tb) return 0;
 if (!ta) return 1;
 if (!tb) return -1;
-return tb.localeCompare(ta);
+return sign * tb.localeCompare(ta);
 });
-} else if (sortMode === SORT_FREE) {
-arr.sort(function (a, b) { return (priceOf(a) > 0 ? 1 : 0) - (priceOf(b) > 0 ? 1 : 0); });
-} else if (__isHotMode(sortMode)) {
-var fld = __hotField();
+} else if (mode === 'hot' || mode === 'hot_asc') {
 var val = function (p) {
 var h = __hotMap && __hotMap[String(p && p.id)];
-return h ? (Number(h[fld]) || 0) : 0;
+return h ? (Number(h.hot) || 0) : 0;
 };
-arr.sort(function (a, b) { return val(b) - val(a); });
+arr.sort(function (a, b) {
+return mode === 'hot' ? (val(b) - val(a)) : (val(a) - val(b));
+});
 }
 return arr;
 }
@@ -855,19 +868,15 @@ if (!__sortActive() || __sortReady() || __sortPromise) return;
 if (__sortCache && __sortCache.key === __sortKey() && !__sortCache.list) return;
 __sortFetch().then(function (list) { if (list && __sortActive()) renderProducts(); });
 }
-function __applySortMode(mode) {
-var ok = false;
-for (var i = 0; i < __SORT_OPTS.length; i++) if (__SORT_OPTS[i].v === mode) { ok = true; break; }
-var m = ok ? mode : SORT_DEF;
-sortMode = m;
+function __applySort() {
 currentPage = 1;
 __syncSortUI();
-if (m === SORT_DEF) {
+if (!__sortActive()) {
 __sortCache = null; __sortPromise = null; __sortLoadingKey = '';
 renderProducts();
 return;
 }
-var prep = __isHotMode(m) && !__hotMap ? __hotFetch() : Promise.resolve(null);
+var prep = sortType === SORT_HOT && !__hotMap ? __hotFetch() : Promise.resolve(null);
 prep.then(function () {
 if (__sortCache && __sortCache.key === __sortKey() && __sortCache.list) { renderProducts(); return; }
 __sortFetch().then(function (list) {
@@ -876,25 +885,52 @@ renderProducts();
 });
 });
 }
-var SORT_HOT = 'hot', SORT_VIEWS = 'views', SORT_CONTACTS = 'contacts', SORT_UNLOCKS = 'unlocks';
+function __pickSortType(v) {
+var def = null;
+for (var i = 0; i < __SORT_TYPES.length; i++) if (__SORT_TYPES[i].v === v) def = __SORT_TYPES[i];
+if (!def) return;
+sortType = v;
+if (def.dir) sortDir = def.def;
+__applySort();
+}
+function __flipSortDir() {
+for (var i = 0; i < __SORT_TYPES.length; i++) {
+if (__SORT_TYPES[i].v === sortType && !__SORT_TYPES[i].dir) return;
+}
+sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+__applySort();
+var map = { hot: '热门', newest: '最新', price: '价格' };
+if (window.showToast) {
+window.showToast((map[sortType] || '') + '：' + (sortDir === 'asc' ? '从低到高 / 从旧到新' : '从高到低 / 从新到旧'), 'success');
+}
+}
+function __syncSortUI() {
+var cur = __SORT_TYPES[0];
+for (var i = 0; i < __SORT_TYPES.length; i++) if (__SORT_TYPES[i].v === sortType) cur = __SORT_TYPES[i];
+var t = document.getElementById('sortText');
+if (t) t.textContent = cur.t;
+var dirBtn = document.getElementById('sortDirBtn');
+if (dirBtn) {
+var usable = !!cur.dir;
+dirBtn.disabled = !usable;
+dirBtn.classList.toggle('asc', usable && sortDir === 'asc');
+dirBtn.classList.toggle('off', !usable);
+var next = sortDir === 'asc' ? '从高到低' : '从低到高';
+dirBtn.setAttribute('aria-label', usable ? ('切换排序顺序，当前' + (sortDir === 'asc' ? '从低到高 / 从旧到新' : '从高到低 / 从新到旧')) : '默认排序没有升降序');
+dirBtn.title = usable ? ('点击改为' + next) : '默认排序按后台顺序，没有升降序';
+}
+var panel = document.getElementById('sortPanel');
+if (panel) {
+Array.prototype.forEach.call(panel.children, function (el) {
+var on = el.getAttribute('data-v') === sortType;
+el.classList.toggle('selected', on);
+el.setAttribute('aria-selected', on ? 'true' : 'false');
+});
+}
+}
 var __sortCloseFn = null;
 var __hotMap = null;
 var __hotPromise = null;
-var __SORT_OPTS = [
-{ v: 'def', t: '默认排序' },
-{ v: 'hot', t: '热门优先' },
-{ v: 'views', t: '浏览最多' },
-{ v: 'contacts', t: '咨询最多' },
-{ v: 'unlocks', t: '解锁最多' },
-{ v: 'newest', t: '最新上架' },
-{ v: 'price', t: '价格从低到高' },
-{ v: 'price_desc', t: '价格从高到低' },
-{ v: 'free', t: '免费优先' }
-];
-function __isHotMode(m) { return m === SORT_HOT || m === SORT_VIEWS || m === SORT_CONTACTS || m === SORT_UNLOCKS; }
-function __hotField() {
-return sortMode === SORT_VIEWS ? 'views' : sortMode === SORT_CONTACTS ? 'contacts' : sortMode === SORT_UNLOCKS ? 'unlocks' : 'hot';
-}
 function __hotFetch() {
 if (__hotMap) return Promise.resolve(__hotMap);
 if (__hotPromise) return __hotPromise;
@@ -910,44 +946,27 @@ __hotMap = map; __hotPromise = null; return map;
 .catch(function () { __hotMap = {}; __hotPromise = null; return __hotMap; });
 return __hotPromise;
 }
-function __syncSortUI() {
-var cur = null;
-for (var i = 0; i < __SORT_OPTS.length; i++) if (__SORT_OPTS[i].v === sortMode) cur = __SORT_OPTS[i];
-var t = document.getElementById('sortText');
-if (t) t.textContent = cur ? cur.t : '默认排序';
-var panel = document.getElementById('sortPanel');
-if (panel) {
-Array.prototype.forEach.call(panel.children, function (el) {
-var on = el.getAttribute('data-v') === sortMode;
-el.classList.toggle('selected', on);
-el.setAttribute('aria-selected', on ? 'true' : 'false');
-});
-}
-}
-function __pickSort(v) {
-if (__sortCloseFn) __sortCloseFn(true);
-__applySortMode(v);
-}
 function __initSortControl() {
 var picker = document.getElementById('sortPicker');
 var disp = document.getElementById('sortDisplay');
 var panel = document.getElementById('sortPanel');
+var dirBtn = document.getElementById('sortDirBtn');
 if (!picker || !disp || !panel) return;
 panel.innerHTML = '';
-__SORT_OPTS.forEach(function (o) {
+__SORT_TYPES.forEach(function (o) {
 var it = document.createElement('div');
 it.className = 'cp-item';
 it.setAttribute('role', 'option');
 it.setAttribute('tabindex', '-1');
 it.setAttribute('data-v', o.v);
 it.textContent = o.t;
-it.addEventListener('click', function () { __pickSort(o.v); });
+it.addEventListener('click', function () { if (__sortCloseFn) __sortCloseFn(true); __pickSortType(o.v); });
 panel.appendChild(it);
 });
 function items() { return Array.prototype.slice.call(panel.querySelectorAll('.cp-item')); }
 function place() {
 var r = disp.getBoundingClientRect();
-var w = Math.max(160, Math.round(r.width));
+var w = Math.max(112, Math.round(r.width + 26));
 panel.style.width = w + 'px';
 panel.classList.add('open');
 var ph = panel.offsetHeight || 0;
@@ -988,7 +1007,7 @@ else if (e.key === 'ArrowUp') { e.preventDefault(); (list[i - 1] || list[list.le
 else if (e.key === 'Enter' || e.key === ' ') {
 e.preventDefault();
 var v = document.activeElement && document.activeElement.getAttribute('data-v');
-if (v) __pickSort(v);
+if (v) { close(true); __pickSortType(v); }
 } else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); }
 else if (e.key === 'Tab') { close(false); }
 });
@@ -999,6 +1018,7 @@ close(false);
 });
 window.addEventListener('resize', function () { if (picker.classList.contains('open')) close(false); });
 window.addEventListener('scroll', function () { if (picker.classList.contains('open')) close(false); }, true);
+if (dirBtn) dirBtn.addEventListener('click', function () { __flipSortDir(); });
 __sortCloseFn = close;
 __syncSortUI();
 }

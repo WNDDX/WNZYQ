@@ -146,6 +146,23 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <button class="cat-toggle" id="catToggle" title="展开/收起分类" aria-label="展开或收起分类">
  <svg aria-hidden="true" class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
  </button>
+ <!-- v631N（老板 04:14）：排序控件放回分类条右侧，不另占一行。
+      形态＝「当前类型 + ⇅」：点文字出类型（默认/热门/最新/价格），点 ⇅ 切升/降序。
+      类型面板复用后台「分类筛选」的 .cat-picker-panel / .cp-item，不新造控件。 -->
+ <div class="sort-ctrl" id="sortCtrl">
+ <div class="cat-picker" id="sortPicker">
+ <div class="cat-picker-display sort-type" id="sortDisplay" role="button" tabindex="0"
+ aria-haspopup="listbox" aria-expanded="false" aria-label="排序类型"><span class="cpd-text" id="sortText">默认</span></div>
+ </div>
+ <button type="button" class="sort-dir off" id="sortDirBtn" aria-label="默认排序没有升降序" title="默认排序按后台顺序，没有升降序">
+ <svg class="sd-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+ stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+ <path class="sd-up" d="M8 18V6m0 0L5 9m3-3 3 3"/>
+ <path class="sd-dn" d="M16 6v12m0 0 3-3m-3 3-3-3"/>
+ </svg>
+ </button>
+ <div class="cat-picker-panel" id="sortPanel" role="listbox" aria-label="排序类型"></div>
+ </div>
  </div>
 
  <!-- ============ 二级分类栏（选中一级分类且有子分类时显示） ============ -->
@@ -154,20 +171,6 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <button class="sub-cat-toggle" id="subCatToggle" title="展开/收起二级分类" aria-label="展开或收起二级分类">
  <svg aria-hidden="true" class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
  </button>
- </div>
-
- <!-- v631L：列表排序。下拉直接复用后台「分类筛选」那一套 .cat-picker 组件
-      （同样的 cpd-text / cpd-arrow 箭头 / .cp-item 选中态与开合动效），不新造任何控件样式。 -->
- <div class="sort-bar">
- <span class="sort-bar-label" id="sortLabel">排序</span>
- <div class="cat-picker sort-picker" id="sortPicker" data-picker-id="sortPicker">
- <div class="cat-picker-display" id="sortDisplay" role="button" tabindex="0"
- aria-haspopup="listbox" aria-expanded="false" aria-labelledby="sortLabel">
- <span class="cpd-text" id="sortText">默认排序</span>
- <span class="cpd-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span>
- </div>
- </div>
- <div class="cat-picker-panel" id="sortPanel" data-picker-id="sortPicker" role="listbox" aria-label="排序方式"></div>
  </div>
 
  <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
