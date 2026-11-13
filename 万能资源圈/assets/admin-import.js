@@ -656,7 +656,8 @@ fetch('/api/health', { cache: 'no-store' }).then(function (r) { return r.json();
 return { name: '后端连通', ok: !!(h && h.ok && h.ready), detail: (h && h.ready) ? '数据库就绪' : ((h && h.msg) || '未就绪（首次部署请先初始化）') };
 }).catch(function () { return { name: '后端连通', ok: false, detail: '接口不通' }; }),
 (navigator.serviceWorker ? navigator.serviceWorker.getRegistration() : Promise.resolve(null)).then(function (reg) {
-var swUrl = reg && reg.active ? reg.active.scriptURL : '';
+var anySw = reg ? (reg.active || reg.waiting || reg.installing || null) : null;
+var swUrl = anySw ? anySw.scriptURL : '';
 if (!swUrl) return { name: '离线缓存（SW）', ok: false, detail: '未注册' };
 return fetch(swUrl, { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
 var m = /wnzyq-v\d+/.exec(t);
