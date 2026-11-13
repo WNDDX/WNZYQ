@@ -168,7 +168,7 @@ if ('serviceWorker' in navigator) {
  * window.openContactModal(url, qrImg, tip, btnText)
  * - url: 客服跳转链接（优先类型→资源→全局默认，由各页面传入）
  * - qrImg: 客服二维码图片，v383 起走后台「设置信息」的 contact_qr（未配置=失败占位）
- * - tip: 提示文字，默认「长按识别加客服」
+ * - tip: 提示文字，缺省按设备取（桌面「扫码添加客服」/ 触屏「长按识别二维码加客服」，v627）
  * - btnText: 跳转按钮文字，默认「咨询在线客服」
  */
 (function () {
@@ -207,6 +207,16 @@ if ('serviceWorker' in navigator) {
  } catch (e) { if (window.__silent) window.__silent(e); }
  }
 
+ /* v627 P8：客服提示按设备给文案——桌面端（非触屏）没有「长按识别」这个动作，写「扫码添加客服」；
+ 手机/平板（触屏）保留「长按识别二维码加客服」。全站客服浮层与导航页客服弹窗统一走这一处。 */
+ window.__kfTipText = function () {
+ try {
+ if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) return '扫码添加客服';
+ if (navigator.maxTouchPoints > 0) return '长按识别二维码加客服';
+ return '扫码添加客服';
+ } catch (e) { return '长按识别二维码加客服'; }
+ };
+
  function ensureKfModal() {
  if (document.getElementById('kfMask')) return;
  var m = document.createElement('div');
@@ -218,10 +228,10 @@ if ('serviceWorker' in navigator) {
  '<button class="kf-x" id="kfCloseX" data-x="1" type="button" aria-label="关闭"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="kf-title" id="kfTitle">咨询客服</div>' +
  '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
- '<div class="kf-tip" id="kfTip">长按识别二维码加客服</div>' +
- '<div class="kf-actions">' +
- '<button class="kf-jump" id="kfJumpBtn" type="button">咨询在线客服</button>' +
+ '<div class="kf-tip" id="kfTip">' + window.__kfTipText() + '</div>' +
+ '<div class="kf-actions">' + /* v627 P9：关闭靠左、主操作靠右（DOM 顺序与视觉顺序一起换，Tab 先到「关闭」） */
  '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
+ '<button class="kf-jump" id="kfJumpBtn" type="button">咨询在线客服</button>' +
  '</div>' +
  '</div>';
  document.body.appendChild(m);
@@ -298,7 +308,7 @@ if ('serviceWorker' in navigator) {
  if (window.__bindQrLightbox) window.__bindQrLightbox(img);
  }
  var tipEl = document.getElementById('kfTip');
- if (tipEl) tipEl.textContent = tip || '长按识别二维码加客服';
+ if (tipEl) tipEl.textContent = tip || window.__kfTipText(); /* v627 P8：文案按设备取，桌面不写「长按识别」 */
  var btn = document.getElementById('kfJumpBtn');
  if (btn) {
  btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '咨询在线客服'; btn.setAttribute('data-url', url || '');
@@ -337,10 +347,10 @@ if ('serviceWorker' in navigator) {
  '<button class="kf-x" type="button" aria-label="关闭" onclick="window.__kfFbClose()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
  '<div class="kf-title">咨询客服</div>' +
  '<div class="kf-qr"><img id="kfFallbackImg" alt="客服二维码" /></div>' +
- '<div class="kf-tip">长按识别二维码加客服</div>' +
- '<div class="kf-actions">' +
- '<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">咨询在线客服</button>' +
+ '<div class="kf-tip">' + window.__kfTipText() + '</div>' +
+ '<div class="kf-actions">' + /* v627 P9：同主弹窗——关闭左、主操作右 */
  '<button class="kf-close" type="button" onclick="window.__kfFbClose()">关闭</button>' +
+ '<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">咨询在线客服</button>' +
  '</div>' +
  '</div>';
  document.body.appendChild(m);
@@ -858,7 +868,7 @@ var __BLOCK_TOUCH_SEL = '.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.
  // window.buildUniPager(container, { page, totalPages, total, unit, onPage })：
  // page=当前页(1起) totalPages=总页数 total=总条数(可选) unit=单位文案(默认"条") onPage=点上一页/下一页/跳页后的回调
  // 交互要点（对应本轮反馈）：
- // 1) 结构（R35 两组，换行按组折行不拆散）：[上一页 | 页码信息 N / M（共X条）| 下一页] 一组，[跳页输入+跳转键] 一组
+ // 1) 结构（R35 两组，换行按组折行不拆散）：[上一页 | 页码信息「第 N 页，共 M 页，X 条」| 下一页] 一组，[跳页输入+跳转键] 一组（v627 P6：信息文案改中文句式）
  // 2) 跳页输入框 clamp 到 [1, totalPages]；回车 = 点跳转
  // 3) 点击即时反馈：按钮无过渡延迟、渲染由调用方同步完成，不做平滑滚动（平滑滚动正是统计翻页"屏幕抖一下"的根因）
  // 4) 只有一页时组件整体隐藏（无翻页必要不占位）
@@ -904,7 +914,9 @@ var __BLOCK_TOUCH_SEL = '.modal-box,.kf-box,.share-box,.modal-inner,.rte-panel,.
  function render() {
  prev.disabled = page <= 1;
  next.disabled = page >= totalPages;
- info.textContent = page + ' / ' + totalPages + (total !== null ? '（共' + total + unit + '）' : '');
+ /* v627 P6：分页信息由半角「N / M（共X条）」改为中文句式——「第 1 页，共 3 页，60 条」
+ 全角标点、不带括号；单位沿用调用方传入的 unit（资源页「个」、统计页「条」） */
+ info.textContent = '第 ' + page + ' 页，共 ' + totalPages + ' 页' + (total !== null ? '，' + total + ' ' + unit : '');
  input.value = page;
  input.max = String(totalPages);
  }

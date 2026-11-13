@@ -1136,7 +1136,7 @@ window.__fillHourly = function (raw) {
  })(d.key, d.wrapId);
  var info = document.createElement('span');
  info.className = 'pg-info';
- info.textContent = statPages[d.key] + ' / ' + totalPages + '（共' + d.list.length + '条）';
+ info.textContent = '第 ' + statPages[d.key] + ' 页，共 ' + totalPages + ' 页，' + d.list.length + ' 条'; /* v627 P6：半角「N / M（共X条）」改中文句式 */
  var next = document.createElement('button');
  next.textContent = '下一页';
  next.disabled = statPages[d.key] === totalPages;
@@ -1603,7 +1603,8 @@ refreshCatCnts();
  box.querySelectorAll('.cat-row').forEach(function (row) {
  if (row.querySelector('.cat-fold') || row.querySelector('.cat-check') === null) return;
  var fold = document.createElement('button');
- fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '展开/收起操作'; fold.setAttribute('aria-label', '展开/收起操作');
+ /* v630 S7：› 不再负责藏操作键（编辑/删除已常显），改为「收起/展开排序」——窄屏自动收起，宽屏可手动腾地方 */
+ fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '收起/展开排序'; fold.setAttribute('aria-label', '收起或展开排序');
  fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
  fold.addEventListener('click', function (e) {
  e.stopPropagation();
@@ -1666,7 +1667,7 @@ refreshCatCnts();
  document.getElementById('catBatchDel').addEventListener('click', function () {
  var ids = Array.from(document.querySelectorAll('.cat-check:checked')).map(function (cb) { return Number(cb.dataset.id); }).filter(function (id) { return !isNaN(id); });
  if (ids.length === 0) return;
- showConfirm('批量删除', '共 ' + ids.length + ' 个分类，删除后将无法恢复', function (closeConfirm) {
+ showConfirm('批量删除', '共 ' + ids.length + ' 个分类，删除后可找回', function (closeConfirm) { /* v626 B1：与单条删除「回收站点可找回」同口径 */
  batchCatAction(ids, 'delete', closeConfirm);
  });
  });
@@ -2411,7 +2412,7 @@ refreshCatCnts();
  if (cv && cv.contactUrl) url = cv.contactUrl;
  if (!url) url = fContactUrl.value.trim();
  if (!url && window.__infoContactUrl) url = window.__infoContactUrl; /* v383：全局客服链接改走「设置信息」 */
- if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); /* v415 条1：客服绿 */ } else { window.openContactFallback(url, { green: true }); } }
+ if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '去咨询', { green: true }); /* v415 条1：客服绿；v626 B4：跳转键文案与前台四处统一为「去咨询」 */ } else { window.openContactFallback(url, { green: true }); } }
  else toast('还没填客服链接', 'warn');
  });
  document.querySelector('.preview-close-btn').addEventListener('click', function () {

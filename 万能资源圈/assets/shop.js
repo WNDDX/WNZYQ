@@ -523,11 +523,12 @@
  function renderShopInfo() {
  var cfg = (typeof SHOP_CONFIG !== 'undefined') ? SHOP_CONFIG : null;
  var name = DATA.shopName || (cfg && cfg.shopName) || '';
- /* R19：默认品牌名（未自定义店铺名）时顶栏显示「万能资源圈・资源」（页面名称统一）；
- 自定义过店铺名则尊重自定义值，浏览器标题保持 品牌/店铺名+「・资源」不重复拼接 */
+ /* R19：默认品牌名（未自定义店铺名）时顶栏显示「万能资源圈，资源」（页面名称统一）；
+ 自定义过店铺名则尊重自定义值，浏览器标题保持 品牌/店铺名+「，资源」不重复拼接
+ v627 P3：页面名里的中点符号不合规（规范 16.12 第 6 条），改中文逗号 */
  var isDefault = !name || name === '万能资源圈';
- shopNameEl.textContent = isDefault ? '万能资源圈・资源' : name;
- document.title = (isDefault ? '万能资源圈' : name) + '・资源';
+ shopNameEl.textContent = isDefault ? '万能资源圈，资源' : name;
+ document.title = (isDefault ? '万能资源圈' : name) + '，资源';
  /* logo 已写死本地 assets/images/logo.png（与管理页同款，解析即加载），不再由 JS 覆盖，避免刷新闪动 */
  /* logo 由 HTML 直接加载显示，失败时全局感叹号占位兜底，JS 不再干预 */
  }
@@ -732,11 +733,14 @@
  } catch (e) { if (window.__silent) window.__silent(e); }
  }
  window.__annShown = true;
- /* v588 用户 11-09：撤销 v587 的「延后 2.5 秒弹公告」——恢复原行为，数据到了就弹。 */
+ /* v626 A1（老板 11-13）：正常进店不再自动弹全屏公告——公告改由顶栏「公告」键自查。
+ 骨架期不开窗、数据到达后也不开窗；上方 mode==='off' 的分支保持原样（照旧强制关窗）。
+ 后台公告预览（?preview=ann）走 window.openAnnModal()，不经此处，预览照常自动打开。
+ 顶栏红点/已读逻辑不依赖这里开窗，返回值不变，不影响 __annShown 标记。 */
+ if (!window.__pvMode) return;
  mask.classList.add('open');
  setBodyLock(true);
- /* v590（老板 11-09 第 1 条）：自动弹出时也把「当前正在看的这条」记成已读——
- 原来只有手动点顶栏打开才记，自动弹出这条路径谁都没记过，于是看完了红点还挂着。
+ /* v590（老板 11-09 第 1 条）：开窗时把「当前正在看的这条」记成已读——
  注意：只记**显示中的这一条**，不是全部（没点开的页签该留红点提示）。 */
  try {
  renderAnnContent();
@@ -940,17 +944,21 @@
  a.is_hidden === b.is_hidden && a.cid === b.cid && a.sort === b.sort;
  }
 
- // ---------- 筛选资源（支持两级分类） ----------
- // R303：后端已过滤+分页时直接返回当前页数据；兼容旧缓存/本地数据走前端过滤
- function getFilteredProducts() {
- if (DATA._backendPaged) return DATA.products;
+// ---------- 筛选资源（支持两级分类） ----------
+// R303：后端已过滤+分页时直接返回当前页数据；兼容旧缓存/本地数据走前端过滤
+/* v630 S6：新增可选入参 srcList——排序档要拿「全量列表」按同一套规则再筛一遍，
+   逻辑复用这一份，不另写第二套过滤（避免搜索容错/分类口径两处不一致）。
+   不传 srcList 时行为与原来逐字一致。 */
+function getFilteredProducts(srcList) {
+ if (!srcList && DATA._backendPaged) return DATA.products;
+ var base = srcList || DATA.products || [];
  var kw = searchInput.value.trim().toLowerCase();
  // 找出当前一级分类下的所有二级分类 id（用于一级分类筛选）
  var subCatIds = DATA.categories
  .filter(function (c) { return Number(c.parent_id) === currentCat; })
  .map(function (c) { return Number(c.id); });
 
- return DATA.products.filter(function (p) {
+ return base.filter(function (p) {
  if (p.is_online !== true && p.is_online !== 1) return false;
  if (p.is_hidden === true || p.is_hidden === 1) return false;
  // 分类筛选
@@ -1027,6 +1035,102 @@
  // v318（用户 10-05 22:06）：命令面板全量数据缓存——v317 首屏只拿第一页 20 条，命令面板用 DATA.products 只能搜到第一页；修法→后台单独拉 page_size=0 全量通道给命令面板用，不影响主列表。
  // v327：声明移至 __loadAllProductsForCmd 处（连同加载状态 __allCmdState）
 
+/* ===== v630 S6：前台列表排序（纯前端，接口不加参数） =====
+   老板反馈：60 条资源、价格从 0 到 680，只能一页页翻，找不到便宜的那条。
+   三档：默认（后台原顺序）/ 低价优先 / 免费优先。
+   · 默认档：一行数据都不多拉，完全走原链路；
+   · 另两档：后台一页只有 20 条，只排当前页等于没排，所以要「本次筛选的全部资源」。
+     用后台已有的「page_size=0 = 不分页」口径拉一次（brief=1 瘦身，字段与列表同款），
+     本地排序 + 本地分页；接口、后台逻辑、缓存口径均未改动。
+   数据没回来之前先按原顺序渲染，回来后自动重排并回到第 1 页。 */
+var SORT_DEF = 'def';
+var SORT_PRICE = 'price';
+var SORT_FREE = 'free';
+var sortMode = SORT_DEF;      /* 当前档位 */
+var __sortCache = null;       /* { key, list }：全量源数据（按 分类 + 搜索词 分格；list=null 表示这一格拉取失败过） */
+var __sortPromise = null;     /* 同格并发请求合并 */
+var __sortLoadingKey = '';    /* 飞行中的分格键 */
+
+function __sortKey() {
+  return (Number(currentCat) || 0) + ':' + (Number(currentSubCat) || 0) + ':' + String((searchInput && searchInput.value) || '').trim().toLowerCase();
+}
+function __sortActive() { return sortMode !== SORT_DEF; }
+/* 数据就位才允许走「本地排序 + 本地分页」，否则一律回落到原有链路 */
+function __sortReady() {
+  return !!__sortActive() && !!__sortCache && __sortCache.key === __sortKey() && !!__sortCache.list;
+}
+/* 排序本体：价格升序；免费优先=0 元在前、其余保持后台原顺序（Array#sort 稳定） */
+function __sortApply(list) {
+  var arr = (list || []).slice();
+  var priceOf = function (p) { var n = Number(p && p.price); return isFinite(n) ? n : 0; };
+  if (sortMode === SORT_PRICE) {
+    arr.sort(function (a, b) { return priceOf(a) - priceOf(b); });
+  } else if (sortMode === SORT_FREE) {
+    arr.sort(function (a, b) { return (priceOf(a) > 0 ? 1 : 0) - (priceOf(b) > 0 ? 1 : 0); });
+  }
+  return arr;
+}
+/* 拉全量源数据：page_size=0 让后台不分页；分类/搜索词沿用现有参数 */
+function __sortFetch() {
+  var key = __sortKey();
+  if (__sortCache && __sortCache.key === key && __sortCache.list) return Promise.resolve(__sortCache.list);
+  if (__sortPromise && __sortLoadingKey === key) return __sortPromise;
+  var cid = Number(currentCat) || 0;
+  var sub = Number(currentSubCat) || 0;
+  var kw = String((searchInput && searchInput.value) || '').trim();
+  var qs = '/api/products?page=1&page_size=0&brief=1';
+  if (cid > 0) qs += '&cid=' + cid;
+  if (sub > 0) qs += '&sub_cid=' + sub;
+  if (kw) qs += '&kw=' + encodeURIComponent(kw);
+  __sortLoadingKey = key;
+  var req = window.__dedupFetch
+    ? window.__dedupFetch(qs, { cache: 'no-cache', credentials: 'include' })
+    : fetch(qs, { cache: 'no-cache', credentials: 'include' });
+  var done = function (j) {
+    __sortPromise = null; __sortLoadingKey = '';
+    if (!j || !j.ok) { __sortCache = { key: key, list: null }; return null; } /* 记成「这格失败」，避免连环重试 */
+    /* 服务端已按 cid / kw 过滤，本地再过一遍同口径（搜索容错与默认档一致） */
+    var list = getFilteredProducts(j.list || []);
+    __sortCache = { key: key, list: list };
+    return list;
+  };
+  __sortPromise = req.then(function (r) { return r && r.ok ? r.json() : null; })
+    .then(done)
+    .catch(function () { return done(null); });
+  return __sortPromise;
+}
+/* 渲染时发现数据没到位 → 后台补拉一次，回来再重排（同格失败过就不再自动重试） */
+function __sortEnsure() {
+  if (!__sortActive() || __sortReady() || __sortPromise) return;
+  if (__sortCache && __sortCache.key === __sortKey() && !__sortCache.list) return;
+  __sortFetch().then(function (list) { if (list && __sortActive()) renderProducts(); });
+}
+/* 切档：一律回到第 1 页，然后立刻重排 */
+function __applySortMode(mode) {
+  var m = (mode === SORT_PRICE || mode === SORT_FREE) ? mode : SORT_DEF;
+  sortMode = m;
+  currentPage = 1;
+  if (m === SORT_DEF) {
+    __sortCache = null; __sortPromise = null; __sortLoadingKey = '';
+    renderProducts();
+    return;
+  }
+  if (__sortCache && __sortCache.key === __sortKey() && __sortCache.list) { renderProducts(); return; }
+  __sortFetch().then(function (list) {
+    if (!list && window.showToast) window.showToast(window.T ? window.T('netFail') : '网络没连上，稍后再试', 'error');
+    renderProducts();
+  });
+}
+/* 排序控件（分类条右侧胶囊）；脚本是 defer，解析到这里 DOM 已就绪 */
+function __initSortControl() {
+  var sel = document.getElementById('sortSelect');
+  if (!sel) return;
+  sel.value = sortMode;
+  sel.addEventListener('change', function () { __applySortMode(this.value); });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', __initSortControl);
+else __initSortControl();
+
  // v318（用户 10-05 22:06）：翻页/搜索锁期间被丢弃的意图，在锁释放后立刻补发——保证最后一个输入的词一定搜。
  function __flushPendingSearch() {
  if (!__pendingSearchOpts) return;
@@ -1048,7 +1152,8 @@
  }
  __pageTurning = true; /* R231 条19：翻页期间防重复 */
  currentPage = p;
- if (usingRemote && DATA._backendPaged) {
+ /* v630 S6：排序档下是「全量本地分页」，翻页不必再打后台（否则白拉一页 20 条还会把 DATA 覆盖成该页） */
+ if (usingRemote && DATA._backendPaged && !__sortReady()) {
  fetchRemote({ page: p }).then(function (res) {
  if (res && res.stale) { __pageTurning = false; return; } /* v363 条1：过期翻页响应不渲染 */
  renderProducts();
@@ -1187,7 +1292,7 @@
  desc.textContent = p.desc || '';
  body.appendChild(title);
  body.appendChild(desc);
- /* v330 条14：卡片信息分层——第三层价格（橙色突出、固定底部行；免费不显示价格行） */
+ /* v330 条14：卡片信息分层——第三层价格（橙色突出、固定底部行）；v626 A3：0 元改显「免费」，不再留空 */
  /* v441：网格卡片补信息行（类型数/分类名）——老板复检：网格只有封面图信息量太少 */
  var _meta = document.createElement('div');
  _meta.className = 'card-meta';
@@ -1200,16 +1305,18 @@
  _meta.textContent = _metaParts.join('，');
  body.appendChild(_meta);
  var _pr = Number(p.price || 0);
- if (_pr > 0) {
+ /* v626 A3（老板 11-13）：价签常显——价格 ≤0 显示「免费」（不加货币符号），>0 走公共价格格式。
+ 原 v330 条14「免费不显示价格行」作废（0 元卡原来整行空缺，与「免费」口径对不上）。 */
  var prow = document.createElement('div');
  prow.className = 'card-price-row';
  var pEl = document.createElement('span');
  pEl.className = 'card-price';
  pEl.setAttribute('data-contrast-skip', 'brand-orange'); /* v609：价格用品牌橙（老板定稿） */
- pEl.textContent = window.formatPrice ? window.formatPrice(_pr) : ('¥' + (String(_pr).indexOf('.') !== -1 ? _pr.toFixed(2) : _pr)); /* v336 条10：统一走公共价格格式 */
+ pEl.textContent = _pr > 0
+ ? (window.formatPrice ? window.formatPrice(_pr) : ('¥' + (String(_pr).indexOf('.') !== -1 ? _pr.toFixed(2) : _pr))) /* v336 条10：统一走公共价格格式 */
+ : '免费';
  prow.appendChild(pEl);
  body.appendChild(prow);
- }
  card.appendChild(img);
  card.appendChild(body);
  card.addEventListener('click', function () { if (Date.now() - (window.__ctxShownAt || 0) < 300) return; /* v336 条163：长按菜单刚弹出，忽略误触 */ openModal(p); });
@@ -1237,7 +1344,11 @@
  /* v381 条3：删除重复的轮播滑动层 __bindCarouselSwipe——ui-common __renderCarousel 的 track 自带拖动+圆点切换，
  此前两层 touchend 叠加：track 先 goToSlide(1)，冒泡到 carEl 又读"新 active"切回 0，净效果=永远切不动且来回闪。 */
  function renderProducts() {
- var list = getFilteredProducts();
+ /* v630 S6：排序档（低价优先 / 免费优先）——数据就位时用全量列表本地排序 + 本地分页；
+ 还没就位时先按原链路渲染，同时后台补拉，回来后自动重排（保证换档/换分类都不空等）。 */
+ var __sorted = __sortReady();
+ if (__sortActive() && !__sorted) __sortEnsure();
+ var list = __sorted ? __sortApply(__sortCache.list) : getFilteredProducts();
  window.__visibleIds = list.map(function (p) { return p.id; }); /* v358 S3：详情弹窗上/下一条按此顺序切换 */
  /* R193 二① 方案A：骨架期（数据在路上）列表不动——骨架已铺满一页，空态不该抢跑 */
  if (window.__skelPhase && !list.length) { emptyTip.classList.remove('show'); return; }
@@ -1250,7 +1361,7 @@
  __uniPager = null; /* R234：旧分页已删，句柄随下方重建更新 */
 
  // 空状态（R124 用户定稿 15:06）：三分支统一只显示标题、副文案全删——
- // 搜索=「该搜索暂无资源」；分类/全部=「该分类暂无资源」
+ // 搜索=「没找到相关资源」；分类/全部=「该分类暂无资源」
  if (list.length === 0) {
  /* v380 条2：切换到无资源分类时，无论是否复用骨架，都必须先清空旧卡片，
  否则会出现“旧卡片残留 + 空态提示同时显示”的叠加 bug。 */
@@ -1287,7 +1398,7 @@
  _curCatName = _cc ? String(_cc.name || '') : '';
  }
  emptyTitle.textContent = kw
- ? (_curCatName ? '「' + _curCatName + '」里没有「' + kw + '」' : '该搜索暂无资源')
+ ? (_curCatName ? '「' + _curCatName + '」里没有「' + kw + '」' : '没找到相关资源') /* v627 P5：规范 16.13 定稿——「该搜索暂无资源」改「没找到相关资源」（7 字） */
  : '该分类暂无资源';
  /* v336 条168：分类空态给“查看全部资源”出口（不再让客人以为站点没货） */
  if (!kw) {
@@ -1310,7 +1421,10 @@
  renderProducts();
  });
  emptyTip.appendChild(__clr);
- /* v545：只在某个分类里搜的时候，多给一颗「去全部资源里搜」——一键跳出分类限制 */
+ /* v626 B3（老板 11-13）：搜索空态精简——只删 v346 条63 那句灰字建议
+ （「没找到？换个关键词，或浏览全部资源」），按钮全留：老板拍板「在全部资源里搜」必须留着，
+ 否则在某个分类里搜不到时，用户被困在分类里出不来。 */
+ /* v545：只在某个分类里搜的时候，多给一颗「在全部资源里搜」——一键跳出分类限制 */
  if (_curCatName) {
  var __allSearch = document.createElement('button');
  __allSearch.type = 'button'; __allSearch.className = 'empty-clear-btn';
@@ -1323,13 +1437,6 @@
  });
  emptyTip.appendChild(__allSearch);
  }
- /* v346 条63：搜不到时给替代建议（不再只有一颗按钮、无任何引导） */
- var __tip2 = document.createElement('div');
- __tip2.className = 'empty-desc';
- __tip2.textContent = _curCatName
- ? '搜索只在当前分类里进行。要么换个词，要么点上面的「在全部资源里搜」'
- : '没找到？换个关键词，或浏览全部资源';
- emptyTip.appendChild(__tip2);
  }
  /* v382 条1：删除 v343 条44 的重复「查看全部资源」——上方 v336 条168 已在所有非搜索空态
  （含空分类）输出同名按键，此处再输出一次导致空分类出现两个相同按钮。 */
@@ -1337,15 +1444,16 @@
  }
 
  // R303：分页计算——后端已分页时直接用元数据，否则前端切片
+ // v630 S6：排序档下 list 已是「全量」，必须走前端切片，不能再认后端的单页元数据
  window.__loadFailed = false; /* v335：能渲染出数据就说明加载已恢复，撤掉“加载失败”标记 */
- var totalPages = DATA._backendPaged ? (DATA.totalPages || 1) : Math.ceil(list.length / PAGE_SIZE);
+ var totalPages = (DATA._backendPaged && !__sorted) ? (DATA.totalPages || 1) : Math.ceil(list.length / PAGE_SIZE);
  if (currentPage > totalPages) currentPage = totalPages || 1;
  var start = (currentPage - 1) * PAGE_SIZE;
- var pageList = DATA._backendPaged ? list : list.slice(start, start + PAGE_SIZE);
+ var pageList = (DATA._backendPaged && !__sorted) ? list : list.slice(start, start + PAGE_SIZE);
 
  // P13 diff：非骨架期、后端分页、有现有卡片、非空态时只更新变化行
  var existingCards = productGrid.querySelectorAll('.product-card[data-pid]');
- var canDiff = !window.__skelPhase && DATA._backendPaged && existingCards.length > 0 &&
+ var canDiff = !window.__skelPhase && DATA._backendPaged && !__sorted && existingCards.length > 0 &&
  productGrid.querySelectorAll('.card-skeleton').length === 0 && pageList.length > 0;
  if (canDiff) {
  var existing = {};
@@ -1387,8 +1495,8 @@
  __uniPager = window.buildUniPager(pager, {
  page: currentPage,
  totalPages: totalPages,
- total: DATA._backendPaged ? (DATA.total || 0) : list.length,
- unit: '个', /* v545：与后台统一成「个」（原来这里不传，默认「条」，同一件事两个单位） */
+ total: (DATA._backendPaged && !__sorted) ? (DATA.total || 0) : list.length, /* v630 S6：排序档下总数取全量列表长度 */
+ unit: '条', /* v627 P6：资源单位统一「条」（老板 11-13 定稿：资源=条、统计=条、分类=个）；此处原写「个」，与主渲染路径默认值不一致 */
  onPage: __turnToPage
  });
  }
@@ -1437,7 +1545,7 @@
  __uniPager = window.buildUniPager(pager, { /* R234：接住 setPage 句柄，自动翻页后同步分页条状态 */
  page: currentPage,
  totalPages: totalPages,
- total: DATA._backendPaged ? (DATA.total || 0) : list.length,
+ total: (DATA._backendPaged && !__sorted) ? (DATA.total || 0) : list.length, /* v630 S6：排序档下总数取全量列表长度 */
  /* R239：翻页动作收口 __turnToPage 单点——分页条按键（onPage）走本路径 */
  onPage: __turnToPage
  });
@@ -1450,7 +1558,7 @@
  prev.onclick = function () { if (currentPage > 1) { currentPage--; renderProducts(); window.scrollTo({top:0,behavior:'smooth'}); } };
  pager.appendChild(prev);
  var info = document.createElement('span');
- info.textContent = currentPage + ' / ' + totalPages;
+ info.textContent = '第 ' + currentPage + ' 页，共 ' + totalPages + ' 页'; /* v627 P6：半角「N / M」与括号改中文句式 */
  info.style.cssText = 'color:var(--text-light);font-size: 14px;';
  pager.appendChild(info);
  var next = document.createElement('button');
@@ -1909,6 +2017,7 @@
  resourceTitle.textContent = '获取专属内容'; // v296（用户 10-04 02:14）：313 标题统一
  resourceInputRow.style.display = 'flex';
  resourceDirectRow.style.display = 'none';
+ if (document.getElementById('resourceCodeHint')) document.getElementById('resourceCodeHint').style.display = 'block';
  resourceInput.value = '';
  if (_cached) resourceInput.placeholder = '本设备已解锁过，直接点解锁即可';
  } else {
@@ -1916,6 +2025,7 @@
  resourceTitle.textContent = '获取专属内容'; // v296（用户 10-04 02:14）：313 标题统一
  resourceInputRow.style.display = 'none';
  resourceDirectRow.style.display = 'block';
+ if (document.getElementById('resourceCodeHint')) document.getElementById('resourceCodeHint').style.display = 'none';
  }
 
  /* v434（老板拍板）：撤除 R92 宽松模式「打开弹窗即静默解锁」+ 撤除缓存命中自动展开——
@@ -2044,7 +2154,7 @@
  // R13：补传跳转键文案（同顶栏，恢复被漏参数隐藏的跳转键）
  // v385 条11：专属客服二维码优先（类型→资源→平台设置），没有则回退平台设置信息
  var _qr = (currentVariant && currentVariant.contactQr) || (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
- if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); }
+ if (window.openContactModal) { window.openContactModal(url, _qr, null, '去咨询', { green: true }); } else { window.openContactFallback(url, { green: true }); }
  };
  } else {
  btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); }; // R213 P1-1（质检 R212）：原误写未定义的 toast()，客服链接清空场景必抛 ReferenceError
@@ -2393,7 +2503,7 @@
  }, { passive: true });
  }
 
- btnCloseModal.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
+ if (btnCloseModal) btnCloseModal.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
  modalCloseX.addEventListener('click', closeModalDiscard); // R112：×/关闭=丢弃草稿
  modalMask.addEventListener('click', function (e) {
  if (e.target === modalMask) closeModalStash(); // R257（老板 09-23 19:08）：点外=暂存资源码草稿（重开同资源同类型回填）；×/关闭=丢弃；R217 恢复的历史保留
@@ -2641,7 +2751,7 @@
  // R20：点击后按钮保持激活白底（与管理页退出一致：弹窗未关闭期间按键呈白色），弹窗关闭后自动恢复
  topContactBtn.classList.add('active');
  // R13：补传第 4 参（跳转键文案）——引入公共客服弹窗时漏传导致跳转键被隐藏，旧版本来有，恢复
- if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); } }
+ if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '去咨询', { green: true }); } else { window.openContactFallback(url, { green: true }); } }
  else showToast('暂未设置客服链接', 'info');
  });
 

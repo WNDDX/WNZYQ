@@ -449,6 +449,8 @@ function renderProducts() {
  return true;
  });
  }
+ /* v626 C3：留存「当前筛选下的总数」——批量条「共 M 条」直接取这个值，与分页条同口径 */
+ state._viewTotal = state._backendPaged ? (state.total || list.length) : list.length;
  /* R230：骨架期空态不抢跑（对齐资源页 renderProducts 口径）——数据在路上时保持灰行 */
  if (window.__adminSkelP && !list.length) { empty.classList.remove('show'); return; }
  if (!__reuse) box.innerHTML = '';
@@ -694,7 +696,10 @@ function renderProducts() {
  delBtn.setAttribute('data-perm', 'products.del');
  delBtn.title = '删除'; /* v395-5：同 editBtn——补 title 供纯图标态悬停/读屏 */
  if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6); /* v330 条18：删除优先级最低，先收成纯图标 */
- delBtn.addEventListener('click', function () { delProduct(p.id); });
+ delBtn.addEventListener('click', function () {
+ /* v626 C2（QA 实测漏改）：行内单条删除之前直接乐观删、只给 10 秒撤销；改成与批量一致，先确认。 */
+ showConfirm('删除资源', '删除后可到回收站点找回', function (closeConfirm) { closeConfirm(); delProduct(p.id); });
+ });
  // R126（用户定稿 15:21）：资源码改为下拉选项查看框（复用全站 select-picker 下拉组件，
  // 与显示/隐藏下拉同款结构）——点开展示该资源各类型的资源码（无码显示"无资源码"），点码即复制。
  // R139（用户定稿）：下拉内码/无码项按键化，与编辑弹窗类型列表 codeBtn/noCodeBtn 完全同款（row-btn）
@@ -903,7 +908,7 @@ function renderProducts() {
  page: adminPage,
  totalPages: totalPages,
  total: state._backendPaged ? (state.total || list.length) : list.length, /* v327：后端分页时用接口返回的真实总数（list.length 只是当前页条数，永远 ≤ 页容量，「共 N 件」一直显示不准） */
- unit: '个', /* v545：全站资源单位是「个」，这里原来写「件」（分页显示"共26件"） */
+ unit: '条', /* v627 P6：资源单位统一「条」（老板 11-13 定稿：资源=条、统计=条、分类=个），此处原写「个」 */
  /* R239：翻页动作收口 __adminTurnPage 单点——分页条按键（onPage）走本路径 */
  onPage: __adminTurnPage
  });
@@ -916,7 +921,7 @@ function renderProducts() {
  prev.onclick = function () { if (adminPage > 1) { adminPage--; if (state._backendPaged) loadProducts(); else renderProducts(); } };
  pager.appendChild(prev);
  var info = document.createElement('span');
- info.textContent = adminPage + ' / ' + totalPages + '（共' + (state._backendPaged ? (state.total || list.length) : list.length) + '件）'; /* v327：同上——后端分页用真实总数 */
+ info.textContent = '第 ' + adminPage + ' 页，共 ' + totalPages + ' 页，' + (state._backendPaged ? (state.total || list.length) : list.length) + ' 条'; /* v627 P6：半角「N / M（共X件）」改中文句式；单位按老板定稿改「条」（资源=条、统计=条、分类=个） */
  info.style.cssText = 'color:var(--text-light,#666);font-size: 14px;';
  pager.appendChild(info);
  var next = document.createElement('button');
@@ -1024,14 +1029,32 @@ function renderProducts() {
  });
  }
 
- // 更新批量操作栏状态
- function updateBatchBar() {
+// 更新批量操作栏状态
+function updateBatchBar() {
  var checks = document.querySelectorAll('.row-check:checked');
  var count = checks.length;
  var bar = document.getElementById('batchBar');
  var countEl = document.getElementById('batchCount');
  var selectAll = document.getElementById('selectAll');
+ /* v626 C1（老板 11-13）：批量条原来挂在 .toolbar 里，sticky 会被 .toolbar 自身的高度困住，
+ 滚到列表中部就跟着工具栏一起走掉。这里把它挪到列表容器下（同级、紧挨 #productList 之前），
+ 视觉位置不变，但包含块变成整块列表面板，吸顶才能一直生效。已挪过就不重复挪。 */
+ try {
+ var _pl = document.getElementById('productList');
+ if (bar && _pl && _pl.parentNode && bar.parentNode !== _pl.parentNode) {
+ _pl.parentNode.insertBefore(bar, _pl);
+ }
+ } catch (e1) { if (window.__silent) window.__silent(e1); }
  countEl.textContent = count;
+ /* v626 C3（老板 11-13）：批量条文案改为「已选 N 条（本页）／共 M 条」——
+ M 取当前筛选下的真实总数（renderProducts 里算好的 state._viewTotal，与分页条「共 N 件」同口径），
+ 只显示、不做跨页选中。 */
+ var totalEl = document.getElementById('batchTotal');
+ if (totalEl) {
+ totalEl.textContent = (typeof state._viewTotal === 'number')
+ ? state._viewTotal
+ : (state._backendPaged ? (state.total || (state.products || []).length) : (state.products || []).length);
+ }
  window.__setBatchBar(bar, count > 0); /* v370 条2：精确高度平滑展开，把下方列表缓缓推下 */
  try { window.__btnFit && window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); } /* v336 条145：批量条显示后补跑按钮瘦身（显示前宽度为 0 会跳过） */
  var allChecks = document.querySelectorAll('.row-check');
@@ -1154,8 +1177,9 @@ function renderProducts() {
  });
  };
  __bDone(action); /* v349：已派发即解除防重 */
- if (ids.length > 10) showConfirm(actionNames[action], msgs[action], function (closeConfirm) { closeConfirm(); _runDelete(); });
- else _runDelete();
+ /* v626 C2（老板 11-13）：删除一律先确认——原「超过 10 条才确认，10 条以内直接删」的条数判断已去掉，
+ 处置一律 showConfirm（文案沿用上方 msgs.delete，未改措辞）。 */
+ showConfirm(actionNames[action], msgs[action], function (closeConfirm) { closeConfirm(); _runDelete(); });
  return;
  }
 

@@ -19,6 +19,8 @@
  * 安全：这是个「只代理图片」的开放代理——非图片内容一律 415，
  * 超过 5MB 一律 413，避免被拿去当通用翻墙/图床。
  */
+import { rateLimit } from '../_utils.js'; /* v626 D2：公开接口挂 IP 级限流，防被当免费图床刷爆 */
+
 export async function onRequestGet(context) {
   const { request } = context;
   const u = new URL(request.url).searchParams.get('u') || '';
@@ -38,6 +40,11 @@ export async function onRequestGet(context) {
   const cache = caches.default;
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
+
+  /* v626 D2（老板 11-13）：公开接口挂 IP 级限流——60 次/分钟/IP，超限直接 429（与 unlock.js 同一套 rateLimit）。
+     放在缓存命中之后：30 天强缓存的命中不占配额，只有真正回源的请求计数，
+     避免首页一屏十来张代理图把访客自己的配额刷满（那会把正常访客的图打成空白）。 */
+  if (!rateLimit(request, 'imgprox', 60)) return new Response('', { status: 429 });
 
   let upstream;
   try {

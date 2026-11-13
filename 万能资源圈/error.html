@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>万能资源圈・错误</title>
+<title>万能资源圈，错误</title>
 <meta name="description" content="万能资源圈错误提示页。">
 <!-- v295（用户 10-04 02:52）：分享 meta 补齐——与资源页统一描述+logo -->
-<meta property="og:title" content="万能资源圈・错误">
+<meta property="og:title" content="万能资源圈，错误">
 <meta property="og:description" content="优质资源聚合平台">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="万能资源圈">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="万能资源圈・错误">
+<meta name="twitter:title" content="万能资源圈，错误">
 <meta name="twitter:description" content="优质资源聚合平台">
 <meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
 <meta name="robots" content="noindex,nofollow">
@@ -68,13 +68,17 @@ body{margin:0;font-family:"Microsoft YaHei",system-ui,sans-serif;background:#f2f
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;font-family:"Microsoft YaHei",system-ui,sans-serif;} /* v404 条1：四页字体栈统一 */
 *,*::before,*::after{min-width:0;}img,video,svg{max-width:100%;}table{max-width:100%;}
 body{background:var(--grad-brand);min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 20px var(--page-bottom-gap,24px); /* v293（用户 10-04 02:14）：070顶部留白20→24px→跟导航页统一 *//*R229(用户 09-21 19:44):底部留白全站统一,原20→24*/}
-.box{text-align:center;color:#fff;max-width:400px;}
-.code{font-size:36px;font-weight:600;letter-spacing:var(--ls-head,1.2px);opacity:0.95;margin:0 0 24px;line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中 */}
-.title{font-size:24px;font-weight:600;margin-bottom:12px;}
+.box{text-align:center;color:#12324F;max-width:400px;} /* v627 P1：白字在浅蓝渐变上实测 2.00:1～2.21:1，改深海军蓝后同一位置 5.3:1～6.6:1（背景主视觉不变） */
+.code{font-size:28px;font-weight:600;letter-spacing:var(--ls-head,1.2px);opacity:0.95;margin:0 0 24px;line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* v627 P2：36px 越出五档，收进「数」档 28 *//* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中 */}
+.title{font-size:18px;font-weight:600;margin-bottom:12px;} /* v627 P2：24px 越出五档，收进「大」档 18 */
 .desc{font-size:14px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1976D2;border-radius: 10px; text-decoration:none;font-size:16px; /* v293（用户 10-04 02:14）：017错误页按钮圆角999→10px→跟全站普通按钮统一 */font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow: var(--shadow-pop);} /* R231 条7：放大式并入微亮+浮起 */
 .btn:active{transform:scale(0.94);} /* R231 条7：按下缩下去（全站统一） */
+/* v626 B3：次要文字键（导航页）——透明底白字、不加下划线，只保留可点区域 */
+.btn.btn-text{background:transparent;color:#12324F;font-weight:400;font-size:14px;padding:10px 6px;opacity:.9;} /* v627 P1：次要键原先白字，在浅蓝上同样不可读，与说明文字一起改深 */
+.btn.btn-text:hover{transform:none;box-shadow:none;filter:none;background:transparent;opacity:1;}
+.btn.btn-text:active{transform:none;}
 .err-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;} /* v400 条10：底部跳转键弹性布局+统一间距（原各键内联 margin-left:14px） */
 /* v333 修：下面这条原本用 JS 的 // 注释，CSS 遇 // 会丢弃到下一个分号，连 text-decoration 一起吞掉（错误页 logo 少了这行样式） */
 /* v310（用户 10-05 14:25）：差异→统一口径。A1+A4 logo 边框+阴影统一 */
@@ -90,11 +94,11 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 /* R285 条48：prtspin 已删——统一走 ui-common.css btnSpin */
 /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
 @media (max-width: 600px) {
- .title { font-size: 20px; }
+ .title { font-size: 18px; } /* v627 P2：20→18 收进五档 */
  .desc { font-size: 14px; }
  .logo { width: 80px; height: 80px; margin-bottom: 20px; }
  /* v350 条8：原同一规则写了两遍（前一份少 margin-bottom），合并为一条 */
- .code { font-size: 26px; padding-left: 2.4px; margin-bottom: 20px; } /* R33：移动端同步对称 */
+ .code { font-size: 28px; padding-left: 2.4px; margin-bottom: 20px; } /* v627 P2：26→28 收进五档 *//* R33：移动端同步对称 */
  .box { max-width: 100%; }
  .btn { padding: 10px 26px; font-size:14px; }
 }
@@ -105,13 +109,13 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 <body><a class="skip-link" href="#mainContent">跳到主要内容</a>
 <div class="box" id="mainContent" role="main"><!-- v346 条70/67：skip-link 目标 + 主区语义 -->
  <div class="logo"><!-- R51：logo 去掉链接纯展示（跳转由下方「导航页」按钮承担） --><img id="errLogo" alt="万能资源圈" decoding="async" style="opacity:0" onload="this.style.opacity='1';var p=this.parentNode;p.style.opacity='1';if(p&&!p.classList.contains('logo-enter'))p.classList.add('logo-enter');"></div>
- <div class="code" id="errorCode" role="heading" aria-level="1">万能资源圈・错误</div>
- <div class="title" id="errorTitle">页面访问异常</div>
- <div class="desc" id="errorDesc">抱歉！你访问的页面出现了问题<br><ul class="err-reasons"><li>①地址有误</li><li>②页面已删除</li><li>③服务暂不可用</li></ul>可点击【导航页】或【资源页】继续浏览</div>
+ <div class="code" id="errorCode" role="heading" aria-level="1">万能资源圈，错误</div>
+ <div class="title" id="errorTitle">页面不存在</div>
+ <div class="desc" id="errorDesc">地址有误或已删除</div><!-- v626 B3：只留一句副句，①②③ 三行原因与感叹号已删 -->
 <div class="err-actions"><!-- v400 条10：按钮间距由内联 margin-left:14px 改弹性布局统一 gap（窄窗口不挤压变形；隐藏键不留空隙，行为与原先一致） -->
- <a href="index" class="btn" id="errBack" aria-label="返回导航页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">导航页</a>
- <!-- R50：右按钮「资源页」样式完全复用左侧导航页按钮（白底蓝字+同款hover），仅保留间距 -->
- <a href="shop" class="btn" id="errShop" aria-label="前往资源页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">资源页</a>
+ <!-- v626 B3：主键只有一个「回资源页」；导航页降为次要文字键 -->
+ <a href="shop" class="btn" id="errShop" aria-label="前往资源页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">回资源页</a>
+ <a href="index" class="btn btn-text" id="errBack" aria-label="返回导航页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">导航页</a>
  <a href="javascript:;" class="btn" id="errReload" aria-label="重新加载" style="display:none;" onclick="location.reload()">重新加载</a>
  <a href="admin" class="btn" id="errLogin" aria-label="去登录" style="display:none;" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">去登录</a>
 </div>
@@ -136,7 +140,7 @@ var errorMap = {
  '400': { title: '请求错误', desc: '你的请求格式不正确，请重试' },
  '401': { title: '未授权访问', desc: '你没有权限访问此页面，请先登录' },
  '403': { title: '禁止访问', desc: '服务器拒绝了你的访问请求' },
- '404': { title: '页面访问异常', desc: '抱歉！你访问的页面出现了问题<br><ul class="err-reasons"><li>①地址有误</li><li>②页面已删除</li><li>③服务暂不可用</li></ul>可点击【导航页】或【资源页】继续浏览' },
+ '404': { title: '页面不存在', desc: '地址有误或已删除' }, /* v626 B3：404 压到标题 + 一句副句，删掉 ①②③ 原因与感叹号 */
  '500': { title: '服务器错误', desc: '服务器内部出现错误，请重试' },
  '502': { title: '网关错误', desc: '服务器暂时不可用，请重试' },
  '503': { title: '服务不可用', desc: '服务器正在维护中，请重试' }
@@ -145,7 +149,7 @@ var errorMap = {
 // 任何错误都只显示通用内容，客户无法区分是地址错了还是服务器坏了）
 if (code && errorMap[code]) {
  var info = errorMap[code];
- /* R19：不再显示错误码数字——所有错误都统一导向本错误页，大字固定「万能资源圈・错误」；错误标题和说明保留 */
+ /* R19：不再显示错误码数字——所有错误都统一导向本错误页，大字固定「万能资源圈，错误」；错误标题和说明保留 */
  document.getElementById('errorTitle').textContent = info.title;
  document.getElementById('errorDesc').innerHTML = info.desc;
  /* v336 条169：错误页从终点变中转站——服务器类错误给“重新加载”，登录过期给“去登录” */

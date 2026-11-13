@@ -12,13 +12,15 @@
  * R169（用户定稿）：①的去重口径同步到全部埋点类型——view / contact / resource_unlock
  * 统一按「同一设备（IP）+ 同一资源 + 同一类型」1 小时窗口去重（同一设备同一点击 1 小时内只算一次）。
  */
-import { json, readJSON, getCookie, getAuthAdmin } from '../_utils.js';
+import { json, readJSON, getCookie, getAuthAdmin, rateLimit } from '../_utils.js';
 
 // 允许的埋点类型白名单：不认识的类型一律按 'view' 记录
 const VALID_TRACK_TYPES = ['view', 'contact', 'resource_unlock', 'ann_read']; /* v439 #118：公告阅读 */
 
 export async function onRequestPost(context) {
   const { env, request } = context;
+  /* v626 D2（老板 11-13）：公开埋点限流 60 次/分钟/IP，超限对访客静默丢弃（返回 ok，不打扰页面） */
+  if (!rateLimit(request, 'track', 60)) return json({ ok: true });
   const body = await readJSON(request);
   const pid = Number(body.product_id);
   const type = VALID_TRACK_TYPES.indexOf(body.type) !== -1 ? body.type : 'view';

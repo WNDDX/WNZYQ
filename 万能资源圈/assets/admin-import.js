@@ -2273,7 +2273,7 @@
  back();
  if (window.showToast) window.showToast(d.truncated
  ? '日志太多，只导出了最近 ' + (rows.length - 1) + ' 条；更早的请把时间范围改小再导'
- : '已导出 ' + (rows.length - 1) + ' 条（' + RANGE_TXT[days] + (who ? '・' + who : '') + '）', d.truncated ? 'info' : 'success');
+ : '已导出 ' + (rows.length - 1) + ' 条（' + RANGE_TXT[days] + (who ? '，' + who : '') + '）', d.truncated ? 'info' : 'success'); /* v627 P3：中点符号改中文逗号（规范 16.12 第 6 条） */
  })
  .catch(function (e) { back(); if (window.showToast) window.showToast('导出失败：' + (e.message || '请重试'), 'error'); });
  });
@@ -2298,7 +2298,7 @@
  '<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份表格</button></div>' +
  '<label for="rsConfirm">输入「清空」两个字确认</label>' +
  '<input class="input" id="rsConfirm" type="text" autocomplete="off" placeholder="清空" aria-label="输入清空二字以确认">' +
- '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="rsGo" disabled>确认清空</button>' +
+ '<div class="modal-footer"><button type="button" class="modal-inner-btn danger-solid" id="rsGo" disabled>确认清空</button>' + /* v630 S8-3c：清空不可逆，主键用危险色（danger-solid 那套，与行内删除同一口径） */
  '<button type="button" class="modal-close" data-x="1">关闭</button></div>' +
  '</div>';
  document.body.appendChild(mask);

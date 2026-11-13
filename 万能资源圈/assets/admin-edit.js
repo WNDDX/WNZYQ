@@ -761,7 +761,7 @@ window.__linkify = function (html) {
  var isNewSave = !state.editingId; // 记录本次是否为新增（editingId 之后会被赋值）
  // R293（用户 09-30）：恢复「确定中」忙碌态——R292 撤掉，老板要求恢复并全系统排查补齐
  saveProductBtn.disabled = true;
- if (window.__btnBusy) window.__btnBusy(saveProductBtn, '确定中');
+ if (window.__btnBusy) window.__btnBusy(saveProductBtn, '保存中'); /* v630 S8-2：随主键文案同步（确定→保存） */
 
  // 修复：原先在请求发出前就提示"保存成功"并关闭弹窗——网络一旦失败，用户以为已保存，数据实际没写入。
  // 现在提示与关窗只在请求成功后发生（见下方 then 分支）。
@@ -805,6 +805,9 @@ window.__linkify = function (html) {
  }
  /* R211 二批（用户 09-20）：保存成功按钮状态链——转圈→✓（停留 400ms 让反馈可见）→收弹窗恢复；R183 条4 只有转圈无成功态 */
  if (window.__btnSuccess) window.__btnSuccess(saveProductBtn, window.T('saved'));
+ /* v626 B2（老板 11-13）：单条保存补一条轻提示——弹窗 400ms 后关闭，期间给一声「已保存」，
+ 只报结果不写解释句；批量保存的提示在批量链路里，未动，不会重复。 */
+ toast('已保存', 'success');
  setTimeout(function () { editMask.classList.remove('open'); try { if (window.__extAfterEditClose) window.__extAfterEditClose(); } catch (eRC) {} }, 400);
  if (isNewSave) { try { delete __editDrafts['new']; } catch (e) { if (window.__silent) window.__silent(e); } } // 新增成功必须清掉“新资源”草稿，避免下次新增带出旧内容
  clearDraft(); // 保存成功后清除草稿
@@ -832,12 +835,12 @@ window.__linkify = function (html) {
  refreshCatCnts();
  silentSyncProducts();
  } else {
- saveProductBtn.disabled = false; saveProductBtn.textContent = '确定';
+ saveProductBtn.disabled = false; saveProductBtn.textContent = '保存'; /* v630 S8-2：复位文案同步为「保存」 */
  toast(res.msg || '保存失败', 'error');
  }
  }).catch(function () {
  saving = false;
- saveProductBtn.disabled = false; saveProductBtn.textContent = '确定';
+ saveProductBtn.disabled = false; saveProductBtn.textContent = '保存'; /* v630 S8-2：复位文案同步为「保存」 */
  toast(window.T('netFail'), 'error'); // v294：087 网络提示统一
  });
  }

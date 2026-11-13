@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>万能资源圈・导航</title>
-<meta name="description" content="万能资源圈・导航，优质虚拟资源导航站，汇聚学习资源、软件工具、设计资源，一键获取。">
+<title>万能资源圈，导航</title>
+<meta name="description" content="万能资源圈，导航，优质虚拟资源导航站，汇聚学习资源、软件工具、设计资源，一键获取。">
 <meta name="keywords" content="万能资源圈,资源导航,虚拟资源,学习资源,软件工具">
-<meta property="og:title" content="万能资源圈・导航">
+<meta property="og:title" content="万能资源圈，导航">
 <meta property="og:description" content="优质资源聚合平台"> <!-- v295（用户 10-04 02:52）：分享描述统一→优质资源聚合平台 -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="万能资源圈">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="万能资源圈・导航">
+<meta name="twitter:title" content="万能资源圈，导航">
 <meta name="twitter:description" content="优质资源聚合平台"> <!-- v295（用户 10-04 02:52）：分享描述统一→优质资源聚合平台 -->
 <meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
  <link rel="stylesheet" href="/assets/ui-common.css">
@@ -124,7 +124,7 @@ body{
 }
 .page-title{
  color: #ffffff;
- font-size: 36px;
+ font-size: 28px; /* v627：26/36 越出字号五档，收进「大」档 28（与错误页大字同级，老板此前要求两页一致） */
  font-weight: 600 /* v336 条115 */;
  text-align: center;
  margin-bottom: 32px; /* R33：与标题上方间距对称（原44/20不均） */
@@ -143,7 +143,7 @@ body{
  justify-content: center;
  gap: 16px;
  border: none;
- font-size: 30px;
+ font-size: 18px; /* v627：30px 越出字号五档，收进「大」档 18（导航大按钮属于标题级标签，不是行内小按钮） */
  line-height: 1;
  color: #ffffff;
  font-weight: 600;
@@ -196,21 +196,21 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 @media (max-width: 600px) {
  .logo-box { width: 100px; height: 100px; }
  .logo-wrap { margin-bottom: 28px; } /* R33：移动端同步上下间距对称 */
- .page-title { font-size: 26px; margin-bottom: 28px; letter-spacing: 1.2px; text-indent: 0.4px /* v336 条127 */; }
- .btn-item { padding: 16px 18px; font-size: 20px; margin-bottom: 12px; border-radius: 10px; gap: 12px; }
+ .page-title { font-size: 28px; margin-bottom: 28px; letter-spacing: 1.2px; text-indent: 0.4px /* v336 条127 */; } /* v627：26→28 收进五档 */
+ .btn-item { padding: 16px 18px; font-size: 18px; margin-bottom: 12px; border-radius: 10px; gap: 12px; } /* v627：20→18 收进五档 */
  .icon-svg { width: 32px; height: 32px; }
  .btn-item .btn-sub { font-size: 12px; } /* v330 条30：手机档副标题同步降一档 */
  .qrcode-wrap { width: 200px; height: 200px; }
  .modal-box { padding: 20px 16px; }
- .modal-title { font-size: 20px; } /* v356 条10：手机档不再降级，全档 20px */
+ .modal-title { font-size: 18px; } /* v356 条10：手机档不再降级；v627 P2：20→18 收进五档 */
  .modal-inner-btn, .modal-close { font-size: 16px; padding: 10px 24px; }
  .modal-tip { font-size: 14px; }
 }
 @media (min-width: 601px) and (max-width: 900px) {
- .page-title { font-size: 26px; } /* v405 条2：平板档 32→26 按小版为主 */
- .btn-item { font-size: 24px; }
+ .page-title { font-size: 28px; } /* v405 条2：平板档 32→26 按小版为主；v627：26→28 收进五档 */
+ .btn-item { font-size: 18px; } /* v627：24→18 收进五档 */
 }
-.page-title { font-size: 26px; } /* v405 条2：桌面档 36→26，与错误页标题观感一致（老板拍板按小的那版为主） */
+.page-title { font-size: 28px; } /* v405 条2：桌面档 36→26，与错误页标题观感一致（老板拍板按小的那版为主）；v627：26→28 与错误页大字 28 同级 */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 </style>
  <!-- R55：搜索引擎收录策略 -->
@@ -235,7 +235,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
  </div>
  </div>
  </div>
- <h1 class="page-title" style="margin-top:0;text-shadow:0 1px 6px rgba(21,80,150,0.45);">万能资源圈・导航</h1>
+ <h1 class="page-title" style="margin-top:0;text-shadow:0 1px 6px rgba(21,80,150,0.45);">万能资源圈，导航</h1>
 
  <button class="btn-item btn-orange" onclick="openResource()">
  <!-- R232（用户 09-22 11:18）：条9 老板验收不通过，恢复原填充图标（v230 原文逐字符还原）；v327 用户拍板：恢复原四色按钮 -->
@@ -379,7 +379,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null, green
 
 //页面按钮事件
 function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
-function openService() { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服", true); } /* v415 条1：咨询客服跳转键绿（第 6 参 green）；v402 注释作废 */
+function openService() { showModal("咨询客服", CONFIG.serviceQrImg, (window.__kfTipText ? window.__kfTipText() : CONFIG.tipService), CONFIG.serviceWeixinUrl, "去咨询", true); } /* v415 条1：咨询客服跳转键绿（第 6 参 green）；v402 注释作废；v626 B4：跳转键文案统一为「去咨询」；v627 P8：提示按设备取（桌面「扫码添加客服」） */
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 // v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮
