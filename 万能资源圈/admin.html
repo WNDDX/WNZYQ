@@ -3,17 +3,17 @@
 <head>
  <meta charset="UTF-8" />
  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
- <title>万能资源圈，管理</title>
+ <title>万能资源圈・管理</title>
  <meta name="description" content="万能资源圈管理页，资源管理、分类管理、数据统计。">
  <!-- v295（用户 10-04 02:52）：分享 meta 补齐——与资源页统一描述+logo -->
- <meta property="og:title" content="万能资源圈，管理">
+ <meta property="og:title" content="万能资源圈・管理">
  <meta property="og:description" content="优质资源聚合平台">
  <meta property="og:type" content="website">
  <meta property="og:site_name" content="万能资源圈">
  <meta property="og:locale" content="zh_CN">
  <meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
  <meta name="twitter:card" content="summary">
- <meta name="twitter:title" content="万能资源圈，管理">
+ <meta name="twitter:title" content="万能资源圈・管理">
  <meta name="twitter:description" content="优质资源聚合平台">
  <meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
  <meta name="robots" content="noindex,nofollow">
@@ -66,7 +66,6 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <link rel="preload" href="/assets/admin-shell.js" as="script">
  <link rel="stylesheet" href="/assets/admin.css">
 <!-- v348 条1：此处原为第二份首屏样式（顶栏另一颜色+60px、底色 #eef3f9），与上方 critical-css 互相覆盖；已合并删除，首屏样式只剩一处 -->
- <link rel="stylesheet" href="/assets/polish.css">
 </head>
 <body><a class="skip-link" href="#mainContent">跳到主要内容</a>
  <!-- ============ 登录视图 ============ -->
@@ -77,7 +76,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <img src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src=(window.WN_MEDIA_FALLBACK||'')' />
  </div>
  </a>
- <h1>万能资源圈，管理</h1>
+ <h1>万能资源圈・管理</h1>
  <!-- R209（用户 09-19 00:34）：根因→v207 误把 label 居中+删了 placeholder 和眼睛按钮；修法→恢复 09-16 结构 -->
  <form id="loginForm" onsubmit="event.preventDefault();if(typeof doLogin==='function')doLogin();"><input id="loginUser" class="input" autocomplete="username" maxlength="50" aria-label="管理员账号" placeholder="账号" />
  <!-- R216（老板 09-21 10:24）：小眼睛垂直居中修复——原结构 input 带 margin-bottom:12px，眼睛按钮挂在 wrapper 的 top:50% 上，
@@ -98,7 +97,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <a class="topbar-logo-link" href="shop" title="回到资源首页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
  <img class="topbar-logo" src="/assets/images/logo.png" alt="" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror='this.parentNode.style.opacity="1";this.style.opacity="1";this.onerror=null;this.classList&&this.classList.add("media-fail");this.src=(window.WN_MEDIA_FALLBACK||'')' />
  </a>
- <span>万能资源圈，管理</span>
+ <span>万能资源圈・管理</span>
  </div>
  <div class="tabs" role="tablist" aria-label="管理页功能区">
  <button class="tab active" data-tab="products" role="tab" aria-selected="true" aria-label="资源管理" data-short="资源">资源管理</button>
@@ -156,7 +155,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  </div>
  <!-- v330 条18：批量条按钮同款图标化（data-pri 越小越先保留文字） -->
  <div class="batch-bar btn-fit-group" id="batchBar">
- <span class="batch-sum" id="batchSum" aria-live="polite" aria-atomic="true">已选 <b class="batch-count" id="batchCount">0</b> 条（本页）／共 <span class="batch-total" id="batchTotal">0</span> 条</span><!-- v626 C3：本页已选与总数同显，M 由 admin-list.js 按当前筛选总数回填 -->
+ 已选 <span class="batch-count" id="batchCount" aria-live="polite" aria-atomic="true">0</span> 项
  <div class="batch-group"><!-- v371 条5：批量按键=同一组，组内不拆散；v371b：显示优先序=取消选中>批量删除>改分类>改价格>批量显示>批量隐藏（放不下先藏后面的） -->
  <button class="batch-btn" data-action="online" data-pri="5">批量显示</button>
  <button class="batch-btn" data-action="offline" data-pri="6">批量隐藏</button>
@@ -672,10 +671,6 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <div class="form">
  <label for="fTitle">标题</label><input id="fTitle" maxlength="100" />
  <label>分类</label><div class="cat-picker" id="fCidPicker"><input type="hidden" id="fCid" value="0" /><div class="cat-picker-display" id="fCidDisplay"><span class="cpd-text">请选择分类</span><span class="cpd-arrow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></span></div><div class="cat-picker-panel" id="fCidPanel"></div></div>
- <!-- v630 S8-1：价格上移到首屏——原来排在「详细描述 + 资源类型」之后（距弹窗顶 880px），
- 要内滚才看得见；标题、分类、价格三件事本就该同屏看完。字段本身与后台数据口径未变。 -->
- <label for="fPrice">价格</label>
- <input id="fPrice" type="number" step="0.01" min="0" inputmode="decimal" />
  <!-- R256：封面多图轮播——横排小图列表 -->
  <label>资源封面图 </label>
  <div class="cover-gallery" id="coverGallery"></div>
@@ -753,7 +748,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  </h4>
  <div id="variantList"></div>
  </div>
- <!-- v630 S8-1：价格字段已上移到「分类」之后（首屏可见），此处不再重复 -->
+ <label for="fPrice">价格</label>
+ <input id="fPrice" type="number" step="0.01" min="0" inputmode="decimal" />
  <!-- v385 条11：专属咨询客服——整套 UI 搬运设置信息行（绿键+三角+二维码上传/网络图/跳转链接/保存/收起），未设置默认用平台设置 -->
  <div class="info-item ed-contact" id="edContactItem">
  <div class="info-row-bar">
@@ -796,8 +792,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  </div>
  <div class="modal-footer">
  <button class="preview-btn" id="previewProductBtn">预览效果</button>
- <button class="modal-inner-btn" id="saveProductBtn">保存</button><!-- v630 S8-2：底部主键「确定」改「保存」——它做的事就是保存，不必让老板猜 -->
- <button class="modal-close" id="editCancel">关闭</button><!-- v630 S8-3：关闭改灰（红色=危险，关闭不是危险动作），颜色在 polish.css 里按 #editMask 收口 -->
+ <button class="modal-inner-btn" id="saveProductBtn">确定</button>
+ <button class="modal-close" id="editCancel">关闭</button>
  </div>
  </div>
  </div>

@@ -409,8 +409,8 @@ function renderShopInfo() {
 var cfg = (typeof SHOP_CONFIG !== 'undefined') ? SHOP_CONFIG : null;
 var name = DATA.shopName || (cfg && cfg.shopName) || '';
 var isDefault = !name || name === '万能资源圈';
-shopNameEl.textContent = isDefault ? '万能资源圈，资源' : name;
-document.title = (isDefault ? '万能资源圈' : name) + '，资源';
+shopNameEl.textContent = isDefault ? '万能资源圈・资源' : name;
+document.title = (isDefault ? '万能资源圈' : name) + '・资源';
 }
 function closeAnnModal() {
 var m = document.getElementById('annModal'); if (m) m.classList.remove('open');
@@ -781,6 +781,8 @@ var PAGE_SIZE = 20;
 var __pendingSearchOpts = null;
 var SORT_DEF = 'def';
 var SORT_PRICE = 'price';
+var SORT_PRICE_DESC = 'price_desc';
+var SORT_NEWEST = 'newest';
 var SORT_FREE = 'free';
 var sortMode = SORT_DEF;
 var __sortCache = null;
@@ -798,6 +800,17 @@ var arr = (list || []).slice();
 var priceOf = function (p) { var n = Number(p && p.price); return isFinite(n) ? n : 0; };
 if (sortMode === SORT_PRICE) {
 arr.sort(function (a, b) { return priceOf(a) - priceOf(b); });
+} else if (sortMode === SORT_PRICE_DESC) {
+arr.sort(function (a, b) { return priceOf(b) - priceOf(a); });
+} else if (sortMode === SORT_NEWEST) {
+arr.sort(function (a, b) {
+var ta = String(a.updated_at || a.created_at || '');
+var tb = String(b.updated_at || b.created_at || '');
+if (!ta && !tb) return 0;
+if (!ta) return 1;
+if (!tb) return -1;
+return tb.localeCompare(ta);
+});
 } else if (sortMode === SORT_FREE) {
 arr.sort(function (a, b) { return (priceOf(a) > 0 ? 1 : 0) - (priceOf(b) > 0 ? 1 : 0); });
 }
@@ -836,7 +849,7 @@ if (__sortCache && __sortCache.key === __sortKey() && !__sortCache.list) return;
 __sortFetch().then(function (list) { if (list && __sortActive()) renderProducts(); });
 }
 function __applySortMode(mode) {
-var m = (mode === SORT_PRICE || mode === SORT_FREE) ? mode : SORT_DEF;
+var m = (mode === SORT_PRICE || mode === SORT_PRICE_DESC || mode === SORT_NEWEST || mode === SORT_FREE) ? mode : SORT_DEF;
 sortMode = m;
 currentPage = 1;
 if (m === SORT_DEF) {

@@ -3,17 +3,17 @@
 <head>
  <meta charset="UTF-8" />
  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
- <title>万能资源圈，资源</title>
+ <title>万能资源圈・资源</title>
  <meta name="description" content="万能资源圈资源页，汇聚软件工具、在线课程、电子书、游戏点卡、AI 工具等虚拟资源，官方正版，购买后自动发货，附安装与使用说明。">
  <meta name="keywords" content="万能资源圈,资源导航,虚拟资源,学习资源,软件工具">
- <meta property="og:title" content="万能资源圈，资源">
+ <meta property="og:title" content="万能资源圈・资源">
  <meta property="og:description" content="优质资源聚合平台">
  <meta property="og:type" content="website">
  <meta property="og:site_name" content="万能资源圈">
  <meta property="og:locale" content="zh_CN">
  <meta property="og:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
  <meta name="twitter:card" content="summary">
- <meta name="twitter:title" content="万能资源圈，资源">
+ <meta name="twitter:title" content="万能资源圈・资源">
  <meta name="twitter:description" content="优质资源聚合平台">
  <meta name="twitter:image" content="https://wnzyq.pages.dev/assets/images/logo.png">
  <!-- 注：favicon.ico 文件保留（标准文件名兜底，书签/收藏直接请求 /favicon.ico 的场景） -->
@@ -77,7 +77,6 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 {"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"万能资源圈","inLanguage":"zh-CN","potentialAction":{"@type":"SearchAction","target":"/shop.html?kw={search_term_string}","query-input":"required name=search_term_string"}},{"@type":"Organization","name":"万能资源圈","url":"https://wnzyq.pages.dev/","logo":"https://wnzyq.pages.dev/assets/images/logo.png"}]}
 </script>
 <!-- v348 条1：此处原为第二份首屏样式（顶栏另一颜色+60px、底色 #eef3f9），与上方 critical-css 互相覆盖；已合并删除，首屏样式只剩一处 -->
- <link rel="stylesheet" href="/assets/polish.css">
 </head>
 
 <body><a class="skip-link" href="#productGrid">跳到主要内容</a><!-- v346 条70：跳到主内容区（本页主内容是资源网格 #productGrid） -->
@@ -90,10 +89,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <a class="shop-logo-link" href="admin" title="进入管理页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
  <img class="shop-logo" id="shopLogo" src="/assets/images/logo.png" alt="Logo" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror="window.__logoFail&&window.__logoFail(this)" />
  </a>
- <!-- v631e：原来是 div + role="heading" aria-level="1"——读屏软件认，但搜索引擎和结构化解析不认。
-      换成真 h1，样式仍由 .shop-name 控制（class 特异性高于元素选择器，视觉不变）。
-      role/aria-level 一并删掉，h1 自带语义，留着反而是冗余声明。 -->
- <h1 class="shop-name" id="shopName">万能资源圈，资源</h1>
+ <div class="shop-name" id="shopName" role="heading" aria-level="1">万能资源圈・资源</div>
  </div>
  <div class="tb-group-a"></div><div class="tb-group-b" hidden></div><div class="topbar-actions">
  <button class="tab" id="topContact" title="咨询客服">
@@ -150,17 +146,6 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <button class="cat-toggle" id="catToggle" title="展开/收起分类" aria-label="展开或收起分类">
  <svg aria-hidden="true" class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
  </button>
- <!-- v630 S6：分类条右侧排序——默认 / 低价优先 / 免费优先（文案均不超过 4 字）。
- 纯前端排序：切档后列表立即重排并回到第 1 页，接口不加参数。 -->
- <div class="sort-pill-wrap" title="列表排序">
- <span class="sort-pill-ico" aria-hidden="true">⇅</span>
- <select class="sort-pill" id="sortSelect" aria-label="列表排序">
- <option value="def">默认</option>
- <option value="price">低价优先</option>
- <option value="free">免费优先</option>
- </select>
- <span class="sort-pill-arrow" aria-hidden="true"></span>
- </div>
  </div>
 
  <!-- ============ 二级分类栏（选中一级分类且有子分类时显示） ============ -->
@@ -169,6 +154,18 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <button class="sub-cat-toggle" id="subCatToggle" title="展开/收起二级分类" aria-label="展开或收起二级分类">
  <svg aria-hidden="true" class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
  </button>
+ </div>
+
+ <!-- v631j：列表排序（原生下拉，与后台筛选栏同款；老板 02:17 要求选项做全） -->
+ <div class="sort-bar">
+ <label class="sort-bar-label" for="sortSelect">排序</label>
+ <select class="sort-bar-sel" id="sortSelect" aria-label="列表排序">
+ <option value="def">默认排序</option>
+ <option value="price">价格从低到高</option>
+ <option value="price_desc">价格从高到低</option>
+ <option value="newest">最新上架</option>
+ <option value="free">免费优先</option>
+ </select>
  </div>
 
  <!-- ============ 平台公告弹窗（管理页可编辑，富文本，支持多条公告小项切换） ============ -->
@@ -272,20 +269,20 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <!-- R243 条21：资源码固定 8 位（R96 生成口径），输入框限 8 位——maxlength 属性 + shop.js input 截断双保险（粘贴超长串只留前 8 位） -->
  <div class="resource-code-input-row" id="resourceCodeInputRow">
  <input type="text" class="resource-code-input" id="resourceCodeInput" maxlength="8" aria-label="输入资源码解锁" autocomplete="one-time-code" enterkeyhint="go" />
- <button class="resource-code-btn" id="resourceCodeBtn">验证</button>
+ <button class="resource-code-btn" id="resourceCodeBtn">解锁</button>
  </div>
- <div class="resource-code-hint" id="resourceCodeHint">找客服领取</div>
  <!-- 无资源码时：直接查看按钮 -->
  <div class="resource-direct-row" id="resourceDirectRow" style="display:none">
- <button class="resource-code-btn" id="resourceDirectBtn" style="width:100%">查看</button>
+ <button class="resource-code-btn" id="resourceDirectBtn" style="width:100%">获取专属内容</button>
  </div>
  <div class="resource-code-error alert-err" id="resourceCodeError" style="display:none">资源码错误，请重试</div>
  <!-- R244（用户 09-23 12:25）：解锁失败红字已含客服引导，灰色小字重复且颜色不统一，整套移除，只保留红色错误一行 -->
  <div class="resource-content" id="resourceContent" style="display:none"></div>
  </div>
  </div>
- <div class="modal-footer"><!-- v627：关掉重复的「关闭」——右上角 × 、遮罩、Esc 三条路都能关，页脚只留主操作 -->
+ <div class="modal-footer">
  <button class="btn-contact" id="btnContact">咨询客服</button>
+ <button class="btn-close-modal" id="btnCloseModal">关闭</button>
  </div>
  </div>
  </div>
