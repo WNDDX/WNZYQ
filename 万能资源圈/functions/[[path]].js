@@ -22,6 +22,9 @@ const SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
   'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+  /* v631b：_headers 里一直写着 Permissions-Policy，但那份文件只对静态资源生效——页面是经本函数返回的，
+     所以浏览器从来没收到过这条（实测响应头里没有）。摄像头/麦克风/定位/支付/USB 全站都用不到，直接关掉。 */
+  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 };
 const HTML_HEADERS = { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache, must-revalidate', ...SECURITY_HEADERS };
 

@@ -2442,6 +2442,7 @@ window.__lastFetchTime = Date.now();
 if (!window.__shopPainted && !(DATA.products || []).length && !opts.force) {
 return loadShopHome({ force: true });
 }
+if ((DATA.products || []).length) checkSharePid(true);
 return;
 }
 if (!res.ok) { __failFinish(); return; }
