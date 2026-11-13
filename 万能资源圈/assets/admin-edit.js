@@ -670,12 +670,12 @@ if (_fr) { _fr.classList.add('row-flash'); setTimeout(function () { _fr.classLis
 refreshCatCnts();
 silentSyncProducts();
 } else {
-saveProductBtn.disabled = false; saveProductBtn.textContent = '保存';
+saveProductBtn.disabled = false; saveProductBtn.textContent = '确定';
 toast(res.msg || '保存失败', 'error');
 }
 }).catch(function () {
 saving = false;
-saveProductBtn.disabled = false; saveProductBtn.textContent = '保存';
+saveProductBtn.disabled = false; saveProductBtn.textContent = '确定';
 toast(window.T('netFail'), 'error');
 });
 }
