@@ -153,13 +153,13 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <!-- v630 S6：分类条右侧排序——默认 / 低价优先 / 免费优先（文案均不超过 4 字）。
  纯前端排序：切档后列表立即重排并回到第 1 页，接口不加参数。 -->
  <div class="sort-pill-wrap" title="列表排序">
- <svg class="sort-pill-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v13m0 0l-3-3m3 3l3-3M17 20V7m0 0l-3 3m3-3l3 3"/></svg>
+ <span class="sort-pill-ico" aria-hidden="true">⇅</span>
  <select class="sort-pill" id="sortSelect" aria-label="列表排序">
  <option value="def">默认</option>
  <option value="price">低价优先</option>
  <option value="free">免费优先</option>
  </select>
- <svg class="sort-pill-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>
+ <span class="sort-pill-arrow" aria-hidden="true"></span>
  </div>
  </div>
 
