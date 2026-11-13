@@ -143,7 +143,8 @@ body{
  justify-content: center;
  gap: 16px;
  border: none;
- font-size: 18px; /* v627：30px 越出字号五档，收进「大」档 18（导航大按钮属于标题级标签，不是行内小按钮） */
+ font-size: 28px; /* v631f：18px 时白字压品牌色底只有 3.07~4.09:1（需 4.5），而 18px 又够不上 WCAG 的大字豁免；
+   28px 是五档里的「大字」档（需 3:1），橙 3.07 / 绿 3.17 / 青 4.09 / 蓝 4.60 全部达标，也更接近老板原来的 30px */
  line-height: 1;
  color: #ffffff;
  font-weight: 600;
@@ -197,7 +198,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
  .logo-box { width: 100px; height: 100px; }
  .logo-wrap { margin-bottom: 28px; } /* R33：移动端同步上下间距对称 */
  .page-title { font-size: 28px; margin-bottom: 28px; letter-spacing: 1.2px; text-indent: 0.4px /* v336 条127 */; } /* v627：26→28 收进五档 */
- .btn-item { padding: 16px 18px; font-size: 18px; margin-bottom: 12px; border-radius: 10px; gap: 12px; } /* v627：20→18 收进五档 */
+ .btn-item { padding: 16px 18px; font-size: 28px; margin-bottom: 12px; border-radius: 10px; gap: 12px; } /* v631f：同基础档，18→28 走大字豁免 */
  .icon-svg { width: 32px; height: 32px; }
  .btn-item .btn-sub { font-size: 12px; } /* v330 条30：手机档副标题同步降一档 */
  .qrcode-wrap { width: 200px; height: 200px; }
@@ -208,7 +209,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 }
 @media (min-width: 601px) and (max-width: 900px) {
  .page-title { font-size: 28px; } /* v405 条2：平板档 32→26 按小版为主；v627：26→28 收进五档 */
- .btn-item { font-size: 18px; } /* v627：24→18 收进五档 */
+ .btn-item { font-size: 28px; } /* v631f：18→28 同基础档 */
 }
 .page-title { font-size: 28px; } /* v405 条2：桌面档 36→26，与错误页标题观感一致（老板拍板按小的那版为主）；v627：26→28 与错误页大字 28 同级 */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
