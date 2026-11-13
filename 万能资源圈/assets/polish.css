@@ -5,15 +5,13 @@
    ========================================================================== */
 
 :root{
-  /* 字号阶梯：只许用这五档 */
-  --fs-xs:12px;   /* 说明、辅助 */
-  --fs-md:14px;   /* 正文、按钮 */
+  /* v631（审计 D5）：原来这里写了五个字号令牌，其中 --fs-xs / --fs-md / --fs-num 引用数为 0，
+     --grey-1 也是 0 —— 留着会让人误以为全站字阶已经走令牌收敛（实际仍是直接写值）。
+     删掉零引用的四个，只留有实际引用的；字阶的真实约束是「只许 12/14/16/18/28 五档」这条规则本身。 */
   --fs-lg:16px;   /* 小标题、品牌 */
   --fs-xl:18px;   /* 价格、弹窗标题 */
-  --fs-num:28px;  /* 数字卡 */
 
-  /* 灰字两档：说明灰 / 弱化灰 */
-  --grey-1:#666666;
+  /* 灰字两档：说明灰 / 弱化灰（--grey-2 在用；--grey-1 与 --text-light 同值已删） */
   --grey-2:#5E7080;
 }
 
@@ -408,3 +406,39 @@ html[data-theme="dark"] .view-toggle .view-btn.active{
   .category-bar-wrap .category-bar{ padding-right:116px; }
   .category-bar-wrap::before{ width:152px; }
 }
+
+/* ==========================================================================
+   v631 返工（QA 独立终验抓出 3 项）
+   ========================================================================== */
+
+/* R1【高】「找客服领取」被吸底页脚压住看不见。
+   根因：v627 P9 把 #modalMask .modal-footer 改成常驻吸底（sticky, 高 71px, 白底 z5），
+   而弹窗内容本身比可视区高，最后 17px（正好是这行提示）永远落在页脚下面 ——
+   QA 用 elementFromPoint 采样 684/684 全部命中页脚按钮，等于这句提示根本读不到。
+   修法：滚动容器底部预留「页脚高 + 余量」，让最后一块内容能滚到页脚上方。
+   顺带修好「查看」展开后内容尾部同样被压的问题（同一根因）。 */
+/* v631b（QA 复验建议）：初版 92/84 留白偏多（桌面余量实测 124.7px、手机 116.9px，视觉略空），
+   收到 80/72 —— 余量仍有约 104px，远大于 0，不会回退成遮挡。 */
+#modalMask .modal-content{padding-bottom:80px;}
+@media (max-width:600px){
+  #modalMask .modal-content{padding-bottom:72px;}
+}
+
+/* R2【中】分类行占位键在点开行尾 › 后会显形。
+   根因：admin.css 有一条 .cat-row.cat-open .c-meta .row-btn{visibility:visible;opacity:1}，
+   它不认识「占位键」，折叠态一开就把 is-slot 槽位也点亮，视觉上多出「固定/编辑/删除」三个假按钮
+   （虽然 pointer-events 挡住了点不到）。这里把占位键钉死为恒不可见，两种折叠态一起管。
+   「全部」固定行（data-id="0"）本来就没有可操作项，同口径钉死。 */
+.cat-row .c-meta .row-btn.is-slot,
+.cat-row.cat-open .c-meta .row-btn.is-slot,
+.cat-row[data-id="0"] .c-meta .row-btn{
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+/* R3【中】字号越出五档（QA 全站扫描 14 处真 CSS 越档）
+   ① 后台登录页主标题 20px → 18（与全站弹窗标题同档）
+   ② 后台设置页 ≤600px 时 .setting-row>label 被降到 13px → 统一 14（正文档） */
+.login-card h1{font-size:18px;}
+.setting-row>label{font-size:14px;}

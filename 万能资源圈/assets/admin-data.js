@@ -678,9 +678,11 @@ window.__fillHourly = function (raw) {
  { label: '资源总数', num: ov.products || 0 },
  { label: '显示资源', num: ov.online || 0 },
  { label: '隐藏资源', num: ov.hidden || 0 },
- { label: '总浏览', num: ov.views || 0, prev: ovp ? (ovp.views || 0) : null },
- { label: '咨询', num: ov.contacts || 0, prev: ovp ? (ovp.contacts || 0) : null },
- { label: '解锁', num: ov.resource_unlocks || 0, prev: ovp ? (ovp.resource_unlocks || 0) : null },
+ /* v631（QA/审计发现）：三张卡的数其实是「今日」——dashboard 用 todayBJ 过滤，
+    文案却写「总浏览」，老板看到「总浏览 3」会以为全站只被访问过 3 次。改成如实标注。 */
+ { label: '今日浏览', num: ov.views || 0, prev: ovp ? (ovp.views || 0) : null },
+ { label: '今日咨询', num: ov.contacts || 0, prev: ovp ? (ovp.contacts || 0) : null },
+ { label: '今日解锁', num: ov.resource_unlocks || 0, prev: ovp ? (ovp.resource_unlocks || 0) : null },
  ];
  var cbox = document.getElementById('statCards');
  cbox.innerHTML = '';
