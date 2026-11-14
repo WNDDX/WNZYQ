@@ -518,14 +518,17 @@ export async function ensureStatsColumns(env) {
     }
     _statsColsEnsured = true;
   } catch (e) { console.error('ensureStatsColumns 失败（不影响主流程):', e && e.message); }
-  /* v633：给 stats 补索引——这张表原来**一个索引都没有**，而每次访客浏览都要跑一次去重查询
-     （WHERE type / product_id / ip / created_at），等于每条埋点都把整张表扫一遍。
-     现在只有 235 行看不出来，攒到几千行时这就是纯烧 D1 读额度的黑洞。
-     三把索引各管一段：去重（每次埋点）、按日清理（每天一次）、按资源统计（后台/导出）。 */
+  /* v633：给 stats 补一条「去重」复合索引。
+     这张表原本已有 idx_stats_product_type(product_id,type) 和 idx_stats_type_created(type,created_at)，
+     但每次浏览都要跑的那条去重查询是四列一起用（type + product_id + ip + created_at），
+     现有两条索引都只能吃掉其中两列，剩下的靠回表过滤——量一大就开始吃读额度。
+     补一条四列复合索引，这条查询稳定落在 1 行。
+     （另两条是给「按日清理」和「按资源统计」的；原本有 idx_stats_product_type，
+      不要再建 (product_id,type) 的同义索引，纯属给写入添负担——建过也已 DROP 掉。） */
   try {
     await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_stats_dedup ON stats(type, product_id, ip, created_at)').run();
     await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_stats_created ON stats(created_at)').run();
-    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_stats_product ON stats(product_id, type)').run();
+    await env.DB.prepare('DROP INDEX IF EXISTS idx_stats_product').run(); /* 与 idx_stats_product_type 重复，清掉 */
   } catch (e) { console.error('ensureStatsIndexes 失败（不影响主流程):', e && e.message); }
 }
 
