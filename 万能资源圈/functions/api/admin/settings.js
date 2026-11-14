@@ -100,6 +100,7 @@ export async function onRequestPut(context) {
   try { await sweepDroppedKeys(env, __oldSettings, JSON.stringify(b)); } catch (e) {} /* v354：换掉的图/删掉的公告里的文件自动追删 */
   /* v439 #64：设置变更留痕（60 天自动清理覆盖） */
   try { const { audit } = await import('../_utils.js'); const keys = Object.keys(b).filter(function (k) { return ALLOWED_KEYS.indexOf(k) >= 0; }); await audit(env, request, '更新设置', keys.join('、')); } catch (e1) {}
+  try { const { clearPublicCache } = await import('../../_utils.js'); await clearPublicCache(request); } catch (e6) {} /* v633：改完设置立刻失效公开缓存 */
   return json({ ok: true, msg: '设置已保存' });
 }
 
@@ -141,5 +142,6 @@ export async function onRequestPost(context) {
   /* 同步旧的 announcement 聚合字段（前台旧口径兜底） */
   try { await env.DB.prepare("UPDATE settings SET value = '' WHERE key = 'announcement'").run(); } catch (e3) {}
   try { const { audit } = await import('../_utils.js'); await audit(env, request, '导入公告', String(item.title || '').trim()); } catch (e4) {}
+  try { const { clearPublicCache } = await import('../../_utils.js'); await clearPublicCache(request); } catch (e5) {} /* v633：公开设置现在有 60 秒缓存，写完必须清 */
   return json({ ok: true, id: nextId });
 }

@@ -105,5 +105,9 @@ export async function onRequestPost(context) {
     const { audit } = await import('../../_utils.js');
     await audit(env, request, LABEL[action] || ('批量' + action), ids.length + ' 个资源' + (action === 'changeCat' ? (' → 分类#' + b.cid) : action === 'changePrice' ? (' → ' + b.price) : ''));
   } catch (e) {}
+  /* v633：批量操作也要清公开缓存。
+     单条编辑/删除一直都清，唯独批量没清——于是「批量改价/批量上下架」之后前台最多 20 秒还是旧数据，
+     用户改完刷新发现没变，会以为批量根本没生效。现在与单条同口径。 */
+  try { const { clearPublicCache } = await import('../../_utils.js'); await clearPublicCache(request); } catch (eC) {}
   return json({ ok: true, count: ids.length });
 }

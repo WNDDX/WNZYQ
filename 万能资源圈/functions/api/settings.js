@@ -9,11 +9,26 @@ import { json, publicAnnouncements } from '../_utils.js';
 const PUBLIC_KEYS = ['shop_name', 'shop_logo', 'contact_url', 'group_url', 'contact_qr', 'group_qr', 'gzh_qr', 'announcement', 'announcement_mode', 'announcements', 'resource_bind_limit'];
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { env, request } = context;
+  /* v633：加 60 秒边缘缓存。
+     原来这个接口一个缓存头都没有——前台每次打开页面都要把 settings 表 12 行读一遍，
+     访客越多读得越多，纯属白烧 D1 读额度。缓存键固定成 /api/settings（不带参数），
+     避免 ?t= 之类每次新键导致永远不命中。
+     代价是后台改完最多 60 秒前台才更新——所以 admin/settings.js 写完之后会主动清这一条，
+     正常操作（改客服链接/发公告）依然是刷一下就生效。 */
+  const cache = caches.default;
+  const cacheKey = new Request(new URL('/api/settings', new URL(request.url).origin).toString(), request);
+  try {
+    const hit = await cache.match(cacheKey);
+    if (hit) return hit;
+  } catch (e0) {}
   const { results } = await env.DB.prepare('SELECT key, value FROM settings').all();
   const obj = {};
   for (const r of results) {
     if (PUBLIC_KEYS.indexOf(r.key) !== -1) obj[r.key] = r.key === 'announcements' ? publicAnnouncements(r.value) : r.value; /* #68：软删公告不下发公开端 */
   }
-  return json({ ok: true, settings: obj });
+  const response = json({ ok: true, settings: obj });
+  try { response.headers.set('Cache-Control', 'public, max-age=60'); } catch (e1) {}
+  try { if (context.waitUntil) context.waitUntil(cache.put(cacheKey, response.clone())); } catch (e2) {}
+  return response;
 }
