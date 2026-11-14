@@ -20,15 +20,16 @@ import { ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensurePro
    RECENT_LIMIT 人为上限已移除，改为 id 游标分批全量拉取（每批 5000 条拼接），
    大数据量不靠单次大查询、不加人为条数上限；游标每轮严格递减，循环必然终止。 */
 const RECENT_BATCH = 5000;
-async function fetchAllRecent(DB) {
+async function fetchAllRecent(DB, scopeIds) {
   let rows = [];
   let cursor = Number.MAX_SAFE_INTEGER;
   for (;;) {
     const b = await DB.prepare(
       `SELECT s.id, s.created_at, s.type, s.ip, p.title AS product_title
        FROM stats s LEFT JOIN products p ON p.id = s.product_id
-       WHERE s.id <= ? ORDER BY s.id DESC LIMIT ?`
-    ).bind(cursor, RECENT_BATCH).all();
+       WHERE s.id <= ?${scopeIds && scopeIds.length ? ' AND s.product_id IN (SELECT id FROM products WHERE cid IN (' + scopeIds.map(() => '?').join(',') + '))' : ''}
+       ORDER BY s.id DESC LIMIT ?`
+    ).bind(cursor, ...(scopeIds && scopeIds.length ? scopeIds : []), RECENT_BATCH).all();
     const part = (b && b.results) || [];
     rows = rows.concat(part);
     if (part.length < RECENT_BATCH) break;
@@ -45,8 +46,16 @@ export async function onRequestGet(context) {
   const auth = await requirePerm(env, request, 'data.export');
   if (auth instanceof Response) return auth;
   /* #116 信息锁：子账号导出的资源码按其可见规则打码（防用导出绕过码可见范围） */
-  const { visibleCode, parsePerms } = await import('../../_perms.js');
+  const { visibleCode, parsePerms, catScopeSQL } = await import('../../_perms.js');
   const _myPerms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+  /* v633：#116 三把锁补漏——导出原来只做了「功能锁（data.export）」和「信息锁（资源码打码）」，
+     唯独漏了「范围锁」：子账号只要勾了导出，别个分类的资源、类型、发码记录、绑定设备全能导走。
+     现在超管（scope=null）SQL 一个字都不变；子账号按授权分类过滤。 */
+  const _scope = catScopeSQL(auth.role, _myPerms);
+  const _sids = _scope ? _scope.ids : null;
+  const _pIn = _sids ? ' AND p.cid IN (' + _sids.map(() => '?').join(',') + ')' : '';
+  const _statIn = _sids ? ' WHERE product_id IN (SELECT id FROM products WHERE deleted_at IS NULL AND cid IN (' + _sids.map(() => '?').join(',') + '))' : '';
+  const _sp = _sids || [];
 
   await ensureProductColumns(env);
   await ensureVariantColumns(env);
@@ -64,17 +73,17 @@ export async function onRequestGet(context) {
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='contact'),0) AS contacts,
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='resource_unlock'),0) AS resource_unlocks,
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.product_id = p.id),0) AS bindings
-       FROM products p WHERE p.deleted_at IS NULL
+       FROM products p WHERE p.deleted_at IS NULL${_pIn}
        ORDER BY p.sort ASC, p.id DESC`
-    ).all(),
+    ).bind(..._sp).all(),
     DB.prepare(
       `SELECT v.id, v.product_id, p.title AS product_title, v.name, v.title AS vtitle, v."desc", v.price,
               v.resource_code, v.resource_content, v.is_hidden, v.sort,
               p.created_by AS p_created_by, p.cid AS p_cid,
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.variant_id = v.id),0) AS bindings
-       FROM product_variants v JOIN products p ON p.id = v.product_id AND p.deleted_at IS NULL
+       FROM product_variants v JOIN products p ON p.id = v.product_id AND p.deleted_at IS NULL${_pIn}
        ORDER BY v.product_id ASC, v.sort ASC, v.id ASC` /* v440：软删资源不进导出 */
-    ).all(),
+    ).bind(..._sp).all(),
     DB.prepare(
       `SELECT c.id, c.name, c.parent_id, c.sort, c.is_hidden,
               (SELECT COUNT(*) FROM products p WHERE p.cid = c.id AND p.deleted_at IS NULL) AS product_count
@@ -86,21 +95,23 @@ export async function onRequestGet(context) {
        FROM resource_bindings rb
        LEFT JOIN product_variants v ON v.id = rb.variant_id
        LEFT JOIN products p ON p.id = rb.product_id
+       WHERE 1=1${_pIn}
        ORDER BY rb.id ASC`
-    ).all(),
+    ).bind(..._sp).all(),
     DB.prepare(
       `SELECT ci.id, p.title AS product_title, v.name AS variant_name, ci.code, ci.issued_at, ci.status, ci.bound_at
        FROM code_issues ci
        LEFT JOIN product_variants v ON v.id = ci.variant_id
        LEFT JOIN products p ON p.id = ci.product_id
+       WHERE 1=1${_pIn}
        ORDER BY ci.id ASC`
-    ).all(),
+    ).bind(..._sp).all(),
     // 每日趋势：全量保留天数（不限 30 天），北京时区切日
     DB.prepare(
       `SELECT date(created_at, '+8 hours') AS day, type, COUNT(*) AS cnt
-       FROM stats
+       FROM stats${_statIn}
        GROUP BY day, type ORDER BY day ASC`
-    ).all(),
+    ).bind(..._sp).all(),
     // 按资源统计：全量口径
     // v442 修复（老板反馈「导出数据统计错误」）：原 SQL 把 LEFT JOIN 写在 WHERE 之后（FROM→WHERE→JOIN 非法顺序），
     // 该工作表一导就报 near "LEFT": syntax error。改为标准顺序 FROM→LEFT JOIN→WHERE。
@@ -112,12 +123,12 @@ export async function onRequestGet(context) {
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.product_id = p.id),0) AS bindings
        FROM products p
        LEFT JOIN stats s ON s.product_id = p.id
-       WHERE p.deleted_at IS NULL
+       WHERE p.deleted_at IS NULL${_pIn}
        GROUP BY p.id
        ORDER BY views DESC, p.id DESC`
-    ).all(),
+    ).bind(..._sp).all(),
     // R307（用户 09-30）：导出不再做条数限制，没有封顶——全量游标分批拉取
-    fetchAllRecent(env.DB),
+    fetchAllRecent(env.DB, _sp),
     DB.prepare('SELECT COUNT(*) AS n FROM stats').first(),
   ]);
 

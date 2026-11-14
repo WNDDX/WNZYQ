@@ -5,7 +5,7 @@
  * 均需登录
  */
 
-import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, ensureProductColumns, ensureUpdatedBy, ensureVariantColumns, audit } from '../../../_utils.js';
+import { json, normScheduleTime, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, ensureProductColumns, ensureUpdatedBy, ensureVariantColumns, audit } from '../../../_utils.js';
 import { catAllowed, visibleCode, parsePerms } from '../../../_perms.js';
 
 /* #116 范围锁：资源是否在当前身份的授权分类内 */
@@ -152,8 +152,8 @@ export async function onRequestPut(context) {
     price: ['price', function (v) { return Number(v) || 0; }],
     is_online: ['is_online', function (v) { return v ? 1 : 0; }],
     is_hidden: ['is_hidden', function (v) { return v ? 1 : 0; }],
-    schedule_on: ['schedule_on', function (v) { return v ? String(v) : null; }],
-    schedule_off: ['schedule_off', function (v) { return v ? String(v) : null; }],
+    schedule_on: ['schedule_on', normScheduleTime],
+    schedule_off: ['schedule_off', normScheduleTime],
     sort: ['sort', function (v) { return Number(v) || 0; }],
   };
 

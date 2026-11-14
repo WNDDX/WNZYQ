@@ -70,8 +70,8 @@ __edContactRefresh();
 fPrice.value = p ? (p.price || '') : '';
 fSort.value = p ? (p.sort || 0) : 0;
 fOnline.checked = p ? !!(p.is_online && !p.is_hidden) : true;
-fScheduleOn.value = p ? (p.schedule_on || '') : '';
-fScheduleOff.value = p ? (p.schedule_off || '') : '';
+fScheduleOn.value = p ? String(p.schedule_on || '').replace(' ', 'T') : '';
+fScheduleOff.value = p ? String(p.schedule_off || '').replace(' ', 'T') : '';
 updateImgPreview();
 }
 var draftTimer = null;

@@ -674,6 +674,19 @@ export async function sniffMatchesType(file, type) {
 /* #39 接口防刷：每实例内存滑动窗口（写接口 30 次/分钟/令牌），超限 429。
    管理端点本身有登录门槛，这里只做高频滥用兜底；跨实例不强一致属可接受（防的是刷不是分布式攻击）。 */
 const __rate = new Map();
+/* v633：定时上下线时间统一成 `<input type="datetime-local">` 认的格式 "YYYY-MM-DDTHH:MM"。
+   两个坑都在这里收口：
+     ① 门店 Excel 导入/手工改库可能给 "2026-11-09 08:01"（空格），塞回 datetime-local 会显示空白，
+        用户以为没设、一保存就把定时清掉 → 统一转成带 T；
+     ② 带秒或毫秒的值（"…T08:01:30.000Z"）截到分钟，避免字符串比较时长短不一。
+   注意：**存储保持带 T**，因为前端回显直接用的是 input.value；读取端比较时再
+   datetime(replace(x,'T',' ')) 归一化（见 api/products.js），两边都不吃亏。 */
+export function normScheduleTime(v) {
+  const raw = String(v == null ? '' : v).trim().replace(' ', 'T');
+  if (!raw) return null;
+  return raw.length > 16 ? raw.slice(0, 16) : raw;
+}
+
 export function rateLimit(request, tag, maxPerMin) {
   try {
     /* v440 复检修正：限流键改 IP 优先——原键取管理员 Cookie，子账号/访客全部挤进同一个 'anon' 共享桶

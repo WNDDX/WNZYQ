@@ -38,12 +38,17 @@ export async function onRequestGet(context) {
     }
   }
 
-  // 2. 定时显示/隐藏检查 + 列迁移（v339 条225：两件互不依赖的事并行做，减少一次串行来回）
+  /* 2. 定时显示/隐藏检查 + 列迁移（v339 条225：两件互不依赖的事并行做，减少一次串行来回）
+     v633 修：定时时间由 <input type="datetime-local"> 传来，存进去是 "2026-11-09T08:01"（带 T），
+     而比较用的是 datetime('now','+8 hours') 生成的 "2026-11-09 08:01:00"（带空格）。
+     SQLite 按字符串比大小，第 10 位 'T'(84) 永远大于 ' '(32)，于是「同一天内」的定时永远不会触发，
+     要等到第二天 0 点才生效——等于定时下架晚一整天。统一用 datetime(replace(x,'T',' ')) 归一化后再比，
+     历史数据不用迁移。 */
   const [pre] = await Promise.all([
     env.DB.prepare(
       `SELECT
-         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours') AND deleted_at IS NULL) AS need_show,
-         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours') AND deleted_at IS NULL) AS need_hide`
+         EXISTS(SELECT 1 FROM products WHERE is_online = 0 AND schedule_on IS NOT NULL AND datetime(replace(schedule_on,'T',' ')) <= datetime('now', '+8 hours') AND deleted_at IS NULL) AS need_show,
+         EXISTS(SELECT 1 FROM products WHERE is_online = 1 AND schedule_off IS NOT NULL AND datetime(replace(schedule_off,'T',' ')) <= datetime('now', '+8 hours') AND deleted_at IS NULL) AS need_hide`
     ).first().catch(() => null),
     (async () => { await ensureProductColumns(env); await ensureVariantColumns(env); })().catch(() => {}),
   ]);
@@ -51,13 +56,13 @@ export async function onRequestGet(context) {
     if (pre && pre.need_show) {
       await env.DB.prepare(
         `UPDATE products SET is_online = 1, is_hidden = 0, updated_at = datetime('now')
-         WHERE is_online = 0 AND schedule_on IS NOT NULL AND schedule_on <= datetime('now', '+8 hours') AND deleted_at IS NULL` /* v440：定时上线不碰数据缓存中的资源 */
+         WHERE is_online = 0 AND schedule_on IS NOT NULL AND datetime(replace(schedule_on,'T',' ')) <= datetime('now', '+8 hours') AND deleted_at IS NULL` /* v440：定时上线不碰数据缓存中的资源 */
       ).run();
     }
     if (pre && pre.need_hide) {
       await env.DB.prepare(
         `UPDATE products SET is_online = 0, updated_at = datetime('now')
-         WHERE is_online = 1 AND schedule_off IS NOT NULL AND schedule_off <= datetime('now', '+8 hours') AND deleted_at IS NULL`
+         WHERE is_online = 1 AND schedule_off IS NOT NULL AND datetime(replace(schedule_off,'T',' ')) <= datetime('now', '+8 hours') AND deleted_at IS NULL`
       ).run();
     }
   } catch (e) { /* 忽略定时显示/隐藏错误 */ }

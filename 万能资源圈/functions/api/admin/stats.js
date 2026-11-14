@@ -28,6 +28,10 @@ export async function onRequestGet(context) {
   await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
   await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'data.stats');
+  /* v633：先判 Response 再取 auth.role（原来这句在下面几行之后）——未登录时 auth 是 401 响应，
+     auth.role 取到 undefined 会被当成"超管全量"去拼 SQL；虽然最后仍然 return 401，
+     但一旦 catScopeSQL 抛异常就会变成 500，把"没登录"伪装成"服务器坏了"。 */
+  if (auth instanceof Response) return auth;
   /* #116 范围锁 + 软删口径（复检修正）：sub 统计只算授权分类；软删（数据缓存中）资源一律不计入统计。
      super 时 scopeIds=null，所有片段为空，SQL 与既有口径一致（仅补 deleted_at 过滤）。 */
   const { catScopeSQL, parsePerms } = await import('../../_perms.js');
@@ -36,7 +40,6 @@ export async function onRequestGet(context) {
   const pScope = scopeIds ? ' AND p.cid IN (' + scopeIds.map(() => '?').join(',') + ')' : '';
   const scopeJoin = scopeIds ? ' JOIN products p ON p.id = stats.product_id AND p.deleted_at IS NULL AND p.cid IN (' + scopeIds.map(() => '?').join(',') + ')' : '';
   const SP = scopeIds || [];
-  if (auth instanceof Response) return auth;
 
   // R168-③：时区统一北京时间口径（全系统统一，一天为北京时间 0:00-24:00）——
   // 存储仍为 UTC，所有按日/按小时聚合一律 date(x, '+8 hours') 切日；"今天/30天前"的默认范围也按北京日期取

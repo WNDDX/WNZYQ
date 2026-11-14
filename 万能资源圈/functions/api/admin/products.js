@@ -4,7 +4,7 @@
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  * R303（09-30）：GET 支持分页按页拉取（page + page_size），支持筛选（kw / cid / status）
  */
-import { cleanProduct, cleanVariant, clearPublicCache, ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensureProductColumns, ensureSoftDelete, ensureUpdatedBy, ensureVariantColumns, json, readJSON, requireAuth, requirePerm } from '../../_utils.js';
+import { cleanProduct, cleanVariant, clearPublicCache, ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensureProductColumns, ensureSoftDelete, ensureUpdatedBy, ensureVariantColumns, json, readJSON, normScheduleTime, requireAuth, requirePerm } from '../../_utils.js';
 import { catScopeSQL, catAllowed, visibleCode, parsePerms } from '../../_perms.js';
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
@@ -184,8 +184,8 @@ export async function onRequestPost(context) {
       Number(b.price) || 0,
       b.is_online ? 1 : 0,
       b.is_hidden ? 1 : 0,
-      b.schedule_on ? String(b.schedule_on) : null,
-      b.schedule_off ? String(b.schedule_off) : null,
+      normScheduleTime(b.schedule_on),
+      normScheduleTime(b.schedule_off),
       Number(b.sort) || 0,
       auth.username, /* #116：创建者（资源码可见规则用） */
       auth.username  /* v544：新增即算「谁最后动的」 */

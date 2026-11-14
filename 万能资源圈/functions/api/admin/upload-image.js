@@ -16,6 +16,10 @@ function isKVBucket(bucket) { return typeof bucket.getWithMetadata === 'function
 export async function onRequestPost(context) {
   const { env, request } = context;
   const auth = await requireAuth(env, request);
+  /* v633：这一句必须紧跟在 requireAuth 后面。原来它写在本段末尾，于是「未登录/会话过期」时
+     auth 实际是个 Response，auth.role 取到 undefined，请求掉进子账号分支、拿到 403「该功能未开放」——
+     用户会话过期后看到的是权限错误，而不是「请重新登录」，前端也不会跳登录页。 */
+  if (auth instanceof Response) return auth;
   /* #116：上传是资源编辑的一部分——sub 需有新增或编辑权限（防无权者刷存储）；super 不限 */
   if (auth.role !== 'super') {
     const { parsePerms, can } = await import('../../_perms.js');
@@ -24,7 +28,6 @@ export async function onRequestPost(context) {
       return json({ ok: false, msg: '该功能未开放' }, 403);
     }
   }
-  if (auth instanceof Response) return auth;
   /* v432 #39：上传写接口防刷（30 次/分钟） */
   if (!rateLimit(request, 'upload', 60)) return json({ ok: false, msg: '操作太频繁，请一分钟后再试' }, 429);
 
