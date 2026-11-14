@@ -2849,6 +2849,8 @@ return;
 }
 cats.forEach(function (c) {
 if (Number(c.id) === 0) return;
+var _pkKey = __cacheKey(1, Number(c.id), 0, '');
+if (__pageCache[_pkKey] || __pageCacheLoading[_pkKey]) return;
 fetchRemote({ page: 1, cid: c.id, subCid: 0, kw: '' }).catch(function () {});
 });
 }
