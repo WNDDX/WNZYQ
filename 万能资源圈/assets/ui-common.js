@@ -2374,8 +2374,13 @@ Array.from(el.attributes).forEach(function (attr) {
 var name = attr.name.toLowerCase();
 if (name.indexOf('on') === 0) { el.removeAttribute(attr.name); return; }
 if (name === 'href' || name === 'src') {
-var val = attr.value.toLowerCase().trim();
+var raw = String(attr.value || '');
+var val = raw.replace(/[\s\u0000-\u001f]/g, '').toLowerCase();
 if (val.indexOf('javascript:') === 0 || val.indexOf('data:') === 0 || val.indexOf('vbscript:') === 0) {
+el.removeAttribute(attr.name);
+return;
+}
+if (val.indexOf(':') !== -1 && !/^(https?:\/\/|mailto:|tel:)/.test(val)) {
 el.removeAttribute(attr.name);
 return;
 }
