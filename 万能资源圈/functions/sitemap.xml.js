@@ -57,10 +57,14 @@ export async function onRequestGet(context) {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.join('\n') + '\n</urlset>\n';
 
+  /* v633：缓存从「浏览器 30 分钟 / 边缘 1 小时」压到「2 分钟 / 5 分钟」。
+     原来删掉一个分类、下架一条资源后，sitemap 最长还要挂着旧地址一小时，搜索引擎会去抓一堆
+     已经不存在的分类页（老板就是这么发现「站点地图列着已删除的分类」的）。
+     爬虫抓取频率本来就低，5 分钟缓存足够省额度，两全。 */
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=1800, s-maxage=3600',
+      'Cache-Control': 'public, max-age=120, s-maxage=300',
     },
   });
 }

@@ -128,12 +128,31 @@ export async function onRequestPost(context) {
   // UPDATE 刷 last_access（两次串行往返）；改为直接 UPDATE（unique index 保证 changes ∈ {0,1}），
   // meta.changes==1 即通行证存在且顺手刷了 last_access（供后台绑定清单展示），0 = 未绑定照常验码。
   // 已绑定路径串行往返 3 → 2（variant 查询 + 本条 UPDATE）。
+  // v633：又改回「先 SELECT 再按需补写」——R243 那次的 UPDATE 是每次访问都写一行，
+  // 写额度比读额度紧 50 倍，老客户反复看资源全耗在这。现在命中只读 1 行、6 小时内不重复写。
+  /* v633：把「UPDATE 兼作查询」改成「SELECT 判定 + 必要时后台补写」。
+     原写法每次已绑定设备看资源都要 UPDATE 一行——写额度是免费套餐里最紧的一项
+     （10 万行/天，读是 500 万行/天，差 50 倍），老客户反复打开资源时全耗在刷「最近访问」上。
+     现在：命中只读 1 行（有唯一索引，读 1 行），last_access 超过 6 小时才异步补写一次，
+     后台「最近访问」的展示精度几乎不变，写次数降一个量级。 */
   let boundHit = false;
   try {
-    const upd = await env.DB.prepare(
-      "UPDATE resource_bindings SET last_access = datetime('now') WHERE variant_id = ? AND device_token = ?"
-    ).bind(variantId, device).run();
-    boundHit = !!(upd && upd.meta && upd.meta.changes);
+    const row = await env.DB.prepare(
+      'SELECT id, last_access FROM resource_bindings WHERE variant_id = ? AND device_token = ? LIMIT 1'
+    ).bind(variantId, device).first();
+    boundHit = !!row;
+    if (row) {
+      let stale = true;
+      if (row.last_access) {
+        const t = new Date(String(row.last_access).replace(' ', 'T') + 'Z').getTime();
+        if (!isNaN(t)) stale = (Date.now() - t) > 6 * 3600 * 1000;
+      }
+      if (stale) {
+        const job = env.DB.prepare("UPDATE resource_bindings SET last_access = datetime('now') WHERE id = ?")
+          .bind(row.id).run().catch(function () {});
+        if (context.waitUntil) context.waitUntil(job);
+      }
+    }
   } catch (e) { console.error('R106 通行证查询失败（按未绑定降级）:', e && e.message); }
   if (boundHit) {
     wrongClear(getCookie(request, DEVICE_COOKIE)); /* v439 #98 */

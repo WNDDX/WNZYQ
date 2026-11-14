@@ -96,7 +96,12 @@ export async function onRequestGet(context) {
     params.push(subCid);
   } else if (cid > 0) {
     // 一级分类：包含该分类及其所有子分类
-    const subRes = await env.DB.prepare('SELECT id FROM categories WHERE parent_id = ?').bind(cid).all();
+    /* v633：子分类查询补 deleted_at / is_hidden 过滤。
+       原来只按 parent_id 取，删掉的子分类仍算进来——于是「手机号卡」下会冒出
+       属于已删分类「联通」的资源，而分类条里根本没有「联通」这个入口，等于凭空多出几条。 */
+    const subRes = await env.DB.prepare(
+      'SELECT id FROM categories WHERE parent_id = ? AND deleted_at IS NULL AND COALESCE(is_hidden,0) = 0'
+    ).bind(cid).all();
     const subIds = (subRes.results || []).map((r) => r.id);
     if (subIds.length > 0) {
       where += ' AND (cid = ? OR cid IN (' + subIds.map(() => '?').join(',') + '))';

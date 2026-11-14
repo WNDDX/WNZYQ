@@ -85,5 +85,9 @@ export async function onRequestPost(context) {
     .run();
 
   try { const { audit } = await import('../../_utils.js'); await audit(env, request, '新增分类', name); } catch (e) {}
+  /* v633：新增分类后清公开缓存——原来只有「改/删」清，新增不清，前台 /api/categories 的
+     缓存还在（原来 5 分钟），访客要等好几分钟才看得见这个新分类，后台却已经显示。
+     现在改完立刻清，前台刷新即见。 */
+  try { const { clearPublicCache } = await import('../../_utils.js'); await clearPublicCache(request); } catch (e) {}
   return json({ ok: true, id: r.meta.last_row_id });
 }

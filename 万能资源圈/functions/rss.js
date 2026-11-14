@@ -15,11 +15,14 @@ export async function onRequestGet(context) {
     items = (results || []).map(function (p) {
       const d = new Date((p.updated_at || '').replace(' ', 'T') + 'Z');
       const date = isNaN(d.getTime()) ? new Date().toUTCString() : d.toUTCString();
+      /* v633：原来每条 <link> 全指向 /shop，订阅里点任何一条都落到列表页第一屏，
+         等于订阅源没有入口价值。改成该资源的直达地址（/shop?pid=N，与服务端分享页同一口径）。 */
+      const link = origin + '/shop?pid=' + p.id;
       return '<item><title>' + xmlEsc(p.title || ('资源#' + p.id)) + '</title>' +
-        '<link>' + origin + '/shop</link>' +
+        '<link>' + xmlEsc(link) + '</link>' +
+        '<guid isPermaLink="true">' + xmlEsc(link) + '</guid>' +
         '<description>' + xmlEsc(p.desc || '') + '</description>' +
-        '<pubDate>' + date + '</pubDate>' +
-        '<guid>' + origin + '/shop#p' + p.id + '</guid></item>';
+        '<pubDate>' + date + '</pubDate></item>';
     }).join('');
   } catch (e) { items = ''; }
   const xml = '<?xml version="1.0" encoding="UTF-8"?>' +

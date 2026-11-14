@@ -145,13 +145,25 @@ async function serveShopWithMeta(context) {
   } catch (e) {
     return serveError(context);
   }
+  let gone = false; /* v633：pid 查得到行才叫"资源页"，查不到就是死链——不能再回 200 */
   if (pid > 0) {
     try {
       const row = await context.env.DB.prepare(
         'SELECT title, "desc", img, price FROM products WHERE id = ? AND is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL'
       ).bind(pid).first();
       if (row && row.title) html = __injectMeta(html, row, url.origin);
-    } catch (e) { /* 查库失败 → 原样返回，分享卡片退化成店铺信息，页面照常打开 */ }
+      else if (!row) gone = true;
+    } catch (e) { /* 查库失败 → 原样返回，分享卡片退化成店铺信息，页面照常打开（不误判为死链） */ }
+  }
+  if (gone) {
+    /* 资源已删除/下架/隐藏，或链接里的 pid 根本不存在：
+       页面照样出（前台自己会提示"该资源已隐藏或不存在"，用户无感），但状态码给 404 + noindex，
+       搜索引擎才不会把一堆空壳页当有效内容收录（原来这里一律 200，属于软 404）。
+       no-store 是有意的：死链不该被浏览器/边缘缓存，资源重新上架后同一个 pid 要能立刻恢复。 */
+    html = html.replace('<meta name="robots" content="index,follow">', '<meta name="robots" content="noindex,follow">');
+    const deadHeaders = Object.assign({}, HTML_HEADERS);
+    deadHeaders['cache-control'] = 'no-store';
+    return new Response(html, { status: 404, headers: deadHeaders });
   }
   const headers = Object.assign({}, HTML_HEADERS);
   /* 带 pid 的 HTML 短缓存 2 分钟：微信抓一次就够，避免每次转发都查库；改完资源名最多 2 分钟反映到新卡片 */

@@ -494,7 +494,10 @@ export async function clearPublicCache(request) {
       '/api/categories',
       '/api/settings',
       '/api/shop/home',
-      '/api/stats/count' /* v348 条29：前台「一共多少资源」也一并清，改完立刻是新数字 */
+      '/api/stats/count', /* v348 条29：前台「一共多少资源」也一并清，改完立刻是新数字 */
+      /* v633：站点地图与订阅源也一起清——原来删掉分类后 sitemap 仍挂旧 cid，搜索引擎去抓空页 */
+      '/sitemap.xml',
+      '/rss'
     ];
     for (const p of paths) {
       try { await cache.delete(new Request(new URL(p, origin).toString())); } catch (e2) { /* 单条失败不影响其余 */ }

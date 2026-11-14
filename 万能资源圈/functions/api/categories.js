@@ -19,7 +19,9 @@ export async function onRequestGet(context) {
   ).all();
 
   const response = new Response(JSON.stringify({ ok: true, list: results }), {
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' },
+    /* v633：300 秒 → 60 秒。后台刚加/改的分类，访客最多 1 分钟就能看到；
+       分类本身变动极少，1 分钟缓存的省额度效果与 5 分钟几乎没差别。 */
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' },
   });
   context.waitUntil(cache.put(cacheKey, response.clone()));
   return response;
