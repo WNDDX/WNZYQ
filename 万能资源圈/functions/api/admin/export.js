@@ -193,6 +193,7 @@ export async function onRequestGet(context) {
     resource_bind_limit: '每码绑定设备上限', sub_freeze: '子账号冻结'
   };
   let settingRows = [];
+  let annRows = [];
   try {
     const sr = await DB.prepare('SELECT key, value FROM settings').all();
     const kv = {};
@@ -200,12 +201,20 @@ export async function onRequestGet(context) {
     settingRows = Object.keys(SETTING_LABEL)
       .filter(function (k) { return kv[k] !== undefined && kv[k] !== ''; })
       .map(function (k) { return { key: k, label: SETTING_LABEL[k], value: kv[k] }; });
+    /* v633：公告单独摊成一张「公告」表——导入正好读这个表名，备份才能真正导回。
+       公告存在 settings.announcements 的 JSON 里，这里摊平并跳过回收站里的。 */
+    try {
+      const arr = kv.announcements ? JSON.parse(kv.announcements) : [];
+      annRows = (Array.isArray(arr) ? arr : []).filter(function (a) { return a && !a.deleted; })
+        .map(function (a) { return { title: String(a.title || '').slice(0, 200), content: String(a.content || '').slice(0, 32000), sort: Number(a.sort) || 0, hidden: a.hidden ? 1 : 0 }; });
+    } catch (eA) { annRows = []; }
   } catch (e) { settingRows = []; }
 
   return json({
     ok: true,
     generated_at: new Date().toISOString(),
     settings: settingRows,
+    announcements: annRows,
     products: (productsRes.results || []).map((p) => ({
       id: p.id,
       title: p.title || '',

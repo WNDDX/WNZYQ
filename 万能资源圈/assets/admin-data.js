@@ -486,6 +486,11 @@ var cRows = [['分类名称', '分类级别', '所属一级分类', '排序序�
 cRows.push([__xl(c.name), __xl(c.level), __xl(c.parent), c.sort || 0, c.is_hidden ? '隐藏' : '显示', c.id, c.product_count || 0]);
 });
 sheets.push({ name: '分类', rows: cRows });
+var aRows = [['公告标题', '公告内容', '排序', '显示状态']];
+(res.announcements || []).forEach(function (a) {
+aRows.push([__xl(a.title), __xl(a.content), a.sort || 0, a.hidden ? '隐藏' : '显示']);
+});
+if (aRows.length > 1) sheets.push({ name: '公告', rows: aRows });
 var bRows = [['所属资源', '类型', '资源码', '绑定时间', '最近访问', '设备UA']];
 (res.bindings || []).forEach(function (b) {
 bRows.push([__xl(b.product_title), __xl(b.variant_name), __xl(b.code), L(b.created_at), L(b.last_access), __xl(b.ua)]);
