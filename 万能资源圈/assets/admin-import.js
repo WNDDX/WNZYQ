@@ -461,8 +461,8 @@ mask.className = 'modal-mask'; mask.id = 'importMask';
 mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="批量导入"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
 '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
 '<p class="imp-lead">先导入分类，再导资源</p>' +
-'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-blue btn-inline" id="impTpl" style="flex:1">下载模板</button>' +
-'<button class="btn-blue btn-inline" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xlsx,.xls,.xml" style="display:none"></div>' +
+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="export-btn" id="impTpl" style="flex:1">下载模板</button>' +
+'<button class="export-btn" id="impUploadBtn" style="flex:1">上传表格</button><input type="file" id="impFile" accept=".xlsx,.xls,.xml" style="display:none"></div>' +
 '<div id="impPrev" style="margin-top:10px"></div>' +
 '<div class="imp-hist" id="impHist"></div></div>' +
 '<div class="modal-footer"><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
@@ -494,7 +494,7 @@ var pv = preview(data);
 var body = mask.querySelector('#impPrev');
 var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length;
 body.innerHTML = '<div class="imp-log">' + esc(pv.lines.join('\n')) + '</div>' +
-'<button class="btn-blue" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
+'<button class="export-btn" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
 body.querySelector('#impGo').addEventListener('click', function () {
 this.disabled = true; this.textContent = '导入中';
 body.innerHTML = '<div id="impLive" class="imp-log imp-log-live"></div>';
@@ -1036,7 +1036,7 @@ return '<div class="u-row" data-uid="' + u.id + '" data-pid="' + Number(u.parent
 + '<span class="u-tag">最近活跃 ' + esc(String(u.lastSeen || '—').slice(0, 16)) + '</span>'
 + (u.note ? '<span class="u-tag u-tag-note">' + esc(u.note) + '</span>' : '')
 + '</span>'
-+ '<button type="button" class="u-tagfold" data-tagfold="' + u.id + '" aria-label="展开或收起标签" aria-expanded="false">展开</button>'
++ '<button type="button" class="u-tagfold" data-tagfold="' + u.id + '" aria-label="展开或收起标签" aria-expanded="false"><svg class="toggle-arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>'
 + '</span></span>'
 + '<span class="u-ops">' + ops + '</span>' + foldHtml + '</div>';
 }).join('');
@@ -1110,7 +1110,6 @@ ev.stopPropagation();
 var box = this.parentNode;
 var clipped = box.classList.toggle('is-clipped');
 this.classList.toggle('open', !clipped);
-this.textContent = clipped ? '展开' : '收起';
 this.setAttribute('aria-expanded', clipped ? 'false' : 'true');
 });
 });
