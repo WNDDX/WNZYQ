@@ -4,37 +4,18 @@
  *  - 页面导航（index/shop/admin/error）→ 网络优先：每次打开都拿最新版，
  *    后台改动前台立即生效；离线时才回退缓存（无缓存回退到错误页）。
  *  - JS / CSS（业务代码频繁改动）→ 缓存优先 + 后台更新：缓存命中直接返回，不发网络请求；
- *    后台静默 fetch 更新缓存，确保 SW 版本升级时 activate 清旧缓存 + install 重新预缓存。
+ *    后台静默 fetch 更新缓存，SW 版本升级时 activate 清旧缓存（install 不预缓存）。
  *  - 图片等其他静态资源 → 缓存优先 + 后台更新（同 JS/CSS，减少弱网条件下的请求往返）。
  *  - /api/ 一律不缓存，始终走网络。
  *  - 任何非 200、或内容类型为 HTML 的 /assets 响应一律不缓存（防止错误页伪装成脚本/样式）。
  */
 /* 变更说明统一维护在《规范》「修订记录」；本文件只保留运行所需代码与最新一条摘要。
    v538：设置键统一蓝色、图标全覆盖、空态口径、分类搜索、回收站批量、深色修复。 */
-const CACHE_NAME = 'wnzyq-1794672640525';
+const CACHE_NAME = 'wnzyq-1794672811056';
 
-/* 预缓存只留访客必需——后台页面/样式/二维码库改为运行时按需入缓存（普通访客省约 700KB）；
-   三个图标（192/512/苹果）必须预缓存，否则「装到桌面」时图标会裂。 */
-
-const STATIC_ASSETS = [
-  './index.html', /* v356 条24：去掉 './'——与 index.html 同一文件，原清单会拉两遍存两份 */
-  './shop.html',
-  './error.html',
-  './manifest.json',
-  './config.js',
-  './favicon.ico',
-  './assets/ui-common.css',
-  './assets/ui-common.js',
-  './assets/motion.css',
-  './assets/motion.js',
-  './assets/shop.css',
-  './assets/shop.js',
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
-  './assets/icons/apple-touch-icon.png',
-  './assets/images/logo.png?v=330'
-  /* v383：kefu/qun/gzh.png 三张二维码移出预缓存并删除文件——二维码改走后台「设置信息」（/img/ 动态地址，访客端按需加载） */
-];
+/* v633：原来这里有一份 STATIC_ASSETS 预缓存清单（17 个文件）。install 改成「一个字节都不下」之后
+   （见下方 install 注释：预缓存把首屏拖到 9.8 秒），这份清单已经没有任何代码读它，
+   留着只会让人以为「改这里就能预缓存」——删掉，缓存完全由 fetch 处理器按需填充。 */
 
 // 安装：**不做批量预缓存**（v585 定稿）
 self.addEventListener('install', function (event) {
@@ -131,7 +112,7 @@ self.addEventListener('fetch', function (event) {
 
   // R298：图片 / 字体 / 其它静态资源 → 缓存优先 + 后台更新
   // 缓存命中直接返回，不发网络请求；后台静默 fetch 并更新缓存。
-  // SW 版本升级时 activate 清旧缓存 + install 重新预缓存，确保代码/图片更新必生效。
+  // SW 版本升级时 activate 清旧缓存（install 不预缓存），确保代码/图片更新必生效。
   event.respondWith(
     caches.match(req).then(function (cached) {
       var network = fetch(req).then(function (res) {

@@ -99,6 +99,12 @@ export async function onRequestPost(context) {
       await env.DB.prepare('DELETE FROM products WHERE id = ?').bind(id).run();
       await env.DB.prepare('DELETE FROM product_variants WHERE product_id = ?').bind(id).run();
       await env.DB.prepare('DELETE FROM stats WHERE product_id = ?').bind(id).run();
+      /* v633：补删派生数据——原来只清了 products/variants/stats，
+         绑定设备（resource_bindings）和发码记录（code_issues）留成永远查不到资源的孤儿行：
+         后台绑定清单里出现"标题为空"的设备、发码台账里挂着已不存在的资源，而且白占表空间。
+         track.js 的 60 天自动清理本来就会删这两张，手动"彻底删除"必须同一口径。 */
+      try { await env.DB.prepare('DELETE FROM resource_bindings WHERE product_id = ?').bind(id).run(); } catch (e1) { console.error('彻底删除-清绑定失败:', e1 && e1.message); }
+      try { await env.DB.prepare('DELETE FROM code_issues WHERE product_id = ?').bind(id).run(); } catch (e2) { console.error('彻底删除-清发码失败:', e2 && e2.message); }
       const sources = [];
       if (row) sources.push(row.img, row.detail, row.detail_images, row.detail_videos);
       if (sources.length) await deleteBucketImages(env, sources);
