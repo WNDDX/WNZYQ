@@ -857,6 +857,7 @@ if (!tglBtn || !tglBody) return;
 tglBtn.addEventListener('click', function () {
 var collapsed = tglBody.classList.toggle('collapsed');
 tglBtn.classList.toggle('open', !collapsed);
+tglBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 });
 });
 function renderStatTables(onlyKey) {
@@ -1325,9 +1326,11 @@ if (row.querySelector('.cat-fold') || row.querySelector('.cat-check') === null) 
 var fold = document.createElement('button');
 fold.type = 'button'; fold.className = 'cat-fold'; fold.title = '收起/展开排序'; fold.setAttribute('aria-label', '收起或展开排序');
 fold.innerHTML = '<svg class="toggle-arrow" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>';
+fold.setAttribute('aria-expanded', 'false');
 fold.addEventListener('click', function (e) {
 e.stopPropagation();
 var _open = row.classList.toggle('cat-open');
+fold.setAttribute('aria-expanded', _open ? 'true' : 'false');
 var _cm = row.querySelector('.c-meta');
 if (_cm && getComputedStyle(_cm).display !== 'contents') {
 _cm.style.maxHeight = _open ? ((window.__foldHeight ? window.__foldHeight(_cm) : _cm.scrollHeight) + 'px') : '0px';
