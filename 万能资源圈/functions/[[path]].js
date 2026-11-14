@@ -97,6 +97,68 @@ async function servePage(context, file) {
   return serveError(context);
 }
 
+/* ===== v632b（老板 22:38「改一个成本中等的体验项」）：分享卡片动态化 =====
+   现状：客户把某个资源转发出去（/shop?pid=123），微信/QQ/微博抓到的还是 shop.html 里写死的
+   「万能资源圈・资源 + 店铺图标」——朋友看到的是店铺名，不是那个资源，点击率差一大截。
+   做法：只在「/shop 且带 pid」这一条路径上，按 id 查一条资源，把 title / description / og:*
+   换成真实标题、简介、封面；其它任何路径（含不带 pid 的 /shop）仍走原来的 servePage，零影响。
+   失败一律降级成原页面（分享卡片退回店铺信息），绝不因为查库失败让页面打不开。 */
+function __esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function __plain(s, max) {
+  return String(s || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+}
+function __absImg(img, origin) {
+  const s = String(img || '').trim();
+  if (!s) return origin + '/assets/images/logo.png';
+  /* 外链封面走我们自己的代理：微信抓取时不带 referrer，直连对方站容易被防盗链判死 */
+  if (/^https?:\/\//i.test(s)) return origin + '/api/img-proxy?u=' + encodeURIComponent(s);
+  if (s.charAt(0) === '/') return origin + s;
+  return origin + '/' + s;
+}
+function __injectMeta(html, row, origin) {
+  const price = Number(row.price) || 0;
+  const name = __plain(row.title, 40);
+  const title = price > 0 ? name + ' · ¥' + (price % 1 === 0 ? price : price.toFixed(2)) : name;
+  const desc = __plain(row.desc, 80) || ('在万能资源圈查看「' + name + '」的详情');
+  const img = __absImg(row.img, origin);
+  const T = __esc(title), D = __esc(desc), I = __esc(img);
+  return html
+    .replace(/<title>[\s\S]*?<\/title>/, '<title>' + T + '</title>')
+    .replace(/(<meta name="description" content=")[^"]*(")/, '$1' + D + '$2')
+    .replace(/(<meta property="og:title" content=")[^"]*(")/, '$1' + T + '$2')
+    .replace(/(<meta property="og:description" content=")[^"]*(")/, '$1' + D + '$2')
+    .replace(/(<meta property="og:image" content=")[^"]*(")/, '$1' + I + '$2')
+    .replace(/(<meta name="twitter:title" content=")[^"]*(")/, '$1' + T + '$2')
+    .replace(/(<meta name="twitter:description" content=")[^"]*(")/, '$1' + D + '$2')
+    .replace(/(<meta name="twitter:image" content=")[^"]*(")/, '$1' + I + '$2');
+}
+async function serveShopWithMeta(context) {
+  const url = new URL(context.request.url);
+  const pid = Number(url.searchParams.get('pid') || 0);
+  let html = '';
+  try {
+    const res = await context.env.ASSETS.fetch(new URL('/shop.html', url));
+    if (!res || !res.ok) return serveError(context);
+    html = await res.text();
+  } catch (e) {
+    return serveError(context);
+  }
+  if (pid > 0) {
+    try {
+      const row = await context.env.DB.prepare(
+        'SELECT title, "desc", img, price FROM products WHERE id = ? AND is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL'
+      ).bind(pid).first();
+      if (row && row.title) html = __injectMeta(html, row, url.origin);
+    } catch (e) { /* 查库失败 → 原样返回，分享卡片退化成店铺信息，页面照常打开 */ }
+  }
+  const headers = Object.assign({}, HTML_HEADERS);
+  /* 带 pid 的 HTML 短缓存 2 分钟：微信抓一次就够，避免每次转发都查库；改完资源名最多 2 分钟反映到新卡片 */
+  headers['cache-control'] = pid > 0 ? 'public, max-age=120' : HTML_HEADERS['cache-control'];
+  return new Response(html, { status: 200, headers: headers });
+}
+
 /** 静态资源兜底：先查根部署路径，再查子目录同名资源；缺失时返回真正 404（正确 MIME，绝不返回 HTML，防止错误页被当 JS/CSS 解析）
  *  图片/字体/视频加长缓存（同 URL 全站复用浏览器缓存，跨页秒开；更新文件用新文件名即可强制生效） */
 const LONG_CACHE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'webp', 'woff', 'woff2', 'ttf'];
@@ -187,6 +249,11 @@ export async function onRequestGet(context) {
   const LEGACY_HTML = { 'index.html': '/index', 'shop.html': '/shop', 'admin.html': '/admin' };
   if (LEGACY_HTML[name] && path === '/' + name) {
     return Response.redirect(new URL(LEGACY_HTML[name], context.request.url).toString(), 301);
+  }
+  /* v632b：/shop 且带 pid 时走「动态 meta」版本，让分享出去的卡片显示该资源名/封面；
+     不带 pid 的 /shop 完全不变。 */
+  if (name === 'shop' && new URL(context.request.url).searchParams.get('pid')) {
+    return serveShopWithMeta(context);
   }
   if (PAGES[name]) {
     return servePage(context, PAGES[name]);

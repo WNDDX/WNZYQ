@@ -17,6 +17,24 @@ import { json, readJSON, getCookie, getAuthAdmin, rateLimit } from '../_utils.js
 // 允许的埋点类型白名单：不认识的类型一律按 'view' 记录
 const VALID_TRACK_TYPES = ['view', 'contact', 'resource_unlock', 'ann_read']; /* v439 #118：公告阅读 */
 
+/* v632a：IP → 不可逆哈希（24 位十六进制）。只用于「同设备 1 小时去重」，不需要还原原始 IP。
+   盐值取固定串即可：哈希只在本库内部做比对，不对外暴露，也不需要跨环境可迁移。 */
+const __IP_SALT = 'wnzyq-track-v1';
+async function __hashIp(ip) {
+  if (!ip) return '';
+  try {
+    const buf = new TextEncoder().encode(__IP_SALT + '|' + ip);
+    const dig = await crypto.subtle.digest('SHA-256', buf);
+    const arr = new Uint8Array(dig).slice(0, 12);
+    let out = '';
+    for (let i = 0; i < arr.length; i++) out += arr[i].toString(16).padStart(2, '0');
+    return out;
+  } catch (e) {
+    /* 极端环境下没有 crypto.subtle：宁可记为“未知来源”，也不退回明文 */
+    return '';
+  }
+}
+
 export async function onRequestPost(context) {
   const { env, request } = context;
   /* v626 D2（老板 11-13）：公开埋点限流 60 次/分钟/IP，超限对访客静默丢弃（返回 ok，不打扰页面） */
@@ -36,6 +54,12 @@ export async function onRequestPost(context) {
   }
 
   const ip = request.headers.get('CF-Connecting-IP') || '';
+  /* v632a（老板 22:38「改一个隐私项」）：访客 IP 不再明文入库，改存不可逆哈希。
+     stats 表每条浏览记录都带完整 IP（保留 60 天），属个人信息；
+     而它唯一的用途只是「1 小时内同一个人不重复计数」——哈希完全够用。
+     取 SHA-256 前 12 字节转 24 位十六进制：量级上撞车可忽略，且无法反推原始 IP。
+     历史明文会在 60 天内自然清掉；过渡期同一人最多被多记一次，可接受。 */
+  const ipHash = await __hashIp(ip);
   try { const { ensureStatsColumns } = await import('../_utils.js'); await ensureStatsColumns(env); } catch (eM) {} /* v441b：stats.region 幂等补列（缺列=埋点 INSERT 一直失败） */
   // R298（用户 09-30）：60 天清理统一每天一次——纯代码实现，不碰后台定时配置。
   // 记录上次清理日期在 settings 表（key='last_cleanup_date'），跨天首访触发一次；先检查真有旧数据才删。
@@ -109,12 +133,12 @@ export async function onRequestPost(context) {
   try {
     const dup = await env.DB.prepare(
       "SELECT id FROM stats WHERE type = ? AND product_id = ? AND ip = ? AND created_at >= datetime('now', '-1 hour') LIMIT 1"
-    ).bind(type, pid, ip).first();
+    ).bind(type, pid, ipHash).first();
     if (dup) return json({ ok: true, deduped: true });
   } catch (e) { console.error('埋点去重查询失败（降级为记录):', e); }
 
   await env.DB.prepare('INSERT INTO stats (product_id, type, ip, region) VALUES (?, ?, ?, ?)')
-    .bind(pid, type, ip, (request.cf && request.cf.region) || '')
+    .bind(pid, type, ipHash, (request.cf && request.cf.region) || '')
     .run();
 
   /* v534：顺带自动采集——和上面 60 天清理完全同一个思路，纯代码实现，不碰任何定时配置。
