@@ -382,6 +382,11 @@ var catIdByName = {};
 ((window.state && state.categories) || []).forEach(function (c) { catIdByName[c.name] = c.id; });
 (data['分类'] || []).forEach(function (r) {
 if (!r[0]) return;
+if (catIdByName[r[0]]) {
+var _w3 = '分类「' + r[0] + '」已存在，跳过';
+log.push(_w3); if (onLog) try { onLog(_w3); } catch (e3) {}
+return;
+}
 seq = seq.then(function () {
 var pid = 0;
 if (r[2]) { pid = catIdByName[r[2]] || 0; if (!pid) { var _w = '分类「' + r[0] + '」：所属一级「' + r[2] + '」未找到，按一级导入'; log.push(_w); if (onLog) try { onLog(_w); } catch (e1) {} } }
