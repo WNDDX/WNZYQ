@@ -68,7 +68,7 @@ export async function onRequestGet(context) {
     trendRes, byProductRes, recentRes, recentTotalRes,
   ] = await Promise.all([
     DB.prepare(
-      `SELECT p.id, p.cid, p.title, p."desc", p.detail, p.contact_url, p.price, p.is_online, p.is_hidden, p.sort, p.created_at,
+      `SELECT p.id, p.cid, p.title, p."desc", p.detail, p.img, p.contact_url, p.price, p.is_online, p.is_hidden, p.sort, p.created_at,
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='view'),0) AS views,
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='contact'),0) AS contacts,
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='resource_unlock'),0) AS resource_unlocks,
