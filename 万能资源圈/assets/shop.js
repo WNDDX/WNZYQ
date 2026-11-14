@@ -2646,6 +2646,12 @@ window._globalContact = res.settings.contact_url || getDefaultContact();
 window.__contactQr = res.settings.contact_qr || ''; window.__groupQr = res.settings.group_qr || ''; window.__gzhQr = res.settings.gzh_qr || '';
 if (window.__kfPreconnect) window.__kfPreconnect(window._globalContact);
 }
+try {
+var _mcSeed = window.__shopMetaCache || (window.__shopMetaCache = { cats: null, sets: null, t: 0 });
+if (DATA.categories && DATA.categories.length) _mcSeed.cats = DATA.categories;
+if (res.settings) _mcSeed.sets = res.settings;
+_mcSeed.t = Date.now();
+} catch (eSeed) { if (window.__silent) window.__silent(eSeed); }
 __setShopCache('wnzyq_shop_data', {
 products: DATA.products,
 categories: DATA.categories,

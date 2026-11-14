@@ -93,7 +93,8 @@ export async function onRequestGet(context) {
   }
 
   if (kw) {
-    where += ' AND (LOWER(title) LIKE ? OR LOWER("desc") LIKE ?)';
+    /* v631W：原来写成 LOWER(title) LIKE ?，对每一行都要跑一次 LOWER，纯粹浪费（LIKE 默认已对 ASCII 不敏感，中文无大小写）。 */
+    where += ' AND (title LIKE ? OR "desc" LIKE ?)';
     params.push('%' + kw + '%', '%' + kw + '%');
   }
 
@@ -104,7 +105,9 @@ export async function onRequestGet(context) {
   if (pageSize === 0) {
     // 不分页：兼容旧口径
     countP = Promise.resolve(null);
-    listP = env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC').bind(...params).all();
+    /* v631W：排序档会走 page_size=0 拉全量来做前端排序。资源多了这里就是几 MB 一次。
+       加 1000 条硬上限当安全阀（现在 21 条，行为完全不变），超过时前端仍能排序，只是不再无限拉。 */
+    listP = env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC LIMIT 1000').bind(...params).all();
   } else {
     countP = env.DB.prepare('SELECT COUNT(*) AS n FROM products ' + where).bind(...params).first();
     listP = env.DB.prepare('SELECT * FROM products ' + where + ' ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?').bind(...params, pageSize, offset).all();
