@@ -68,7 +68,7 @@ export async function onRequestGet(context) {
     trendRes, byProductRes, recentRes, recentTotalRes,
   ] = await Promise.all([
     DB.prepare(
-      `SELECT p.id, p.cid, p.title, p."desc", p.contact_url, p.price, p.is_online, p.is_hidden, p.sort, p.created_at,
+      `SELECT p.id, p.cid, p.title, p."desc", p.detail, p.contact_url, p.price, p.is_online, p.is_hidden, p.sort, p.created_at,
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='view'),0) AS views,
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='contact'),0) AS contacts,
               COALESCE((SELECT COUNT(*) FROM stats s WHERE s.product_id = p.id AND s.type='resource_unlock'),0) AS resource_unlocks,
@@ -78,7 +78,7 @@ export async function onRequestGet(context) {
     ).bind(..._sp).all(),
     DB.prepare(
       `SELECT v.id, v.product_id, p.title AS product_title, v.name, v.title AS vtitle, v."desc", v.price,
-              v.resource_code, v.resource_content, v.is_hidden, v.sort,
+              v.resource_code, v.resource_content, v.bind_limit, v.is_hidden, v.sort,
               p.created_by AS p_created_by, p.cid AS p_cid,
               COALESCE((SELECT COUNT(*) FROM resource_bindings rb WHERE rb.variant_id = v.id),0) AS bindings
        FROM product_variants v JOIN products p ON p.id = v.product_id AND p.deleted_at IS NULL${_pIn}
@@ -218,6 +218,10 @@ export async function onRequestGet(context) {
       resource_unlocks: p.resource_unlocks,
       bindings: p.bindings,
       desc: p.desc || '',
+      /* v633：详情原本没下发，导出的「资源详情」列永远是空的——备份等于丢了正文。
+         这里补上；Excel 单元格上限 32767 字符，超长的截断并标注，至少不会让整个导出失败。 */
+      detail: String(p.detail || '').slice(0, 32000),
+      detail_truncated: String(p.detail || '').length > 32000,
       contact_url: p.contact_url || '',
       sort: p.sort || 0,
       created_at: p.created_at,
@@ -231,6 +235,10 @@ export async function onRequestGet(context) {
       /* #116 信息锁：子账号导出按其码可见规则打码（防用导出绕过「只看自己新增的码」） */
       resource_code: auth.role === 'super' ? (v.resource_code || '') : visibleCode(v.resource_code || '', auth.role, _myPerms, v.p_created_by || '', auth.username, v.p_cid || 0),
       has_content: !!(v.resource_content && String(v.resource_content).trim()),
+      /* v633：解锁后内容也导出（否则备份恢复后客户拿到的码是空的）。
+         只有超管才给明文——子账号本来就没有「看全部解锁内容」的权限，导出不能成为后门。 */
+      resource_content: auth.role === 'super' ? String(v.resource_content || '') : '',
+      bind_limit: Number(v.bind_limit) || 0,
       is_hidden: v.is_hidden || 0,
       sort: v.sort || 0,
       bindings: v.bindings,
@@ -239,7 +247,7 @@ export async function onRequestGet(context) {
       id: c.id,
       name: c.name || '',
       level: c.id === 0 ? '固定' : (c.parent_id ? '二级' : '一级'),
-      parent: c.parent_id ? (catName[c.parent_id] || '') : '—',
+      parent: c.parent_id ? (catName[c.parent_id] || '') : '',  /* v633：一级分类的「所属一级」留空——原来写的是破折号，导回时会被当成一个叫「—」的上级分类去找，白报一条警告 */
       sort: c.sort || 0,
       is_hidden: c.is_hidden ? 1 : 0,
       product_count: c.product_count || 0,

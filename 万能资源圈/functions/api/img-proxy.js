@@ -81,6 +81,12 @@ export async function onRequestGet(context) {
       'X-Content-Type-Options': 'nosniff',
       'Access-Control-Allow-Origin': '*',
       'Timing-Allow-Origin': '*',
+      /* v633 安全补丁：`image/*` 里包含 `image/svg+xml`，而 SVG 是可以内嵌 <script> 的。
+         照片类格式（png/jpg/webp/gif/avif/bmp）不存在这个问题，SVG 必须单独上锁：
+         加一个 CSP sandbox，万一有人把这个代理地址直接发给访客点开（顶层导航），
+         里面就算藏了脚本也执行不了，等于在我们域名下开了一个不能跑脚本的沙箱。
+         放在 <img> 里加载的 SVG 本来就不执行脚本，所以这条不影响正常封面显示。 */
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
     },
   });
 

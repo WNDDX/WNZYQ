@@ -465,23 +465,27 @@ var sheets = [];
 var pRows = [['资源标题', '所属分类', '资源简介', '资源详情', '资源价格', '封面图片链接', '排序', '显示状态', '定时显示时间', '定时隐藏时间', '专属客服链接', '专属客服二维码', 'ID', '浏览量', '咨询客服', '资源码解锁', '绑定设备数', '创建时间']];
 (res.products || []).forEach(function (p) {
 pRows.push([
-__xl(p.title), __xl(p.cat), __xl(p.desc), __xl(p.detail_text || ''), Number(p.price) || 0,
+__xl(p.title), __xl(p.cat), __xl(p.desc), __xl(p.detail || ''), Number(p.price) || 0,
 __xl(p.cover || p.img || ''), p.sort || 0, (p.is_online && !p.is_hidden) ? '显示' : '隐藏',
 __xl(p.schedule_on || ''), __xl(p.schedule_off || ''), __xl(p.contact_url || ''), __xl(p.contact_qr || ''),
 p.id, p.views || 0, p.contacts || 0, p.resource_unlocks || 0, p.bindings || 0, L(p.created_at)
 ]);
 });
-sheets.push({ name: '资源清单', rows: pRows });
-var vRows = [['所属资源', '类型名称', '类型描述', '价格（元）', '当前资源码', '是否需要资源码', '是否隐藏', '绑定设备数', '排序']];
+sheets.push({ name: '资源', rows: pRows });
+var vRows = [['所属资源标题', '类型名称', '类型价格', '类型简介', '资源码', '解锁后内容', '绑定上限', '显示状态', '排序', '绑定设备数']];
 (res.variants || []).forEach(function (v) {
-vRows.push([__xl(v.product_title), __xl(v.name), __xl(v.desc), Number(v.price) || 0, __xl(v.resource_code), v.resource_code ? '是' : (v.has_content ? '否（直接获取）' : '否'), v.is_hidden ? '是' : '否', v.bindings || 0, v.sort || 0]);
+vRows.push([
+__xl(v.product_title), __xl(v.name), Number(v.price) || 0, __xl(v.desc),
+__xl(v.resource_code), __xl(v.resource_content || ''),
+v.bind_limit || 1, v.is_hidden ? '隐藏' : '显示', v.sort || 0, v.bindings || 0
+]);
 });
-sheets.push({ name: '资源类型', rows: vRows });
-var cRows = [['ID', '分类名称', '层级', '所属一级', '排序', '是否隐藏', '资源数']];
+sheets.push({ name: '类型', rows: vRows });
+var cRows = [['分类名称', '分类级别', '所属一级分类', '排序序号', '显示状态', 'ID', '资源数']];
 (res.categories || []).forEach(function (c) {
-cRows.push([c.id, __xl(c.name), __xl(c.level), __xl(c.parent), c.sort || 0, c.is_hidden ? '是' : '否', c.product_count || 0]);
+cRows.push([__xl(c.name), __xl(c.level), __xl(c.parent), c.sort || 0, c.is_hidden ? '隐藏' : '显示', c.id, c.product_count || 0]);
 });
-sheets.push({ name: '分类清单', rows: cRows });
+sheets.push({ name: '分类', rows: cRows });
 var bRows = [['所属资源', '类型', '资源码', '绑定时间', '最近访问', '设备UA']];
 (res.bindings || []).forEach(function (b) {
 bRows.push([__xl(b.product_title), __xl(b.variant_name), __xl(b.code), L(b.created_at), L(b.last_access), __xl(b.ua)]);
