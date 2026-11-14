@@ -227,6 +227,8 @@ export async function onRequestGet(context) {
       resource_unlocks: p.resource_unlocks,
       bindings: p.bindings,
       desc: p.desc || '',
+      /* v633：封面也漏了——导出的「封面图片链接」列一直是空的，备份导回去资源全部变成无封面占位图。 */
+      img: p.img || '',
       /* v633：详情原本没下发，导出的「资源详情」列永远是空的——备份等于丢了正文。
          这里补上；Excel 单元格上限 32767 字符，超长的截断并标注，至少不会让整个导出失败。 */
       detail: String(p.detail || '').slice(0, 32000),
