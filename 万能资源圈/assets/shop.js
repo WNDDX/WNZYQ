@@ -2264,7 +2264,14 @@ __fadeRenderProducts();
 searchInput.addEventListener('keydown', function (e) {
 if (e.key === 'Enter') { e.preventDefault(); __searchNow(); }
 });
+var __searchComposing = false;
+searchInput.addEventListener('compositionstart', function () { __searchComposing = true; });
+searchInput.addEventListener('compositionend', function () {
+__searchComposing = false;
+searchInput.dispatchEvent(new Event('input'));
+});
 searchInput.addEventListener('input', function () {
+if (__searchComposing) return;
 searchClear.classList.toggle('show', this.value.length > 0);
 clearTimeout(searchTimer);
 var self = this;
