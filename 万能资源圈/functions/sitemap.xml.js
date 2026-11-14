@@ -27,7 +27,9 @@ export async function onRequestGet(context) {
   } catch (e) { products = []; }
   try {
     const r2 = await env.DB.prepare(
-      "SELECT id FROM categories WHERE COALESCE(is_hidden,0) = 0 ORDER BY id ASC LIMIT 500"
+      /* v632c：原来漏了 deleted_at 过滤——已删除的分类（软删）仍在表里，于是 sitemap 里出现
+         cid=1..5 / 14 / 15 这些早已不存在的分类，搜索引擎抓到的全是空列表页。 */
+      "SELECT id FROM categories WHERE COALESCE(is_hidden,0) = 0 AND deleted_at IS NULL ORDER BY id ASC LIMIT 500"
     ).all();
     cats = r2.results || [];
   } catch (e) { cats = []; }
