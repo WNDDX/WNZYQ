@@ -15,13 +15,18 @@ export async function onRequestGet(context) {
     // 检查核心表是否已创建（以 products 表是否存在为标志）
     const tables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='products'").first();
     const ready = !!tables;
-    /* v631U：?schema=1 才额外返回 products 的索引清单——用来确认"有备无患"加的索引真的建上了。
-       平时监控探活不带这个参数，保持一条轻查询。 */
+    /* v631U：?schema=1 才额外返回索引清单——用来确认"有备无患"加的索引真的建上了。
+       平时监控探活不带这个参数，保持一条轻查询。
+       v633：范围从 products 扩到全部业务表（stats/categories/variants 等），
+       因为 stats 一直是零索引、却在每次浏览时被全表扫，光看 products 看不出来。 */
     if (request && new URL(request.url).searchParams.get('schema') === '1') {
       const idx = await env.DB.prepare(
-        "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='products' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+        "SELECT name, tbl_name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%' ORDER BY tbl_name, name"
       ).all();
-      return json({ ok: true, ready, indexes: (idx.results || []).map((r) => r.name) });
+      const rows = idx.results || [];
+      const byTable = {};
+      rows.forEach(function (r) { (byTable[r.tbl_name] = byTable[r.tbl_name] || []).push(r.name); });
+      return json({ ok: true, ready, indexes: rows.filter(function (r) { return r.tbl_name === 'products'; }).map(function (r) { return r.name; }), byTable: byTable });
     }
     return json({ ok: true, ready });
   } catch (e) {

@@ -119,8 +119,14 @@ export async function onRequestGet(context) {
 
   if (kw) {
     /* v631W：原来写成 LOWER(title) LIKE ?，对每一行都要跑一次 LOWER，纯粹浪费（LIKE 默认已对 ASCII 不敏感，中文无大小写）。 */
-    where += ' AND (title LIKE ? OR "desc" LIKE ?)';
-    params.push('%' + kw + '%', '%' + kw + '%');
+    /* v633：多关键词——空格分隔的每个词都要命中（AND），与前台 getFilteredProducts 同一口径；
+       最多取 5 个词，防止有人拼一长串空格把 SQL 撑爆。单词时与原来完全一致。 */
+    const words = kw.split(/\s+/).filter(function (w) { return w; }).slice(0, 5);
+    const useWords = words.length > 1 ? words : [kw];
+    for (const w of useWords) {
+      where += ' AND (title LIKE ? OR "desc" LIKE ?)';
+      params.push('%' + w + '%', '%' + w + '%');
+    }
   }
 
   // 3. 查库（v339 条225：总数与列表并行，省一次串行来回）

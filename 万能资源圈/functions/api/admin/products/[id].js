@@ -149,7 +149,7 @@ export async function onRequestPut(context) {
     detailVideos: ['detail_videos', asArr],
     contactUrl: ['contact_url', function (v) { return String(v || ''); }],
     contactQr: ['contact_qr', function (v) { return String(v || ''); }],
-    price: ['price', function (v) { return Number(v) || 0; }],
+    price: ['price', function (v) { return Math.max(0, Number(v) || 0); }], /* v633：同 POST，负数落到 0 */
     is_online: ['is_online', function (v) { return v ? 1 : 0; }],
     is_hidden: ['is_hidden', function (v) { return v ? 1 : 0; }],
     schedule_on: ['schedule_on', normScheduleTime],

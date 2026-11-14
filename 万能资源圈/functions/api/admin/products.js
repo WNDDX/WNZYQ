@@ -181,7 +181,7 @@ export async function onRequestPost(context) {
       detailVideos,
       String(b.contactUrl || ''),
       String(b.contactQr || ''), /* v385 条11：专属客服二维码 */
-      Number(b.price) || 0,
+      Math.max(0, Number(b.price) || 0), /* v633：负数价格会被原样存进去（前端 min=0 只提示不拦），这里兜一下地板价 0 */
       b.is_online ? 1 : 0,
       b.is_hidden ? 1 : 0,
       normScheduleTime(b.schedule_on),

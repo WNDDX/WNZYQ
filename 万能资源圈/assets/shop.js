@@ -734,6 +734,18 @@ var t = String(p.title || '');
 hit = __smartMatch(kw, t);
 if (!hit) hit = __smartMatch(kw, String(p.desc || '').slice(0, 60));
 }
+if (!hit && /\s/.test(kw)) {
+var __words = kw.split(/\s+/).filter(function (w) { return w; });
+if (__words.length > 1) {
+var __t = String(p.title || ''), __d = String(p.desc || '');
+hit = __words.every(function (w) {
+if (__t.toLowerCase().indexOf(w) !== -1) return true;
+if (__d.toLowerCase().indexOf(w) !== -1) return true;
+if (__smartMatch(w, __t)) return true;
+return __smartMatch(w, __d.slice(0, 60));
+});
+}
+}
 if (!hit) return false;
 }
 return true;

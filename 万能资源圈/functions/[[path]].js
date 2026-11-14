@@ -130,26 +130,62 @@ function __absImg(img, origin) {
   if (s.charAt(0) === '/') return origin + s;
   return origin + '/' + s;
 }
-function __injectMeta(html, row, origin) {
+function __injectMeta(html, row, origin, selfUrl) {
   const price = Number(row.price) || 0;
   const name = __plain(row.title, 40);
   const title = price > 0 ? name + ' · ¥' + (price % 1 === 0 ? price : price.toFixed(2)) : name;
   const desc = __plain(row.desc, 80) || ('在万能资源圈查看「' + name + '」的详情');
   const img = __absImg(row.img, origin);
-  const T = __esc(title), D = __esc(desc), I = __esc(img);
-  return html
+  const T = __esc(title), D = __esc(desc), I = __esc(img), U = __esc(selfUrl);
+  let out = html
     .replace(/<title>[\s\S]*?<\/title>/, '<title>' + T + '</title>')
     .replace(/(<meta name="description" content=")[^"]*(")/, '$1' + D + '$2')
+    /* v633：canonical / og:url 必须指向本条资源自己。
+       原来这两个还是 shop.html 里写死的 /shop —— 等于一边给它独立的 title/描述/封面，
+       一边又告诉搜索引擎「这个是 /shop 的副本，别单独收录」。结果就是 sitemap 里列的
+       18 个资源页全部被当成重复页面丢掉，白做。 */
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, '$1' + U + '$2')
+    .replace(/(<meta property="og:url" content=")[^"]*(")/, '$1' + U + '$2')
     .replace(/(<meta property="og:title" content=")[^"]*(")/, '$1' + T + '$2')
     .replace(/(<meta property="og:description" content=")[^"]*(")/, '$1' + D + '$2')
     .replace(/(<meta property="og:image" content=")[^"]*(")/, '$1' + I + '$2')
     .replace(/(<meta name="twitter:title" content=")[^"]*(")/, '$1' + T + '$2')
     .replace(/(<meta name="twitter:description" content=")[^"]*(")/, '$1' + D + '$2')
     .replace(/(<meta name="twitter:image" content=")[^"]*(")/, '$1' + I + '$2');
+  /* v633：给不执行 JS 的爬虫一段同内容的纯文字摘要（放 noscript，有 JS 的访客看不到）。
+     详情页正文本来全靠 JS 渲染，爬虫拿到的是一张空壳——只有 title/描述、没有正文，
+     很容易被判「内容稀薄/软 404」。这里把标题、简介、价格写成静态文本，
+     内容与页面完全一致，不构成 cloaking。 */
+  const seo = '<noscript><div style="max-width:720px;margin:28px auto;padding:0 16px;' +
+    'font:16px/1.75 -apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;color:#26323d">' +
+    '<h1 style="font-size:22px;margin:0 0 12px">' + T + '</h1>' +
+    '<p style="margin:0 0 10px">' + D + '</p>' +
+    (price > 0 ? '<p style="margin:0">价格：¥' + (price % 1 === 0 ? price : price.toFixed(2)) + '</p>' : '') +
+    '<p style="margin:14px 0 0"><a href="/shop">查看全部资源</a></p></div></noscript>';
+  return out.replace('</body>', seo + '</body>');
 }
+/* v633：分类页的轻量版注入——只换 title / 描述 / canonical / og:url / og:title / og:description，
+   封面继续用站点 logo。分类页正文是同一份列表页（客户端渲染），所以只用独立标题区分，
+   不硬造内容，避免被判重复内容作弊。 */
+function __injectCatMeta(html, catName, selfUrl, origin) {
+  const name = __plain(catName, 20);
+  const title = name + ' · 万能资源圈';
+  const desc = '万能资源圈「' + name + '」分类下的全部资源，实时更新。';
+  const T = __esc(title), D = __esc(desc), U = __esc(selfUrl);
+  return html
+    .replace(/<title>[\s\S]*?<\/title>/, '<title>' + T + '</title>')
+    .replace(/(<meta name="description" content=")[^"]*(")/, '$1' + D + '$2')
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, '$1' + U + '$2')
+    .replace(/(<meta property="og:url" content=")[^"]*(")/, '$1' + U + '$2')
+    .replace(/(<meta property="og:title" content=")[^"]*(")/, '$1' + T + '$2')
+    .replace(/(<meta property="og:description" content=")[^"]*(")/, '$1' + D + '$2')
+    .replace(/(<meta property="og:image" content=")[^"]*(")/, '$1' + __esc(origin + '/assets/images/logo.png') + '$2');
+}
+
 async function serveShopWithMeta(context) {
   const url = new URL(context.request.url);
   const pid = Number(url.searchParams.get('pid') || 0);
+  const cid = Number(url.searchParams.get('cid') || 0);
   let html = '';
   try {
     const res = await context.env.ASSETS.fetch(new URL('/shop.html', url));
@@ -164,9 +200,19 @@ async function serveShopWithMeta(context) {
       const row = await context.env.DB.prepare(
         'SELECT title, "desc", img, price FROM products WHERE id = ? AND is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL'
       ).bind(pid).first();
-      if (row && row.title) html = __injectMeta(html, row, url.origin);
+      if (row && row.title) html = __injectMeta(html, row, url.origin, url.origin + '/shop?pid=' + pid);
       else if (!row) gone = true;
     } catch (e) { /* 查库失败 → 原样返回，分享卡片退化成店铺信息，页面照常打开（不误判为死链） */ }
+  } else if (cid > 0) {
+    /* v633：分类页也给它自己的 title / canonical。原来 8 个分类页共用 /shop 的 canonical，
+       sitemap 里列着它们、但搜索引擎只会当成 /shop 的重复页面丢掉。分类被删/隐藏时同样 404。 */
+    try {
+      const c = await context.env.DB.prepare(
+        'SELECT id, name FROM categories WHERE id = ? AND deleted_at IS NULL AND COALESCE(is_hidden,0) = 0'
+      ).bind(cid).first();
+      if (c && c.name) html = __injectCatMeta(html, c.name, url.origin + '/shop?cid=' + cid, url.origin);
+      else if (!c) gone = true;
+    } catch (e) { /* 查库失败按原样返回 */ }
   }
   if (gone) {
     /* 资源已删除/下架/隐藏，或链接里的 pid 根本不存在：
@@ -179,8 +225,8 @@ async function serveShopWithMeta(context) {
     return new Response(html, { status: 404, headers: deadHeaders });
   }
   const headers = Object.assign({}, HTML_HEADERS);
-  /* 带 pid 的 HTML 短缓存 2 分钟：微信抓一次就够，避免每次转发都查库；改完资源名最多 2 分钟反映到新卡片 */
-  headers['cache-control'] = pid > 0 ? 'public, max-age=120' : HTML_HEADERS['cache-control'];
+  /* 带 pid/cid 的 HTML 短缓存 2 分钟：微信/爬虫抓一次就够，避免每次转发都查库；改完最多 2 分钟反映 */
+  headers['cache-control'] = (pid > 0 || cid > 0) ? 'public, max-age=120' : HTML_HEADERS['cache-control'];
   return new Response(html, { status: 200, headers: headers });
 }
 
@@ -290,7 +336,8 @@ export async function onRequestGet(context) {
   }
   /* v632b：/shop 且带 pid 时走「动态 meta」版本，让分享出去的卡片显示该资源名/封面；
      不带 pid 的 /shop 完全不变。 */
-  if (name === 'shop' && new URL(context.request.url).searchParams.get('pid')) {
+  const _sp = new URL(context.request.url).searchParams;
+  if (name === 'shop' && (_sp.get('pid') || _sp.get('cid'))) {
     return serveShopWithMeta(context);
   }
   if (PAGES[name]) {

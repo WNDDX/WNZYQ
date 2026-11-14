@@ -518,6 +518,15 @@ export async function ensureStatsColumns(env) {
     }
     _statsColsEnsured = true;
   } catch (e) { console.error('ensureStatsColumns 失败（不影响主流程):', e && e.message); }
+  /* v633：给 stats 补索引——这张表原来**一个索引都没有**，而每次访客浏览都要跑一次去重查询
+     （WHERE type / product_id / ip / created_at），等于每条埋点都把整张表扫一遍。
+     现在只有 235 行看不出来，攒到几千行时这就是纯烧 D1 读额度的黑洞。
+     三把索引各管一段：去重（每次埋点）、按日清理（每天一次）、按资源统计（后台/导出）。 */
+  try {
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_stats_dedup ON stats(type, product_id, ip, created_at)').run();
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_stats_created ON stats(created_at)').run();
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_stats_product ON stats(product_id, type)').run();
+  } catch (e) { console.error('ensureStatsIndexes 失败（不影响主流程):', e && e.message); }
 }
 
 // R92：读取平台设置（settings 键值表），失败/未设置返回默认值
