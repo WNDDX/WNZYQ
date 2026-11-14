@@ -1793,7 +1793,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<button type="button" class="logs-rbtn on" data-days="1">1天</button>' +
 '<button type="button" class="logs-rbtn" data-days="7">7天</button>' +
 '<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
-'<button type="button" class="row-btn logs-exp" id="logsExport">导出表格</button>' +
+'<button type="button" class="logs-exp export-btn" id="logsExport">导出表格</button>' +
 '</div>' +
 '<div class="logs-daily" id="logsDaily"><div class="logs-d-empty">正在统计</div></div>' +
 '<div class="logs-tools">' +
@@ -2004,7 +2004,7 @@ mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-la
 '<p class="imp-lead"><b>将删除：</b>资源、分类、统计、绑定、日志、公告<br>' +
 '<b>将保留：</b>账号、店铺名、客服码、风格设置</p>' +
 '<p class="imp-lead">删除后无法找回，请先备份</p>' +
-'<div class="logs-tools"><button type="button" class="row-btn" id="rsBackup">导出备份表格</button></div>' +
+'<div class="logs-tools"><button type="button" class="export-btn" id="rsBackup">导出备份表格</button></div>' +
 '<label for="rsConfirm">输入「清空」两个字确认</label>' +
 '<input class="input" id="rsConfirm" type="text" autocomplete="off" placeholder="清空" aria-label="输入清空二字以确认">' +
 '<div class="modal-footer"><button type="button" class="modal-inner-btn danger-solid" id="rsGo" disabled>确认清空</button>' +
@@ -2061,7 +2061,7 @@ return g;
 };
 mkGroup('内容管理',
 row('资源采集（从别家平台抓资源，挑着上架）', btnHtml('openExtCollectBtn', '资源采集', ' data-perm="external.view"'))
-+ row('批量导入（Excel 一次导多条）', btnHtml('batchImportBtn', '批量导入', '', 1))
++ row('批量导入（Excel 一次导多条）', '<button type="button" class="export-btn" id="batchImportBtn" data-noico="1">批量导入</button>')
 + row('回收站点（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站点'))
 );
 mkGroup('系统维护',
