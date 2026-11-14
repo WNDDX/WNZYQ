@@ -699,6 +699,10 @@ export async function ensureSoftDelete(env) {
   try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
   try { await env.DB.prepare("ALTER TABLE categories ADD COLUMN created_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
  /* v441b：#116 创建者列兜底（线上已验证有，此处幂等保险） */
+ /* v631U（有备无患）：老库也要把这两个索引补上——install.js 只对新库生效。
+    每台 isolate 开机各跑一次 IF NOT EXISTS（已存在时是纯 schema 查表，很便宜）。 */
+  try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_products_deleted ON products(deleted_at)').run(); } catch (e) {}
+  try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_products_online_list ON products(is_online, is_hidden, deleted_at, sort)').run(); } catch (e) {}
 }
 
 /* v545 修：资源「最后修改人」列必须单独迁移。

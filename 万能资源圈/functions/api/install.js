@@ -114,6 +114,11 @@ CREATE INDEX IF NOT EXISTS idx_products_online ON products(is_online);
 CREATE INDEX IF NOT EXISTS idx_products_cid ON products(cid);
 CREATE INDEX IF NOT EXISTS idx_products_hidden ON products(is_hidden);
 CREATE INDEX IF NOT EXISTS idx_products_sort ON products(sort);
+/* v631U（有备无患）：软删列与"上架中列表"的复合索引。
+   idx_products_deleted 让 COUNT(WHERE deleted_at IS NULL) 只读窄索引项；
+   idx_products_online_list 是首页/列表那条 WHERE+ORDER BY 的覆盖索引，资源上千后省掉临时排序。 */
+CREATE INDEX IF NOT EXISTS idx_products_deleted ON products(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_products_online_list ON products(is_online, is_hidden, deleted_at, sort);
 CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
 CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);
 CREATE INDEX IF NOT EXISTS idx_stats_type_created ON stats(type, created_at);
