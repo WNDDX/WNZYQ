@@ -19,13 +19,14 @@ export async function onRequestGet(context) {
      原来键 = 完整 URL，于是 `?x=随机数` 每次都是新键 → 缓存永远不命中、每次都真打 D1，
      等于给"拿脚本刷接口烧额度"开了个后门（顺带还能把边缘缓存塞满垃圾条目）。
      现在只按真正影响结果的参数生成键；带 `_t=` 的（前端强刷）不读也不写缓存。 */
-  const url = new URL(request.url);
+  /* 注意：本函数后面（分页参数处）已经声明了 const url，这里不能重名，用 _cu */
+  const _cu = new URL(request.url);
   const KEEP = ['page', 'page_size', 'cid', 'sub_cid', 'kw', 'brief', 'id']; /* id = 单条详情，漏了会和列表键撞车 */
-  const normUrl = new URL(url.origin + url.pathname);
-  KEEP.forEach(function (k) { if (url.searchParams.has(k)) normUrl.searchParams.set(k, url.searchParams.get(k)); });
+  const normUrl = new URL(_cu.origin + _cu.pathname);
+  KEEP.forEach(function (k) { if (_cu.searchParams.has(k)) normUrl.searchParams.set(k, _cu.searchParams.get(k)); });
   const cacheKey = new Request(normUrl.toString(), request);
   const cache = caches.default;
-  const bypassCache = url.searchParams.has('_t');
+  const bypassCache = _cu.searchParams.has('_t');
 
   // 1. 尝试读缓存
   if (!bypassCache) {
