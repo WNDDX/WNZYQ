@@ -35,13 +35,24 @@ const HTML_HEADERS = { 'content-type': 'text/html; charset=utf-8', 'cache-contro
 const PAGES = { index: 'index.html', shop: 'shop.html', admin: 'admin.html', error: 'error.html', 'error.html': 'error.html' };
 
 /** 统一返回错误页（HTTP 404） */
+/* v633：绝对地址（canonical / og:url / og:image / JSON-LD 里的 url、logo）在 HTML 里写死成
+   https://wnzyq.pages.dev，将来绑自定义域名（或换 pages 子域）就得四处翻着改，漏一处
+   SEO 就把权重指回旧域名。这里按请求的 origin 统一改写一遍，域名一换自动跟着走。
+   只改域名这一段，不做任何其它加工；origin 恰好是 pages.dev 时原样返回，零开销。 */
+const CANON_ORIGIN = 'https://wnzyq.pages.dev';
+function __absify(html, origin) {
+  if (!origin || origin === CANON_ORIGIN || !html) return html;
+  return String(html).split(CANON_ORIGIN).join(origin);
+}
+
 async function serveError(context) {
   try {
     const candidates = ['/error.html']; /* v336 条21：定死根目录部署 */
     for (const u of candidates) {
       const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
       if (res && res.ok) {
-        return new Response(res.body, { status: 404, headers: HTML_HEADERS });
+        const html = __absify(await res.text(), new URL(context.request.url).origin);
+        return new Response(html, { status: 404, headers: HTML_HEADERS });
       }
     }
   } catch (e) {
@@ -73,7 +84,8 @@ async function serveHome(context) {
   try {
     const res = await context.env.ASSETS.fetch(new URL('/index.html', context.request.url));
     if (res && res.ok) {
-      return new Response(res.body, { status: 200, headers: HTML_HEADERS });
+      const html = __absify(await res.text(), new URL(context.request.url).origin);
+      return new Response(html, { status: 200, headers: HTML_HEADERS });
     }
   } catch (e) {
     /* 忽略，走错误页兜底 */
@@ -88,7 +100,8 @@ async function servePage(context, file) {
     for (const u of candidates) {
       const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
       if (res && res.ok) {
-        return new Response(res.body, { status: 200, headers: HTML_HEADERS });
+        const html = __absify(await res.text(), new URL(context.request.url).origin);
+        return new Response(html, { status: 200, headers: HTML_HEADERS });
       }
     }
   } catch (e) {
@@ -141,7 +154,7 @@ async function serveShopWithMeta(context) {
   try {
     const res = await context.env.ASSETS.fetch(new URL('/shop.html', url));
     if (!res || !res.ok) return serveError(context);
-    html = await res.text();
+    html = __absify(await res.text(), url.origin);
   } catch (e) {
     return serveError(context);
   }

@@ -143,11 +143,17 @@ export async function onRequestPost(context) {
 
   // R169：去重口径统一到全部类型——「同设备+同资源+同类型」1 小时窗口内已有记录则本次不记
   // （created_at 为 UTC，与 datetime('now','-1 hour') 同系直接比较，窗口 1 小时与时区无关）
+  /* v633：顺手把「资源是否存在」一起判了（同一个 SELECT 两个 EXISTS，不多一次往返、不多一次计费）。
+     原来 product_id 完全不校验，脚本随便填个 999999 就写进 stats，攒一堆查不到资源的脏行；
+     公告阅读（ann_read）的 id 是公告 id 不是资源 id，所以它不做这项校验。 */
   try {
-    const dup = await env.DB.prepare(
-      "SELECT id FROM stats WHERE type = ? AND product_id = ? AND ip = ? AND created_at >= datetime('now', '-1 hour') LIMIT 1"
-    ).bind(type, pid, ipHash).first();
-    if (dup) return json({ ok: true, deduped: true });
+    const chk = await env.DB.prepare(
+      `SELECT
+         EXISTS(SELECT 1 FROM stats WHERE type = ? AND product_id = ? AND ip = ? AND created_at >= datetime('now', '-1 hour')) AS dup,
+         EXISTS(SELECT 1 FROM products WHERE id = ? AND deleted_at IS NULL) AS live`
+    ).bind(type, pid, ipHash, pid).first();
+    if (chk && chk.dup) return json({ ok: true, deduped: true });
+    if (type !== 'ann_read' && chk && !chk.live) return json({ ok: true, skipped: 'no-product' });
   } catch (e) { console.error('埋点去重查询失败（降级为记录):', e); }
 
   await env.DB.prepare('INSERT INTO stats (product_id, type, ip, region) VALUES (?, ?, ?, ?)')
