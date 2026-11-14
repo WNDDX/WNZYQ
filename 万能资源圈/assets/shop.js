@@ -1148,7 +1148,7 @@ return out + esc(s.slice(i));
 function buildProductCard(p) {
 var card = document.createElement('div');
 card.className = 'product-card'; card.setAttribute('role', 'button'); card.tabIndex = 0;
-card.setAttribute('aria-label', String(p.title || '').trim() + '，' + Number(p.price || 0) + ' 元');
+card.setAttribute('aria-label', String(p.title || '').trim() + (Number(p.price || 0) > 0 ? '，' + Number(p.price) + ' 元' : ''));
 card.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openModal(p); } });
 card.setAttribute('data-pid', p.id || 0);
 var img = document.createElement('img');
@@ -1194,7 +1194,7 @@ pEl.className = 'card-price';
 pEl.setAttribute('data-contrast-skip', 'brand-orange');
 pEl.textContent = _pr > 0
 ? (window.formatPrice ? window.formatPrice(_pr) : ('¥' + (String(_pr).indexOf('.') !== -1 ? _pr.toFixed(2) : _pr)))
-: '免费';
+: '';
 prow.appendChild(pEl);
 body.appendChild(prow);
 card.appendChild(img);

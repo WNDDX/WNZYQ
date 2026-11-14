@@ -89,13 +89,31 @@ export async function onRequestPost(context) {
           { name: 'audit_log', dateCol: 'created_at' },
           { name: 'admin_logins', dateCol: 'created_at' },
           { name: 'products', dateCol: 'deleted_at', extra: 'AND deleted_at IS NOT NULL' },
-          { name: 'categories', dateCol: 'deleted_at', extra: 'AND deleted_at IS NOT NULL' }
+          { name: 'categories', dateCol: 'deleted_at', extra: 'AND deleted_at IS NOT NULL' },
+          /* v633：性能实测（web_vitals）和前端报错（client_errors）从来没进过清理清单——
+             每次访问都写一条，只增不减。攒上一年，后台"性能实测"的 p75 查询会越来越慢，
+             还白占 D1 存储额度。同样按 60 天清。
+             这两张表是"用到才建"的（vitals.js / error.js 里 CREATE TABLE IF NOT EXISTS），
+             所以**必须排在数组最后**：万一某个库还没建过它们，这里会抛 no such table，
+             而整个循环共用外层一个 try——放最后就不会连累前面的表清不掉。 */
+          { name: 'web_vitals', dateCol: 'created_at' },
+          { name: 'client_errors', dateCol: 'created_at' }
         ];
         /* v439 复检修正：回收站到期彻底删除时联动清理派生数据——
            ① 先收集到期资源的图仓 key 并删除（否则 R2 永久孤儿占存储）
            ② 删 product_variants（类型/资源码）与 resource_bindings（绑定记录），否则残留孤儿
            categories 到期时其下资源早已随资源各自到期处理，此处仅删分类行 */
+        /* v633：先拿一份"这座库里到底有哪些表"，只清理存在的。
+           原因：web_vitals / client_errors 是懒建表（没人访问过就没有），
+           而整个循环共用外层一个 try——一张表 no such table 就会让后面的表全都清不掉。
+           先筛一遍最稳，代价只有每天一次 sqlite_master 查询。 */
+        let __exist = null;
+        try {
+          const __er = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+          __exist = new Set((__er.results || []).map(function (r) { return r.name; }));
+        } catch (eE) { __exist = null; }
         for (const t of tables) {
+          if (__exist && !__exist.has(t.name)) continue;
           const countRow = await env.DB.prepare(
             `SELECT COUNT(*) AS n FROM ${t.name} WHERE ${t.dateCol} < datetime('now', '-60 days') ${t.extra || ''}`
           ).first();

@@ -182,9 +182,30 @@ export async function onRequestGet(context) {
 
   const TYPE_TEXT = { view: '浏览', contact: '咨询客服', resource_unlock: '资源码解锁' };
 
+  /* v633：把平台设置一起导出去。
+     原来 8 个工作表全是"数据"，平台自身的配置（平台名、客服链接、群链接、
+     三个二维码、公告、绑定上限）一条都没有——老板一直以为"点导出 = 备份好了"，
+     真出事重建时这些全得靠回忆。这里只导白名单里的运营配置，不含任何密钥类字段。 */
+  const SETTING_LABEL = {
+    shop_name: '平台名称', shop_logo: '平台 Logo', contact_url: '客服链接', group_url: '群链接',
+    contact_qr: '客服二维码', group_qr: '群二维码', gzh_qr: '公众号二维码',
+    announcement: '公告内容', announcement_mode: '公告展示方式', announcements: '公告列表（JSON）',
+    resource_bind_limit: '每码绑定设备上限', sub_freeze: '子账号冻结'
+  };
+  let settingRows = [];
+  try {
+    const sr = await DB.prepare('SELECT key, value FROM settings').all();
+    const kv = {};
+    (sr.results || []).forEach(function (r) { kv[r.key] = r.value; });
+    settingRows = Object.keys(SETTING_LABEL)
+      .filter(function (k) { return kv[k] !== undefined && kv[k] !== ''; })
+      .map(function (k) { return { key: k, label: SETTING_LABEL[k], value: kv[k] }; });
+  } catch (e) { settingRows = []; }
+
   return json({
     ok: true,
     generated_at: new Date().toISOString(),
+    settings: settingRows,
     products: (productsRes.results || []).map((p) => ({
       id: p.id,
       title: p.title || '',
