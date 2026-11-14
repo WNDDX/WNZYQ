@@ -1036,7 +1036,7 @@ return '<div class="u-row" data-uid="' + u.id + '" data-pid="' + Number(u.parent
 + '<span class="u-tag">最近活跃 ' + esc(String(u.lastSeen || '—').slice(0, 16)) + '</span>'
 + (u.note ? '<span class="u-tag u-tag-note">' + esc(u.note) + '</span>' : '')
 + '</span>'
-+ '<button type="button" class="u-tagfold" data-tagfold="' + u.id + '" aria-label="展开或收起标签" aria-expanded="false">更多</button>'
++ '<button type="button" class="u-tagfold" data-tagfold="' + u.id + '" aria-label="展开或收起标签" aria-expanded="false">展开</button>'
 + '</span></span>'
 + '<span class="u-ops">' + ops + '</span>' + foldHtml + '</div>';
 }).join('');
@@ -1110,7 +1110,7 @@ ev.stopPropagation();
 var box = this.parentNode;
 var clipped = box.classList.toggle('is-clipped');
 this.classList.toggle('open', !clipped);
-this.textContent = clipped ? '更多' : '收起';
+this.textContent = clipped ? '展开' : '收起';
 this.setAttribute('aria-expanded', clipped ? 'false' : 'true');
 });
 });
