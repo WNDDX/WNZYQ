@@ -13,14 +13,28 @@ import { cleanProduct, cleanVariantPublic, ensureProductColumns, ensureSoftDelet
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const cacheUrl = new URL(request.url);
-  const cacheKey = new Request(cacheUrl.toString(), request);
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
+
+  /* v631Y（老板 21:16「有备无患」）：缓存键只保留参数白名单。
+     原来键 = 完整 URL，于是 `?x=随机数` 每次都是新键 → 缓存永远不命中、每次都真打 D1，
+     等于给"拿脚本刷接口烧额度"开了个后门（顺带还能把边缘缓存塞满垃圾条目）。
+     现在只按真正影响结果的参数生成键；带 `_t=` 的（前端强刷）不读也不写缓存。 */
+  const url = new URL(request.url);
+  const KEEP = ['page', 'page_size', 'cid', 'sub_cid', 'kw', 'brief', 'id']; /* id = 单条详情，漏了会和列表键撞车 */
+  const normUrl = new URL(url.origin + url.pathname);
+  KEEP.forEach(function (k) { if (url.searchParams.has(k)) normUrl.searchParams.set(k, url.searchParams.get(k)); });
+  const cacheKey = new Request(normUrl.toString(), request);
   const cache = caches.default;
+  const bypassCache = url.searchParams.has('_t');
 
   // 1. 尝试读缓存
-  const cached = await cache.match(cacheKey);
-  if (cached) {
-    return new Response(cached.body, cached);
+  if (!bypassCache) {
+    const cached = await cache.match(cacheKey);
+    if (cached) {
+      const hit = new Response(cached.body, cached);
+      hit.headers.set('X-Pub-Cache', 'hit');
+      return hit;
+    }
   }
 
   // 2. 定时显示/隐藏检查 + 列迁移（v339 条225：两件互不依赖的事并行做，减少一次串行来回）
@@ -161,8 +175,9 @@ export async function onRequestGet(context) {
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'public, max-age=20',
+      'X-Pub-Cache': 'miss',
     },
   });
-  context.waitUntil(cache.put(cacheKey, response.clone()));
+  if (!bypassCache) context.waitUntil(cache.put(cacheKey, response.clone()));
   return response;
 }
