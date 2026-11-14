@@ -41,3 +41,10 @@ export async function onRequestGet(context) {
 function xmlEsc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+/* v633：补 HEAD 处理。原来只导出 onRequestGet，HEAD 请求就落到兜底路由，
+   实测 HEAD /sitemap.xml 返回的是「首页 HTML + 200」，监控探活/爬虫预检会拿到错的东西。 */
+export async function onRequestHead(context) {
+  const res = await onRequestGet(context);
+  return new Response(null, { status: res.status, headers: res.headers });
+}

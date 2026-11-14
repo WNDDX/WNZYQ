@@ -177,11 +177,24 @@ const LONG_CACHE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'webp', 'wof
 const VIDEO_CACHE_EXTS = ['mp4', 'webm', 'ogv'];
 async function serveAsset(context, path) {
   const candidates = [path, '/万能资源圈' + path];
+  const _ext0 = (path.split('.').pop() || '').toLowerCase();
   for (const u of candidates) {
     try {
       const res = await context.env.ASSETS.fetch(new URL(u, context.request.url));
       if (res && res.ok) {
         const ext = (path.split('.').pop() || '').toLowerCase();
+        /* v633：**不存在的静态文件会被 Pages 兜底成首页 HTML（状态 200）**。
+           实测 GET /assets/nope.js → 200 + text/html + 一整页首页。后果很脏：
+           ① 拼错的 JS/CSS 引用不会报 404，而是拿到 HTML 当脚本解析 → 控制台一串
+              "Unexpected token '<'"，页面上某个功能整体失灵，还查不出是谁引用的；
+           ② 爬虫把 /assets/任意名字 全当有效页面收录。
+           这里按"声明的类型 vs 实际返回的类型"判真伪：请求的是非 HTML 资源、
+           回来的却是 text/html，就当我们没这个文件，继续找下一个候选、最后回真 404。 */
+        const gotType = (res.headers.get('content-type') || '').toLowerCase();
+        const looksHtml = gotType.indexOf('text/html') === 0;
+        if (looksHtml && ext !== 'html' && ext !== 'htm' && _ext0 !== '') {
+          continue;
+        }
         const headers = new Headers(res.headers);
         Object.keys(SECURITY_HEADERS).forEach((k) => headers.set(k, SECURITY_HEADERS[k])); /* v339 条221：静态兜底响应同样带防护 */
         if (path.split('/').pop() === 'sw.js') {
