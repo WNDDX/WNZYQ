@@ -899,17 +899,10 @@ return __SORT_TYPES[0];
 }
 function __setSortDir(d) {
 var cur = __sortTypeDef();
-if (!cur.dir) {
-if (window.showToast) window.showToast('「默认」按后台顺序排，没有升降序', 'success');
-return;
-}
+if (!cur.dir) return;
 if (sortDir === d) return;
 sortDir = d;
 __applySort();
-var map = { hot: '热度', newest: '最新', price: '价格' };
-if (window.showToast) {
-window.showToast((map[sortType] || '') + '：' + (d === 'asc' ? '从低到高 / 从旧到新' : '从高到低 / 从新到旧'), 'success');
-}
 }
 function __syncSortUI() {
 var cur = __SORT_TYPES[0];
@@ -998,7 +991,10 @@ if (cur) cur.focus({ preventScroll: true });
 function close(back) {
 picker.classList.remove('open');
 panel.classList.remove('open');
+setTimeout(function () {
+if (picker.classList.contains('open')) return;
 panel.style.top = ''; panel.style.left = ''; panel.style.width = '';
+}, 260);
 disp.setAttribute('aria-expanded', 'false');
 if (back) disp.focus({ preventScroll: true });
 }
