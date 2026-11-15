@@ -1923,7 +1923,7 @@ var uv = s[c.urlKey] !== undefined ? (s[c.urlKey] || '') : (window.__infoSetting
 window.__infoSettings[c.urlKey] = uv;
 if (k === 'contact') window.__infoContactUrl = uv || c.defUrl;
 var it = document.getElementById('infoItem' + __infoCap(k));
-if (!it || !it.classList.contains('open')) {
+{
 var inp = document.getElementById('infoUrl' + __infoCap(k));
 
 if (inp && document.activeElement !== inp) inp.value = uv || c.defUrl;
@@ -2028,6 +2028,10 @@ if (body && body.offsetHeight < 28) { itc.classList.remove('open'); if (fold) fo
 if (willOpen) {
 var ni = document.getElementById('infoNet' + C);
 if (ni && document.activeElement !== ni) ni.value = __infoPending[k] || (window.__infoSettings[c.qrKey] || '');
+if (c.urlKey) {
+var _ui = document.getElementById('infoUrl' + C);
+if (_ui && document.activeElement !== _ui) _ui.value = (window.__infoSettings[c.urlKey] || '') || c.defUrl;
+}
 }
 if (window.__haptic) window.__haptic();
 };
@@ -2084,7 +2088,7 @@ var _bad = document.getElementById('infoUrl' + C); if (_bad) { try { _bad.focus(
 return;
 }
 }
-var b = col, _t = b.textContent;
+var b = document.getElementById("infoSave" + C) || col, _t = b.textContent;
 b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '保存中');
 api('admin/settings', { method: 'PUT', body: JSON.stringify(body) }).then(function (res) {
 b.disabled = false; b.textContent = _t;
