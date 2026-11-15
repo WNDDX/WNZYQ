@@ -1867,7 +1867,13 @@ var _qr = (currentVariant && currentVariant.contactQr) || (currentProduct && cur
 if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); }
 };
 } else {
-btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); };
+btnContact.style.display = '';
+btnContact.onclick = function () {
+track(currentProduct ? currentProduct.id : null, 'contact');
+var _qr2 = (currentVariant && currentVariant.contactQr) || (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
+if (window.openContactModal) window.openContactModal('', _qr2, null, '', { green: true });
+else showToast('暂未设置客服链接', 'info');
+};
 }
 }
 var __codeDraft = null;
