@@ -383,7 +383,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null, green
 function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
 function openService() { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服", true); } /* v633：按钮文案与资源页/后台统一「去咨询」 */ /* v415 条1：咨询客服跳转键绿（第 6 参 green）；v402 注释作废 */
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
-function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
+function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh, null, "", false);} /* v633：显式传空按钮文案——之前落到默认值，公众号弹窗多出一个「跳转-咨询在线客服」键；后台同类配置 btn 为空，两边要一致 */
 // v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮
 // v392-4：下拉刷新手势与胶囊 UI 收归 motion.js 四页唯一源，本页只留刷新动作（重拉 logo 保鲜） 
 window.__pullRefresh = { refresh: function (done) { try { loadImg(dom.logoImage, CONFIG.logoImg); } catch (e) { if (window.__silent) window.__silent(e); } if (done) done(); } };
