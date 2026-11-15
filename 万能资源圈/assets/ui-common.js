@@ -860,6 +860,18 @@ try { mask.querySelectorAll('video').forEach(function (v) { v.pause(); }); } cat
 }
 document.addEventListener('keydown', function (e) {
 if (e.key !== 'Escape' || e.__escPre) return;
+var _kfM = document.getElementById('kfMask');
+if (_kfM && _kfM.classList && _kfM.classList.contains('open')) {
+e.preventDefault();
+close(_kfM, 'stash');
+return;
+}
+var _kfF = document.getElementById('kfFallback');
+if (_kfF && _kfF.style && _kfF.style.display !== 'none' && _kfF.style.display !== '') {
+e.preventDefault();
+try { window.__kfFbClose(); } catch (eK) {}
+return;
+}
 if (!stack.length) return;
 e.preventDefault();
 close(stack[stack.length - 1], 'stash');
