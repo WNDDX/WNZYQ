@@ -1968,6 +1968,19 @@ window.openContactModal(jumpUrl, qr, meta.tip, jumpUrl && meta.btn ? meta.btn : 
 if (window.__haptic) window.__haptic();
 }
 }
+
+window.__infoEnsure = function () {
+try {
+if (!window.__infoApply) return;
+var st = window.state && window.state.settings;
+if (st && (st.contact_qr !== undefined || st.contact_url !== undefined)) window.__infoApply(st);
+fetch('/api/settings', { credentials: 'include' })
+.then(function (r) { return r.ok ? r.json() : null; })
+.then(function (j) { if (j && j.ok && j.settings && window.__infoApply) window.__infoApply(j.settings); })
+.catch(function () {});
+} catch (eE) { if (window.__silent) window.__silent(eE); }
+};
+
 (function __infoInit() {
 
 try {
@@ -1982,12 +1995,13 @@ __keyGlow('openAnnBtn', 'annMask');
 } catch (e) { if (window.__silent) window.__silent(e); }
 
 var edContact = document.getElementById('edContactBtn');
-if (edContact) edContact.addEventListener('click', function () { __infoPreview('contact'); });
+if (edContact) edContact.addEventListener('click', function () { if (window.__infoEnsure) window.__infoEnsure(); __infoPreview('contact'); });
 
 var open = document.getElementById('openInfoBtn');
 if (open) open.addEventListener('click', function () {
 var mk = document.getElementById('infoMask');
 if (mk && !mk.classList.contains('open')) mk.classList.add('open');
+if (window.__infoEnsure) window.__infoEnsure();
 if (window.__haptic) window.__haptic();
 });
 function syncInfoSave(k) {
