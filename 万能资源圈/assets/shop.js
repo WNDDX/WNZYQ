@@ -920,7 +920,7 @@ function __syncSortUI() {
 var cur = __SORT_TYPES[0];
 for (var i = 0; i < __SORT_TYPES.length; i++) if (__SORT_TYPES[i].v === sortType) cur = __SORT_TYPES[i];
 var t = document.getElementById('sortText');
-if (t) t.textContent = cur.t;
+if (t) { t.textContent = cur.t; t.classList.toggle('is-picked', cur.v !== __SORT_TYPES[0].v); }
 var dirBtn = document.getElementById('sortDirBtn');
 if (dirBtn) {
 var usable = !!cur.dir;
@@ -3361,10 +3361,7 @@ var first = pills[0].getBoundingClientRect();
 var tr = tabs.getBoundingClientRect();
 lineH = Math.ceil(first.height + 20);
 foldTop = Math.max(2, Math.round((first.top + first.height / 2) - tr.top - 12));
-var top0 = Math.round(first.top);
-for (var i = 1; i < pills.length; i++) {
-if (Math.abs(Math.round(pills[i].getBoundingClientRect().top) - top0) > 3) { multi = true; break; }
-}
+var multi = tabs.scrollWidth > tabs.clientWidth + 2;
 }
 fold.style.top = foldTop + 'px';
 fold.hidden = !multi;
