@@ -2001,7 +2001,7 @@ var cv = variants[previewCurVariant];
 if (cv && cv.contactUrl) url = cv.contactUrl;
 if (!url) url = fContactUrl.value.trim();
 if (!url && window.__infoContactUrl) url = window.__infoContactUrl;
-if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '去咨询', { green: true }); } else { window.openContactFallback(url, { green: true }); } }
+if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); } }
 else toast('还没填客服链接', 'warn');
 });
 document.querySelector('.preview-close-btn').addEventListener('click', function () {
