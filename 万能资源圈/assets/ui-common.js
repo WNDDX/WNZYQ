@@ -212,13 +212,20 @@ if (img) {
 img.style.opacity = '0';
 img.classList.remove('kf-qr-in');
 img.onerror = function () {
+if (this.dataset && !this.dataset.__retried && _qrRaw && /^https?:\/\//i.test(_qrRaw) && String(this.src).indexOf('/api/img-proxy') >= 0) {
+this.dataset.__retried = '1';
+this.src = _qrRaw;
+return;
+}
 this.onerror = null;
 this.src = KF_QRF();
 if (this.classList) this.classList.add('media-fail');
+if (this.dataset) this.dataset.__failed = '1';
 img.style.opacity = '';
 };
 img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
 var _qrSrc = qrImg || window.__kefuQrSrc();
+var _qrRaw = _qrSrc;
 if (_qrSrc && /^https?:\/\//i.test(_qrSrc)) _qrSrc = '/api/img-proxy?u=' + encodeURIComponent(_qrSrc);
 if (_qrSrc) {
 img.src = _qrSrc;
