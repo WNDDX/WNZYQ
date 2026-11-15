@@ -1949,7 +1949,12 @@ var del = document.getElementById('infoQrDel' + C);
 var add = document.getElementById('infoQrAdd' + C);
 if (img) {
 var _tip = document.getElementById('infoQrTip' + C);
-if (qr) { img.src = qr; img.style.display = ''; if (_tip) _tip.remove(); }
+if (qr) {
+
+var _thumb = qr;
+if (/^https?:\/\//i.test(_thumb) && _thumb.indexOf('/api/img-proxy') < 0) _thumb = '/api/img-proxy?u=' + encodeURIComponent(_thumb);
+img.src = _thumb; img.style.display = ''; if (_tip) _tip.remove();
+}
 else { img.removeAttribute('src'); img.style.display = 'none'; if (!_tip && img.parentNode) { _tip = document.createElement('div'); _tip.id = 'infoQrTip' + C; _tip.style.cssText = 'font-size:12px;color:var(--text-light);padding:10px 0;line-height:1.7'; _tip.textContent = '该行暂无二维码——点上方「上传二维码」添加，访客长按图片即可识别'; img.parentNode.appendChild(_tip); } }
 }
 if (del) del.style.display = qr ? '' : 'none';
