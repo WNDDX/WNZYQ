@@ -241,7 +241,9 @@ var tipEl = document.getElementById('kfTip');
 if (tipEl) tipEl.textContent = tip || window.__kfTipText();
 var btn = document.getElementById('kfJumpBtn');
 if (btn) {
-btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
+btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText;
+btn.textContent = btnText || '';
+btn.setAttribute('data-url', btnText ? (url || '') : '');
 btn.classList.toggle('kf-jump-green', !!(opts && opts.green));
 }
 var mask = document.getElementById('kfMask');
