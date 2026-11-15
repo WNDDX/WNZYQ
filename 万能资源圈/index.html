@@ -288,9 +288,9 @@ const CONFIG = {
  serviceQrImg: "",
  groupQrImg: "",
  gzhImg: "",
- tipService: "长按识别加客服",
- tipGroup: "长按图片识别-加入交流群聊",
- tipGzh: "长按图片识别-关注公众号讯",
+ tipService: "长按识别二维码加客服",
+ tipGroup: "长按识别二维码加群聊",
+ tipGzh: "长按识别二维码关注公众号",
  maxRetry: 3,
  retryDelay: 1000
 };
@@ -381,7 +381,7 @@ function showModal(title, imgSrc, tipText, jumpUrl = null, btnText = null, green
 
 //页面按钮事件
 function openResource() { /* R233 条13：跳转接入 View Transitions（window.jumpTo 统一方案） */ window.jumpTo(CONFIG.resourceUrl); }
-function openService() { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "跳转-咨询在线客服", true); } /* v415 条1：咨询客服跳转键绿（第 6 参 green）；v402 注释作废 */
+function openService() { showModal("咨询客服", CONFIG.serviceQrImg, CONFIG.tipService, CONFIG.serviceWeixinUrl, "去咨询", true); } /* v633：按钮文案与资源页/后台统一「去咨询」 */ /* v415 条1：咨询客服跳转键绿（第 6 参 green）；v402 注释作废 */
 function openGroup() {showModal("交流群聊", CONFIG.groupQrImg, CONFIG.tipGroup, CONFIG.groupWeixinUrl, "跳转-加入交流群聊");}
 function openGzh() {showModal("公众号讯", CONFIG.gzhImg, CONFIG.tipGzh);}
 // v297（用户 10-04 17:48）：撤回 v295 超范围改动→恢复三页无分享按钮

@@ -152,9 +152,7 @@ if (!hide) __kfHiddenVideos = [];
 }
 window.__kfTipText = function () {
 try {
-if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) return '扫码添加客服';
-if (navigator.maxTouchPoints > 0) return '长按识别二维码加客服';
-return '扫码添加客服';
+return '长按识别二维码加客服';
 } catch (e) { return '长按识别二维码加客服'; }
 };
 function ensureKfModal() {
