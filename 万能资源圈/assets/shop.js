@@ -1864,7 +1864,7 @@ btnContact.style.display = '';
 btnContact.onclick = function () {
 track(currentProduct ? currentProduct.id : null, 'contact');
 var _qr = (currentVariant && currentVariant.contactQr) || (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
-if (window.openContactModal) { window.openContactModal(url, _qr, null, '去咨询', { green: true }); } else { window.openContactFallback(url, { green: true }); }
+if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); }
 };
 } else {
 btnContact.style.display = ''; btnContact.onclick = function () { showToast('暂未设置客服链接', 'info'); };
@@ -2351,7 +2351,7 @@ window.toast = showToast;
 topContactBtn.addEventListener('click', function () {
 var url = window._globalContact || getDefaultContact();
 topContactBtn.classList.add('active');
-if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '去咨询', { green: true }); } else { window.openContactFallback(url, { green: true }); } }
+if (url) { if (window.openContactModal) { window.openContactModal(url, window.__kefuQrSrc(), null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); } }
 else showToast('暂未设置客服链接', 'info');
 });
 topShareBtn.addEventListener('click', openShare);

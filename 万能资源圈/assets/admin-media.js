@@ -1953,7 +1953,7 @@ if (window.__syncInfoSave) window.__syncInfoSave(k);
 function __infoPreview(k) {
 var c = __infoCfg[k], C = __infoCap(k);
 var meta = {
-contact: { title: '咨询客服', tip: '长按识别二维码加客服', btn: '去咨询', green: true },
+contact: { title: '咨询客服', tip: '长按识别二维码加客服', btn: '跳转-咨询在线客服', green: true },
 group: { title: '交流群聊', tip: '长按识别二维码加群聊', btn: '跳转-加入交流群聊' },
 gzh: { title: '公众号讯', tip: '长按识别二维码关注公众号', btn: '' }
 }[k];
