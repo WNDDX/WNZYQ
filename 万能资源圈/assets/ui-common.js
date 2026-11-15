@@ -170,7 +170,7 @@ m.innerHTML =
 '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
 '<div class="kf-tip" id="kfTip">' + window.__kfTipText() + '</div>' +
 '<div class="kf-actions">' +
-'<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
+'<button class="kf-jump" id="kfJumpBtn" type="button">去咨询</button>' +
 '<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
 '</div>' +
 '</div>';
@@ -235,7 +235,7 @@ var tipEl = document.getElementById('kfTip');
 if (tipEl) tipEl.textContent = tip || window.__kfTipText();
 var btn = document.getElementById('kfJumpBtn');
 if (btn) {
-btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '跳转-咨询在线客服'; btn.setAttribute('data-url', url || '');
+btn.style.display = btnText ? '' : 'none'; btn.hidden = !btnText; btn.textContent = btnText || '去咨询'; btn.setAttribute('data-url', url || '');
 btn.classList.toggle('kf-jump-green', !!(opts && opts.green));
 }
 var mask = document.getElementById('kfMask');
@@ -266,7 +266,7 @@ m.innerHTML =
 '<div class="kf-qr"><img id="kfFallbackImg" alt="客服二维码" /></div>' +
 '<div class="kf-tip">' + window.__kfTipText() + '</div>' +
 '<div class="kf-actions">' +
-'<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
+'<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">去咨询</button>' +
 '<button class="kf-close" type="button" onclick="window.__kfFbClose()">关闭</button>' +
 '</div>' +
 '</div>';
