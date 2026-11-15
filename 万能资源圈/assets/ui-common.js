@@ -152,8 +152,8 @@ if (!hide) __kfHiddenVideos = [];
 }
 window.__kfTipText = function () {
 try {
-return '长按识别二维码加客服';
-} catch (e) { return '长按识别二维码加客服'; }
+return '长按图片识别-添加人工客服';
+} catch (e) { return '长按图片识别-添加人工客服'; }
 };
 function ensureKfModal() {
 if (document.getElementById('kfMask')) return;
@@ -168,8 +168,8 @@ m.innerHTML =
 '<div class="kf-qr"><img id="kfQrImg" alt="二维码" /></div>' +
 '<div class="kf-tip" id="kfTip">' + window.__kfTipText() + '</div>' +
 '<div class="kf-actions">' +
-'<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
 '<button class="kf-jump" id="kfJumpBtn" type="button">跳转-咨询在线客服</button>' +
+'<button class="kf-close" id="kfCloseBtn" type="button">关闭</button>' +
 '</div>' +
 '</div>';
 document.body.appendChild(m);
@@ -259,13 +259,13 @@ m.className = 'kf-mask';
 m.setAttribute('role', 'dialog');
 m.innerHTML =
 '<div class="kf-box">' +
-'<button class="kf-x" type="button" aria-label="关闭" onclick="window.__kfFbClose()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
+'<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
 '<div class="kf-title">咨询客服</div>' +
 '<div class="kf-qr"><img id="kfFallbackImg" alt="客服二维码" /></div>' +
 '<div class="kf-tip">' + window.__kfTipText() + '</div>' +
 '<div class="kf-actions">' +
 '<button class="kf-close" type="button" onclick="window.__kfFbClose()">关闭</button>' +
-'<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
+'<button class="kf-x" type="button" aria-label="关闭" onclick="window.__kfFbClose()"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button>' +
 '</div>' +
 '</div>';
 document.body.appendChild(m);
