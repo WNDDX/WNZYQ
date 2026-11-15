@@ -185,7 +185,11 @@ document.getElementById('kfCloseX').addEventListener('click', close);
 document.getElementById('kfCloseBtn').addEventListener('click', close);
 document.getElementById('kfJumpBtn').addEventListener('click', function () {
 var u = this.getAttribute('data-url') || '';
-if (u) { try { window.open(u, '_blank'); } catch (e) { if (window.__silent) window.__silent(e); } }
+if (!u) return;
+var _now = Date.now();
+if (_now - (window.__kfJumpAt || 0) < 1200) return;
+window.__kfJumpAt = _now;
+try { window.open(u, '_blank'); } catch (e) { if (window.__silent) window.__silent(e); }
 });
 window.closeContactModal = close;
 }
@@ -269,7 +273,7 @@ m.className = 'kf-mask';
 m.setAttribute('role', 'dialog');
 m.innerHTML =
 '<div class="kf-box">' +
-'<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
+'<button class="kf-jump" type="button" data-u="" onclick="var u=this.getAttribute(\'data-u\');if(u){var n=Date.now();if(n-(window.__kfJumpAt||0)<1200)return;window.__kfJumpAt=n;window.open(u,\'_blank\');}">跳转-咨询在线客服</button>' +
 '<div class="kf-title">咨询客服</div>' +
 '<div class="kf-qr"><img id="kfFallbackImg" alt="客服二维码" /></div>' +
 '<div class="kf-tip">' + window.__kfTipText() + '</div>' +
