@@ -224,7 +224,8 @@ if (this.dataset) this.dataset.__failed = '1';
 img.style.opacity = '';
 };
 img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
-var _qrSrc = qrImg || window.__kefuQrSrc();
+var _qrSrc = qrImg;
+if (qrImg === undefined || qrImg === null) _qrSrc = window.__kefuQrSrc();
 var _qrRaw = _qrSrc;
 if (_qrSrc && /^https?:\/\//i.test(_qrSrc)) _qrSrc = '/api/img-proxy?u=' + encodeURIComponent(_qrSrc);
 if (_qrSrc) {
