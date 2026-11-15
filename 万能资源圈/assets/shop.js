@@ -1510,6 +1510,7 @@ try { if (window.__ogDynamic) window.__ogDynamic(p); } catch (e) { if (window.__
 try { if (!window.__pvMode) __pushRecent(p.id); } catch (e) { if (window.__silent) window.__silent(e); }
 try { __renderRecent(); } catch (e) { if (window.__silent) window.__silent(e); }
 currentVariant = null;
+try { updateContactBtn(); } catch (eC) { if (window.__silent) window.__silent(eC); }
 track(p.id, 'view');
 try {
 var _ids = window.__visibleIds || [];
