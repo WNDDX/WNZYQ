@@ -3094,6 +3094,14 @@ return true;
 };
 document.addEventListener('keydown', function (e) {
 if (e.key !== 'Escape' || e.__escPre) return;
+var _kfm = document.querySelector('.kf-mask.open');
+if (_kfm) {
+e.__escPre = true;
+e.preventDefault();
+e.stopPropagation();
+try { if (window.__modalKit) window.__modalKit.close(_kfm, 'stash'); else _kfm.classList.remove('open'); } catch (eKf) {}
+return;
+}
 var open = document.querySelectorAll('.modal-mask.open');
 if (!open.length) return;
 e.__escPre = true;
