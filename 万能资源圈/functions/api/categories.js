@@ -8,7 +8,7 @@ import { ensureSoftDelete, json } from '../_utils.js';
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const cacheKey = new Request(new URL(request.url).toString(), request);
+  await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  const cacheKey = new Request(new URL(request.url).toString()); /* v633：同上，键要与清缓存一致 */
   const cache = caches.default;
 
   const cached = await cache.match(cacheKey);

@@ -17,7 +17,11 @@ export async function onRequestGet(context) {
      代价是后台改完最多 60 秒前台才更新——所以 admin/settings.js 写完之后会主动清这一条，
      正常操作（改客服链接/发公告）依然是刷一下就生效。 */
   const cache = caches.default;
-  const cacheKey = new Request(new URL('/api/settings', new URL(request.url).origin).toString(), request);
+  /* v633（实测根因：后台保存后 60 秒内前台还是旧值，老板以为没改上）——
+     put/match 的键原来写的是 new Request(url, request)，把原请求的 Cookie/UA 等头一起带进了键；
+     而清缓存 clearPublicCache 删的是「裸 URL」的键，两个键对不上，于是永远删不掉。
+     这里改成裸 URL 键，与 clearPublicCache 完全一致。 */
+  const cacheKey = new Request(new URL('/api/settings', new URL(request.url).origin).toString());
   try {
     const hit = await cache.match(cacheKey);
     if (hit) return hit;

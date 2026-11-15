@@ -24,7 +24,7 @@ export async function onRequestGet(context) {
   const KEEP = ['page', 'page_size', 'cid', 'sub_cid', 'kw', 'brief', 'id']; /* id = 单条详情，漏了会和列表键撞车 */
   const normUrl = new URL(_cu.origin + _cu.pathname);
   KEEP.forEach(function (k) { if (_cu.searchParams.has(k)) normUrl.searchParams.set(k, _cu.searchParams.get(k)); });
-  const cacheKey = new Request(normUrl.toString(), request);
+  const cacheKey = new Request(normUrl.toString()); /* v633：去掉 request——带 Cookie/UA 的键与 clearPublicCache 删的裸 URL 键对不上，永远删不掉，后台改完前台迟迟不更新 */
   const cache = caches.default;
   const bypassCache = _cu.searchParams.has('_t');
 
