@@ -1927,6 +1927,11 @@ var it = document.getElementById('infoItem' + __infoCap(k));
 var inp = document.getElementById('infoUrl' + __infoCap(k));
 
 if (inp && document.activeElement !== inp) inp.value = uv || c.defUrl;
+
+try {
+var nInp = document.getElementById('infoNet' + __infoCap(k));
+if (nInp && document.activeElement !== nInp && /^https?:\/\//i.test(qr || '')) nInp.value = qr;
+} catch (eN) {}
 }
 }
 var it2 = document.getElementById('infoItem' + __infoCap(k));
@@ -1936,7 +1941,9 @@ __infoRefreshPanel(k);
 };
 function __infoRefreshPanel(k) {
 var C = __infoCap(k);
-var qr = __infoPending[k] || '';
+
+var _pend = __infoPending[k];
+var qr = (_pend === null) ? '' : (_pend || (window.__infoSettings && window.__infoSettings[__infoCfg[k].qrKey]) || '');
 var img = document.getElementById('infoQrImg' + C);
 var del = document.getElementById('infoQrDel' + C);
 var add = document.getElementById('infoQrAdd' + C);
@@ -1957,7 +1964,8 @@ contact: { title: '咨询客服', tip: '长按图片识别-添加人工客服', 
 group: { title: '交流群聊', tip: '长按图片识别-加入交流群聊', btn: '跳转-加入交流群聊' },
 gzh: { title: '公众号讯', tip: '长按图片识别-关注公众号讯', btn: '' }
 }[k];
-var qr = __infoPending[k] || (window.__infoSettings[c.qrKey] || '');
+var _pend2 = __infoPending[k];
+var qr = (_pend2 === null) ? '' : (_pend2 || (window.__infoSettings[c.qrKey] || ''));
 var jumpUrl = '';
 if (c.urlKey) {
 var inp = document.getElementById('infoUrl' + C);
@@ -2072,7 +2080,7 @@ if (window.__haptic) window.__haptic();
 }
 var del = document.getElementById('infoQrDel' + C);
 if (del) del.addEventListener('click', function () {
-__infoPending[k] = '';
+__infoPending[k] = null;
 __infoRefreshPanel(k);
 });
 
@@ -2091,7 +2099,7 @@ var pvBtn = document.getElementById('infoBtn' + C);
 if (pvBtn) pvBtn.addEventListener('click', function () { __infoPreview(k); });
 
 function __infoSaveRow(after) {
-var body = {}; body[c.qrKey] = __infoPending[k] || '';
+var body = {}; body[c.qrKey] = (__infoPending[k] === null ? '' : (__infoPending[k] || ''));
 if (c.urlKey) {
 var inp = document.getElementById('infoUrl' + C);
 body[c.urlKey] = (inp ? inp.value : '').trim();
