@@ -4,7 +4,7 @@
  * body: { cid, title, desc, detail, img, detailImages[], detailVideos[], contactUrl, is_online, sort }
  * R303（09-30）：GET 支持分页按页拉取（page + page_size），支持筛选（kw / cid / status）
  */
-import { cleanProduct, cleanVariant, clearPublicCache, ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensureProductColumns, ensureSoftDelete, ensureUpdatedBy, ensureVariantColumns, json, readJSON, normScheduleTime, requireAuth, requirePerm } from '../../_utils.js';
+import { cleanProduct, cleanVariant, clearPublicCache, ensureAdminUsers, ensureBindingsTable, ensureCodeIssuesTable, ensureProductColumns, ensureSoftDelete, ensureUpdatedBy, ensureVariantColumns, json, readJSON, normScheduleTime, requireAuth, requirePerm, checkContactUrl } from '../../_utils.js';
 import { catScopeSQL, catAllowed, visibleCode, parsePerms } from '../../_perms.js';
 
 // 给资源列表批量挂上各自的类型（后台需要看到类型/资源码状态、导出资源类型表）
@@ -151,6 +151,8 @@ export async function onRequestPost(context) {
 
   await ensureProductColumns(env);
   const b = await readJSON(request);
+  /* v633：客服链接填成图片地址会被原样存进库，前台点客服就是打开一张图 */
+  { const _bad = checkContactUrl(b && b.contactUrl); if (_bad) return json({ ok: false, msg: _bad }, 400); }
   if (!String(b.title || '').trim()) return json({ ok: false, msg: '请填写资源标题' }, 400);
   /* #116 范围锁：子账号只能新增到授权分类 */
   if (auth.role !== 'super' && !catAllowed(Number(b.cid) || 0, auth.role, typeof auth.perms === 'string' ? parsePerms(auth.perms) : null)) {

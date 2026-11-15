@@ -5,7 +5,7 @@
  * 均需登录
  */
 
-import { json, normScheduleTime, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, ensureProductColumns, ensureUpdatedBy, ensureVariantColumns, audit } from '../../../_utils.js';
+import { json, normScheduleTime, requireAuth, requirePerm, ensureAdminUsers, readJSON, cleanProduct, cleanVariant, clearPublicCache, ensureSoftDelete, ensureProductColumns, ensureUpdatedBy, ensureVariantColumns, audit, checkContactUrl } from '../../../_utils.js';
 import { catAllowed, visibleCode, parsePerms } from '../../../_perms.js';
 
 /* #116 范围锁：资源是否在当前身份的授权分类内 */
@@ -56,6 +56,20 @@ export async function onRequestPut(context) {
   if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
 
   const b = await readJSON(request);
+  /* v633：客服链接不许是图片地址。但只在「这次真的改了」时才判——
+     库里原有的历史坏值（比如把图片地址填进客服链接的那条），老板打开编辑原样保存不能被拦，
+     否则会以为编辑功能坏了。所以先读旧值，新值等于旧值就放行。 */
+  {
+    const _newContact = String((b && b.contactUrl) == null ? '' : b.contactUrl).trim();
+    if (_newContact) {
+      let _oldContact = null;
+      try { const _row = await env.DB.prepare('SELECT contact_url FROM products WHERE id = ?').bind(id).first(); _oldContact = _row ? String(_row.contact_url || '') : ''; } catch (eO) { _oldContact = null; }
+      if (_oldContact === null || _newContact !== _oldContact) {
+        const _bad = checkContactUrl(_newContact);
+        if (_bad) return json({ ok: false, msg: _bad }, 400);
+      }
+    }
+  }
 
   // v385 条11：部分更新模式——编辑弹窗内「专属咨询客服」行内保存只更新这两列（下方全量 UPDATE 会把缺失字段清空）
   if (b.partial === 'contact') {

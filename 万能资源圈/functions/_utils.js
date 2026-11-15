@@ -793,3 +793,17 @@ export async function recordAdminLogin(env, request) {
     await env.DB.prepare('INSERT INTO admin_logins (device, ip, ua) VALUES (?, ?, ?)').bind(describeDevice(ua), ip, String(ua).slice(0, 300)).run();
   } catch (e) { /* 记录失败不阻塞登录 */ }
 }
+
+
+/* v633（实测：有资源的「客服链接」被填成了图片地址，访客点客服＝打开一张图，看起来"没反应"）——
+   资源级客服链接补一道校验。只认 http(s)；明确像图片文件的直接拒（图片是二维码那一栏的事）。
+   留空合法（前台会回退到平台设置里的客服链接）。 */
+export function checkContactUrl(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return '';
+  if (!/^https?:\/\//i.test(s)) return '客服链接要填完整网址（http/https 开头）';
+  if (/\.(jpe?g|png|gif|webp|bmp|svg|avif)(\?|#|_|$)/i.test(s)) {
+    return '这看起来是图片地址：客服链接请填对话页（微信/QQ 等），二维码请填到「客服二维码」那一栏';
+  }
+  return '';
+}
