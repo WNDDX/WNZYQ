@@ -1042,6 +1042,23 @@ if (el.hasAttribute('data-perm-hid')) { el.style.display = el.getAttribute('data
 }
 });
 });
+(function () {
+var rules = [
+{ id: 'batchBar', acts: ['products.edit', 'products.del'] },
+{ id: 'catBatchBar', acts: ['cats.edit', 'cats.del'] }
+];
+rules.forEach(function (r) {
+var bar = document.getElementById(r.id);
+if (!bar) return;
+var allow = r.acts.some(function (a) { return window.__permCan(a); });
+if (allow) {
+if (bar.hasAttribute('data-permbar-hid')) { bar.style.display = bar.getAttribute('data-permbar-hid'); bar.removeAttribute('data-permbar-hid'); }
+} else if (!bar.hasAttribute('data-permbar-hid')) {
+bar.setAttribute('data-permbar-hid', bar.style.display || '');
+bar.style.display = 'none';
+}
+});
+})();
 var active = document.querySelector('.tab.active');
 if (active && active.style.display === 'none') {
 var first = document.querySelector('.tab[data-tab]:not([style*="none"])');

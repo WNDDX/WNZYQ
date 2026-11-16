@@ -33,8 +33,23 @@ async function readFullCache(url) {
   } catch (e) { return null; }
 }
 
+/* v634（QA 第二轮 P1）：原来版本串里的 s${sn} 取的是 settings 表的**行数**。
+   改公告只是 UPDATE 某一行的 value，行数一字不变 → 版本号一字不变 → 老访客带着同一个 ?v= 请求，
+   服务端比对 clientV === serverV 就回 { unchanged: true } 且不带数据 → 前端永远用 localStorage 里的旧公告。
+   （全新无痕访客不带 v，反而立刻看到新值——现象正是"老访客看不到、新访客看得到"。）
+   改为对「用户可见设置值」做内容指纹：覆盖的 key 与 PUBLIC_KEYS 一致（真正会影响前台展示的那些），
+   刻意**不**包含 last_cleanup_date / vitals_cleanup / auto_collect_state 这类每天自己会变的时间戳，
+   否则版本号天天变，白白让所有客户端重拉全量。
+   11 个子查询与原来 4 个写在同一条 SQL 里，仍然只打一次 D1 往返。 */
+/* 稳定、够短、无依赖的 djb2 变体。公告 JSON 可能几千字，绝不能把原值直接拼进版本串。 */
+function shortHash(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) { h = ((h << 5) + h + str.charCodeAt(i)) | 0; }
+  return (h >>> 0).toString(36);
+}
+
 // 计算数据版本（ Beijing 时间口径，与 U8 统一 ）
-/* 原来 3 条独立 SQL 并行发；现在合成 1 条，语义完全不变（3 个标量子查询） */
+/* 原来 3 条独立 SQL 并行发；现在合成 1 条，语义完全不变（多个标量子查询） */
 async function computeVersion(env) {
   try {
     const row = await env.DB.prepare(
@@ -42,9 +57,28 @@ async function computeVersion(env) {
          (SELECT COUNT(*) FROM products WHERE deleted_at IS NULL) AS pn,
          (SELECT COALESCE(MAX(updated_at), '') FROM products WHERE deleted_at IS NULL) AS pm,
          (SELECT COUNT(*) FROM categories WHERE is_hidden = 0 AND deleted_at IS NULL) AS cn,
-         (SELECT COUNT(*) FROM settings) AS sn`
+         (SELECT COALESCE(value,'') FROM settings WHERE key='announcements')     AS s_ann,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='announcement')      AS s_an1,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='announcement_mode') AS s_am,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='contact_url')       AS s_cu,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='group_url')         AS s_gu,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='contact_qr')        AS s_cq,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='group_qr')          AS s_gq,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='gzh_qr')            AS s_zq,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='shop_name')         AS s_nm,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='shop_logo')         AS s_lg,
+         (SELECT COALESCE(value,'') FROM settings WHERE key='resource_bind_limit') AS s_bl`
     ).first();
-    if (row) return `p${row.pn}_${row.pm}_c${row.cn}_s${row.sn}`;
+    if (row) {
+      /* 用 \u0001 作分隔，避免「a|b」和「a」「|b」拼出同一个串 */
+      const sig = [
+        row.s_ann, row.s_an1, row.s_am, row.s_cu, row.s_gu,
+        row.s_cq, row.s_gq, row.s_zq, row.s_nm, row.s_lg, row.s_bl
+      ].map((v) => (v === null || v === undefined ? '' : String(v))).join('\u0001');
+      /* 兼容性说明：版本串格式由 s17 变成 s<hash>，老客户端带旧格式来请求必然不等 → 重拉一次全量。
+         这是一次性的、可接受的（正好让老访客把旧缓存换掉），因此不加任何兼容分支。 */
+      return `p${row.pn}_${row.pm}_c${row.cn}_s${shortHash(sig)}`;
+    }
   } catch (e) { /* 落到下面的兜底 */ }
   /* 兜底：查不动就每次当新版本——宁可多传数据，也不给前端"没变"的错觉 */
   return 'nb_' + Date.now();
