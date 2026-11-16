@@ -2200,7 +2200,7 @@ if (window.showToast) window.showToast('网络没连上，没清成', 'error');
 var panel = document.getElementById('panel-settings');
 if (panel && !document.getElementById('batchImportBtn')) {
 var btnHtml = function (id, lab, extra) {
-return '<button type="button" class="row-btn" id="' + id + '" data-noico="1"' + (extra || '') + '>' + lab + '</button>';
+return '<button type="button" class="row-btn" id="' + id + '"' + (extra || '') + '>' + lab + '</button>';
 };
 var row = function (lab, btnStr) { return '<div class="setting-row is-inline"><label>' + lab + '</label>' + btnStr + '</div>'; };
 var mkGroup = function (title, rowsHtml) {
@@ -2212,7 +2212,7 @@ return g;
 };
 mkGroup('内容管理',
 row('资源采集（从别家平台抓资源，挑着上架）', btnHtml('openExtCollectBtn', '资源采集', ' data-perm="external.view"'))
-+ row('批量导入（Excel 一次导多条）', '<button type="button" class="export-btn" id="batchImportBtn" data-noico="1">批量导入</button>')
++ row('批量导入（Excel 一次导多条）', '<button type="button" class="export-btn" id="batchImportBtn">批量导入</button>')
 + row('回收站点（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站点'))
 );
 mkGroup('系统维护',
