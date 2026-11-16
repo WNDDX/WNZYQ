@@ -1641,6 +1641,16 @@ closeConfirm();
 api('admin/logout', { method: 'POST' });
 if (window.__clearAdminCache) window.__clearAdminCache();
 else { try { sessionStorage.removeItem('wnzyq_admin_data'); } catch (e) { if (window.__silent) window.__silent(e); } }
+try {
+state.products = []; state.categories = [];
+['productList', 'catList', 'statRows', 'statCatRows', 'statRecentRows'].forEach(function (id) {
+var box = document.getElementById(id); if (box) box.innerHTML = '';
+});
+state.statsOverview = null; state.statsOverviewPrev = null;
+state.statsTrend = null; state.statsTrendPrev = null;
+state.statByProduct = null; state.statByCategory = null; state.statRecent = null;
+try { __statsCache = {}; } catch (e3) {}
+} catch (e2) { if (window.__silent) window.__silent(e2); }
 showLogin();
 });
 });
