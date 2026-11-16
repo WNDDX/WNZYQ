@@ -357,75 +357,164 @@ out[name] = rows;
 });
 return out;
 }
+var PRICE_RE = /^(\d+(\.\d*)?|\.\d+)$/;
+function priceCheck(v) {
+var s = String(v == null ? '' : v).trim();
+if (!s) return { ok: true, val: 0, raw: s };
+if (!PRICE_RE.test(s)) return { ok: false, val: 0, raw: s };
+return { ok: true, val: Number(s) || 0, raw: s };
+}
 function preview(data) {
 var lines = [];
 var cats = catOptions();
 var res = data['资源'] || [], cat = data['分类'] || [], ann = data['公告'] || [], vars = data['类型'] || [];
 var bad = 0;
-res.forEach(function (r, i) { if (!r[0]) { bad++; lines.push('资源第' + (i + 2) + '行：缺标题，跳过'); } else if (r[1] && cats.indexOf(r[1]) < 0) { bad++; lines.push('资源第' + (i + 2) + '行：分类「' + r[1] + '」不存在，请先导分类'); } });
-cat.forEach(function (r, i) { if (!r[0]) { bad++; lines.push('分类第' + (i + 2) + '行：缺名称，跳过'); } });
-ann.forEach(function (r, i) { if (!r[0]) { bad++; lines.push('公告第' + (i + 2) + '行：缺标题，跳过'); } });
-vars.forEach(function (r, i) { if (!r[0] || !r[1]) { bad++; lines.push('类型第' + (i + 2) + '行：缺所属资源标题或类型名称，跳过'); } });
-lines.unshift('校验完成：资源 ' + res.length + ' 条 / 类型 ' + vars.length + ' 条 / 分类 ' + cat.length + ' 条 / 公告 ' + ann.length + ' 条' + (bad ? '；问题 ' + bad + ' 条' : '，全部可导入'));
-return { lines: lines, bad: bad, '资源': res, '类型': vars, '分类': cat, '公告': ann };
+var badRes = {}, badCat = {}, badVar = {}, badAnn = {};
+var flag = function (map, i, why, line) { map[i] = why; bad++; lines.push(line); };
+res.forEach(function (r, i) {
+var row = '资源第' + (i + 2) + '行：';
+if (!r[0]) { flag(badRes, i, '缺标题', row + '缺标题，跳过'); return; }
+if (r[1] && cats.indexOf(r[1]) < 0) { flag(badRes, i, '分类「' + r[1] + '」不存在，请先导分类', row + '分类「' + r[1] + '」不存在，请先导分类'); return; }
+var pc = priceCheck(r[4]);
+if (!pc.ok) flag(badRes, i, '价格「' + pc.raw + '」不是数字', row + '价格「' + pc.raw + '」不是数字，跳过');
+});
+cat.forEach(function (r, i) { if (!r[0]) flag(badCat, i, '缺名称', '分类第' + (i + 2) + '行：缺名称，跳过'); });
+ann.forEach(function (r, i) { if (!r[0]) flag(badAnn, i, '缺标题', '公告第' + (i + 2) + '行：缺标题，跳过'); });
+vars.forEach(function (r, i) {
+var row = '类型第' + (i + 2) + '行：';
+if (!r[0] || !r[1]) { flag(badVar, i, '缺所属资源标题或类型名称', row + '缺所属资源标题或类型名称，跳过'); return; }
+var pc2 = priceCheck(r[2]);
+if (!pc2.ok) flag(badVar, i, '价格「' + pc2.raw + '」不是数字', row + '价格「' + pc2.raw + '」不是数字，跳过');
+});
+var okRes = res.length - Object.keys(badRes).length;
+var okVar = vars.length - Object.keys(badVar).length;
+var okCat = cat.length - Object.keys(badCat).length;
+var okAnn = ann.length - Object.keys(badAnn).length;
+lines.unshift('校验完成：资源 ' + res.length + ' 条（可导入 ' + okRes + '）/ 类型 ' + vars.length + ' 条（可导入 ' + okVar + '）/ 分类 ' + cat.length + ' 条（可导入 ' + okCat + '）/ 公告 ' + ann.length + ' 条（可导入 ' + okAnn + '）' + (bad ? '；问题 ' + bad + ' 条' : '，全部可导入'));
+return { lines: lines, bad: bad, badRes: badRes, badCat: badCat, badVar: badVar, badAnn: badAnn, okCount: okRes + okVar + okCat + okAnn, '资源': res, '类型': vars, '分类': cat, '公告': ann };
 }
 function apiCall(path, opts) {
 opts = opts || {};
 return fetch('/api/' + path, { method: opts.method || 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: opts.body })
 .then(function (r) { return r.json(); });
 }
-function doImport(data, onLog) {
-var seq = Promise.resolve();
-var log = [];
-var say = function (line) { log.push(line); if (onLog) try { onLog(line); } catch (e) {} };
-var catIdByName = {};
-((window.state && state.categories) || []).forEach(function (c) { catIdByName[c.name] = c.id; });
-(data['分类'] || []).forEach(function (r) {
-if (!r[0]) return;
-if (catIdByName[r[0]]) {
-var _w3 = '分类「' + r[0] + '」已存在，跳过';
-log.push(_w3); if (onLog) try { onLog(_w3); } catch (e3) {}
-return;
+function annTitlesFrom(st) {
+var arr = [];
+if (window.parseAnnouncements) { try { arr = window.parseAnnouncements(st || {}, { sortLevel: true }) || []; } catch (e1) { arr = []; } }
+if (!arr.length) { try { var a2 = JSON.parse((st || {}).announcements || '[]'); if (Array.isArray(a2)) arr = a2; } catch (e2) { arr = []; } }
+var out = {};
+arr.forEach(function (a) { var t = String((a && a.title) || '').trim(); if (t && !a.deleted) out[t] = 1; });
+return out;
 }
+function doImport(data, onLog) {
+var log = [];
+var stat = { created: 0, skipped: 0, ignored: 0, failed: 0 };
+var say = function (line) { log.push(line); if (onLog) try { onLog(line); } catch (e) {} };
+var okLine = function (l) { stat.created++; say(l); };
+var dupLine = function (l) { stat.skipped++; say(l); };
+var ignLine = function (l) { stat.ignored++; say(l); };
+var failLine = function (l) { stat.failed++; say(l); };
+var badRes = data.badRes || {}, badCat = data.badCat || {}, badVar = data.badVar || {}, badAnn = data.badAnn || {};
+var resRows = data['资源'] || [], catRows = data['分类'] || [], varRows = data['类型'] || [], annRows = data['公告'] || [];
+var titleId = {}, varKeys = {}, annTitles = {};
+var learnProduct = function (p) {
+if (!p) return;
+var t = String(p.title || '').trim();
+if (t && !titleId[t]) titleId[t] = p.id;
+(Array.isArray(p.variants) ? p.variants : []).forEach(function (v) {
+var vt = String((v && v.name) || '').trim();
+if (vt) varKeys[String(p.id) + '|' + vt] = 1;
+});
+};
+((window.state && state.products) || []).forEach(learnProduct);
+var seq = Promise.resolve();
+if (resRows.length || varRows.length) {
+seq = seq.then(function () {
+return apiCall('admin/products?page_size=0').then(function (x) {
+((x && x.list) || []).forEach(learnProduct);
+}).catch(function () {});
+});
+}
+if (annRows.length) {
+seq = seq.then(function () {
+return apiCall('admin/settings').then(function (x) {
+var add = annTitlesFrom((x && x.settings) || {});
+Object.keys(add).forEach(function (k) { annTitles[k] = 1; });
+}).catch(function () {});
+});
+}
+var catIdByName = {}, seenCat = {};
+((window.state && state.categories) || []).forEach(function (c) { catIdByName[c.name] = c.id; });
+catRows.forEach(function (r, i) {
+if (badCat[i]) { failLine('分类第' + (i + 2) + '行失败：' + badCat[i]); return; }
+if (!r[0]) return;
+var name = String(r[0]).trim();
+if (catIdByName[name] || seenCat[name]) { dupLine('分类「' + name + '」已存在，跳过'); return; }
+seenCat[name] = 1;
 seq = seq.then(function () {
 var pid = 0;
-if (r[2]) { pid = catIdByName[r[2]] || 0; if (!pid) { var _w = '分类「' + r[0] + '」：所属一级「' + r[2] + '」未找到，按一级导入'; log.push(_w); if (onLog) try { onLog(_w); } catch (e1) {} } }
-return apiCall('admin/categories', { method: 'POST', body: JSON.stringify({ name: r[0], parent_id: pid, sort: Number(r[3]) || 0, hidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) });
-}).then(function (x) { if (x && x.ok) catIdByName[r[0]] = x.id; say('分类「' + r[0] + '」' + (x && x.ok ? '✓' : '失败')); }).catch(function () { say('分类「' + r[0] + '」失败'); });
+if (r[2]) { pid = catIdByName[r[2]] || 0; if (!pid) say('分类「' + name + '」：所属一级「' + r[2] + '」未找到，按一级导入'); }
+return apiCall('admin/categories', { method: 'POST', body: JSON.stringify({ name: name, parent_id: pid, sort: Number(r[3]) || 0, hidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) });
+}).then(function (x) {
+if (x && x.ok) { catIdByName[name] = x.id; okLine('分类「' + name + '」✓'); }
+else failLine('分类「' + name + '」失败' + (x && x.msg ? '：' + x.msg : ''));
+}).catch(function () { failLine('分类「' + name + '」失败'); });
 });
-var prodIdByName = {};
-(data['资源'] || []).forEach(function (r) {
+var prodIdByName = {}, seenTitle = {};
+resRows.forEach(function (r, i) {
+if (badRes[i]) { failLine('资源第' + (i + 2) + '行失败：' + badRes[i]); return; }
 if (!r[0]) return;
+var title = String(r[0]).trim();
+if (titleId[title] || seenTitle[title]) { dupLine('资源「' + title + '」已存在，跳过'); return; }
+seenTitle[title] = 1;
+var pc = priceCheck(r[4]);
 seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({
-title: r[0], cid: catIdByName[r[1]] || 0, desc: r[2] || '', detail: r[3] || '',
-price: Number(r[4]) || 0, img: r[5] || '', sort: Number(r[6]) || 0,
+title: title, cid: catIdByName[r[1]] || 0, desc: r[2] || '', detail: r[3] || '',
+price: pc.val, img: r[5] || '', sort: Number(r[6]) || 0,
 is_online: /隐藏/.test(r[7] || '') ? 0 : 1, is_hidden: /隐藏/.test(r[7] || '') ? 1 : 0,
 schedule_on: (r[8] || '').trim() || undefined, schedule_off: (r[9] || '').trim() || undefined,
 contactUrl: (r[10] || '').trim() || '', contactQr: (r[11] || '').trim() || ''
 }) }); }).then(function (x) {
-if (!(x && x.ok)) { say('资源「' + r[0] + '」失败' + (x && x.msg ? '：' + x.msg : '')); return; }
-prodIdByName[r[0]] = x.id;
-say('资源「' + r[0] + '」✓');
-}).catch(function () { say('资源「' + r[0] + '」失败'); });
+if (!(x && x.ok)) { failLine('资源「' + title + '」失败' + (x && x.msg ? '：' + x.msg : '')); return; }
+titleId[title] = x.id; prodIdByName[title] = x.id;
+okLine('资源「' + title + '」✓');
+}).catch(function () { failLine('资源「' + title + '」失败'); });
 });
-(data['类型'] || []).forEach(function (r) {
+varRows.forEach(function (r, i) {
+if (badVar[i]) { failLine('类型第' + (i + 2) + '行失败：' + badVar[i]); return; }
 if (!r[0] || !r[1]) return;
+var pTitle = String(r[0]).trim(), vName = String(r[1]).trim();
+var pc2 = priceCheck(r[2]);
 seq = seq.then(function () {
-var pid = prodIdByName[r[0]];
-if (!pid) { say('类型「' + r[1] + '」：资源「' + r[0] + '」未在本次导入中创建，跳过'); return Promise.resolve(null); }
+var pid = prodIdByName[pTitle] || titleId[pTitle];
+if (!pid) { ignLine('类型「' + vName + '」：资源「' + pTitle + '」未在本次导入中创建，跳过'); return null; }
+var vk = String(pid) + '|' + vName;
+if (varKeys[vk]) { dupLine('类型「' + vName + '」已存在，跳过'); return null; }
+varKeys[vk] = 1;
 return apiCall('admin/variants', { method: 'POST', body: JSON.stringify({
-productId: pid, name: r[1], price: Number(r[2]) || 0, desc: r[3] || '',
+productId: pid, name: vName, price: pc2.val, desc: r[3] || '',
 resourceCode: String(r[4] || '').trim() === '●●●●' ? '' : String(r[4] || '').trim(),
 resourceContent: r[5] || '', bindLimit: Number(r[6]) || 1,
 isHidden: /隐藏/.test(r[7] || '') ? 1 : 0, sort: Number(r[8]) || 0
 }) });
-}).then(function (x) { if (x === null) return; say('类型「' + r[1] + '」' + (x && x.ok ? '✓' : '失败')); }).catch(function () { say('类型「' + r[1] + '」失败'); });
+}).then(function (x) {
+if (x === null) return;
+if (x && x.ok) okLine('类型「' + vName + '」✓');
+else failLine('类型「' + vName + '」失败' + (x && x.msg ? '：' + x.msg : ''));
+}).catch(function () { failLine('类型「' + vName + '」失败'); });
 });
-(data['公告'] || []).forEach(function (r) {
+annRows.forEach(function (r, i) {
+if (badAnn[i]) { failLine('公告第' + (i + 2) + '行失败：' + badAnn[i]); return; }
 if (!r[0]) return;
-seq = seq.then(function () { return apiCall('admin/settings', { method: 'POST', body: JSON.stringify({ annAdd: { title: r[0], content: r[1] || '', sort: Number(r[2]) || 0, hidden: /隐藏/.test(r[3] || '') ? 1 : 0 } }) }); }).then(function (x) { say('公告「' + r[0] + '」' + (x && x.ok ? '✓' : '失败')); }).catch(function () { say('公告「' + r[0] + '」失败'); });
+var t = String(r[0]).trim();
+if (annTitles[t]) { dupLine('公告「' + t + '」已存在，跳过'); return; }
+annTitles[t] = 1;
+seq = seq.then(function () { return apiCall('admin/settings', { method: 'POST', body: JSON.stringify({ annAdd: { title: t, content: r[1] || '', sort: Number(r[2]) || 0, hidden: /隐藏/.test(r[3] || '') ? 1 : 0 } }) }); }).then(function (x) {
+if (x && x.ok) okLine('公告「' + t + '」✓');
+else failLine('公告「' + t + '」失败' + (x && x.msg ? '：' + x.msg : ''));
+}).catch(function () { failLine('公告「' + t + '」失败'); });
 });
-return seq.then(function () { return log; });
+return seq.then(function () { return { lines: log, created: stat.created, skipped: stat.skipped, ignored: stat.ignored, failed: stat.failed }; });
 }
 var IMP_HIST_KEY = 'wnzyq_import_hist';
 function impHistRead() {
@@ -494,11 +583,25 @@ var rd = new FileReader();
 rd.onload = function () {
 var buf = rd.result, isZip = false;
 try { var head = new Uint8Array(buf, 0, 4); isZip = head[0] === 0x50 && head[1] === 0x4B; } catch (eH) { isZip = false; }
+var MSG_EMPTY = '文件是空的，没有可导入的数据';
+var MSG_CORRUPT = '文件格式不对或已损坏，请用模板重新导出';
+var MSG_JSON = '这是备份格式（JSON），不能直接导入。恢复备份请联系技术支持；日常批量导入请下载 Excel 模板。';
+var showNote = function (msg) {
+var box = mask.querySelector('#impPrev');
+if (box) box.innerHTML = '<div class="imp-warn">' + esc(msg) + '</div>' +
+'<button class="export-btn" id="impGo" style="width:100%" disabled>确认导入</button>';
+if (window.showToast) window.showToast(msg, 'error');
+};
+var hasSheet = function (book) { return Object.keys(book || {}).length > 0; };
+var rowCount = function (book) { var n = 0; Object.keys(book || {}).forEach(function (k) { n += (book[k] || []).length; }); return n; };
 var doneParse = function (data) {
 var pv = preview(data);
 var body = mask.querySelector('#impPrev');
 var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length;
-body.innerHTML = '<div class="imp-log">' + esc(pv.lines.join('\n')) + '</div>' +
+var headLine = '';
+if (!total) headLine = '<div class="imp-warn">文件里没有可导入的行，请按模板填写后重新导出</div>';
+else if (pv.bad && pv.bad >= total) headLine = '<div class="imp-warn">' + total + ' 行都有问题（明细见下），没有可导入的数据</div>';
+body.innerHTML = headLine + '<div class="imp-log">' + esc(pv.lines.join('\n')) + '</div>' +
 '<button class="export-btn" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
 body.querySelector('#impGo').addEventListener('click', function () {
 this.disabled = true; this.textContent = '导入中';
@@ -506,34 +609,70 @@ body.innerHTML = '<div id="impLive" class="imp-log imp-log-live"></div>';
 var live = body.querySelector('#impLive');
 var onLog = function (line) {
 var ln = document.createElement('div');
-var bad = /失败|错误/.test(line);
 ln.textContent = line;
-ln.className = bad ? 'is-bad' : 'is-ok';
+ln.className = /失败|错误/.test(line) ? 'is-bad' : (/跳过/.test(line) ? 'is-skip' : 'is-ok');
 live.appendChild(ln);
 try { live.scrollTop = live.scrollHeight; } catch (e2) {}
 };
-doImport(pv, onLog).then(function (log) {
-var badN = log.filter(function (l) { return /失败|错误/.test(l); }).length;
+doImport(pv, onLog).then(function (R) {
+var lines = (R && R.lines) || [];
+var created = Number(R && R.created) || 0, skipped = Number(R && R.skipped) || 0;
+var ignored = Number(R && R.ignored) || 0, failed = Number(R && R.failed) || 0;
 var sum = document.createElement('div');
-sum.className = 'imp-log-sum ' + (badN ? 'is-bad' : 'is-ok');
-sum.textContent = '导入完成：' + log.length + ' 条' + (badN ? '（失败 ' + badN + ' 条）' : '，全部成功');
+sum.className = 'imp-log-sum ' + (failed ? 'is-bad' : (created ? 'is-ok' : ''));
+if (!lines.length) sum.textContent = '没有可导入的数据，请检查文件内容';
+else if (!created && !failed) sum.textContent = '没有新增：' + (skipped + ignored) + ' 条已存在或不可导入，已跳过';
+else {
+var parts = ['成功 ' + created + ' 条'];
+if (skipped) parts.push('已存在跳过 ' + skipped + ' 条');
+if (ignored) parts.push('其他跳过 ' + ignored + ' 条');
+if (failed) parts.push('失败 ' + failed + ' 条');
+sum.textContent = '导入完成：' + parts.join('，');
+}
 live.appendChild(sum);
 try { live.scrollTop = live.scrollHeight; } catch (e3) {}
 impHistPush({
-at: bjNow(), file: fname, total: log.length,
-ok: log.length - badN, bad: badN,
-note: badN ? (log.filter(function (l) { return /失败|错误/.test(l); })[0] || '').slice(0, 80) : ''
+at: bjNow(), file: fname, total: lines.length,
+ok: created, bad: failed,
+note: failed ? (lines.filter(function (l) { return /失败|错误/.test(l); })[0] || '').slice(0, 80) : ''
 });
 renderImpHist(mask.querySelector('#impHist'));
-if (window.showToast) window.showToast(badN ? '导入完成，有失败项请看明细' : '导入完成', badN ? 'info' : 'success');
+try { if (window.__reloadAdminProducts) window.__reloadAdminProducts(); else if (window.loadProducts) window.loadProducts(true); } catch (e4) {}
+if (window.showToast) {
+if (!lines.length) window.showToast('没有可导入的数据，请检查文件内容', 'error');
+else if (!created && failed) window.showToast('没有导入成功的数据，失败 ' + failed + ' 条', 'error');
+else if (failed) window.showToast('导入完成：成功 ' + created + ' 条，失败 ' + failed + ' 条', 'info');
+else if (!created) window.showToast('没有新增，' + (skipped + ignored) + ' 条已存在或不可导入', 'info');
+else window.showToast('导入完成：成功 ' + created + ' 条', 'success');
+}
+}).catch(function () {
+var sum2 = document.createElement('div');
+sum2.className = 'imp-log-sum is-bad';
+sum2.textContent = '导入中断，请重试或检查文件内容';
+live.appendChild(sum2);
+if (window.showToast) window.showToast('导入中断，请重试或检查文件内容', 'error');
 });
 });
 };
+if (/\.json$/i.test(fname)) { showNote(MSG_JSON); return; }
 if (isZip) {
-parseXlsx(buf).then(doneParse).catch(function (e) { if (window.showToast) window.showToast('解析失败：' + e.message, 'error'); });
+parseXlsx(buf).then(function (book) {
+if (!hasSheet(book)) { showNote(MSG_JSON); return; }
+if (!rowCount(book)) { showNote(MSG_EMPTY); return; }
+doneParse(book);
+}).catch(function () { showNote(MSG_CORRUPT); });
 } else {
-try { doneParse(parseWorkbook(new TextDecoder('utf-8').decode(buf))); }
-catch (e) { if (window.showToast) window.showToast('解析失败：' + e.message, 'error'); }
+var text = '';
+try { text = new TextDecoder('utf-8').decode(buf); } catch (eT) { text = ''; }
+text = String(text == null ? '' : text).replace(/^\ufeff/, '');
+if (!text.trim()) { showNote(MSG_EMPTY); return; }
+if (/^\s*[{[]/.test(text)) { showNote(MSG_JSON); return; }
+if (text.indexOf('<') < 0) { showNote(MSG_CORRUPT); return; }
+var book = null;
+try { book = parseWorkbook(text); } catch (eP) { showNote(MSG_CORRUPT); return; }
+if (!hasSheet(book)) { showNote(MSG_JSON); return; }
+if (!rowCount(book)) { showNote(MSG_EMPTY); return; }
+doneParse(book);
 }
 };
 rd.readAsArrayBuffer(f);
