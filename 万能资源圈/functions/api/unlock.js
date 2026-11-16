@@ -246,17 +246,26 @@ export async function onRequestPost(context) {
     /* 条件插入没落行 = 被并发挤满（同一设备重复提交会撞唯一约束，走下面 catch，不会走到这里） */
     const _changed = (_ins && _ins.meta && _ins.meta.changes) || 0;
     if (_changed === 0) {
-      /* 再确认一次：是满了，还是别的意外。满了就按「已满」返回，别把超发算成成功 */
-      let _now = 0;
+      /* 再确认一次：是满了，还是本设备已经在里面了，还是别的意外。
+         注意不能直接按「满」返回——同一台设备并发提交时，第一条已经把行写进去了，
+         后两条的 WHERE 子查询会算出「已绑定数 = 上限」而落 0 行，若此时一律报「已满」，
+         就把 v294 的幂等语义修坏了（同一设备连点会看到「已满」而不是正常解锁）。
+         所以一条查询同时取：该码已绑定总数 c + 本设备是否已在其中 mine。 */
+      let _now = 0, _mine = 0;
       try {
-        const _c = await env.DB.prepare('SELECT COUNT(*) AS c FROM resource_bindings WHERE variant_id = ? AND code = ?')
-          .bind(variantId, bindCode).first();
+        const _c = await env.DB.prepare(
+          'SELECT COUNT(*) AS c, SUM(CASE WHEN device_token = ? THEN 1 ELSE 0 END) AS mine FROM resource_bindings WHERE variant_id = ? AND code = ?'
+        ).bind(device, variantId, bindCode).first();
         _now = (_c && _c.c) || 0;
-      } catch (e2) { _now = 0; }
-      if (_now >= limit) {
+        _mine = (_c && _c.mine) || 0;
+      } catch (e2) { _now = 0; _mine = 0; }
+      if (_mine > 0) {
+        bound = true; /* 本设备已在绑定表里（并发重复提交）：幂等成功，不能报「已满」 */
+      } else if (_now >= limit) {
         return json({ ok: false, msg: '该码绑定设备已满（上限 ' + limit + ' 台），请联系客服。注意：换浏览器、无痕模式、清除缓存都会被识别为新设备' }, 200, extraHeaders);
+      } else {
+        bound = false; /* 非预期情况：放行但不记绑定（沿用原来的降级语义） */
       }
-      bound = false; /* 非预期情况：放行但不记绑定（沿用原来的降级语义） */
     }
   } catch (e) {
     const msg = String(e && e.message || '');
