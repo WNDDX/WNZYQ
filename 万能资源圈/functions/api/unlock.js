@@ -221,6 +221,21 @@ export async function onRequestPost(context) {
      未绑定验码路径串行往返 7 → 5 的最后一处合并 */
   const cnt = issue.bind_cnt;
   if (cnt && cnt >= limit) {
+    /* v642（QA 回归）同一设备并发被误判「已满」——第 4 步的通行证查询可能早于另一条同设备请求的
+       INSERT 提交（那一刻还查不到），而 bind_cnt 是在此之后读的快照（已经算进了那条刚落库的绑定），
+       于是一台已绑定的设备被当成新设备，在这里就被拒了，压根走不到第 7 步的幂等复核。
+       所以拒绝之前先确认「本设备是否已经在绑定表里」：在，就是同一台设备连点，按通行证放行。 */
+    let _mine0 = 0;
+    try {
+      const _m = await env.DB.prepare(
+        'SELECT 1 AS one FROM resource_bindings WHERE variant_id = ? AND device_token = ? LIMIT 1'
+      ).bind(variantId, device).first();
+      _mine0 = _m ? 1 : 0;
+    } catch (e) { _mine0 = 0; /* 查询失败按未绑定处理，保持原有「满就拒」语义 */ }
+    if (_mine0 > 0) {
+      wrongClear(getCookie(request, DEVICE_COOKIE)); /* v439 #98：与第 4 步通行证命中保持一致 */
+      return json({ ok: true, content, bound: true }, 200, extraHeaders);
+    }
     // R221：绑满不再自动换码（换码只由后台复制触发），本次仍拒绝
     return json({ ok: false, msg: '该码绑定设备已满（上限 ' + limit + ' 台），请联系客服。注意：换浏览器、无痕模式、清除缓存都会被识别为新设备' }, 200, extraHeaders);
   }
