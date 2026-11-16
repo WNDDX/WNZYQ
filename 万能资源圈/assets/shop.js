@@ -432,7 +432,7 @@ if (window.__annMarkActiveRead) window.__annMarkActiveRead();
 if (window.__haptic) window.__haptic();
 };
 function showAnnDefault() {
-try { var _amOpen = (document.getElementById('annModal') || {}).classList && document.getElementById('annModal').classList.contains('open'); var _def = (DATA.announcements || []).find(function (x) { return x.level === 1; }) || (DATA.announcements || [])[0]; if (_amOpen && _def && window.__annMarkRead) window.__annMarkRead(_def.id); } catch (e0) { if (window.__silent) window.__silent(e0); }
+try { var _amOpen = (document.getElementById('annModal') || {}).classList && document.getElementById('annModal').classList.contains('open'); if (_amOpen && window.__annMarkAllRead) window.__annMarkAllRead(); } catch (e0) { if (window.__silent) window.__silent(e0); }
 var l = DATA.announcements || [];
 var d = l.find(function (x) { return x.level === 1; }) || l[0];
 if (!d) return;
@@ -539,7 +539,7 @@ if (__annHasContent(_defB)) _annAll = [_defB].concat(_annAll);
 _annAll = _annAll.filter(__annHasContent);
 if (!_annAll.length) { mask.classList.remove('open'); if (_annSkel) _annSkel.style.display = 'none'; return; }
 if (window.__annSilent) { window.__annSilent = false; return; } if (window.__annDismissed) return; if (window.__annShown || mask.classList.contains('open')) { if (mode === 'session') { try { if (!sessionStorage.getItem('wnzyq_ann_session')) sessionStorage.setItem('wnzyq_ann_session', '1'); } catch (e) { if (window.__silent) window.__silent(e); } } else if (mode === 'daily') { try { var _td = new Date().toDateString(); if (localStorage.getItem('wnzyq_ann_date') !== _td) localStorage.setItem('wnzyq_ann_date', _td); } catch (e) { if (window.__silent) window.__silent(e); } }
-if (mask.classList.contains('open')) renderAnnContent();
+if (mask.classList.contains('open')) { renderAnnContent(); if (window.__annMarkAllRead) window.__annMarkAllRead(); }
 return; }
 var list = _annAll;
 if (!list.length || mode === 'off') { mask.classList.remove('open'); return; }
