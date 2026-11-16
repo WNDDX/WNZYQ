@@ -335,6 +335,10 @@ try { var c = JSON.parse(sessionStorage.getItem('wnzyq_admin_data') || '{}'); re
 function __setAdminCache(obj) {
 try { sessionStorage.setItem('wnzyq_admin_data', JSON.stringify(obj)); } catch (e) { if (window.__silent) window.__silent(e); }
 }
+window.__clearAdminCache = function () {
+try { sessionStorage.removeItem('wnzyq_admin_data'); } catch (e) { if (window.__silent) window.__silent(e); }
+try { sessionStorage.removeItem('wnzyq_admin_bindings'); } catch (e) { if (window.__silent) window.__silent(e); }
+};
 function __saveAdminState() {
 __setAdminCache({
 products: state.products,
@@ -941,6 +945,7 @@ if (res && res.ok) {
 try { localStorage.setItem('wnzyq_last_user', u); } catch (e) { if (window.__silent) window.__silent(e); }
 if (window.__haptic) window.__haptic();
 try {
+if (window.__clearAdminCache) window.__clearAdminCache();
 showMain(res.username); window.__applyMe(res.username);
 setTimeout(function () {
 try {
@@ -1064,6 +1069,41 @@ if (active && active.style.display === 'none') {
 var first = document.querySelector('.tab[data-tab]:not([style*="none"])');
 if (first) first.click();
 }
+(function () {
+var anyTabVisible = false;
+Array.prototype.forEach.call(document.querySelectorAll('.tab[data-tab]'), function (t) {
+if (t.style.display !== 'none') anyTabVisible = true;
+});
+var panels = document.querySelectorAll('section[id^="panel-"]');
+var box = document.getElementById('permEmptyBox');
+if (anyTabVisible) {
+Array.prototype.forEach.call(panels, function (p) {
+if (p.hasAttribute('data-perm-empty-hid')) {
+p.style.display = p.getAttribute('data-perm-empty-hid');
+p.removeAttribute('data-perm-empty-hid');
+}
+});
+if (box) box.style.display = 'none';
+return;
+}
+Array.prototype.forEach.call(panels, function (p) {
+if (!p.hasAttribute('data-perm-empty-hid')) p.setAttribute('data-perm-empty-hid', p.style.display || '');
+p.style.display = 'none';
+});
+if (!box) {
+box = document.createElement('section');
+box.id = 'permEmptyBox';
+box.setAttribute('role', 'status');
+box.style.cssText = 'background:var(--card-bg,#fff);border-radius:10px;box-shadow:var(--shadow-card);padding:48px 16px;';
+var _first = panels[0];
+if (_first && _first.parentNode) _first.parentNode.insertBefore(box, _first);
+else document.getElementById('mainContent').appendChild(box);
+}
+box.innerHTML = window.__adminEmpty
+? window.__adminEmpty('该账号还没有任何权限', '请联系管理员为你开通对应功能')
+: '<div style="text-align:center;padding:26px 12px;"><div style="font-size:14px;font-weight:600;color:var(--text-light,#666);">该账号还没有任何权限</div><div style="font-size:12px;color:var(--text-faint,#999);margin-top:4px;">请联系管理员为你开通对应功能</div></div>';
+box.style.display = '';
+})();
 };
 (function () {
 var t = 0;

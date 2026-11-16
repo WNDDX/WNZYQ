@@ -1639,6 +1639,8 @@ logoutBtn.classList.add('active');
 showConfirm('退出登录', '退出后需重新登录一次', function (closeConfirm) {
 closeConfirm();
 api('admin/logout', { method: 'POST' });
+if (window.__clearAdminCache) window.__clearAdminCache();
+else { try { sessionStorage.removeItem('wnzyq_admin_data'); } catch (e) { if (window.__silent) window.__silent(e); } }
 showLogin();
 });
 });
