@@ -1641,16 +1641,7 @@ closeConfirm();
 api('admin/logout', { method: 'POST' });
 if (window.__clearAdminCache) window.__clearAdminCache();
 else { try { sessionStorage.removeItem('wnzyq_admin_data'); } catch (e) { if (window.__silent) window.__silent(e); } }
-try {
-state.products = []; state.categories = [];
-['productList', 'catList', 'statRows', 'statCatRows', 'statRecentRows'].forEach(function (id) {
-var box = document.getElementById(id); if (box) box.innerHTML = '';
-});
-state.statsOverview = null; state.statsOverviewPrev = null;
-state.statsTrend = null; state.statsTrendPrev = null;
-state.statByProduct = null; state.statByCategory = null; state.statRecent = null;
-try { __statsCache = {}; } catch (e3) {}
-} catch (e2) { if (window.__silent) window.__silent(e2); }
+if (window.__adminResetSessionData) window.__adminResetSessionData();
 showLogin();
 });
 });
@@ -2323,6 +2314,27 @@ else { showLogin(); }
 showLogin();
 }
 }
+window.__adminResetSessionData = function () {
+try {
+state.products = []; state.categories = [];
+state.statsOverview = null; state.statsOverviewPrev = null;
+state.statsTrend = null; state.statsTrendPrev = null;
+state.statByProduct = null; state.statByCategory = null; state.statRecent = null;
+try { __statsCache = {}; } catch (e3) { if (window.__silent) window.__silent(e3); }
+var kill = function (host, sel) {
+var box = typeof host === 'string' ? document.getElementById(host) : host;
+if (!box) return;
+var rows = box.querySelectorAll(sel);
+for (var i = 0; i < rows.length; i++) { if (rows[i].parentNode) rows[i].parentNode.removeChild(rows[i]); }
+};
+kill('productList', '.product-row:not(.skel)');
+kill('catList', '.cat-row:not(.skel)');
+kill('statRows', 'tr:not(.admin-skel)');
+kill('statCatRows', 'tr:not(.admin-skel)');
+kill('statRecentRows', 'tr:not(.admin-skel)');
+var pe = document.getElementById('productEmpty'); if (pe) pe.classList.remove('show');
+} catch (e) { if (window.__silent) window.__silent(e); }
+};
 function showLogin() {
 window.__adminLoggedIn = false;
 loginView.style.display = 'flex'; mainView.style.display = 'none';

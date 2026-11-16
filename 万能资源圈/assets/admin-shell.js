@@ -946,6 +946,7 @@ try { localStorage.setItem('wnzyq_last_user', u); } catch (e) { if (window.__sil
 if (window.__haptic) window.__haptic();
 try {
 if (window.__clearAdminCache) window.__clearAdminCache();
+if (window.__adminResetSessionData) window.__adminResetSessionData();
 showMain(res.username); window.__applyMe(res.username);
 setTimeout(function () {
 try {
