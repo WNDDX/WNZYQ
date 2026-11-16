@@ -2353,7 +2353,7 @@ try {
 var SEL = '.setting-row.is-inline, .modal-footer, .extc-pops, .extc-bar, .logs-tools, .info-panel-btns, .batch-group, .tbl-opbar, .usf-body .pm-actions'
 + ', .toolbar .tb-group, .toolbar .tb-row, .toolbar .tb-row2, .stat-head-tools, #statsFilterBar, .time-filter, .stat-head-label'
 + ', .uni-pager, .stat-pager, .modal-inner-btns, .extc-batch, .p-ops, .c-meta, .u-ops'
-+ ', .topbar-actions, .tabs, .topbar-right';
++ ', .topbar-actions, .tabs, .topbar-right, .set-nav';
 var list = document.querySelectorAll(SEL);
 for (var i = 0; i < list.length; i++) list[i].classList.add('btn-fit-group');
 var __navItem = document.querySelector('.btn-item');
@@ -2362,12 +2362,12 @@ if (__navItem && __navItem.parentNode && __navItem.parentNode.classList) __navIt
 };
 window.__markIconTextBtns = function () {
 try {
-var BOX = ['.topbar-actions', '.tabs', '.topbar-right'];
+var BOX = ['.topbar-actions', '.tabs', '.topbar-right', '.set-nav'];
 for (var x = 0; x < BOX.length; x++) {
 var bx = document.querySelector(BOX[x]);
 if (bx) bx.classList.add('btn-fit-all');
 }
-var list = document.querySelectorAll('#mainContent .btn-item, .topbar-actions .tab, .tabs .tab[data-tab], .topbar-right .tab');
+var list = document.querySelectorAll('#mainContent .btn-item, .topbar-actions .tab, .tabs .tab[data-tab], .topbar-right .tab, .set-nav button');
 for (var i = 0; i < list.length; i++) {
 var b = list[i];
 if (!b.querySelector('svg')) continue;
