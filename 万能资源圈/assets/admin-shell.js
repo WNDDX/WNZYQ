@@ -879,7 +879,7 @@ document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = che
 updateBatchBar();
 });
 document.querySelectorAll('.batch-btn').forEach(function (btn) {
-var __ic = { online: 'show', offline: 'hide', changeCat: 'cat', changePrice: 'code', delete: 'del', clearSel: 'close' }[btn.dataset.action];
+var __ic = { online: 'show', offline: 'hide', changeCat: 'cat', changePrice: 'price', delete: 'del', clearSel: 'close' }[btn.dataset.action];
 if (__ic && window.__decorateBtn) window.__decorateBtn(btn, __ic, btn.dataset.pri || 5);
 btn.addEventListener('click', function () { batchAction(this.dataset.action); });
 });
