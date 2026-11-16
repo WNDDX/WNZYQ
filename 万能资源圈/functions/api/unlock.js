@@ -168,14 +168,13 @@ export async function onRequestPost(context) {
   await ensureCodeIssuesTable(env);
   const codeLower = code.toLowerCase();
   let issue = null;
-  /* R243 条3：发码记录查询 + 60 天兑换窗口 + 绑定计数合并为一次往返——原先三条串行
-     SELECT（issue 记录、窗口判定、COUNT 绑定数）；改为单条多子查询 SELECT 一次带回
-     （in_window / bind_cnt 由子查询算出），未绑定验码路径串行往返 7 → 5 */
+  /* R243 条3：发码记录查询 + 60 天兑换窗口合并为一次往返——原先两条串行 SELECT
+     （issue 记录、窗口判定）；改为单条多子查询 SELECT 一次带回（in_window 由子查询算出）。
+     v643：随「提前判满」一并删掉了 bind_cnt 子查询——它已无消费者，留着等于每次解锁白算一次 COUNT */
   try {
     issue = await env.DB.prepare(
       `SELECT ci.id, ci.code, ci.status, ci.issued_at,
-              (ci.issued_at >= datetime('now','-60 days')) AS in_window,
-              (SELECT COUNT(*) FROM resource_bindings rb WHERE rb.variant_id = ci.variant_id AND rb.code = ci.code) AS bind_cnt
+              (ci.issued_at >= datetime('now','-60 days')) AS in_window
        FROM code_issues ci
        WHERE ci.variant_id = ? AND LOWER(ci.code) = ?
        ORDER BY ci.id DESC LIMIT 1`
@@ -191,8 +190,7 @@ export async function onRequestPost(context) {
           .bind(variantId, productId, String(v.resource_code).trim()).run();
         issue = await env.DB.prepare(
           `SELECT ci.id, ci.code, ci.status, ci.issued_at,
-                  (ci.issued_at >= datetime('now','-60 days')) AS in_window,
-                  (SELECT COUNT(*) FROM resource_bindings rb WHERE rb.variant_id = ci.variant_id AND rb.code = ci.code) AS bind_cnt
+                  (ci.issued_at >= datetime('now','-60 days')) AS in_window
            FROM code_issues ci
            WHERE ci.variant_id = ? AND LOWER(ci.code) = ?
            ORDER BY ci.id DESC LIMIT 1`
@@ -212,33 +210,19 @@ export async function onRequestPost(context) {
     return json({ ok: false, msg: '资源码已过期，请联系客服' }, 200, extraHeaders);
   }
 
-  // 6. 码正确：检查该码的绑定上限（R221 按"每个码"计数；后台可调，默认 1 台）
+  // 6. 码正确：绑定上限判定
+  // R221：按"每个码"计数；后台可调，默认 1 台
   // R106：绑定设备上限挪进类型编辑表单——类型自身设置优先，未设置再按全局设置（默认 1）
   const vLimit = parseInt(v.bind_limit, 10);
   const limit = vLimit >= 1 ? vLimit : Math.max(1, parseInt(await getSetting(env, 'resource_bind_limit', '1'), 10) || 1);
   const bindCode = String(issue.code);
-  /* R243 条3：绑定计数改读合并 SELECT 带回的 bind_cnt 子查询（不再单独发 COUNT 往返），
-     未绑定验码路径串行往返 7 → 5 的最后一处合并 */
-  const cnt = issue.bind_cnt;
-  if (cnt && cnt >= limit) {
-    /* v642（QA 回归）同一设备并发被误判「已满」——第 4 步的通行证查询可能早于另一条同设备请求的
-       INSERT 提交（那一刻还查不到），而 bind_cnt 是在此之后读的快照（已经算进了那条刚落库的绑定），
-       于是一台已绑定的设备被当成新设备，在这里就被拒了，压根走不到第 7 步的幂等复核。
-       所以拒绝之前先确认「本设备是否已经在绑定表里」：在，就是同一台设备连点，按通行证放行。 */
-    let _mine0 = 0;
-    try {
-      const _m = await env.DB.prepare(
-        'SELECT 1 AS one FROM resource_bindings WHERE variant_id = ? AND device_token = ? LIMIT 1'
-      ).bind(variantId, device).first();
-      _mine0 = _m ? 1 : 0;
-    } catch (e) { _mine0 = 0; /* 查询失败按未绑定处理，保持原有「满就拒」语义 */ }
-    if (_mine0 > 0) {
-      wrongClear(getCookie(request, DEVICE_COOKIE)); /* v439 #98：与第 4 步通行证命中保持一致 */
-      return json({ ok: true, content, bound: true }, 200, extraHeaders);
-    }
-    // R221：绑满不再自动换码（换码只由后台复制触发），本次仍拒绝
-    return json({ ok: false, msg: '该码绑定设备已满（上限 ' + limit + ' 台），请联系客服。注意：换浏览器、无痕模式、清除缓存都会被识别为新设备' }, 200, extraHeaders);
-  }
+  /* v643：这里原先还有一道「读快照计数 cnt → 判满 → 提前拒绝」，现已删除。
+     它和下面第 7 步的条件插入是两个互不同步的判据：cnt 是第 5 步那条 SELECT 的快照，
+     而同一设备并发时，那条子查询可能在「另一条同设备请求」的 INSERT 提交之后才求值（算出已满），
+     但第 4 步的通行证查询在那之前跑过（查不到）——于是这台明明已经绑定的设备在这里被误判成新设备，
+     直接报「已满」，根本走不到第 7 步的幂等复核。QA 用 4 并发 × 6 轮复现到 3/6 轮失败。
+     现在上限只由第 7 步的「条件插入 + 落 0 行复核」一处判定（原子、且能区分"本设备已在"），
+     判据唯一，不会再出现两处打架。代价：已满的请求要多走一次必然落 0 行的 INSERT，可忽略。 */
 
   // 7. 绑定本设备（记录当时的码）并返回内容
   //    R106 防御：绑定表异常导致写不进去时降级放行（码已验对，只是这台记不上账），不再 500
@@ -247,8 +231,8 @@ export async function onRequestPost(context) {
   const ua = (request.headers.get('User-Agent') || '').slice(0, 200);
   let bound = true;
   try {
-    /* v641 P0 并发超发修复：上面的 cnt 检查是「读」，本条 INSERT 是「写」，两者之间无原子性——
-       多台不同设备同一时刻提交同一个码时会同时读到 cnt=0 全部通过检查，全部 INSERT → 超发。
+    /* v641 P0 并发超发修复：早先这里是「先读计数判满、再无条件 INSERT」，读与写之间没有原子性——
+       多台不同设备同一时刻提交同一个码时会同时读到 0 台、全部通过检查、全部 INSERT → 超发。
        改为「条件插入」：把「已绑定数 < 上限」写进 INSERT 的 WHERE 子查询，
        由数据库在同一条语句、同一把写锁内一次性判定，条件不成立就落 0 行。
        参数共 9 个：前 6 个给 INSERT 的列，后 3 个给 WHERE 里的子查询（D1 用位置 ? 重复传值，不用 ?1 ?2 编号参数）。 */
@@ -258,13 +242,14 @@ export async function onRequestPost(context) {
        WHERE (SELECT COUNT(*) FROM resource_bindings WHERE variant_id = ? AND code = ?) < ?`
     ).bind(variantId, productId, device, ua, bindCode, (request.cf && request.cf.region) || '', variantId, bindCode, limit).run();
 
-    /* 条件插入没落行 = 被并发挤满（同一设备重复提交会撞唯一约束，走下面 catch，不会走到这里） */
+    /* 条件插入落 0 行 = 计数已达上限（本设备或别人占满都可能）。
+       v643 修正注释：同设备并发时这里也会走到——第 1 条提交后，后续几条的 WHERE 子查询即算出「已满」，
+       落 0 行且不报错，并不会「撞唯一约束走 catch」。所以下面的复核必须能区分「本设备已在」和「真满了」。 */
     const _changed = (_ins && _ins.meta && _ins.meta.changes) || 0;
     if (_changed === 0) {
       /* 再确认一次：是满了，还是本设备已经在里面了，还是别的意外。
-         注意不能直接按「满」返回——同一台设备并发提交时，第一条已经把行写进去了，
-         后两条的 WHERE 子查询会算出「已绑定数 = 上限」而落 0 行，若此时一律报「已满」，
-         就把 v294 的幂等语义修坏了（同一设备连点会看到「已满」而不是正常解锁）。
+         同一台设备并发提交时，第一条已经把行写进去了，后几条的 WHERE 子查询会算出「已绑定数 = 上限」而落 0 行，
+         若此时一律报「已满」，就把 v294 的幂等语义修坏了（同一设备连点会看到「已满」而不是正常解锁）。
          所以一条查询同时取：该码已绑定总数 c + 本设备是否已在其中 mine。 */
       let _now = 0, _mine = 0;
       try {
