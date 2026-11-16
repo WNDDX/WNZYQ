@@ -1891,7 +1891,7 @@ return false;
 };
 var __collapse = function (bj) {
 if (bj.classList.contains('ico-only')) return;
-if (!bj.querySelector('.btn-ico')) return;
+if (!bj.querySelector('.btn-ico, svg')) return;
 if (!bj.title && !bj.getAttribute('aria-label')) {
 var lb = bj.querySelector('.btn-lab');
 var tx = (lb ? lb.textContent : bj.textContent || '').replace(/\s+/g, ' ').trim();
@@ -2346,13 +2346,31 @@ window.__markFitGroups = function () {
 try {
 var SEL = '.setting-row.is-inline, .modal-footer, .extc-pops, .extc-bar, .logs-tools, .info-panel-btns, .batch-group, .tbl-opbar, .usf-body .pm-actions'
 + ', .toolbar .tb-group, .toolbar .tb-row, .toolbar .tb-row2, .stat-head-tools, #statsFilterBar, .time-filter, .stat-head-label'
-+ ', .uni-pager, .stat-pager, .modal-inner-btns, .extc-batch, .p-ops, .c-meta, .u-ops';
++ ', .uni-pager, .stat-pager, .modal-inner-btns, .extc-batch, .p-ops, .c-meta, .u-ops'
++ ', .topbar-actions, .tabs, .topbar-right';
 var list = document.querySelectorAll(SEL);
 for (var i = 0; i < list.length; i++) list[i].classList.add('btn-fit-group');
+var __navItem = document.querySelector('.btn-item');
+if (__navItem && __navItem.parentNode && __navItem.parentNode.classList) __navItem.parentNode.classList.add('btn-fit-group');
+} catch (e) { if (window.__silent) window.__silent(e); }
+};
+window.__markIconTextBtns = function () {
+try {
+var list = document.querySelectorAll('#mainContent .btn-item, .topbar-actions .tab, .tabs .tab[data-tab], .topbar-right .tab');
+for (var i = 0; i < list.length; i++) {
+var b = list[i];
+if (!b.querySelector('svg')) continue;
+if (!b.querySelector('.btn-lab')) {
+var t = b.querySelector('.btn-txt') || b.querySelector('span:not(.dot-badge)');
+if (t) t.classList.add('btn-lab');
+}
+if (!b.classList.contains('btn-fit') && !b.classList.contains('btn-fit-soft')) b.classList.add('btn-fit-soft');
+if (!b.hasAttribute('data-pri')) b.setAttribute('data-pri', '1');
+}
 } catch (e) { if (window.__silent) window.__silent(e); }
 };
 window.__refreshIcons = function () {
-try { window.__autoDecorate(); window.__markFitGroups(); if (window.__btnFit) window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); }
+try { window.__autoDecorate(); window.__autoDecorateTabs(); window.__markIconTextBtns(); window.__markFitGroups(); if (window.__btnFit) window.__btnFit(); } catch (e) { if (window.__silent) window.__silent(e); }
 };
 window.addEventListener('DOMContentLoaded', function () {
 try { window.__refreshIcons(); window.__autoDecorateTabs(); } catch (e0) {}
