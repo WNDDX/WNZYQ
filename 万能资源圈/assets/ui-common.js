@@ -2278,6 +2278,15 @@ bug: '<path d="M9 4l1.5 2.5h3L15 4"/><rect x="6" y="7" width="12" height="11" rx
 speed: '<path d="M4 18a8 8 0 0116 0"/><path d="M12 18l4.5-5"/><circle cx="12" cy="18" r="1.4"/>',
 wrench: '<path d="M14.7 6.3a4 4 0 105.3 5.3l-5.3-5.3z"/><path d="M13.3 7.7L4 17v3h3l9.3-9.3"/>'
 };
+var __calN = /^cal(\d+)$/.exec(name);
+if (__calN) {
+var __num = __calN[1];
+return '<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
++ '<rect x="3" y="4.5" width="18" height="16.5" rx="2"/>'
++ '<path d="M8 2.4v3.4M16 2.4v3.4M3 9.4h18"/>'
++ '<text x="12" y="18.6" font-size="' + (__num.length > 1 ? 7.6 : 10) + '" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">' + __num + '</text>'
++ '</svg>';
+}
 var d = P[name];
 if (!d) return '';
 return '<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
@@ -2312,6 +2321,8 @@ if (b.querySelector('.dot-badge, .badge, .wn-badge')) continue;
 if (b.matches(skip) || b.closest('.ctx-menu, .rte-toolbar') || b.querySelector('.btn-ico')) continue;
 var t = (b.textContent || '').trim();
 if (!t) continue;
+var __day = /^(\d+)\s*天$/.exec(t);
+if (__day) { window.__decorateBtn(b, 'cal' + __day[1], 3); continue; }
 for (var k = 0; k < MAP.length; k++) {
 if (MAP[k][0].test(t)) {
 var pr = /确定|保存|编辑|显示/.test(t) ? 1 : (/删除|取消|关闭/.test(t) ? 6 : 3);
