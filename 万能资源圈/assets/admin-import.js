@@ -460,25 +460,26 @@ if (x && x.ok) { catIdByName[name] = x.id; okLine('分类「' + name + '」✓')
 else failLine('分类「' + name + '」失败' + (x && x.msg ? '：' + x.msg : ''));
 }).catch(function () { failLine('分类「' + name + '」失败'); });
 });
-var prodIdByName = {}, seenTitle = {};
+var prodIdByName = {};
 resRows.forEach(function (r, i) {
 if (badRes[i]) { failLine('资源第' + (i + 2) + '行失败：' + badRes[i]); return; }
 if (!r[0]) return;
 var title = String(r[0]).trim();
-if (titleId[title] || seenTitle[title]) { dupLine('资源「' + title + '」已存在，跳过'); return; }
-seenTitle[title] = 1;
 var pc = priceCheck(r[4]);
-seq = seq.then(function () { return apiCall('admin/products', { method: 'POST', body: JSON.stringify({
+seq = seq.then(function () {
+if (titleId[title]) { dupLine('资源「' + title + '」已存在，跳过'); return null; }
+return apiCall('admin/products', { method: 'POST', body: JSON.stringify({
 title: title, cid: catIdByName[r[1]] || 0, desc: r[2] || '', detail: r[3] || '',
 price: pc.val, img: r[5] || '', sort: Number(r[6]) || 0,
 is_online: /隐藏/.test(r[7] || '') ? 0 : 1, is_hidden: /隐藏/.test(r[7] || '') ? 1 : 0,
 schedule_on: (r[8] || '').trim() || undefined, schedule_off: (r[9] || '').trim() || undefined,
 contactUrl: (r[10] || '').trim() || '', contactQr: (r[11] || '').trim() || ''
-}) }); }).then(function (x) {
+}) }).then(function (x) {
 if (!(x && x.ok)) { failLine('资源「' + title + '」失败' + (x && x.msg ? '：' + x.msg : '')); return; }
 titleId[title] = x.id; prodIdByName[title] = x.id;
 okLine('资源「' + title + '」✓');
 }).catch(function () { failLine('资源「' + title + '」失败'); });
+});
 });
 varRows.forEach(function (r, i) {
 if (badVar[i]) { failLine('类型第' + (i + 2) + '行失败：' + badVar[i]); return; }
@@ -507,12 +508,14 @@ annRows.forEach(function (r, i) {
 if (badAnn[i]) { failLine('公告第' + (i + 2) + '行失败：' + badAnn[i]); return; }
 if (!r[0]) return;
 var t = String(r[0]).trim();
-if (annTitles[t]) { dupLine('公告「' + t + '」已存在，跳过'); return; }
+seq = seq.then(function () {
+if (annTitles[t]) { dupLine('公告「' + t + '」已存在，跳过'); return null; }
 annTitles[t] = 1;
-seq = seq.then(function () { return apiCall('admin/settings', { method: 'POST', body: JSON.stringify({ annAdd: { title: t, content: r[1] || '', sort: Number(r[2]) || 0, hidden: /隐藏/.test(r[3] || '') ? 1 : 0 } }) }); }).then(function (x) {
+return apiCall('admin/settings', { method: 'POST', body: JSON.stringify({ annAdd: { title: t, content: r[1] || '', sort: Number(r[2]) || 0, hidden: /隐藏/.test(r[3] || '') ? 1 : 0 } }) }).then(function (x) {
 if (x && x.ok) okLine('公告「' + t + '」✓');
 else failLine('公告「' + t + '」失败' + (x && x.msg ? '：' + x.msg : ''));
 }).catch(function () { failLine('公告「' + t + '」失败'); });
+});
 });
 return seq.then(function () { return { lines: log, created: stat.created, skipped: stat.skipped, ignored: stat.ignored, failed: stat.failed }; });
 }
@@ -600,7 +603,7 @@ var body = mask.querySelector('#impPrev');
 var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length;
 var headLine = '';
 if (!total) headLine = '<div class="imp-warn">文件里没有可导入的行，请按模板填写后重新导出</div>';
-else if (pv.bad && pv.bad >= total) headLine = '<div class="imp-warn">' + total + ' 行都有问题（明细见下），没有可导入的数据</div>';
+else if (pv.bad && pv.bad >= total) headLine = '<div class="imp-warn">' + (total > 1 ? total + ' 行全部有问题' : '这一行有问题') + '（明细见下），没有可导入的数据</div>';
 body.innerHTML = headLine + '<div class="imp-log">' + esc(pv.lines.join('\n')) + '</div>' +
 '<button class="export-btn" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
 body.querySelector('#impGo').addEventListener('click', function () {
