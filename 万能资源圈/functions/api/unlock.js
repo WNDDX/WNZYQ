@@ -232,9 +232,32 @@ export async function onRequestPost(context) {
   const ua = (request.headers.get('User-Agent') || '').slice(0, 200);
   let bound = true;
   try {
-    await env.DB.prepare(
-      'INSERT INTO resource_bindings (variant_id, product_id, device_token, ua, code, region) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(variantId, productId, device, ua, bindCode, (request.cf && request.cf.region) || '').run();
+    /* v641 P0 并发超发修复：上面的 cnt 检查是「读」，本条 INSERT 是「写」，两者之间无原子性——
+       多台不同设备同一时刻提交同一个码时会同时读到 cnt=0 全部通过检查，全部 INSERT → 超发。
+       改为「条件插入」：把「已绑定数 < 上限」写进 INSERT 的 WHERE 子查询，
+       由数据库在同一条语句、同一把写锁内一次性判定，条件不成立就落 0 行。
+       参数共 9 个：前 6 个给 INSERT 的列，后 3 个给 WHERE 里的子查询（D1 用位置 ? 重复传值，不用 ?1 ?2 编号参数）。 */
+    const _ins = await env.DB.prepare(
+      `INSERT INTO resource_bindings (variant_id, product_id, device_token, ua, code, region)
+       SELECT ?, ?, ?, ?, ?, ?
+       WHERE (SELECT COUNT(*) FROM resource_bindings WHERE variant_id = ? AND code = ?) < ?`
+    ).bind(variantId, productId, device, ua, bindCode, (request.cf && request.cf.region) || '', variantId, bindCode, limit).run();
+
+    /* 条件插入没落行 = 被并发挤满（同一设备重复提交会撞唯一约束，走下面 catch，不会走到这里） */
+    const _changed = (_ins && _ins.meta && _ins.meta.changes) || 0;
+    if (_changed === 0) {
+      /* 再确认一次：是满了，还是别的意外。满了就按「已满」返回，别把超发算成成功 */
+      let _now = 0;
+      try {
+        const _c = await env.DB.prepare('SELECT COUNT(*) AS c FROM resource_bindings WHERE variant_id = ? AND code = ?')
+          .bind(variantId, bindCode).first();
+        _now = (_c && _c.c) || 0;
+      } catch (e2) { _now = 0; }
+      if (_now >= limit) {
+        return json({ ok: false, msg: '该码绑定设备已满（上限 ' + limit + ' 台），请联系客服。注意：换浏览器、无痕模式、清除缓存都会被识别为新设备' }, 200, extraHeaders);
+      }
+      bound = false; /* 非预期情况：放行但不记绑定（沿用原来的降级语义） */
+    }
   } catch (e) {
     const msg = String(e && e.message || '');
     if (msg.includes('UNIQUE constraint failed')) {
