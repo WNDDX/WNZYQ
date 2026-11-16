@@ -368,13 +368,16 @@ function preview(data) {
 var lines = [];
 var cats = catOptions();
 var res = data['资源'] || [], cat = data['分类'] || [], ann = data['公告'] || [], vars = data['类型'] || [];
+var fileCats = {};
+cat.forEach(function (r) { var n = String((r && r[0]) || '').trim(); if (n) fileCats[n] = 1; });
+var catKnown = function (n) { var s = String(n || '').trim(); return cats.indexOf(s) >= 0 || !!fileCats[s]; };
 var bad = 0;
 var badRes = {}, badCat = {}, badVar = {}, badAnn = {};
 var flag = function (map, i, why, line) { map[i] = why; bad++; lines.push(line); };
 res.forEach(function (r, i) {
 var row = '资源第' + (i + 2) + '行：';
 if (!r[0]) { flag(badRes, i, '缺标题', row + '缺标题，跳过'); return; }
-if (r[1] && cats.indexOf(r[1]) < 0) { flag(badRes, i, '分类「' + r[1] + '」不存在，请先导分类', row + '分类「' + r[1] + '」不存在，请先导分类'); return; }
+if (r[1] && !catKnown(r[1])) { flag(badRes, i, '分类「' + r[1] + '」不存在，请先导分类', row + '分类「' + r[1] + '」不存在，请先导分类'); return; }
 var pc = priceCheck(r[4]);
 if (!pc.ok) flag(badRes, i, '价格「' + pc.raw + '」不是数字', row + '价格「' + pc.raw + '」不是数字，跳过');
 });
@@ -427,7 +430,16 @@ if (vt) varKeys[String(p.id) + '|' + vt] = 1;
 });
 };
 ((window.state && state.products) || []).forEach(learnProduct);
+var catIdByName = {};
+((window.state && state.categories) || []).forEach(function (c) { catIdByName[c.name] = c.id; });
 var seq = Promise.resolve();
+if (catRows.length) {
+seq = seq.then(function () {
+return apiCall('admin/categories').then(function (x) {
+((x && x.list) || []).forEach(function (c) { var n = String((c && c.name) || '').trim(); if (n && !catIdByName[n]) catIdByName[n] = c.id; });
+}).catch(function () {});
+});
+}
 if (resRows.length || varRows.length) {
 seq = seq.then(function () {
 return apiCall('admin/products?page_size=0').then(function (x) {
@@ -443,22 +455,19 @@ Object.keys(add).forEach(function (k) { annTitles[k] = 1; });
 }).catch(function () {});
 });
 }
-var catIdByName = {}, seenCat = {};
-((window.state && state.categories) || []).forEach(function (c) { catIdByName[c.name] = c.id; });
 catRows.forEach(function (r, i) {
 if (badCat[i]) { failLine('分类第' + (i + 2) + '行失败：' + badCat[i]); return; }
 if (!r[0]) return;
 var name = String(r[0]).trim();
-if (catIdByName[name] || seenCat[name]) { dupLine('分类「' + name + '」已存在，跳过'); return; }
-seenCat[name] = 1;
 seq = seq.then(function () {
+if (catIdByName[name]) { dupLine('分类「' + name + '」已存在，跳过'); return null; }
 var pid = 0;
 if (r[2]) { pid = catIdByName[r[2]] || 0; if (!pid) say('分类「' + name + '」：所属一级「' + r[2] + '」未找到，按一级导入'); }
-return apiCall('admin/categories', { method: 'POST', body: JSON.stringify({ name: name, parent_id: pid, sort: Number(r[3]) || 0, hidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) });
-}).then(function (x) {
+return apiCall('admin/categories', { method: 'POST', body: JSON.stringify({ name: name, parent_id: pid, sort: Number(r[3]) || 0, hidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) }).then(function (x) {
 if (x && x.ok) { catIdByName[name] = x.id; okLine('分类「' + name + '」✓'); }
 else failLine('分类「' + name + '」失败' + (x && x.msg ? '：' + x.msg : ''));
 }).catch(function () { failLine('分类「' + name + '」失败'); });
+});
 });
 var prodIdByName = {};
 resRows.forEach(function (r, i) {
@@ -603,7 +612,7 @@ var body = mask.querySelector('#impPrev');
 var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length;
 var headLine = '';
 if (!total) headLine = '<div class="imp-warn">文件里没有可导入的行，请按模板填写后重新导出</div>';
-else if (pv.bad && pv.bad >= total) headLine = '<div class="imp-warn">' + (total > 1 ? total + ' 行全部有问题' : '这一行有问题') + '（明细见下），没有可导入的数据</div>';
+else if (total && pv.okCount === 0) headLine = '<div class="imp-warn">' + (total > 1 ? total + ' 行全部有问题' : '这一行有问题') + '（明细见下），没有可导入的数据</div>';
 body.innerHTML = headLine + '<div class="imp-log">' + esc(pv.lines.join('\n')) + '</div>' +
 '<button class="export-btn" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
 body.querySelector('#impGo').addEventListener('click', function () {
