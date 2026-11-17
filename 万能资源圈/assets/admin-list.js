@@ -805,7 +805,7 @@ function reorderProducts(draggedId, targetId) {
 var fromIdx = state.products.findIndex(function (p) { return p.id === draggedId; });
 var toIdx = state.products.findIndex(function (p) { return p.id === targetId; });
 if (fromIdx === -1 || toIdx === -1) return;
-if (window.__reorderBusy) return;
+if (window.__reorderBusy) { window.__pendingReorder = [draggedId, targetId]; return; }
 window.__reorderBusy = true;
 var _listEl = document.getElementById('productList');
 var _flip = (window.__motion && __motion.flipSnap && _listEl) ? __motion.flipSnap(_listEl, '.product-row') : null;
@@ -825,26 +825,32 @@ return r;
 });
 Promise.all(updates).then(function (results) {
 var hasErr = results.some(function (r) { return !r || !r.ok; });
-var _unlock = function () { window.__reorderBusy = false; };
+var _unlock = function (dropQueue) {
+window.__reorderBusy = false;
+var q = window.__pendingReorder;
+window.__pendingReorder = null;
+if (q && !dropQueue) { try { reorderProducts(q[0], q[1]); } catch (eQ) { if (window.__silent) window.__silent(eQ); } }
+};
 if (_conflict > 0) {
 toast('有资源已被他人修改，已为你刷新最新顺序', 'warning');
 try { if (typeof window.__reloadAdminProducts === 'function') window.__reloadAdminProducts(); else __syncProductsNow(); } catch (eR) { if (window.__silent) window.__silent(eR); }
 renderProducts();
 try { if (_flip) _flip(); } catch (e) { if (window.__silent) window.__silent(e); }
-_unlock();
+_unlock(true);
 return;
 }
 if (hasErr) {
 toast('排序保存失败，请重试', 'error');
 renderProducts();
 try { if (_flip) _flip(); } catch (e) { if (window.__silent) window.__silent(e); }
-_unlock();
+_unlock(true);
 return;
 }
 renderProducts();
 try { if (_flip) _flip(); } catch (e) { if (window.__silent) window.__silent(e); }
-try { Promise.resolve(__syncProductsNow()).then(_unlock).catch(_unlock); }
-catch (eS) { if (window.__silent) window.__silent(eS); _unlock(); }
+try {
+Promise.resolve(__syncProductsNow()).then(function () { _unlock(); }).catch(function () { _unlock(); });
+} catch (eS) { if (window.__silent) window.__silent(eS); _unlock(true); }
 }).catch(function () { window.__reorderBusy = false; });
 }
 function updateBatchBar() {
