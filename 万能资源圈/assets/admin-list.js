@@ -825,17 +825,26 @@ return r;
 });
 Promise.all(updates).then(function (results) {
 var hasErr = results.some(function (r) { return !r || !r.ok; });
+var _unlock = function () { window.__reorderBusy = false; };
 if (_conflict > 0) {
 toast('有资源已被他人修改，已为你刷新最新顺序', 'warning');
 try { if (typeof window.__reloadAdminProducts === 'function') window.__reloadAdminProducts(); else __syncProductsNow(); } catch (eR) { if (window.__silent) window.__silent(eR); }
-} else if (hasErr) {
+renderProducts();
+try { if (_flip) _flip(); } catch (e) { if (window.__silent) window.__silent(e); }
+_unlock();
+return;
+}
+if (hasErr) {
 toast('排序保存失败，请重试', 'error');
-} else {
-try { __syncProductsNow(); } catch (eS) { if (window.__silent) window.__silent(eS); }
+renderProducts();
+try { if (_flip) _flip(); } catch (e) { if (window.__silent) window.__silent(e); }
+_unlock();
+return;
 }
 renderProducts();
 try { if (_flip) _flip(); } catch (e) { if (window.__silent) window.__silent(e); }
-window.__reorderBusy = false;
+try { Promise.resolve(__syncProductsNow()).then(_unlock).catch(_unlock); }
+catch (eS) { if (window.__silent) window.__silent(eS); _unlock(); }
 }).catch(function () { window.__reorderBusy = false; });
 }
 function updateBatchBar() {
@@ -1004,7 +1013,7 @@ var _qs = '?page=' + adminPage + '&page_size=' + ADMIN_PAGE_SIZE;
 if (_kw) _qs += '&kw=' + encodeURIComponent(_kw);
 if (_cat && _cat !== '0') _qs += '&cid=' + encodeURIComponent(_cat);
 if (_st) _qs += '&status=' + encodeURIComponent(_st);
-api('admin/products' + _qs).then(function (res) {
+return api('admin/products' + _qs).then(function (res) {
 if (!res || !res.ok) return;
 state.products = res.list || [];
 if (res.total_pages !== undefined) {
