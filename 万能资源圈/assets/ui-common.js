@@ -2453,7 +2453,7 @@ window.__bfDirty = 1;
 };
 window.__markIconTextBtns = function () {
 try {
-var BOX = ['.topbar-actions', '.tabs', '.set-nav'];
+var BOX = ['.topbar-actions', '.tabs', '.topbar-right', '.set-nav'];
 for (var x = 0; x < BOX.length; x++) {
 var bx = document.querySelector(BOX[x]);
 if (bx && !bx.classList.contains('btn-fit-all')) { bx.classList.add('btn-fit-all'); window.__bfDirty = 1; }
@@ -2478,8 +2478,10 @@ if (!info.querySelector('.btn-lab')) {
 var it = info.querySelector('.btn-txt') || info.querySelector('span:not(.dot-badge)');
 if (it) { it.classList.add('btn-lab'); window.__bfDirty = 1; }
 }
+var infoSvg = info.querySelector('svg');
+if (infoSvg && !infoSvg.classList.contains('btn-ico')) { infoSvg.classList.add('btn-ico'); window.__bfDirty = 1; }
 if (!info.classList.contains('btn-fit') && !info.classList.contains('btn-fit-soft')) { info.classList.add('btn-fit-soft'); window.__bfDirty = 1; }
-if (!info.hasAttribute('data-pri')) { info.setAttribute('data-pri', '3'); window.__bfDirty = 1; }
+if (!info.hasAttribute('data-pri')) { info.setAttribute('data-pri', '1'); window.__bfDirty = 1; }
 }
 } catch (e) { if (window.__silent) window.__silent(e); }
 };
