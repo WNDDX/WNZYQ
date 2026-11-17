@@ -1900,11 +1900,12 @@ var par = grp.parentElement;
 if (!par) return false;
 try {
 var pcs = getComputedStyle(par);
-var pr = par.getBoundingClientRect(), gr = grp.getBoundingClientRect();
-if (!pr.width || !gr.width) return false;
-var l = pr.left + (parseFloat(pcs.borderLeftWidth) || 0) + (parseFloat(pcs.paddingLeft) || 0);
-var r = pr.right - (parseFloat(pcs.borderRightWidth) || 0) - (parseFloat(pcs.paddingRight) || 0);
-return (gr.right > r + 1) || (gr.left < l - 1);
+var pr = par.getBoundingClientRect();
+if (!pr.width) return false;
+var inner = pr.width - (parseFloat(pcs.borderLeftWidth) || 0) - (parseFloat(pcs.borderRightWidth) || 0)
+- (parseFloat(pcs.paddingLeft) || 0) - (parseFloat(pcs.paddingRight) || 0);
+if (inner <= 0) return false;
+return grp.getBoundingClientRect().width > inner + 1;
 } catch (e) { return false; }
 };
 var __crowded = function () {
