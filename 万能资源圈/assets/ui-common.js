@@ -1961,8 +1961,9 @@ if (lb) {
 var lcs = getComputedStyle(lb);
 var lt = (lb.textContent || '').trim();
 if (lcs.display !== 'none' && lcs.visibility !== 'hidden' && lt) {
-if (lb.clientWidth < 6) over = true;
-else if (lb.scrollWidth > lb.clientWidth + 2) over = true;
+var lw = lb.getBoundingClientRect().width;
+if (lw < 1) over = true;
+else if (lb.clientWidth > 0 && lb.scrollWidth > lb.clientWidth + 2) over = true;
 }
 }
 }
@@ -2453,12 +2454,12 @@ window.__bfDirty = 1;
 };
 window.__markIconTextBtns = function () {
 try {
-var BOX = ['.topbar-actions', '.tabs', '.topbar-right', '.set-nav'];
+var BOX = ['.topbar-actions', '.tabs', '.topbar-right'];
 for (var x = 0; x < BOX.length; x++) {
 var bx = document.querySelector(BOX[x]);
 if (bx && !bx.classList.contains('btn-fit-all')) { bx.classList.add('btn-fit-all'); window.__bfDirty = 1; }
 }
-var list = document.querySelectorAll('#mainContent .btn-item, .topbar-actions .tab, .tabs .tab[data-tab], .set-nav button');
+var list = document.querySelectorAll('#mainContent .btn-item, .topbar-actions .tab, .tabs .tab[data-tab]');
 for (var i = 0; i < list.length; i++) {
 var b = list[i];
 if (!b.querySelector('svg')) continue;
