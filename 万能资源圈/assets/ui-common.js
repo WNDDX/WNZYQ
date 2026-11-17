@@ -3009,6 +3009,25 @@ window.__lastOuterHit = hit || e.target;
 } catch (e0) {}
 }, true);
 window.__DS401_KEY = 'wn_draft_401';
+window.__draftOwnerKey = function (maskId) {
+try {
+var st = window.state || null;
+var m = String(maskId || '');
+if (m === 'editMask') { var pid = st && st.editingId ? Number(st.editingId) : 0; return 'edit:' + (pid > 0 ? pid : 'new'); }
+if (m === 'variantMask') { var vid = st && st.editingVariantId ? Number(st.editingVariantId) : 0; return 'variant:' + (vid > 0 ? vid : 'new'); }
+if (m === 'catMask') { var cid = st && st.catEditingId ? Number(st.catEditingId) : 0; return 'cat:' + (cid > 0 ? cid : 'new'); }
+if (m === 'annMask') { var sa = window.stateAnn || null; var aid = sa && sa.curId ? Number(sa.curId) : 0; return 'ann:' + (aid > 0 ? aid : 'new'); }
+return '';
+} catch (e) { return ''; }
+};
+window.__draftOwnerLabel = function (maskId) {
+var m = String(maskId || '');
+if (m === 'editMask') return '资源';
+if (m === 'variantMask') return '类型';
+if (m === 'catMask') return '分类';
+if (m === 'annMask') return '公告';
+return '内容';
+};
 window.__snapOpenForms = function () {
 try {
 var masks = document.querySelectorAll('.modal-mask.open');
@@ -3018,9 +3037,16 @@ Array.prototype.forEach.call(masks, function (m) {
 if (!m.id) return;
 var fields = {};
 Array.prototype.forEach.call(m.querySelectorAll('input[id], textarea[id], select[id]'), function (el) {
+if (el.type === 'file' || el.type === 'password') return;
 fields[el.id] = (el.type === 'checkbox' || el.type === 'radio') ? (el.checked ? 1 : 0) : el.value;
 });
-if (Object.keys(fields).length) out.masks.push({ id: m.id, fields: fields });
+var rte = {};
+Array.prototype.forEach.call(m.querySelectorAll('[contenteditable="true"][id]'), function (el) {
+var html = el.innerHTML || '';
+if (html) rte[el.id] = html;
+});
+if (!Object.keys(fields).length && !Object.keys(rte).length) return;
+out.masks.push({ id: m.id, owner: window.__draftOwnerKey(m.id), fields: fields, rte: rte });
 });
 if (!out.masks.length) return 0;
 sessionStorage.setItem(window.__DS401_KEY, JSON.stringify(out));
@@ -3031,39 +3057,60 @@ window.__pending401 = null;
 window.__applyPending401 = function () {
 var data = window.__pending401;
 if (!data) return 0;
-var done = 0, total = 0, n = 0;
+var filled = 0;
+var rest = [];
 data.masks.forEach(function (mm) {
-total++;
 var mask = document.getElementById(mm.id);
-if (!mask || !mask.classList.contains('open')) return;
-done++;
-Object.keys(mm.fields).forEach(function (id) {
+if (!mask || !mask.classList.contains('open')) { rest.push(mm); return; }
+var curOwner = window.__draftOwnerKey(mm.id);
+if (mm.owner && curOwner && mm.owner !== curOwner) {
+try { if (window.showToast) window.showToast('上次未保存的是另一条' + window.__draftOwnerLabel(mm.id) + '，已丢弃', 'warning'); } catch (eT) {}
+return;
+}
+var n = 0;
+Object.keys(mm.fields || {}).forEach(function (id) {
 var el = document.getElementById(id);
-if (!el) return;
+if (!el || (mask.contains && !mask.contains(el))) return;
 if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!mm.fields[id];
 else el.value = mm.fields[id];
 try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
 n++;
 });
+Object.keys(mm.rte || {}).forEach(function (id) {
+var el = document.getElementById(id);
+if (!el || (mask.contains && !mask.contains(el))) return;
+try { el.innerHTML = mm.rte[id]; } catch (e) { return; }
+try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+n++;
 });
-if (done && done >= total) {
+data.filledTotal = (data.filledTotal || 0) + n;
+filled += n;
+});
+data.masks = rest;
+if (filled > 0) {
+try { if (window.showToast) window.showToast('已填回上次未保存的 ' + data.filledTotal + ' 项内容', 'success'); } catch (e) {}
+}
+if (!rest.length) {
 window.__pending401 = null;
 try { sessionStorage.removeItem(window.__DS401_KEY); } catch (e) {}
-try { if (window.showToast) window.showToast('已填回上次未保存的 ' + n + ' 项内容', 'success'); } catch (e) {}
+try { if (data.__timer) clearInterval(data.__timer); } catch (e) {}
 }
-return n;
+return filled;
 };
 window.__restoreForms401 = function () {
 try {
 var raw = sessionStorage.getItem(window.__DS401_KEY);
 if (!raw) return 0;
 var data = JSON.parse(raw);
-if (!data || !data.masks || (Date.now() - Number(data.at || 0) > 30 * 60 * 1000)) {
+if (!data || !data.masks || !data.masks.length || (Date.now() - Number(data.at || 0) > 30 * 60 * 1000)) {
 sessionStorage.removeItem(window.__DS401_KEY); return 0;
 }
 window.__pending401 = data;
 var n = window.__applyPending401();
-if (!n && !window.__pending401.__timer) {
+if (n) return n;
+if (!window.__pending401) return 0;
+if (!window.__pending401.__timer) {
 var tries = 0;
 window.__pending401.__timer = setInterval(function () {
 tries++;
@@ -3075,10 +3122,8 @@ if (window.__pending401) window.__pending401.__timer = null;
 }
 }, 400);
 }
-if (!n) {
-try { if (window.showToast) window.showToast('已保留上次内容', 'info'); } catch (e) {}
-}
-return n;
+try { if (window.showToast) window.showToast('已保留上次未保存的内容，打开对应编辑框会自动填回', 'info'); } catch (e) {}
+return 0;
 } catch (e) { return 0; }
 };
 (function () {

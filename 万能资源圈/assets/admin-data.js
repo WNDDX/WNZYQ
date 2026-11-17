@@ -2303,8 +2303,7 @@ if (s.ok) {
 showMain(s.username); if (window.__applyMe) window.__applyMe(s.username);
 setTimeout(function () {
 try {
-var n = window.__restoreForms401 ? window.__restoreForms401() : 0;
-if (n && window.showToast) window.showToast('已恢复上次填写 ' + n + ' 项内容', 'success');
+if (window.__restoreForms401) window.__restoreForms401();
 } catch (eR) {}
 }, 900);
 }

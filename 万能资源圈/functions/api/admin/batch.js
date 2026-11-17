@@ -29,10 +29,26 @@ export async function onRequestPost(context) {
   if (need) {
     const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
     if (!can(need, auth.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
+    /* v637（QA P2）：把「资源已不存在」和「没权限」分开报。
+       productScopeOk 对软删/查不到的资源返回 { ok:false, missing:true }，原来一律当权限问题回 403「该功能未开放」——
+       用户明明有权限，却被告诉'功能未开放'，会以为系统坏了（实测：批量操作一条已删资源即触发）。
+       现在：已不存在的按 409 明确报条数，真正的越权才 403。 */
+    const missing = [];
+    const denied = [];
     for (const pid of ids) {
       const sc = await productScopeOk(env, auth, pid);
-      if (!sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
+      if (sc.missing) { missing.push(pid); continue; }
+      if (!sc.ok) denied.push(pid);
     }
+    if (missing.length) {
+      return json({
+        ok: false,
+        msg: '其中 ' + missing.length + ' 条资源已不存在（可能已被删除），请刷新后重试',
+        missing: missing.length,
+        missingIds: missing,
+      }, 409);
+    }
+    if (denied.length) return json({ ok: false, msg: '该功能未开放' }, 403);
     /* #116 范围锁：挪分类的目标分类也必须在授权范围内（防止把资源挪出自己范围/挪进别人的） */
     if (action === 'changeCat') {
       const { catAllowed } = await import('../../_perms.js');

@@ -805,31 +805,38 @@ function reorderProducts(draggedId, targetId) {
 var fromIdx = state.products.findIndex(function (p) { return p.id === draggedId; });
 var toIdx = state.products.findIndex(function (p) { return p.id === targetId; });
 if (fromIdx === -1 || toIdx === -1) return;
+if (window.__reorderBusy) return;
+window.__reorderBusy = true;
 var _listEl = document.getElementById('productList');
 var _flip = (window.__motion && __motion.flipSnap && _listEl) ? __motion.flipSnap(_listEl, '.product-row') : null;
 var item = state.products.splice(fromIdx, 1)[0];
 state.products.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, item);
 toast('正在保存排序', 'info');
+var _conflict = 0;
 var updates = state.products.map(function (p, i) {
 p.sort = i + 1;
 return api('admin/products/' + p.id, {
 method: 'PUT',
-body: JSON.stringify({
-cid: p.cid, title: p.title, desc: p.desc, detail: p.detail,
-img: p.img, detailImages: p.detailImages || [],
-detailVideos: p.detailVideos || [], contactUrl: p.contactUrl || '',
-price: p.price || 0, sort: p.sort, is_online: p.is_online,
-is_hidden: p.is_hidden || 0
-})
+body: JSON.stringify({ sort: p.sort, updated_at: p.updated_at || '' })
+}).then(function (r) {
+if (r && (r._status === 409 || (r.ok === false && /已被修改/.test(String(r.msg || ''))))) _conflict++;
+return r;
 }).catch(function () { return { ok: false }; });
 });
 Promise.all(updates).then(function (results) {
 var hasErr = results.some(function (r) { return !r || !r.ok; });
-if (hasErr) { toast('排序保存失败，请重试', 'error'); }
-else { }
+if (_conflict > 0) {
+toast('有资源已被他人修改，已为你刷新最新顺序', 'warning');
+try { if (typeof window.__reloadAdminProducts === 'function') window.__reloadAdminProducts(); else __syncProductsNow(); } catch (eR) { if (window.__silent) window.__silent(eR); }
+} else if (hasErr) {
+toast('排序保存失败，请重试', 'error');
+} else {
+try { __syncProductsNow(); } catch (eS) { if (window.__silent) window.__silent(eS); }
+}
 renderProducts();
 try { if (_flip) _flip(); } catch (e) { if (window.__silent) window.__silent(e); }
-});
+window.__reorderBusy = false;
+}).catch(function () { window.__reorderBusy = false; });
 }
 function updateBatchBar() {
 var checks = document.querySelectorAll('.row-check:checked');
@@ -964,6 +971,7 @@ toast(actionNames[action] + '完成：成功 ' + res.count + ' 项', 'success');
 clearCache();
 applyBatchLocal(action, ids); renderProducts(); silentSyncProducts();
 } else {
+__bDone(action);
 toast(res.msg || '操作失败', 'error');
 }
 }).catch(function () { closeConfirm(); __bDone(action); toast(window.T('netFail'), 'error'); });
@@ -988,9 +996,7 @@ else if (action === 'changePrice' && extra) p.price = Number(extra.price);
 try { refreshCatCnts(); } catch (e) { if (window.__silent) window.__silent(e); }
 }
 var __silentSyncT = 0;
-function silentSyncProducts() {
-clearTimeout(__silentSyncT);
-__silentSyncT = setTimeout(function () {
+function __syncProductsNow() {
 var _kw = (document.getElementById('adminSearch').value || '').trim();
 var _cat = document.getElementById('filterCat').value;
 var _st = document.getElementById('filterStatus').value;
@@ -1018,7 +1024,10 @@ timestamp: Date.now()
 }
 renderProducts();
 }).catch(function () {});
-}, 600);
+}
+function silentSyncProducts() {
+clearTimeout(__silentSyncT);
+__silentSyncT = setTimeout(__syncProductsNow, 600);
 }
 var __silentCatT = null;
 function silentSyncCategories() {
