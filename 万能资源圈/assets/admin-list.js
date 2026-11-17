@@ -811,6 +811,7 @@ var _listEl = document.getElementById('productList');
 var _flip = (window.__motion && __motion.flipSnap && _listEl) ? __motion.flipSnap(_listEl, '.product-row') : null;
 var item = state.products.splice(fromIdx, 1)[0];
 state.products.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, item);
+__stateGen = (__stateGen || 0) + 1;
 toast('正在保存排序', 'info');
 var _conflict = 0;
 var updates = state.products.map(function (p, i) {
@@ -995,6 +996,7 @@ toast(res.msg || '操作失败', 'error');
 function applyBatchLocal(action, ids, extra) {
 var idSet = {};
 ids.forEach(function (i) { idSet[Number(i)] = true; });
+__stateGen = (__stateGen || 0) + 1;
 if (action === 'delete') {
 state.products = state.products.filter(function (p) { return !idSet[p.id]; });
 state.prodSelected = {};
@@ -1011,6 +1013,7 @@ else if (action === 'changePrice' && extra) p.price = Number(extra.price);
 try { refreshCatCnts(); } catch (e) { if (window.__silent) window.__silent(e); }
 }
 var __silentSyncT = 0;
+var __stateGen = 0;
 function __syncProductsNow() {
 var _kw = (document.getElementById('adminSearch').value || '').trim();
 var _cat = document.getElementById('filterCat').value;
@@ -1019,8 +1022,10 @@ var _qs = '?page=' + adminPage + '&page_size=' + ADMIN_PAGE_SIZE;
 if (_kw) _qs += '&kw=' + encodeURIComponent(_kw);
 if (_cat && _cat !== '0') _qs += '&cid=' + encodeURIComponent(_cat);
 if (_st) _qs += '&status=' + encodeURIComponent(_st);
+var __gen = __stateGen || 0;
 return api('admin/products' + _qs).then(function (res) {
 if (!res || !res.ok) return;
+if (__gen !== (__stateGen || 0)) return;
 state.products = res.list || [];
 if (res.total_pages !== undefined) {
 state.totalPages = res.total_pages || 1;
