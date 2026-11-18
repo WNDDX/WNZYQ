@@ -20,6 +20,21 @@ if (a.id !== b.id) return false;
 return a.title === b.title && a.desc === b.desc && a.img === b.img && a.price === b.price &&
 a.is_online === b.is_online && a.is_hidden === b.is_hidden && a.cid === b.cid && a.sort === b.sort;
 }
+var __delTomb = {};
+function __tombMark(id) {
+__delTomb[String(id)] = true;
+setTimeout(function () { try { delete __delTomb[String(id)]; } catch (e) { if (window.__silent) window.__silent(e); } },
+((typeof UNDO_MS === 'number' && UNDO_MS) ? UNDO_MS : 10000) + 5000);
+}
+function __tombDrop(id) { try { delete __delTomb[String(id)]; } catch (e) { if (window.__silent) window.__silent(e); } }
+function __tombStrip(list) {
+var arr = list || [], hit = false, k;
+for (k in __delTomb) { hit = true; break; }
+if (!hit) return arr;
+var out = [];
+for (var i = 0; i < arr.length; i++) { if (!__delTomb[String(arr[i].id)]) out.push(arr[i]); }
+return out;
+}
 function __clearSwitching() {
 try {
 var _pl2 = document.getElementById('productList');
@@ -35,7 +50,7 @@ var filterStatus = document.getElementById('filterStatus').value;
 var _cacheKey = __adminProductCacheKey(adminPage, kw, filterCat, filterStatus);
 var _cache = __adminProductCache[_cacheKey];
 if (!silent && _cache) {
-state.products = _cache.products || [];
+state.products = __tombStrip(_cache.products || []);
 state.totalPages = _cache.totalPages || 1;
 state.total = _cache.total || 0;
 state._backendPaged = _cache._backendPaged;
@@ -106,7 +121,7 @@ var _newP = res.list || [];
 if (silent && __adminDataSig(_newP) === _snapP) return;
 if (silent) initFilterCatPicker();
 window.__adminSkelP = false;
-state.products = _newP;
+state.products = __tombStrip(_newP);
 if (res.total_pages !== undefined) {
 state.totalPages = res.total_pages || 1;
 state.total = res.total || 0;
@@ -116,7 +131,7 @@ state._backendPaged = true;
 if (res.total !== undefined) state.total = res.total || 0;
 }
 __adminProductCache[_reqCacheKey] = {
-products: _newP,
+products: state.products,
 totalPages: state.totalPages,
 total: state.total,
 _backendPaged: state._backendPaged,
@@ -356,6 +371,7 @@ if (filterStatus === 'hidden' && (p.is_online && !p.is_hidden)) return false;
 return true;
 });
 }
+list = __tombStrip(list);
 state._viewTotal = state._backendPaged ? (state.total || list.length) : list.length;
 if (window.__adminSkelP && !list.length) { empty.classList.remove('show'); return; }
 if (!__reuse) box.innerHTML = '';
@@ -1026,7 +1042,7 @@ var __gen = __stateGen || 0;
 return api('admin/products' + _qs).then(function (res) {
 if (!res || !res.ok) return;
 if (__gen !== (__stateGen || 0)) return;
-state.products = res.list || [];
+state.products = __tombStrip(res.list || []);
 if (res.total_pages !== undefined) {
 state.totalPages = res.total_pages || 1;
 state.total = res.total || 0;
@@ -1069,13 +1085,14 @@ var p = (state.products || []).filter(function (x) { return x.id === id; })[0];
 if (!p) return;
 var _idx = state.products.indexOf(p);
 var _delRow = document.querySelector('#productList [data-id="' + id + '"]');
+__tombMark(id);
+__stateGen = (__stateGen || 0) + 1;
 state.products = (state.products || []).filter(function (x) { return x.id !== id; });
-try { refreshCatCnts(); } catch (e) { if (window.__silent) window.__silent(e); }
-if (_delRow) { _delRow.style.transition = 'opacity 0.2s ease'; _delRow.style.opacity = '0'; }
-setTimeout(function () {
+if (state.prodSelected) { try { delete state.prodSelected[id]; } catch (e1) { if (window.__silent) window.__silent(e1); } }
 if (_delRow && _delRow.parentNode) _delRow.parentNode.removeChild(_delRow);
+try { refreshCatCnts(); } catch (e) { if (window.__silent) window.__silent(e); }
+try { if (typeof updateBatchBar === 'function') updateBatchBar(); } catch (e2) { if (window.__silent) window.__silent(e2); }
 if (!document.querySelector('#productList .product-row')) renderProducts();
-}, 200);
 api('admin/products/' + id, { method: 'DELETE' }).then(function (res) {
 if (res && res.ok) {
 clearCache();
@@ -1083,30 +1100,48 @@ __undoable(
 '已删除「' + (p.title || '未命名') + '」，回收站点可找回',
 function () { silentSyncProducts(); },
 function () {
-api('admin/recycle', { method: 'POST', body: JSON.stringify({ op: 'restore', kind: 'product', id: id }) })
-.then(function (r2) {
-if (r2 && r2.ok) {
-var _cur3 = (state.products || []).slice();
+__tombDrop(id);
+var _cur3 = (state.products || []).filter(function (x) { return String(x.id) !== String(id); });
 _cur3.splice(Math.min(_idx, _cur3.length), 0, p);
 state.products = _cur3;
 try { refreshCatCnts(); } catch (e0) { if (window.__silent) window.__silent(e0); }
-renderProducts(); clearCache();
+renderProducts();
+api('admin/recycle', { method: 'POST', body: JSON.stringify({ op: 'restore', kind: 'product', id: id }) })
+.then(function (r2) {
+if (r2 && r2.ok) {
+clearCache();
 toast('已恢复 ' + (p.title || '未命名'), 'success');
+silentSyncProducts();
 } else {
+__tombMark(id);
+state.products = (state.products || []).filter(function (x) { return String(x.id) !== String(id); });
+try { refreshCatCnts(); } catch (e1) { if (window.__silent) window.__silent(e1); }
+renderProducts();
 toast((r2 && r2.msg) || '恢复失败，请手动恢复', 'error');
 }
 })
-.catch(function () { toast('恢复失败，请手动恢复', 'error'); });
+.catch(function () {
+__tombMark(id);
+state.products = (state.products || []).filter(function (x) { return String(x.id) !== String(id); });
+try { refreshCatCnts(); } catch (e1) { if (window.__silent) window.__silent(e1); }
+renderProducts();
+toast('恢复失败，请手动恢复', 'error');
+});
 }
 );
+silentSyncProducts();
 } else {
 toast((res && res.msg) || '删除失败', 'error');
-var _cur = (state.products || []).slice(); _cur.splice(Math.min(_idx, _cur.length), 0, p);
+__tombDrop(id);
+var _cur = (state.products || []).filter(function (x) { return String(x.id) !== String(id); });
+_cur.splice(Math.min(_idx, _cur.length), 0, p);
 state.products = _cur; renderProducts();
 }
 }).catch(function () {
 toast(window.T('delFail'), 'error');
-var _cur2 = (state.products || []).slice(); _cur2.splice(Math.min(_idx, _cur2.length), 0, p);
+__tombDrop(id);
+var _cur2 = (state.products || []).filter(function (x) { return String(x.id) !== String(id); });
+_cur2.splice(Math.min(_idx, _cur2.length), 0, p);
 state.products = _cur2; renderProducts();
 });
 }

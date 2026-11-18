@@ -1707,16 +1707,17 @@ fetch('/api/cron/collect?op=status', { credentials: 'same-origin' })
 load();
 var btn = mask.querySelector('#cronRunNow');
 btn.addEventListener('click', function () {
-btn.disabled = true; btn.textContent = '正在采';
+btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '正在采'); else btn.textContent = '正在采';
 if (host) host.innerHTML = '<span class="cs-bad">正在采，平台多的要十几秒</span>';
 fetch('/api/cron/collect', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
 .then(function (r) { return r.json(); })
 .then(function (r) {
-btn.disabled = false; btn.textContent = '再采一次';
+btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn);
+var _lab1 = btn.querySelector('.btn-lab'); if (_lab1) _lab1.textContent = '再采一次'; else btn.textContent = '再采一次';
 if (window.showToast) window.showToast(r && r.ok ? ('采完了，新增 ' + ((r && r.added) || 0) + ' 个资源') : ((r && r.msg) || '采集失败'), r && r.ok ? 'success' : 'error');
 load();
 })
-.catch(function () { btn.disabled = false; btn.textContent = '现在采一次'; if (window.showToast) window.showToast('网络没连上，没采成', 'error'); load(); });
+.catch(function () { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '现在采一次'; if (window.showToast) window.showToast('网络没连上，没采成', 'error'); load(); });
 });
 }
 function openVitals() {
@@ -2206,19 +2207,19 @@ else if (window.showToast) window.showToast('请到统计页导出', 'error');
 });
 go.addEventListener('click', function () {
 if (String(inp.value).trim() !== '清空') return;
-go.disabled = true; var t0 = go.textContent; go.textContent = '正在清空';
+go.disabled = true; var t0 = go.textContent; if (window.__btnBusy) window.__btnBusy(go, '正在清空'); else go.textContent = '正在清空';
 fetch('/api/admin/reset', {
 method: 'POST', credentials: 'same-origin',
 headers: { 'Content-Type': 'application/json' },
 body: JSON.stringify({ confirm: '清空' })
 }).then(function (r) { return r.json(); }).then(function (d) {
-go.disabled = false; go.textContent = t0;
+go.disabled = false; if (window.__btnIdle) window.__btnIdle(go); else go.textContent = t0;
 if (!d || !d.ok) { if (window.showToast) window.showToast((d && d.msg) || '清空失败', 'error'); return; }
 close();
 if (window.showToast) window.showToast('已清空，正在刷新', 'success');
 setTimeout(function () { try { location.reload(); } catch (e0) { if (window.__silent) window.__silent(e0); } }, 500);
 }).catch(function () {
-go.disabled = false; go.textContent = t0;
+go.disabled = false; if (window.__btnIdle) window.__btnIdle(go); else go.textContent = t0;
 if (window.showToast) window.showToast('网络没连上，没清成', 'error');
 });
 });
