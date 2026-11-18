@@ -1078,11 +1078,11 @@ window.__denyMsg = '该功能未开放';
 
 window.__permLabel = {
 'products.view': '查看资源', 'products.add': '新增资源', 'products.edit': '编辑资源',
-'products.price': '修改价格', 'products.online': '显示隐藏', 'products.del': '删除资源',
+'products.price': '修改价格', 'products.online': '显示/隐藏', 'products.del': '删除资源',
 'products.restore': '恢复资源', 'products.purge': '彻底删除', 'products.moveCat': '移动分类',
 'cats.view': '查看分类', 'cats.add': '新增分类', 'cats.edit': '编辑分类', 'cats.del': '删除分类',
 'ann.view': '查看公告', 'ann.add': '新增公告', 'ann.edit': '编辑公告', 'ann.del': '删除公告',
-'batch.import': '批量导入', 'batch.price': '批量改价', 'batch.online': '批量显示隐藏', 'batch.del': '批量删除',
+'batch.import': '批量导入', 'batch.price': '批量改价', 'batch.online': '批量隐藏/显示', 'batch.del': '批量删除',
 'data.stats': '看统计', 'data.detail': '看明细', 'data.ip': '看访客 IP', 'data.export': '导出数据',
 'info.view': '看联系方式', 'users': '账号管理',
 'external.view': '看外部台账', 'external.add': '登记台账', 'external.edit': '改台账',
