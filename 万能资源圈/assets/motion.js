@@ -469,7 +469,15 @@ var sy = 0, sx = 0, pulling = false, dist = 0;
 function label(t) { var l = tip.querySelector('.prt-label'); if (l) l.textContent = t; }
 function blocked() {
 
-return document.querySelector('.modal-mask.open, .ann-modal.open, .share-mask.open, .kf-mask.open, .lightbox.open') !== null;
+
+if (document.querySelector('.modal-mask.open, .ann-modal.open, .share-mask.open, .kf-mask.open, .lightbox.open')) return true;
+var list = document.querySelectorAll('.cat-picker-panel.open, .ctx-menu, .dt-pop, .rte-toolbar-large');
+for (var i = 0; i < list.length; i++) {
+var cs = window.getComputedStyle ? getComputedStyle(list[i]) : null;
+if (!cs) continue;
+if (cs.display !== 'none' && cs.visibility !== 'hidden' && list[i].offsetHeight > 0) return true;
+}
+return false;
 }
 document.addEventListener('touchstart', function (e) {
 if (opts.guard && opts.guard()) return;
