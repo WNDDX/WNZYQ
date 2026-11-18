@@ -5,12 +5,13 @@
  *
  * 设计原则（怕误删生产数据）：
  *  ① 只有超级管理员能调（sensitive.super）；子账号即使有全部业务权限也调不动。
- *  ② 必须带 body.confirm === '清空'，少一个字都不执行——防手滑、防误触。
+ *  ② 必须带 body.password === 当前超级管理员密码，密码不对不执行——防手滑、防误触。
+ *     （老板 2026-11-19 裁定：原来是手打「清空」两个字，改成输超管密码。）
  *  ③ 只清「业务数据」，**不动账号、不动店铺设置**；公告内容一并清空（属于内容）。
  *  ④ 执行前把每张表删了多少条写进操作日志，事后能查。
  *  ⑤ 图片/视频文件不在这里删——交给「设置 → 系统体检 → 全局清理孤儿文件」，避免这里删库、那里还留着引用。
  */
-import { json, requirePerm, readJSON, audit } from '../../_utils.js';
+import { json, requirePerm, readJSON, verifyPassword, audit } from '../../_utils.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -20,9 +21,15 @@ export async function onRequestPost(context) {
     if (auth instanceof Response) return auth;
 
     const body = await readJSON(request);
-    if (!body || String(body.confirm || '').trim() !== '清空') {
-      return json({ ok: false, msg: '请输入「清空」两个字' }, 400);
-    }
+    const pwd = String((body && body.password) || '');
+    if (!pwd) return json({ ok: false, msg: '请输入当前超级管理员密码' }, 400);
+
+    /* 老板 2026-11-19：清空是不可逆操作，光敲两个字不够，要验证是本人。
+       超管表是 admins（子账号在 admin_users），requirePerm 已保证只有 super 能到这里。 */
+    const meRow = await env.DB.prepare('SELECT * FROM admins WHERE id = ?').bind(auth.id).first();
+    if (!meRow) return json({ ok: false, msg: '账号不存在' }, 404);
+    const pv = await verifyPassword(pwd, meRow);
+    if (!pv || !pv.ok) return json({ ok: false, msg: '密码不正确' }, 400);
 
     /* 按依赖顺序删：先明细，后主表 */
     const TABLES = [
