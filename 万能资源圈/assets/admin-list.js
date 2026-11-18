@@ -563,7 +563,7 @@ delBtn.setAttribute('data-perm', 'products.del');
 delBtn.title = '删除';
 if (window.__decorateBtn) window.__decorateBtn(delBtn, 'del', 6);
 delBtn.addEventListener('click', function () {
-showConfirm('删除资源', '删除后可到回收站点找回', function (closeConfirm) { closeConfirm(); delProduct(p.id); });
+delProduct(p.id);
 });
 var codePicker = document.createElement('div');
 codePicker.setAttribute('data-perm', 'info.view');
