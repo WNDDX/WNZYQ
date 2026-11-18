@@ -3541,3 +3541,23 @@ try { box.scrollIntoView({ block: 'nearest' }); } catch (e2) {}
 document.addEventListener('click', guard, true);
 document.addEventListener('focusin', guard, true);
 })();
+(function __kfWarmQrOnce() {
+try {
+var _tries = 0, _done = false;
+function __warm() {
+if (_done) return;
+var src = '';
+try { src = (window.__kefuQrSrc && window.__kefuQrSrc()) || ''; } catch (e0) { src = ''; }
+if (!src) { if (++_tries < 40) setTimeout(__warm, 300); return; }
+_done = true;
+try {
+var u = /^https?:/
+var im = new Image();
+try { im.decoding = 'async'; } catch (e2) { if (window.__silent) window.__silent(e2); }
+im.onerror = function () {};
+im.src = u;
+} catch (e1) { if (window.__silent) window.__silent(e1); }
+}
+if (window.requestIdleCallback) requestIdleCallback(__warm, { timeout: 2500 }); else setTimeout(__warm, 1200);
+} catch (e) { if (window.__silent) window.__silent(e); }
+})();
