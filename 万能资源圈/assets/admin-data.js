@@ -85,16 +85,18 @@ toast(ok0 ? '已复制' : '复制失败', ok0 ? 'success' : 'error');
 return;
 }
 if ((codeCopy && codeCopy.disabled) || (codeVal && codeVal.disabled) || window.__issueInFlight) return;
-if (codeCopy) { codeCopy.disabled = true; codeCopy.textContent = '发码中'; }
-if (codeVal) { codeVal.disabled = true; codeVal.textContent = '发码中'; }
+if (codeCopy) { codeCopy.disabled = true; if (window.__btnBusy) window.__btnBusy(codeCopy, '发码中'); else codeCopy.textContent = '发码中'; }
+if (codeVal) { codeVal.disabled = true; if (window.__btnBusy) window.__btnBusy(codeVal, '发码中'); else codeVal.textContent = '发码中'; }
 __issueCode(_bindingsVariant, function () {
+if (window.__btnIdle) { if (codeCopy) window.__btnIdle(codeCopy); if (codeVal) window.__btnIdle(codeVal); }
 refreshBindings(_bindingsVariant.id);
 loadVariants(state.editingId);
 });
 };
 codeVal.onclick = _copyCode;
 codeCopy.onclick = _copyCode;
-if (codeCopy && codeCopy.textContent === '发码中') codeCopy.textContent = '复制并发新码';
+if (codeCopy && codeCopy.__busy && window.__btnIdle) window.__btnIdle(codeCopy);
+if (codeVal && codeVal.__busy && window.__btnIdle) window.__btnIdle(codeVal);
 } else {
 codeBox.style.display = 'none';
 }

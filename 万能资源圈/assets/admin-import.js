@@ -566,6 +566,7 @@ var old = document.getElementById('importMask');
 if (old) old.remove();
 var mask = document.createElement('div');
 mask.className = 'modal-mask'; mask.id = 'importMask';
+mask.setAttribute('data-stash-node', '1');
 mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="批量导入"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
 '<h2 class="modal-title">批量导入</h2><div class="form" id="impBody">' +
 '<p class="imp-lead">先导入分类，再导资源</p>' +
@@ -627,7 +628,7 @@ else if (total && pv.okCount === 0) headLine = '<div class="imp-warn">' + (total
 body.innerHTML = headLine + '<div class="imp-log">' + esc(pv.lines.join('\n')) + '</div>' +
 '<button class="export-btn" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
 body.querySelector('#impGo').addEventListener('click', function () {
-this.disabled = true; this.textContent = '导入中';
+this.disabled = true; if (window.__btnBusy) window.__btnBusy(this, '导入中'); else this.textContent = '导入中';
 body.innerHTML = '<div id="impLive" class="imp-log imp-log-live"></div>';
 var live = body.querySelector('#impLive');
 var onLog = function (line) {
@@ -877,7 +878,7 @@ im.src = src;
 });
 }
 function replaceOversize(it, btn) {
-if (btn) { btn.disabled = true; btn.textContent = '压缩中'; }
+if (btn) { btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '压缩中'); else btn.textContent = '压缩中'; }
 compressBlob(it.src).then(function (nb) {
 if (!window.__uploadToBucket) throw new Error('上传组件未就绪');
 var fname = 'c' + Date.now() + (/png/i.test(nb.type) ? '.png' : '.jpg');
@@ -896,14 +897,14 @@ it.replaced = newUrl;
 if (window.showToast) window.showToast('已换成压缩图', 'success');
 var row = btn && btn.closest('[data-osidx]');
 if (row) renderOversizeRowState(row, it);
-if (btn) { btn.disabled = false; btn.textContent = '压缩替换'; }
+if (btn) { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '压缩替换'; }
 }).catch(function (e) {
 if (window.showToast) window.showToast('替换失败：' + (e.message || '未知错误'), 'error');
-if (btn) { btn.disabled = false; btn.textContent = '压缩替换'; }
+if (btn) { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '压缩替换'; }
 });
 }
 function restoreOversize(it, btn) {
-if (btn) { btn.disabled = true; btn.textContent = '恢复中'; }
+if (btn) { btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '恢复中'); else btn.textContent = '恢复中'; }
 var seq = Promise.resolve();
 it.refs.forEach(function (ref) {
 seq = seq.then(function () {
@@ -914,8 +915,8 @@ seq.then(function () { it.replaced = null;
 if (window.showToast) window.showToast('已恢复原图', 'success');
 var row = btn && btn.closest('[data-osidx]');
 if (row) renderOversizeRowState(row, it);
-if (btn) { btn.disabled = false; btn.textContent = '压缩替换'; }
-}).catch(function () { if (window.showToast) window.showToast('恢复失败', 'error'); if (btn) { btn.disabled = false; btn.textContent = '恢复原图'; } });
+if (btn) { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '压缩替换'; }
+}).catch(function () { if (window.showToast) window.showToast('恢复失败', 'error'); if (btn) { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '恢复原图'; } });
 }
 function renderOversizeRowState(row, it) {
 var act = row.querySelector('[data-osact]');
@@ -1100,8 +1101,8 @@ m.addEventListener('click', function (e) { if (e.target === m || e.target.closes
 m.querySelector('#usAskOk').addEventListener('click', function () {
 var v = m.querySelector('#usAskInput') ? m.querySelector('#usAskInput').value : '';
 if (opts.input && !String(v).trim()) { if (window.showToast) window.showToast('请填写内容', 'error'); return; }
-var btn = this; btn.disabled = true; btn.textContent = '处理中';
-onOk(String(v).trim(), function () { close(); }, function () { btn.disabled = false; btn.textContent = opts.okText || '确定'; });
+var btn = this; btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '处理中'); else btn.textContent = '处理中';
+onOk(String(v).trim(), function () { close(); }, function () { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = opts.okText || '确定'; });
 });
 }
 function usersPwd(u) {
@@ -1325,6 +1326,7 @@ var cats = (window.state && window.state.categories) || [];
 var me = window.__usMe || {};
 var mask = document.createElement('div');
 mask.className = 'modal-mask'; mask.id = 'usFormMask';
+mask.setAttribute('data-stash-node', '1');
 var secHtml = PM_GROUPS.map(function (g) {
 var chks = g.items.map(function (it) {
 var on = isEdit ? gval(g.k, it[0]) : (g.k === 'products' && (it[0] === 'view')) || (g.k === 'cats' && it[0] === 'view') || (g.k === 'ann' && it[0] === 'view');
@@ -1456,8 +1458,8 @@ pv.annScope = annMode === 'all' ? 'all' : annIds;
 pv.codeScope = (mask.querySelector('input[name="ufCode"]:checked') || {}).value || 'own';
 var note = (mask.querySelector('#ufNote') || {}).value || '';
 var btn = this;
-btn.disabled = true; btn.textContent = '保存中';
-var restore = function () { btn.disabled = false; btn.textContent = isEdit ? '确定' : '创建账号'; };
+btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '保存中'); else btn.textContent = '保存中';
+var restore = function () { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = isEdit ? '确定' : '创建账号'; };
 if (isEdit) {
 usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
 if (window.showToast) window.showToast(window.T('saved'), 'success');
@@ -2150,8 +2152,8 @@ if (window.showToast) window.showToast('请刷新页面再导出', 'error');
 return;
 }
 var oldTxt = expBtn.textContent;
-expBtn.disabled = true; expBtn.textContent = '导出中';
-var back = function () { expBtn.disabled = false; expBtn.textContent = oldTxt; };
+expBtn.disabled = true; if (window.__btnBusy) window.__btnBusy(expBtn, '导出中'); else expBtn.textContent = '导出中';
+var back = function () { expBtn.disabled = false; if (window.__btnIdle) window.__btnIdle(expBtn); else expBtn.textContent = oldTxt; };
 fetch('/api/admin/logs?page=1&size=0&days=' + days
 + '&q=' + encodeURIComponent(q) + '&who=' + encodeURIComponent(who),
 { credentials: 'same-origin', cache: 'no-cache' })

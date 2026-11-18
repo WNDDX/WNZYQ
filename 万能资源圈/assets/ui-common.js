@@ -1149,13 +1149,22 @@ window.__btnBusy = function (btn, text) {
 if (!btn) return;
 if (!btn.__busy) {
 btn.__busy = 1;
-btn.__busyOrig = (btn.querySelector('.btn-lab') || {}).textContent != null ? btn.querySelector('.btn-lab').textContent : null;
+btn.__busyOrig = (function () {
+var _lab = btn.querySelector('.btn-lab');
+if (_lab) return _lab.textContent;
+for (var _i = 0; _i < btn.childNodes.length; _i++) {
+var _n = btn.childNodes[_i];
+if (_n.nodeType === 3 && String(_n.nodeValue || '').trim()) return String(_n.nodeValue);
+}
+return null;
+})();
 if (btn.__busyTimer) { clearTimeout(btn.__busyTimer); btn.__busyTimer = null; }
 btn.__busyTimer = setTimeout(function () {
 btn.__busyTimer = null;
 if (btn.__busy) window.__btnIdle(btn);
 }, 12000);
 }
+btn.__busyText = text;
 var lab = btn.querySelector('.btn-lab');
 if (lab) { lab.textContent = text; }
 else {
@@ -1179,6 +1188,16 @@ btn.removeAttribute('aria-busy');
 var sp = btn.querySelector('.btn-spin');
 if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
 if (btn.__busyOrig != null) {
+var __cur = (function () {
+var _lab = btn.querySelector('.btn-lab');
+if (_lab) return String(_lab.textContent == null ? '' : _lab.textContent);
+for (var _i = 0; _i < btn.childNodes.length; _i++) {
+var _n = btn.childNodes[_i];
+if (_n.nodeType === 3 && String(_n.nodeValue || '').trim()) return String(_n.nodeValue);
+}
+return '';
+})();
+if (btn.__busyText == null || __cur === btn.__busyText) {
 var lab = btn.querySelector('.btn-lab');
 if (lab) { lab.textContent = btn.__busyOrig; }
 else {
@@ -1189,8 +1208,10 @@ if (n.nodeType === 3 && String(n.nodeValue || '').trim()) { if (!txt) txt = n; e
 }
 if (txt) txt.nodeValue = btn.__busyOrig;
 }
-btn.__busyOrig = null;
 }
+}
+btn.__busyOrig = null;
+btn.__busyText = null;
 btn.disabled = false;
 };
 (function () {
@@ -2299,7 +2320,7 @@ var b = document.createElement('button');
 b.type = 'button'; b.className = 'lr-btn'; b.textContent = '重试';
 b.addEventListener('click', function () {
 if (b.disabled) return;
-b.disabled = true; b.textContent = '重试中';
+b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '重试中'); else b.textContent = '重试中';
 try { window.__clearLoadRetry(container); } catch (e) { if (window.__silent) window.__silent(e); }
 try { if (retryFn) retryFn(); } catch (e2) { if (window.__silent) window.__silent(e2); }
 });
@@ -3499,6 +3520,7 @@ if (!m || !m.classList || !m.classList.contains('modal-mask')) return;
 if (!m.classList.contains('open')) return;
 if (m.hasAttribute('data-no-backdrop')) return;
 if (m.id === 'editMask') return;
+if (m.hasAttribute('data-stash-node')) return;
 e.stopPropagation();
 window.__closeMaskTop(m, { keep: true });
 }, true);

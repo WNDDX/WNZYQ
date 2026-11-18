@@ -139,6 +139,7 @@ if (S.mask) close();
 S.cats = (window.state && window.state.categories) || [];
 var m = document.createElement('div');
 m.className = 'modal-mask'; m.id = 'extcMask';
+m.setAttribute('data-stash-node', '1');
 m.innerHTML = '<div class="modal-box extc-box" role="dialog" aria-modal="true">' +
 '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
 '<h2 class="modal-title">资源采集</h2>' +
@@ -595,10 +596,10 @@ var h = S.mask && S.mask.querySelector('#extcHint');
 if (h) h.textContent = S.hint;
 }, 1000);
 var btn = S.mask && S.mask.querySelector('#extcRun');
-if (btn) { btn.disabled = true; btn.textContent = '采集中'; }
+if (btn) { btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '采集中'); else btn.textContent = '采集中'; }
 api('admin/external', { method: 'POST', body: { op: 'collect', platform_id: p.id } }).then(function (r) {
 S.busy = false; clearInterval(__tick);
-if (btn) { btn.disabled = false; btn.textContent = '采集'; }
+if (btn) { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '采集'; }
 if (r && r.ok) {
 S.hint = '抓到 ' + r.found + ' 条，新入库 ' + r.added + ' 条' + (r.dup ? '，已有 ' + r.dup + ' 条' : '')
 + (r.via === 'api' ? '（走商城接口，标题/封面/描述/详情/下单链接都拿到了）' : '（走页面解析）')
@@ -620,12 +621,12 @@ var list = S.platforms.filter(function (x) { return String(x.mall_url || '').tri
 if (!list.length) { toast('请先添加平台', 'error'); return; }
 S.busy = true;
 var btn = S.mask && S.mask.querySelector('#extcRun');
-if (btn) { btn.disabled = true; btn.textContent = '采集中'; }
+if (btn) { btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '采集中'); else btn.textContent = '采集中'; }
 var i = 0, added = 0, fails = [];
 var step = function () {
 if (i >= list.length) {
 S.busy = false;
-if (btn) { btn.disabled = false; btn.textContent = '采集'; }
+if (btn) { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '采集'; }
 S.hint = '全部采完：新增 ' + added + ' 条' + (fails.length ? '，' + fails.length + ' 个平台没采到' : '');
 var h0 = S.mask && S.mask.querySelector('#extcHint'); if (h0) h0.textContent = S.hint;
 toast(S.hint, fails.length ? 'error' : 'success');
@@ -786,16 +787,16 @@ m.querySelector('#paTip').innerHTML = '提取到：标题「' + esc(got.title ||
 });
 m.querySelector('#paSave').addEventListener('click', function () {
 var btn = this;
-setTimeout(function () { if (btn.disabled) btn.textContent = '还在处理，请稍候'; }, 6000);
+setTimeout(function () { if (btn.disabled) { btn.textContent = '还在处理，请稍候'; if (btn.__busy) btn.__busyText = '还在处理，请稍候'; } }, 6000);
 var pfId = Number(m.querySelector('#paPf').value) || 0;
 var tip = m.querySelector('#paTip');
 if (tab === 'link') {
 var url = m.querySelector('#paUrl').value.trim();
 if (!/^https?:\/\//i.test(url)) { toast('填完整网址', 'error'); return; }
-btn.disabled = true; btn.textContent = '抓取中';
+btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '抓取中'); else btn.textContent = '抓取中';
 tip.textContent = '正在抓这一条';
 api('admin/external', { method: 'POST', body: { op: 'find.one', url: url } }).then(function (r) {
-btn.disabled = false; btn.textContent = '加进资源池';
+btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '加进资源池';
 if (!r || !r.ok) { tip.textContent = (r && r.msg) || '抓不到'; return; }
 var media = (r.media || []).filter(function (u) { return u !== r.cover; });
 if (r.weak) {
@@ -809,9 +810,9 @@ else toast((r2 && r2.msg) || '保存失败', 'error');
 } else {
 var got2 = P.lastClip;
 if (!got2 || (!got2.title && !got2.media.length)) { tip.textContent = '先在上面的框里 Ctrl+V 粘一下内容'; return; }
-btn.disabled = true; btn.textContent = '保存中';
+btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '保存中'); else btn.textContent = '保存中';
 api('admin/external', { method: 'POST', body: { op: 'goods.add', platform_id: pfId, title: got2.title || '（未命名资源）', cover: got2.media[0] || '', src_url: '', media: got2.media.slice(1) } }).then(function (r2) {
-btn.disabled = false; btn.textContent = '加进资源池';
+btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '加进资源池';
 if (r2 && r2.ok) { toast(r2.dup ? '资源池里已经有了' : '已加进资源池', 'success'); closeM(m); loadGoods(); }
 else toast((r2 && r2.msg) || '保存失败', 'error');
 });
@@ -892,11 +893,11 @@ catch (e) { try { var i = document.createElement('textarea'); i.value = t; docum
 if (uniq.length <= 1 && g.src_url && !g.__fetching) {
 var btnF = document.getElementById('seeFetch');
 if (btnF) btnF.addEventListener('click', function () {
-var b = this; b.disabled = true; b.textContent = '抓取中';
+var b = this; b.disabled = true; if (window.__btnBusy) window.__btnBusy(b, '抓取中'); else b.textContent = '抓取中';
 g.__fetching = true;
 api('admin/external', { method: 'POST', body: { op: 'find.one', url: g.src_url } }).then(function (r) {
 g.__fetching = false;
-if (!r || !r.ok) { toast((r && r.msg) || '没抓到，可能这站要登录', 'error'); if (b) { b.disabled = false; b.textContent = '补抓详情'; } return; }
+if (!r || !r.ok) { toast((r && r.msg) || '没抓到，可能这站要登录', 'error'); if (b) { b.disabled = false; if (window.__btnIdle) window.__btnIdle(b); else b.textContent = '补抓详情'; } return; }
 var media = (r.media || []).filter(function (u) { return u !== g.cover; }).slice(0, 20);
 var html = media.map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('');
 g.detail_html = html || g.detail_html; g.detail_media = media;
@@ -922,7 +923,7 @@ var m = mkModal('extcEditMask', '编辑资源', '',
 '<div class="extc-formhint">上架时会自动抓详情图</div>',
 '<button class="modal-inner-btn" id="edSave">确定</button><button class="modal-close" data-x="1">关闭</button>');
 m.querySelector('#edSave').addEventListener('click', function () {
-var btn = this; btn.disabled = true; btn.textContent = '保存中';
+var btn = this; btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '保存中'); else btn.textContent = '保存中';
 api('admin/external', {
 method: 'POST',
 body: {
@@ -934,7 +935,7 @@ buy_url: m.querySelector('#edBuy').value.trim(),
 src_url: m.querySelector('#edUrl').value.trim()
 }
 }).then(function (r) {
-btn.disabled = false; btn.textContent = '确定';
+btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '确定';
 if (r && r.ok) {
 g.title = m.querySelector('#edTitle').value.trim();
 g.cover = m.querySelector('#edCover').value.trim();
@@ -975,10 +976,10 @@ pb.addEventListener('click', function () {
 var tip = m.querySelector('#epProbeTip');
 var u = m.querySelector('#epMall').value.trim();
 if (!/^https?:\/\//i.test(u)) { tip.textContent = '先在上面填好商城地址再试'; tip.className = 'extc-probe-tip is-bad'; return; }
-var old = pb.textContent; pb.disabled = true; pb.textContent = '试采中';
+var old = pb.textContent; pb.disabled = true; if (window.__btnBusy) window.__btnBusy(pb, '试采中'); else pb.textContent = '试采中';
 tip.textContent = '正在试着抓一次'; tip.className = 'extc-probe-tip';
 api('admin/external', { method: 'POST', body: { op: 'probe', url: u } }).then(function (r) {
-pb.disabled = false; pb.textContent = old;
+pb.disabled = false; if (window.__btnIdle) window.__btnIdle(pb); else pb.textContent = old;
 if (r && r.ok && Number(r.count) > 0) {
 tip.textContent = '能采：这次拿到 ' + r.count + ' 条' + (r.via ? '（' + (r.via === 'api' ? '对方接口' : '页面解析') + '）' : '') + (r.samples && r.samples[0] ? '，比如「' + r.samples[0] + '」' : '');
 tip.className = 'extc-probe-tip is-ok';
@@ -986,7 +987,7 @@ tip.className = 'extc-probe-tip is-ok';
 tip.textContent = '采不到：' + ((r && r.msg) || '这个地址解析不出资源，换列表页地址，或用「粘贴」兜底');
 tip.className = 'extc-probe-tip is-bad';
 }
-}).catch(function () { pb.disabled = false; pb.textContent = old; tip.textContent = '试采失败，检查网络后重试'; tip.className = 'extc-probe-tip is-bad'; });
+}).catch(function () { pb.disabled = false; if (window.__btnIdle) window.__btnIdle(pb); else pb.textContent = old; tip.textContent = '试采失败，检查网络后重试'; tip.className = 'extc-probe-tip is-bad'; });
 });
 })();
 m.querySelector('#epSave').addEventListener('click', function () {
@@ -1002,7 +1003,7 @@ auto_hide: m.querySelector('#epAutoHide') && m.querySelector('#epAutoHide').chec
 note: ed ? ed.innerHTML.slice(0, 20000) : ''
 };
 if (!body.name) { toast('平台名不能为空', 'error'); return; }
-var btn = this; btn.disabled = true; btn.textContent = '保存中';
+var btn = this; btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '保存中'); else btn.textContent = '保存中';
 api('admin/external', { method: 'POST', body: body }).then(function (r) {
 if (r && r.ok) {
 toast(window.T('saved'), 'success');
@@ -1019,7 +1020,7 @@ render();
 loadAll();
 } else {
 toast((r && r.msg) || '保存失败', 'error');
-btn.disabled = false; btn.textContent = isEdit ? '确定' : '添加';
+btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = isEdit ? '确定' : '添加';
 }
 });
 });
