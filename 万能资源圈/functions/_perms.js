@@ -23,7 +23,7 @@ export function parsePerms(raw) {
   let p = {};
   try { p = JSON.parse(raw || '{}') || {}; } catch (e) { p = {}; }
   const g = (o, k) => (o && typeof o === 'object') ? !!o[k] : false;
-  return {
+  const out = {
     products: { view: g(p.products, 'view'), add: g(p.products, 'add'), edit: g(p.products, 'edit'), price: g(p.products, 'price'), online: g(p.products, 'online'), del: g(p.products, 'del'), restore: g(p.products, 'restore'), purge: g(p.products, 'purge'), moveCat: g(p.products, 'moveCat') },
     cats: { view: g(p.cats, 'view'), add: g(p.cats, 'add'), edit: g(p.cats, 'edit'), del: g(p.cats, 'del') },
     ann: { view: g(p.ann, 'view'), add: g(p.ann, 'add'), edit: g(p.ann, 'edit'), del: g(p.ann, 'del') },
@@ -38,6 +38,29 @@ export function parsePerms(raw) {
     /* v454：公告范围（老板要「只能改指定公告」，与指定分类同思路）。'all'=全部；数组=只这些公告 id */
     annScope: (p.annScope === 'all' || p.annScope == null) ? 'all' : (Array.isArray(p.annScope) ? p.annScope.map(String) : 'all'),
   };
+  /* v661（安全修复配套）：白名单外的键必须**原样保留**，否则「授了但读回来是空」。
+     这是 validateGrant 越权漏洞的另一半——只补遍历列表没用，因为这里的白名单先把
+     account / system / danger / settings 整组、以及 products.code/bind/copy、cats.sort、
+     ann.preview/hide、external.probe/platform/auto/autohide 这些组内键全丢了，
+     补进去的组读到 undefined，`Object.keys(undefined)` 直接抛 TypeError。
+     做法：① 已知组里没显式列出的键，补成布尔；② 白名单外的整组也补成布尔对象。
+     只认「对象」形态，标量/数组一律忽略（catsScope 等已单独处理的不会被误当组）。 */
+  const KEEP_GROUPS = ['products', 'cats', 'ann', 'batch', 'data', 'info', 'external'];
+  const mergeExtra = (dst, src) => {
+    if (!src || typeof src !== 'object' || Array.isArray(src)) return;
+    Object.keys(src).forEach((k) => { if (!(k in dst)) dst[k] = !!src[k]; });
+  };
+  KEEP_GROUPS.forEach((name) => { mergeExtra(out[name], p[name]); });
+  const RESERVED = new Set(KEEP_GROUPS.concat(['users', 'catsScope', 'codeScope', 'annScope']));
+  Object.keys(p).forEach((k) => {
+    if (RESERVED.has(k)) return;
+    const v = p[k];
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return;
+    const box = {};
+    Object.keys(v).forEach((kk) => { box[kk] = !!v[kk]; });
+    out[k] = box;
+  });
+  return out;
 }
 
 /* 超管权限：全开 */
@@ -104,15 +127,22 @@ export function visibleCode(code, role, perms, createdBy, meUsername, productCat
 
 /* ===== 授权校验：授出的权限必须是自己的子集（层级不限但权限只能缩） ===== */
 /* childPermsRaw/grantorPermsRaw 都是原始 JSON/对象；返回 { ok, violations:[...] } */
+/* v661（安全修复）：原来只遍历 6 组，漏了 external / account / system / danger / settings。
+   其中 **external 是后端真在校验的**（view/add/edit/del/fetch 都有 requirePerm），
+   于是「只有 account.edit 的子账号」能给自己的下级授出 external.*，下级真能调采集接口 —— 可复现的提权。
+   现在：① 遍历全部 11 组 + users 布尔；② 授者与被授者**都用 parsePerms 解析后的对象**比（口径一致）；
+   ③ `mine[g]` 可能是 undefined（老账号 JSON 里没这组），一律用 `(mine[g]||{})` 兜底，避免 TypeError。 */
 export function validateGrant(childRaw, grantorRole, grantorPermsRaw) {
   if (grantorRole === 'super') return { ok: true, violations: [] };
   const child = parsePerms(typeof childRaw === 'string' ? childRaw : JSON.stringify(childRaw || {}));
   const mine = parsePerms(typeof grantorPermsRaw === 'string' ? grantorPermsRaw : JSON.stringify(grantorPermsRaw || {}));
   const violations = [];
-  const grps = ['products', 'cats', 'ann', 'batch', 'data', 'info'];
+  const grps = ['products', 'cats', 'ann', 'batch', 'data', 'info', 'external', 'account', 'system', 'danger', 'settings'];
   for (const g of grps) {
-    for (const k of Object.keys(child[g])) {
-      if (child[g][k] && !mine[g][k]) violations.push(g + '.' + k);
+    const childG = child[g] || {};
+    const mineG = mine[g] || {};
+    for (const k of Object.keys(childG)) {
+      if (childG[k] && !mineG[k]) violations.push(g + '.' + k);
     }
   }
   if (child.users && !mine.users) violations.push('users');
