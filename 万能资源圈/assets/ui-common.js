@@ -1613,6 +1613,9 @@ var _oldH = parseFloat(S.stage.style.height) || 0;
 var _newH = S.pB ? (S.pB.scrollHeight || S.pB.offsetHeight || 0) : 0;
 if (_newH > 40 && _oldH > _newH + 2) S.stage.style.height = _newH + 'px';
 } catch (eCut) { if (window.__silent) window.__silent(eCut); }
+try {
+if (S.pA) { S.pA.style.transition = 'opacity .32s ease'; S.pA.style.opacity = '0'; }
+} catch (eFade) { if (window.__silent) window.__silent(eFade); }
 S.track.style.transition = _slide;
 S.track.style.transform = 'translateX(' + (-S.dir * S.w) + 'px)';
 setTimeout(function () {
