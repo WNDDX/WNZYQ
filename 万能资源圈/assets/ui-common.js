@@ -3551,7 +3551,7 @@ try { src = (window.__kefuQrSrc && window.__kefuQrSrc()) || ''; } catch (e0) { s
 if (!src) { if (++_tries < 40) setTimeout(__warm, 300); return; }
 _done = true;
 try {
-var u = /^https?:/
+var u = (src.slice(0, 4).toLowerCase() === 'http') ? ('/api/img-proxy?u=' + encodeURIComponent(src)) : src;
 var im = new Image();
 try { im.decoding = 'async'; } catch (e2) { if (window.__silent) window.__silent(e2); }
 im.onerror = function () {};
