@@ -1187,6 +1187,7 @@ list.forEach(function (tb) {
 if (!tb || !tb.querySelector) return;
 var btn = tb.querySelector('.rte-expand');
 if (!btn) return;
+if (tb.classList.contains('rte-collapsed')) { tb.style.setProperty('--rte-expand-top', 'auto'); return; }
 var th = tb.clientHeight || 0;
 var bh = btn.offsetHeight || 28;
 if (th < bh + 2) return;
