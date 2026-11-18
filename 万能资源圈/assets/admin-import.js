@@ -1,15 +1,25 @@
 (function () {
 'use strict';
 var NS = 'urn:schemas-microsoft-com:office:spreadsheet';
+
+
 var esc = window.escapeHtml || function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
+
+
 function catOptions() {
 var cats = (window.state && state.categories) || [];
 return cats.map(function (c) { return c.name; });
 }
+
+
+
+
 var __crcT = (function () { var t = [], n, k, c; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) { c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); } t[n] = c >>> 0; } return t; })();
 function __crc32(u8) { var c = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) { c = __crcT[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); } return (c ^ 0xFFFFFFFF) >>> 0; }
 function __u16(n) { return [n & 255, (n >>> 8) & 255]; }
 function __u32(n) { return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]; }
+
+
 function __zip(files) {
 var enc = new TextEncoder(), parts = [], central = [], offset = 0, i;
 for (i = 0; i < files.length; i++) {
@@ -33,9 +43,13 @@ var total = offset + cdSize + eocd.length, out = new Uint8Array(total), pos = 0;
 parts.concat(cd, [eocd]).forEach(function (b) { out.set(b, pos); pos += b.length; });
 return out;
 }
+
 function __colName(i) { var s = ''; i++; while (i > 0) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+
 var __XLSX_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 var __REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+
 function __sheetXml(cfg) {
 var hdr = cfg.headerRows == null ? 1 : cfg.headerRows;
 var cols = '';
@@ -54,6 +68,7 @@ return '<row r="' + (ri + 1) + '"' + (ri < hdr ? ' ht="26" customHeight="1"' : '
 var dv = '';
 if (cfg.dv && cfg.dv.length) {
 dv = '<dataValidations count="' + cfg.dv.length + '">' + cfg.dv.map(function (d) {
+
 return '<dataValidation type="list" allowBlank="1" showInputMessage="0" showErrorMessage="1"' +
 ' errorTitle="只能选列表里的值" error="' + esc(d.err || '请点单元格右侧的小三角，从列表里选；不要自己输入。') + '"' +
 ' sqref="' + d.sqref + '"><formula1>' + esc(d.formula) + '</formula1></dataValidation>';
@@ -66,6 +81,7 @@ return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
 '<sheetData>' + rowsXml + '</sheetData>' + dv +
 '</worksheet>';
 }
+
 var __STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
 '<styleSheet xmlns="' + __XLSX_NS + '">' +
 '<fonts count="2"><font><sz val="11"/><name val="等线"/></font><font><b/><sz val="11"/><color rgb="FF1B3A57"/><name val="等线"/></font></fonts>' +
@@ -81,6 +97,8 @@ var __STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
 '</cellXfs>' +
 '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
 '</styleSheet>';
+
+
 function __buildXlsx(sheets) {
 var enc = new TextEncoder();
 var files = [];
@@ -97,6 +115,8 @@ files.push({ name: '_rels/.rels', data: enc.encode('<?xml version="1.0" encoding
 '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
 '<Relationship Id="rId1" Type="' + __REL_NS + '/officeDocument" Target="xl/workbook.xml"/>' +
 '</Relationships>') });
+
+
 var allNames = [];
 sheets.forEach(function (sh) { (sh.names || []).forEach(function (n) { allNames.push(n); }); });
 var defNames = allNames.length
@@ -107,6 +127,7 @@ var wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
 sheets.map(function (sh, i) { return '<sheet name="' + esc(sh.name) + '" sheetId="' + (i + 1) + '"' + (sh.hidden ? ' state="hidden"' : '') + ' r:id="rId' + (i + 1) + '"/>'; }).join('') +
 '</sheets>' + defNames + '</workbook>';
 files.push({ name: 'xl/workbook.xml', data: enc.encode(wb) });
+
 var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
 '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
 sheets.map(function (sh, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="' + __REL_NS + '/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join('') +
@@ -114,11 +135,14 @@ sheets.map(function (sh, i) { return '<Relationship Id="rId' + (i + 1) + '" Type
 '</Relationships>';
 files.push({ name: 'xl/_rels/workbook.xml.rels', data: enc.encode(rels) });
 files.push({ name: 'xl/styles.xml', data: enc.encode(__STYLES) });
+
 sheets.forEach(function (sh, i) {
 files.push({ name: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: enc.encode(__sheetXml(sh)) });
 });
 return __zip(files);
 }
+
+
 function __unzip(buf) {
 var dv = new DataView(buf), eocd = -1, i;
 for (i = buf.byteLength - 22; i >= 0 && i > buf.byteLength - 66000; i--) {
@@ -139,6 +163,7 @@ p += 46 + nlen + elen + clen;
 }
 return out;
 }
+
 function __readPart(files, name) {
 var f = files[name];
 if (!f) return Promise.resolve('');
@@ -147,12 +172,16 @@ if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error(
 var st = new Blob([f.data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
 return new Response(st).arrayBuffer().then(function (ab) { return new TextDecoder('utf-8').decode(ab); });
 }
+
 function __colIdx(ref) {
 var m = String(ref || '').match(/^([A-Z]+)/); if (!m) return 0;
 var s = m[1], n = 0;
 for (var i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64);
 return n - 1;
 }
+
+
+
 function __rowsFromSheet(xml, shared, keepHeader) {
 var doc = new DOMParser().parseFromString(xml, 'application/xml');
 var rs = doc.getElementsByTagName('row'), rows = [];
@@ -171,8 +200,11 @@ rows.push(cells);
 var out = rows.filter(function (r) { return r.some(function (x) { return x; }); });
 return keepHeader ? out : out.slice(1);
 }
+
+
 window.__parseAnySheet = function (buf) {
 return parseXlsx(buf, true).then(function (book) {
+
 var best = null;
 Object.keys(book || {}).forEach(function (name) {
 var rs = book[name] || [];
@@ -182,9 +214,11 @@ if (!best || rs.length > best.rows.length) best = { name: name, rows: rs };
 if (!best) return [];
 var rows = best.rows.filter(function (r) { return r && r.join('').trim(); });
 if (!rows.length) return [];
+
 var hi = -1;
 for (var i = 0; i < Math.min(6, rows.length); i++) {
 var line = rows[i].join('|');
+
 if (/标题|名称|商品|产品|套餐/.test(line) && /图|链接|地址|url|备注|价格|id/i.test(line)) { hi = i; break; }
 if (/标题|名称/.test(line) && rows[i].filter(Boolean).length >= 2) { hi = i; break; }
 }
@@ -200,6 +234,7 @@ var iU = idx(/链接|地址|url|网址/i);
 var hasHead = (iT >= 0 || iC >= 0 || iU >= 0);
 var start = hasHead ? hi + 1 : hi;
 if (iT < 0) iT = 0;
+
 var sniff = function (r) {
 var c = '', u = '';
 for (var k = 0; k < r.length; k++) {
@@ -228,6 +263,7 @@ try { window.__lastSheet = { sheet: best.name, head: head, iT: iT, iC: iC, iU: i
 return out;
 });
 };
+
 function parseXlsx(buf, keepHeader) {
 var files;
 try { files = __unzip(buf); } catch (e) { return Promise.reject(e); }
@@ -238,6 +274,7 @@ while ((m2 = siRe.exec(sst))) {
 var ts = m2[1].match(/<t[^>]*>[\s\S]*?<\/t>/g) || [];
 shared.push(ts.map(function (x) { return x.replace(/<[^>]+>/g, ''); }).join(''));
 }
+
 var relMap = {}, rm, relRe = /<Relationship\b[^>]*\/?>/g;
 while ((rm = relRe.exec(rels))) {
 var rtag = rm[0];
@@ -254,6 +291,7 @@ sheets.push({ name: nm, target: relMap[rid] || '' });
 }
 return Promise.all(sheets.map(function (sh) {
 var t = sh.target; if (!t) return Promise.resolve(null);
+
 var path = t.charAt(0) === '/' ? t.slice(1)
 : (t.indexOf('worksheets/') >= 0 ? ('xl/' + t.slice(t.indexOf('worksheets/'))) : ('xl/' + t.replace(/^\.\//, '')));
 return __readPart(files, path).then(function (xml) { return { name: sh.name, rows: xml ? __rowsFromSheet(xml, shared, keepHeader) : [] }; });
@@ -264,6 +302,8 @@ return out;
 });
 });
 }
+
+
 function buildTemplate() {
 var opts = catOptions().filter(Boolean);
 if (!opts.length) opts = ['（请先到后台分类管理新增分类）'];
@@ -280,26 +320,33 @@ var OPT_NAMES = [
 var ROWSN = 30;
 var d2 = new Date(), pd = function (n) { return n < 10 ? '0' + n : '' + n; };
 var fname = '' + d2.getFullYear() + pd(d2.getMonth() + 1) + pd(d2.getDate()) + '-' + pd(d2.getHours()) + pd(d2.getMinutes()) + '-导入模板.xlsx';
+
+
 var mk = function (heads) {
 var rows = [heads];
 for (var r = 0; r < ROWSN; r++) { var e = []; for (var c = 0; c < heads.length; c++) e.push(''); rows.push(e); }
 return rows;
 };
+
 var resHeads = ['资源标题', '所属分类', '资源简介', '资源详情', '资源价格', '封面图片链接', '排序', '显示状态', '定时显示时间', '定时隐藏时间', '专属客服链接', '专属客服二维码'];
 var varHeads = ['所属资源标题', '类型名称', '类型价格', '类型简介', '资源码', '解锁后内容', '绑定上限', '显示状态', '排序'];
 var catHeads = ['分类名称', '分类级别', '所属一级分类', '排序序号', '显示状态'];
 var annHeads = ['公告标题', '公告内容', '排序序号', '显示状态'];
 var optHeads = ['分类选项', '分类级别选项', '显示状态选项', '时间选项'];
+
+
 var _dtNow = new Date();
 var _dtStr = function (dayOffset, hh) {
 var x = new Date(_dtNow.getTime() + dayOffset * 86400000);
 return x.getFullYear() + '-' + pd(x.getMonth() + 1) + '-' + pd(x.getDate()) + ' ' + pd(hh) + ':00';
 };
 var DT_OPTS = [_dtStr(0, 9), _dtStr(0, 18), _dtStr(1, 9), _dtStr(1, 18), _dtStr(2, 9), _dtStr(3, 9), _dtStr(7, 9), _dtStr(7, 18)];
+
 var optRows = [optHeads];
 for (var i = 0; i < Math.max(opts.length, DT_OPTS.length, 2); i++) {
 optRows.push([opts[i] || '', i === 0 ? '一级分类' : (i === 1 ? '二级分类' : ''), i === 0 ? '显示' : (i === 1 ? '隐藏' : ''), DT_OPTS[i] || '']);
 }
+
 var sheets = [
 { name: '资源', rows: mk(resHeads), widths: [26, 18, 30, 40, 12, 30, 8, 12, 18, 18, 30, 30], dv: [
 { sqref: 'B2:B' + (ROWSN + 1), formula: CAT_DV },
@@ -318,10 +365,13 @@ var sheets = [
 { name: '公告', rows: mk(annHeads), widths: [26, 50, 12, 12], dv: [
 { sqref: 'D2:D' + (ROWSN + 1), formula: ST_DV }
 ] },
+
 { name: '选项', rows: optRows, widths: [24, 16, 16, 22], dv: [], names: OPT_NAMES, hidden: true }
 ];
+
 return { blob: new Blob([__buildXlsx(sheets)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name: fname, xml: '' };
 }
+
 function downloadBlob(name, blob) {
 try { window.__tplName = name; } catch (e0) {}
 var a = document.createElement('a');
@@ -336,6 +386,8 @@ a.href = URL.createObjectURL(blob); a.download = name;
 document.body.appendChild(a); a.click(); a.remove();
 setTimeout(function () { URL.revokeObjectURL(a.href); }, 3000);
 }
+
+
 function parseWorkbook(text) {
 var doc = new DOMParser().parseFromString(text, 'text/xml');
 var out = {};
@@ -357,6 +409,8 @@ out[name] = rows;
 });
 return out;
 }
+
+
 var PRICE_RE = /^(\d+(\.\d*)?|\.\d+)$/;
 function priceCheck(v) {
 var s = String(v == null ? '' : v).trim();
@@ -364,10 +418,13 @@ if (!s) return { ok: true, val: 0, raw: s };
 if (!PRICE_RE.test(s)) return { ok: false, val: 0, raw: s };
 return { ok: true, val: Number(s) || 0, raw: s };
 }
+
+
 function preview(data) {
 var lines = [];
 var cats = catOptions();
 var res = data['资源'] || [], cat = data['分类'] || [], ann = data['公告'] || [], vars = data['类型'] || [];
+
 var fileCats = {};
 cat.forEach(function (r) { var n = String((r && r[0]) || '').trim(); if (n) fileCats[n] = 1; });
 var catKnown = function (n) { var s = String(n || '').trim(); return cats.indexOf(s) >= 0 || !!fileCats[s]; };
@@ -396,11 +453,15 @@ var okAnn = ann.length - Object.keys(badAnn).length;
 lines.unshift('校验完成：资源 ' + res.length + ' 条（可导入 ' + okRes + '）/ 类型 ' + vars.length + ' 条（可导入 ' + okVar + '）/ 分类 ' + cat.length + ' 条（可导入 ' + okCat + '）/ 公告 ' + ann.length + ' 条（可导入 ' + okAnn + '）' + (bad ? '；问题 ' + bad + ' 条' : '，全部可导入'));
 return { lines: lines, bad: bad, badRes: badRes, badCat: badCat, badVar: badVar, badAnn: badAnn, okCount: okRes + okVar + okCat + okAnn, '资源': res, '类型': vars, '分类': cat, '公告': ann };
 }
+
+
 function apiCall(path, opts) {
 opts = opts || {};
 return fetch('/api/' + path, { method: opts.method || 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: opts.body })
 .then(function (r) { return r.json(); });
 }
+
+
 function annTitlesFrom(st) {
 var arr = [];
 if (window.parseAnnouncements) { try { arr = window.parseAnnouncements(st || {}, { sortLevel: true }) || []; } catch (e1) { arr = []; } }
@@ -409,6 +470,7 @@ var out = {};
 arr.forEach(function (a) { var t = String((a && a.title) || '').trim(); if (t && !a.deleted) out[t] = 1; });
 return out;
 }
+
 function doImport(data, onLog) {
 var log = [];
 var stat = { created: 0, skipped: 0, ignored: 0, failed: 0 };
@@ -419,6 +481,8 @@ var ignLine = function (l) { stat.ignored++; say(l); };
 var failLine = function (l) { stat.failed++; say(l); };
 var badRes = data.badRes || {}, badCat = data.badCat || {}, badVar = data.badVar || {}, badAnn = data.badAnn || {};
 var resRows = data['资源'] || [], catRows = data['分类'] || [], varRows = data['类型'] || [], annRows = data['公告'] || [];
+
+
 var titleId = {}, varKeys = {}, annTitles = {};
 var learnProduct = function (p) {
 if (!p) return;
@@ -430,8 +494,11 @@ if (vt) varKeys[String(p.id) + '|' + vt] = 1;
 });
 };
 ((window.state && state.products) || []).forEach(learnProduct);
+
+
 var catIdByName = {};
 ((window.state && state.categories) || []).forEach(function (c) { catIdByName[c.name] = c.id; });
+
 var seq = Promise.resolve();
 if (catRows.length) {
 seq = seq.then(function () {
@@ -440,6 +507,7 @@ return apiCall('admin/categories').then(function (x) {
 }).catch(function () {});
 });
 }
+
 if (resRows.length || varRows.length) {
 seq = seq.then(function () {
 return apiCall('admin/products?page_size=0').then(function (x) {
@@ -455,11 +523,13 @@ Object.keys(add).forEach(function (k) { annTitles[k] = 1; });
 }).catch(function () {});
 });
 }
+
 catRows.forEach(function (r, i) {
 if (badCat[i]) { failLine('分类第' + (i + 2) + '行失败：' + badCat[i]); return; }
 if (!r[0]) return;
 var name = String(r[0]).trim();
 seq = seq.then(function () {
+
 if (catIdByName[name]) { dupLine('分类「' + name + '」已存在，跳过'); return null; }
 var pid = 0;
 if (r[2]) { pid = catIdByName[r[2]] || 0; if (!pid) say('分类「' + name + '」：所属一级「' + r[2] + '」未找到，按一级导入'); }
@@ -469,14 +539,17 @@ else failLine('分类「' + name + '」失败' + (x && x.msg ? '：' + x.msg : '
 }).catch(function () { failLine('分类「' + name + '」失败'); });
 });
 });
+
 var prodIdByName = {};
 resRows.forEach(function (r, i) {
 if (badRes[i]) { failLine('资源第' + (i + 2) + '行失败：' + badRes[i]); return; }
 if (!r[0]) return;
 var title = String(r[0]).trim();
 var pc = priceCheck(r[4]);
+
 seq = seq.then(function () {
 if (titleId[title]) { dupLine('资源「' + title + '」已存在，跳过'); return null; }
+
 return apiCall('admin/products', { method: 'POST', body: JSON.stringify({
 title: title, cid: catIdByName[r[1]] || 0, desc: r[2] || '', detail: r[3] || '',
 price: pc.val, img: r[5] || '', sort: Number(r[6]) || 0,
@@ -490,6 +563,8 @@ okLine('资源「' + title + '」✓');
 }).catch(function () { failLine('资源「' + title + '」失败'); });
 });
 });
+
+
 varRows.forEach(function (r, i) {
 if (badVar[i]) { failLine('类型第' + (i + 2) + '行失败：' + badVar[i]); return; }
 if (!r[0] || !r[1]) return;
@@ -501,6 +576,7 @@ if (!pid) { ignLine('类型「' + vName + '」：资源「' + pTitle + '」未�
 var vk = String(pid) + '|' + vName;
 if (varKeys[vk]) { dupLine('类型「' + vName + '」已存在，跳过'); return null; }
 varKeys[vk] = 1;
+
 return apiCall('admin/variants', { method: 'POST', body: JSON.stringify({
 productId: pid, name: vName, price: pc2.val, desc: r[3] || '',
 resourceCode: String(r[4] || '').trim() === '●●●●' ? '' : String(r[4] || '').trim(),
@@ -513,10 +589,12 @@ if (x && x.ok) okLine('类型「' + vName + '」✓');
 else failLine('类型「' + vName + '」失败' + (x && x.msg ? '：' + x.msg : ''));
 }).catch(function () { failLine('类型「' + vName + '」失败'); });
 });
+
 annRows.forEach(function (r, i) {
 if (badAnn[i]) { failLine('公告第' + (i + 2) + '行失败：' + badAnn[i]); return; }
 if (!r[0]) return;
 var t = String(r[0]).trim();
+
 seq = seq.then(function () {
 if (annTitles[t]) { dupLine('公告「' + t + '」已存在，跳过'); return null; }
 annTitles[t] = 1;
@@ -526,8 +604,12 @@ else failLine('公告「' + t + '」失败' + (x && x.msg ? '：' + x.msg : ''))
 }).catch(function () { failLine('公告「' + t + '」失败'); });
 });
 });
+
 return seq.then(function () { return { lines: log, created: stat.created, skipped: stat.skipped, ignored: stat.ignored, failed: stat.failed }; });
 }
+
+
+
 var IMP_HIST_KEY = 'wnzyq_import_hist';
 function impHistRead() {
 try { var a = JSON.parse(localStorage.getItem(IMP_HIST_KEY) || '[]'); return Array.isArray(a) ? a : []; }
@@ -559,7 +641,9 @@ return '<div class="imp-hist-row"><span class="t">' + esc(r.at || '') + '</span>
 }
 host.innerHTML = h;
 }
+
 function openWizard() {
+
 var __st = window.__maskStash ? window.__maskStash.take('importMask') : null;
 if (__st) { window.__maskStash.reopen(__st); return; }
 var old = document.getElementById('importMask');
@@ -583,12 +667,14 @@ try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll:
 });
 if (window.lockBodyScroll) window.lockBodyScroll(true);
 mask.addEventListener('click', function (e) {
+
 if (e.target === mask || e.target.closest('[data-x]')) {
 var __drop = !!e.target.closest('[data-x]');
 if (window.__maskStash) window.__maskStash.closeOrStash(mask, __drop, '导入');
 else { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
 }
 });
+
 mask.addEventListener('keydown', function (e) {
 if (e.key !== 'Escape') return;
 e.preventDefault(); e.stopPropagation();
@@ -605,8 +691,10 @@ var f = this.files && this.files[0]; if (!f) return;
 var fname = String(f.name || '');
 var rd = new FileReader();
 rd.onload = function () {
+
 var buf = rd.result, isZip = false;
 try { var head = new Uint8Array(buf, 0, 4); isZip = head[0] === 0x50 && head[1] === 0x4B; } catch (eH) { isZip = false; }
+
 var MSG_EMPTY = '文件是空的，没有可导入的数据';
 var MSG_CORRUPT = '文件格式不对或已损坏，请用模板重新导出';
 var MSG_JSON = '这是备份格式（JSON），不能直接导入。恢复备份请联系技术支持；日常批量导入请下载 Excel 模板。';
@@ -618,10 +706,12 @@ if (window.showToast) window.showToast(msg, 'error');
 };
 var hasSheet = function (book) { return Object.keys(book || {}).length > 0; };
 var rowCount = function (book) { var n = 0; Object.keys(book || {}).forEach(function (k) { n += (book[k] || []).length; }); return n; };
+
 var doneParse = function (data) {
 var pv = preview(data);
 var body = mask.querySelector('#impPrev');
 var total = (pv['资源'] || []).length + (pv['类型'] || []).length + (pv['分类'] || []).length + (pv['公告'] || []).length;
+
 var headLine = '';
 if (!total) headLine = '<div class="imp-warn">文件里没有可导入的行，请按模板填写后重新导出</div>';
 else if (total && pv.okCount === 0) headLine = '<div class="imp-warn">' + (total > 1 ? total + ' 行全部有问题' : '这一行有问题') + '（明细见下），没有可导入的数据</div>';
@@ -629,6 +719,7 @@ body.innerHTML = headLine + '<div class="imp-log">' + esc(pv.lines.join('\n')) +
 '<button class="export-btn" id="impGo" style="width:100%"' + (total ? '' : ' disabled') + '>确认导入</button>';
 body.querySelector('#impGo').addEventListener('click', function () {
 this.disabled = true; if (window.__btnBusy) window.__btnBusy(this, '导入中'); else this.textContent = '导入中';
+
 body.innerHTML = '<div id="impLive" class="imp-log imp-log-live"></div>';
 var live = body.querySelector('#impLive');
 var onLog = function (line) {
@@ -644,6 +735,7 @@ var created = Number(R && R.created) || 0, skipped = Number(R && R.skipped) || 0
 var ignored = Number(R && R.ignored) || 0, failed = Number(R && R.failed) || 0;
 var sum = document.createElement('div');
 sum.className = 'imp-log-sum ' + (failed ? 'is-bad' : (created ? 'is-ok' : ''));
+
 if (!lines.length) sum.textContent = '没有可导入的数据，请检查文件内容';
 else if (!created && !failed) sum.textContent = '没有新增：' + (skipped + ignored) + ' 条已存在或不可导入，已跳过';
 else {
@@ -655,12 +747,14 @@ sum.textContent = '导入完成：' + parts.join('，');
 }
 live.appendChild(sum);
 try { live.scrollTop = live.scrollHeight; } catch (e3) {}
+
 impHistPush({
 at: bjNow(), file: fname, total: lines.length,
 ok: created, bad: failed,
 note: failed ? (lines.filter(function (l) { return /失败|错误/.test(l); })[0] || '').slice(0, 80) : ''
 });
 renderImpHist(mask.querySelector('#impHist'));
+
 try { if (window.__reloadAdminProducts) window.__reloadAdminProducts(); else if (window.loadProducts) window.loadProducts(true); } catch (e4) {}
 if (window.showToast) {
 if (!lines.length) window.showToast('没有可导入的数据，请检查文件内容', 'error');
@@ -678,6 +772,8 @@ if (window.showToast) window.showToast('导入中断，请重试或检查文件�
 });
 });
 };
+
+
 if (/\.json$/i.test(fname)) { showNote(MSG_JSON); return; }
 if (isZip) {
 parseXlsx(buf).then(function (book) {
@@ -702,10 +798,13 @@ doneParse(book);
 rd.readAsArrayBuffer(f);
 });
 }
+
+
 function sysCheck(silent) {
 return new Promise(function (resolve) {
 var products = (window.state && state.products) || [];
 if (!products.length) { if (!silent && window.showToast) window.showToast('当前没有资源可检查', 'info'); resolve(null); return; }
+
 var _shell = null;
 if (!silent) {
 var _old = document.getElementById('sysCheckMask'); if (_old) _old.remove();
@@ -714,6 +813,7 @@ _shell.className = 'modal-mask'; _shell.id = 'sysCheckMask';
 _shell.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
 '<h2 class="modal-title">系统体检</h2>' +
 '<div style="font-size: 14px;color:var(--text-light);margin:0 0 12px">正在检查图片和外链，最长约半分钟</div>' +
+
 '<div style="margin:0 0 14px"><div style="height:6px;border-radius:99px;background:var(--border,#e6ecf5);overflow:hidden"><i id="chkProgFill" style="display:block;height:100%;width:0;border-radius:99px;background:var(--blue1,#1976D2);transition:width .25s ease"></i></div>' +
 '<div id="chkProgTxt" style="font-size:12px;color:var(--text-light);margin-top:6px">正在准备检查清单</div></div>' +
 '<div class="chk-scroll"><div class="chk-skel">' +
@@ -730,6 +830,7 @@ var imgs = [];
 products.forEach(function (p) {
 var pname = '「' + (p.title || ('资源#' + p.id)) + '」';
 var addImg = function (src, pos, field, idx) { if (src) imgs.push({ src: src, where: pname + pos, pid: p.id, field: field, idx: idx }); };
+
 var _cov = p.img || '';
 addImg(_cov, '封面', 'img', -1);
 (p.coverImages || []).forEach(function (u, i) {
@@ -739,6 +840,7 @@ addImg(u, '封面组', 'cover_images', i);
 });
 (p.detailImages || []).forEach(function (u, i) { addImg(u, '详情图', 'detail_images', i); });
 });
+
 var links = []; var linkKey = {};
 products.forEach(function (p) {
 var pname = '「' + (p.title || ('资源#' + p.id)) + '」';
@@ -759,10 +861,13 @@ if (!linkKey[k]) { linkKey[k] = 1; links.push({ href: href, where: pname, pid: p
 });
 if (!imgs.length && !links.length) { var _eS = document.getElementById('sysCheckMask'); if (_eS) _eS.remove(); if (!silent && window.showToast) window.showToast('没有可检查的内容', 'info'); resolve(null); return; }
 if (!silent && window.showToast) window.showToast('系统体检中：图片 ' + imgs.length + ' 张，外链 ' + links.length + ' 条', 'info');
+
+
 var refMap = {};
 imgs.forEach(function (it) { (refMap[it.src] = refMap[it.src] || []).push(it); });
 var testList = Object.keys(refMap).map(function (src) { return { src: src, refs: refMap[src] }; });
 var broken = [], oversize = [], done = 0, total = testList.length;
+
 var _pgFill = document.getElementById('chkProgFill');
 var _pgTxt = document.getElementById('chkProgTxt');
 var _linkCnt = 0, _pTotal = total + links.length, _pLast = -1;
@@ -776,7 +881,9 @@ try { _pgFill.style.width = (stage ? 96 : pct) + '%'; } catch (eP) {}
 if (_pgTxt) _pgTxt.textContent = stage || ('正在检查：图片 ' + done + ' / ' + total + ' 张，外链 ' + _linkCnt + ' / ' + links.length + ' 条（' + pct + '%）');
 }
 __tickProg();
+
 var imgDone = new Promise(function (res) { window.__sysImgFinish = res; });
+
 var linkDone = Promise.all(links.map(function (L) {
 return new Promise(function (res) {
 var href = String(L.href || '');
@@ -796,6 +903,7 @@ var finish = function () {
 if (done < total) return;
 window.__sysImgFinish();
 };
+
 var done2 = 0;
 var finish2 = function () { done2++; };
 testList.forEach(function (it) {
@@ -805,6 +913,7 @@ im.onload = function () { fin(true); };
 im.onerror = function () { fin(false); };
 setTimeout(function () { if (!im.complete) fin(false); }, 8000);
 im.src = it.src;
+
 if (/^\/|^\./i.test(it.src) || it.src.indexOf(location.host) >= 0) {
 fetch(it.src, { cache: 'force-cache' }).then(function (r) { return r.blob(); }).then(function (bl) {
 it.size = bl.size; if (bl.size > 1024 * 1024) oversize.push(it); finish2();
@@ -818,11 +927,14 @@ setTimeout(function () { clearInterval(t); res(); }, 9000);
 if (!total) finish();
 Promise.all([imgDone, linkDone, sizeDone]).then(function () {
 __tickProg('图片和外链已查完，正在核对运行环境');
+
 var dups = testList.filter(function (t) { return t.refs.length > 1; });
+
 var envJobs = [
 fetch('/api/health', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (h) {
 return { name: '后端连通', ok: !!(h && h.ok && h.ready), detail: (h && h.ready) ? '数据库就绪' : ((h && h.msg) || '未就绪（首次部署请先初始化）') };
 }).catch(function () { return { name: '后端连通', ok: false, detail: '接口不通' }; }),
+
 (navigator.serviceWorker ? navigator.serviceWorker.getRegistration() : Promise.resolve(null)).then(function (reg) {
 var anySw = reg ? (reg.active || reg.waiting || reg.installing || null) : null;
 var swUrl = anySw ? anySw.scriptURL : '';
@@ -843,6 +955,7 @@ return { name: '本地存储', ok: true, detail: 'localStorage / sessionStorage 
 ];
 Promise.all(envJobs).then(function (env) {
 var R0 = { totalImgs: imgs.length, testList: testList, broken: broken, dups: dups, links: links, oversize: oversize, env: env };
+
 try {
 var badN = sysAlertCount(R0);
 if (badN > 0) localStorage.setItem('wnzyq_syscheck_alert', JSON.stringify({ day: new Date().toDateString(), n: badN }));
@@ -856,9 +969,13 @@ resolve(R0);
 });
 });
 }
+
+
 function sysAlertCount(R0) {
 return (R0.broken || []).length + (R0.oversize || []).length + (R0.links || []).filter(function (L) { return L.ok === false; }).length + (R0.env || []).filter(function (e) { return !e.ok; }).length;
 }
+
+
 function compressBlob(src) {
 return fetch(src, { cache: 'force-cache' }).then(function (r) { return r.blob(); }).then(function (bl) {
 return new Promise(function (res, rej) {
@@ -885,6 +1002,7 @@ var fname = 'c' + Date.now() + (/png/i.test(nb.type) ? '.png' : '.jpg');
 return window.__uploadToBucket(new File([nb], fname, { type: nb.type }));
 }).then(function (newUrl) {
 if (!newUrl) throw new Error('上传失败');
+
 var seq = Promise.resolve();
 it.refs.forEach(function (ref) {
 seq = seq.then(function () {
@@ -895,6 +1013,7 @@ return seq.then(function () { return newUrl; });
 }).then(function (newUrl) {
 it.replaced = newUrl;
 if (window.showToast) window.showToast('已换成压缩图', 'success');
+
 var row = btn && btn.closest('[data-osidx]');
 if (row) renderOversizeRowState(row, it);
 if (btn) { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '压缩替换'; }
@@ -931,7 +1050,10 @@ var pb = act.querySelector('[data-osrep]');
 pb.addEventListener('click', function () { replaceOversize(it, pb); });
 }
 }
+
+
 function renderSysResult(R0) {
+
 var _prev = document.getElementById('sysCheckMask');
 window.__chkClosedEarly = !!(_prev && (_prev.dataset.userClosed === '1' || !_prev.classList.contains('open')));
 if (_prev) _prev.remove();
@@ -956,6 +1078,7 @@ return '<div class="chk-row">' +
 '<span class="chk-main"><b>' + esc(L.where) + '</b><span class="chk-sub">' + esc(L.href) + '</span></span>' +
 (L.pid ? '<button type="button" class="btn-blue btn-inline-pd" data-goto-pid="' + esc(String(L.pid)) + '">去处理</button>' : '') + '</div>';
 });
+
 var osRows = (R0.oversize || []).map(function (it, oi) {
 return '<div class="chk-row" data-osidx="' + oi + '">' +
 '<img class="chk-thumb" src="' + esc(it.src) + '" alt="超大图片">' +
@@ -969,6 +1092,7 @@ return '<div class="chk-row">' +
 '<span class="chk-thumb ' + (e.ok ? 'chk-thumb-ok' : 'chk-thumb-bad') + '">' + (e.ok ? '✓' : '✕') + '</span>' +
 '<span class="chk-main"><b>' + esc(e.name) + '</b><span class="chk-sub">' + esc(e.detail) + '</span></span></div>';
 });
+
 var CHK_DATA = { env: envRows, broken: brokenRows, dups: dupRows, links: linkRows, os: osRows };
 var sec = function (title, tone, key, arr, note, count) {
 if (!arr || !arr.length) return '';
@@ -985,6 +1109,7 @@ sec('疑似失效外链', 'is-bad', 'links', linkRows, '跨域限制下只测图
 sec('超大图片', 'is-warn', 'os', osRows, '超 1MB 拖慢加载；压缩替换后原图留存可恢复', (R0.oversize || []).length + ' 张');
 var hasIssue = R0.broken.length || R0.dups.length || badLinks.length || (R0.oversize || []).length || badEnv.length;
 if (!hasIssue) body = '<div class="chk-empty">全部正常 ✓ 图片 ' + R0.totalImgs + ' 张，外链 ' + okLinks + '/' + R0.links.length + ' 条可达，环境 ' + (R0.env || []).length + '/' + (R0.env || []).length + '</div>';
+
 var chip = function (n, label, tone) {
 return '<span class="chk-chip' + (tone ? ' ' + tone : '') + '">' + label + ' <b>' + n + '</b></span>';
 };
@@ -995,10 +1120,13 @@ chip(badLinks.length, '失效外链', badLinks.length ? 'is-bad' : '') +
 (uncheckedLinks ? chip(uncheckedLinks, '待人工核对', 'is-warn') : '') +
 chip((R0.oversize || []).length, '超大图', (R0.oversize || []).length ? 'is-warn' : '');
 var mask = document.createElement('div');
+
 var _prevMask = document.getElementById('sysCheckMask');
+
 var _wasClosed = !!window.__chkClosedEarly || !!(_prevMask && (_prevMask.dataset.userClosed === '1' || !_prevMask.classList.contains('open')));
 window.__chkClosedEarly = false;
 if (_wasClosed) {
+
 var _m0 = document.getElementById('sysCheckMask'); if (_m0) _m0.remove(); resolve(R0); return; }
 mask.className = 'modal-mask'; mask.id = 'sysCheckMask';
 mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="系统体检" style="max-width:var(--modal-w-xl)"><button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>' +
@@ -1010,6 +1138,7 @@ requestAnimationFrame(function () {
 mask.classList.add('open');
 try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll: true }); } catch (eF) {}
 });
+
 var __chkPage = {};
 var bindOsRows = function () {
 Array.prototype.forEach.call(mask.querySelectorAll('[data-osidx]'), function (row) {
@@ -1032,18 +1161,23 @@ onPage: function (p9) { __chkPage[key] = p9; paintChk(key); }
 });
 }
 if (key === 'os') bindOsRows();
+
 Array.prototype.forEach.call(holder.querySelectorAll('img.chk-thumb'), function (im) {
 im.addEventListener('error', function () { this.style.visibility = 'hidden'; });
 });
 };
 ['env', 'broken', 'dups', 'links', 'os'].forEach(paintChk);
+
 mask.addEventListener('click', function (e) {
 var go = e.target.closest && e.target.closest('[data-goto-pid]');
 if (go) { gotoEditProduct(go.getAttribute('data-goto-pid')); return; }
 if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
 });
 }
+
+
 function gotoEditProduct(pid) {
+
 if (!pid) return;
 if (typeof window.__openEdit !== 'function') { if (window.showToast) window.showToast('稍等一下再点', 'error'); return; }
 fetch('/api/admin/products/' + encodeURIComponent(pid), { credentials: 'include' })
@@ -1051,6 +1185,7 @@ fetch('/api/admin/products/' + encodeURIComponent(pid), { credentials: 'include'
 .then(function (j) {
 if (!j || !j.ok || !j.product) { if (window.showToast) window.showToast((j && j.msg) || '这条资源取不到（可能已删除）', 'error'); return; }
 window.__openEdit(j.product);
+
 try {
 var em = document.getElementById('editMask');
 if (em && em.parentNode) em.parentNode.appendChild(em);
@@ -1058,6 +1193,10 @@ if (em && em.parentNode) em.parentNode.appendChild(em);
 })
 .catch(function () { if (window.showToast) window.showToast('打开失败，请重试', 'error'); });
 }
+
+
+
+
 function openResetPwd(u, onOk) {
 var old = document.getElementById('usPwdMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -1083,6 +1222,7 @@ function usersCall(method, body, done, fail, urlOverride) { fetch(urlOverride ||
 .then(function (x) { if (x && x.ok) { if (done) done(x); } else { if (window.showToast) window.showToast((x && x.msg) || '操作失败', 'error'); if (fail) fail(x); } })
 .catch(function () { if (window.showToast) window.showToast(window.T('netFail'), 'error'); if (fail) fail(); });
 }
+
 function usAsk(title, msg, opts, onOk) {
 opts = opts || {};
 var old = document.getElementById('usAskMask'); if (old) old.remove();
@@ -1124,7 +1264,9 @@ usAsk('删除账号', '确认删除「' + esc(u.username) + '」？<br>' + warn,
 usersCall('DELETE', null, function () { if (window.showToast) window.showToast('账号已删除', 'success'); done(); renderUsersList(); }, fail, '/api/admin/users?id=' + u.id);
 });
 }
+
 function openUsers() {
+
 try { if (window.loadCategories) window.loadCategories(true); } catch (e) {}
 var old = document.getElementById('usersMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -1151,6 +1293,7 @@ var me = x.me || {}; window.__usMe = me; window.__usList = x.list || [];
 var isSuper = me.role === 'super';
 var list = window.__usList;
 if (!list.length) { body.innerHTML = (window.__adminEmpty ? window.__adminEmpty('暂无子账号', '填好账号密码即可新增') : '暂无子账号'); return; }
+
 var byParent = {};
 list.forEach(function (u) { var pid = Number(u.parentId || 0); (byParent[pid] = byParent[pid] || []).push(u); });
 var order = [], seen = {};
@@ -1163,6 +1306,7 @@ walk(u.id, depth + 1);
 })(0, 0);
 list.forEach(function (u) { if (!seen[u.id]) { seen[u.id] = 1; order.push({ u: u, depth: 0 }); } });
 window.__usCollapsed = window.__usCollapsed || {};
+
 var __usPage = 1, __usPages = 1, __usTotal = order.length;
 var __usSize = window.LIST_PAGE_SIZE || 20;
 var __shown = order;
@@ -1186,6 +1330,7 @@ __shown = __ups[__usPage - 1];
 } else { window.__usPage = 1; }
 var rows = __shown.map(function (it) {
 var u = it.u, hasKids = (byParent[u.id] || []).length > 0;
+
 var collapsed = hasKids ? (window.__usCollapsed[u.id] !== false) : false;
 var isMe = u.username === me.username;
 var canManage = isSuper || Number(u.parentId) === Number(me.id);
@@ -1213,6 +1358,7 @@ body.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bot
 + '<span class="pm-hint" style="margin:0">子账号只能挂在你自己名下</span></div>'
 + '<div class="u-tree">' + rows + '</div>'
 + (__usTotal > __usSize ? '<div class="uni-pager" id="usPager"></div>' : '');
+
 (function () {
 var pg = document.getElementById('usPager');
 if (pg && window.buildUniPager) {
@@ -1222,6 +1368,8 @@ onPage: function (p8) { window.__usPage = p8; renderUsersList(); }
 });
 }
 })();
+
+
 function applyFold() {
 var byId = {};
 body.querySelectorAll('.u-row').forEach(function (r) { byId[r.getAttribute('data-uid')] = r; });
@@ -1233,6 +1381,7 @@ if (window.__usCollapsed[pid] !== false) { hide = true; break; }
 var pr = byId[pid]; if (!pr) break;
 pid = Number(pr.getAttribute('data-pid') || 0);
 }
+
 if (hide) {
 if (r.style.display !== 'none' && !r.classList.contains('is-folding')) {
 r.classList.add('is-folding');
@@ -1260,10 +1409,12 @@ var wasCollapsed = window.__usCollapsed[id] !== false;
 window.__usCollapsed[id] = !wasCollapsed;
 this.classList.toggle('collapsed', !wasCollapsed);
 this.setAttribute('aria-expanded', wasCollapsed ? 'true' : 'false');
+
 applyFold();
 });
 });
 applyFold();
+
 body.querySelectorAll('.u-tags-box').forEach(function (bx) {
 var tg = bx.querySelector('.u-tags');
 if (tg && tg.scrollHeight <= 24) {
@@ -1272,6 +1423,8 @@ var f0 = bx.querySelector('.u-tagfold');
 if (f0) f0.classList.add('is-leaf');
 }
 });
+
+
 body.querySelectorAll('[data-tagfold]').forEach(function (b) {
 b.addEventListener('click', function (ev) {
 ev.stopPropagation();
@@ -1281,6 +1434,7 @@ this.classList.toggle('open', !clipped);
 this.setAttribute('aria-expanded', clipped ? 'false' : 'true');
 });
 });
+
 var addBtn = body.querySelector('#usAdd');
 if (addBtn) addBtn.addEventListener('click', function () { usersForm(null); });
 body.querySelectorAll('[data-ua]').forEach(function (b) {
@@ -1299,13 +1453,15 @@ else if (ua === 'del') usersDel(u, Number(this.getAttribute('data-n') || 0), Num
 body.innerHTML = '<div class="imp-err">网络没连上，稍后再试</div>';
 });
 }
+
+
 var PM_GROUPS = [
-{ t: '资源管理', k: 'products', items: [['view', '查看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '修改价格'], ['online', '上架下架'], ['del', '删除资源'], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['moveCat', '移动分类'], ['code', '资源码与发码'], ['bind', '绑定设备'], ['copy', '复制资源']] },
+{ t: '资源管理', k: 'products', items: [['view', '查看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '修改价格'], ['online', '显示隐藏'], ['del', '删除资源'], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['moveCat', '移动分类'], ['code', '资源码与发码'], ['bind', '绑定设备'], ['copy', '复制资源']] },
 { t: '分类管理', k: 'cats', items: [['view', '查看分类'], ['add', '新增分类'], ['edit', '编辑分类'], ['del', '删除分类'], ['sort', '拖动排序']] },
 { t: '公告', k: 'ann', items: [['view', '查看公告'], ['add', '发布公告'], ['edit', '编辑公告'], ['del', '删除公告'], ['preview', '预览公告'], ['hide', '显示与隐藏']] },
-{ t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量上下架'], ['del', '批量删除']] },
+{ t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量显示隐藏'], ['del', '批量删除']] },
 { t: '数据统计', k: 'data', items: [['stats', '查看总量'], ['detail', '查看明细'], ['ip', '查看访客IP'], ['export', '导出数据']] },
-{ t: '资源采集', k: 'external', items: [['view', '打开采集'], ['add', '添加平台'], ['edit', '编辑资源与平台'], ['del', '删除资源与平台'], ['fetch', '采集与上架'], ['probe', '试采地址'], ['platform', '平台设置'], ['auto', '自动采集开关'], ['autohide', '自动隐藏下架'], ['export', '导出采集']] },
+{ t: '资源采集', k: 'external', items: [['view', '打开采集'], ['add', '添加平台'], ['edit', '编辑资源与平台'], ['del', '删除资源与平台'], ['fetch', '采集与发布'], ['probe', '试采地址'], ['platform', '平台设置'], ['auto', '自动采集开关'], ['autohide', '自动隐藏'], ['export', '导出采集']] },
 { t: '账号管理', k: 'account', items: [['view', '查看账号'], ['add', '新增账号'], ['edit', '编辑账号与权限'], ['pwd', '重置密码'], ['status', '停用与启用'], ['sub', '管理下级'], ['del', '删除账号']] },
 { t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错'], ['cache', '清理缓存'], ['file', '清理无用文件']] },
 { t: '备份与恢复', k: 'danger', items: [['backup', '导出备份'], ['restore', '导入恢复'], ['recycle', '回收站'], ['clear', '清空测试数据']] },
@@ -1313,6 +1469,7 @@ var PM_GROUPS = [
 ];
 function usersForm(u) {
 var isEdit = !!(u && u.id);
+
 var __ufKey = 'usFormMask' + (isEdit ? '-u' + u.id : '-new');
 var __ufSt = window.__maskStash ? window.__maskStash.take(__ufKey) : null;
 if (__ufSt) { window.__maskStash.reopen(__ufSt); return; }
@@ -1327,6 +1484,7 @@ var me = window.__usMe || {};
 var mask = document.createElement('div');
 mask.className = 'modal-mask'; mask.id = 'usFormMask';
 mask.setAttribute('data-stash-node', '1');
+
 var secHtml = PM_GROUPS.map(function (g) {
 var chks = g.items.map(function (it) {
 var on = isEdit ? gval(g.k, it[0]) : (g.k === 'products' && (it[0] === 'view')) || (g.k === 'cats' && it[0] === 'view') || (g.k === 'ann' && it[0] === 'view');
@@ -1336,10 +1494,14 @@ return '<div class="pm-sec" data-sec="' + g.k + '"><div class="pm-sec-hd"><b>' +
 + '<button type="button" class="pm-all" data-all="' + g.k + '">全选 / 清空</button></div>'
 + '<div class="pm-grid">' + chks + '</div></div>';
 }).join('');
+
+
 secHtml += '<div class="pm-sec"><div class="pm-sec-hd"><b>其它</b></div><div class="pm-grid">'
 + '<label class="pm-chk"><input type="checkbox" data-pa="info" data-pk="view"' + (isEdit ? (gval('info', 'view') ? ' checked' : '') : ' checked') + '><span>信息</span></label>'
 + '<label class="pm-chk"><input type="checkbox" data-pa="users" data-pk="_"' + (isEdit && perms.users ? ' checked' : '') + '><span>管理下级账号</span></label>'
 + '</div></div>';
+
+
 var catHtml = (function () {
 if (!cats.length) return '<span class="pm-hint">暂无分类</span>';
 var isOn = function (c) { return Array.isArray(catsScope) ? catsScope.indexOf(Number(c.id)) !== -1 : false; };
@@ -1360,22 +1522,29 @@ return '<label class="pm-catrow is-kid"><input type="checkbox" data-cat="' + k.i
 '</div>';
 }).join('') + '</div>';
 })();
+
+
 var tplHtml = '';
+
 var scopeHtml = '<div class="pm-sec"><div class="pm-sec-hd"><b>数据范围（能碰哪些分类）</b></div>'
 + '<div class="pm-grid" style="grid-template-columns:1fr">'
 + '<label class="pm-chk"><input type="radio" name="ufScope" value="all"' + (catsScope === 'all' ? ' checked' : '') + '><span>全部分类（勾这个就不用往下选）</span></label>'
 + '<label class="pm-chk"><input type="radio" name="ufScope" value="pick"' + (catsScope !== 'all' ? ' checked' : '') + '><span>只给下面勾选的分类（别的分类看不见也动不了）</span></label>'
 + '</div><div class="pm-chips" id="ufCatChips">' + catHtml + '</div></div>';
+
 var codeHtml = '<div class="pm-sec"><div class="pm-sec-hd"><b>资源码可见</b></div><div class="pm-grid" style="grid-template-columns:1fr">'
 + '<label class="pm-chk"><input type="radio" name="ufCode" value="own"' + (codeScope === 'own' ? ' checked' : '') + '><span>只看自己新增的</span></label>'
 + '<label class="pm-chk"><input type="radio" name="ufCode" value="scoped"' + (codeScope === 'scoped' ? ' checked' : '') + '><span>范围内资源的都能看</span></label>'
 + '<label class="pm-chk"><input type="radio" name="ufCode" value="all"' + (codeScope === 'all' ? ' checked' : '') + '><span>全部都能看</span></label>'
 + '</div></div>';
+
+
 var annHtml = '<div class="pm-sec" id="ufAnnSec"><div class="pm-sec-hd"><b>公告范围（能改哪些公告）</b></div>'
 + '<div class="pm-grid" style="grid-template-columns:1fr">'
 + '<label class="pm-chk"><input type="radio" name="ufAnn" value="all"' + (annScope === 'all' ? ' checked' : '') + '><span>全部公告</span></label>'
 + '<label class="pm-chk"><input type="radio" name="ufAnn" value="pick"' + (annScope !== 'all' ? ' checked' : '') + '><span>只能改下面勾选的公告</span></label>'
 + '</div><div class="pm-chips" id="ufAnnChips"><span class="pm-hint">正在读取公告</span></div></div>';
+
 var parentOpts = '<option value="0">（我自己这一级）</option>';
 if (me.role === 'super') {
 (window.__usList || []).forEach(function (x) {
@@ -1383,6 +1552,8 @@ if (isEdit && x.id === u.id) return;
 parentOpts += '<option value="' + x.id + '"' + (isEdit && Number(u.parentId) === x.id ? ' selected' : '') + '>' + esc(x.username) + (x.note ? '（' + esc(x.note) + '）' : '') + '</option>';
 });
 }
+
+
 setTimeout(function () { try { if (window.__wrapSelects) window.__wrapSelects(mask); } catch (e) {} }, 30);
 mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="子账号编辑" style="max-width:var(--modal-w-lg)">'
 + '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button>'
@@ -1395,18 +1566,21 @@ mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-la
 + tplHtml + secHtml + scopeHtml + annHtml + codeHtml
 + '</div>'
 + '<div class="modal-footer"><button type="button" class="modal-inner-btn" id="ufSave">' + (isEdit ? '确定' : '创建账号') + '</button><button type="button" class="modal-close" data-x="1">关闭</button></div></div>';
+
 document.body.appendChild(mask);
 requestAnimationFrame(function () {
 mask.classList.add('open');
 try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll: true }); } catch (eF) {}
 });
 mask.addEventListener('click', function (e) {
+
 if (e.target === mask || e.target.closest('[data-x]')) {
 var __drop = !!e.target.closest('[data-x]');
 if (window.__maskStash) window.__maskStash.closeOrStash(mask, __drop, '账号填写的内容', __ufKey);
 else { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
 }
 });
+
 mask.addEventListener('keydown', function (e) {
 if (e.key !== 'Escape') return;
 e.preventDefault(); e.stopPropagation();
@@ -1420,10 +1594,13 @@ var allOn = boxes.every(function (c) { return c.checked; });
 boxes.forEach(function (c) { c.checked = !allOn; });
 });
 });
+
+
 fetch('/api/admin/settings', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
 var st = (x && x.settings) || {};
 var arr = [];
 try { arr = JSON.parse(st.announcements || '[]') || []; } catch (e) { arr = []; }
+
 arr = arr.map(function (a2, i2) { return { a: a2, i: i2 }; }).sort(function (x, y) {
 var dx = (Number(x.a.id) === 0 || x.a.isDefault || String(x.a.title || '').trim() === '公告') ? 0 : 1;
 var dy = (Number(y.a.id) === 0 || y.a.isDefault || String(y.a.title || '').trim() === '公告') ? 0 : 1;
@@ -1439,6 +1616,7 @@ return '<label class="pm-chip"><input type="checkbox" data-ann="' + esc(id) + '"
 }).catch(function () {
 var box = mask.querySelector('#ufAnnChips'); if (box) box.innerHTML = '<span class="pm-hint">公告读取失败</span>';
 });
+
 mask.querySelector('#ufSave').addEventListener('click', function () {
 var pv = {};
 mask.querySelectorAll('[data-pa]').forEach(function (c) {
@@ -1478,6 +1656,9 @@ mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); renderUsersList()
 }
 });
 }
+
+
+
 function fmtDelTime(t) {
 var s = String(t || '').replace('T', ' ').replace('Z', '');
 return s.length > 16 ? s.slice(0, 16) : (s || '—');
@@ -1501,6 +1682,7 @@ mask.className = 'modal-mask'; mask.id = 'recycleMask';
 mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-label="回收站点">' +
 (window.__frag ? window.__frag.modalHead('回收站点') : '<button class="modal-close-x" data-x="1" aria-label="关闭"><svg class="wn-ico" width="16" height="16"><use href="#wn-ico-x"/></svg></button><h2 class="modal-title">回收站点</h2>') +
 '<div class="rc-tools"><label class="rc-all"><input type="checkbox" id="rcAll" aria-label="全选"> 全选</label><input class="input" id="rcQ" type="search" autocomplete="off" placeholder="搜索资源、分类或公告的名称"></div>' +
+
 '<div class="batch-bar" id="rcBar"><span class="batch-count-label">已选 <b id="rcCount">0</b> 项</span>' +
 '<div class="batch-group"><button type="button" class="batch-btn" id="rcRestoreAll">恢复选中</button>' +
 '<button type="button" class="batch-btn danger" id="rcPurgeAll">彻底删除</button>' +
@@ -1517,6 +1699,7 @@ if (window.lockBodyScroll) window.lockBodyScroll(true);
 mask.addEventListener('click', function (e) {
 if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
 });
+
 var RC = { items: [], q: '', onlyExpiring: false, page: 1, render: null, ready: false };
 var _rcQ = mask.querySelector('#rcQ');
 if (_rcQ) _rcQ.addEventListener('input', function () {
@@ -1527,7 +1710,9 @@ if (RC.render) RC.render();
 fetch('/api/admin/recycle', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (x) {
 var body = mask.querySelector('#rcBody'); if (!body) return;
 if (!x || !x.ok) { body.innerHTML = '<div class="imp-err">服务器忙，稍后再试</div>'; return; }
+
 var _kindName = { product: '资源', category: '分类', ann: '公告' };
+
 var _daysLeft = function (t) {
 var d = new Date(String(t || '').replace('T', ' ').replace('Z', '').replace(' ', 'T') + 'Z');
 if (isNaN(d.getTime())) return 99;
@@ -1538,6 +1723,7 @@ RC.items = [];
 (x.categories || []).forEach(function (c) { RC.items.push({ kind: 'category', id: c.id, name: c.name || ('分类#' + c.id), t: c.deleted_at }); });
 (x.announcements || []).forEach(function (a) { RC.items.push({ kind: 'ann', id: a.id, name: a.title || '公告', t: a.deleted_at }); });
 RC.ready = true;
+
 var _rowHtml = function (it) {
 var left = _daysLeft(it.t);
 return '<div class="rc-row">' +
@@ -1547,6 +1733,7 @@ return '<div class="rc-row">' +
 '<button type="button" class="row-btn" data-rc="restore" data-kind="' + it.kind + '" data-id="' + esc(String(it.id)) + '">恢复</button>' +
 '<button type="button" class="row-btn danger" data-rc="purge" data-kind="' + it.kind + '" data-id="' + esc(String(it.id)) + '">删除</button></div>';
 };
+
 RC.render = function () {
 var bodyEl = mask.querySelector('#rcBody'); if (!bodyEl) return;
 var lead = '<p class="imp-lead">保留 60 天，到期清除</p>';
@@ -1589,9 +1776,12 @@ page: st.page, totalPages: st.totalPages, total: st.total, unit: '项',
 onPage: function (p5) { RC.page = p5; RC.render(); }
 });
 }
+
 if (typeof _syncSel === 'function') _syncSel();
 };
 RC.render();
+
+
 var _bar = mask.querySelector('#rcBar');
 var _cnt = mask.querySelector('#rcCount');
 var _allBox = mask.querySelector('#rcAll');
@@ -1615,6 +1805,7 @@ _syncSel();
 var _clearSel = function () { body.querySelectorAll('.rc-ck').forEach(function (c) { c.checked = false; }); _syncSel(); };
 var _cs = mask.querySelector('#rcClearSel'); if (_cs) _cs.addEventListener('click', _clearSel);
 var _picked = function () { return Array.prototype.slice.call(body.querySelectorAll('.rc-ck')).filter(function (c) { return c.checked; }); };
+
 var _runBatch = function (op, label) {
 var list = _picked();
 if (!list.length) return;
@@ -1645,6 +1836,7 @@ step(0);
 _syncSel();
 var _ra = mask.querySelector('#rcRestoreAll'); if (_ra) _ra.addEventListener('click', function () { _runBatch('restore', '恢复'); });
 var _pa = mask.querySelector('#rcPurgeAll'); if (_pa) _pa.addEventListener('click', function () { _runBatch('purge', '彻底删除'); });
+
 body.addEventListener('click', function (e) {
 var b = e.target.closest && e.target.closest('[data-rc]'); if (!b) return;
 var op = b.getAttribute('data-rc'), kind = b.getAttribute('data-kind'), id = b.getAttribute('data-id');
@@ -1654,6 +1846,8 @@ window.showConfirm('删除', '删除后无法恢复，是否继续', function (c
 });
 }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">服务器忙，稍后再试</div>'; });
 }
+
+
 function openCronHelp() {
 var old = document.getElementById('cronHelpMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -1675,6 +1869,7 @@ requestAnimationFrame(function () { mask.classList.add('open'); });
 if (window.syncBodyLock) window.syncBodyLock();
 var close = function () { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180); };
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
 var host = mask.querySelector('#cronStatus');
 var paint = function (st) {
 if (!host) return;
@@ -1691,6 +1886,7 @@ var extra = '新增 ' + (st.last.added || 0) + ' 个资源';
 if (st.last.fails && st.last.fails.length) extra += '，' + st.last.fails.length + ' 个没抓到（' + st.last.fails.join('、') + '）';
 line.push('<div class="cs-row"><span>上次自动</span><b>' + st.last.at + '，' + extra + '</b></div>');
 } else if (st.lastAutoAt) {
+
 var dT = new Date(String(st.lastAutoAt).replace(' ', 'T') + 'Z');
 var txt = isNaN(dT.getTime()) ? String(st.lastAutoAt).slice(5, 16)
 : new Date(dT.getTime() + 8 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
@@ -1698,6 +1894,7 @@ line.push('<div class="cs-row"><span>上次自动</span><b>' + txt + '</b></div>
 }
 host.innerHTML = line.join('');
 };
+
 var load = function () {
 fetch('/api/cron/collect?op=status', { credentials: 'same-origin' })
 .then(function (r) { return r.json(); })
@@ -1705,6 +1902,7 @@ fetch('/api/cron/collect?op=status', { credentials: 'same-origin' })
 .catch(function () { paint(null); });
 };
 load();
+
 var btn = mask.querySelector('#cronRunNow');
 btn.addEventListener('click', function () {
 btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '正在采'); else btn.textContent = '正在采';
@@ -1712,6 +1910,7 @@ if (host) host.innerHTML = '<span class="cs-bad">正在采，平台多的要十�
 fetch('/api/cron/collect', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
 .then(function (r) { return r.json(); })
 .then(function (r) {
+
 btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn);
 var _lab1 = btn.querySelector('.btn-lab'); if (_lab1) _lab1.textContent = '再采一次'; else btn.textContent = '再采一次';
 if (window.showToast) window.showToast(r && r.ok ? ('采完了，新增 ' + ((r && r.added) || 0) + ' 个资源') : ((r && r.msg) || '采集失败'), r && r.ok ? 'success' : 'error');
@@ -1720,6 +1919,10 @@ load();
 .catch(function () { btn.disabled = false; if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = '现在采一次'; if (window.showToast) window.showToast('网络没连上，没采成', 'error'); load(); });
 });
 }
+
+
+
+
 function openVitals() {
 var old = document.getElementById('vitalsMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -1740,6 +1943,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 document.body.appendChild(mask);
 requestAnimationFrame(function () { mask.classList.add('open'); });
 if (window.syncBodyLock) window.syncBodyLock();
+
 var close = function () {
 mask.classList.remove('open');
 setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
@@ -1750,6 +1954,7 @@ if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) clo
 document.addEventListener('keydown', function esc(e) {
 if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
 });
+
 var body = mask.querySelector('#vitalsBody');
 var _color = function (k) {
 return k === 'good' ? 'var(--ok-ink,#2e7d32)' : k === 'mid' ? 'var(--warn-ink,#b26a00)' : k === 'bad' ? 'var(--bad-ink,#c62828)' : 'var(--text-light,#666)';
@@ -1764,6 +1969,7 @@ return '<div style="flex:1 1 132px;background:var(--bg-light,#f5f7fa);border-rad
 (rate == null ? '' : '<span style="color:var(--text-light,#666)">，达标 ' + rate + '%</span>') + '</div>' +
 '</div>';
 }
+
 function paint(d) {
 if (!d || !d.total) {
 body.innerHTML = '<div class="logs-d-empty">还没有访客数据，过两天再看</div>';
@@ -1776,6 +1982,7 @@ card('布局稳定', o.cls, '', g.cls, good.cls) +
 card('交互响应', o.inp, ' ms', g.inp, good.inp) +
 card('首字节等待', o.ttfb, ' ms', g.ttfb, good.ttfb) +
 '</div>';
+
 html += '<div class="vt-sec">样本 ' + d.total + ' 次；手机端 vs 桌面端</div>';
 var sp = d.split || {};
 var rows = [['手机（<768px）', sp.mobile], ['桌面', sp.desktop]];
@@ -1792,6 +1999,7 @@ html += '<tr style="border-top:1px solid var(--border-soft,#eef2f7)"><td>' + r[0
 '<td style="text-align:right">' + (m.inp == null ? '—' : m.inp) + '</td></tr>';
 });
 html += '</table>';
+
 if ((d.pages || []).length) {
 html += '<div class="vt-sec">按页面（样本多的排前面）</div>';
 html += '<table class="vitals-table">' +
@@ -1810,6 +2018,7 @@ html += '</table>';
 }
 body.innerHTML = html;
 }
+
 function load(days) {
 body.innerHTML = '<div class="extc-loading">正在读取</div>';
 fetch('/api/admin/vitals?days=' + days, { credentials: 'same-origin' })
@@ -1817,6 +2026,7 @@ fetch('/api/admin/vitals?days=' + days, { credentials: 'same-origin' })
 .then(function (d) { paint(d); })
 .catch(function () { body.innerHTML = '<div class="logs-d-empty">读取失败，请稍后再试。</div>'; });
 }
+
 mask.querySelector('#vitalsRange').addEventListener('click', function (e) {
 var b = e.target.closest && e.target.closest('.logs-rbtn');
 if (!b) return;
@@ -1824,8 +2034,10 @@ mask.querySelectorAll('#vitalsRange .logs-rbtn').forEach(function (x) { x.classL
 b.classList.add('on');
 load(b.getAttribute('data-days'));
 });
+
 load(7);
 }
+
 function openErrs() {
 var old = document.getElementById('errMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -1851,11 +2063,13 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 document.body.appendChild(mask);
 requestAnimationFrame(function () { mask.classList.add('open'); });
 if (window.syncBodyLock) window.syncBodyLock();
+
 var close = function () {
 mask.classList.remove('open');
 setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
 };
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
 var days = 1, page = 1, q = '';
 function bjTime(v) {
 var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
@@ -1863,6 +2077,7 @@ if (isNaN(d.getTime())) return String(v || '');
 return new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ');
 }
 var KIND_TXT = { js: '脚本错', promise: '异步错', resource: '加载失败', custom: '业务错' };
+
 function paintSum(d) {
 var box = mask.querySelector('#errSum');
 if (!box) return;
@@ -1886,6 +2101,7 @@ box.innerHTML =
 '</div>' +
 (ph ? '<div class="logs-d-people">' + ph + '</div>' : '');
 }
+
 function paint(d) {
 var body = mask.querySelector('#errBody');
 var list = d.list || [];
@@ -1910,8 +2126,10 @@ return '<div class="err-row">' +
 (stack ? '<details class="err-stack"><summary>看调用栈</summary><pre>' + esc(stack) + '</pre></details>' : '') +
 '</div>';
 }).join('');
+
 var total = Number(d.total) || 0, size = Number(d.size) || 20;
 var pages = Math.max(1, Math.ceil(total / size));
+
 var _errPager = mask.querySelector('#errPager');
 if (window.buildUniPager) {
 window.buildUniPager(_errPager, {
@@ -1920,6 +2138,7 @@ onPage: function (p) { page = p; load(); }
 });
 } else { _errPager.innerHTML = ''; }
 }
+
 function load() {
 fetch('/api/admin/errors?days=' + days + '&page=' + page + '&q=' + encodeURIComponent(q), { credentials: 'include' })
 .then(function (r) { return r.json(); })
@@ -1929,6 +2148,7 @@ paintSum(d); paint(d);
 })
 .catch(function () { mask.querySelector('#errBody').innerHTML = '<div class="logs-d-empty">网络异常，读取失败</div>'; });
 }
+
 mask.querySelector('#errRange').addEventListener('click', function (e) {
 var b = e.target.closest('.logs-rbtn'); if (!b) return;
 mask.querySelectorAll('#errRange .logs-rbtn').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -1960,6 +2180,7 @@ else go();
 });
 load();
 }
+
 function openLogs() {
 var old = document.getElementById('logsMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -1967,11 +2188,13 @@ mask.className = 'modal-mask'; mask.id = 'logsMask';
 mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-label="操作日志">' +
 (window.__frag ? window.__frag.modalHead('操作日志') : '<button type="button" class="modal-close-x" aria-label="关闭" data-x="1"><svg class="wn-ico" width="16" height="16" aria-hidden="true"><use href="#wn-ico-x"/></svg></button><div class="modal-title">操作日志</div>') +
 '<p class="imp-lead"></p>' +
+
 '<div class="logs-range" id="logsRange">' +
 '<span class="logs-range-t">时间范围</span>' +
 '<button type="button" class="logs-rbtn on" data-days="1">1天</button>' +
 '<button type="button" class="logs-rbtn" data-days="7">7天</button>' +
 '<button type="button" class="logs-rbtn" data-days="30">30天</button>' +
+
 '<button type="button" class="logs-exp export-btn" id="logsExport">导出表格</button>' +
 '</div>' +
 '<div class="logs-daily" id="logsDaily"><div class="logs-d-empty">正在统计</div></div>' +
@@ -1979,6 +2202,7 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 '<input class="input" id="logsQ" type="search" autocomplete="off" placeholder="搜索动作或对象，比如 删除、分类、资源">' +
 '<button type="button" class="btn-blue btn-inline" id="logsGo">搜索</button>' +
 '</div>' +
+
 '<div class="log-tip">点开看全文</div>' +
 '<div class="logs-body" id="logsBody"><div class="extc-loading">正在读取</div></div>' +
 '<div class="uni-pager" id="logsPager"></div>' +
@@ -1986,11 +2210,14 @@ mask.innerHTML = '<div class="modal-box modal-wide" role="dialog" aria-modal="tr
 document.body.appendChild(mask);
 requestAnimationFrame(function () { mask.classList.add('open'); });
 if (window.syncBodyLock) window.syncBodyLock();
+
 var close = function () {
 mask.classList.remove('open');
 setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
 };
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
+
 function closeLogRow(r) {
 r.classList.remove('is-open');
 r.setAttribute('aria-expanded', 'false');
@@ -2003,6 +2230,7 @@ Array.prototype.forEach.call(mask.querySelectorAll('#logsBody .log-row.is-open')
 if (wasOpen) return;
 r.classList.add('is-open');
 r.setAttribute('aria-expanded', 'true');
+
 var full = r.querySelector('.log-t-full');
 var t = full || r.querySelector('.log-t') || {};
 var w = r.querySelector('.log-w') || {}, a = r.querySelector('.log-a') || {}, g = r.querySelector('.log-g') || {};
@@ -2025,7 +2253,9 @@ var r = e.target.closest ? e.target.closest('.log-row') : null;
 if (!r) return;
 e.preventDefault(); toggleLogRow(r);
 });
+
 var page = 1, q = '', days = 1, who = '';
+
 var actF = '', dayF = '', lastSum = null;
 function paintWithSum(sm) { paintSum(sm); }
 function applyRowFilter() {
@@ -2052,6 +2282,8 @@ var d = new Date(String(v || '').replace(' ', 'T') + 'Z');
 if (isNaN(d.getTime())) return String(v || '');
 return new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ');
 }
+
+
 function paintSum(sm) {
 var box = mask.querySelector('#logsDaily');
 if (!box) return;
@@ -2082,6 +2314,7 @@ box.innerHTML =
 (acts.length ? '<div class="logs-d-line"><span class="ldl-t">做什么</span>' + ah + '</div>' : '') +
 (byDay.length ? '<div class="logs-d-line"><span class="ldl-t">按天</span>' + dh + '</div>' : '');
 }
+
 function paint(d) {
 var body = mask.querySelector('#logsBody');
 var list = (d && d.list) || [];
@@ -2089,6 +2322,7 @@ if (!list.length) {
 body.innerHTML = '<div class="extc-loading">' + (q ? '该搜索暂无记录，换个词试试'
 : (who ? '该账号在这段时间没有操作记录' : '该列表暂无操作记录。改一次设置或删一个资源，这里就会出现。')) + '</div>';
 } else {
+
 body.innerHTML = '<div class="log-head" aria-hidden="true"><span>时间</span><span>账号</span><span>做了什么</span><span>对象</span></div>' + list.map(function (r) {
 return '<div class="log-row" data-who="' + esc(r.who || 'admin') + '" role="button" tabindex="0" aria-expanded="false">' +
 '<span class="log-t"><i class="log-t-full">' + esc(bjTime(r.at)) + '</i><i class="log-t-short">' + esc(String(bjTime(r.at)).replace(/^\d{4}-/, '')) + '</i></span>' +
@@ -2110,6 +2344,8 @@ onPage: function (p2) { page = p2; load(); }
 paintSum(d && d.summary);
 applyRowFilter();
 }
+
+
 var _daily = mask.querySelector('#logsDaily');
 if (_daily) _daily.addEventListener('click', function (e) {
 var a1 = e.target.closest && e.target.closest('[data-actf]');
@@ -2117,9 +2353,11 @@ if (a1) { var v1 = a1.getAttribute('data-actf'); actF = (actF === v1) ? '' : v1;
 var a2 = e.target.closest && e.target.closest('[data-dayf]');
 if (a2) { var v2 = a2.getAttribute('data-dayf'); dayF = (dayF === v2) ? '' : v2; paintSum(lastSum || {}); applyRowFilter(); }
 });
+
 function load() {
 var body = mask.querySelector('#logsBody');
 body.innerHTML = '<div class="extc-loading">正在读取</div>';
+
 fetch('/api/admin/logs?page=' + page + '&size=20&days=' + days
 + '&q=' + encodeURIComponent(q) + '&who=' + encodeURIComponent(who),
 { credentials: 'same-origin', cache: 'no-cache' })
@@ -2127,6 +2365,8 @@ fetch('/api/admin/logs?page=' + page + '&size=20&days=' + days
 .then(function (d) { if (!d || !d.ok) throw new Error((d && d.msg) || '读取失败'); paint(d); })
 .catch(function (e) { body.innerHTML = '<div class="imp-err">' + esc(e.message || '读取失败，请重试') + '</div>'; });
 }
+
+
 var rangeEl = mask.querySelector('#logsRange');
 if (rangeEl) rangeEl.addEventListener('click', function (e) {
 var b = e.target.closest && e.target.closest('.logs-rbtn'); if (!b) return;
@@ -2135,6 +2375,7 @@ page = 1;
 mask.querySelectorAll('.logs-rbtn').forEach(function (x) { x.classList.toggle('on', x === b); });
 load();
 });
+
 mask.addEventListener('click', function (e) {
 var w = e.target.closest && e.target.closest('.log-who'); if (!w) return;
 var name = w.getAttribute('data-who');
@@ -2144,8 +2385,11 @@ page = 1; load();
 mask.addEventListener('click', function (e) {
 if (e.target.closest && e.target.closest('#logsWhoClear')) { who = ''; page = 1; load(); }
 });
+
 mask.querySelector('#logsGo').addEventListener('click', function () { q = mask.querySelector('#logsQ').value.trim(); page = 1; load(); });
 mask.querySelector('#logsQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') { q = this.value.trim(); page = 1; load(); } });
+
+
 var expBtn = mask.querySelector('#logsExport');
 if (expBtn) expBtn.addEventListener('click', function () {
 if (typeof window.__downloadXLS !== 'function' || typeof window.__exportStamp !== 'function') {
@@ -2174,6 +2418,8 @@ if (window.showToast) window.showToast(d.truncated
 });
 load();
 }
+
+
 function openReset() {
 var old = document.getElementById('resetMask'); if (old) old.remove();
 var mask = document.createElement('div');
@@ -2192,19 +2438,23 @@ mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-la
 document.body.appendChild(mask);
 requestAnimationFrame(function () { mask.classList.add('open'); });
 if (window.syncBodyLock) window.syncBodyLock();
+
 var close = function () {
 mask.classList.remove('open');
 setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
 };
 mask.addEventListener('click', function (e) { if (e.target === mask || (e.target.closest && e.target.closest('[data-x]'))) close(); });
+
 var inp = mask.querySelector('#rsConfirm');
 var go = mask.querySelector('#rsGo');
 inp.addEventListener('input', function () { go.disabled = String(inp.value).trim() !== '清空'; });
+
 mask.querySelector('#rsBackup').addEventListener('click', function () {
 var eb = document.getElementById('exportBtn');
 if (eb) { eb.click(); if (window.showToast) window.showToast('导出中，稍后确认清空', 'info'); }
 else if (window.showToast) window.showToast('请到统计页导出', 'error');
 });
+
 go.addEventListener('click', function () {
 if (String(inp.value).trim() !== '清空') return;
 go.disabled = true; var t0 = go.textContent; if (window.__btnBusy) window.__btnBusy(go, '正在清空'); else go.textContent = '正在清空';
@@ -2217,6 +2467,7 @@ go.disabled = false; if (window.__btnIdle) window.__btnIdle(go); else go.textCon
 if (!d || !d.ok) { if (window.showToast) window.showToast((d && d.msg) || '清空失败', 'error'); return; }
 close();
 if (window.showToast) window.showToast('已清空，正在刷新', 'success');
+
 setTimeout(function () { try { location.reload(); } catch (e0) { if (window.__silent) window.__silent(e0); } }, 500);
 }).catch(function () {
 go.disabled = false; if (window.__btnIdle) window.__btnIdle(go); else go.textContent = t0;
@@ -2224,9 +2475,15 @@ if (window.showToast) window.showToast('网络没连上，没清成', 'error');
 });
 });
 }
+
+
 (function wait() {
+
 var panel = document.getElementById('panel-settings');
 if (panel && !document.getElementById('batchImportBtn')) {
+
+
+
 var btnHtml = function (id, lab, extra) {
 return '<button type="button" class="row-btn" id="' + id + '"' + (extra || '') + '>' + lab + '</button>';
 };
@@ -2239,10 +2496,11 @@ panel.appendChild(g);
 return g;
 };
 mkGroup('内容管理',
-row('资源采集（从别家平台抓资源，挑着上架）', btnHtml('openExtCollectBtn', '资源采集', ' data-perm="external.view"'))
+row('资源采集（从别家平台抓资源，挑着发布）', btnHtml('openExtCollectBtn', '资源采集', ' data-perm="external.view"'))
 + row('批量导入（Excel 一次导多条）', '<button type="button" class="export-btn" id="batchImportBtn">批量导入</button>')
 + row('回收站点（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站点'))
 );
+
 mkGroup('系统维护',
 row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1))
 + row('前端报错（访客页面出错会自动记下来）', btnHtml('errLogBtn', '前端报错', ' data-perm="sensitive.super"'))
@@ -2251,6 +2509,7 @@ row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系�
 var accGrp = mkGroup('账号安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
 + row('谁改了什么（保留 60 天）', btnHtml('logsBtn', '操作日志', ' data-perm="users"')));
 var grp = accGrp;
+
 try {
 var pwdGrp = document.getElementById('pwdGroup');
 if (pwdGrp) { pwdGrp.className = ''; pwdGrp.style.marginTop = '6px'; accGrp.appendChild(pwdGrp); }
@@ -2266,6 +2525,8 @@ panel.querySelector('#recycleBtn').addEventListener('click', openRecycle);
 panel.querySelector('#usersBtn').addEventListener('click', openUsers);
 var _lgBtn = panel.querySelector('#logsBtn');
 if (_lgBtn) _lgBtn.addEventListener('click', function () { openLogs(); });
+
+
 try {
 var groups = [].slice.call(panel.querySelectorAll('.setting-group'));
 if (groups.length) {
@@ -2285,6 +2546,7 @@ g.classList.remove('collapsed');
 g.scrollIntoView({ behavior: 'smooth', block: 'start' });
 [].forEach.call(nav.children, function (x) { x.classList.toggle('on', x === b); });
 });
+
 groups.forEach(function (g) {
 var h = g.querySelector('h3');
 if (!h) return;
@@ -2309,7 +2571,10 @@ h.addEventListener('click', function () { g.classList.toggle('collapsed'); });
 });
 }
 } catch (eNav) {}
+
+
 try {
+
 if (!window.__me || window.__me.role === 'super') {
 var today = new Date().toDateString();
 if (localStorage.getItem('wnzyq_autocheck_day') !== today) {
