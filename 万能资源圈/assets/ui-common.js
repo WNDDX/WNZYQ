@@ -78,6 +78,13 @@ fetch(url, fopts),
 new Promise(function (_, rej) { setTimeout(function () { rej(new Error('timeout')); }, timeout); })
 ]).then(function (r) {
 if (opts.raw) return r;
+if (r.status === 503) {
+window.__dbBusy = true; window.__dbBusyAt = Date.now();
+if (isGet && !isRetry) {
+return new Promise(function (res) { setTimeout(function () { res(once(true)); }, 1200); });
+}
+if (opts.on503) { try { opts.on503(r); } catch (e) { if (window.__silent) window.__silent(e); } }
+}
 var ct = r.headers.get('content-type') || '';
 if (r.status >= 400 && ct.indexOf('application/json') === -1) {
 return { ok: false, msg: window.T('netFail'), _status: r.status };
