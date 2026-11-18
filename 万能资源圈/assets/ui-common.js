@@ -902,6 +902,43 @@ close(stack[stack.length - 1], 'stash');
 });
 return { register: register, close: close, stack: stack };
 })();
+window.__maskStash = (function () {
+var box = {};
+function take(id) {
+var m = box[id];
+if (m && m.parentNode) return m;
+delete box[id];
+return null;
+}
+function reopen(m) {
+if (!m) return;
+m.style.display = '';
+requestAnimationFrame(function () { m.classList.add('open'); });
+try { if (window.lockBodyScroll) window.lockBodyScroll(true); } catch (e) {}
+try { if (window.syncBodyLock) window.syncBodyLock(); } catch (e2) {}
+try { var xb = m.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll: true }); } catch (e3) {}
+}
+function closeOrStash(mask, drop, label, key) {
+if (!mask) return;
+var k = key || mask.id;
+if (drop) {
+delete box[k];
+mask.classList.remove('open');
+setTimeout(function () { try { if (mask.parentNode) mask.remove(); } catch (e) {} try { if (window.syncBodyLock) window.syncBodyLock(); } catch (e2) {} }, 200);
+return;
+}
+box[k] = mask;
+mask.classList.remove('open');
+mask.style.display = 'none';
+try { if (window.syncBodyLock) window.syncBodyLock(); } catch (e) {}
+try {
+if (window.showToast) window.showToast((label || '填写的内容') + '已暂存，下次打开还在', 'success');
+else if (window.uiToast) window.uiToast((label || '填写的内容') + '已暂存，下次打开还在', 'success');
+} catch (e2) {}
+}
+function stashed(id) { return !!box[id]; }
+return { take: take, reopen: reopen, closeOrStash: closeOrStash, stashed: stashed, _box: box };
+})();
 window.pushSearchHist = function (key, kw) {
 kw = (kw || '').trim(); if (!kw) return;
 try {

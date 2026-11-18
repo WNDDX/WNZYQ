@@ -560,6 +560,8 @@ return '<div class="imp-hist-row"><span class="t">' + esc(r.at || '') + '</span>
 host.innerHTML = h;
 }
 function openWizard() {
+var __st = window.__maskStash ? window.__maskStash.take('importMask') : null;
+if (__st) { window.__maskStash.reopen(__st); return; }
 var old = document.getElementById('importMask');
 if (old) old.remove();
 var mask = document.createElement('div');
@@ -580,8 +582,17 @@ try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll:
 });
 if (window.lockBodyScroll) window.lockBodyScroll(true);
 mask.addEventListener('click', function (e) {
-if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
+if (e.target === mask || e.target.closest('[data-x]')) {
+var __drop = !!e.target.closest('[data-x]');
+if (window.__maskStash) window.__maskStash.closeOrStash(mask, __drop, '导入');
+else { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
+}
 });
+mask.addEventListener('keydown', function (e) {
+if (e.key !== 'Escape') return;
+e.preventDefault(); e.stopPropagation();
+if (window.__maskStash) window.__maskStash.closeOrStash(mask, false, '导入');
+}, true);
 mask.querySelector('#impTpl').addEventListener('click', function () {
 var tpl = buildTemplate();
 downloadBlob(tpl.name, tpl.blob);
@@ -1301,6 +1312,9 @@ var PM_GROUPS = [
 ];
 function usersForm(u) {
 var isEdit = !!(u && u.id);
+var __ufKey = 'usFormMask' + (isEdit ? '-u' + u.id : '-new');
+var __ufSt = window.__maskStash ? window.__maskStash.take(__ufKey) : null;
+if (__ufSt) { window.__maskStash.reopen(__ufSt); return; }
 var perms = {};
 try { perms = (isEdit ? (typeof u.perms === 'string' ? JSON.parse(u.perms) : (u.perms || {})) : {}) || {}; } catch (e) { perms = {}; }
 var gval = function (grp, key) { try { return !!(perms[grp] || {})[key]; } catch (e) { return false; } };
@@ -1385,8 +1399,17 @@ mask.classList.add('open');
 try { var xb = mask.querySelector('[data-x]'); if (xb) xb.focus({ preventScroll: true }); } catch (eF) {}
 });
 mask.addEventListener('click', function (e) {
-if (e.target === mask || e.target.closest('[data-x]')) { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
+if (e.target === mask || e.target.closest('[data-x]')) {
+var __drop = !!e.target.closest('[data-x]');
+if (window.__maskStash) window.__maskStash.closeOrStash(mask, __drop, '账号填写的内容', __ufKey);
+else { mask.classList.remove('open'); setTimeout(function () { mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200); }
+}
 });
+mask.addEventListener('keydown', function (e) {
+if (e.key !== 'Escape') return;
+e.preventDefault(); e.stopPropagation();
+if (window.__maskStash) window.__maskStash.closeOrStash(mask, false, '账号填写的内容', __ufKey);
+}, true);
 mask.querySelectorAll('[data-all]').forEach(function (b) {
 b.addEventListener('click', function () {
 var grp = this.getAttribute('data-all');
@@ -1438,6 +1461,7 @@ var restore = function () { btn.disabled = false; btn.textContent = isEdit ? '�
 if (isEdit) {
 usersCall('PUT', { id: u.id, op: 'update', perms: pv, note: note }, function () {
 if (window.showToast) window.showToast(window.T('saved'), 'success');
+if (window.__maskStash) { try { delete window.__maskStash._box[__ufKey]; } catch (e) {} }
 mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); renderUsersList();
 }, restore);
 } else {
@@ -1446,6 +1470,7 @@ var pw = (mask.querySelector('#ufPwd') || {}).value || '';
 var psel = mask.querySelector('#ufParent');
 usersCall('POST', { username: un, password: pw, note: note, perms: pv, parentId: psel ? Number(psel.value) || 0 : 0 }, function () {
 if (window.showToast) window.showToast('账号已创建', 'success');
+if (window.__maskStash) { try { delete window.__maskStash._box[__ufKey]; } catch (e) {} }
 mask.remove(); if (window.syncBodyLock) window.syncBodyLock(); renderUsersList();
 }, restore);
 }

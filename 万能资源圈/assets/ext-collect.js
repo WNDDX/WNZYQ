@@ -1,16 +1,12 @@
 (function () {
 'use strict';
-
 var S = {
 platforms: [], goods: [], curPf: 0, tab: 'goods', sel: {},
 mask: null, busy: false, hint: '',
-
 q: '', status: '', page: 1, pageSize: (window.LIST_PAGE_SIZE || 20),
 pfPage: 1, runsPage: 1,
 runs: [], cats: []
 };
-
-
 var esc = window.escapeHtml || function (s) {
 return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 };
@@ -30,24 +26,19 @@ return fetch('/api/' + path, o)
 .catch(function () { return { ok: false, msg: '网络超时或中断，请重试' }; });
 }
 function toast(m, t) { if (window.showToast) window.showToast(m, t || 'info'); }
-
 function bjShort(v) {
 var s = String(v == null ? '' : v); if (!s) return '';
 var d = new Date(s.replace(' ', 'T') + 'Z');
 if (isNaN(d.getTime())) return s.slice(5, 16);
 return new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
 }
-
 function bindSelects(root) {
 if (!root) return;
-
 try { if (window.__upgradeSelects) window.__upgradeSelects(root); } catch (e0) {}
 Array.prototype.forEach.call(root.querySelectorAll('select'), function (sel) {
 try { if (window.__syncSelectDisplay) window.__syncSelectDisplay(sel); } catch (e1) {}
 });
 }
-
-
 function empty(title, hint) {
 if (window.__adminEmpty) return window.__adminEmpty(title, hint);
 return '<div class="extc-empty">' + esc(title) + (hint ? '<br>' + esc(hint) : '') + '</div>';
@@ -57,8 +48,6 @@ function nowStr() {
 var d = new Date(), p = function (n) { return n < 10 ? '0' + n : '' + n; };
 return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
-
-
 function mountRte(host, editorId, initialHtml, minH) {
 if (!host) return null;
 var srcBar = document.getElementById('detailRteToolbar');
@@ -68,13 +57,11 @@ return host.querySelector('#' + editorId);
 }
 var bar = srcBar.cloneNode(true);
 bar.removeAttribute('id');
-
 bar.classList.remove('rte-toolbar-large');
 bar.classList.add('rte-toolbar');
 bar.setAttribute('data-editor', editorId);
 Array.prototype.forEach.call(bar.querySelectorAll('[data-editor]'), function (el) { el.setAttribute('data-editor', editorId); });
 Array.prototype.forEach.call(bar.querySelectorAll('[data-target]'), function (el) { el.setAttribute('data-target', editorId); });
-
 var ed = document.createElement('div');
 ed.className = 'rte-editor';
 ed.id = editorId;
@@ -85,16 +72,12 @@ ed.innerHTML = initialHtml || '';
 host.innerHTML = '';
 host.appendChild(bar);
 host.appendChild(ed);
-
 try { if (window.__bindRteBar) window.__bindRteBar(bar, ed); } catch (eB) { if (window.__silent) window.__silent(eB); }
 bindPicker(bar, ed);
 return ed;
 }
-
-
 function bindPicker(bar, editor) {
 Array.prototype.forEach.call(bar.querySelectorAll('.select-picker'), function (pk) {
-
 var sel = pk.querySelector('select');
 if (!sel) {
 var nx = pk.nextElementSibling;
@@ -103,8 +86,6 @@ else if (pk.parentNode) sel = pk.parentNode.querySelector('select');
 }
 var disp = pk.querySelector('.cat-picker-display');
 if (!sel || !disp) return;
-
-
 var panel = pk.querySelector('.cat-picker-panel');
 if (!panel) {
 panel = document.createElement('div');
@@ -115,18 +96,15 @@ try { pk.style.position = 'relative'; } catch (e0) {}
 panel.style.cssText = 'position:absolute;left:0;top:100%;margin-top:4px;min-width:100%;width:auto;' +
 'max-height:220px;overflow-y:auto;z-index:60;display:none;background:var(--card-bg,#fff);' +
 'border:1px solid var(--border,#e3e9ef);border-radius:10px;box-shadow:0 8px 22px rgba(15,35,60,.14);padding:4px;';
-
 var txt = disp.querySelector('.cpd-text') || disp;
 panel.innerHTML = Array.prototype.map.call(sel.options, function (o) {
 return '<div class="cp-item" data-v="' + esc(o.value) + '">' + esc(o.textContent) + '</div>';
 }).join('');
 var cur = sel.options[sel.selectedIndex] || sel.options[0];
 if (cur) txt.textContent = cur.textContent;
-
 disp.addEventListener('click', function (e) {
 e.preventDefault(); e.stopPropagation();
 var willOpen = panel.style.display === 'none';
-
 Array.prototype.forEach.call(bar.querySelectorAll('.cat-picker-panel'), function (p2) {
 if (p2 !== panel) p2.style.display = 'none';
 });
@@ -146,7 +124,6 @@ try { sel.dispatchEvent(new Event('change', { bubbles: true })); } catch (e2) {}
 try { if (editor) editor.focus({ preventScroll: true }); } catch (e3) {}
 });
 });
-
 setTimeout(function () {
 document.addEventListener('click', function (ev) {
 if (ev.target.closest && ev.target.closest('.select-picker')) return;
@@ -155,9 +132,9 @@ Array.prototype.forEach.call(bar.querySelectorAll('.select-picker.open'), functi
 });
 }, 0);
 }
-
-
 function open() {
+var __st = window.__maskStash ? window.__maskStash.take('extcMask') : null;
+if (__st) { S.mask = __st; window.__maskStash.reopen(__st); return; }
 if (S.mask) close();
 S.cats = (window.state && window.state.categories) || [];
 var m = document.createElement('div');
@@ -176,7 +153,6 @@ m.innerHTML = '<div class="modal-box extc-box" role="dialog" aria-modal="true">'
 '<button type="button" class="extc-tab on" data-tab="goods">采集到的资源 <i id="extcNGoods">0</i></button>' +
 '<button type="button" class="extc-tab" data-tab="pf">我的平台 <i id="extcNPf">0</i></button>' +
 '<button type="button" class="extc-tab" data-tab="runs">采集记录 <i id="extcNRuns2">0</i></button>' +
-
 '<button type="button" class="row-btn extc-addpf" id="extcAddPf" title="添加一个平台档案">添加平台</button>' +
 '</div>' +
 '<div class="batch-bar extc-batch" id="extcBatch"></div>' +
@@ -187,10 +163,18 @@ S.mask = m;
 requestAnimationFrame(function () { m.classList.add('open'); });
 bindSelects(m);
 if (window.syncBodyLock) window.syncBodyLock();
-
 m.addEventListener('click', function (e) {
-if (e.target === m || (e.target.closest && e.target.closest('[data-x]'))) close();
+if (e.target === m || (e.target.closest && e.target.closest('[data-x]'))) {
+var __drop = !!(e.target.closest && e.target.closest('[data-x]'));
+if (window.__maskStash) { window.__maskStash.closeOrStash(m, __drop, '采集面板'); S.mask = null; }
+else close();
+}
 });
+m.addEventListener('keydown', function (e) {
+if (e.key !== 'Escape') return;
+e.preventDefault(); e.stopPropagation();
+if (window.__maskStash) { window.__maskStash.closeOrStash(m, false, '采集面板'); S.mask = null; }
+}, true);
 m.querySelector('#extcPf').addEventListener('change', function () {
 S.curPf = Number(this.value) || 0;
 S.sel = {}; S.page = 1; S.pfPage = 1; S.runsPage = 1;
@@ -208,13 +192,11 @@ render();
 });
 });
 m.querySelector('#extcBody').addEventListener('click', onBodyClick);
-
 m.querySelector('#extcBatch').addEventListener('click', onBodyClick);
 m.querySelector('#extcBody').addEventListener('input', onBodyInput);
 m.querySelector('#extcBody').addEventListener('change', onBodyInput);
 loadAll();
 }
-
 function close() {
 if (!S.mask) return;
 var m = S.mask;
@@ -222,8 +204,6 @@ m.classList.remove('open');
 S.mask = null;
 setTimeout(function () { m.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 180);
 }
-
-
 function loadAll() {
 return Promise.all([
 api('admin/external').catch(function () { return { ok: false }; }),
@@ -245,7 +225,6 @@ if (r && r.ok) S.goods = r.goods || [];
 render();
 });
 }
-
 function filtered() {
 var q = S.q.trim().toLowerCase();
 return S.goods.filter(function (g) {
@@ -259,8 +238,6 @@ if (hay.toLowerCase().indexOf(q) < 0) return false;
 return true;
 });
 }
-
-
 function render() {
 if (!S.mask) return;
 var m = S.mask;
@@ -271,7 +248,6 @@ return '<option value="' + p.id + '">' + esc(p.name) + '</option>';
 }).join('');
 pfSel.value = String(S.curPf);
 }
-
 var __setTab = function (tab, label, n) {
 var btn = m.querySelector('.extc-tab[data-tab="' + tab + '"]');
 if (!btn) return;
@@ -287,12 +263,10 @@ __setTab('runs', '采集记录', S.runs.length);
 var nR = m.querySelector('#extcNRuns'); if (nR) nR.textContent = S.runs.length;
 var hint = m.querySelector('#extcHint');
 if (hint) { hint.textContent = S.hint || ''; hint.title = S.hint || ''; }
-
 var body = m.querySelector('#extcBody');
 if (S.tab === 'goods') body.innerHTML = renderGoods();
 else if (S.tab === 'runs') body.innerHTML = renderRuns();
 else body.innerHTML = renderPlatforms();
-
 (function bindLazyThumbs() {
 var imgs = [].slice.call(document.querySelectorAll('#extcBody .extc-thumb img[data-src]'));
 if (!imgs.length) return;
@@ -312,11 +286,8 @@ try { window.__extcThumbIO.unobserve(i); } catch (eU) {}
 }, { root: null, rootMargin: '200px 0px', threshold: 0.01 });
 imgs.forEach(function (i) { window.__extcThumbIO.observe(i); });
 })();
-
 bindSelects(body);
 bindSelects(m);
-
-
 var _rp = body.querySelector('#extcRunsPager');
 if (_rp && window.buildUniPager) {
 window.buildUniPager(_rp, {
@@ -341,9 +312,6 @@ onPage: function (p2) { S.page = p2; render(); }
 }
 updateBatch();
 }
-
-
-
 function updateBatch() {
 if (!S.mask) return;
 var bar = S.mask.querySelector('#extcBatch');
@@ -351,18 +319,13 @@ if (!bar) return;
 var n = selIds().length;
 bar.innerHTML = '已选 <span class="batch-count">' + n + '</span> 个' +
 '<div class="batch-group">' +
-
 '<button type="button" class="batch-btn" data-act="batchuse" data-noico="1">上架选中</button>' +
 '<button type="button" class="batch-btn" data-act="selpage" data-noico="1">选中本页</button>' +
 '<button type="button" class="batch-btn danger" data-act="delbatch" data-noico="1">批量删除</button>' +
-
 '<button type="button" class="batch-btn" data-act="delunused" data-noico="1">清未上架</button>' +
 '<button type="button" class="batch-btn" data-act="selnone" data-noico="1">取消选中</button>' +
 '</div>';
-
 try {
-
-
 } catch (eI) {}
 if (window.__setBatchBar) window.__setBatchBar(bar, n > 0);
 else bar.classList.toggle('show', n > 0);
@@ -375,19 +338,16 @@ var cnt = S.mask.querySelector('.extc-cnt');
 if (cnt) cnt.innerHTML = filtered().length + ' 个' + (n ? '，已选 <b>' + n + '</b>' : '');
 updateBatch();
 }
-
 function renderGoods() {
 var list = filtered();
 if (!S.goods.length) {
 return empty('该列表暂无采集到的资源', '选一个平台点「采集」一次抓一批；抓不到的点「粘贴」，粘链接或整页内容一条条加');
 }
-
 if (!list.length) {
 return empty('没有符合条件的资源', '换个平台、清掉搜索词或把状态切回「全部」再试');
 }
 var n = selIds().length;
 var cur = S.platforms.filter(function (p) { return Number(p.id) === Number(S.curPf); })[0];
-
 var pfNote = cur && cur.note
 ? '<div class="extc-pfnote">'
 + '<div class="extc-pfnote-hd">'
@@ -399,7 +359,6 @@ var pfNote = cur && cur.note
 + '<div class="extc-pfnote-b">' + cur.note + '</div>'
 + '</div>'
 : '';
-
 var head = '<div class="extc-tools">' +
 '<input id="extcQ" class="input extc-search" type="search" autocomplete="off" placeholder="搜索标题、平台或链接" value="' + esc(S.q) + '">' +
 '<select id="extcSt" class="extc-sel-input">' +
@@ -409,12 +368,10 @@ var head = '<div class="extc-tools">' +
 '</select>' +
 '<span class="extc-cnt">' + list.length + ' 个' + (n ? '，已选 <b>' + n + '</b>' : '') + '</span>' +
 '</div>';
-
 var total = list.length;
 var pages = Math.max(1, Math.ceil(total / S.pageSize));
 if (S.page > pages) S.page = pages;
 var slice = list.slice((S.page - 1) * S.pageSize, S.page * S.pageSize);
-
 var cards = slice.map(function (g) {
 var on = !!S.sel[g.id];
 var used = g.status === 'used';
@@ -425,7 +382,6 @@ return '<div class="extc-card' + (on ? ' on' : '') + (used ? ' is-used' : '') + 
 '<span class="extc-ck">' + (on ? '✓' : '') + '</span>' +
 '</div>' +
 '<div class="extc-t" title="' + esc(g.title) + '">' + esc(g.title) + '</div>' +
-
 (Number(g.missing || 0) >= 2
 ? '<div class="extc-gone">⚠ 对方已下架' + (Number(g.auto_hidden) ? '（本店已自动隐藏）' : '') + '</div>'
 : '') +
@@ -437,14 +393,9 @@ return '<div class="extc-card' + (on ? ' on' : '') + (used ? ' is-used' : '') + 
 '<button type="button" class="row-btn danger" data-act="del">删除</button>' +
 '</div></div>';
 }).join('');
-
-
 var pager = '<div class="uni-pager" id="extcPager"></div>';
-
 return pfNote + head + '<div class="extc-grid">' + cards + '</div>' + pager;
 }
-
-
 function reasonOf(msg) {
 var m = String(msg || '');
 if (/登录|登入|未登录|密码|账号/.test(m)) return { k: 'login', t: '需要登录', tip: '点「打开」登录一次再采' };
@@ -454,13 +405,10 @@ if (/超时|timeout|网络|fetch|EOF/.test(m)) return { k: 'net', t: '网络不�
 return { k: 'other', t: '没采到', tip: '点这一行「打开」看看对方页面还在不在' };
 }
 window.__extcReason = reasonOf;
-
-
 function renderRuns() {
 if (!S.runs.length) {
 return empty('该列表暂无采集记录', '点上面的「采集」，或者等每天自动采过之后，这里会记下每次的时间和结果');
 }
-
 var st = window.__slicePage(S.runs, S.runsPage, window.LIST_PAGE_SIZE || 20);
 S.runsPage = st.page;
 return '<div class="extc-runs">' + st.items.map(function (r) {
@@ -472,17 +420,14 @@ return '<div class="log-row">' +
 '</div>';
 }).join('') + '</div>' + window.pagerBox('extcRunsPager');
 }
-
 function renderPlatforms() {
 if (!S.platforms.length) {
 return empty('该列表暂无平台', '点右上「+ 添加平台」，填平台名和商城地址（你在那边看资源列表的那一页）');
 }
-
 var stp = window.__slicePage(S.platforms, S.pfPage, window.LIST_PAGE_SIZE || 20);
 S.pfPage = stp.page;
 var rows = stp.items.map(function (p) {
 var cnt = S.goods.filter(function (g) { return Number(g.platform_id) === Number(p.id); }).length;
-
 var last = S.runs.filter(function (x) { return Number(x.pid) === Number(p.id); })[0];
 var meta = [];
 meta.push('<i class="extc-auto">每天自动</i>');
@@ -506,15 +451,12 @@ return '<div class="extc-prow" data-pid="' + p.id + '">' +
 }).join('');
 return '<div class="extc-plist">' + rows + '</div>' + window.pagerBox('extcPfPager');
 }
-
-
 function onBodyClick(e) {
 var b = e.target.closest ? e.target.closest('[data-act]') : null;
 if (!b) return;
 var act = b.getAttribute('data-act');
 var card = b.closest('.extc-card');
 var id = card ? Number(card.getAttribute('data-id')) : 0;
-
 if (act === 'pick') {
 S.sel[id] = !S.sel[id];
 var on = !!S.sel[id];
@@ -538,7 +480,6 @@ if (act === 'batchuse') { useBatch(selIds()); return; }
 if (act === 'edit') { editForm(id); return; }
 if (act === 'see') { seeForm(id); return; }
 if (act === 'del') {
-
 if (!window.showConfirm) { toast(window.T('needRefresh'), 'error'); return; }
 window.showConfirm('删除资源', '删除后不影响对方平台', function (done) {
 done();
@@ -625,7 +566,6 @@ Array.prototype.forEach.call(S.mask.querySelectorAll('.extc-tab'), function (x) 
 render(); return;
 }
 }
-
 function onBodyInput(e) {
 var t = e.target;
 if (!t || !t.id) return;
@@ -640,17 +580,13 @@ el.focus();
 try { el.setSelectionRange(caret, caret); } catch (e) {}
 }, 0);
 }
-
-
 function runCollect() {
 if (S.busy) return;
-
 if (!S.curPf) return collectAll();
 var p = S.platforms.filter(function (x) { return Number(x.id) === Number(S.curPf); })[0];
 if (!p) { toast('先在左上选一个平台', 'error'); return; }
 if (!p.mall_url) { toast('请先填平台地址', 'error'); return; }
 S.busy = true; S.hint = '正在采集（0 秒 / 最多 20 秒）'; render();
-
 var __t0 = Date.now();
 var __tick = setInterval(function () {
 if (!S.busy) { clearInterval(__tick); return; }
@@ -660,7 +596,6 @@ if (h) h.textContent = S.hint;
 }, 1000);
 var btn = S.mask && S.mask.querySelector('#extcRun');
 if (btn) { btn.disabled = true; btn.textContent = '采集中'; }
-
 api('admin/external', { method: 'POST', body: { op: 'collect', platform_id: p.id } }).then(function (r) {
 S.busy = false; clearInterval(__tick);
 if (btn) { btn.disabled = false; btn.textContent = '采集'; }
@@ -680,8 +615,6 @@ render();
 }
 });
 }
-
-
 function collectAll() {
 var list = S.platforms.filter(function (x) { return String(x.mall_url || '').trim(); });
 if (!list.length) { toast('请先添加平台', 'error'); return; }
@@ -719,7 +652,6 @@ setTimeout(step, 250);
 };
 step();
 }
-
 function openPlatform() {
 var p = S.platforms.filter(function (x) { return Number(x.id) === Number(S.curPf); })[0];
 if (!p) { toast('先选一个平台', 'error'); return; }
@@ -727,19 +659,14 @@ var u = p.login_url || p.mall_url;
 if (!u) { toast('这个平台还没填地址', 'error'); return; }
 window.open(u, '_blank', 'noopener');
 }
-
-
 function goEdit(g, detailHtml) {
-
 var buy = String(g.buy_url || g.src_url || '').trim();
 var html = String(detailHtml || g.detail_html || '');
 var buyLine = '';
 if (buy) {
 var already = html.indexOf(buy) >= 0;
-
 if (!already) buyLine = '<p><a href="' + buy + '" target="_blank" rel="noopener">' + buy + '</a></p>';
 }
-
 var _ex = {};
 try { _ex = JSON.parse(g.extra || '{}') || {}; } catch (e0) { _ex = {}; }
 var _rawBlock = '';
@@ -757,9 +684,7 @@ sort: 0,
 is_online: 1
 };
 if (typeof window.__openEdit !== 'function') { toast('请刷新后台再试', 'error'); return; }
-
 try { window.__openEdit(payload); } catch (eOE) { toast('打不开新增资源：' + (eOE && eOE.message || '未知错误'), 'error'); return; }
-
 window.__extReturnAfterEdit = true;
 setTimeout(function () {
 var em = document.getElementById('editMask');
@@ -770,10 +695,8 @@ toast('补上分类和价格即可', 'info');
 toast('再点一次试试', 'error');
 }
 }, 260);
-
 window.__extPendingGoods = Number(g.id) || 0;
 }
-
 function useGoods(id) {
 var g = S.goods.filter(function (x) { return Number(x.id) === id; })[0];
 if (!g) return;
@@ -785,7 +708,6 @@ var html = '';
 if (r && r.ok && r.media && r.media.length) {
 html = r.media.filter(function (u) { return u !== g.cover; }).slice(0, 20)
 .map(function (u) { return '<p><img src="' + u + '"></p>'; }).join('');
-
 var upd = { op: 'goods.update', id: g.id, detail_html: html };
 if (!g.descr && r.desc) { upd.descr = r.desc; g.descr = r.desc; }
 if (!g.buy_url && r.buy_url) { upd.buy_url = r.buy_url; g.buy_url = r.buy_url; }
@@ -795,7 +717,6 @@ g.detail_html = html;
 goEdit(g, html);
 });
 }
-
 function useBatch(ids) {
 ids = (ids || []).filter(Boolean);
 if (!ids.length) { toast('先选资源', 'error'); return; }
@@ -803,10 +724,7 @@ if (ids.length > 1) toast('批量会逐条打开', 'info');
 var g = S.goods.filter(function (x) { return Number(x.id) === Number(ids[0]); })[0];
 if (g) useGoods(Number(g.id));
 }
-
-
 function pasteForm() {
-
 var pid = Number(S.curPf) || (S.platforms[0] ? Number(S.platforms[0].id) : 0);
 var pfOpts = '<option value="0">（不归平台）</option>' + S.platforms.map(function (p) {
 return '<option value="' + p.id + '"' + (Number(p.id) === pid ? ' selected' : '') + '>' + esc(p.name) + '</option>';
@@ -829,7 +747,6 @@ var m = mkModal('extcPasteMask', '粘贴添加资源', '',
 '</div>' +
 '<div class="extc-formhint" id="paTip"></div>',
 '<button class="modal-inner-btn" id="paSave">加进资源</button><button class="modal-close" data-x="1">关闭</button>');
-
 var tab = 'link';
 Array.prototype.forEach.call(m.querySelectorAll('[data-ptab]'), function (b) {
 b.addEventListener('click', function () {
@@ -840,7 +757,6 @@ m.querySelector('#paRichBox').style.display = tab === 'rich' ? '' : 'none';
 m.querySelector('#paTip').textContent = '';
 });
 });
-
 m.querySelector('#paUrl').addEventListener('input', function () {
 var u = this.value.trim();
 if (!/^https?:\/\//i.test(u)) return;
@@ -855,7 +771,6 @@ m.querySelector('#paPf').value = String(hit.id);
 m.querySelector('#paTip').textContent = '已自动归到平台「' + hit.name + '」';
 }
 });
-
 m.querySelector('#paRich').addEventListener('paste', function (ev) {
 var cd = ev.clipboardData || window.clipboardData;
 if (!cd) return;
@@ -869,7 +784,6 @@ P.lastClip = got;
 m.querySelector('#paTip').innerHTML = '提取到：标题「' + esc(got.title || '（没认出，可自己改）') + '」' +
 (got.media.length ? '，' + got.media.length + ' 张图（封面用第 1 张）' : '，没有图');
 });
-
 m.querySelector('#paSave').addEventListener('click', function () {
 var btn = this;
 setTimeout(function () { if (btn.disabled) btn.textContent = '还在处理，请稍候'; }, 6000);
@@ -884,11 +798,9 @@ api('admin/external', { method: 'POST', body: { op: 'find.one', url: url } }).th
 btn.disabled = false; btn.textContent = '加进资源池';
 if (!r || !r.ok) { tip.textContent = (r && r.msg) || '抓不到'; return; }
 var media = (r.media || []).filter(function (u) { return u !== r.cover; });
-
 if (r.weak) {
 tip.textContent = '只抓到标题（这条是登录墙或靠浏览器渲染的页面），简介和图片可能是空的。存进去后请核对，实在不行改用「粘贴」。';
 }
-
 api('admin/external', { method: 'POST', body: { op: 'goods.add', platform_id: pfId, title: r.title, cover: r.cover, src_url: url, media: media, descr: r.desc || '', buy_url: r.buy_url || '' } }).then(function (r2) {
 if (r2 && r2.ok) { toast(r2.dup ? '资源池里已经有了' : '已加进资源池', 'success'); closeM(m); loadGoods(); }
 else toast((r2 && r2.msg) || '保存失败', 'error');
@@ -907,7 +819,6 @@ else toast((r2 && r2.msg) || '保存失败', 'error');
 });
 }
 var P = { lastClip: null };
-
 function extractFromHtml(html, text) {
 var media = [], title = '';
 if (html) {
@@ -928,8 +839,6 @@ var GOODS = /(卡|WiFi|宽带|流量包|套餐|随身|物联)/, OP = /(联通|�
 title = (lines.filter(function (l) { return l.length >= 5 && l.length <= 60 && GOODS.test(l) && (OP.test(l) || /\d/.test(l)); })[0]) || '';
 return { title: title.slice(0, 90), media: media.slice(0, 30) };
 }
-
-
 function seeForm(id) {
 var g = S.goods.filter(function (x) { return Number(x.id) === id; })[0];
 if (!g) return;
@@ -940,7 +849,6 @@ var urls = imgs.map(function (t) { return (t.match(/src=["']([^"']+)["']/i) || [
 var all = (g.cover ? [g.cover] : []).concat(urls, media);
 var uniq = [];
 all.forEach(function (u) { if (u && uniq.indexOf(u) < 0) uniq.push(u); });
-
 (function () {
 var _ex = {};
 try { _ex = JSON.parse(g.extra || '{}') || {}; } catch (eX) { _ex = {}; }
@@ -981,8 +889,6 @@ try { navigator.clipboard.writeText(t); toast('链接已经复制', 'success'); 
 catch (e) { try { var i = document.createElement('textarea'); i.value = t; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); toast('链接已经复制', 'success'); } catch (e2) { toast('复制失败，手动选中吧', 'error'); } }
 });
 })();
-
-
 if (uniq.length <= 1 && g.src_url && !g.__fetching) {
 var btnF = document.getElementById('seeFetch');
 if (btnF) btnF.addEventListener('click', function () {
@@ -1003,7 +909,6 @@ setTimeout(function () { seeForm(g.id); render(); }, 200);
 });
 }
 }
-
 function editForm(id) {
 var g = S.goods.filter(function (x) { return Number(x.id) === id; })[0];
 if (!g) return;
@@ -1041,8 +946,6 @@ toast(window.T('saved'), 'success'); closeM(m); render();
 });
 });
 }
-
-
 function platformForm(p) {
 var isEdit = !!(p && p.id);
 var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加平台', '',
@@ -1052,7 +955,6 @@ var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加
 '<div class="extc-probe-row"><button type="button" class="row-btn" id="epProbe">试采地址</button><span class="extc-probe-tip" id="epProbeTip">不确定能不能采？先点这里试一下（不会入库）</span></div>' +
 '<label>登录地址（对方后台里的「手机登录」那一条）</label><input class="input" id="epAdmin" maxlength="600" value="' + esc(isEdit ? (p.login_url || '') : '') + '" placeholder="点「手机登录」复制的地址">' +
 '<div class="extc-formhint">只填登录链接，不填就跳商城</div>' +
-
 '<label>自动采集 / 自动隐藏</label>' +
 '<div class="extc-sw-row">' +
 '<label class="extc-sw"><input type="checkbox" id="epAutoCollect"' + (!isEdit || Number(p.auto_collect) ? ' checked' : '') + '><i><b></b></i><span>每天自动采集</span></label>' +
@@ -1067,7 +969,6 @@ var m = mkModal('extcPfMask', isEdit ? '编辑平台：' + esc(p.name) : '添加
 function () {
 mountRte(m.querySelector('#epNoteHost'), 'epNote', isEdit ? String(p.note || '') : '', '100px');
 });
-
 (function () {
 var pb = m.querySelector('#epProbe'); if (!pb) return;
 pb.addEventListener('click', function () {
@@ -1123,8 +1024,6 @@ btn.disabled = false; btn.textContent = isEdit ? '确定' : '添加';
 });
 });
 }
-
-
 function mkModal(id, title, extraCls, bodyHtml, footHtml, after) {
 var old = document.getElementById(id); if (old) old.remove();
 var m = document.createElement('div');
@@ -1135,7 +1034,6 @@ m.innerHTML = '<div class="modal-box ' + (extraCls || '') + '" role="dialog" ari
 '<div class="form">' + bodyHtml + '</div>' +
 '<div class="modal-footer">' + footHtml + '</div></div>';
 document.body.appendChild(m);
-
 if (window.lockBodyScroll) window.lockBodyScroll(true);
 else if (window.syncBodyLock) window.syncBodyLock();
 requestAnimationFrame(function () {
@@ -1152,12 +1050,10 @@ if (!m) return;
 m.classList.remove('open');
 setTimeout(function () { m.remove(); if (window.syncBodyLock) window.syncBodyLock(); }, 200);
 }
-
 document.addEventListener('click', function (e) {
 var b = e.target.closest && e.target.closest('#openExtCollectBtn');
 if (b) { e.preventDefault(); open(); }
 });
-
 window.__extAfterProductSave = function (productId) {
 var gid = Number(window.__extPendingGoods || 0);
 if (!gid) return;
@@ -1167,7 +1063,6 @@ S.goods.forEach(function (x) { if (Number(x.id) === gid) { x.status = 'used'; x.
 if (S.mask) render();
 });
 };
-
 document.addEventListener('click', function (e) {
 var btn = e.target.closest && e.target.closest('.extc-note-fold');
 if (!btn) return;
@@ -1180,13 +1075,10 @@ btn.setAttribute('aria-label', on ? '收起平台说明' : '展开平台说明')
 var body = box.querySelector('.extc-pfnote-b');
 if (body) body.style.maxHeight = on ? (body.scrollHeight + 8 + 'px') : '0px';
 });
-
-
 window.__extAfterEditClose = function () {
 if (!window.__extReturnAfterEdit) return;
 window.__extReturnAfterEdit = false;
 try { if (typeof window.__extOpenCollect === 'function') window.__extOpenCollect(); } catch (e) {}
 };
-
 window.__extOpenCollect = open;
 })();
