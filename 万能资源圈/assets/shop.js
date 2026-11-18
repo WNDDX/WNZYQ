@@ -1864,14 +1864,14 @@ if (url) {
 btnContact.style.display = '';
 btnContact.onclick = function () {
 track(currentProduct ? currentProduct.id : null, 'contact');
-var _qr = (currentVariant && currentVariant.contactQr) || (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
+var _qr = (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
 if (window.openContactModal) { window.openContactModal(url, _qr, null, '跳转-咨询在线客服', { green: true }); } else { window.openContactFallback(url, { green: true }); }
 };
 } else {
 btnContact.style.display = '';
 btnContact.onclick = function () {
 track(currentProduct ? currentProduct.id : null, 'contact');
-var _qr2 = (currentVariant && currentVariant.contactQr) || (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
+var _qr2 = (currentProduct && currentProduct.contactQr) || window.__kefuQrSrc();
 if (window.openContactModal) window.openContactModal('', _qr2, null, '', { green: true });
 else showToast('暂未设置客服链接', 'info');
 };
@@ -2588,6 +2588,8 @@ if (Array.isArray(c.announcements)) { DATA.announcements = c.announcements;
 try { var mx = 0; c.announcements.forEach(function (a) { var v = parseInt(a && a.id) || 0; if (v > mx) mx = v; }); window.__annMaxId = mx; if (window.__annUnread) window.__annUnread(); } catch (e9) { if (window.__silent) window.__silent(e9); }
 }
 if (c.shop_name) DATA.shopName = c.shop_name;
+if (c._globalContact) window._globalContact = c._globalContact;
+if (c._contactQr !== undefined) { window.__contactQr = c._contactQr || ''; window.__groupQr = c._groupQr || ''; window.__gzhQr = c._gzhQr || ''; }
 cachedVersion = c._homeVersion || '';
 usingRemote = true;
 hasCache = true;
@@ -2645,6 +2647,13 @@ return null;
 if (!res) { __failFinish(); return; }
 if (res.unchanged === true) {
 window.__lastFetchTime = Date.now();
+try {
+var _wc = JSON.parse(localStorage.getItem('wnzyq_shop_data') || 'null');
+if (_wc) {
+if (_wc._globalContact) window._globalContact = _wc._globalContact;
+if (_wc._contactQr !== undefined) { window.__contactQr = _wc._contactQr || ''; window.__groupQr = _wc._groupQr || ''; window.__gzhQr = _wc._gzhQr || ''; }
+}
+} catch (eW) { if (window.__silent) window.__silent(eW); }
 if (!window.__shopPainted && !(DATA.products || []).length && !opts.force) {
 return loadShopHome({ force: true });
 }
@@ -2686,6 +2695,7 @@ announcement_mode: DATA.announcementMode,
 announcements: DATA.announcements,
 shop_name: DATA.shopName,
 _contactQr: window.__contactQr || '', _groupQr: window.__groupQr || '', _gzhQr: window.__gzhQr || '',
+_globalContact: window._globalContact || '',
 _homeVersion: res.version || ''
 });
 usingRemote = true;
@@ -2751,7 +2761,9 @@ products: (res[0] && res[0].list) || [], categories: (res[1] && res[1].list) || 
 total: (res[0] && res[0].total) || 0, totalPages: (res[0] && res[0].total_pages) || 1, page: (res[0] && res[0].page) || 1, _backendPaged: true,
 announcement: DATA.announcement, announcementMode: DATA.announcementMode,
 announcements: DATA.announcements, shopName: DATA.shopName,
-_globalContact: window._globalContact, _changed: false, _wasSkel: false
+_globalContact: window._globalContact,
+_contactQr: window.__contactQr || '', _groupQr: window.__groupQr || '', _gzhQr: window.__gzhQr || '',
+_changed: false, _wasSkel: false
 };
 } catch (e) { if (window.__silent) window.__silent(e); }
 return { changed: false, wasSkel: false, stale: true };
@@ -2795,6 +2807,10 @@ cacheData.announcement = DATA.announcement;
 cacheData.announcement_mode = DATA.announcementMode;
 cacheData.announcements = DATA.announcements;
 if (DATA.shopName) cacheData.shop_name = DATA.shopName;
+cacheData._contactQr = window.__contactQr || '';
+cacheData._groupQr = window.__groupQr || '';
+cacheData._gzhQr = window.__gzhQr || '';
+cacheData._globalContact = window._globalContact || '';
 __setShopCache('wnzyq_shop_data', cacheData);
 } catch (e) { if (window.__silent) window.__silent(e); }
 if (DATA.announcement !== _oldAnn || DATA.announcementMode !== _oldAnnMode || DATA.shopName !== _oldShopName) _changed = true;
@@ -2808,6 +2824,7 @@ total: DATA.total, totalPages: DATA.totalPages, page: DATA.page, _backendPaged: 
 announcement: DATA.announcement, announcementMode: DATA.announcementMode,
 announcements: DATA.announcements, shopName: DATA.shopName,
 _globalContact: window._globalContact,
+_contactQr: window.__contactQr || '', _groupQr: window.__groupQr || '', _gzhQr: window.__gzhQr || '',
 _changed: _changed, _wasSkel: _wasSkel
 };
 void 0;

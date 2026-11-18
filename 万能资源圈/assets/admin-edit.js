@@ -67,6 +67,7 @@ else { fImg.value = p ? (p.img || '') : ''; }
 fContactUrl.value = p ? (p.contactUrl || '') : '';
 fContactQr.value = p ? (p.contactQr || '') : '';
 __edContactRefresh();
+try { if (window.__edContactReset) window.__edContactReset(); } catch (eRC2) { if (window.__silent) window.__silent(eRC2); }
 fPrice.value = p ? (p.price || '') : '';
 fSort.value = p ? (p.sort || 0) : 0;
 fOnline.checked = p ? !!(p.is_online && !p.is_hidden) : true;
@@ -1931,6 +1932,12 @@ if (d) d.style.display = qr ? '' : 'none';
 if (a) a.style.display = qr ? 'none' : '';
 }
 window.__edContactRefresh = __edContactRefresh;
+function __edContactReset() {
+item.classList.remove('open');
+if (fold) fold.setAttribute('aria-expanded', 'false');
+if (net) net.value = (document.getElementById('fContactQr').value || '').trim();
+}
+window.__edContactReset = __edContactReset;
 var toggle = function () {
 var willOpen = !item.classList.contains('open');
 item.classList.toggle('open', willOpen);

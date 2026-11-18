@@ -212,9 +212,14 @@ ensureKfModal();
 var _tEl = document.getElementById('kfTitle');
 if (_tEl) _tEl.textContent = opts.title || '咨询客服';
 var img = document.getElementById('kfQrImg');
+var _qrBoxEl = img ? img.parentNode : null;
+function __qrBusy(on) {
+try { if (_qrBoxEl && _qrBoxEl.classList) _qrBoxEl.classList.toggle('kf-qr-loading', !!on); } catch (e) { if (window.__silent) window.__silent(e); }
+}
 if (img) {
 img.style.opacity = '0';
 img.classList.remove('kf-qr-in');
+__qrBusy(true);
 img.onerror = function () {
 if (this.dataset && !this.dataset.__retried && _qrRaw && /^https?:\/\//i.test(_qrRaw) && String(this.src).indexOf('/api/img-proxy') >= 0) {
 this.dataset.__retried = '1';
@@ -226,8 +231,9 @@ this.src = KF_QRF();
 if (this.classList) this.classList.add('media-fail');
 if (this.dataset) this.dataset.__failed = '1';
 img.style.opacity = '';
+__qrBusy(false);
 };
-img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); };
+img.onload = function () { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); __qrBusy(false); };
 var _qrSrc = qrImg;
 if (qrImg === undefined || qrImg === null) _qrSrc = window.__kefuQrSrc();
 var _qrRaw = _qrSrc;
@@ -235,7 +241,7 @@ if (_qrSrc && /^https?:\/\//i.test(_qrSrc)) _qrSrc = '/api/img-proxy?u=' + encod
 if (_qrSrc) {
 img.src = _qrSrc;
 if (img.complete) {
-if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); }
+if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); __qrBusy(false); }
 else { img.onerror(); }
 }
 } else { img.onerror(); }
