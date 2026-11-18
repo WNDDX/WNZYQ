@@ -1203,6 +1203,18 @@ var _t = 0;
 var deb = function () { clearTimeout(_t); _t = setTimeout(run, 120); };
 window.addEventListener('resize', deb);
 window.addEventListener('orientationchange', function () { clearTimeout(_t); _t = setTimeout(run, 240); });
+try {
+if (window.ResizeObserver) {
+var ro = new ResizeObserver(function () { run(); });
+Array.prototype.forEach.call(document.querySelectorAll('.rte-toolbar'), function (tb) { ro.observe(tb); });
+}
+} catch (eRO) { if (window.__silent) window.__silent(eRO); }
+try {
+var em = document.getElementById('editMask');
+if (em && window.MutationObserver) new MutationObserver(function () {
+if (em.classList.contains('open')) { setTimeout(run, 60); setTimeout(run, 420); }
+}).observe(em, { attributes: true, attributeFilter: ['class'] });
+} catch (eMO) { if (window.__silent) window.__silent(eMO); }
 })();
 document.addEventListener('keydown', function (e) {
 if (e.key === 'Escape') {
