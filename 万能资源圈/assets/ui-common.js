@@ -3548,7 +3548,7 @@ function __warm() {
 if (_done) return;
 var src = '';
 try { src = (window.__kefuQrSrc && window.__kefuQrSrc()) || ''; } catch (e0) { src = ''; }
-if (!src) { if (++_tries < 40) setTimeout(__warm, 300); return; }
+if (!src) { if (++_tries < 40) setTimeout(__warm, 150); return; }
 _done = true;
 try {
 var u = (src.slice(0, 4).toLowerCase() === 'http') ? ('/api/img-proxy?u=' + encodeURIComponent(src)) : src;
@@ -3558,6 +3558,6 @@ im.onerror = function () {};
 im.src = u;
 } catch (e1) { if (window.__silent) window.__silent(e1); }
 }
-if (window.requestIdleCallback) requestIdleCallback(__warm, { timeout: 2500 }); else setTimeout(__warm, 1200);
+if (window.requestIdleCallback) requestIdleCallback(__warm, { timeout: 900 }); else setTimeout(__warm, 600);
 } catch (e) { if (window.__silent) window.__silent(e); }
 })();
