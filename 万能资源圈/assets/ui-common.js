@@ -244,6 +244,20 @@ if (img.complete) {
 if (img.naturalWidth) { img.style.opacity = ''; void img.offsetWidth; img.classList.add('kf-qr-in'); __qrBusy(false); }
 else { img.onerror(); }
 }
+} else if (qrImg === undefined || qrImg === null) {
+var _qrWaitAt = Date.now();
+var _qrWait = setInterval(function () {
+var _late = window.__kefuQrSrc();
+if (_late) {
+clearInterval(_qrWait);
+_qrRaw = _late;
+var _s2 = /^https?:\/\//i.test(_late) ? ('/api/img-proxy?u=' + encodeURIComponent(_late)) : _late;
+img.src = _s2;
+if (img.complete && img.naturalWidth) { img.style.opacity = ''; img.classList.add('kf-qr-in'); __qrBusy(false); }
+return;
+}
+if (Date.now() - _qrWaitAt > 2000) { clearInterval(_qrWait); img.onerror(); }
+}, 150);
 } else { img.onerror(); }
 if (window.__bindQrLightbox) window.__bindQrLightbox(img);
 }
