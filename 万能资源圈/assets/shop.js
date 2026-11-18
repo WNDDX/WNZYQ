@@ -911,7 +911,10 @@ return __SORT_TYPES[0];
 }
 function __setSortDir(d) {
 var cur = __sortTypeDef();
-if (!cur.dir) return;
+if (!cur.dir) {
+if (window.showToast) window.showToast('「默认」按后台顺序排列，没有升降序；先在左边选一个排序类型（热门/最新/价格）再点 ⇅', 'info');
+return;
+}
 if (sortDir === d) return;
 sortDir = d;
 __applySort();
@@ -2074,7 +2077,9 @@ panel: function () { return document.getElementById('productGrid'); },
 neighbor: function (dir) { return window.__catSeqTarget(dir); },
 fill: function (nb, dir, panelB) {
 var _curGrid = document.getElementById('productGrid');
-panelB.className = (_curGrid && _curGrid.className) || 'product-grid';
+panelB.className = 'product-grid'
++ (_curGrid && _curGrid.classList.contains('list-view') ? ' list-view' : '')
++ (_curGrid && _curGrid.classList.contains('grid-empty') ? ' grid-empty' : '');
 panelB.replaceChildren();
 for (var _si = 0; _si < 8; _si++) {
 var _sc = document.createElement('div');
@@ -2102,7 +2107,8 @@ onEnd: function () { window.__fsCatLineUpdate(true); },
 commit: function (dir) { window.__swipeCatGo(dir); },
 isActive: function () {
 var m = document.getElementById('modalMask');
-return !(m && m.classList.contains('open')) && !window.__flipAnimating;
+var ob = document.querySelector('.ann-modal.open, .kf-mask.open, .share-mask.open, .cat-picker-panel.open');
+return !(m && m.classList.contains('open')) && !window.__flipAnimating && !ob;
 }
 });
 window.addEventListener('popstate', function(e) {

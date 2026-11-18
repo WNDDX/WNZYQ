@@ -1151,6 +1151,7 @@ if (big) {
 try { ed.focus({ preventScroll: true }); } catch (e1) { ed.focus(); }
 (function () { var _tb = ed.previousElementSibling; if (_tb && _tb.classList && _tb.classList.contains('rte-toolbar')) { var _f = function () { if (!ed.classList.contains('rte-large')) return; var _b = _tb.getBoundingClientRect().bottom + 0; ed.style.top = _b + 'px'; ed.style.height = 'calc(100vh - ' + (_b + 12) + 'px)'; ed.style.height = 'calc(100dvh - ' + (_b + 12) + 'px)'; }; _f(); if (window.__rteRO) window.__rteRO.disconnect(); try { window.__rteRO = new ResizeObserver(_f); window.__rteRO.observe(_tb); } catch (e) { if (window.__silent) window.__silent(e); } } })();
 setTimeout(function(){ var _le=document.querySelector('.rte-editor.rte-large'); if(_le){ var _tb2=_le.previousElementSibling; if(_tb2&&_tb2.classList&&_tb2.classList.contains('rte-toolbar')){ var _b2=_tb2.getBoundingClientRect().bottom+0; _le.style.top=_b2+'px'; _le.style.height='calc(100vh - '+(_b2+12)+'px)'; _le.style.height='calc(100dvh - '+(_b2+12)+'px)'; } } }, 80);
+setTimeout(function () { if (window.__rteCenterExpand && tb && tb.classList && tb.classList.contains('rte-toolbar')) window.__rteCenterExpand(tb); }, 100);
 }
 });
 document.addEventListener('click', function (e) {
@@ -1167,7 +1168,7 @@ tb.style.maxHeight = __h0 + 'px'; tb.style.opacity = '1';
 void tb.offsetHeight;
 tb.style.transition = 'max-height var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out)';
 tb.style.maxHeight = __h1 + 'px';
-setTimeout(function () { tb.style.transition = ''; tb.style.maxHeight = ''; tb.style.overflow = ''; }, 230);
+setTimeout(function () { tb.style.transition = ''; tb.style.maxHeight = ''; tb.style.overflow = ''; if (window.__rteCenterExpand) window.__rteCenterExpand(tb); }, 230);
 } catch (e0) { if (window.__silent) window.__silent(e0); }
 x.title = collapsed ? '展开工具栏' : '收起工具栏';
 setTimeout(function () {
@@ -1180,6 +1181,29 @@ ed.style.height = 'calc(100dvh - ' + (_b + 12) + 'px)';
 }
 }, 30);
 });
+function __rteCenterExpand(only) {
+var list = only ? [only] : Array.prototype.slice.call(document.querySelectorAll('.rte-toolbar'));
+list.forEach(function (tb) {
+if (!tb || !tb.querySelector) return;
+var btn = tb.querySelector('.rte-expand');
+if (!btn) return;
+var th = tb.clientHeight || 0;
+var bh = btn.offsetHeight || 28;
+if (th < bh + 2) return;
+tb.style.setProperty('--rte-expand-top', ((th - bh) / 2) + 'px');
+});
+}
+window.__rteCenterExpand = __rteCenterExpand;
+(function __rteCenterBoot() {
+var run = function () { try { __rteCenterExpand(); } catch (e) { if (window.__silent) window.__silent(e); } };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+setTimeout(run, 300);
+setTimeout(run, 1200);
+var _t = 0;
+var deb = function () { clearTimeout(_t); _t = setTimeout(run, 120); };
+window.addEventListener('resize', deb);
+window.addEventListener('orientationchange', function () { clearTimeout(_t); _t = setTimeout(run, 240); });
+})();
 document.addEventListener('keydown', function (e) {
 if (e.key === 'Escape') {
 var bigEd = document.querySelector('.rte-editor.rte-large');
