@@ -2433,7 +2433,7 @@ mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-la
 '<label for="rsConfirm">输入当前超级管理员密码以确认</label>' +
 '<input class="input" id="rsConfirm" type="password" autocomplete="current-password" placeholder="当前密码" aria-label="输入当前超级管理员密码以确认">' +
 '<p class="imp-lead" id="rsErr" style="color:var(--danger,#d33);min-height:20px;margin:4px 0 0"></p>' +
-'<div class="modal-footer"><button type="button" class="modal-inner-btn danger-solid" id="rsGo" disabled>确认清空</button>' +
+'<div class="modal-footer"><button type="button" class="modal-inner-btn" id="rsGo" disabled>确认清空</button>' +
 '<button type="button" class="modal-close" data-x="1">关闭</button></div>' +
 '</div>';
 document.body.appendChild(mask);
