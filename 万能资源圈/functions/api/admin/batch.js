@@ -22,6 +22,58 @@ export async function onRequestPost(context) {
   const ids = Array.isArray(b.ids) ? b.ids.map(Number).filter(Boolean) : [];
   const action = String(b.action || '');
 
+  /* v671（老板 A 案：批量导入顺带包含建分类/建类型；团长要求防伪造）：
+     导入遇到「新分类 / 新类型」时，前端**不调** categories / variants（那两个接口仍各要自己的权限），
+     改调下面两条**导入专用动作**——本入口自己按 batch.import 判权。
+     所以「只勾 batch.import 直接调新建分类接口」仍然 403，不存在"客户端塞个标记就绕过 cats.add"的后门。
+     归属：分类 created_by = 当前账号；类型挂 product_id（跟着资源走）。
+     C-1 范围锁：新建分类的 id 会追加进该账号的 catsScope（仅数组形态；'all' 本来就看得到），
+     否则 A 建完分类自己看不到（99 不在 [6] 里），会变成"导入成功了但什么都不见了"。 */
+  if (action === 'import.category' || action === 'import.variant') {
+    const au = await requirePerm(env, request, 'batch.import');
+    if (au instanceof Response) return au;
+
+    if (action === 'import.category') {
+      const name = String(b.name || '').trim().slice(0, 60);
+      if (!name) return json({ ok: false, msg: '分类名不能为空' }, 400);
+      const parentId = Number(b.parent_id) || 0;
+      const ins = await env.DB.prepare('INSERT INTO categories (name, sort, parent_id, is_hidden, created_by) VALUES (?,?,?,?,?)')
+        .bind(name, Number(b.sort) || 0, parentId, b.is_hidden ? 1 : 0, au.username).run();
+      const newId = (ins.meta && ins.meta.last_row_id) || 0;
+      if (newId && au.role !== 'super') {
+        try {
+          const rawStr = typeof au.perms === 'string' ? au.perms : JSON.stringify(au.perms || {});
+          const perms = parsePerms(rawStr);
+          if (Array.isArray(perms.catsScope)) {
+            const ids = perms.catsScope.slice();
+            if (ids.indexOf(Number(newId)) === -1) ids.push(Number(newId));
+            const raw = JSON.parse(rawStr) || {};
+            raw.catsScope = ids;
+            await env.DB.prepare('UPDATE admin_users SET perms = ? WHERE username = ?').bind(JSON.stringify(raw), au.username).run();
+          }
+        } catch (e) { /* 追加失败不影响建分类本身（最坏是这条资源暂时看不到） */ }
+      }
+      return json({ ok: true, id: newId, created_by: au.username });
+    }
+
+    /* import.variant：类型跟着资源走，先过范围锁（资源必须在授权分类内） */
+    const productId = Number(b.productId || b.product_id) || 0;
+    if (!productId) return json({ ok: false, msg: '缺少资源 id' }, 400);
+    const sc = await productScopeOk(env, auth, productId);
+    if (sc.missing) return json({ ok: false, msg: '资源不存在或已删除' }, 404);
+    if (!sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
+    const vr = await env.DB.prepare(
+      `INSERT INTO product_variants (product_id, name, title, "desc", img, video, contact_url, price, sort, resource_code, resource_content, is_hidden, bind_limit)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    ).bind(
+      productId, String(b.name || '标准').slice(0, 60), String(b.title || ''), String(b.desc || ''),
+      String(b.img || ''), String(b.video || ''), String(b.contactUrl || ''), Number(b.price) || 0,
+      Number(b.sort) || 0, String(b.resourceCode || ''), String(b.resourceContent || ''),
+      b.isHidden ? 1 : 0, Number(b.bindLimit) || 1
+    ).run();
+    return json({ ok: true, id: (vr.meta && vr.meta.last_row_id) || 0 });
+  }
+
   if (ids.length === 0) return json({ ok: false, msg: '请选择资源' }, 400);
   /* #116：批量动作逐项鉴权 + 范围锁（选中的资源必须全部在授权范围内） */
   const ACT = { online: 'batch.online', offline: 'batch.online', hide: 'batch.online', show: 'batch.online', delete: 'batch.del', changeCat: 'products.moveCat', changePrice: 'batch.price' };

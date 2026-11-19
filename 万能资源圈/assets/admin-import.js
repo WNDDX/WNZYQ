@@ -533,7 +533,8 @@ seq = seq.then(function () {
 if (catIdByName[name]) { dupLine('分类「' + name + '」已存在，跳过'); return null; }
 var pid = 0;
 if (r[2]) { pid = catIdByName[r[2]] || 0; if (!pid) say('分类「' + name + '」：所属一级「' + r[2] + '」未找到，按一级导入'); }
-return apiCall('admin/categories', { method: 'POST', body: JSON.stringify({ name: name, parent_id: pid, sort: Number(r[3]) || 0, hidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) }).then(function (x) {
+
+return apiCall('admin/batch', { method: 'POST', body: JSON.stringify({ action: 'import.category', name: name, parent_id: pid, sort: Number(r[3]) || 0, is_hidden: /隐藏/.test(r[4] || '') ? 1 : 0 }) }).then(function (x) {
 if (x && x.ok) { catIdByName[name] = x.id; okLine('分类「' + name + '」✓'); }
 else failLine('分类「' + name + '」失败' + (x && x.msg ? '：' + x.msg : ''));
 }).catch(function () { failLine('分类「' + name + '」失败'); });
@@ -578,7 +579,9 @@ var vk = String(pid) + '|' + vName;
 if (varKeys[vk]) { dupLine('类型「' + vName + '」已存在，跳过'); return null; }
 varKeys[vk] = 1;
 
-return apiCall('admin/variants', { method: 'POST', body: JSON.stringify({
+
+return apiCall('admin/batch', { method: 'POST', body: JSON.stringify({
+action: 'import.variant',
 productId: pid, name: vName, price: pc2.val, desc: r[3] || '',
 resourceCode: String(r[4] || '').trim() === '●●●●' ? '' : String(r[4] || '').trim(),
 resourceContent: r[5] || '', bindLimit: Number(r[6]) || 1,
