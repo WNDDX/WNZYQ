@@ -230,7 +230,10 @@ export async function onRequestPost(context) {
 
     /* --- 平台档案：只有超管能加/删/改 --- */
     if (op.indexOf('platform.') === 0) {
-      const auth = await requirePerm(env, request, 'external.view');
+      /* v664：平台档案单独给 external.platform。
+         注意：下面还有一道 `!isSuper` 的超管独占判断（产品决定），所以对子账号目前仍然进不来；
+         真要让子账号维护平台，得先经老板同意再把那道判断去掉。 */
+      const auth = await requirePerm(env, request, 'external.platform');
       if (auth instanceof Response) return auth;
       if (!isSuper) return json({ ok: false, msg: '只有总管能维护平台档案' }, 403);
 
@@ -294,7 +297,12 @@ export async function onRequestPost(context) {
     }
 
     /* --- 链接：按 op 校验权限 --- */
-    const needPerm = op === 'link.add' ? 'external.add' : (op === 'link.del' ? 'external.del' : (op === 'link.touch' ? 'external.view' : 'external.edit'));
+    /* v664：probe（只探不写）必须显式映射到 external.probe ——
+       否则会先被这道通用门按 external.edit 拦掉，下面 probe 自己那道校验永远走不到（死代码）。 */
+    const needPerm = op === 'probe' ? 'external.probe'
+      : (op === 'link.add' ? 'external.add'
+      : (op === 'link.del' ? 'external.del'
+      : (op === 'link.touch' ? 'external.view' : 'external.edit')));
     const auth = await requirePerm(env, request, needPerm);
     if (auth instanceof Response) return auth;
 
@@ -372,7 +380,8 @@ export async function onRequestPost(context) {
        给「这个地址到底能不能采」和平台横评用：拉一次页面、走同一套解析，只返回条数和样例，
        一条都不入库。这样测十个八个平台不会污染采集库。 */
     if (op === 'probe') {
-      const authP = await requirePerm(env, request, 'external.fetch');
+      /* v664：只探不写，单独给 external.probe，不再借用 external.fetch（否则有采集权就能到处探站） */
+      const authP = await requirePerm(env, request, 'external.probe');
       if (authP instanceof Response) return authP;
       const one = String(b.url || '').trim().slice(0, 1200);
       if (!/^https?:\/\//i.test(one)) return json({ ok: false, msg: '填完整网址' }, 400);

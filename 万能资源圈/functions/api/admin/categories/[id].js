@@ -28,7 +28,13 @@ export async function onRequestPut(context) {
   const { env, request, params } = context;
 
   await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
-  const auth = await requirePerm(env, request, 'cats.edit');
+  /* v664：先读 body，才能分清这次是「拖动排序」还是「编辑分类」——
+     只传 sort 一个字段 → 要 cats.sort；带了 name/parent_id/is_hidden → 要 cats.edit。
+     readJSON 只吃 body，requirePerm 只读 Cookie/头，两者顺序互不影响。 */
+  const b = await readJSON(request);
+  const __keys = Object.keys(b || {}).filter((k) => ALLOWED_CAT_FIELDS.indexOf(k) !== -1);
+  const __sortOnly = __keys.length === 1 && __keys[0] === 'sort';
+  const auth = await requirePerm(env, request, __sortOnly ? 'cats.sort' : 'cats.edit');
   if (auth instanceof Response) return auth;
 
   const id = Number(params.id);
@@ -36,7 +42,6 @@ export async function onRequestPut(context) {
   const _sc = await catScopeOk(env, auth, id, true);
   if (!_sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
 
-  const b = await readJSON(request);
   const sets = [];
   const vals = [];
 

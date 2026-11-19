@@ -22,7 +22,9 @@ export async function onRequestDelete(context) {
   if (auth.role !== 'super') {
     const { parsePerms, can, catAllowed } = await import('../../../_perms.js');
     const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
-    if (!can('products.edit', auth.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
+    /* v664：绑设备算「编辑」的一种——products.bind 或 products.edit 任一即可，
+       否则只勾了「绑定设备」的账号解不了绑，只勾「编辑资源」的老账号也会被卡死。 */
+    if (!can('products.bind', auth.role, perms) && !can('products.edit', auth.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
     if (!catAllowed(Number(b.cid) || 0, auth.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
   }
 
