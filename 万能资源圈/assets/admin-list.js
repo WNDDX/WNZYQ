@@ -54,6 +54,8 @@ if (_pp2) _pp2.classList.remove('is-switching');
 
 function loadProducts(silent) {
 
+var __genP = __stateGen || 0;
+
 
 var kw = (document.getElementById('adminSearch').value || '').trim();
 var filterCat = document.getElementById('filterCat').value;
@@ -111,6 +113,12 @@ return api('admin/products' + qs);
 }).then(function (res) {
 var curCacheKey = __adminProductCacheKey(adminPage, (document.getElementById('adminSearch').value || '').trim(), document.getElementById('filterCat').value, document.getElementById('filterStatus').value);
 if (curCacheKey !== _reqCacheKey) return;
+
+if (__genP !== (__stateGen || 0)) {
+__clearSwitching();
+if (!silent) window.__adminSkelP = false;
+return;
+}
 __clearSwitching();
 try { window.__clearLoadRetry(document.getElementById('productList')); } catch (e0) { if (window.__silent) window.__silent(e0); }
 if (!res.ok) {
@@ -1056,7 +1064,19 @@ return;
 if (action === 'delete') {
 var _runDelete = function () {
 var _snap = (state.products || []).slice();
-applyBatchLocal('delete', ids); renderProducts();
+
+var _want = {}, _picked = [];
+(ids || []).forEach(function (x) { _want[String(x)] = true; });
+(state.products || []).forEach(function (p, i) {
+if (_want[String(p.id)]) { _picked.push({ p: p, idx: i }); delete _want[String(p.id)]; }
+});
+
+ids.forEach(function (id) { __tombMark(id); });
+
+applyBatchLocal('delete', ids);
+__batchRemoveRows(ids);
+try { if (typeof updateBatchBar === 'function') updateBatchBar(); } catch (e0) { if (window.__silent) window.__silent(e0); }
+if (!document.querySelector('#productList .product-row')) renderProducts();
 api('admin/batch', { method: 'POST', body: JSON.stringify({ ids: ids, action: action }) }).then(function (res) {
 if (res && res.ok) {
 clearCache();
@@ -1064,30 +1084,53 @@ __undoable(
 '已删除 ' + ids.length + ' 个资源，回收站点可找回',
 function () { silentSyncProducts(); },
 function () {
+
+ids.forEach(function (id) { __tombDrop(id); });
+__batchRestoreRows(_picked, ids);
+var _failIds = [];
 var _seq = Promise.resolve();
 ids.forEach(function (id) {
 _seq = _seq.then(function () {
-return api('admin/recycle', { method: 'POST', body: JSON.stringify({ op: 'restore', kind: 'product', id: id }) });
+return api('admin/recycle', { method: 'POST', body: JSON.stringify({ op: 'restore', kind: 'product', id: id }) })
+.then(function (r) { if (!r || !r.ok) _failIds.push(id); })
+.catch(function () { _failIds.push(id); });
 });
 });
 _seq.then(function () {
 clearCache();
+if (_failIds.length) {
+_failIds.forEach(function (id) {
+__tombMark(id);
+state.products = (state.products || []).filter(function (x) { return String(x.id) !== String(id); });
+});
+try { refreshCatCnts(); } catch (e1) { if (window.__silent) window.__silent(e1); }
+renderProducts();
+toast('有 ' + _failIds.length + ' 个资源恢复失败，请到回收站点手动恢复', 'error');
+} else {
 toast('已恢复 ' + ids.length + ' 个资源', 'success');
-silentSyncProducts();
-}).catch(function () {
-toast('恢复失败，请手动恢复', 'error');
+}
 silentSyncProducts();
 });
 }
 );
+
 silentSyncProducts();
 } else {
+
+var _missList = (res && res.missingIds) || [];
+var _miss = {};
+_missList.forEach(function (x) { _miss[String(x)] = true; });
+var _restoreIds = ids.filter(function (id) { return !_miss[String(id)]; });
+_restoreIds.forEach(function (id) { __tombDrop(id); });
+if (_restoreIds.length) __batchRestoreRows(_picked, _restoreIds);
+else { state.products = _snap; renderProducts(); }
 toast((res && res.msg) || '批量删除失败', 'error');
-state.products = _snap; renderProducts();
 }
 }).catch(function () {
+
 toast(window.T('netFail'), 'error');
-state.products = _snap; renderProducts();
+ids.forEach(function (id) { __tombDrop(id); });
+__batchRestoreRows(_picked, ids);
 });
 };
 __bDone(action);
@@ -1129,6 +1172,34 @@ else if (action === 'changePrice' && extra) p.price = Number(extra.price);
 });
 }
 try { refreshCatCnts(); } catch (e) { if (window.__silent) window.__silent(e); }
+}
+
+
+function __batchRemoveRows(ids) {
+var idSet = {}, i;
+ids.forEach(function (x) { idSet[String(x)] = true; });
+var rows = document.querySelectorAll('#productList .product-row[data-id]');
+var n = 0;
+for (i = 0; i < rows.length; i++) {
+if (idSet[String(rows[i].dataset.id)] && rows[i].parentNode) { rows[i].parentNode.removeChild(rows[i]); n++; }
+}
+return n;
+}
+
+function __batchRestoreRows(picked, restoreIds) {
+var want = {}, drop = {};
+(restoreIds || []).forEach(function (x) { want[String(x)] = true; });
+var add = (picked || []).filter(function (it) { return want[String(it.p.id)]; });
+add.forEach(function (it) { drop[String(it.p.id)] = true; });
+
+var cur = (state.products || []).filter(function (x) { return !drop[String(x.id)]; });
+add.sort(function (a, b) { return a.idx - b.idx; }).forEach(function (it) {
+cur.splice(Math.min(it.idx, cur.length), 0, it.p);
+});
+state.products = cur;
+__stateGen = (__stateGen || 0) + 1;
+try { refreshCatCnts(); } catch (e) { if (window.__silent) window.__silent(e); }
+renderProducts();
 }
 var __silentSyncT = 0;
 
