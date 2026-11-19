@@ -16,8 +16,10 @@ export async function onRequestGet(context) {
     const { env, request } = context;
     await ensureAdminUsers(env);
 
-    /* 权限：超管，或有「账号管理」权限的人（日志属于账号安全范畴） */
-    const auth = await requirePerm(env, request, 'users');
+    /* v674（老板 11-19：日志要能单独授权）：权限从「账号管理」改为「操作日志」。
+       原来挂 users，等于「有账号管理权就能看全站操作记录」，语义不对——
+       日志属于系统维护，不在账号管理范畴。 */
+    const auth = await requirePerm(env, request, 'system.logs');
     if (auth instanceof Response) return auth;
 
     const url = new URL(request.url);

@@ -1111,8 +1111,8 @@ var map = { products: 'products.view', categories: 'cats.view', stats: 'data.sta
 var hasSettings = me.role === 'super'
 || window.__permCan('users')
 || window.__permCan('settings.ann')
-|| window.__permCan('settings.mode')
-|| window.__permCan('settings.bindlimit');
+|| window.__permCan('settings.contact')
+|| window.__permCan('settings.mode');
 tabs.forEach(function (t) {
 var name = t.getAttribute('data-tab');
 if (name === 'settings') { t.style.display = hasSettings ? '' : 'none'; return; }

@@ -17,19 +17,23 @@ export async function onRequestPost(context) {
   const { env, request } = context;
   try {
     await (await import('../../_utils.js')).ensureAdminUsers(env);
-    const auth = await requirePerm(env, request, 'sensitive.super');
+    /* v674（老板 11-19「权限全放开，但高危项要输管理员密码」）：
+       ① 权限从 `sensitive.super` 改为 `danger.clear`——面板可勾、可分配给子账号；
+       ② 但密码永远是「超管密码」，不是子账号自己的密码。 */
+    const auth = await requirePerm(env, request, 'danger.clear');
     if (auth instanceof Response) return auth;
 
     const body = await readJSON(request);
     const pwd = String((body && body.password) || '');
-    if (!pwd) return json({ ok: false, msg: '请输入当前超级管理员密码' }, 400);
+    if (!pwd) return json({ ok: false, msg: '请输入超级管理员密码' }, 400);
 
     /* 老板 2026-11-19：清空是不可逆操作，光敲两个字不够，要验证是本人。
-       超管表是 admins（子账号在 admin_users），requirePerm 已保证只有 super 能到这里。 */
-    const meRow = await env.DB.prepare('SELECT * FROM admins WHERE id = ?').bind(auth.id).first();
-    if (!meRow) return json({ ok: false, msg: '账号不存在' }, 404);
+       v674：密码验证对象固定为超管（admins 表），不再按 auth.id 查——
+       否则子账号拿到权限后，输自己的密码就能清空全站。 */
+    const meRow = await env.DB.prepare('SELECT * FROM admins ORDER BY id LIMIT 1').first();
+    if (!meRow) return json({ ok: false, msg: '超级管理员账号不存在' }, 404);
     const pv = await verifyPassword(pwd, meRow);
-    if (!pv || !pv.ok) return json({ ok: false, msg: '密码不正确' }, 400);
+    if (!pv || !pv.ok) return json({ ok: false, msg: '超级管理员密码不正确' }, 400);
 
     /* 按依赖顺序删：先明细，后主表 */
     const TABLES = [

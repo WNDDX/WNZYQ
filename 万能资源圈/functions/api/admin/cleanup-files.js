@@ -5,7 +5,7 @@
  * 安全：①需登录；②key 白名单校验；③删前逐个核对该 key 是否仍被任何资源/类型引用，被引用的一律保留；
  *     ④单次最多 200 个 key。
  */
-import { json, requirePerm, readJSON, buildContentText } from '../../_utils.js';
+import { json, requirePerm, readJSON, buildContentText, verifyPassword } from '../../_utils.js';
 
 const KEY_RE = /^(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+$/;
 const P_FIELDS = ['img', 'detail', 'detail_images', 'detail_videos', 'resource_content'];
@@ -13,10 +13,18 @@ const V_FIELDS = ['desc', 'img', 'video', 'resource_content'];
 
 export async function onRequestPost(context) {
   const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
-  const auth = await requirePerm(env, request, 'sensitive.super');
+  const auth = await requirePerm(env, request, 'system.file');
   if (auth instanceof Response) return auth;
 
   const b = await readJSON(request);
+  /* v674（老板 11-19「高危项要输管理员密码」）：删文件不可逆，误判会删掉在用的图，
+     所以除了权限之外，还要验证超管密码（固定 admins 表那条，不是子账号自己的密码）。 */
+  const pwd = String((b && b.password) || '');
+  if (!pwd) return json({ ok: false, msg: '请输入超级管理员密码' }, 400);
+  const superRow = await env.DB.prepare('SELECT * FROM admins ORDER BY id LIMIT 1').first();
+  if (!superRow) return json({ ok: false, msg: '超级管理员账号不存在' }, 404);
+  const pv = await verifyPassword(pwd, superRow);
+  if (!pv || !pv.ok) return json({ ok: false, msg: '超级管理员密码不正确' }, 400);
   const keys = Array.isArray(b.keys)
     ? b.keys.map(String).filter(function (k) { return KEY_RE.test(k); }).slice(0, 200)
     : [];

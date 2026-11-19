@@ -1480,8 +1480,9 @@ var PM_GROUPS = [
 { t: '账号管理', k: 'account', items: [['view', '查看账号'], ['add', '新增账号'], ['edit', '编辑账号与权限'], ['pwd', '重置密码'], ['status', '停用与启用'], ['sub', '管理下级'], ['del', '删除账号']] },
 
 
-{ t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错'], ['cache', '清理缓存'], ['file', '清理无用文件']] },
-{ t: '备份与恢复', k: 'danger', items: [['backup', '导出备份'], ['restore', '导入恢复'], ['recycle', '回收站'], ['clear', '清空测试数据']] },
+
+{ t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['vitals', '性能实测'], ['err', '前端报错'], ['cache', '清理缓存'], ['file', '清理无用文件']] },
+{ t: '备份与恢复', k: 'danger', items: [['recycle', '回收站'], ['clear', '清空测试数据']] },
 
 
 { t: '平台设置', k: 'settings', items: [['ann', '公告设置'], ['contact', '客服与二维码'], ['mode', '公告显示方式']] }

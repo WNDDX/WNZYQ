@@ -4,14 +4,24 @@
  * 保护：①上传台账——24 小时内的新文件可能是编辑中途的，不删；台账之前的历史遗留（如拖拽 bug 期的黑户）直接删。
  * 节流：30 分钟内重复调用直接跳过（settings 表记时间戳）。
  */
-import { json, requirePerm, buildContentText } from '../../_utils.js';
+import { json, requirePerm, buildContentText, readJSON, verifyPassword } from '../../_utils.js';
 
 const GRACE_HOURS = 24;
 
 export async function onRequestPost(context) {
   const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
-  const auth = await requirePerm(env, request, 'sensitive.super');
+  const auth = await requirePerm(env, request, 'system.file');
   if (auth instanceof Response) return auth;
+
+  /* v674（老板 11-19「高危项要输管理员密码」）：全仓扫删文件不可逆，
+     除了系统维护权限，还要验证超管密码（固定 admins 表那条）。 */
+  const _b = await readJSON(request);
+  const _pwd = String((_b && _b.password) || '');
+  if (!_pwd) return json({ ok: false, msg: '请输入超级管理员密码' }, 400);
+  const _superRow = await env.DB.prepare('SELECT * FROM admins ORDER BY id LIMIT 1').first();
+  if (!_superRow) return json({ ok: false, msg: '超级管理员账号不存在' }, 404);
+  const _pv = await verifyPassword(_pwd, _superRow);
+  if (!_pv || !_pv.ok) return json({ ok: false, msg: '超级管理员密码不正确' }, 400);
 
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) return json({ ok: false, msg: '图片存储未配置' }, 400);
