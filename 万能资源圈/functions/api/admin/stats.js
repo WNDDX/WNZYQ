@@ -34,8 +34,13 @@ export async function onRequestGet(context) {
   if (auth instanceof Response) return auth;
   /* #116 范围锁 + 软删口径（复检修正）：sub 统计只算授权分类；软删（数据缓存中）资源一律不计入统计。
      super 时 scopeIds=null，所有片段为空，SQL 与既有口径一致（仅补 deleted_at 过滤）。 */
-  const { catScopeSQL, parsePerms } = await import('../../_perms.js');
-  const _sc = catScopeSQL(auth.role, typeof auth.perms === 'string' ? parsePerms(auth.perms) : null);
+  const { catScopeSQL, parsePerms, can } = await import('../../_perms.js');
+  const _pObj = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
+  const _sc = catScopeSQL(auth.role, _pObj);
+  /* v666：面板上「查看总量」和「查看明细」两个勾，实际只有第一个在拦。
+     现在拆开：data.stats 管概览/趋势，data.detail 管三张明细表（资源明细 / 分类统计 / 浏览记录）。
+     ⚠ recent（浏览记录）里只拆"有没有这张表"，不动访客 IP 打码（那是 data.ip 的事，别串）。 */
+  const hasDetail = can('data.detail', auth.role, _pObj);
   const scopeIds = _sc ? _sc.ids : null;
   const pScope = scopeIds ? ' AND p.cid IN (' + scopeIds.map(() => '?').join(',') + ')' : '';
   const scopeJoin = scopeIds ? ' JOIN products p ON p.id = stats.product_id AND p.deleted_at IS NULL AND p.cid IN (' + scopeIds.map(() => '?').join(',') + ')' : '';
@@ -48,7 +53,7 @@ export async function onRequestGet(context) {
 
   // 日期范围参数
   const url = new URL(request.url);
-  const __memoKey = url.searchParams.toString() + '|' + (auth.role || '') + '|' + (scopeIds ? scopeIds.join(',') : 'all');
+  const __memoKey = url.searchParams.toString() + '|' + (auth.role || '') + '|' + (scopeIds ? scopeIds.join(',') : 'all') + '|d' + (hasDetail ? 1 : 0); /* v666：明细权限要进缓存键，否则同范围两个账号共用到错的那份 */
   const __memo = __memoGet(__memoKey);
   if (__memo) {
     return new Response(JSON.stringify(__memo), {
@@ -279,17 +284,18 @@ export async function onRequestGet(context) {
     overview_prev,
     trend_prev,
     overview,
-    byProduct: byProduct.map((r) => ({
+    byProduct: hasDetail ? byProduct.map((r) => ({
       id: r.id, title: r.title, is_online: r.is_online, is_hidden: r.is_hidden,
       views: r.views, contacts: r.contacts, resource_unlocks: r.resource_unlocks,
       bindings: r.bindings, // R92：该资源已绑定设备数（存量）
-    })),
+    })) : [],
     trend,
-    byCategory,
-    recent: recent.map((r) => ({
+    byCategory: hasDetail ? byCategory : [],
+    recent: hasDetail ? recent.map((r) => ({
       id: r.id, type: r.type, created_at: r.created_at,
       title: r.title || '（已删除）', img: r.img || '',
-    })),
+    })) : [],
+    detail: hasDetail, /* v666：false = 这个账号没有「看明细」，前端三张表显示"没有「看明细」权限" */
   };
   __memoSet(__memoKey, __payload); /* v616：同一份参数 60 秒内不再重算 */
   return new Response(JSON.stringify(__payload), {

@@ -582,7 +582,7 @@ delBtn.addEventListener('click', function () {
 delProduct(p.id);
 });
 var codePicker = document.createElement('div');
-codePicker.setAttribute('data-perm', 'info.view');
+codePicker.setAttribute('data-perm', 'products.code');
 codePicker.className = 'select-picker code-picker';
 var __cpid = 'cp-' + Math.random().toString(36).slice(2, 9);
 codePicker.dataset.pickerId = __cpid;

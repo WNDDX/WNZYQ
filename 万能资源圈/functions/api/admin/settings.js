@@ -4,7 +4,7 @@
  * body (PUT): { shop_name, shop_logo, contact_url, ... }
  */
 import { json, requireAuth, requirePerm, ensureAdminUsers, readJSON, sweepDroppedKeys } from '../../_utils.js';
-import { parsePerms } from '../../_perms.js';
+import { parsePerms, can } from '../../_perms.js';
 
 // 允许设置的 key 白名单
 /* v383：新增 group_url（交流群聊跳转链接）+ contact_qr/group_qr/gzh_qr（三张二维码图片），链接/图片全部后台可改 */
@@ -45,6 +45,44 @@ export async function onRequestPut(context) {
   const onlyAnn = bodyKeys.length > 0 && bodyKeys.every(k => ANN_KEYS.indexOf(k) !== -1);
   const auth = onlyAnn ? await requirePerm(env, request, 'ann.edit') : await requirePerm(env, request, 'settings.write');
   if (auth instanceof Response) return auth;
+
+  /* v666（老板：公告删除/隐藏要单独授权）：公告没有独立接口，整份数组一次 PUT，
+     光看请求分不清这次是"改文字"还是"删了一条"还是"只是点了隐藏"——所以这里对
+     「库里现在的公告」和「这次提交的公告」做一次 diff，按动作分别要权限：
+       提交里没有的真实 id → 删除 → ann.del
+       hidden 变化         → 显示/隐藏 → ann.hide
+       库里没有的真实 id   → 新增 → ann.add
+       其它（标题/正文/排序/等级）变化 → 编辑 → ann.edit
+     ⚠ 必须在下面 annScope 范围过滤**之前**算，否则范围外的公告会被误判成"这条被删了"。
+     ⚠ 缺权限时**整体拒绝**（不做部分保存），避免"删成功了改没成功"的中间态。
+     ⚠ 只认真实数字 id（>0）：前端会塞一条合成的默认公告（id='def'/0），它不是"新增"，按编辑处理。 */
+  if (auth.role !== 'super' && b && ('announcements' in b)) {
+    const _perms = parsePerms(typeof auth.perms === 'string' ? auth.perms : JSON.stringify(auth.perms || {}));
+    const _cur = await env.DB.prepare('SELECT value FROM settings WHERE key = ?').bind('announcements').first();
+    let _curArr = []; try { _curArr = JSON.parse((_cur && _cur.value) || '[]') || []; } catch (e) { _curArr = []; }
+    let _inArr = []; try { _inArr = JSON.parse(String(b.announcements || '[]')) || []; } catch (e) { _inArr = []; }
+    if (!Array.isArray(_curArr)) _curArr = [];
+    if (!Array.isArray(_inArr)) _inArr = [];
+    const _realId = (id) => /^\d+$/.test(String(id)) && Number(id) > 0;
+    const _curMap = new Map(_curArr.map((x) => [String(x && x.id), x]));
+    const _inMap = new Map(_inArr.map((x) => [String(x && x.id), x]));
+    const _sig = (o) => JSON.stringify([o && o.title, o && o.content, o && o.sort, o && o.level, o && o.isDefault]);
+    const _need = new Set();
+    _inMap.forEach((v, id) => {
+      const old = _curMap.get(id);
+      if (!old) { if (_realId(id)) _need.add('ann.add'); else _need.add('ann.edit'); return; }
+      if (Number(!!old.hidden) !== Number(!!v.hidden)) _need.add('ann.hide');
+      if (_sig(old) !== _sig(v)) _need.add('ann.edit');
+    });
+    _curMap.forEach((v, id) => { if (!_inMap.has(id) && _realId(id)) _need.add('ann.del'); });
+    /* 顺序固定，报错文案才稳定可预期 */
+    const _LABEL = { 'ann.del': '删除公告', 'ann.hide': '显示与隐藏', 'ann.add': '发布公告', 'ann.edit': '编辑公告' };
+    for (const _act of ['ann.del', 'ann.hide', 'ann.add', 'ann.edit']) {
+      if (_need.has(_act) && !can(_act, auth.role, _perms)) {
+        return json({ ok: false, msg: '缺少「' + _LABEL[_act] + '」权限，请联系管理员开通', need: _act }, 403);
+      }
+    }
+  }
 
   /* v546：跳转链接只收 http(s)。前端已拦一道，这里再拦一道——
      实测「abc」「javascript:alert(1)」都能直接写进库，前台客服键拿这个值 window.open，等于把坏链接发给客户。 */

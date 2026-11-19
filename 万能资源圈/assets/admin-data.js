@@ -678,6 +678,7 @@ _sec.insertBefore(_ws[1], _ws[0]);
 if (!res.ok) {
 __clearAdminSkel(document.getElementById('statRows')); __clearAdminSkel(document.getElementById('statCatRows')); __clearAdminSkel(document.getElementById('statRecentRows'));
 toast(res.msg || '网络没连上，稍后再试', 'error'); return; }
+window.__statsDetailDenied = (res.detail === false);
 window.__lastFetchTime = Date.now();
 var ov = res.overview || {};
 var ovp = res.overview_prev || null;
@@ -901,6 +902,11 @@ if (onlyKey && d.key !== onlyKey) return;
 var tbody = document.getElementById(d.tbodyId);
 var pager = document.getElementById(d.pagerId);
 if (!tbody || !pager) return;
+if (window.__statsDetailDenied) {
+tbody.innerHTML = '<tr><td colspan="9" style="color:var(--text-faint);text-align:center;padding:18px 0">没有「看明细」权限，请联系管理员开通</td></tr>';
+pager.innerHTML = '';
+return;
+}
 var __skels = tbody.querySelectorAll('.admin-skel'); var __reuse = __skels.length > 0;
 if (!__reuse) tbody.innerHTML = '';
 pager.innerHTML = '';
