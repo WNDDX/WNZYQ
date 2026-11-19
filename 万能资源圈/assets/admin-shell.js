@@ -1123,7 +1123,7 @@ if (act) t.style.display = window.__permCan(act) ? '' : 'none';
 
 var __groups = [];
 Array.prototype.forEach.call(document.querySelectorAll('[data-perm]'), function (el) {
-var host = el.closest('.product-row, .cat-row, .u-row, .batch-bar, .toolbar, .row-acts, .modal-footer') || document.body;
+var host = el.closest('.product-row, .cat-row, .u-row, .batch-bar, .toolbar, .row-acts, .modal-footer, .setting-group') || document.body;
 var g = null;
 for (var i = 0; i < __groups.length; i++) if (__groups[i].host === host) { g = __groups[i]; break; }
 if (!g) { g = { host: host, items: [] }; __groups.push(g); }

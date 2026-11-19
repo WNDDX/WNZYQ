@@ -407,12 +407,12 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <h3>基本设置</h3>
  <!-- v384：「设置信息」单入口键（与「设置公告」同款）——点击打开弹窗，弹窗内三行（绿/蓝/青键+右缘三角），展开配置二维码+链接，各行独立保存 -->
  <!-- v587 用户 11-08：资源采集已移到「内容管理」组（它属于内容管理，不属于基本设置） -->
- <div class="setting-row info-setting-row is-inline">
+ <div class="setting-row info-setting-row is-inline" data-perm="settings.contact">
  <label>设置信息</label>
  <button type="button" class="row-btn" id="openInfoBtn">设置信息</button>
  </div>
  <!-- R106：资源码绑定设备上限已挪到「编辑资源的类型表单」里（每个类型可单独设置），设置面板不再保留全局入口 -->
- <div class="setting-row is-inline">
+ <div class="setting-row is-inline" data-perm="settings.ann">
  <label>公告（显示在资源页顶部）</label>
  <button type="button" class="row-btn" id="openAnnBtn" data-perm="ann.edit">设置公告</button>
  <div class="rte-toolbar rte-collapsed" id="announcementRteToolbar" data-editor="setAnnouncement"><span class="rte-group">
