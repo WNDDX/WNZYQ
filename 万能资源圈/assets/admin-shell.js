@@ -1152,6 +1152,12 @@ if (el.hasAttribute('data-perm-hid')) { el.style.display = el.getAttribute('data
 });
 });
 
+__groups.forEach(function (g) {
+if (!g.host || !g.host.classList || !g.host.classList.contains('setting-group')) return;
+var anyAllowed = g.items.some(function (el) { return window.__permCan(el.getAttribute('data-perm')); });
+if (!anyAllowed) g.host.style.display = 'none';
+});
+
 (function () {
 var rules = [
 
