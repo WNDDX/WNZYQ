@@ -117,8 +117,12 @@ export async function onRequestPost(context) {
   const permsJson = JSON.stringify(b.perms || {});
   const r = await env.DB.prepare('INSERT INTO admin_users (username, pwd_hash, salt, role, parent_id, perms, status, note) VALUES (?, ?, ?, ?, ?, ?, 1, ?)')
     .bind(username, hash, salt, 'sub', parentId, permsJson, note).run();
+  /* v677（实测发现）：D1 的 `meta.last_row_id` **不可靠**——批量连续插入时返回的是自增值而非真实 rowid
+     （实测返回 158/159/160，真实 id 是 155/156/157）。调用方拿这个 id 去 DELETE 会删错人。
+     改成插入后按 username 回查一次；回查失败才退回 last_row_id（保持兼容）。 */
+  const ins = await env.DB.prepare('SELECT id FROM admin_users WHERE username = ?').bind(username).first();
   await audit(env, request, '创建子账号', username + (note ? '（' + note + '）' : ''));
-  return json({ ok: true, id: r.meta && r.meta.last_row_id });
+  return json({ ok: true, id: ins ? ins.id : (r.meta && r.meta.last_row_id) });
 }
 
 export async function onRequestPut(context) {
