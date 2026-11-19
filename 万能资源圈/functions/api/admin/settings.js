@@ -55,7 +55,7 @@ export async function onRequestPut(context) {
     const hasWrite = bodyKeys.some((k) => WRITE_KEYS.indexOf(k) !== -1);
     const hasMode = bodyKeys.indexOf('announcement_mode') !== -1;
     const hasBind = bodyKeys.indexOf('resource_bind_limit') !== -1;
-    const hasAnn = bodyKeys.some((k) => ANN_KEYS.indexOf(k) !== -1);
+    const hasAnn = bodyKeys.some((k) => k === 'announcement' || k === 'announcements'); /* v675：公告**内容**才要 ann.edit；announcement_mode 只归 settings.mode，别混 */
     const __LBL = { 'settings.write': '平台设置', 'settings.mode': '公告显示方式', 'settings.bindlimit': '设备绑定上限', 'ann.edit': '编辑公告' };
     const __need = [];
     if (hasWrite) __need.push('settings.write');
