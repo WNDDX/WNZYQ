@@ -1456,11 +1456,12 @@ body.innerHTML = '<div class="imp-err">网络没连上，稍后再试</div>';
 
 
 var PM_GROUPS = [
-{ t: '资源管理', k: 'products', items: [['view', '查看资源'], ['add', '新增资源'], ['edit', '编辑资源'], ['price', '修改价格'], ['online', '显示/隐藏'], ['del', '删除资源'], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['moveCat', '移动分类'], ['code', '资源码与发码'], ['bind', '绑定设备']] },
-{ t: '分类管理', k: 'cats', items: [['view', '查看分类'], ['add', '新增分类'], ['edit', '编辑分类'], ['del', '删除分类'], ['sort', '拖动排序']] },
-{ t: '公告', k: 'ann', items: [['view', '查看公告'], ['add', '发布公告'], ['edit', '编辑公告'], ['del', '删除公告'], ['hide', '显示与隐藏']] },
+
+{ t: '资源管理', k: 'products', items: [['view', '查看资源'], ['add', '新增资源'], ['del', '删除资源'], ['edit', '编辑资源', [['price', '修改价格'], ['online', '显示/隐藏'], ['moveCat', '移动分类']]], ['restore', '恢复回收站'], ['purge', '彻底删除'], ['code', '资源码与发码'], ['bind', '绑定设备']] },
+{ t: '分类管理', k: 'cats', items: [['view', '查看分类'], ['add', '新增分类'], ['del', '删除分类'], ['edit', '编辑分类', [['sort', '拖动排序']]]] },
+{ t: '公告', k: 'ann', items: [['view', '查看公告'], ['add', '发布公告'], ['del', '删除公告'], ['edit', '编辑公告', [['hide', '显示与隐藏']]]] },
 { t: '批量操作', k: 'batch', items: [['import', '批量导入'], ['price', '批量改价'], ['online', '批量隐藏/显示'], ['del', '批量删除']] },
-{ t: '数据统计', k: 'data', items: [['stats', '查看总量'], ['detail', '查看明细'], ['ip', '查看访客IP'], ['export', '导出数据']] },
+{ t: '数据统计', k: 'data', items: [['export', '导出数据'], ['stats', '查看总量', [['detail', '查看明细'], ['ip', '查看访客IP']]]] },
 { t: '资源采集', k: 'external', items: [['view', '打开采集'], ['add', '添加平台'], ['edit', '编辑资源与平台'], ['del', '删除资源与平台'], ['fetch', '采集与发布'], ['probe', '试采地址'], ['platform', '平台设置']] },
 { t: '账号管理', k: 'account', items: [['view', '查看账号'], ['add', '新增账号'], ['edit', '编辑账号与权限'], ['pwd', '重置密码'], ['status', '停用与启用'], ['sub', '管理下级'], ['del', '删除账号']] },
 { t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错'], ['cache', '清理缓存'], ['file', '清理无用文件']] },
@@ -1486,14 +1487,29 @@ mask.className = 'modal-mask'; mask.id = 'usFormMask';
 mask.setAttribute('data-stash-node', '1');
 
 var secHtml = PM_GROUPS.map(function (g) {
-var chks = g.items.map(function (it) {
-var on = isEdit ? gval(g.k, it[0]) : (g.k === 'products' && (it[0] === 'view')) || (g.k === 'cats' && it[0] === 'view') || (g.k === 'ann' && it[0] === 'view');
-return '<label class="pm-chk"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + it[0] + '"' + (on ? ' checked' : '') + '><span>' + it[1] + '</span></label>';
-}).join('');
+
+var __onOf = function (key) {
+return isEdit ? gval(g.k, key) : (g.k === 'products' && key === 'view') || (g.k === 'cats' && key === 'view') || (g.k === 'ann' && key === 'view');
+};
+var __box = function (key, label, cls) {
+return '<label class="' + cls + '"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + key + '"' + (__onOf(key) ? ' checked' : '') + '><span>' + label + '</span></label>';
+};
+var __blocks = [], __run = [];
+g.items.forEach(function (it) {
+var kids = (it.length > 2 && Array.isArray(it[2])) ? it[2] : null;
+if (!kids) { __run.push(__box(it[0], it[1], 'pm-chk')); return; }
+if (__run.length) { __blocks.push('<div class="pm-grid">' + __run.join('') + '</div>'); __run = []; }
+__blocks.push('<div class="pm-catnode">'
++ '<label class="pm-catrow"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + it[0] + '"' + (__onOf(it[0]) ? ' checked' : '') + '><span>' + it[1] + '</span>'
++ '<i class="pm-catcnt">' + kids.length + ' 个细分</i></label>'
++ '<div class="pm-catkids">' + kids.map(function (k2) { return __box(k2[0], k2[1], 'pm-catrow is-kid'); }).join('') + '</div>'
++ '</div>');
+});
+if (__run.length) __blocks.push('<div class="pm-grid">' + __run.join('') + '</div>');
 return '<div class="pm-sec" data-sec="' + g.k + '"><div class="pm-sec-hd"><b>' + g.t + '</b>'
 
 + '<button type="button" class="pm-all" data-all="' + g.k + '" aria-label="全选本组权限" aria-pressed="false">全选</button></div>'
-+ '<div class="pm-grid">' + chks + '</div></div>';
++ __blocks.join('') + '</div>';
 }).join('');
 
 
