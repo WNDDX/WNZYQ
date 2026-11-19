@@ -1491,7 +1491,8 @@ var on = isEdit ? gval(g.k, it[0]) : (g.k === 'products' && (it[0] === 'view')) 
 return '<label class="pm-chk"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + it[0] + '"' + (on ? ' checked' : '') + '><span>' + it[1] + '</span></label>';
 }).join('');
 return '<div class="pm-sec" data-sec="' + g.k + '"><div class="pm-sec-hd"><b>' + g.t + '</b>'
-+ '<button type="button" class="pm-all" data-all="' + g.k + '">全选 / 清空</button></div>'
+
++ '<button type="button" class="pm-all" data-all="' + g.k + '" aria-label="全选本组权限" aria-pressed="false">全选</button></div>'
 + '<div class="pm-grid">' + chks + '</div></div>';
 }).join('');
 
@@ -1592,7 +1593,27 @@ var grp = this.getAttribute('data-all');
 var boxes = [].slice.call(mask.querySelectorAll('[data-pa="' + grp + '"]'));
 var allOn = boxes.every(function (c) { return c.checked; });
 boxes.forEach(function (c) { c.checked = !allOn; });
+__syncAllLabels();
 });
+});
+
+
+function __syncAllLabel(grp) {
+var boxes = [].slice.call(mask.querySelectorAll('[data-pa="' + grp + '"]'));
+if (!boxes.length) return;
+var btn = mask.querySelector('[data-all="' + grp + '"]');
+if (!btn) return;
+var allOn = boxes.every(function (c) { return c.checked; });
+btn.textContent = allOn ? '清空' : '全选';
+btn.setAttribute('aria-label', allOn ? '清空本组权限' : '全选本组权限');
+btn.setAttribute('aria-pressed', allOn ? 'true' : 'false');
+}
+function __syncAllLabels() { PM_GROUPS.forEach(function (g) { __syncAllLabel(g.k); }); }
+__syncAllLabels();
+
+mask.addEventListener('change', function (e) {
+var t = e.target;
+if (t && t.getAttribute && t.getAttribute('data-pa')) __syncAllLabels();
 });
 
 
