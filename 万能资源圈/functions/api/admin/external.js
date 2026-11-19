@@ -230,29 +230,13 @@ export async function onRequestPost(context) {
 
     /* --- 平台档案：只有超管能加/删/改 --- */
     if (op.indexOf('platform.') === 0) {
-      /* v664：平台档案单独给 external.platform。
-         注意：下面还有一道 `!isSuper` 的超管独占判断（产品决定），所以对子账号目前仍然进不来；
-         真要让子账号维护平台，得先经老板同意再把那道判断去掉。 */
-      /* v666（老板：自动采集开关要能单独授权）：拨开关 ≠ 改平台档案，两者分开要权——
-         只提交 auto_collect（+ id）算"纯拨开关" → 要 external.auto；
-         带了 name/mall_url/login_url/note/domain 任一档案字段 → 要 external.platform（现状）。
-         external.auto 这条**不受**下面的超管独占墙限制（否则这个勾永远等于没勾）。 */
-      const __autoOnly = (op === 'platform.auto')
-        || (op === 'platform.save' && Number(b.id || 0) > 0 && b.auto_collect !== undefined
-          && b.name === undefined && b.mall_url === undefined && b.login_url === undefined
-          && b.note === undefined && b.domain === undefined);
-      const auth = await requirePerm(env, request, __autoOnly ? 'external.auto' : 'external.platform');
+      /* v667（老板裁定 B「开放给有平台设置权的子账号」）：平台档案不再超管独占，改认 external.platform。
+         没有权限统一回「该功能未开放」（不再用「只有总管能维护平台档案」那句）。
+         ⚠ 平台档案是**全局**的（不属于任何分类）→ **没有范围锁**，有 external.platform 就能管所有平台。
+         v666 那条「只提交 auto_collect → external.auto」的分支已按老板裁定删除（开关改回跟保存按钮走，
+         前端不再单独提交，留着是死代码），面板上的 external.auto / external.autohide 两项也一并删了。 */
+      const auth = await requirePerm(env, request, 'external.platform');
       if (auth instanceof Response) return auth;
-      if (__autoOnly) {
-        const _aid = Number(b.id || 0) || 0;
-        if (!_aid) return json({ ok: false, msg: '缺少平台 id' }, 400);
-        const _on = b.auto_collect ? 1 : 0;
-        const _r = await env.DB.prepare('UPDATE external_platforms SET auto_collect = ? WHERE id = ?').bind(_on, _aid).run();
-        if (!_r.meta || !_r.meta.changes) return json({ ok: false, msg: '平台不存在' }, 404);
-        try { await audit(env, request, _on ? '开启每天自动采集' : '关闭每天自动采集', '平台#' + _aid); } catch (eA) { /* 审计失败不影响结果 */ }
-        return json({ ok: true, id: _aid, auto_collect: _on });
-      }
-      if (!isSuper) return json({ ok: false, msg: '只有总管能维护平台档案' }, 403);
 
       if (op === 'platform.save') {
         const id = Number(b.id || 0) || 0;

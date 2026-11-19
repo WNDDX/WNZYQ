@@ -1107,24 +1107,6 @@ tip.className = 'extc-probe-tip is-bad';
 })();
 
 
-(function () {
-var sw = m.querySelector('#epAutoCollect');
-if (!sw || !isEdit) return;
-sw.addEventListener('change', function () {
-var on = sw.checked ? 1 : 0, back = !sw.checked;
-sw.disabled = true;
-api('admin/external', { method: 'POST', body: { op: 'platform.save', id: p.id, auto_collect: on } }).then(function (r) {
-sw.disabled = false;
-if (r && r.ok) {
-toast(on ? '已开启每天自动采集' : '已关闭每天自动采集', 'success');
-(S.platforms || []).forEach(function (x) { if (Number(x.id) === Number(p.id)) x.auto_collect = on; });
-} else {
-sw.checked = back;
-toast((r && r.msg) || '保存失败', 'error');
-}
-}).catch(function () { sw.disabled = false; sw.checked = back; toast('保存失败', 'error'); });
-});
-})();
 
 m.querySelector('#epSave').addEventListener('click', function () {
 var ed = m.querySelector('#epNote');
@@ -1140,7 +1122,6 @@ note: ed ? ed.innerHTML.slice(0, 20000) : ''
 };
 if (!body.name) { toast('平台名不能为空', 'error'); return; }
 
-if (isEdit) delete body.auto_collect;
 var btn = this; btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '保存中'); else btn.textContent = '保存中';
 api('admin/external', { method: 'POST', body: body }).then(function (r) {
 if (r && r.ok) {

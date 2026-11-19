@@ -49,13 +49,38 @@ export async function onRequestPut(context) {
 
   await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */
   await ensureProductColumns(env); await ensureVariantColumns(env); /* v440：线上旧库列迁移 */  await ensureUpdatedBy(env); /* v545：最后修改人列，独立守卫 */
-  const auth = await requirePerm(env, request, 'products.edit');
+  /* v667（老板批：三项「半接」修复）——入口门原来只认 products.edit，
+     于是只勾「修改价格 / 上下架 / 移动分类」的子账号在门口就被一刀切 403，
+     下面 118/126/131 三段细分校验永远走不到（实测：只给 price 也是 403）。
+     现在门放宽成四项任一；**但立刻用字段白名单收口**——没有 products.edit 的账号，
+     本次 PUT 只允许带 price / is_online / is_hidden / cid / updated_at（乐观锁），
+     带了 title/desc/detail/img/cover_images 等任何一个就 403。
+     ⚠ 白名单是硬要求：只放宽门不放白名单，等于给"只勾改价"的人开了改标题正文的后门。 */
+  const auth = await requireAuth(env, request);
   if (auth instanceof Response) return auth;
+  const b = await readJSON(request);
+  {
+    const { can, frozenDenied, parsePerms } = await import('../../../_perms.js');
+    const __p = typeof auth.perms === 'string' ? parsePerms(auth.perms) : (auth.perms || null);
+    if (auth.role !== 'super') { /* 冻结总闸：与 requirePerm 同口径（应急冻结时子账号一律动不了） */
+      let __frz = false;
+      try { const r = await env.DB.prepare("SELECT value FROM settings WHERE key = 'sub_freeze'").first(); __frz = !!(r && r.value === '1'); } catch (e) { __frz = false; }
+      if (frozenDenied(auth.role, __frz)) return json({ ok: false, msg: '该功能未开放' }, 403);
+    }
+    const __canEdit = can('products.edit', auth.role, __p);
+    const __canFine = can('products.price', auth.role, __p) || can('products.online', auth.role, __p) || can('products.moveCat', auth.role, __p);
+    if (!__canEdit && !__canFine) return json({ ok: false, msg: '该功能未开放' }, 403);
+    if (!__canEdit) {
+      const __ALLOW = ['price', 'is_online', 'is_hidden', 'cid', 'updated_at'];
+      const __bad = Object.keys(b || {}).filter((k) => __ALLOW.indexOf(k) === -1);
+      if (__bad.length) return json({ ok: false, msg: '该功能未开放' }, 403);
+    }
+  }
 
   const id = Number(params.id);
   if (!id) return json({ ok: false, msg: '缺少资源 id' }, 400);
 
-  const b = await readJSON(request);
+  /* v667：body 已在上面（判权限时）读过一次——readJSON 只能读一次，这里不能重复读 */
   /* v633：客服链接不许是图片地址。但只在「这次真的改了」时才判——
      库里原有的历史坏值（比如把图片地址填进客服链接的那条），老板打开编辑原样保存不能被拦，
      否则会以为编辑功能坏了。所以先读旧值，新值等于旧值就放行。 */
