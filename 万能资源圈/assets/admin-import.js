@@ -1468,9 +1468,7 @@ var PM_GROUPS = [
 { t: '数据统计', k: 'data', items: [['export', '导出数据'], ['stats', '查看总量', [['detail', '查看明细'], ['ip', '查看访客IP']]]] },
 { t: '资源采集', k: 'external', items: [['view', '打开采集'], ['add', '添加平台'], ['edit', '编辑资源与平台'], ['del', '删除资源与平台'], ['fetch', '采集与发布'], ['probe', '试采地址'], ['platform', '平台设置']] },
 { t: '账号管理', k: 'account', items: [['view', '查看账号'], ['add', '新增账号'], ['edit', '编辑账号与权限'], ['pwd', '重置密码'], ['status', '停用与启用'], ['sub', '管理下级'], ['del', '删除账号']] },
-{ t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['check', '系统体检'], ['vitals', '性能实测'], ['err', '前端报错'], ['cache', '清理缓存'], ['file', '清理无用文件']] },
-{ t: '备份与恢复', k: 'danger', items: [['backup', '导出备份'], ['restore', '导入恢复'], ['recycle', '回收站'], ['clear', '清空测试数据']] },
-{ t: '平台设置', k: 'settings', items: [['view', '查看设置'], ['edit', '店铺信息'], ['contact', '客服与二维码'], ['ann', '公告设置'], ['style', '页面风格'], ['logo', '店铺名与Logo'], ['mode', '公告显示方式'], ['bindlimit', '设备绑定上限']] }
+
 ];
 function usersForm(u) {
 var isEdit = !!(u && u.id);

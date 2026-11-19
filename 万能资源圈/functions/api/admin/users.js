@@ -47,7 +47,9 @@ export async function onRequestGet(context) {
   if (me instanceof Response) return me;
   const { can, parsePerms } = await import('../../_perms.js');
   const perms = typeof me.perms === 'string' ? parsePerms(me.perms) : null;
-  if (!can('users', me.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
+  /* v673（老板：账号 6 项要各自生效）：`users` 只是「能不能进账号管理页」的总闸，
+     进页面后每个动作再要自己的细分权限。列表 = account.view。 */
+  if (!can('users', me.role, perms) || !can('account.view', me.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
   /* super 看全部；sub 管理员看自己名下整棵树 */
   let rows;
   if (me.role === 'super') {
@@ -85,7 +87,7 @@ export async function onRequestPost(context) {
   if (me instanceof Response) return me;
   const { can, parsePerms } = await import('../../_perms.js');
   const myPermsObj = typeof me.perms === 'string' ? parsePerms(me.perms) : null;
-  if (!can('users', me.role, myPermsObj)) return json({ ok: false, msg: '该功能未开放' }, 403);
+  if (!can('users', me.role, myPermsObj) || !can('account.add', me.role, myPermsObj)) return json({ ok: false, msg: '该功能未开放' }, 403);
 
   const b = await readJSON(request);
   const username = String(b.username || '').trim();
@@ -127,11 +129,13 @@ export async function onRequestPut(context) {
   if (me instanceof Response) return me;
   const { can, parsePerms } = await import('../../_perms.js');
   const myPermsObj = typeof me.perms === 'string' ? parsePerms(me.perms) : null;
-  if (!can('users', me.role, myPermsObj)) return json({ ok: false, msg: '该功能未开放' }, 403);
-
+  /* v673：先读 body 才能按 op 判权——每个 op 一个细分权限：
+     update→account.edit｜resetpwd→account.pwd｜status→account.status｜move/transfer→account.sub */
   const b = await readJSON(request);
   const id = Number(b.id) || 0;
   const op = String(b.op || 'update');
+  const __ACT = { update: 'account.edit', resetpwd: 'account.pwd', status: 'account.status', move: 'account.sub', transfer: 'account.sub' };
+  if (!can('users', me.role, myPermsObj) || !can(__ACT[op] || 'account.edit', me.role, myPermsObj)) return json({ ok: false, msg: '该功能未开放' }, 403);
   if (!id) return json({ ok: false, msg: '缺少账号 id' }, 400);
   const target = await env.DB.prepare('SELECT id, username, role, parent_id, perms FROM admin_users WHERE id = ?').bind(id).first();
   if (!target) return json({ ok: false, msg: '账号不存在' }, 404);
@@ -213,7 +217,7 @@ export async function onRequestDelete(context) {
   if (me instanceof Response) return me;
   const { can, parsePerms } = await import('../../_perms.js');
   const myPermsObj = typeof me.perms === 'string' ? parsePerms(me.perms) : null;
-  if (!can('users', me.role, myPermsObj)) return json({ ok: false, msg: '该功能未开放' }, 403);
+  if (!can('users', me.role, myPermsObj) || !can('account.del', me.role, myPermsObj)) return json({ ok: false, msg: '该功能未开放' }, 403);
   const url = new URL(request.url);
   const id = Number(url.searchParams.get('id')) || 0;
   if (!id) return json({ ok: false, msg: '缺少账号 id' }, 400);
