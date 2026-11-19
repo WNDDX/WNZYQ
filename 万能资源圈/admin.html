@@ -869,8 +869,8 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  R100（用户回退 R98）：复制按键恢复——点按键复制 + 点码文本也能复制，两个都行 -->
  <div id="bindingsCode" style="display:none;font-size: 14px;margin:0 0 12px;align-items:center;gap:8px;">
  <span style="color:var(--text-faint);">当前资源码</span>
- <button type="button" class="row-btn" id="bindingsCodeVal" style="font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);" title="点击复制并发新码"></button>
- <button type="button" class="row-btn" id="bindingsCodeCopy" style="margin-left:auto;">复制并发新码</button>
+ <button type="button" class="row-btn" id="bindingsCodeVal" data-perm="products.code" style="font-family:monospace;letter-spacing:1px;font-weight:600;background:var(--blue1);color:#fff;border-color:var(--blue1);" title="点击复制并发新码"></button>
+ <button type="button" class="row-btn" id="bindingsCodeCopy" data-perm="products.code" style="margin-left:auto;">复制并发新码</button>
  </div>
  <!-- R223：资源码与绑定合并平铺表（老板定稿 8 列；一行=一台绑定设备，码信息每行填满，
  未绑定的码独占一行设备列显「—」；老绑定无码记录显示「早期绑定」） -->

@@ -7,12 +7,17 @@
  *   → 立即生成防撞新码写回类型行（面板即时出新码）
  *   → 返回 { issuedCode:刚复制出去的旧码, code:面板新码 }
  * 前端拿到响应后把 issuedCode 复制进剪贴板（复制的就是刚发出的码）。
+ *
+ * v664（老板：发码放开给子账号）：权限从超管专属 `sensitive.super` 改为 `products.code`。
+ *   ⚠ **必须先过范围锁再发码**：只勾了分类 3 的子账号，绝不能给分类 7 的资源发码——
+ *   否则等于让他把别人客户的码发出去。顺序固定为「先查类型 → 查所属资源 → productScopeOk → 才动库」。
+ *   超管不受影响（`can()` 里 role==='super' 直接 true，catAllowed 也直接 true）。
  */
-import { json, requirePerm, readJSON, ensureCodeIssuesTable, ensureVariantColumns, issueCodeForVariant } from '../../_utils.js';
+import { json, productScopeOk, requirePerm, readJSON, ensureCodeIssuesTable, ensureVariantColumns, issueCodeForVariant } from '../../_utils.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
-  const auth = await requirePerm(env, request, 'sensitive.super');
+  const auth = await requirePerm(env, request, 'products.code');
   if (auth instanceof Response) return auth;
 
   const b = await readJSON(request);
@@ -22,6 +27,15 @@ export async function onRequestPost(context) {
   await ensureVariantColumns(env);
   await ensureCodeIssuesTable(env);
 
+  /* v664 范围锁：类型 → 所属资源 → 分类范围。顺序不能反——
+     先按 id 把类型查出来，才有 product_id 可判；查不到就是 404（不是 403，
+     403 会让「这个类型存在但不是你的」和「这个类型不存在」变得可区分）。 */
+  const vRow = await env.DB.prepare('SELECT id, product_id FROM product_variants WHERE id = ?').bind(variantId).first();
+  if (!vRow) return json({ ok: false, msg: '类型不存在' }, 404);
+  const sc = await productScopeOk(env, auth, vRow.product_id);
+  if (sc.missing) return json({ ok: false, msg: '资源不存在或已删除' }, 404);
+  if (!sc.ok) return json({ ok: false, msg: '该功能未开放' }, 403);
+
   // v294（用户 10-04 02:14）：182 发码限流——同一类型 3 秒内不可重复发码，防连点多发
   const recent = await env.DB.prepare(
     "SELECT id FROM code_issues WHERE variant_id = ? AND issued_at >= datetime('now','-3 seconds') LIMIT 1"
@@ -30,7 +44,8 @@ export async function onRequestPost(context) {
     return json({ ok: false, msg: '操作太频繁，请稍后再试' }, 429);
   }
 
-  const r = await issueCodeForVariant(env, variantId);
+  /* v664：把发码人一起写进 code_issues.issued_by（原来查不出「这条码是谁发的」） */
+  const r = await issueCodeForVariant(env, variantId, auth.username);
   if (!r.ok) return json({ ok: false, msg: r.msg }, 400);
 
   // R307（用户 09-30）：发码接口不再返回 issues 最近发码记录（弹窗表数据来自 bindings 全量查询）

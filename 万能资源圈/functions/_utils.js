@@ -430,6 +430,10 @@ export async function ensureCodeIssuesTable(env) {
     )`).run();
     await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_code_issues_variant_status ON code_issues(variant_id, status)').run();
     await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_code_issues_variant_issued ON code_issues(variant_id, issued_at)').run();
+    /* v664：后补列 issued_by —— 谁发的码。此前只有 variant_id/product_id，查不出「这条码是哪个账号发出去的」。
+       发码从超管专属放开给子账号（products.code）后，这条是追溯的唯一线索，必须有。
+       客户自己验码绑定时没有账号，落空串（= 客户/系统），与「账号发的」区分开。 */
+    try { await env.DB.prepare("ALTER TABLE code_issues ADD COLUMN issued_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
     _codeIssuesEnsured = true;
   } catch (e) { console.error('R221 ensureCodeIssuesTable 失败（调用方按无发码记录兜底）:', e && e.message); }
 }
@@ -460,7 +464,8 @@ async function genAvailableCode(env, variantId) {
 //   ① 当前码记一条 issued（issued_at=now；已有未过期同码记录则不重复记，兼容迁移种子/同分钟重复点按）
 //   ② 生成防撞新码写回类型行（面板立即可见新码，下一个客户用新码）
 //   返回 { ok, msg } 或 { ok:true, issuedCode:刚发出的码, code:面板新码 }
-export async function issueCodeForVariant(env, variantId) {
+//   v664：第 3 个参数 issuedBy = 发码账号名，落进 code_issues.issued_by（追溯用；客户自助验码时为空）
+export async function issueCodeForVariant(env, variantId, issuedBy) {
   const v = await env.DB.prepare('SELECT id, product_id, resource_code FROM product_variants WHERE id = ?').bind(variantId).first();
   if (!v) return { ok: false, msg: '类型不存在' };
   const oldCode = String(v.resource_code || '').trim();
@@ -470,7 +475,7 @@ export async function issueCodeForVariant(env, variantId) {
     "SELECT id FROM code_issues WHERE variant_id = ? AND code = ? AND status = 'issued' AND issued_at >= datetime('now','-60 days') LIMIT 1"
   ).bind(variantId, oldCode).first();
   if (!active) {
-    await env.DB.prepare('INSERT INTO code_issues (variant_id, product_id, code) VALUES (?, ?, ?)').bind(variantId, v.product_id || 0, oldCode).run();
+    await env.DB.prepare('INSERT INTO code_issues (variant_id, product_id, code, issued_by) VALUES (?, ?, ?, ?)').bind(variantId, v.product_id || 0, oldCode, String(issuedBy || '')).run();
   }
   const newCode = await genAvailableCode(env, variantId);
   await env.DB.prepare('UPDATE product_variants SET resource_code = ? WHERE id = ?').bind(newCode, variantId).run();

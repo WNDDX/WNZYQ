@@ -739,10 +739,10 @@ codeBtn.style.cssText = 'font-family:monospace;letter-spacing:1px;font-weight:60
 codeBtn.textContent = v.resourceCode;
 codeBtn.title = v.resourceCode + '（点击复制并发新码）';
 (function (cvObj, cBtn) {
-if (window.__me && window.__me.role !== 'super') {
+if (window.__permCan && !window.__permCan('products.code')) {
 cBtn.disabled = true;
 cBtn.style.cursor = 'default';
-cBtn.title = '仅超级管理员可发码';
+cBtn.title = window.__permWhy ? window.__permWhy('products.code') : '该功能未开放';
 return;
 }
 cBtn.addEventListener('click', function (ev) {

@@ -1088,6 +1088,9 @@ window.__permLabel = {
 'products.view': '查看资源', 'products.add': '新增资源', 'products.edit': '编辑资源',
 'products.price': '修改价格', 'products.online': '显示/隐藏', 'products.del': '删除资源',
 'products.restore': '恢复资源', 'products.purge': '彻底删除', 'products.moveCat': '移动分类',
+
+'products.code': '资源码与发码', 'products.bind': '绑定设备', 'cats.sort': '拖动排序',
+'external.probe': '试采地址', 'external.platform': '平台设置',
 'cats.view': '查看分类', 'cats.add': '新增分类', 'cats.edit': '编辑分类', 'cats.del': '删除分类',
 'ann.view': '查看公告', 'ann.add': '新增公告', 'ann.edit': '编辑公告', 'ann.del': '删除公告',
 'batch.import': '批量导入', 'batch.price': '批量改价', 'batch.online': '批量隐藏/显示', 'batch.del': '批量删除',

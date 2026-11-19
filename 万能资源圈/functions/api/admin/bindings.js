@@ -110,7 +110,7 @@ export async function onRequestGet(context) {
     let irows = [];
     try {
       const r = await env.DB.prepare(
-        'SELECT variant_id, code, issued_at, status, bound_at FROM code_issues ORDER BY issued_at DESC, id DESC'
+        'SELECT variant_id, code, issued_at, status, bound_at, issued_by FROM code_issues ORDER BY issued_at DESC, id DESC'
       ).all();
       irows = (r.results || []).filter((x) => inScopeVid.has(x.variant_id));
     } catch (e) { console.error('R223 预载发码记录查询失败（按空降级）:', e && e.message); }
@@ -119,7 +119,14 @@ export async function onRequestGet(context) {
       if (!issuesByV[r.variant_id]) issuesByV[r.variant_id] = [];
       const _iv = issueView(r);
       const _m = vMeta[r.variant_id] || {};
-      _iv.code = maskCode(auth, perms, _iv.code, _m.createdBy, _m.cid); /* #116 */
+      /* v664：自己发出去的码对自己不打码——发码已放开给子账号，他刚发的码就在剪贴板里，
+         列表里却显示 ●●●● 只会让他没法核对「这条是不是我刚发的」。
+         别人发的码仍按「资源码可见」规则打码（口径不变）。 */
+      if (!(r.issued_by && r.issued_by === auth.username)) {
+        _iv.code = maskCode(auth, perms, _iv.code, _m.createdBy, _m.cid); /* #116 */
+      } else {
+        _iv.mine = 1;
+      }
       issuesByV[r.variant_id].push(_iv);
     });
     const map = {};

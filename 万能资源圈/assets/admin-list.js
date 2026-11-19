@@ -638,10 +638,10 @@ try { if (window.__decorateBtn) window.__decorateBtn(cd, 'key', 5); } catch (e2)
 cd.title = v.resourceCode + '（点击复制并发新码）';
 item.appendChild(cd);
 (function (cvObj, cdEl) {
-if (window.__me && window.__me.role !== 'super') {
+if (window.__permCan && !window.__permCan('products.code')) {
 cdEl.disabled = true;
 cdEl.style.cursor = 'default';
-cdEl.title = '仅超级管理员可发码';
+cdEl.title = window.__permWhy ? window.__permWhy('products.code') : '该功能未开放';
 return;
 }
 cdEl.addEventListener('click', function (ev) {
