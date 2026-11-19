@@ -1492,8 +1492,9 @@ var secHtml = PM_GROUPS.map(function (g) {
 var __onOf = function (key) {
 return isEdit ? gval(g.k, key) : (g.k === 'products' && key === 'view') || (g.k === 'cats' && key === 'view') || (g.k === 'ann' && key === 'view');
 };
-var __box = function (key, label, cls) {
-return '<label class="' + cls + '"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + key + '"' + (__onOf(key) ? ' checked' : '') + '><span>' + label + '</span></label>';
+var __box = function (key, label, cls, parentKey) {
+
+return '<label class="' + cls + '"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + key + '"' + (parentKey ? ' data-parent="' + parentKey + '"' : '') + (__onOf(key) ? ' checked' : '') + '><span>' + label + '</span></label>';
 };
 var __blocks = [], __run = [];
 g.items.forEach(function (it) {
@@ -1502,8 +1503,8 @@ if (!kids) { __run.push(__box(it[0], it[1], 'pm-chk')); return; }
 if (__run.length) { __blocks.push('<div class="pm-grid">' + __run.join('') + '</div>'); __run = []; }
 __blocks.push('<div class="pm-catnode">'
 + '<label class="pm-catrow"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + it[0] + '"' + (__onOf(it[0]) ? ' checked' : '') + '><span>' + it[1] + '</span>'
-+ '<i class="pm-catcnt">' + kids.length + ' 个细分（需同时勾）</i></label>'
-+ '<div class="pm-catkids"><div class="pm-grid">' + kids.map(function (k2) { return __box(k2[0], k2[1], 'pm-catrow is-kid'); }).join('') + '</div></div>'
++ '<i class="pm-catcnt">' + kids.length + ' 个细分</i></label>'
++ '<div class="pm-catkids"><div class="pm-grid">' + kids.map(function (k2) { return __box(k2[0], k2[1], 'pm-catrow is-kid', it[0]); }).join('') + '</div></div>'
 + '</div>');
 });
 if (__run.length) __blocks.push('<div class="pm-grid">' + __run.join('') + '</div>');
@@ -1630,7 +1631,23 @@ __syncAllLabels();
 
 mask.addEventListener('change', function (e) {
 var t = e.target;
-if (t && t.getAttribute && t.getAttribute('data-pa')) __syncAllLabels();
+if (!t || !t.getAttribute) return;
+var grp = t.getAttribute('data-pa');
+if (!grp) return;
+var pk = t.getAttribute('data-pk');
+var pkey = t.getAttribute('data-parent');
+if (pkey) {
+if (t.checked) {
+var par = mask.querySelector('[data-pa="' + grp + '"][data-pk="' + pkey + '"]');
+if (par && !par.checked) { par.checked = true; try { par.dispatchEvent(new Event('change', { bubbles: true })); } catch (e1) {} }
+}
+} else if (!t.checked) {
+var kidsOut = mask.querySelectorAll('[data-pa="' + grp + '"][data-parent="' + pk + '"]');
+Array.prototype.forEach.call(kidsOut, function (c) {
+if (c.checked) { c.checked = false; try { c.dispatchEvent(new Event('change', { bubbles: true })); } catch (e2) {} }
+});
+}
+__syncAllLabels();
 });
 
 
