@@ -1373,7 +1373,7 @@ body.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bot
 + '<div class="u-tree">' + rows + '</div>'
 + (__usTotal > __usSize ? '<div class="uni-pager" id="usPager"></div>' : '');
 
-try { if (window.__applyPermUI) window.__applyPermUI(); } catch (ePA) { if (window.__silent) window.__silent(ePA); }
+try { setTimeout(function () { try { if (window.__applyPermUI) window.__applyPermUI(); } catch (e1) {} }, 300); } catch (ePA) { if (window.__silent) window.__silent(ePA); }
 
 (function () {
 var pg = document.getElementById('usPager');
