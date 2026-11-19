@@ -740,7 +740,7 @@ var ignored = Number(R && R.ignored) || 0, failed = Number(R && R.failed) || 0;
 var sum = document.createElement('div');
 sum.className = 'imp-log-sum ' + (failed ? 'is-bad' : (created ? 'is-ok' : ''));
 
-if (!lines.length) sum.textContent = '没有可导入的数据，请检查文件内容';
+if (!lines.length) sum.textContent = '没有可导入的数据';
 else if (!created && !failed) sum.textContent = '没有新增：' + (skipped + ignored) + ' 条已存在或不可导入，已跳过';
 else {
 var parts = ['成功 ' + created + ' 条'];
@@ -761,8 +761,8 @@ renderImpHist(mask.querySelector('#impHist'));
 
 try { if (window.__reloadAdminProducts) window.__reloadAdminProducts(); else if (window.loadProducts) window.loadProducts(true); } catch (e4) {}
 if (window.showToast) {
-if (!lines.length) window.showToast('没有可导入的数据，请检查文件内容', 'error');
-else if (!created && failed) window.showToast('没有导入成功的数据，失败 ' + failed + ' 条', 'error');
+if (!lines.length) window.showToast('没有可导入的数据', 'error');
+else if (!created && failed) window.showToast('全部导入失败' + failed + ' 条', 'error');
 else if (failed) window.showToast('导入完成：成功 ' + created + ' 条，失败 ' + failed + ' 条', 'info');
 else if (!created) window.showToast('没有新增，' + (skipped + ignored) + ' 条已存在或不可导入', 'info');
 else window.showToast('导入完成：成功 ' + created + ' 条', 'success');
@@ -770,9 +770,9 @@ else window.showToast('导入完成：成功 ' + created + ' 条', 'success');
 }).catch(function () {
 var sum2 = document.createElement('div');
 sum2.className = 'imp-log-sum is-bad';
-sum2.textContent = '导入中断，请重试或检查文件内容';
+sum2.textContent = '导入中断，请重试';
 live.appendChild(sum2);
-if (window.showToast) window.showToast('导入中断，请重试或检查文件内容', 'error');
+if (window.showToast) window.showToast('导入中断，请重试', 'error');
 });
 });
 };

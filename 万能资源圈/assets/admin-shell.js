@@ -568,7 +568,7 @@ on503: function () {
 var now = Date.now();
 if (window.__dbBusyToastAt && now - window.__dbBusyToastAt < 5000) return;
 window.__dbBusyToastAt = now;
-try { toast('系统维护中，请稍后重试', 'warn'); } catch (e) { if (window.__silent) window.__silent(e); }
+try { toast('系统维护中', 'warn'); } catch (e) { if (window.__silent) window.__silent(e); }
 try { if (window.__maskBusyReset) window.__maskBusyReset(); } catch (e2) { if (window.__silent) window.__silent(e2); }
 },
 on401: function () {

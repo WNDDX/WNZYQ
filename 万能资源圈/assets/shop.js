@@ -1033,7 +1033,7 @@ function __setSortDir(d) {
 var cur = __sortTypeDef();
 
 if (!cur.dir) {
-if (window.showToast) window.showToast('「默认」按后台顺序排列，没有升降序；先在左边选一个排序类型（热门/最新/价格）再点 ⇅', 'info');
+if (window.showToast) window.showToast('先选排序类型再点 ⇅', 'info');
 return;
 }
 if (sortDir === d) return;
