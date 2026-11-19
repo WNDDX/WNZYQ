@@ -1502,7 +1502,7 @@ if (__run.length) { __blocks.push('<div class="pm-grid">' + __run.join('') + '</
 __blocks.push('<div class="pm-catnode">'
 + '<label class="pm-catrow"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + it[0] + '"' + (__onOf(it[0]) ? ' checked' : '') + '><span>' + it[1] + '</span>'
 + '<i class="pm-catcnt">' + kids.length + ' 个细分</i></label>'
-+ '<div class="pm-catkids">' + kids.map(function (k2) { return __box(k2[0], k2[1], 'pm-catrow is-kid'); }).join('') + '</div>'
++ '<div class="pm-catkids"><div class="pm-grid">' + kids.map(function (k2) { return __box(k2[0], k2[1], 'pm-catrow is-kid'); }).join('') + '</div></div>'
 + '</div>');
 });
 if (__run.length) __blocks.push('<div class="pm-grid">' + __run.join('') + '</div>');
