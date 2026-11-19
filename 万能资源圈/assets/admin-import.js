@@ -551,6 +551,7 @@ seq = seq.then(function () {
 if (titleId[title]) { dupLine('资源「' + title + '」已存在，跳过'); return null; }
 
 return apiCall('admin/products', { method: 'POST', body: JSON.stringify({
+bulkImport: 1,
 title: title, cid: catIdByName[r[1]] || 0, desc: r[2] || '', detail: r[3] || '',
 price: pc.val, img: r[5] || '', sort: Number(r[6]) || 0,
 is_online: /隐藏/.test(r[7] || '') ? 0 : 1, is_hidden: /隐藏/.test(r[7] || '') ? 1 : 0,
@@ -1501,7 +1502,7 @@ if (!kids) { __run.push(__box(it[0], it[1], 'pm-chk')); return; }
 if (__run.length) { __blocks.push('<div class="pm-grid">' + __run.join('') + '</div>'); __run = []; }
 __blocks.push('<div class="pm-catnode">'
 + '<label class="pm-catrow"><input type="checkbox" data-pa="' + g.k + '" data-pk="' + it[0] + '"' + (__onOf(it[0]) ? ' checked' : '') + '><span>' + it[1] + '</span>'
-+ '<i class="pm-catcnt">' + kids.length + ' 个细分</i></label>'
++ '<i class="pm-catcnt">' + kids.length + ' 个细分（需同时勾）</i></label>'
 + '<div class="pm-catkids"><div class="pm-grid">' + kids.map(function (k2) { return __box(k2[0], k2[1], 'pm-catrow is-kid'); }).join('') + '</div></div>'
 + '</div>');
 });

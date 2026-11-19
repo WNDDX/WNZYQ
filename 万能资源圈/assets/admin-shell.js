@@ -1149,7 +1149,8 @@ if (el.hasAttribute('data-perm-hid')) { el.style.display = el.getAttribute('data
 
 (function () {
 var rules = [
-{ id: 'batchBar', acts: ['products.edit', 'products.del'] },
+
+{ id: 'batchBar', acts: ['batch.online', 'batch.price', 'batch.del', 'products.moveCat', 'products.edit', 'products.del'] },
 { id: 'catBatchBar', acts: ['cats.edit', 'cats.del'] }
 ];
 rules.forEach(function (r) {

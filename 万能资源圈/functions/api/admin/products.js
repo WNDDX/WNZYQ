@@ -146,11 +146,15 @@ export async function onRequestPost(context) {
 
   await ensureSoftDelete(env); /* v440：先迁移软删列（线上旧库无此列，缺它接口 500） */  await ensureAdminUsers(env);
   await ensureUpdatedBy(env); /* v545：最后修改人列 */
-  const auth = await requirePerm(env, request, 'products.add');
+  /* v669（老板：批量 4 项都要接）：批量导入创建资源时按 batch.import 判权，
+     单条新增仍走 products.add——两者是两个独立开关（导入走 Excel 一次多条，新增是表单一条）。 */
+  const b0 = await readJSON(request);
+  const __need = (b0 && b0.bulkImport) ? 'batch.import' : 'products.add';
+  const auth = await requirePerm(env, request, __need);
   if (auth instanceof Response) return auth;
 
   await ensureProductColumns(env);
-  const b = await readJSON(request);
+  const b = b0;
   /* v633：客服链接填成图片地址会被原样存进库，前台点客服就是打开一张图 */
   { const _bad = checkContactUrl(b && b.contactUrl); if (_bad) return json({ ok: false, msg: _bad }, 400); }
   if (!String(b.title || '').trim()) return json({ ok: false, msg: '请填写资源标题' }, 400);
