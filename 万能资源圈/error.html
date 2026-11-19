@@ -72,7 +72,7 @@ body{margin:0;font-family:"Microsoft YaHei",system-ui,sans-serif;background:#f2f
 body{background:var(--grad-brand);min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 20px var(--page-bottom-gap,24px); /* v293（用户 10-04 02:14）：070顶部留白20→24px→跟导航页统一 *//*R229(用户 09-21 19:44):底部留白全站统一,原20→24*/}
 .box{text-align:center;color:#fff;max-width:400px;}
 .code{font-size:36px;font-weight:600;letter-spacing:var(--ls-head,1.2px);opacity:0.95;margin:0 0 24px;line-height:1.35;display:flex;align-items:center;justify-content:center;padding-left:2.4px;/* R20：padding 抵消 letter-spacing 尾随空隙 + flex 双向居中 */}
-.title{font-size:24px;font-weight:600;margin-bottom:12px;}
+.title{font-size:18px;font-weight:600;margin-bottom:12px;}
 .desc{font-size:14px;opacity:0.85;margin-bottom:30px;line-height:1.6;}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 32px;background:#fff;color:#1976D2;border-radius: 10px; text-decoration:none;font-size:16px; /* v293（用户 10-04 02:14）：017错误页按钮圆角999→10px→跟全站普通按钮统一 */font-weight:600;transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease; /* R231 条1：all 收窄为显式属性（error 页并入全站口径） */}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow: var(--shadow-pop);} /* R231 条7：放大式并入微亮+浮起 */
@@ -92,7 +92,7 @@ html,body{overscroll-behavior:none;}@media (hover:hover) and (pointer:fine){html
 /* R285 条48：prtspin 已删——统一走 ui-common.css btnSpin */
 /* 滚动条已恢复浏览器默认样式（用户要求取消自定义滚动轮） */
 @media (max-width: 600px) {
- .title { font-size: 20px; }
+ .title { font-size: 18px; }
  .desc { font-size: 14px; }
  .logo { width: 80px; height: 80px; margin-bottom: 20px; }
  /* v350 条8：原同一规则写了两遍（前一份少 margin-bottom），合并为一条 */

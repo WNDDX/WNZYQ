@@ -2347,6 +2347,26 @@ clearTimeout(window.__btnFitTimer);
 window.__btnFitTimer = setTimeout(function () { window.__btnFit(); }, 150);
 });
 
+
+(function () {
+try {
+if (window.__btnFontReadyHooked) return;
+if (!document.fonts || !document.fonts.ready || typeof window.__btnFit !== 'function') return;
+window.__btnFontReadyHooked = 1;
+var __run = function () {
+try {
+window.__bfDirty = 1;
+window.__btnFit();
+} catch (e) { if (window.__silent) window.__silent(e); }
+};
+document.fonts.ready.then(function () {
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(__run, 0); }, { once: true });
+else setTimeout(__run, 0);
+});
+} catch (e) { if (window.__silent) window.__silent(e); }
+})();
+
 (function () {
 if (!window.MutationObserver || !document.head) return;
 try {

@@ -1930,6 +1930,7 @@ window.showConfirm('删除', '删除后无法恢复，是否继续', function (c
 }
 
 
+
 function openCronHelp() {
 var old = document.getElementById('cronHelpMask'); if (old) old.remove();
 var mask = document.createElement('div');
