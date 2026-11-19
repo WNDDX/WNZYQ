@@ -1479,6 +1479,8 @@ var PM_GROUPS = [
 { t: '资源采集', k: 'external', items: [['view', '打开采集'], ['add', '添加平台'], ['edit', '编辑资源与平台'], ['del', '删除资源与平台'], ['fetch', '采集与发布'], ['probe', '试采地址'], ['platform', '平台设置']] },
 { t: '账号管理', k: 'account', items: [['view', '查看账号'], ['add', '新增账号'], ['edit', '编辑账号与权限'], ['pwd', '重置密码'], ['status', '停用与启用'], ['sub', '管理下级'], ['del', '删除账号']] },
 
+
+{ t: '平台设置', k: 'settings', items: [['ann', '公告设置'], ['mode', '公告显示方式'], ['bindlimit', '设备绑定上限']] }
 ];
 function usersForm(u) {
 var isEdit = !!(u && u.id);

@@ -43,7 +43,34 @@ export async function onRequestPut(context) {
   const b = await readJSON(request);
   const bodyKeys = Object.keys(b || {});
   const onlyAnn = bodyKeys.length > 0 && bodyKeys.every(k => ANN_KEYS.indexOf(k) !== -1);
-  const auth = onlyAnn ? await requirePerm(env, request, 'ann.edit') : await requirePerm(env, request, 'settings.write');
+  /* v675（老板：「公告设置/公告显示方式/绑定上限 下级可以自己设置自己的」）：
+     整份设置不再一律要 settings.write，改成**按提交的字段分流**——
+       店铺名/Logo/客服码/群码/公众号码/页面风格 → settings.write（超管独占，不变）
+       announcement_mode（公告弹出频率）        → settings.mode（全局，无范围锁）
+       resource_bind_limit（全局绑定上限默认值）  → settings.bindlimit（全局，无范围锁）
+       公告内容 announcement/announcements      → 先过 ann.edit（后面还有 v666 的 diff 细判 del/hide/add/edit）
+     混合提交：缺任何一个都 403，且**点名缺哪项**（不用笼统的「该功能未开放」）。 */
+  {
+    const WRITE_KEYS = ['shop_name', 'shop_logo', 'logo', 'style', 'theme', 'contact_url', 'contact_qr', 'group_url', 'group_qr', 'gzh_qr', 'ann_anchor', 'shop_slogan'];
+    const hasWrite = bodyKeys.some((k) => WRITE_KEYS.indexOf(k) !== -1);
+    const hasMode = bodyKeys.indexOf('announcement_mode') !== -1;
+    const hasBind = bodyKeys.indexOf('resource_bind_limit') !== -1;
+    const hasAnn = bodyKeys.some((k) => ANN_KEYS.indexOf(k) !== -1);
+    const __LBL = { 'settings.write': '平台设置', 'settings.mode': '公告显示方式', 'settings.bindlimit': '设备绑定上限', 'ann.edit': '编辑公告' };
+    const __need = [];
+    if (hasWrite) __need.push('settings.write');
+    if (hasMode) __need.push('settings.mode');
+    if (hasBind) __need.push('settings.bindlimit');
+    if (hasAnn) __need.push('ann.edit');
+    if (!__need.length) __need.push('settings.write'); /* 空提交/未知字段：按最严的来 */
+    let __auth = null;
+    for (const __act of __need) {
+      const __r = await requirePerm(env, request, __act);
+      if (__r instanceof Response) return json({ ok: false, msg: '缺少「' + (__LBL[__act] || __act) + '」权限，请联系管理员开通', need: __act }, 403);
+      __auth = __r;
+    }
+    var auth = __auth;
+  }
   if (auth instanceof Response) return auth;
 
   /* v666（老板：公告删除/隐藏要单独授权）：公告没有独立接口，整份数组一次 PUT，

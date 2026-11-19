@@ -1107,7 +1107,12 @@ window.__applyPermUI = function () {
 var me = window.__me; if (!me) return;
 var tabs = document.querySelectorAll('.tab[data-tab]');
 var map = { products: 'products.view', categories: 'cats.view', stats: 'data.stats' };
-var hasSettings = me.role === 'super';
+
+var hasSettings = me.role === 'super'
+|| window.__permCan('users')
+|| window.__permCan('settings.ann')
+|| window.__permCan('settings.mode')
+|| window.__permCan('settings.bindlimit');
 tabs.forEach(function (t) {
 var name = t.getAttribute('data-tab');
 if (name === 'settings') { t.style.display = hasSettings ? '' : 'none'; return; }
