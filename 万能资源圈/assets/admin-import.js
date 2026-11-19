@@ -1368,7 +1368,7 @@ return '<div class="u-row" data-uid="' + u.id + '" data-pid="' + Number(u.parent
 + '<span class="u-ops">' + ops + '</span>' + foldHtml + '</div>';
 }).join('');
 body.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-+ '<button type="button" class="btn-blue btn-inline-pd" id="usAdd">新增账号</button>'
++ '<button type="button" class="btn-blue btn-inline-pd" id="usAdd" data-perm="account.add">新增账号</button>'
 + '<span class="pm-hint" style="margin:0">子账号只能挂在你自己名下</span></div>'
 + '<div class="u-tree">' + rows + '</div>'
 + (__usTotal > __usSize ? '<div class="uni-pager" id="usPager"></div>' : '');
@@ -1481,7 +1481,7 @@ var PM_GROUPS = [
 
 
 
-{ t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['vitals', '性能实测'], ['err', '前端报错'], ['cache', '清理缓存'], ['file', '清理无用文件']] },
+{ t: '系统维护', k: 'system', items: [['logs', '操作日志'], ['vitals', '性能实测'], ['err', '前端报错']] },
 { t: '备份与恢复', k: 'danger', items: [['recycle', '回收站'], ['clear', '清空测试数据']] },
 
 
@@ -2581,17 +2581,17 @@ return g;
 };
 mkGroup('内容管理',
 row('资源采集（从别家平台抓资源，挑着发布）', btnHtml('openExtCollectBtn', '资源采集', ' data-perm="external.view"'))
-+ row('批量导入（Excel 一次导多条）', '<button type="button" class="export-btn" id="batchImportBtn">批量导入</button>')
-+ row('回收站点（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站点'))
++ row('批量导入（Excel 一次导多条）', '<button type="button" class="export-btn" id="batchImportBtn" data-perm="batch.import">批量导入</button>')
++ row('回收站点（删除的内容保留 60 天）', btnHtml('recycleBtn', '回收站点', ' data-perm="danger.recycle"'))
 );
 
 mkGroup('系统维护',
 row('系统体检（图片/外链/环境检查）', btnHtml('imgCheckBtn', '系统体检', '', 1))
-+ row('前端报错（访客页面出错会自动记下来）', btnHtml('errLogBtn', '前端报错', ' data-perm="sensitive.super"'))
-+ row('性能实测（真实访客的加载速度 p75）', btnHtml('vitalsBtn', '性能实测', ' data-perm="sensitive.super"'))
-+ row('清空测试数据（重新开始测试时用）', btnHtml('resetBtn', '清空数据', ' data-perm="sensitive.super"')));
++ row('前端报错（访客页面出错会自动记下来）', btnHtml('errLogBtn', '前端报错', ' data-perm="system.err"'))
++ row('性能实测（真实访客的加载速度 p75）', btnHtml('vitalsBtn', '性能实测', ' data-perm="system.vitals"'))
++ row('清空测试数据（重新开始测试时用）', btnHtml('resetBtn', '清空数据', ' data-perm="danger.clear"')));
 var accGrp = mkGroup('账号安全', row('子账号权限与冻结', btnHtml('usersBtn', '账号管理', ' data-perm="users"', 1))
-+ row('谁改了什么（保留 60 天）', btnHtml('logsBtn', '操作日志', ' data-perm="users"')));
++ row('谁改了什么（保留 60 天）', btnHtml('logsBtn', '操作日志', ' data-perm="system.logs"')));
 var grp = accGrp;
 
 try {
