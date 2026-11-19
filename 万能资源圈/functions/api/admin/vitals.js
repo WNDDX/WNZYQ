@@ -36,7 +36,7 @@ function grade(metric, v) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const auth = await requirePerm(env, request, 'sensitive.super');
+  const auth = await requirePerm(env, request, 'system.vitals');
   if (auth instanceof Response) return auth;
 
   const url = new URL(request.url);

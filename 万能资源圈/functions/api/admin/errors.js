@@ -9,7 +9,7 @@ import { json, requirePerm, audit } from '../../_utils.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const auth = await requirePerm(env, request, 'sensitive.super');
+  const auth = await requirePerm(env, request, 'system.err');
   if (auth instanceof Response) return auth;
 
   const url = new URL(request.url);
@@ -85,7 +85,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestDelete(context) {
   const { env, request } = context;
-  const auth = await requirePerm(env, request, 'sensitive.super');
+  const auth = await requirePerm(env, request, 'system.err');
   if (auth instanceof Response) return auth;
   try {
     await env.DB.prepare('DELETE FROM client_errors').run();

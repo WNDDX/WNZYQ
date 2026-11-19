@@ -51,14 +51,17 @@ export async function onRequestPut(context) {
        公告内容 announcement/announcements      → 先过 ann.edit（后面还有 v666 的 diff 细判 del/hide/add/edit）
      混合提交：缺任何一个都 403，且**点名缺哪项**（不用笼统的「该功能未开放」）。 */
   {
-    const WRITE_KEYS = ['shop_name', 'shop_logo', 'logo', 'style', 'theme', 'contact_url', 'contact_qr', 'group_url', 'group_qr', 'gzh_qr', 'ann_anchor', 'shop_slogan'];
+    const WRITE_KEYS = ['shop_name', 'shop_logo', 'logo', 'style', 'theme', 'ann_anchor', 'shop_slogan', 'sub_freeze'];
+    const CONTACT_KEYS = ['contact_url', 'contact_qr', 'group_url', 'group_qr', 'gzh_qr'];
     const hasWrite = bodyKeys.some((k) => WRITE_KEYS.indexOf(k) !== -1);
+    const hasContact = bodyKeys.some((k) => CONTACT_KEYS.indexOf(k) !== -1); /* v676：客服/群/三张码 → settings.contact */
     const hasMode = bodyKeys.indexOf('announcement_mode') !== -1;
     const hasBind = bodyKeys.indexOf('resource_bind_limit') !== -1;
     const hasAnn = bodyKeys.some((k) => k === 'announcement' || k === 'announcements'); /* v675：公告**内容**才要 ann.edit；announcement_mode 只归 settings.mode，别混 */
-    const __LBL = { 'settings.write': '平台设置', 'settings.mode': '公告显示方式', 'settings.bindlimit': '设备绑定上限', 'ann.edit': '编辑公告' };
+    const __LBL = { 'settings.write': '平台设置', 'settings.contact': '客服与二维码', 'settings.mode': '公告显示方式', 'settings.bindlimit': '设备绑定上限', 'ann.edit': '编辑公告' };
     const __need = [];
     if (hasWrite) __need.push('settings.write');
+    if (hasContact) __need.push('settings.contact');
     if (hasMode) __need.push('settings.mode');
     if (hasBind) __need.push('settings.bindlimit');
     if (hasAnn) __need.push('ann.edit');

@@ -8,7 +8,9 @@ import { parsePerms, can, catScopeSQL } from '../../_perms.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const auth = await requirePerm(env, request, 'products.view');
+  /* v676（老板：权限放开、授予时把关）：回收站列表改判 danger.recycle（原来是 products.view，
+     等于「能看资源就能看回收站」）。恢复/彻底删仍走各自的 products.restore / products.purge。 */
+  const auth = await requirePerm(env, request, 'danger.recycle');
   if (auth instanceof Response) return auth;
   await ensureSoftDelete(env);
   const myPerms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
