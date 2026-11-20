@@ -1807,7 +1807,8 @@ RC.items = [];
 (x.categories || []).forEach(function (c) { RC.items.push({ kind: 'category', id: c.id, name: c.name || ('分类#' + c.id), t: c.deleted_at }); });
 (x.announcements || []).forEach(function (a) { RC.items.push({ kind: 'ann', id: a.id, name: a.title || '公告', t: a.deleted_at }); });
 
-(x.accounts || []).forEach(function (u) { RC.items.push({ kind: 'account', id: u.id, name: u.username || ('账号#' + u.id), t: u.deleted_at }); });
+
+(x.accounts || []).forEach(function (u) { RC.items.push({ kind: 'account', id: u.id, name: u.username || ('账号#' + u.id), t: u.deleted_at, n: Number(u.product_count) || 0 }); });
 
 RC.items.sort(function (a, b) { return (a.kind === 'account' ? 0 : 1) - (b.kind === 'account' ? 0 : 1); });
 RC.ready = true;
@@ -1931,7 +1932,19 @@ body.addEventListener('click', function (e) {
 var b = e.target.closest && e.target.closest('[data-rc]'); if (!b) return;
 var op = b.getAttribute('data-rc'), kind = b.getAttribute('data-kind'), id = b.getAttribute('data-id');
 if (op === 'purge' && window.showConfirm) {
+
+var _acc = null;
+if (kind === 'account') {
+for (var _i = 0; _i < RC.items.length; _i++) {
+if (RC.items[_i].kind === 'account' && String(RC.items[_i].id) === String(id)) { _acc = RC.items[_i]; break; }
+}
+}
+var _n = _acc ? (Number(_acc.n) || 0) : 0;
+if (_n > 0) {
+window.showConfirm('删除账号', '该账号名下还有 ' + _n + ' 个资源，彻底删除后这些资源会转到超级管理员名下，资源本身不受影响（数量/状态/分类都不变）。', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
+} else {
 window.showConfirm('删除', '删除后无法恢复，是否继续', function (closeConfirm) { closeConfirm(); recycleCall(op, kind, id, function () { openRecycle(); }); });
+}
 } else recycleCall(op, kind, id, function () { openRecycle(); });
 });
 }).catch(function () { var body = mask.querySelector('#rcBody'); if (body) body.innerHTML = '<div class="imp-err">服务器忙，稍后再试</div>'; });
@@ -2582,8 +2595,10 @@ if (window.showToast) window.showToast('刚清理过，60 秒内不重复执行'
 reset(); return;
 }
 
-if (cmsg) cmsg.textContent = (d.deleted >= 100)
-? '已清理 ' + d.deleted + ' 个文件（单次上限 100 个，还有更多，可再点一次继续清理）'
+
+var moreClean = (typeof d.remain === 'number') ? d.remain : 0;
+if (cmsg) cmsg.textContent = (moreClean > 0)
+? '已清理 ' + (d.deleted || 0) + ' 个文件（单次上限 100 个，还有 ' + moreClean + ' 个，可再点一次继续清理）'
 : '已清理 ' + (d.deleted || 0) + ' 个文件';
 if (window.showToast) window.showToast('已清理 ' + (d.deleted || 0) + ' 个无用文件', 'success');
 reset();
@@ -2596,6 +2611,8 @@ if (cmsg) cmsg.textContent = '';
 fetch('/api/admin/global-cleanup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dryRun: true }) })
 .then(function (r) { return r.json(); }).then(function (d) {
 if (window.__btnIdle) window.__btnIdle(cb);
+
+if (d && d.ok && d.throttled) { cb.disabled = false; return; }
 if (!d || !d.ok) { if (cmsg) cmsg.textContent = (d && d.msg) || '扫描失败'; cb.disabled = false; return; }
 pending = d.count || 0;
 if (!pending) {

@@ -219,6 +219,12 @@ export async function ensureAdminUsers(env) {
      users.js 的列表、login.js 的子账号登录、_utils.getAuthAdmin 的每条请求都会因 no such column: deleted_at 抛异常，
      子账号整个后台 500，且报错完全指不到真因。放这里＝每 isolate 一次、幂等、覆盖全部入口。 */
   try { await env.DB.prepare('ALTER TABLE admin_users ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
+  /* v687（修「恢复会把冻结变回启用」）：软删时把**删除前**的 status 存下来，恢复时还原。
+     原来 recycle.js 的 restore 一律写 `status = 1` —— 先冻结、再删除的账号，恢复后变成可用，
+     把「冻结」这个安全动作悄悄抹掉了。列可空：老数据（本列上线前就被删的账号）没有值，
+     恢复时用 `COALESCE(status_before, 1)` 兜底（见 recycle.js 那段注释）。
+     跟上面 deleted_at 那条挨着、同样 try/catch 幂等：每 isolate 一次，覆盖 users.js / login.js / getAuthAdmin 全入口。 */
+  try { await env.DB.prepare('ALTER TABLE admin_users ADD COLUMN status_before INTEGER').run(); } catch (e) {}
 }
 
 /* 权限门卫：requireAuth 之后调用。无权（含冻结中的子账号）→ 统一「该功能未开放」 */

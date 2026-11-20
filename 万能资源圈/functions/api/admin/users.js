@@ -237,7 +237,11 @@ export async function onRequestDelete(context) {
   /* v680（老板 11-21：账号要能进回收站点）：原来直接 DELETE 硬删，删错只能重建。
      改成软删——打 deleted_at 标记，进「回收站点」保留 60 天，可恢复可彻底删。 */
   try { await env.DB.prepare("ALTER TABLE admin_users ADD COLUMN deleted_at TEXT").run(); } catch (e) {}
-  await env.DB.prepare("UPDATE admin_users SET deleted_at = datetime('now'), status = 0 WHERE id = ?").bind(id).run();
+  /* v687（修「恢复会把冻结变回启用」）：软删时把**删除前**的 status 存进 `status_before`，恢复时还原。
+     `SET status_before = status` 读的是**同一行的旧值**（SQL 的 UPDATE 所有赋值表达式都按旧行求值），
+     所以先冻结（status=0）再删除的账号，status_before 记的是 0；正常账号记的是 1。
+     本列由 `_utils.ensureAdminUsers()` 统一 ALTER 出来（本函数入口已调用），这里不再重复加列。 */
+  await env.DB.prepare("UPDATE admin_users SET deleted_at = datetime('now'), status_before = status, status = 0 WHERE id = ?").bind(id).run();
   await audit(env, request, '删除子账号（已移入回收站）', target.username + '（其下级已上移至超级管理员名下，账号可在回收站点恢复）');
   return json({ ok: true });
 }
