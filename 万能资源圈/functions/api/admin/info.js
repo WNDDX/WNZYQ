@@ -52,7 +52,7 @@ export async function onRequestGet(context) {
     env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='resource_unlock' AND created_at > ?1").bind(todayStartUTC).first(),
     env.DB.prepare('SELECT COUNT(*) AS n FROM resource_bindings WHERE created_at > ?1').bind(todayStartUTC).first(),
     env.DB.prepare('SELECT COUNT(*) AS n FROM admin_logins WHERE created_at > ?1').bind(last).first().catch(() => ({ n: 0 })),
-    env.DB.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE created_at > ?1 AND admin != 'admin'").bind(last).first().catch(() => ({ n: 0 })), /* #116：下级动作增量（排除超管自己的 admin 记录） */
+    env.DB.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE created_at > ?1 AND admin != 'admin'").bind(last).first().catch(() => ({ n: 0 })), /* #116：下级动作增量（排除超级管理员自己的 admin 记录） */
     env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='view' AND created_at > ?1").bind(todayStartUTC).first(),
     env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='contact' AND created_at > ?1").bind(todayStartUTC).first(),
     env.DB.prepare("SELECT COUNT(*) AS n FROM stats WHERE type='resource_unlock' AND created_at > ?1").bind(todayStartUTC).first(),
@@ -83,7 +83,7 @@ export async function onRequestGet(context) {
   let rows = (recent.results || []).map(function (r) { return { at: r.at, type: r.type, who: r.who || '', region: r.region || '', title: r.title || '', extra: r.extra || '', unread: String(r.at || '') > String(last) }; }); /* v454：未读标记（比上次查看新） */
   /* #116：子账号视角——别人的操作留痕与管理登录不给看 */
   if (isSub) rows = rows.filter(function (r) { return !(r.type === 'audit' && r.who !== auth.username) && r.type !== 'login'; });
-  /* #116：按人筛选（超管查某个员工的账） */
+  /* #116：按人筛选（超级管理员查某个员工的账） */
   if (whoFilter) rows = rows.filter(function (r) { return r.type === 'audit' ? r.who === whoFilter : true; });
   /* #116 复检修正：信息锁（IP）——sub 无 data.ip 权限时访客地址脱敏（此前勾不勾都看得到全站访客 IP） */
   if (isSub) {

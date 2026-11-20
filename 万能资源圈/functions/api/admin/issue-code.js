@@ -8,10 +8,10 @@
  *   → 返回 { issuedCode:刚复制出去的旧码, code:面板新码 }
  * 前端拿到响应后把 issuedCode 复制进剪贴板（复制的就是刚发出的码）。
  *
- * v664（老板：发码放开给子账号）：权限从超管专属 `sensitive.super` 改为 `products.code`。
+ * v664（老板：发码放开给子账号）：权限从超级管理员专属 `sensitive.super` 改为 `products.code`。
  *   ⚠ **必须先过范围锁再发码**：只勾了分类 3 的子账号，绝不能给分类 7 的资源发码——
  *   否则等于让他把别人客户的码发出去。顺序固定为「先查类型 → 查所属资源 → productScopeOk → 才动库」。
- *   超管不受影响（`can()` 里 role==='super' 直接 true，catAllowed 也直接 true）。
+ *   超级管理员不受影响（`can()` 里 role==='super' 直接 true，catAllowed 也直接 true）。
  */
 import { json, productScopeOk, requirePerm, readJSON, ensureCodeIssuesTable, ensureVariantColumns, issueCodeForVariant } from '../../_utils.js';
 

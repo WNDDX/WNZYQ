@@ -17,7 +17,7 @@ export async function onRequestGet(context) {
 
   /* v448 修复越权：原来这里只有 requireAuth —— 任何「已登录」的子账号（包括 perms={} 的零权限号）
      都能读到平台运营配置（客服链接/群链接/二维码键/公告/绑定上限等）。写操作却要 settings.write，
-     读写权限不对称。改为与写操作对齐：超管放行；子账号需持公告或批量导入相关权限才可读
+     读写权限不对称。改为与写操作对齐：超级管理员放行；子账号需持公告或批量导入相关权限才可读
      （公告编辑、批量导入都要读这份设置，不能一刀切 403）。 */
   {
     const { can, parsePerms } = await import('../../_perms.js');
@@ -38,14 +38,14 @@ export async function onRequestGet(context) {
 export async function onRequestPut(context) {
   const { env, request } = context;
   await ensureAdminUsers(env); /* v440 修复：移到解构后 */
-  /* #116：平台设置仅超管；但子账号有公告权限时可保存公告相关键（功能锁落地） */
+  /* #116：平台设置仅超级管理员；但子账号有公告权限时可保存公告相关键（功能锁落地） */
   const ANN_KEYS = ['announcement', 'announcement_mode', 'announcements'];
   const b = await readJSON(request);
   const bodyKeys = Object.keys(b || {});
   const onlyAnn = bodyKeys.length > 0 && bodyKeys.every(k => ANN_KEYS.indexOf(k) !== -1);
   /* v675（老板：「公告设置/公告显示方式/绑定上限 下级可以自己设置自己的」）：
      整份设置不再一律要 settings.write，改成**按提交的字段分流**——
-       店铺名/Logo/客服码/群码/公众号码/页面风格 → settings.write（超管独占，不变）
+       店铺名/Logo/客服码/群码/公众号码/页面风格 → settings.write（超级管理员独占，不变）
        announcement_mode（公告弹出频率）        → settings.mode（全局，无范围锁）
        resource_bind_limit（全局绑定上限默认值）  → settings.bindlimit（全局，无范围锁）
        公告内容 announcement/announcements      → 先过 ann.edit（后面还有 v666 的 diff 细判 del/hide/add/edit）

@@ -33,12 +33,12 @@ function issueView(row) {
   return { code: row.code, issued_at: row.issued_at, remaining_days: Math.max(0, 60 - ageDays), status: statusText };
 }
 
-/* v666（老板裁定「A 统一打码，但超管能看到所有人的码，不打码」）：
+/* v666（老板裁定「A 统一打码，但超级管理员能看到所有人的码，不打码」）：
    发码记录的打码**只有这一处口径**——资源列表的批量预载（prefetch）和单类型明细（variant_id=xxx）
    共用这个函数，不许两处各写一份（此前明细那条 SELECT 没带 issued_by，于是"自己发的码"在明细里被打成
    ●●●●、在列表里却是明文，两个页面不一致）。
    规则：① 自己发出去的码对自己明文（issued_by === 我，标 mine:1）；
-        ② 其它一律走 visibleCode —— 超管明文 / codeScope=all 明文 / scoped 且资源在范围内明文 / 其余 ●●●●。 */
+        ② 其它一律走 visibleCode —— 超级管理员明文 / codeScope=all 明文 / scoped 且资源在范围内明文 / 其余 ●●●●。 */
 function maskIssueRow(auth, perms, row, meta) {
   const iv = issueView(row);
   if (row && row.issued_by && row.issued_by === auth.username) { iv.mine = 1; return iv; }

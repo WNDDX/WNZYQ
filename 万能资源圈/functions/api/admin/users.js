@@ -3,7 +3,7 @@
  * GET    /api/admin/users          → 列表（含权限/状态/备注/最近登录/子树规模）
  * POST   /api/admin/users          → 创建 { username, password, note, perms, parentId }
  * PUT    /api/admin/users          → 编辑 { id, op: 'update'|'resetpwd'|'status'|'transfer'|'move', ... }
- * DELETE /api/admin/users?id=      → 删除（其下级账号统一上移成为超管下级）
+ * DELETE /api/admin/users?id=      → 删除（其下级账号统一上移成为超级管理员下级）
  * 安全：授出权限必须是授者权限子集；防环；动作全部留痕
  */
 import { audit, ensureAdminUsers, ensureSoftDelete, hashPasswordNew, json, readJSON, requireAuth } from '../../_utils.js';
@@ -74,7 +74,7 @@ export async function onRequestGet(context) {
   safe.forEach(r => { (byParent[r.parentId] = byParent[r.parentId] || []).push(r); });
   const cnt = r => { let n = 0; (byParent[r.id] || []).forEach(c => { n += 1 + cnt(c); }); return n; };
   safe.forEach(r => { r.subtreeCount = cnt(r); });
-  /* #116：直接下级数（删除确认文案口径——只有直接下级上移到超管） */
+  /* #116：直接下级数（删除确认文案口径——只有直接下级上移到超级管理员） */
   safe.forEach(r => { r.childrenCount = (byParent[r.id] || []).length; });
   return json({ ok: true, list: safe, me: { id: me.id, username: me.username, role: me.role } });
 }
@@ -107,7 +107,7 @@ export async function onRequestPost(context) {
   if (!v.ok) return json({ ok: false, msg: '权限超出您的范围：' + v.violations.join('、') }, 400);
   /* 范围校验：parentId 必须是自己的下级树内账号或自己（防认错爹） */
   if (parentId !== 0 && me.role === 'super') {
-    /* 超管可挂任意已有账号下 */
+    /* 超级管理员可挂任意已有账号下 */
     const t = await env.DB.prepare('SELECT id FROM admin_users WHERE id = ? AND deleted_at IS NULL').bind(parentId).first(); /* v684：不许挂到已删账号名下（否则列表看不见但能登录干活） */
     if (!t) return json({ ok: false, msg: '上级账号不存在' }, 400);
   }

@@ -8,14 +8,14 @@ import { json, requireAuth, requirePerm, ensureSoftDelete, ensureAdminUsers, aud
 import { parsePerms, can, catScopeSQL } from '../../_perms.js';
 
 /**
- * v687（老板 11-21 04:10 拍板）：「改成不会继承，那些资源都会到我超管这里继承，资源状态不变」。
+ * v687（老板 11-21 04:10 拍板）：「改成不会继承，那些资源都会到我超级管理员这里继承，资源状态不变」。
  * 彻底删除账号**之前**，把它名下的资源/分类归属转给超级管理员。
  *
  * 为什么必须「先转再删」：`products.created_by` / `categories.created_by` 存的是**用户名**（不是 id），
  * 账号一旦 DELETE 掉就再也查不到它叫过什么 → 顺序反了这批资源就永远查不出归属，成了"无主"。
  *
  * 只改 `created_by` 一个字段：**status / deleted_at / 价格 / 分类 一律不动**（老板明确「资源状态不变」）。
- * 转给超管后，用同名新账号"继承"旧资源这件事天然不成立（`created_by` 已经不是那个用户名了），
+ * 转给超级管理员后，用同名新账号"继承"旧资源这件事天然不成立（`created_by` 已经不是那个用户名了），
  * 所以**不写任何继承逻辑**。
  *
  * @param {object} env Workers 环境（要 env.DB）
@@ -26,12 +26,12 @@ async function transferOwnedToSuper(env, username) {
   const name = String(username || '').trim();
   const out = { to: '', products: 0, categories: 0 };
   if (!name) return out;
-  /* 超管在 `admins` 表里，不在 `admin_users`（子账号表）—— 取 id 最小的那条，与全站其它「超管是谁」口径一致 */
+  /* 超级管理员在 `admins` 表里，不在 `admin_users`（子账号表）—— 取 id 最小的那条，与全站其它「超级管理员是谁」口径一致 */
   try {
     const r = await env.DB.prepare('SELECT username FROM admins ORDER BY id LIMIT 1').first();
     out.to = r && r.username ? String(r.username) : '';
   } catch (e) { out.to = ''; }
-  /* 取不到超管（比如 admins 表是空的）就跳过：宁可不转，也不能把归属改成空串——那等于制造新的无主资源 */
+  /* 取不到超级管理员（比如 admins 表是空的）就跳过：宁可不转，也不能把归属改成空串——那等于制造新的无主资源 */
   if (!out.to || out.to === name) return out;
   try {
     const r1 = await env.DB.prepare('UPDATE products SET created_by = ? WHERE created_by = ?').bind(out.to, name).run();
@@ -115,7 +115,7 @@ export async function onRequestGet(context) {
   } catch (e) {}
 
   /* v680（老板 11-21：删账号要能回收）：账号也进回收站。
-     只有超管看得到——账号是权限体系本身，子账号不该看到「有哪些账号被删过」。 */
+     只有超级管理员看得到——账号是权限体系本身，子账号不该看到「有哪些账号被删过」。 */
   let arows = [];
   if (auth.role === 'super') {
     try {
@@ -123,7 +123,7 @@ export async function onRequestGet(context) {
     } catch (e) {}
     try {
       /* v687（老板 11-21 04:10）：顺带带上「这个账号名下有多少资源」——
-         前端「彻底删除账号」的确认框要说清「这 N 个资源会转到超管名下」。
+         前端「彻底删除账号」的确认框要说清「这 N 个资源会转到超级管理员名下」。
          `created_by` 存的是用户名，所以按 username 相关子查询计数（回收站里的资源也算，因为它同样会被转走）。 */
       arows = (await env.DB.prepare("SELECT u.id, u.username, u.role, u.deleted_at, (SELECT COUNT(*) FROM products WHERE created_by = u.username) AS product_count FROM admin_users u WHERE u.deleted_at IS NOT NULL ORDER BY u.deleted_at DESC").all()).results || [];
     } catch (e) { arows = []; }
@@ -166,7 +166,7 @@ export async function onRequestPost(context) {
         if (scope && scope.ids.indexOf(Number(row.cid)) === -1) return json({ ok: false, msg: '该功能未开放' }, 403);
       }
     }
-    if (kind === 'category' && auth.role !== 'super') return json({ ok: false, msg: '该功能未开放' }, 403); /* 分类回收站仅超管 */
+    if (kind === 'category' && auth.role !== 'super') return json({ ok: false, msg: '该功能未开放' }, 403); /* 分类回收站仅超级管理员 */
   }
 
   if (kind === 'product') {
@@ -198,7 +198,7 @@ export async function onRequestPost(context) {
       await audit(env, request, '回收站彻底删除分类', '#' + id);
     }
   } else if (kind === 'account') {
-    /* v680：账号回收站——只有超管能恢复/彻底删；超管自己的账号不允许从这里动。 */
+    /* v680：账号回收站——只有超级管理员能恢复/彻底删；超级管理员自己的账号不允许从这里动。 */
     if (auth.role !== 'super') return json({ ok: false, msg: '该功能未开放' }, 403);
     const t = await env.DB.prepare('SELECT id, username, role, deleted_at FROM admin_users WHERE id = ?').bind(id).first();
     if (!t) return json({ ok: false, msg: '账号不存在' }, 404);
@@ -214,7 +214,7 @@ export async function onRequestPost(context) {
            · `status_before` 有值（v687 之后被软删的账号）→ 用它，冻结的恢复后仍是冻结；
            · `status_before` 为 NULL → **兜底 1**。为什么兜底 1 而不是 0：这一列上线**之前**就被删的老账号没有这个值，
              而当时软删的语义是「status 置 0 只是为了停用登录，不代表用户被冻结过」——
-             老数据里根本无从区分「冻结后删」和「直接删」，兜底 0 会把正常运行的老账号全变成冻结、超管还得逐个解冻；
+             老数据里根本无从区分「冻结后删」和「直接删」，兜底 0 会把正常运行的老账号全变成冻结、超级管理员还得逐个解冻；
              兜底 1 等价于**旧行为**（恢复＝可用），既不误伤老数据，也不丢新数据的冻结语义。
          顺手把 `status_before` 清 NULL：避免下一次真删时（万一同行读不到 status 的旧值）残留上次的旧状态。 */
       await env.DB.prepare("UPDATE admin_users SET deleted_at = NULL, status = COALESCE(status_before, 1), status_before = NULL WHERE id = ?").bind(id).run();
@@ -227,14 +227,14 @@ export async function onRequestPost(context) {
          理由：资源/分类的 `created_by` 存的是用户名，账号一旦 DELETE 就查不到名字了，转不出去；
          所以「转」必须发生在「删」之前，一步都不能后置。只改 `created_by`，
          `status` / `deleted_at` / 价格 / 分类 / 上下架一律不动（老板：「资源状态不变」）。
-         转给超管后「同名新账号继承旧资源」也就不成立了（`created_by` 已不是那个用户名），**不写任何继承逻辑**。 */
+         转给超级管理员后「同名新账号继承旧资源」也就不成立了（`created_by` 已不是那个用户名），**不写任何继承逻辑**。 */
       const moved = await transferOwnedToSuper(env, t.username);
       /* 再把下级上移，别留指向不存在行的 parent_id */
       await env.DB.prepare('UPDATE admin_users SET parent_id = 0 WHERE parent_id = ?').bind(id).run();
       await env.DB.prepare('DELETE FROM sessions WHERE admin_id = ? AND utype = ?').bind(id, 'u').run().catch(() => {});
       await env.DB.prepare('DELETE FROM admin_users WHERE id = ?').bind(id).run();
       await audit(env, request, '回收站彻底删除账号',
-        t.username + (moved.to ? '（名下资源 ' + moved.products + ' 个、分类 ' + moved.categories + ' 个已转给「' + moved.to + '」）' : '（未找到超管账号，资源归属未转移）'));
+        t.username + (moved.to ? '（名下资源 ' + moved.products + ' 个、分类 ' + moved.categories + ' 个已转给「' + moved.to + '」）' : '（未找到超级管理员账号，资源归属未转移）'));
     }
   } else if (kind === 'ann') {
     const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'announcements'").first();

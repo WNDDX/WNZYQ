@@ -3,7 +3,7 @@
  *
  * GET  /api/admin/external?platform=&status=&q=   → { ok, platforms, links, counts }
  * POST /api/admin/external  { op, ... }
- *   platform.save / platform.del                        （仅超管）
+ *   platform.save / platform.del                        （仅超级管理员）
  *   link.add / link.update / link.del / link.check
  * DELETE /api/admin/external?id=                        → 软删进回收站语义
  *
@@ -228,9 +228,9 @@ export async function onRequestPost(context) {
     const op = String(b.op || '');
     const isSuper = auth0.role === 'super';
 
-    /* --- 平台档案：只有超管能加/删/改 --- */
+    /* --- 平台档案：只有超级管理员能加/删/改 --- */
     if (op.indexOf('platform.') === 0) {
-      /* v667（老板裁定 B「开放给有平台设置权的子账号」）：平台档案不再超管独占，改认 external.platform。
+      /* v667（老板裁定 B「开放给有平台设置权的子账号」）：平台档案不再超级管理员独占，改认 external.platform。
          没有权限统一回「该功能未开放」（不再用「只有总管能维护平台档案」那句）。
          ⚠ 平台档案是**全局**的（不属于任何分类）→ **没有范围锁**，有 external.platform 就能管所有平台。
          v666 那条「只提交 auto_collect → external.auto」的分支已按老板裁定删除（开关改回跟保存按钮走，

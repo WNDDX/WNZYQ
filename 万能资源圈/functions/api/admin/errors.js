@@ -2,7 +2,7 @@
  * GET /api/admin/errors?days=7&q=&page=1   —— 前端报错列表（谁在用、报了什么）
  * DELETE /api/admin/errors                 —— 清空已读（老板看完了想归零时用）
  *
- * 权限：sensitive.super（与「清空数据」同级）——报错里有页面路径和 UA，属运维信息，只给超管。
+ * 权限：sensitive.super（与「清空数据」同级）——报错里有页面路径和 UA，属运维信息，只给超级管理员。
  * 保留：60 天。这个清理挂在每天的 stats 清理里没必要重复做，这里读取时顺手删一次旧的（有 30 分钟节流）。
  */
 import { json, requirePerm, audit } from '../../_utils.js';

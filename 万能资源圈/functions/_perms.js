@@ -3,7 +3,7 @@
  *
  * 设计（老板拍板 v3）：
  * - 三把锁：功能锁 actions（细到改价/删除/导出）× 范围锁 catsScope（all | 分类 id 数组）× 信息锁（码/IP/明细）
- * - 资源码：codeScope 'own'=只看自己新增 | 'scoped'=范围内全部 | 'all'=全部（超管固定 all）
+ * - 资源码：codeScope 'own'=只看自己新增 | 'scoped'=范围内全部 | 'all'=全部（超级管理员固定 all）
  * - 层级不限：但授出的权限必须是自己的子集（权限只能缩不能涨）；防环（不能把自己/祖先当下级）
  * - 无权动作统一文案「该功能未开放」
  */
@@ -63,7 +63,7 @@ export function parsePerms(raw) {
   return out;
 }
 
-/* 超管权限：全开 */
+/* 超级管理员权限：全开 */
 export function superPerms() {
   return {
     products: { view: true, add: true, edit: true, price: true, online: true, del: true, restore: true, purge: true, moveCat: true },
@@ -167,7 +167,7 @@ export function validateGrant(childRaw, grantorRole, grantorPermsRaw) {
 /* chain: 从当前账号沿 parent 往上走的 id 集合（含自己）；descendantIds: 自己整棵子树的 id 集合 */
 export function treeMoveOk(newParentId, selfId, descendantIds) {
   const np = Number(newParentId) || 0;
-  if (np === 0) return true; /* 挂到超管=顶层，永远合法 */
+  if (np === 0) return true; /* 挂到超级管理员=顶层，永远合法 */
   if (np === Number(selfId)) return false; /* 不能认自己做上级 */
   return descendantIds.indexOf(np) === -1; /* 不能认自己的下级（含子孙）做上级 */
 }

@@ -58,7 +58,7 @@ export async function onRequestPost(context) {
       }
     }
 
-    // 2. 查找管理员：先查超管（admins），未命中再查子账号（admin_users，v439 #116）
+    // 2. 查找管理员：先查超级管理员（admins），未命中再查子账号（admin_users，v439 #116）
     let row = await env.DB.prepare('SELECT * FROM admins WHERE username = ?').bind(username).first();
     let isSub = false;
     if (!row) {
@@ -66,7 +66,7 @@ export async function onRequestPost(context) {
       const sub = await env.DB.prepare("SELECT * FROM admin_users WHERE username = ? AND deleted_at IS NULL").bind(username).first();
       if (sub) {
         if (!sub.status) { await recordFailure(env, ip, username, attempt); return json({ ok: false, msg: '该账号已停用，请联系管理员' }, 403); }
-        /* #116：应急冻结期间子账号一律拒绝登录（超管不受影响） */
+        /* #116：应急冻结期间子账号一律拒绝登录（超级管理员不受影响） */
         try {
           const fz = await env.DB.prepare("SELECT value FROM settings WHERE key = 'sub_freeze'").first();
           if (fz && fz.value === '1') return json({ ok: false, msg: '该功能未开放' }, 403);

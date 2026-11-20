@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
 
   const b = await readJSON(request);
   /* v674（老板 11-19「高危项要输管理员密码」）：删文件不可逆，误判会删掉在用的图，
-     所以除了权限之外，还要验证超管密码（固定 admins 表那条，不是子账号自己的密码）。 */
+     所以除了权限之外，还要验证超级管理员密码（固定 admins 表那条，不是子账号自己的密码）。 */
   const pwd = String((b && b.password) || '');
   if (!pwd) return json({ ok: false, msg: '请输入超级管理员密码' }, 400);
   const superRow = await env.DB.prepare('SELECT * FROM admins ORDER BY id LIMIT 1').first();

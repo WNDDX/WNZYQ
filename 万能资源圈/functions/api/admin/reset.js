@@ -6,7 +6,7 @@
  * 设计原则（怕误删生产数据）：
  *  ① 只有超级管理员能调（sensitive.super）；子账号即使有全部业务权限也调不动。
  *  ② 必须带 body.password === 当前超级管理员密码，密码不对不执行——防手滑、防误触。
- *     （老板 2026-11-19 裁定：原来是手打「清空」两个字，改成输超管密码。）
+ *     （老板 2026-11-19 裁定：原来是手打「清空」两个字，改成输超级管理员密码。）
  *  ③ 只清「业务数据」，**不动账号、不动店铺设置**；公告内容一并清空（属于内容）。
  *  ④ 执行前把每张表删了多少条写进操作日志，事后能查。
  *  ⑤ 图片/视频文件不在这里删——交给「设置 → 系统体检 → 全局清理孤儿文件」，避免这里删库、那里还留着引用。
@@ -19,7 +19,7 @@ export async function onRequestPost(context) {
     await (await import('../../_utils.js')).ensureAdminUsers(env);
     /* v674（老板 11-19「权限全放开，但高危项要输管理员密码」）：
        ① 权限从 `sensitive.super` 改为 `danger.clear`——面板可勾、可分配给子账号；
-       ② 但密码永远是「超管密码」，不是子账号自己的密码。 */
+       ② 但密码永远是「超级管理员密码」，不是子账号自己的密码。 */
     const auth = await requirePerm(env, request, 'danger.clear');
     if (auth instanceof Response) return auth;
 
@@ -28,7 +28,7 @@ export async function onRequestPost(context) {
     if (!pwd) return json({ ok: false, msg: '请输入超级管理员密码' }, 400);
 
     /* 老板 2026-11-19：清空是不可逆操作，光敲两个字不够，要验证是本人。
-       v674：密码验证对象固定为超管（admins 表），不再按 auth.id 查——
+       v674：密码验证对象固定为超级管理员（admins 表），不再按 auth.id 查——
        否则子账号拿到权限后，输自己的密码就能清空全站。 */
     const meRow = await env.DB.prepare('SELECT * FROM admins ORDER BY id LIMIT 1').first();
     if (!meRow) return json({ ok: false, msg: '超级管理员账号不存在' }, 404);

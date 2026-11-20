@@ -2,7 +2,7 @@
  * POST /api/admin/password
  * 修改管理员密码（需登录），生成新盐
  * body: { oldPassword, newPassword }
- * #116 复检修正：子账号（sessions.utype='u'）此前也走 admins 表——id 撞号时会改到超管表里别人的密码行。
+ * #116 复检修正：子账号（sessions.utype='u'）此前也走 admins 表——id 撞号时会改到超级管理员表里别人的密码行。
        现按会话类型分表：super → admins；子账号 → admin_users（并只清理自己的子账号会话）。
  */
 import { json, requireAuth, readJSON, verifyPassword, hashPasswordNew } from '../../_utils.js';
@@ -41,7 +41,7 @@ export async function onRequestPost(context) {
     .bind(newHash, newSalt, auth.id).run();
 
   /* v348 条32：改完密码把该账号其它设备的登录全部作废，只保留当前这台。
-     #116：按会话类型限定——子账号只清 utype='u' 的会话，避免误删同 id 超管会话（反之亦然）。 */
+     #116：按会话类型限定——子账号只清 utype='u' 的会话，避免误删同 id 超级管理员会话（反之亦然）。 */
   try {
     let curToken = '';
     const ck = request.headers.get('Cookie') || '';

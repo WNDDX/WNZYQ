@@ -171,7 +171,7 @@ export async function getAuthAdmin(env, request) {
       } catch (e) { /* 续期失败不影响本次请求 */ }
     }
   }
-  /* v439 #116：多账号——utype='u' 会话对应 admin_users 子账号；旧会话（utype 空）= admins 超管 */
+  /* v439 #116：多账号——utype='u' 会话对应 admin_users 子账号；旧会话（utype 空）= admins 超级管理员 */
   if (row.utype === 'u') {
     const u = await env.DB.prepare("SELECT id, username, role, perms, status, note FROM admin_users WHERE id = ? AND deleted_at IS NULL").bind(row.id).first();
     if (!u || !u.status) { /* 停用/删除的子账号会话立即失效 */
@@ -442,7 +442,7 @@ export async function ensureCodeIssuesTable(env) {
     await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_code_issues_variant_status ON code_issues(variant_id, status)').run();
     await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_code_issues_variant_issued ON code_issues(variant_id, issued_at)').run();
     /* v664：后补列 issued_by —— 谁发的码。此前只有 variant_id/product_id，查不出「这条码是哪个账号发出去的」。
-       发码从超管专属放开给子账号（products.code）后，这条是追溯的唯一线索，必须有。
+       发码从超级管理员专属放开给子账号（products.code）后，这条是追溯的唯一线索，必须有。
        客户自己验码绑定时没有账号，落空串（= 客户/系统），与「账号发的」区分开。 */
     try { await env.DB.prepare("ALTER TABLE code_issues ADD COLUMN issued_by TEXT NOT NULL DEFAULT ''").run(); } catch (e) {}
     _codeIssuesEnsured = true;

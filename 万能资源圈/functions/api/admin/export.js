@@ -50,7 +50,7 @@ export async function onRequestGet(context) {
   const _myPerms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
   /* v633：#116 三把锁补漏——导出原来只做了「功能锁（data.export）」和「信息锁（资源码打码）」，
      唯独漏了「范围锁」：子账号只要勾了导出，别个分类的资源、类型、发码记录、绑定设备全能导走。
-     现在超管（scope=null）SQL 一个字都不变；子账号按授权分类过滤。 */
+     现在超级管理员（scope=null）SQL 一个字都不变；子账号按授权分类过滤。 */
   const _scope = catScopeSQL(auth.role, _myPerms);
   const _sids = _scope ? _scope.ids : null;
   const _pIn = _sids ? ' AND p.cid IN (' + _sids.map(() => '?').join(',') + ')' : '';
@@ -247,7 +247,7 @@ export async function onRequestGet(context) {
       resource_code: auth.role === 'super' ? (v.resource_code || '') : visibleCode(v.resource_code || '', auth.role, _myPerms, v.p_created_by || '', auth.username, v.p_cid || 0),
       has_content: !!(v.resource_content && String(v.resource_content).trim()),
       /* v633：解锁后内容也导出（否则备份恢复后客户拿到的码是空的）。
-         只有超管才给明文——子账号本来就没有「看全部解锁内容」的权限，导出不能成为后门。 */
+         只有超级管理员才给明文——子账号本来就没有「看全部解锁内容」的权限，导出不能成为后门。 */
       resource_content: auth.role === 'super' ? String(v.resource_content || '') : '',
       bind_limit: Number(v.bind_limit) || 0,
       is_hidden: v.is_hidden || 0,

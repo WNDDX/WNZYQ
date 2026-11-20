@@ -9,7 +9,7 @@ import { ensureBindingsTable, ensureSoftDelete, json, requirePerm } from '../../
    元凶是这个接口——它一次要跑十来条 COUNT(*)/GROUP BY 扫 stats 表，
    而刷新一次页面/连跑几轮自动化就会把同一份统计重复算很多遍。
    命中记忆时不碰数据库，行数读取直接归零；数据最多旧 60 秒（统计页本来就不是秒级要求）。
-   记忆键带上角色与分类范围，避免子账号读到超管的口径。 */
+   记忆键带上角色与分类范围，避免子账号读到超级管理员的口径。 */
 const __statsMemo = new Map();
 function __memoGet(k) {
   const v = __statsMemo.get(k);
@@ -29,7 +29,7 @@ export async function onRequestGet(context) {
   await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'data.stats');
   /* v633：先判 Response 再取 auth.role（原来这句在下面几行之后）——未登录时 auth 是 401 响应，
-     auth.role 取到 undefined 会被当成"超管全量"去拼 SQL；虽然最后仍然 return 401，
+     auth.role 取到 undefined 会被当成"超级管理员全量"去拼 SQL；虽然最后仍然 return 401，
      但一旦 catScopeSQL 抛异常就会变成 500，把"没登录"伪装成"服务器坏了"。 */
   if (auth instanceof Response) return auth;
   /* #116 范围锁 + 软删口径（复检修正）：sub 统计只算授权分类；软删（数据缓存中）资源一律不计入统计。
