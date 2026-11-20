@@ -2047,7 +2047,8 @@ function card(label, val, unit, k, rate) {
 var v = (val == null || val === 0) ? '—' : val;
 return '<div style="flex:1 1 132px;background:var(--bg-light,#f5f7fa);border-radius:10px;padding:10px 12px;min-width:0">' +
 '<div style="font-size:12px;color:var(--text-light,#666);margin-bottom:2px">' + label + '</div>' +
-'<div style="font-size:28px;font-weight:700;line-height:1.2">/* v680：24 不在 9.2 五档（且内联样式 grep CSS 查不到），数字卡按统计数字档走 28 */' + v + '<span style="font-size:12px;font-weight:400">' + (v === '—' ? '' : unit) + '</span></div>' +
+
+'<div style="font-size:28px;font-weight:700;line-height:1.2">' + v + '<span style="font-size:12px;font-weight:400">' + (v === '—' ? '' : unit) + '</span></div>' +
 '<div style="font-size:12px;margin-top:2px"><span style="color:' + _color(k) + '">' + (_word(k) || '无数据') + '</span>' +
 (rate == null ? '' : '<span style="color:var(--text-light,#666)">，达标 ' + rate + '%</span>') + '</div>' +
 '</div>';
