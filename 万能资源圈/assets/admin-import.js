@@ -2591,7 +2591,8 @@ if (cmsg) cmsg.textContent = '没有可清理的无用文件（被引用的文�
 return;
 }
 cb.disabled = false;
-cb.textContent = '确认清理 ' + pending + ' 个（' + fmt(d.bytes) + '）';
+
+cb.textContent = '确认清理 ' + pending + ' 个' + (d.bytes ? '（' + fmt(d.bytes) + '）' : '');
 if (cmsg) cmsg.textContent = '扫描到 ' + pending + ' 个没人引用的文件' + (d.bytes ? '，约 ' + fmt(d.bytes) : '') + '。再点一次即删除，删了找不回来。';
 }).catch(function () { if (window.__btnIdle) window.__btnIdle(cb); cb.disabled = false; if (cmsg) cmsg.textContent = '网络没连上，没扫成'; });
 });
