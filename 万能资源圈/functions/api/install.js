@@ -79,7 +79,8 @@ CREATE TABLE IF NOT EXISTS admin_users (
   status INTEGER NOT NULL DEFAULT 1,
   note TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  last_seen TEXT
+  last_seen TEXT,
+  deleted_at TEXT            -- v684：账号软删（进回收站点保 60 天）。老库靠 _utils.ensureAdminUsers 的 ALTER 补，本行只影响新库
 );
   CREATE TABLE IF NOT EXISTS sessions (
   token      TEXT PRIMARY KEY,

@@ -35,6 +35,15 @@
 /*.png
   Cache-Control: public, max-age=31536000, immutable
 
+# v684：站内图片实际都放在两级子目录里（assets/images/logo.png、assets/icons/icon-192.png 等 4 个），
+# 而上面 `/assets/*.png` 的 `*` 不能跨过中间那一层 `/` —— 这 4 个文件一条规则都没命中，
+# 且四个页面引用它们时都是裸地址（不带 ?v=），换图后可能一直拿旧副本。
+# 这里**按目录逐个白名单**，不用 `/assets/**` 那种宽泛匹配（会把 js/css 也锁一年）。
+/assets/images/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /*.ico
   Cache-Control: public, max-age=31536000, immutable
 
