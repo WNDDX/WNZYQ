@@ -1261,11 +1261,13 @@ usersCall('PUT', { id: u.id, op: 'status', status: st }, function () { if (windo
 });
 }
 function usersDel(u, children, subtree) {
+
 var warn = (subtree > 0)
-? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后这些账号会一并失效（数据保留，可在「回收站点」找回）。'
+? '该账号下有 <b>' + subtree + '</b> 个下级账号，删除后它们会<b>上移到你名下</b>，照常可以登录（不会失效）。'
 : '删除后该账号立即无法登录，其新增的内容按分类范围保留。';
-usAsk('删除账号', '确认删除「' + esc(u.username) + '」？<br>' + warn, { okText: '删除' }, function (v, done, fail) {
-usersCall('DELETE', null, function () { if (window.showToast) window.showToast('账号已删除', 'success'); done(); renderUsersList(); }, fail, '/api/admin/users?id=' + u.id);
+usAsk('删除账号', '确认删除「' + esc(u.username) + '」？<br>' + warn +
+'<br>账号会进入<b>回收站点</b>保留 60 天，期间可以恢复。', { okText: '删除' }, function (v, done, fail) {
+usersCall('DELETE', null, function () { if (window.showToast) window.showToast('已移入回收站点，60 天内可恢复', 'success'); done(); renderUsersList(); }, fail, '/api/admin/users?id=' + u.id);
 });
 }
 
@@ -1793,7 +1795,7 @@ fetch('/api/admin/recycle', { credentials: 'same-origin' }).then(function (r) { 
 var body = mask.querySelector('#rcBody'); if (!body) return;
 if (!x || !x.ok) { body.innerHTML = '<div class="imp-err">服务器忙，稍后再试</div>'; return; }
 
-var _kindName = { product: '资源', category: '分类', ann: '公告' };
+var _kindName = { product: '资源', category: '分类', ann: '公告', account: '账号' };
 
 var _daysLeft = function (t) {
 var d = new Date(String(t || '').replace('T', ' ').replace('Z', '').replace(' ', 'T') + 'Z');
@@ -1804,6 +1806,8 @@ RC.items = [];
 (x.products || []).forEach(function (p) { RC.items.push({ kind: 'product', id: p.id, name: p.title || ('资源#' + p.id), t: p.deleted_at }); });
 (x.categories || []).forEach(function (c) { RC.items.push({ kind: 'category', id: c.id, name: c.name || ('分类#' + c.id), t: c.deleted_at }); });
 (x.announcements || []).forEach(function (a) { RC.items.push({ kind: 'ann', id: a.id, name: a.title || '公告', t: a.deleted_at }); });
+
+(x.accounts || []).forEach(function (u) { RC.items.push({ kind: 'account', id: u.id, name: u.username || ('账号#' + u.id), t: u.deleted_at }); });
 RC.ready = true;
 
 var _rowHtml = function (it) {
@@ -2513,7 +2517,10 @@ mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-la
 '<p class="imp-lead"><b>将删除：</b>资源、分类、统计、绑定、日志、公告<br>' +
 '<b>将保留：</b>账号、店铺名、客服码、风格设置</p>' +
 '<p class="imp-lead">删除后无法找回，请先备份</p>' +
-'<div class="logs-tools"><button type="button" class="export-btn" id="rsBackup">导出备份表格</button></div>' +
+'<div class="logs-tools"><button type="button" class="export-btn" id="rsBackup">导出备份表格</button>' +
+
+'<button type="button" class="export-btn" id="rsClean">清理无用文件</button></div>' +
+'<p class="imp-lead" id="rsCleanMsg" style="min-height:20px;margin:2px 0 0"></p>' +
 '<label for="rsConfirm">输入当前超级管理员密码以确认</label>' +
 '<input class="input" id="rsConfirm" type="password" autocomplete="current-password" placeholder="当前密码" aria-label="输入当前超级管理员密码以确认">' +
 '<p class="imp-lead" id="rsErr" style="color:var(--danger,#d33);min-height:20px;margin:4px 0 0"></p>' +
@@ -2538,6 +2545,57 @@ inp.addEventListener('input', function () {
 if (errEl) errEl.textContent = '';
 go.disabled = String(inp.value).length < 6;
 });
+
+
+(function () {
+var cb = mask.querySelector('#rsClean');
+var cmsg = mask.querySelector('#rsCleanMsg');
+if (!cb) return;
+var pending = 0;
+var fmt = function (b) {
+if (!b) return '0 B';
+if (b < 1024) return b + ' B';
+if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+return (b / 1048576).toFixed(2) + ' MB';
+};
+var reset = function () {
+pending = 0;
+cb.textContent = '清理无用文件';
+if (window.__btnIdle) window.__btnIdle(cb); else cb.disabled = false;
+};
+cb.addEventListener('click', function () {
+if (pending > 0) {
+
+cb.disabled = true; if (window.__btnBusy) window.__btnBusy(cb, '正在清理');
+if (cmsg) cmsg.textContent = '正在删除 ' + pending + ' 个文件…';
+fetch('/api/admin/global-cleanup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+.then(function (r) { return r.json(); }).then(function (d) {
+if (!d || !d.ok) { if (cmsg) cmsg.textContent = (d && d.msg) || '清理失败'; reset(); return; }
+if (cmsg) cmsg.textContent = '已清理 ' + (d.deleted || 0) + ' 个文件（本次上限 100 个，再点一次继续）';
+if (window.showToast) window.showToast('已清理 ' + (d.deleted || 0) + ' 个无用文件', 'success');
+reset();
+}).catch(function () { if (cmsg) cmsg.textContent = '网络没连上，没清成'; reset(); });
+return;
+}
+
+cb.disabled = true; if (window.__btnBusy) window.__btnBusy(cb, '正在扫描');
+if (cmsg) cmsg.textContent = '';
+fetch('/api/admin/global-cleanup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dryRun: true }) })
+.then(function (r) { return r.json(); }).then(function (d) {
+if (window.__btnIdle) window.__btnIdle(cb);
+if (!d || !d.ok) { if (cmsg) cmsg.textContent = (d && d.msg) || '扫描失败'; cb.disabled = false; return; }
+pending = d.count || 0;
+if (!pending) {
+cb.textContent = '清理无用文件'; cb.disabled = false;
+if (cmsg) cmsg.textContent = '没有可清理的无用文件（被引用的文件和 24 小时内新上传的都不会动）';
+return;
+}
+cb.disabled = false;
+cb.textContent = '确认清理 ' + pending + ' 个（' + fmt(d.bytes) + '）';
+if (cmsg) cmsg.textContent = '扫描到 ' + pending + ' 个没人引用的文件' + (d.bytes ? '，约 ' + fmt(d.bytes) : '') + '。再点一次即删除，删了找不回来。';
+}).catch(function () { if (window.__btnIdle) window.__btnIdle(cb); cb.disabled = false; if (cmsg) cmsg.textContent = '网络没连上，没扫成'; });
+});
+})();
 
 mask.querySelector('#rsBackup').addEventListener('click', function () {
 var eb = document.getElementById('exportBtn');

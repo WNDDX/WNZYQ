@@ -63,7 +63,7 @@ export async function onRequestPost(context) {
     let isSub = false;
     if (!row) {
       await ensureAdminUsers(env);
-      const sub = await env.DB.prepare('SELECT * FROM admin_users WHERE username = ?').bind(username).first();
+      const sub = await env.DB.prepare("SELECT * FROM admin_users WHERE username = ? AND deleted_at IS NULL").bind(username).first();
       if (sub) {
         if (!sub.status) { await recordFailure(env, ip, username, attempt); return json({ ok: false, msg: '该账号已停用，请联系管理员' }, 403); }
         /* #116：应急冻结期间子账号一律拒绝登录（超管不受影响） */

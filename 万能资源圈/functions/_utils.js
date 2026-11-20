@@ -173,7 +173,7 @@ export async function getAuthAdmin(env, request) {
   }
   /* v439 #116：多账号——utype='u' 会话对应 admin_users 子账号；旧会话（utype 空）= admins 超管 */
   if (row.utype === 'u') {
-    const u = await env.DB.prepare('SELECT id, username, role, perms, status, note FROM admin_users WHERE id = ?').bind(row.id).first();
+    const u = await env.DB.prepare("SELECT id, username, role, perms, status, note FROM admin_users WHERE id = ? AND deleted_at IS NULL").bind(row.id).first();
     if (!u || !u.status) { /* 停用/删除的子账号会话立即失效 */
       try { await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(auth).run(); } catch (e) {}
       return null;

@@ -63,7 +63,19 @@ export async function onRequestGet(context) {
     }
   } catch (e) {}
 
-  return json({ ok: true, products: prows || [], categories: crows || [], announcements: anns });
+  /* v680（老板 11-21：删账号要能回收）：账号也进回收站。
+     只有超管看得到——账号是权限体系本身，子账号不该看到「有哪些账号被删过」。 */
+  let arows = [];
+  if (auth.role === 'super') {
+    try {
+      await env.DB.prepare("ALTER TABLE admin_users ADD COLUMN deleted_at TEXT").run();
+    } catch (e) {}
+    try {
+      arows = (await env.DB.prepare("SELECT id, username, role, deleted_at FROM admin_users WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC").all()).results || [];
+    } catch (e) { arows = []; }
+  }
+
+  return json({ ok: true, products: prows || [], categories: crows || [], announcements: anns, accounts: arows });
 }
 
 export async function onRequestPost(context) {
@@ -119,6 +131,24 @@ export async function onRequestPost(context) {
     } else if (op === 'purge') {
       await env.DB.prepare('DELETE FROM categories WHERE id = ?').bind(id).run();
       await audit(env, request, '回收站彻底删除分类', '#' + id);
+    }
+  } else if (kind === 'account') {
+    /* v680：账号回收站——只有超管能恢复/彻底删；超管自己的账号不允许从这里动。 */
+    if (auth.role !== 'super') return json({ ok: false, msg: '该功能未开放' }, 403);
+    const t = await env.DB.prepare('SELECT id, username, role, deleted_at FROM admin_users WHERE id = ?').bind(id).first();
+    if (!t) return json({ ok: false, msg: '账号不存在' }, 404);
+    if (t.role === 'super') return json({ ok: false, msg: '超级管理员账号不能从这里删除或恢复' }, 403);
+    if (op === 'restore') {
+      if (!t.deleted_at) return json({ ok: false, msg: '该账号不在回收站里' }, 400);
+      /* 用户名可能已被新账号占用（删了又建同名），恢复前先查重 */
+      const dup = await env.DB.prepare('SELECT id FROM admin_users WHERE username = ? AND deleted_at IS NULL AND id <> ?').bind(t.username, id).first();
+      if (dup) return json({ ok: false, msg: '已有同名账号在使用，无法恢复（可改名或彻底删除旧账号）' }, 400);
+      await env.DB.prepare("UPDATE admin_users SET deleted_at = NULL, status = 1 WHERE id = ?").bind(id).run();
+      await audit(env, request, '回收站恢复账号', t.username);
+    } else if (op === 'purge') {
+      await env.DB.prepare('DELETE FROM sessions WHERE admin_id = ? AND utype = ?').bind(id, 'u').run().catch(() => {});
+      await env.DB.prepare('DELETE FROM admin_users WHERE id = ?').bind(id).run();
+      await audit(env, request, '回收站彻底删除账号', t.username);
     }
   } else if (kind === 'ann') {
     const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'announcements'").first();

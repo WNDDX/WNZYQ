@@ -53,9 +53,9 @@ export async function onRequestGet(context) {
   /* super 看全部；sub 管理员看自己名下整棵树 */
   let rows;
   if (me.role === 'super') {
-    rows = (await env.DB.prepare('SELECT id, username, role, parent_id, perms, status, note, created_at, last_seen FROM admin_users ORDER BY id ASC').all()).results || [];
+    rows = (await env.DB.prepare("SELECT id, username, role, parent_id, perms, status, note, created_at, last_seen FROM admin_users WHERE deleted_at IS NULL ORDER BY id ASC").all()).results || [];
   } else {
-    const all = (await env.DB.prepare('SELECT id, username, role, parent_id, perms, status, note, created_at, last_seen FROM admin_users ORDER BY id ASC').all()).results || [];
+    const all = (await env.DB.prepare("SELECT id, username, role, parent_id, perms, status, note, created_at, last_seen FROM admin_users WHERE deleted_at IS NULL ORDER BY id ASC").all()).results || [];
     const mine = all.filter(r => r.id === me.id);
     const byParent = {};
     all.forEach(r => { (byParent[r.parent_id] = byParent[r.parent_id] || []).push(r); });
@@ -234,7 +234,10 @@ export async function onRequestDelete(context) {
   /* 拍板规则：删除后其下级账号统一上移成为超级管理员（parent=0）的下级 */
   await env.DB.prepare('UPDATE admin_users SET parent_id = 0 WHERE parent_id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM sessions WHERE admin_id = ? AND utype = ?').bind(id, 'u').run();
-  await env.DB.prepare('DELETE FROM admin_users WHERE id = ?').bind(id).run();
-  await audit(env, request, '删除子账号', target.username + '（其下级已上移至超级管理员名下）');
+  /* v680（老板 11-21：账号要能进回收站点）：原来直接 DELETE 硬删，删错只能重建。
+     改成软删——打 deleted_at 标记，进「回收站点」保留 60 天，可恢复可彻底删。 */
+  try { await env.DB.prepare("ALTER TABLE admin_users ADD COLUMN deleted_at TEXT").run(); } catch (e) {}
+  await env.DB.prepare("UPDATE admin_users SET deleted_at = datetime('now'), status = 0 WHERE id = ?").bind(id).run();
+  await audit(env, request, '删除子账号（已移入回收站）', target.username + '（其下级已上移至超级管理员名下，账号可在回收站点恢复）');
   return json({ ok: true });
 }

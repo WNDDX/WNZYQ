@@ -4,7 +4,7 @@
  * 保护：①上传台账——24 小时内的新文件可能是编辑中途的，不删；台账之前的历史遗留（如拖拽 bug 期的黑户）直接删。
  * 节流：30 分钟内重复调用直接跳过（settings 表记时间戳）。
  */
-import { json, requirePerm, buildContentText, readJSON, verifyPassword } from '../../_utils.js';
+import { json, requirePerm, buildContentText, readJSON } from '../../_utils.js';/* v680：去掉密码校验后 verifyPassword 不再使用，避免死导入 */
 
 const GRACE_HOURS = 24;
 
@@ -13,15 +13,13 @@ export async function onRequestPost(context) {
   const auth = await requirePerm(env, request, 'system.file');
   if (auth instanceof Response) return auth;
 
-  /* v674（老板 11-19「高危项要输管理员密码」）：全仓扫删文件不可逆，
-     除了系统维护权限，还要验证超管密码（固定 admins 表那条）。 */
+  /* v680（老板 11-21 明确）：「这些占用的数据不重要，都删除了说明不重要了，就不需要密码了，点击确认删除即可」。
+     所以去掉 v674 的超管密码门槛，保留 system.file 权限（能进「清空测试数据」的人本来就只有超管）。
+     但没有密码就意味着**更没有后悔药**，因此加了两道保护：
+     ① 先 dryRun 预扫，把「能清几个、占多少空间」摆出来，让用户看着数字点确认；
+     ② 真正删除前仍然核对引用（被任何内容引用的文件一律不删）+ 24 小时新上传保护期。 */
   const _b = await readJSON(request);
-  const _pwd = String((_b && _b.password) || '');
-  if (!_pwd) return json({ ok: false, msg: '请输入超级管理员密码' }, 400);
-  const _superRow = await env.DB.prepare('SELECT * FROM admins ORDER BY id LIMIT 1').first();
-  if (!_superRow) return json({ ok: false, msg: '超级管理员账号不存在' }, 404);
-  const _pv = await verifyPassword(_pwd, _superRow);
-  if (!_pv || !_pv.ok) return json({ ok: false, msg: '超级管理员密码不正确' }, 400);
+  const dryRun = !!(_b && _b.dryRun);
 
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) return json({ ok: false, msg: '图片存储未配置' }, 400);
@@ -42,6 +40,7 @@ export async function onRequestPost(context) {
   const isKV = typeof bucket.getWithMetadata === 'function';
   const RE = /^(?:images|videos|files)\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36}(?:_t)?\.[a-zA-Z0-9]+$/;
   const keys = [];
+  const sizeOf = {}; /* dryRun 用：key → 字节数（KV 拿不到体积时为 undefined） */
   try {
     if (isKV) {
       let cur;
@@ -55,7 +54,7 @@ export async function onRequestPost(context) {
       let cur;
       for (let page = 0; page < 5; page++) {
         const r = await bucket.list({ cursor: cur, limit: 500 });
-        for (const o of (r.objects || [])) keys.push(o.key);
+        for (const o of (r.objects || [])) { keys.push(o.key); if (typeof o.size === 'number') sizeOf[o.key] = o.size; }
         if (!r.truncated || !r.cursor) break;
         cur = r.cursor;
       }
@@ -90,7 +89,13 @@ export async function onRequestPost(context) {
       if (isFinite(ageH) && ageH < GRACE_HOURS) continue; /* 新上传，可能正在编辑中 */
     }
     toDelete.push(key); /* 不在台账=历史遗留黑户；超 24h=被遗弃 */
-    if (toDelete.length >= 100) break; /* 单次最多删 100 个，分次清完 */
+    if (!dryRun && toDelete.length >= 100) break; /* 真实删除：单次最多 100 个，分次清完；预扫要报全量 */
+  }
+
+  if (dryRun) {
+    let bytes = 0;
+    for (const k of toDelete) { const b = sizeOf[k]; if (typeof b === 'number') bytes += b; }
+    return json({ ok: true, dryRun: true, scanned: cand.length, count: toDelete.length, bytes: bytes, sample: toDelete.slice(0, 5) });
   }
 
   let deleted = 0;
