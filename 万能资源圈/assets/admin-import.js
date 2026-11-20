@@ -1846,7 +1846,8 @@ return;
 var st = window.__slicePage(list, RC.page, window.LIST_PAGE_SIZE || 20);
 RC.page = st.page;
 var secHtml = '';
-['product', 'category', 'ann'].forEach(function (k) {
+
+['product', 'category', 'ann', 'account'].forEach(function (k) {
 var rows = st.items.filter(function (it) { return it.kind === k; });
 if (!rows.length) return;
 var totalK = list.filter(function (it) { return it.kind === k; }).length;
