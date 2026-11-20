@@ -1901,7 +1901,20 @@ var _runBatch = function (op, label) {
 var list = _picked();
 if (!list.length) return;
 if (op === 'purge' && window.showConfirm) {
-window.showConfirm('彻底删除', '永久删除后将无法恢复', function (closeConfirm) {
+
+var _accN = 0, _pN = 0;
+list.forEach(function (c) {
+if (c.getAttribute('data-kind') !== 'account') return;
+_accN++;
+var _aid = String(c.getAttribute('data-id'));
+for (var _k = 0; _k < RC.items.length; _k++) {
+if (RC.items[_k].kind === 'account' && String(RC.items[_k].id) === _aid) { _pN += (Number(RC.items[_k].n) || 0); break; }
+}
+});
+
+var _pmsg = '永久删除后将无法恢复';
+if (_accN > 0) _pmsg += '。含 ' + _accN + ' 个账号，其名下共 ' + _pN + ' 个资源会转到超级管理员名下，资源本身不受影响。';
+window.showConfirm('彻底删除', _pmsg, function (closeConfirm) {
 closeConfirm(); _doBatch(op, list, label);
 });
 } else _doBatch(op, list, label);
