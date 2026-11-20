@@ -2,7 +2,7 @@
  * POST /api/admin/global-cleanup —— 全局孤儿清理（v354，用户拍板：全系统一切没用上的上传文件都自动清）
  * 规则：列出存储仓全部文件 → 核对是否仍被任何内容引用（资源/类型/设置，公告也存在设置里）→ 没人用的删除。
  * 保护：①上传台账——24 小时内的新文件可能是编辑中途的，不删；台账之前的历史遗留（如拖拽 bug 期的黑户）直接删。
- * 节流：30 分钟内重复调用直接跳过（settings 表记时间戳）。
+ * 节流：**只作用于真删**（真删成功后 60 秒内不重复）；预扫不参与、不读也不写任何状态。
  */
 import { json, requirePerm, buildContentText, readJSON, audit } from '../../_utils.js';/* v680：去掉密码校验后 verifyPassword 不再使用，避免死导入 */
 
@@ -28,18 +28,18 @@ export async function onRequestPost(context) {
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) return json({ ok: false, msg: '图片存储未配置' }, 400);
 
-  /* 节流：30 分钟内**真删过**就跳过。
-     v684（复查阻断 #4）：原来节流不分 dryRun，而「清理无用文件」是两步——第 1 步预扫就把时间戳写了，
-     第 2 步真删直接被 skip → 永远删不掉（前端显示"已清理 0 个"，再点又变回"没有可清理"）。
-     现在预扫是只读的，不参与节流；只有真删才写时间戳。 */
+  /* 节流：**只作用于真删** —— 真删成功后 60 秒内不重复；预扫（dryRun）完全不进这块，不读也不写任何状态
+     （老板要求「预扫零副作用」，这一步是那句要求的落点）。
+     v684 修：原来节流不分 dryRun，预扫就把时间戳写了 → 紧随其后的「确认清理」必被 skip，
+     「扫 → 删」两步流程永远删不掉（前端还显示「已清理 0 个」）。
+     v684b 定：① 窗口 30 分钟 → **60 秒**（进后台自动调用早已删除，这里只为防连点；
+                清满 100 个想再来一批，不该再等半小时）；
+               ② 时间戳挪到「删完之后」写（见函数尾部），预扫 / 引用核对失败 / 中途被打断都不污染窗口。 */
   if (!dryRun) {
     try {
       const last = await env.DB.prepare("SELECT value FROM settings WHERE key = 'last_global_sweep'").first();
       if (last && last.value) {
         const ageMin = (Date.now() - Date.parse(String(last.value).replace(' ', 'T') + 'Z')) / 60000;
-        /* v684b：30 分钟太长——原来「清 100 个 → 想再清一批」要等半小时；现在自动触发已删，
-           节流只为防连点，60 秒足够。时间戳也改成「删成功后」再写（见函数尾部），
-           这样预扫、失败、被中途打断都不会污染节流窗口。 */
         if (isFinite(ageMin) && ageMin < 1) return json({ ok: true, skipped: true, deleted: 0, msg: '刚清理过，请稍等 1 分钟再试' });
       }
     } catch (e) {}
@@ -116,10 +116,15 @@ export async function onRequestPost(context) {
   } catch (e) {}
 
   try { for (const k of toDelete) await env.DB.prepare('DELETE FROM uploads WHERE key = ?').bind(k).run(); } catch (e) {}
-  /* v684b：时间戳挪到「删完之后」写——只在真的动过手时才占用节流窗口 */
-  try {
-    await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('last_global_sweep', datetime('now')) ON CONFLICT(key) DO UPDATE SET value = datetime('now')").run();
-  } catch (e) {}
+  /* v684b：时间戳挪到「删完之后」写，而且**只在真的删到东西时**才占用节流窗口。
+     两层理由：① 预扫 / 引用核对失败 / 中途被打断都不该消耗配额；
+               ② deleted === 0（一个都没删到，比如候选都被引用或全部删除失败）时如果也写，
+                  用户 60 秒内再点就会被判「刚清理过」——明明什么都没发生却被限流，说不通。 */
+  if (deleted > 0) {
+    try {
+      await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('last_global_sweep', datetime('now')) ON CONFLICT(key) DO UPDATE SET value = datetime('now')").run();
+    } catch (e) {}
+  }
   /* v684：去掉密码后必须留痕——谁在什么时候删了多少个文件，事后要查得到 */
   try { await audit(env, request, '清理无用文件', '扫描 ' + cand.length + ' 个，删除 ' + deleted + ' 个'); } catch (e) {}
   return json({ ok: true, scanned: cand.length, deleted: deleted });

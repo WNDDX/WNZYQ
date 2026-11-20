@@ -2575,8 +2575,8 @@ fetch('/api/admin/global-cleanup', { method: 'POST', credentials: 'same-origin',
 if (!d || !d.ok) { if (cmsg) cmsg.textContent = (d && d.msg) || '清理失败'; reset(); return; }
 
 if (d.skipped) {
-if (cmsg) cmsg.textContent = d.msg || '刚清理过（30 分钟内），这次没有重复执行';
-if (window.showToast) window.showToast('刚清理过，30 分钟内不重复执行', 'info');
+if (cmsg) cmsg.textContent = d.msg || '刚清理过（60 秒内），这次没有重复执行';
+if (window.showToast) window.showToast('刚清理过，60 秒内不重复执行', 'info');
 reset(); return;
 }
 if (cmsg) cmsg.textContent = '已清理 ' + (d.deleted || 0) + ' 个文件（本次上限 100 个，再点一次继续）';
