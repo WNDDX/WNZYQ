@@ -37,11 +37,11 @@ export async function onRequestPost(context) {
       const last = await env.DB.prepare("SELECT value FROM settings WHERE key = 'last_global_sweep'").first();
       if (last && last.value) {
         const ageMin = (Date.now() - Date.parse(String(last.value).replace(' ', 'T') + 'Z')) / 60000;
-        if (isFinite(ageMin) && ageMin < 30) return json({ ok: true, skipped: true, deleted: 0, msg: '30 分钟内刚清理过，稍后再试' });
+        /* v684b：30 分钟太长——原来「清 100 个 → 想再清一批」要等半小时；现在自动触发已删，
+           节流只为防连点，60 秒足够。时间戳也改成「删成功后」再写（见函数尾部），
+           这样预扫、失败、被中途打断都不会污染节流窗口。 */
+        if (isFinite(ageMin) && ageMin < 1) return json({ ok: true, skipped: true, deleted: 0, msg: '刚清理过，请稍等 1 分钟再试' });
       }
-    } catch (e) {}
-    try {
-      await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('last_global_sweep', datetime('now')) ON CONFLICT(key) DO UPDATE SET value = datetime('now')").run();
     } catch (e) {}
   }
 
@@ -116,6 +116,10 @@ export async function onRequestPost(context) {
   } catch (e) {}
 
   try { for (const k of toDelete) await env.DB.prepare('DELETE FROM uploads WHERE key = ?').bind(k).run(); } catch (e) {}
+  /* v684b：时间戳挪到「删完之后」写——只在真的动过手时才占用节流窗口 */
+  try {
+    await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('last_global_sweep', datetime('now')) ON CONFLICT(key) DO UPDATE SET value = datetime('now')").run();
+  } catch (e) {}
   /* v684：去掉密码后必须留痕——谁在什么时候删了多少个文件，事后要查得到 */
   try { await audit(env, request, '清理无用文件', '扫描 ' + cand.length + ' 个，删除 ' + deleted + ' 个'); } catch (e) {}
   return json({ ok: true, scanned: cand.length, deleted: deleted });

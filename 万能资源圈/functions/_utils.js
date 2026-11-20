@@ -220,7 +220,6 @@ export async function ensureAdminUsers(env) {
      子账号整个后台 500，且报错完全指不到真因。放这里＝每 isolate 一次、幂等、覆盖全部入口。 */
   try { await env.DB.prepare('ALTER TABLE admin_users ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
 }
-}
 
 /* 权限门卫：requireAuth 之后调用。无权（含冻结中的子账号）→ 统一「该功能未开放」 */
 export async function requirePerm(env, request, action) {
