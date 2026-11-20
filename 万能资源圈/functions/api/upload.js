@@ -3,7 +3,7 @@
  * 通用图片上传（管理页封面图等使用）
  * v301（用户 10-05 00:00）：补回缺失接口
  */
-import { json, requireAuth } from '../_utils.js';
+import { json, requireAuth, recordUpload } from '../_utils.js';
 
 const ALLOWED_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
 
@@ -40,6 +40,10 @@ export async function onRequestPost(context) {
       httpMetadata: { contentType: type, cacheControl: 'public, max-age=31536000, immutable' },
     });
   }
+  /* v688（QA 实测 P1）：记上传台账，这是 `global-cleanup` 那条「24 小时内新上传的不删」的唯一依据。
+     本接口是后台轮播图槽等处的上传入口（`assets/admin-media.js`），原来**连 recordUpload 都没 import**
+     → 从这里传的图刚落地就进了「可删候选」，用户还没保存就可能被清掉。与 upload-file / upload-video 同口径补齐。 */
+  try { await recordUpload(env, key); } catch (e) {}
 
   return json({ ok: true, key, url: '/img/' + key });
 }

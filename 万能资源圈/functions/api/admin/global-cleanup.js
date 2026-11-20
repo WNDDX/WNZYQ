@@ -7,6 +7,12 @@
  *   ② **预扫（dryRun）**：5 秒**进程内**（模块级时间戳，不写库 —— 老板要求「预扫零副作用」，见 __dryRunAt）。
  * 返回体：两个分支都带 `remain`（= 本次扫出的候选总数 − 本次删除数），前端据此判断「还有更多」，
  *         不再用 `deleted >= 100` 猜（v687 修的「已知不精确」）。
+ *
+ * ⚠⚠ **`uploads` 台账是「24 小时保护」的唯一依据，任何新增的上传入口都必须调 `recordUpload(env, key)`**（`_utils.js` 导出）。
+ *    判断逻辑就在下面：`const created = ledger[key]; if (created && ageH < 24) continue;` —— **台账里没有这个 key ＝ 立刻可删**，
+ *    不管它是 1 秒前刚上传的。漏记一次＝那条上传通道完全没有保护（v688 之前 `upload-image.js` 的主图/小图、`upload.js` 就是漏的，
+ *    QA 实测「上传 24 秒后就被清掉」）。小图（`_t.webp`）、缩略图、任何独立 key 都要各自记一笔。
+ *    记台账必须放在 `put` **成功之后**、并用 try/catch 包住（台账失败不能导致上传失败）。
  */
 import { json, requirePerm, buildContentText, readJSON, audit } from '../../_utils.js';/* v680：去掉密码校验后 verifyPassword 不再使用，避免死导入 */
 

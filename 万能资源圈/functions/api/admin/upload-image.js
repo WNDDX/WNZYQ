@@ -86,6 +86,12 @@ export async function onRequestPost(context) {
       httpMetadata: { contentType: type, cacheControl: 'public, max-age=31536000, immutable' },
     });
   }
+  /* v688（QA 实测 P1）：**主图也必须记台账**，否则「24 小时内新上传的不删」对图片是假承诺。
+     原来整个文件只有上面 `mode=thumb` 那段记了台账，主图（以及下面同请求带的 file2 小图）都没记
+     → `global-cleanup.js` 的 `const created = ledger[key]` 取不到 → 刚传的封面图**立刻**被列为可删候选。
+     真实后果：用户在编辑弹窗传了封面/详情图但还没保存，任何人点一次「清理无用文件」（已不要密码）就永久删掉，
+     再保存就是一条 404 的图片链接。台账失败不影响上传（recordUpload 内部已 try/catch）。 */
+  try { await recordUpload(env, key); } catch (e) {}
 
   /* R304 P18：file2 = 前端 canvas 生成的小图（最大边 400px、webp、q0.8），随原图同一请求
      提交，存为同目录 uuid_t.webp；缺 file2（老前端/生成失败）不报错，小图缺失读取侧回退原图 */
@@ -100,6 +106,9 @@ export async function onRequestPost(context) {
           httpMetadata: { contentType: 'image/webp', cacheControl: 'public, max-age=31536000, immutable' },
         });
       }
+      /* v688：小图同样记台账 —— 它是独立 key，不记就会「原图受 24h 保护、小图立刻可删」，
+         删完列表缩略图全 404（比原图被删更早暴露，但一样是数据损失）。 */
+      try { await recordUpload(env, tkey); } catch (e) {}
     } catch (e) { /* 小图写失败不阻塞原图 */ }
   }
 
