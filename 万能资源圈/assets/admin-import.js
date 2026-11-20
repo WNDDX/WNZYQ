@@ -1808,6 +1808,8 @@ RC.items = [];
 (x.announcements || []).forEach(function (a) { RC.items.push({ kind: 'ann', id: a.id, name: a.title || '公告', t: a.deleted_at }); });
 
 (x.accounts || []).forEach(function (u) { RC.items.push({ kind: 'account', id: u.id, name: u.username || ('账号#' + u.id), t: u.deleted_at }); });
+
+RC.items.sort(function (a, b) { return (a.kind === 'account' ? 0 : 1) - (b.kind === 'account' ? 0 : 1); });
 RC.ready = true;
 
 var _rowHtml = function (it) {
@@ -2579,7 +2581,10 @@ if (cmsg) cmsg.textContent = d.msg || '刚清理过（60 秒内），这次没�
 if (window.showToast) window.showToast('刚清理过，60 秒内不重复执行', 'info');
 reset(); return;
 }
-if (cmsg) cmsg.textContent = '已清理 ' + (d.deleted || 0) + ' 个文件（本次上限 100 个，再点一次继续）';
+
+if (cmsg) cmsg.textContent = (d.deleted >= 100)
+? '已清理 ' + d.deleted + ' 个文件（单次上限 100 个，还有更多，可再点一次继续清理）'
+: '已清理 ' + (d.deleted || 0) + ' 个文件';
 if (window.showToast) window.showToast('已清理 ' + (d.deleted || 0) + ' 个无用文件', 'success');
 reset();
 }).catch(function () { if (cmsg) cmsg.textContent = '网络没连上，没清成'; reset(); });

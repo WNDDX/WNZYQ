@@ -821,7 +821,9 @@ if (state._backendPaged === undefined) state._backendPaged = true;
 return;
 }
 if (!res || !res.ok) {
-if (!silent) toast(window.T('netFail'), 'error');
+
+var _m = (res && res.msg) || '';
+if (!silent && _m !== '该功能未开放') toast(_m || window.T('netFail'), 'error');
 return;
 }
 if (res.products) {
