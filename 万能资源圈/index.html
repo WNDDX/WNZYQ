@@ -139,7 +139,9 @@ body{
 .btn-item{
  width: 100%;
  border-radius: 10px;
- padding: 24px 26px;
+ /* v680：字号已按 9.2 统一到 18（原 30），内距从 24/26 收到 18/22，
+    用留白补视觉份量，而不是把字再放大回 30（那会破 18 上限）。 */
+ padding: 18px 22px;
  margin-bottom: 18px;
  display: flex;
  align-items: center;
