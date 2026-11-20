@@ -30,7 +30,7 @@ function myPerms(me) {
 
 /* 取自己的后代 id 集合（防环用） */
 async function descendantIds(env, rootId) {
-  const all = await env.DB.prepare('SELECT id, parent_id FROM admin_users').all();
+  const all = await env.DB.prepare('SELECT id, parent_id FROM admin_users WHERE deleted_at IS NULL').all(); /* v684：已删账号不进树，否则子管理员还能对它操作 */
   const byParent = {};
   for (const r of (all.results || [])) { (byParent[r.parent_id] = byParent[r.parent_id] || []).push(r.id); }
   const out = [];
@@ -108,7 +108,7 @@ export async function onRequestPost(context) {
   /* 范围校验：parentId 必须是自己的下级树内账号或自己（防认错爹） */
   if (parentId !== 0 && me.role === 'super') {
     /* 超管可挂任意已有账号下 */
-    const t = await env.DB.prepare('SELECT id FROM admin_users WHERE id = ?').bind(parentId).first();
+    const t = await env.DB.prepare('SELECT id FROM admin_users WHERE id = ? AND deleted_at IS NULL').bind(parentId).first(); /* v684：不许挂到已删账号名下（否则列表看不见但能登录干活） */
     if (!t) return json({ ok: false, msg: '上级账号不存在' }, 400);
   }
 
@@ -141,7 +141,7 @@ export async function onRequestPut(context) {
   const __ACT = { update: 'account.edit', resetpwd: 'account.pwd', status: 'account.status', move: 'account.sub', transfer: 'account.sub' };
   if (!can('users', me.role, myPermsObj) || !can(__ACT[op] || 'account.edit', me.role, myPermsObj)) return json({ ok: false, msg: '该功能未开放' }, 403);
   if (!id) return json({ ok: false, msg: '缺少账号 id' }, 400);
-  const target = await env.DB.prepare('SELECT id, username, role, parent_id, perms FROM admin_users WHERE id = ?').bind(id).first();
+  const target = await env.DB.prepare('SELECT id, username, role, parent_id, perms FROM admin_users WHERE id = ? AND deleted_at IS NULL').bind(id).first(); /* v684 */
   if (!target) return json({ ok: false, msg: '账号不存在' }, 404);
   /* 权限边界：sub 管理员只能操作自己名下整棵树；super 全部 */
   if (me.role !== 'super') {
@@ -188,7 +188,7 @@ export async function onRequestPut(context) {
         if (descMe.indexOf(newParent) === -1) return json({ ok: false, msg: '只能挪到自己名下' }, 403);
       }
     } else if (newParent !== 0) {
-      const t = await env.DB.prepare('SELECT id FROM admin_users WHERE id = ?').bind(newParent).first();
+      const t = await env.DB.prepare('SELECT id FROM admin_users WHERE id = ? AND deleted_at IS NULL').bind(newParent).first(); /* v684 */
       if (!t) return json({ ok: false, msg: '上级账号不存在' }, 400);
     }
     await env.DB.prepare('UPDATE admin_users SET parent_id = ? WHERE id = ?').bind(newParent, id).run();
@@ -198,7 +198,7 @@ export async function onRequestPut(context) {
   if (op === 'transfer') {
     /* 离职交接：把该账号（可选含子树）的资源与子树移交目标账号 */
     const toId = Number(b.toId) || 0;
-    const to = await env.DB.prepare('SELECT id, username, role, status FROM admin_users WHERE id = ?').bind(toId).first();
+    const to = await env.DB.prepare('SELECT id, username, role, status FROM admin_users WHERE id = ? AND deleted_at IS NULL').bind(toId).first(); /* v684：资源不能交接给已删账号 */
     if (!to || !to.status) return json({ ok: false, msg: '接收账号不存在或已停用' }, 400);
     if (toId === id) return json({ ok: false, msg: '不能交接给自己' }, 400);
     const includeTree = !!b.includeTree;
@@ -225,7 +225,7 @@ export async function onRequestDelete(context) {
   const url = new URL(request.url);
   const id = Number(url.searchParams.get('id')) || 0;
   if (!id) return json({ ok: false, msg: '缺少账号 id' }, 400);
-  const target = await env.DB.prepare('SELECT id, username, role FROM admin_users WHERE id = ?').bind(id).first();
+  const target = await env.DB.prepare('SELECT id, username, role FROM admin_users WHERE id = ? AND deleted_at IS NULL').bind(id).first(); /* v684：已删账号不能再被删一次（会把 60 天计时清零） */
   if (!target) return json({ ok: false, msg: '账号不存在' }, 404);
   if (me.role !== 'super') {
     const desc = await descendantIds(env, me.id);

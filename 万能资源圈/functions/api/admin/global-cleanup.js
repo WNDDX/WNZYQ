@@ -4,7 +4,7 @@
  * 保护：①上传台账——24 小时内的新文件可能是编辑中途的，不删；台账之前的历史遗留（如拖拽 bug 期的黑户）直接删。
  * 节流：30 分钟内重复调用直接跳过（settings 表记时间戳）。
  */
-import { json, requirePerm, buildContentText, readJSON } from '../../_utils.js';/* v680：去掉密码校验后 verifyPassword 不再使用，避免死导入 */
+import { json, requirePerm, buildContentText, readJSON, audit } from '../../_utils.js';/* v680：去掉密码校验后 verifyPassword 不再使用，避免死导入 */
 
 const GRACE_HOURS = 24;
 
@@ -12,6 +12,10 @@ export async function onRequestPost(context) {
   const { env, request } = context; await (await import('../../_utils.js')).ensureAdminUsers(env);
   const auth = await requirePerm(env, request, 'system.file');
   if (auth instanceof Response) return auth;
+  /* v684（复查建议）：`system.file` 在 v677 已从权限面板删掉，正常授权路径给不出这颗权限；
+     但老账号的 perms JSON 里如果残留 true，它仍然能调、而且现在不用密码。
+     删文件不可逆，这里直接锁死只有超管能调。 */
+  if (auth.role !== 'super') return json({ ok: false, msg: '该功能仅超级管理员可用' }, 403);
 
   /* v680（老板 11-21 明确）：「这些占用的数据不重要，都删除了说明不重要了，就不需要密码了，点击确认删除即可」。
      所以去掉 v674 的超管密码门槛，保留 system.file 权限（能进「清空测试数据」的人本来就只有超管）。
@@ -24,17 +28,22 @@ export async function onRequestPost(context) {
   const bucket = env.IMAGE_BUCKET;
   if (!bucket) return json({ ok: false, msg: '图片存储未配置' }, 400);
 
-  /* 节流：30 分钟内扫过就跳过 */
-  try {
-    const last = await env.DB.prepare("SELECT value FROM settings WHERE key = 'last_global_sweep'").first();
-    if (last && last.value) {
-      const ageMin = (Date.now() - Date.parse(String(last.value).replace(' ', 'T') + 'Z')) / 60000;
-      if (isFinite(ageMin) && ageMin < 30) return json({ ok: true, skipped: true });
-    }
-  } catch (e) {}
-  try {
-    await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('last_global_sweep', datetime('now')) ON CONFLICT(key) DO UPDATE SET value = datetime('now')").run();
-  } catch (e) {}
+  /* 节流：30 分钟内**真删过**就跳过。
+     v684（复查阻断 #4）：原来节流不分 dryRun，而「清理无用文件」是两步——第 1 步预扫就把时间戳写了，
+     第 2 步真删直接被 skip → 永远删不掉（前端显示"已清理 0 个"，再点又变回"没有可清理"）。
+     现在预扫是只读的，不参与节流；只有真删才写时间戳。 */
+  if (!dryRun) {
+    try {
+      const last = await env.DB.prepare("SELECT value FROM settings WHERE key = 'last_global_sweep'").first();
+      if (last && last.value) {
+        const ageMin = (Date.now() - Date.parse(String(last.value).replace(' ', 'T') + 'Z')) / 60000;
+        if (isFinite(ageMin) && ageMin < 30) return json({ ok: true, skipped: true, deleted: 0, msg: '30 分钟内刚清理过，稍后再试' });
+      }
+    } catch (e) {}
+    try {
+      await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('last_global_sweep', datetime('now')) ON CONFLICT(key) DO UPDATE SET value = datetime('now')").run();
+    } catch (e) {}
+  }
 
   /* 列出存储仓文件（KV / R2 两种存储都兼容） */
   const isKV = typeof bucket.getWithMetadata === 'function';
@@ -62,7 +71,9 @@ export async function onRequestPost(context) {
   } catch (e) { return json({ ok: false, msg: '列出存储失败' }, 500); }
 
   const cand = keys.filter(function (k) { return RE.test(k); });
-  if (!cand.length) return json({ ok: true, scanned: 0, deleted: 0 });
+  if (!cand.length) return dryRun
+    ? json({ ok: true, dryRun: true, scanned: 0, count: 0, bytes: 0, sample: [] })
+    : json({ ok: true, scanned: 0, deleted: 0 });
 
   /* 台账（24 小时保护期） */
   const ledger = {};
@@ -105,6 +116,8 @@ export async function onRequestPost(context) {
   } catch (e) {}
 
   try { for (const k of toDelete) await env.DB.prepare('DELETE FROM uploads WHERE key = ?').bind(k).run(); } catch (e) {}
+  /* v684：去掉密码后必须留痕——谁在什么时候删了多少个文件，事后要查得到 */
+  try { await audit(env, request, '清理无用文件', '扫描 ' + cand.length + ' 个，删除 ' + deleted + ' 个'); } catch (e) {}
   return json({ ok: true, scanned: cand.length, deleted: deleted });
 }
 

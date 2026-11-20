@@ -34,7 +34,10 @@ export async function onRequestPost(context) {
 
   // 新密码一律用 PBKDF2 多轮哈希
   const { salt: newSalt, hash: newHash } = await hashPasswordNew(newPassword);
-  await env.DB.prepare(`UPDATE ${table} SET password_hash = ?, salt = ? WHERE id = ?`)
+  /* v684（复查 P0）：admin_users 的列名是 pwd_hash，不是 password_hash —— 子账号自己改密码原来必 500。
+     这是一直存在的旧 bug（#116 只修了 verifyPassword 和 resetpwd，漏了这里）。 */
+  const pwdCol = isSub ? 'pwd_hash' : 'password_hash';
+  await env.DB.prepare(`UPDATE ${table} SET ${pwdCol} = ?, salt = ? WHERE id = ?`)
     .bind(newHash, newSalt, auth.id).run();
 
   /* v348 条32：改完密码把该账号其它设备的登录全部作废，只保留当前这台。

@@ -214,6 +214,12 @@ export async function ensureAdminUsers(env) {
   try { await env.DB.prepare("ALTER TABLE sessions ADD COLUMN utype TEXT NOT NULL DEFAULT 'a'").run(); } catch (e) {}
   try { await env.DB.prepare('ALTER TABLE products ADD COLUMN created_by TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {}
   try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN created_by TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {} /* #116：分类创建者（只能改自己名下的分类） */
+  /* v684（复查阻断 #1）：账号软删列必须在这里迁移。
+     原来只有 recycle.js 的 GET 里补这一列 —— 结果是「新库 / 新 isolate 还没人打开过回收站」时，
+     users.js 的列表、login.js 的子账号登录、_utils.getAuthAdmin 的每条请求都会因 no such column: deleted_at 抛异常，
+     子账号整个后台 500，且报错完全指不到真因。放这里＝每 isolate 一次、幂等、覆盖全部入口。 */
+  try { await env.DB.prepare('ALTER TABLE admin_users ADD COLUMN deleted_at TEXT').run(); } catch (e) {}
+}
 }
 
 /* 权限门卫：requireAuth 之后调用。无权（含冻结中的子账号）→ 统一「该功能未开放」 */

@@ -28,6 +28,16 @@ export async function onRequestGet(context) {
       if (row) sources.push(row.img, row.detail, row.detail_images, row.detail_videos);
       if (sources.length) await deleteBucketImages(env, sources);
     }
+    /* v684（复查 #5）：账号也必须 60 天到期清理，否则「保留 60 天」只是半句承诺，账号永远占在回收站里。
+       track.js 的每日清单里没有 admin_users（grep = 0），所以放在这里保证一打开回收站就清。 */
+    try {
+      const expiredAcc = await env.DB.prepare("SELECT id, username FROM admin_users WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days') AND role <> 'super'").all();
+      for (const a of (expiredAcc.results || [])) {
+        await env.DB.prepare('UPDATE admin_users SET parent_id = 0 WHERE parent_id = ?').bind(a.id).run();
+        await env.DB.prepare('DELETE FROM sessions WHERE admin_id = ? AND utype = ?').bind(a.id, 'u').run();
+        await env.DB.prepare('DELETE FROM admin_users WHERE id = ?').bind(a.id).run();
+      }
+    } catch (e) { /* 迁移/清理失败不阻塞列表 */ }
     const expiredCats = await env.DB.prepare("SELECT id FROM categories WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')").all();
     for (const r of (expiredCats.results || [])) {
       await env.DB.prepare('DELETE FROM categories WHERE id = ?').bind(r.id).run();
@@ -89,10 +99,16 @@ export async function onRequestPost(context) {
   const kind = String(b.kind || '');
   const id = Number(b.id) || 0;
   if (!op || !kind || (!id && kind !== 'ann')) return json({ ok: false, msg: '参数错误' }, 400);
+  /* v684（复查 #13）：原来 op/kind 拼错会一路走到 `{ok:true}`，界面显示"成功"其实什么都没做。加白名单。 */
+  if (['restore', 'purge'].indexOf(op) === -1) return json({ ok: false, msg: '参数错误' }, 400);
+  if (['product', 'category', 'ann', 'account'].indexOf(kind) === -1) return json({ ok: false, msg: '参数错误' }, 400);
   /* #116：恢复/彻底删除分别鉴权 + 范围锁 */
   {
     const perms = typeof auth.perms === 'string' ? parsePerms(auth.perms) : null;
-    const need = op === 'restore' ? 'products.restore' : 'products.purge';
+    /* v684（复查 #11）：账号的恢复/彻底删语义上属于账号管理，不该借用 products.* 的键 */
+    const need = (kind === 'account')
+      ? 'account.del'
+      : (op === 'restore' ? 'products.restore' : 'products.purge');
     if (!can(need, auth.role, perms)) return json({ ok: false, msg: '该功能未开放' }, 403);
     if (kind === 'product') {
       const row = await env.DB.prepare('SELECT cid FROM products WHERE id = ?').bind(id).first();
@@ -146,6 +162,11 @@ export async function onRequestPost(context) {
       await env.DB.prepare("UPDATE admin_users SET deleted_at = NULL, status = 1 WHERE id = ?").bind(id).run();
       await audit(env, request, '回收站恢复账号', t.username);
     } else if (op === 'purge') {
+      /* v684（复查阻断 #3）：原来不校验 deleted_at —— 拿一个「活跃账号」的 id 直接 POST 就能物理删掉它，
+         删完它的下级 parent_id 指向不存在的行：列表里查不到、却照样能登录，成了幽灵账号。 */
+      if (!t.deleted_at) return json({ ok: false, msg: '该账号不在回收站里，不能从回收站点彻底删除' }, 400);
+      /* 删之前把下级上移，别留指向不存在行的 parent_id */
+      await env.DB.prepare('UPDATE admin_users SET parent_id = 0 WHERE parent_id = ?').bind(id).run();
       await env.DB.prepare('DELETE FROM sessions WHERE admin_id = ? AND utype = ?').bind(id, 'u').run().catch(() => {});
       await env.DB.prepare('DELETE FROM admin_users WHERE id = ?').bind(id).run();
       await audit(env, request, '回收站彻底删除账号', t.username);
