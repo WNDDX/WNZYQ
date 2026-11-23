@@ -3,7 +3,7 @@
  * 前台首页聚合接口（R308）：一次返回首屏全部数据
  * 带版本号：客户端传 ?v=lastVersion，没变则返回 { unchanged: true }
  */
-import { cleanProduct, cleanVariantPublic, ensureProductColumns, ensureSoftDelete, ensureVariantColumns, json, publicAnnouncements } from '../../_utils.js'; // v299（用户 10-04 23:11）：修复引用层级错误致 Cloudflare 构建失败
+import { cleanProduct, cleanVariantPublic, ensureProductColumns, ensureSoftDelete, ensureThumbOk, ensureVariantColumns, json, publicAnnouncements } from '../../_utils.js'; // v299（用户 10-04 23:11）：修复引用层级错误致 Cloudflare 构建失败
 
 // v317（用户 10-05 18:40）：根因→老板拍板规则1/2/3/4+优化2/3/4，v315全量返回需改回首屏只拿第一页，翻页/切分类/搜索点到才拉；修法→恢复20条分页，首屏一趟拿第一页+分类+设置，其余前端按需拉取。
 /* v383：+ group_url/contact_qr/group_qr/gzh_qr——客服/群聊链接与三张二维码全量走设置值 */
@@ -50,13 +50,19 @@ function shortHash(str) {
 
 // 计算数据版本（ Beijing 时间口径，与 U8 统一 ）
 /* 原来 3 条独立 SQL 并行发；现在合成 1 条，语义完全不变（多个标量子查询） */
+/* v692：版本串里加进「有小图的资源数」pt。
+   原因：本轮给响应加了 thumb 字段，而 thumb 由 products.thumb_ok 决定——它是后台补传/上传时才变的。
+   不进版本串的话，老访客带着 localStorage 里的旧 v 来请求，服务端比对相等就回 { unchanged: true }，
+   前端永远用本地旧 payload（没有 thumb → 一辈子取 600px 原图，小图等于白做）。
+   pt 查不到（列还没迁移）时**不能**让整条 SQL 挂掉：挂掉会落到 'nb_'+Date.now() 兜底，
+   变成「每次请求都当新版本」→ 每次都全量下发 + 每次写边缘缓存，比不加速更糟。
+   所以下面用 withThumb 参数化：带 pt 查失败就退回不带 pt 的老 SQL，版本照样稳定。 */
 async function computeVersion(env) {
-  try {
-    const row = await env.DB.prepare(
-      `SELECT
+  const build = (withThumb) => `SELECT
          (SELECT COUNT(*) FROM products WHERE deleted_at IS NULL) AS pn,
          (SELECT COALESCE(MAX(updated_at), '') FROM products WHERE deleted_at IS NULL) AS pm,
          (SELECT COUNT(*) FROM categories WHERE is_hidden = 0 AND deleted_at IS NULL) AS cn,
+         ${withThumb ? "(SELECT COUNT(*) FROM products WHERE deleted_at IS NULL AND thumb_ok = 1) AS pt," : ''}
          (SELECT COALESCE(value,'') FROM settings WHERE key='announcements')     AS s_ann,
          (SELECT COALESCE(value,'') FROM settings WHERE key='announcement')      AS s_an1,
          (SELECT COALESCE(value,'') FROM settings WHERE key='announcement_mode') AS s_am,
@@ -67,8 +73,14 @@ async function computeVersion(env) {
          (SELECT COALESCE(value,'') FROM settings WHERE key='gzh_qr')            AS s_zq,
          (SELECT COALESCE(value,'') FROM settings WHERE key='shop_name')         AS s_nm,
          (SELECT COALESCE(value,'') FROM settings WHERE key='shop_logo')         AS s_lg,
-         (SELECT COALESCE(value,'') FROM settings WHERE key='resource_bind_limit') AS s_bl`
-    ).first();
+         (SELECT COALESCE(value,'') FROM settings WHERE key='resource_bind_limit') AS s_bl`;
+  let row = null;
+  try { row = await env.DB.prepare(build(true)).first(); }
+  catch (e) { /* thumb_ok 列还没迁上 → 退回老口径（版本照样稳定，只是不含小图指纹） */ }
+  if (!row) {
+    try { row = await env.DB.prepare(build(false)).first(); } catch (e2) { row = null; }
+  }
+  try {
     if (row) {
       /* 用 \u0001 作分隔，避免「a|b」和「a」「|b」拼出同一个串 */
       const sig = [
@@ -76,8 +88,9 @@ async function computeVersion(env) {
         row.s_cq, row.s_gq, row.s_zq, row.s_nm, row.s_lg, row.s_bl
       ].map((v) => (v === null || v === undefined ? '' : String(v))).join('\u0001');
       /* 兼容性说明：版本串格式由 s17 变成 s<hash>，老客户端带旧格式来请求必然不等 → 重拉一次全量。
-         这是一次性的、可接受的（正好让老访客把旧缓存换掉），因此不加任何兼容分支。 */
-      return `p${row.pn}_${row.pm}_c${row.cn}_s${shortHash(sig)}`;
+         这是一次性的、可接受的（正好让老访客把旧缓存换掉），因此不加任何兼容分支。
+         v692：再加 t<有小图数>——payload 形状变了（多了 thumb），老访客必须重拉一次。 */
+      return `p${row.pn}_${row.pm}_c${row.cn}_s${shortHash(sig)}_t${row.pt === undefined || row.pt === null ? 'x' : row.pt}`;
     }
   } catch (e) { /* 落到下面的兜底 */ }
   /* 兜底：查不动就每次当新版本——宁可多传数据，也不给前端"没变"的错觉 */
@@ -174,6 +187,9 @@ export async function onRequestGet(context) {
       variantsByProduct[v.product_id].push(cleanVariantPublic(v));
     }
   }
+  /* v692：首屏卡片的小图判据（thumb_ok 为 NULL 的行现场探一次并落库，稳态零 I/O）。
+     探测必须在 cleanProduct 之前，否则首屏拿到的 thumb 恒为空、永远取原图。 */
+  await ensureThumbOk(env, prodRows);
   const products = prodRows.map((p) => {
     const item = cleanProduct(p);
     item.variants = variantsByProduct[p.id] || [];

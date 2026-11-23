@@ -319,7 +319,7 @@ return vf;
 }
 
 
-var thumbOf = function (url) { return window.__thumbOf(url); };
+
 
 function loadImg(img, src, fallbackSrc) {
 img.dataset.lf = '1';
@@ -1305,13 +1305,17 @@ img.className = 'card-img';
 img.decoding = 'async'; img.loading = 'lazy';
 img.alt = p.title || '';
 
-var __thumb = thumbOf(p.img), __orig = p.img || '';
+
+var __orig = p.img || '';
+var __thumb = (typeof p.thumb === 'string' && p.thumb && p.thumb !== __orig) ? p.thumb : '';
 
 if (!__orig) {
 img.src = window.WN_MEDIA_FALLBACK;
 img.classList.add('media-fail');
-} else {
+} else if (__thumb) {
 loadImg(img, __thumb, __orig);
+} else {
+loadImg(img, __orig, '');
 }
 
 

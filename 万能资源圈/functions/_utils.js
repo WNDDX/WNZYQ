@@ -256,6 +256,106 @@ export async function productScopeOk(env, auth, productId) {
   return { ok: catAllowed(Number(row.cid) || 0, auth.role, perms), cid: row.cid, createdBy: row.created_by, product: row };
 }
 
+/* ===== v692：封面小图（_t.webp）可服务性判据 =====
+   背景（2026-11-19 首屏 43 请求 / 上限 39 的根因）：
+     R304 P18 定的策略是「列表卡片读小图、小图缺失回退原图」。但读侧是**先请小图**，
+     小图不存在时才在 onerror 里换原图 —— 一张封面因此要发两个请求（404 的 _t.webp + 200 的原图）。
+     线上有 12 张 2026/11 上传的封面，小图在「清理无用文件」里被当孤儿删了（v688 已修台账，
+     但删掉的不会自己回来），于是每次进资源页都白跑 12 个 404。
+   改法：把「这张封面到底有没有小图」变成**数据**，读侧只信数据，不再靠 onerror 试错。
+     thumb_ok = NULL → 未探测（本函数会探一次并落库）
+     thumb_ok = 0    → 确定没有小图 → 读侧直接取原图（零 404）
+     thumb_ok = 1    → 确定有小图   → 读侧走小图优先 + 原图回退
+   为什么用 NULL 而不是 DEFAULT 0：
+     默认 0 会让「新上传且成功生成小图」的资源也一直被判成 0（上传接口拿不到 product id），
+     列表就永远只能看 600px 原图；NULL 让读侧探测一次即可自愈，老数据探测结果也天然是 0，行为一致。
+   ⚠ 派生规则与 assets/ui-common.js 的 `__thumbOf`（浏览器侧唯一真源）保持同款正则，
+     改一处必须同步另一处（服务端要跑在同一套 /img/images/YYYY/MM/uuid.ext 命名上）。 */
+const THUMB_SRC_RE = /^\/img\/(images\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:png|jpe?g|webp|gif))$/i;
+
+/* 封面原图 URL → 小图 URL；非图仓图片（外链/空/其它目录）一律返回 ''（= 没小图） */
+export function thumbUrlOf(img) {
+  const m = String(img || '').match(THUMB_SRC_RE);
+  if (!m) return '';
+  return '/img/' + m[1].replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp');
+}
+
+/* 封面原图 URL → 小图在图仓里的 key（images/…uuid_t.webp）；没有则 '' */
+export function thumbKeyOf(img) {
+  const t = thumbUrlOf(img);
+  return t ? t.slice(5) /* 去掉前导 '/img/' */ : '';
+}
+
+/* 小图文件是否存在：true=有 / false=没有 / undefined=不知道（图仓没接、读失败）
+   —— 只有明确 false 才落库 0，避免一次抖动把「有小图」永久记成「没有」。 */
+export async function thumbExistsInBucket(env, img) {
+  const key = thumbKeyOf(img);
+  if (!key) return false;                 /* 非图仓图片，结构上就不可能有小图 */
+  const bucket = env && env.IMAGE_BUCKET;
+  if (!bucket) return undefined;          /* 图仓没绑 → 不知道，下次再说 */
+  try {
+    if (typeof bucket.head === 'function') return !!(await bucket.head(key));            /* R2 */
+    if (typeof bucket.getWithMetadata === 'function') {                                   /* KV（无 head） */
+      const r = await bucket.getWithMetadata(key, 'stream');
+      const v = r ? r.value : null;
+      if (v && typeof v.cancel === 'function') { try { v.cancel(); } catch (e) {} }        /* 立刻断开，不下载图片字节 */
+      return !!(v !== null && v !== undefined);
+    }
+    const obj = await bucket.get(key);
+    if (obj && obj.body && typeof obj.body.cancel === 'function') { try { obj.body.cancel(); } catch (e) {} }
+    return !!obj;
+  } catch (e) { return undefined; }
+}
+
+/* 列迁移（幂等，每实例一次）。用 PRAGMA 判断是否真的加上了——加不上就整条链路降级为「一律取原图」，
+   绝不会因为迁移失败而每次请求都白探 20 次。 */
+let __thumbColOk = null; /* null=未检查 / true=有列 / false=加不上 */
+async function ensureThumbOkColumn(env) {
+  if (__thumbColOk !== null) return __thumbColOk;
+  try {
+    const cols = await env.DB.prepare('PRAGMA table_info(products)').all();
+    const names = (cols.results || []).map((c) => c.name);
+    if (!names.includes('thumb_ok')) {
+      await env.DB.prepare('ALTER TABLE products ADD COLUMN thumb_ok INTEGER').run();
+    }
+    __thumbColOk = true;
+  } catch (e) { __thumbColOk = false; }
+  return __thumbColOk;
+}
+
+/* 就地补探测：把 rows 里 thumb_ok 还是 NULL 的行探一次并落库（<调用方给的 rows 会被直接改写>）。
+   稳态成本：一次 .filter 遍历，零 I/O —— 全部行都有值后本函数立即返回。 */
+export async function ensureThumbOk(env, rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  if (!list.length) return list;
+  let todo = [];
+  for (const r of list) {
+    if (r && r.img && (r.thumb_ok === null || r.thumb_ok === undefined)) todo.push(r);
+  }
+  if (!todo.length) return list;
+  if (!(await ensureThumbOkColumn(env))) {
+    /* 列加不上：不探测（否则每条请求都白探），读侧 thumb 恒为 '' → 取原图，行为安全 */
+    for (const r of todo) r.thumb_ok = 0;
+    return list;
+  }
+  todo = todo.slice(0, 20); /* 一页最多 20 条，别让异常数据放大探测次数 */
+  const probed = await Promise.all(todo.map(async (r) => ({ r, v: await thumbExistsInBucket(env, r.img) })));
+
+  const stmts = [];
+  for (const { r, v } of probed) {
+    if (v === true) { r.thumb_ok = 1; stmts.push(env.DB.prepare('UPDATE products SET thumb_ok = 1 WHERE id = ?').bind(r.id)); }
+    else if (v === false) { r.thumb_ok = 0; stmts.push(env.DB.prepare('UPDATE products SET thumb_ok = 0 WHERE id = ?').bind(r.id)); }
+    /* v === undefined（不知道）：保持 NULL，下次再探；本次读侧按「没小图」处理（取原图，绝不发 404） */
+  }
+  if (stmts.length) {
+    try {
+      if (typeof env.DB.batch === 'function') await env.DB.batch(stmts);
+      else for (const s of stmts) await s.run();
+    } catch (e) { /* 落库失败不影响本次返回：值已经在内存行上，下次再探 */ }
+  }
+  return list;
+}
+
 // 把数据库行转成前台友好字段（snake_case → camelCase）
 export function cleanProduct(p) {
   let coverImages = [];
@@ -271,6 +371,9 @@ export function cleanProduct(p) {
     desc: p.desc,
     detail: p.detail,
     img: p.img,
+    /* v692：列表小图地址（''= 没有小图，读侧直接取原图）。判据来自 products.thumb_ok，
+       由 ensureThumbOk() 探测落库、由 upload-image 生成小图成功时置 1。 */
+    thumb: Number(p.thumb_ok) === 1 ? thumbUrlOf(p.img) : '',
     coverImages: coverImages,     // 封面轮播图（网络 URL 数组）
     detailImages: detailImages,   // 详情多图（网络 URL 数组）
     detailVideos: detailVideos,   // 详情多视频（网络 URL 数组）

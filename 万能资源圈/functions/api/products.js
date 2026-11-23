@@ -8,7 +8,7 @@
  * R303（09-30）：支持分页按页拉取（page + page_size），兼容旧口径（不传参=返回全部）
  * 带 20 秒边缘缓存（Cache API），管理员修改后自动失效
  */
-import { cleanProduct, cleanVariantPublic, ensureProductColumns, ensureSoftDelete, ensureVariantColumns, json } from '../_utils.js';
+import { cleanProduct, cleanVariantPublic, ensureProductColumns, ensureSoftDelete, ensureThumbOk, ensureVariantColumns, json } from '../_utils.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -83,6 +83,7 @@ export async function onRequestGet(context) {
   if (singleId > 0) {
     const r = await env.DB.prepare('SELECT * FROM products WHERE id = ? AND is_online = 1 AND is_hidden = 0 AND deleted_at IS NULL').bind(singleId).first(); /* v440：软删（数据缓存中）资源前台不可见 */
     if (!r) return json({ ok: false, msg: '资源不存在或已下架' }, 404);
+    await ensureThumbOk(env, [r]); /* v692：小图判据（NULL 行现场探一次并落库） */
     const item = cleanProduct(r);
     const { results: vrows } = await env.DB.prepare('SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort ASC, id ASC').bind(singleId).all();
     item.variants = (vrows || []).filter((v) => !v.is_hidden).map(cleanVariantPublic);
@@ -163,6 +164,8 @@ export async function onRequestGet(context) {
   }
 
   // 4. 组装
+  /* v692：先把「有没有小图」补探测齐（只对 thumb_ok 还是 NULL 的行动手，稳态零 I/O） */
+  await ensureThumbOk(env, results);
   const list = results.map((p) => {
     const item = cleanProduct(p);
     item.variants = variantsByProduct[p.id] || [];
@@ -175,6 +178,11 @@ export async function onRequestGet(context) {
   const respBody = { ok: true, list };
   /* v336 条55：内容指纹——没变就只回 304，重复访问传输量从几十 KB 降到几十字节 */
   const etag = 'W/"' + (brief ? 'b.' : '') + total + '-' + list.length + '-' + (list[0] ? list[0].id : 0) + '"'; /* v336 条55 + v338 条40：指纹含瘦身标记 */
+  /* v692 备注（不改行为）：这个指纹**只在 304 分支里被写进响应头**，200 响应并不带 ETag，
+     所以浏览器根本不会存 If-None-Match —— 304 这条路径实际上一直是死的。
+     本次要保证的「thumb 字段不滞留」由 Cache-Control: max-age=20 兜住（最多 20 秒），
+     因此不在这里顺手打开 ETag：指纹里没有 updated_at/title，一旦真的开始 304，
+     改个标题就会长期发旧内容。要开就是另一件事，得先把指纹补齐。 */
 
   if (request.headers.get('If-None-Match') === etag) {
     const notMod = new Response(null, { status: 304 });

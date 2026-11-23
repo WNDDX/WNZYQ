@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS products (
   "desc"        TEXT    NOT NULL DEFAULT '',
   detail        TEXT    NOT NULL DEFAULT '',
   img           TEXT    NOT NULL DEFAULT '',
+  thumb_ok      INTEGER,               -- v692：封面小图（_t.webp）可服务性：NULL=未探测 / 0=没有 / 1=有
   cover_images  TEXT    NOT NULL DEFAULT '[]', -- 封面轮播图（JSON 数组）
   detail_images TEXT    NOT NULL DEFAULT '[]',
   detail_videos TEXT    NOT NULL DEFAULT '[]',

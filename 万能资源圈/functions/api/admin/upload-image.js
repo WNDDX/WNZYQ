@@ -13,6 +13,22 @@ const ALLOWED_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': '
 // KV 命名空间特有 getWithMetadata；R2 桶没有
 function isKVBucket(bucket) { return typeof bucket.getWithMetadata === 'function'; }
 
+/* v692：把「这张封面已经有小图」写进 products.thumb_ok。
+   读侧（/api/products、/api/shop/home）只认这一列，所以每次真的产出小图都得置 1，
+   否则资源列表会一直取原图（大图），小图等于白存。
+   两个调用点：
+     ① 主图上传带 file2（新图，刚传完还没入库 → 通常 0 行命中，但编辑旧资源替换封面时能对上）；
+     ② mode=thumb 存量补传成功（老图补回小图，命中 1 行）。
+   key 是图仓相对 key（images/YYYY/MM/uuid.ext），库里 img 存的是 '/img/' + key 或裸 key，两种都覆盖。 */
+async function markThumbOk(env, key) {
+  try {
+    if (!key) return 0;
+    const r = await env.DB.prepare('UPDATE products SET thumb_ok = 1 WHERE img = ? OR img = ?')
+      .bind('/img/' + key, key).run();
+    return (r && r.meta && r.meta.changes) || 0;
+  } catch (e) { return 0; } /* 列还没加上/库抖动：不改上传结果，读侧下次探测会自愈 */
+}
+
 export async function onRequestPost(context) {
   const { env, request } = context;
   const auth = await requireAuth(env, request);
@@ -61,6 +77,7 @@ export async function onRequestPost(context) {
       });
     }
     try { await recordUpload(env, tkey); } catch (e) {} /* v354：记台账（24h 保护期依据） */
+    await markThumbOk(env, base); /* v692：补传成功 → 对应的资源立刻改走小图 */
     return json({ ok: true, key: tkey, url: '/img/' + tkey });
   }
 
@@ -96,6 +113,7 @@ export async function onRequestPost(context) {
   /* R304 P18：file2 = 前端 canvas 生成的小图（最大边 400px、webp、q0.8），随原图同一请求
      提交，存为同目录 uuid_t.webp；缺 file2（老前端/生成失败）不报错，小图缺失读取侧回退原图 */
   const file2 = form.get('file2');
+  let hasThumb = false; /* v692：本次请求是否真的产出了小图（决定要不要回 thumbUrl、要不要置 thumb_ok） */
   if (file2 && typeof file2 !== 'string' && file2.size > 0 && file2.size <= 2 * 1024 * 1024) {
     try {
       const tkey = key.replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp');
@@ -109,9 +127,13 @@ export async function onRequestPost(context) {
       /* v688：小图同样记台账 —— 它是独立 key，不记就会「原图受 24h 保护、小图立刻可删」，
          删完列表缩略图全 404（比原图被删更早暴露，但一样是数据损失）。 */
       try { await recordUpload(env, tkey); } catch (e) {}
+      hasThumb = true; /* v692 */
+      await markThumbOk(env, key); /* v692：本次真的产出了小图 → 该资源可以走小图了 */
     } catch (e) { /* 小图写失败不阻塞原图 */ }
   }
 
   // R32：图片走自家路由 /img/<key>（相对路径，浏览器自动用当前域名），无需任何公开地址配置
-  return json({ ok: true, key, url: '/img/' + key });
+  /* v692：顺带回一个 thumbUrl——新图（含 file2 小图）上传后前端即可知道小图地址，
+     不需要再去 HEAD 探测一次。没产出小图时为 ''。 */
+  return json({ ok: true, key, url: '/img/' + key, thumbUrl: hasThumb ? ('/img/' + key.replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp')) : '' });
 }
