@@ -67,7 +67,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <meta name="apple-mobile-web-app-capable" content="yes">
  <meta name="apple-mobile-web-app-status-bar-style" content="default">
  <meta name="apple-mobile-web-app-title" content="万能资源圈">
- <link rel="preload" href="/assets/images/logo.png" as="image">
+ <link rel="preload" href="/assets/images/logo.png?v=330" as="image">
  <!-- R243 条4：每页脚本预载——head 内提前发起脚本请求（弱网进页面提速），四页统一 -->
  <link rel="preload" href="/assets/ui-common.js" as="script">
  <link rel="preload" href="/assets/shop.js" as="script">
@@ -90,7 +90,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
  <div class="topbar-inner">
  <div class="shop-brand">
  <a class="shop-logo-link" href="admin" title="进入管理页" onclick="event.preventDefault();window.jumpTo(this.getAttribute('href'))">
- <img class="shop-logo" id="shopLogo" src="/assets/images/logo.png" alt="Logo" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror="window.__logoFail&&window.__logoFail(this)" />
+ <img class="shop-logo" id="shopLogo" src="/assets/images/logo.png?v=330" alt="Logo" decoding="async" style="opacity:0" onload="var _i=this,_p=this.parentNode,_s=function(){_i.style.opacity='1';_p.style.background='#e2e5e9';_p.style.opacity='1';if(_p&&!_p.classList.contains('logo-enter'))_p.classList.add('logo-enter');};if(_i.decode){_i.decode().then(_s,function(){_s();});}else{_s();}" onerror="window.__logoFail&&window.__logoFail(this)" />
  </a>
  <h1 class="shop-name" id="shopName">万能资源圈・资源</h1><!-- v633：原来是 div+role=heading 假装 h1（读屏等价、SEO 弱），换成真 h1；.shop-name 自带完整样式 + 全局 * 已清零 margin，视觉零变化 -->
  </div>
