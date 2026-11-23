@@ -540,7 +540,8 @@ img.onerror = function () {
 if (_origImg && this.getAttribute('src') !== _origImg) { this.src = _origImg; return; }
 this.onerror = null; this.src = window.WN_MEDIA_FALLBACK; this.style.opacity = '1'; if (this && this.classList) this.classList.add('media-fail');
 };
-img.src = _origImg ? thumbOf(_origImg) : window.WN_MEDIA_FALLBACK;
+
+img.src = (p && p.thumb) ? p.thumb : (_origImg || window.WN_MEDIA_FALLBACK);
 
 var info = document.createElement('div');
 info.className = 'info';
