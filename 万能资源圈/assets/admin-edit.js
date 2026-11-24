@@ -2175,7 +2175,7 @@ partial: 'contact',
 contactQr: (document.getElementById('fContactQr').value || '').trim(),
 contactUrl: (document.getElementById('fContactUrl').value || '').trim()
 }) }).then(function (res) {
-b.disabled = false; b.textContent = _t;
+b.disabled = false; if (window.__btnIdle) window.__btnIdle(b); else b.textContent = _t;
 if (res && res.ok) {
 var _sp = (state.products || []).find(function (x) { return x.id === pid; });
 if (_sp) { _sp.contactQr = (document.getElementById('fContactQr').value || '').trim(); _sp.contactUrl = (document.getElementById('fContactUrl').value || '').trim(); }
@@ -2184,7 +2184,7 @@ if (window.showToast) window.showToast(window.T('saved'), 'success');
 if (after) after();
 }
 else { toast((res && res.msg) || '保存失败', 'error'); }
-}).catch(function () { b.disabled = false; b.textContent = _t; toast(window.T('netFail'), 'error'); });
+}).catch(function () { b.disabled = false; if (window.__btnIdle) window.__btnIdle(b); else b.textContent = _t; toast(window.T('netFail'), 'error'); });
 return true;
 }
 
