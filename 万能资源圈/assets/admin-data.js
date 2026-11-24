@@ -482,8 +482,12 @@ window.__exportStamp = __exportStamp;
 
 function exportAllData() {
 var btn = document.getElementById('exportBtn');
-var btnOld = btn ? btn.textContent : '';
-if (btn) { btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '导出中'); else btn.textContent = '导出中'; }
+
+if (btn && btn.__busy) return;
+if (btn) {
+if (window.__btnBusy) { window.__btnBusy(btn, '导出中'); btn.disabled = true; }
+else { btn.disabled = true; btn.textContent = '导出中'; }
+}
 toast('正在准备导出', 'info');
 
 var _indet = document.createElement('div');
@@ -491,7 +495,15 @@ _indet.className = 'wn-indet';
 _indet.style.cssText = 'margin-top:6px;max-width:300px;';
 _indet.innerHTML = '<i></i>';
 if (btn && btn.parentNode) btn.parentNode.appendChild(_indet);
-var done = function () { if (btn) { btn.disabled = false; btn.textContent = btnOld || '导出数据统计'; } try { if (_indet.parentNode) _indet.parentNode.removeChild(_indet); } catch (e) { if (window.__silent) window.__silent(e); } };
+var done = function () {
+
+if (btn) {
+
+try { if (window.__btnIdle) window.__btnIdle(btn); } catch (e0) { if (window.__silent) window.__silent(e0); }
+btn.disabled = false;
+}
+try { if (_indet.parentNode) _indet.parentNode.removeChild(_indet); } catch (e) { if (window.__silent) window.__silent(e); }
+};
 api('admin/export').then(function (res) {
 if (!res || !res.ok) { toast((res && res.msg) || '导出失败：数据加载失败', 'error'); done(); return; }
 try {
