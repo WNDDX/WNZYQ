@@ -1267,6 +1267,8 @@ if (!btn) return;
 if (!btn.__busy) {
 btn.__busy = 1;
 
+btn.__busyWasDisabled = !!btn.disabled;
+
 btn.__busyOrig = (function () {
 var _lab = btn.querySelector('.btn-lab');
 if (_lab) return _lab.textContent;
@@ -1357,7 +1359,11 @@ if (txt) txt.nodeValue = btn.__busyOrig;
 btn.__busyOrig = null;
 btn.__busyText = null;
 btn.__busyLab = null;
-btn.disabled = false;
+
+if (btn.__busyWasDisabled !== undefined) {
+btn.disabled = !!btn.__busyWasDisabled;
+btn.__busyWasDisabled = undefined;
+}
 };
 
 (function () {
@@ -3215,6 +3221,7 @@ return u.replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp');
 
 
 window.__thumbIfKnown = function (url, serverThumb) {
+
 try {
 var u = String(url || '');
 if (!u) return '';

@@ -2592,7 +2592,9 @@ return (b / 1048576).toFixed(2) + ' MB';
 var reset = function () {
 pending = 0;
 cb.textContent = '清理无用文件';
-if (window.__btnIdle) window.__btnIdle(cb); else cb.disabled = false;
+
+if (window.__btnIdle) window.__btnIdle(cb);
+cb.disabled = false;
 };
 cb.addEventListener('click', function () {
 if (pending > 0) {
@@ -2625,6 +2627,7 @@ if (cmsg) cmsg.textContent = '';
 fetch('/api/admin/global-cleanup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dryRun: true }) })
 .then(function (r) { return r.json(); }).then(function (d) {
 if (window.__btnIdle) window.__btnIdle(cb);
+cb.disabled = false;
 
 if (d && d.ok && d.throttled) { cb.disabled = false; return; }
 if (!d || !d.ok) { if (cmsg) cmsg.textContent = (d && d.msg) || '扫描失败'; cb.disabled = false; return; }
