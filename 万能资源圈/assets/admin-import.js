@@ -2284,14 +2284,15 @@ mask.querySelector('#errClear').addEventListener('click', function () {
 var btn = this;
 var go = function () {
 btn.disabled = true;
+if (window.__btnBusy) window.__btnBusy(btn, '清理中');
 fetch('/api/admin/errors', { method: 'DELETE', credentials: 'include' })
 .then(function (r) { return r.json(); })
 .then(function (d) {
-btn.disabled = false;
+if (window.__btnIdle) window.__btnIdle(btn); btn.disabled = false;
 toast(d && d.ok ? '已清空' : '清空失败', d && d.ok ? 'success' : 'error');
 page = 1; load();
 })
-.catch(function () { btn.disabled = false; toast('网络异常', 'error'); });
+.catch(function () { if (window.__btnIdle) window.__btnIdle(btn); btn.disabled = false; toast('网络异常', 'error'); });
 };
 if (window.showConfirm) window.showConfirm('清空后记录将无法恢复', go, null, '清空', '取消', true);
 else go();

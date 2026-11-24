@@ -123,6 +123,16 @@ stopAutoSaveDraft();
 
 var __imgPreviewTimer = null;
 var __lastBadUrl = null;
+
+function __thumbForCover(url) {
+
+try {
+var u = String(url || '');
+if (!u) return '';
+if (window.__thumbIfKnown) return window.__thumbIfKnown(u);
+} catch (e) { if (window.__silent) window.__silent(e); }
+return '';
+}
 function _safeSetPreview(preview, url, opts) {
 opts = opts || {};
 if (!preview) return;
@@ -144,16 +154,17 @@ preview.classList.add('show');
 return;
 }
 
-var _tUrl = thumbOf(url);
+var _tUrl = __thumbForCover(url);
+var _probeUrl = _tUrl || url;
 var probe = new Image();
 probe.onload = function () {
 preview.onerror = null; delete preview.dataset.fh;
 preview.classList.remove('media-fail');
-preview.src = _tUrl;
+preview.src = _probeUrl;
 preview.classList.add('show');
 };
 probe.onerror = function () {
-if (_tUrl !== url) {
+if (_tUrl && _probeUrl !== url) {
 var probe2 = new Image();
 probe2.onload = function () {
 preview.onerror = null; delete preview.dataset.fh;
@@ -175,7 +186,7 @@ preview.onerror = null; preview.dataset.fh = '1';
 preview.src = window.WN_MEDIA_FALLBACK; if (preview && preview.classList) preview.classList.add('media-fail');
 preview.classList.add('show');
 };
-probe.src = _tUrl;
+probe.src = _probeUrl;
 } else {
 preview.onerror = null; preview.dataset.fh = '1'; __lastBadUrl = null;
 preview.src = window.WN_MEDIA_FALLBACK; if (preview && preview.classList) preview.classList.add('media-fail');
@@ -727,12 +738,12 @@ if (_fr) { _fr.classList.add('row-flash'); setTimeout(function () { _fr.classLis
 refreshCatCnts();
 silentSyncProducts();
 } else {
-saveProductBtn.disabled = false; saveProductBtn.textContent = '确定';
+if (window.__btnIdle) window.__btnIdle(saveProductBtn); else saveProductBtn.textContent = '确定'; saveProductBtn.disabled = false;
 toast(res.msg || '保存失败', 'error');
 }
 }).catch(function () {
 saving = false;
-saveProductBtn.disabled = false; saveProductBtn.textContent = '确定';
+if (window.__btnIdle) window.__btnIdle(saveProductBtn); else saveProductBtn.textContent = '确定'; saveProductBtn.disabled = false;
 toast(window.T('netFail'), 'error');
 });
 }
@@ -821,6 +832,7 @@ return;
 
 if (cBtn.disabled || window.__issueInFlight) return;
 cBtn.disabled = true;
+
 if (window.__btnBusy) window.__btnBusy(cBtn, '发码中'); else cBtn.textContent = '发码中';
 __issueCode(cvObj, function () { renderVariants(); });
 });

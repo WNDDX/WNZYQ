@@ -281,7 +281,8 @@ inp.click();
 
 var __inputBusy = false;
 function _resetInputBtn() {
-inputOk.disabled = false; inputOk.textContent = '确定';
+if (window.__btnIdle) window.__btnIdle(inputOk); else inputOk.textContent = '确定';
+inputOk.disabled = false;
 __inputBusy = false;
 }
 window.closeInput = function () {
@@ -405,7 +406,8 @@ document.getElementById('confirmMask').classList.add('open');
 var __confirmBusy = false;
 function _resetConfirmBtn() {
 var okBtn = document.getElementById('confirmOk');
-okBtn.disabled = false; okBtn.textContent = '确定';
+if (window.__btnIdle) window.__btnIdle(okBtn); else okBtn.textContent = '确定';
+okBtn.disabled = false;
 __confirmBusy = false;
 }
 window.closeConfirm = function () {
@@ -1026,6 +1028,7 @@ var u = loginUser.value.trim();
 var p = loginPass.value;
 if (!u || !p) { toast('请输入账号和密码', 'error'); return; }
 loginBtn.disabled = true;
+
 if (window.__btnBusy) window.__btnBusy(loginBtn, '登录中');
 api('admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) })
 .then(function (res) {

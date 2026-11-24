@@ -2468,7 +2468,8 @@ var btn = document.getElementById('resourceCodeBtn');
 var btnText = btn.textContent;
 btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '解锁中');
 requestResourceUnlock(input, 400).then(function (res) {
-btn.disabled = false; btn.textContent = btnText;
+if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = btnText;
+btn.disabled = false;
 if (res === null) return;
 if (res && res.ok && res.content) {
 if (window.__haptic) window.__haptic();
@@ -2533,7 +2534,8 @@ var btnText = btn.textContent;
 if (btn.disabled) return;
 btn.disabled = true; if (window.__btnBusy) window.__btnBusy(btn, '获取中'); else btn.textContent = '获取中';
 requestResourceUnlock('', 400).then(function (res) {
-btn.disabled = false; btn.textContent = btnText;
+if (window.__btnIdle) window.__btnIdle(btn); else btn.textContent = btnText;
+btn.disabled = false;
 if (res === null) return;
 if (res && res.ok && res.content) {
 

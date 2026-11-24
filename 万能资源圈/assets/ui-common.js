@@ -1274,6 +1274,15 @@ for (var _i = 0; _i < btn.childNodes.length; _i++) {
 var _n = btn.childNodes[_i];
 if (_n.nodeType === 3 && String(_n.nodeValue || '').trim()) return String(_n.nodeValue);
 }
+
+var _ce = btn.children;
+if (_ce && _ce.length) {
+for (var _ci = 0; _ci < _ce.length; _ci++) {
+if ((!_ce[_ci].children || _ce[_ci].children.length === 0) && String(_ce[_ci].textContent || '').trim()) {
+return String(_ce[_ci].textContent);
+}
+}
+}
 return null;
 })();
 if (btn.__busyTimer) { clearTimeout(btn.__busyTimer); btn.__busyTimer = null; }
@@ -1286,7 +1295,19 @@ btn.__busyText = text;
 
 
 var lab = btn.querySelector('.btn-lab');
-if (lab) { lab.textContent = text; }
+
+if (!lab) {
+var __kids = btn.children;
+if (__kids && __kids.length) {
+for (var __k = 0; __k < __kids.length; __k++) {
+var __c = __kids[__k];
+if (!__c.children || __c.children.length === 0) {
+if (String(__c.textContent || '').trim()) { lab = __c; break; }
+}
+}
+}
+}
+if (lab) { btn.__busyLab = lab; lab.textContent = text; }
 else {
 var txt = null;
 for (var i = 0; i < btn.childNodes.length; i++) {
@@ -1312,7 +1333,7 @@ if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
 if (btn.__busyOrig != null) {
 
 var __cur = (function () {
-var _lab = btn.querySelector('.btn-lab');
+var _lab = btn.__busyLab || btn.querySelector('.btn-lab');
 if (_lab) return String(_lab.textContent == null ? '' : _lab.textContent);
 for (var _i = 0; _i < btn.childNodes.length; _i++) {
 var _n = btn.childNodes[_i];
@@ -1321,7 +1342,7 @@ if (_n.nodeType === 3 && String(_n.nodeValue || '').trim()) return String(_n.nod
 return '';
 })();
 if (btn.__busyText == null || __cur === btn.__busyText) {
-var lab = btn.querySelector('.btn-lab');
+var lab = btn.__busyLab || btn.querySelector('.btn-lab');
 if (lab) { lab.textContent = btn.__busyOrig; }
 else {
 var txt = null;
@@ -1335,6 +1356,7 @@ if (txt) txt.nodeValue = btn.__busyOrig;
 }
 btn.__busyOrig = null;
 btn.__busyText = null;
+btn.__busyLab = null;
 btn.disabled = false;
 };
 
@@ -3189,6 +3211,37 @@ window.__thumbOf = function (url) {
 var u = String(url || '');
 if (!/^\/img\/images\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpe?g|webp|gif)$/i.test(u)) return u;
 return u.replace(/\.(png|jpe?g|webp|gif)$/i, '_t.webp');
+};
+
+
+window.__thumbIfKnown = function (url, serverThumb) {
+try {
+var u = String(url || '');
+if (!u) return '';
+var t = String(serverThumb || '');
+if (t && t !== u) return t;
+
+try {
+var pid = (window.state && window.state.editingId) || '';
+if (pid) {
+var list = (window.state.products) || [];
+for (var i = 0; i < list.length; i++) {
+var p = list[i];
+if (!p || String(p.id) !== String(pid)) continue;
+if (p.thumb && String(p.img || '') === u) return String(p.thumb);
+break;
+}
+}
+} catch (e0) { if (window.__silent) window.__silent(e0); }
+try {
+var ok = JSON.parse(localStorage.getItem('wnzyq_thumb_ok') || '[]') || [];
+if (ok.indexOf(u) >= 0) {
+var d = window.__thumbOf(u);
+return d === u ? '' : d;
+}
+} catch (e1) { if (window.__silent) window.__silent(e1); }
+} catch (e) { if (window.__silent) window.__silent(e); }
+return '';
 };
 
 

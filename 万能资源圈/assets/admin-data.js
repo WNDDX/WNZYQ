@@ -1644,6 +1644,8 @@ catSaving = true;
 catOk.disabled = true;
 catOk.style.opacity = '0.6';
 
+if (window.__btnBusy) window.__btnBusy(catOk, '保存中');
+
 var name = catName.value.trim();
 var sort = Number(catSort.value) || 0;
 var isChild = document.querySelector('input[name="catLevel"]:checked').value === '1';
