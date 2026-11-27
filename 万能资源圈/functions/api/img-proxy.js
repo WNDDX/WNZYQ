@@ -56,6 +56,12 @@
  *       本来就没有缩图候选（非白名单 / gif / svg）→ 30 天 immutable（无坏值风险）。
  *       同时 `_cv` 701 → 702，让那条已中毒的条目立刻不可达，不用等 30 天过期。
  *       另加 `X-Img-Path: shrunk|fallback|passthrough`，`curl -I` 一眼看出走的哪条。
+ *
+ * ── v703 补 HEAD（不改任何字节逻辑，只补一个本该有的入口）──────────────────────
+ * 之前只导出 `onRequestGet`，**HEAD 直接 404**（GET 同时刻 200/158009）。验收时 `curl -I` 会误判
+ * "接口挂了"或"没缓存头"。现在补 `onRequestHead`：状态码/头与 GET 一致、不回 body，
+ * 顺带让「单文件 < 200KB」这类验收只需一个 HEAD 就能量到真实 Content-Length。
+ * 注意 GET 的字节逻辑一个字没动，所以 `_cv` 仍是 702，不需要再洗缓存。
  */
 import { rateLimit } from '../_utils.js'; /* v626 D2：公开接口挂 IP 级限流，防被当免费图床刷爆 */
 
@@ -249,4 +255,26 @@ export async function onRequestGet(context) {
   }
 
   return res;
+}
+
+/**
+ * HEAD —— v703 补。
+ *
+ * 为什么必须补：Pages Functions 只导出 `onRequestGet` 时，**HEAD 请求直接 404**。
+ * 实测（QA 11-27 独立复核踩到，我也复现了）：
+ *   GET  /api/img-proxy?u=… → 200 / 158009 字节 / X-Img-Path: shrunk
+ *   HEAD /api/img-proxy?u=… → **404**
+ * 危害不是"接口挂了"，而是**人会根据这个 404 得出错误结论**：
+ *   · 验收/监控用 `curl -I` 探活 → 看着像接口死了，白排查一轮；
+ *   · 更糟的是有人据此判定"没有缓存头"，然后去动 Cache-Control —— 修一个不存在的问题。
+ * 我上一轮给主理人的验收命令就写的 `curl -sI`，是错的，这里一并补掉。
+ *
+ * 语义：状态码与响应头跟 GET 完全一致（含 `Content-Length` 真实字节数、
+ * `Cache-Control`、`X-Img-Path`），只是不回 body —— 这正是 HEAD 该有的行为，
+ * 而且顺便让「单文件 < 200KB」这类验收可以只发一个 HEAD 就量到真实大小。
+ * 代价：未命中缓存时也会真取一次图（HEAD 很罕见，可以接受；命中缓存时零成本）。
+ */
+export async function onRequestHead(context) {
+  const res = await onRequestGet(context);
+  return new Response(null, { status: res.status, headers: res.headers });
 }
