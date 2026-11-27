@@ -28,7 +28,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:"Microsoft
 /* v348 条1：顶栏全站唯一一份（原下方还有第二份 .topbar：另一颜色 + 60px，反过来盖掉这里；现合并为一处） */
 .topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:12px;padding:0 16px;min-height:60px;height:auto;background:linear-gradient(180deg,var(--blue1) 0%,var(--blue2) 100%);box-shadow:var(--shadow-blue);color:#fff}
 .card-skeleton{background:var(--card-bg);border-radius:12px;overflow:hidden}
-.card-skeleton .sk{background:linear-gradient(90deg,#eceff3 25%,#f7f9fb 37%,#eceff3 63%);background-size:400% 100%;animation:skShimmer 1.6s ease infinite}
+.card-skeleton .sk{background:linear-gradient(90deg,#eceff3 25%,#f7f9fb 37%,#eceff3 63%);background-size:400% 100%;animation:skShimmer var(--dur-shimmer) ease infinite}
 .card-skeleton .sk-img{aspect-ratio:3/2;width:100%;background:#e9eef4;border-radius:8px}
 @keyframes skShimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 </style>
