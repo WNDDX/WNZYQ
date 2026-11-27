@@ -42,6 +42,20 @@
  *       缩图请求只要不是 200 / 不是 image/* / body 为空，立刻退回原图：宁可大，不能裂。
  * 调用方还可以自己传 w（想要更小尺寸时）：`?w=480&q=82` → 图床侧 resize。
  *   w 默认 0 = 不改尺寸（保底方案，画质零变化）；上限 2000，防止被拿去当免费缩图服务。
+ *
+ * ── v702 补一个真漏洞（老板 11-27 线上验出来的，比 701 本身更重要）──────────────
+ * 现象：701 推上去后，默认地址（不带参数）一直是 267313B，`cf-cache-status: HIT, age 149`；
+ *       但显式 `?q=82` 就是 158009B —— 说明代码是好的，是**缓存里躺着一条坏值**。
+ * 成因：部署后第一个请求冷启动，图床那一次慢/失败 → 走「退回原图」分支 →
+ *       这条 267313B 的响应**照样按 30 天 immutable 写进了缓存** → 之后所有人吃大图 30 天，
+ *       而且日志里看不出来（200 + 正常图片，只是大）。
+ * 教训：「失败就退回原图」这个兜底逻辑是对的（宁可大不能裂），但**兜底的产物不能按成功的规格长缓存**，
+ *       否则任何一次冷启动抖动都会被放大成 30 天的固定错误。
+ * 修法：按走的哪条路分别给缓存策略（见 onRequestGet 里的 usedFallback）：
+ *       缩图成功 → 30 天 immutable；退回原图 → no-store 且不写缓存（下次自动重试）；
+ *       本来就没有缩图候选（非白名单 / gif / svg）→ 30 天 immutable（无坏值风险）。
+ *       同时 `_cv` 701 → 702，让那条已中毒的条目立刻不可达，不用等 30 天过期。
+ *       另加 `X-Img-Path: shrunk|fallback|passthrough`，`curl -I` 一眼看出走的哪条。
  */
 import { rateLimit } from '../_utils.js'; /* v626 D2：公开接口挂 IP 级限流，防被当免费图床刷爆 */
 
@@ -54,7 +68,9 @@ const MAX_WIDTH = 2000;
 const MAX_BYTES = 5 * 1024 * 1024;
 /* 缓存键版本号。改了「回什么字节」的逻辑就要进位——否则边缘上 30 天的老缓存会继续吐
    261KB 的旧版本，改了半天线上还是原样（这个坑不写在这儿下次一定踩）。 */
-const CACHE_VERSION = '701';
+/* v702：把 701 升到 702。原因是 701 上线后第一次请求撞上回退分支，把 267KB 的原图
+   按 30 天锁进了缓存键 `_cv=701` 里；不换版本号的话所有人还得继续吃那张大图 30 天。 */
+const CACHE_VERSION = '702';
 
 /* 已知图床的「同 URL 加参数即缩图」规则表。
    加新宿主的前提：亲手 curl 过「加参数后尺寸/字节确实变小、且不是 404」，并把数据写进注释。 */
@@ -112,10 +128,13 @@ async function fetchUpstream(target, origin) {
 
 /**
  * 取一张「可用的图片」：先试缩图地址，失败（非 2xx / 非图片 / 空 body / 超 5MB）就退回原图。
- * @returns {Promise<{ct: string, body: ArrayBuffer}|null>} null 表示彻底拿不到
+ * @returns {Promise<{ct: string, body: ArrayBuffer, index: number}|null>}
+ *   `index` 是命中的候选下标：0 = 缩图成功，>0 = 退回了原图（调用方必须据此决定能不能长缓存）。
+ *   null 表示彻底拿不到。
  */
 async function grabImage(candidates, origin) {
-  for (const target of candidates) {
+  for (let i = 0; i < candidates.length; i++) {
+    const target = candidates[i];
     if (!target) continue;
     let upstream;
     try {
@@ -139,7 +158,7 @@ async function grabImage(candidates, origin) {
     }
     if (!body || body.byteLength === 0) continue;
     if (body.byteLength > MAX_BYTES) continue;
-    return { ct: ct, body: body };
+    return { ct: ct, body: body, index: i };
   }
   return null;
 }
@@ -188,14 +207,31 @@ export async function onRequestGet(context) {
   const got = await grabImage(shrunk ? [shrunk, u] : [u], origin);
   if (!got) return new Response('upstream failed', { status: 502 });
 
+  /* v702（老板 11-27 线上验出）：**回退原图这一条不能长缓存**。
+     线上实测过事故形态：701 上线后第一个请求冷启动、缩图那一次没成，于是回退原图，
+     这条 267KB 的响应照样按 30 天 immutable 写进了缓存 —— 之后所有人拿到的都是大图，
+     而且没人知道。所以按「这次到底走的哪条路」分别给缓存策略：
+       · 命中缩图（index=0）         → 30 天 immutable（正常路径，字节是瘦过的）
+       · 给了缩图却退回了原图(index>0) → no-store，且**不写缓存**，下一次重试还能自愈
+       · 压根没有缩图候选（非白名单/gif/svg）→ 30 天 immutable（本来就没有"坏值"风险）
+     `X-Img-Path` 把走的分支显式回给调用方/排查者，curl -I 一眼就能看出来。 */
+  const usedFallback = Boolean(shrunk) && got.index > 0;
+  const imgPath = !shrunk ? 'passthrough' : (usedFallback ? 'fallback' : 'shrunk');
+  const cacheControl = (shrunk && usedFallback)
+    ? 'no-store, max-age=0'
+    // 30 天强缓存：对方换图会换 URL（文件名带日期/编号），不换 URL 的极少
+    : 'public, max-age=2592000, s-maxage=2592000, immutable';
+
   const res = new Response(got.body, {
     headers: {
       'Content-Type': got.ct,
       'Content-Length': String(got.body.byteLength),
-      // 30 天强缓存：对方换图会换 URL（文件名带日期/编号），不换 URL 的极少
-      'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable',
+      'Cache-Control': cacheControl,
+      'X-Img-Path': imgPath, /* shrunk | fallback | passthrough —— 三态自证用 */
       'X-Content-Type-Options': 'nosniff',
       'Access-Control-Allow-Origin': '*',
+      /* 让页内 JS / devtools 也能读到 X-Img-Path（否则自定义响应头被 CORS 挡住，排查时看不到） */
+      'Access-Control-Expose-Headers': 'X-Img-Path',
       'Timing-Allow-Origin': '*',
       /* v633 安全补丁：`image/*` 里包含 `image/svg+xml`，而 SVG 是可以内嵌 <script> 的。
          照片类格式（png/jpg/webp/gif/avif/bmp）不存在这个问题，SVG 必须单独上锁：
@@ -206,8 +242,11 @@ export async function onRequestGet(context) {
     },
   });
 
-  // 写进 Cloudflare 边缘缓存（下次同 URL 直接命中，不再回源）
-  try { context.waitUntil(cache.put(cacheKey, res.clone())); } catch (e) {}
+  /* 写进 Cloudflare 边缘缓存（下次同 URL 直接命中，不再回源）。
+     v702：回退原图的响应**绝不写缓存** —— 写进去就等于把这个坏值锁 30 天。 */
+  if (!(shrunk && usedFallback)) {
+    try { context.waitUntil(cache.put(cacheKey, res.clone())); } catch (e) {}
+  }
 
   return res;
 }
