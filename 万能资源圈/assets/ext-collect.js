@@ -571,9 +571,24 @@ if (!ids.length) { toast('先勾选要删的资源', 'info'); return; }
 if (!window.showConfirm) { toast(window.T('needRefresh'), 'error'); return; }
 window.showConfirm('批量删除', '共 ' + ids.length + ' 条，删除后不影响对方平台', function (done) {
 done();
-Promise.all(ids.map(function (x) { return api('admin/external', { method: 'POST', body: { op: 'goods.del', id: x } }); })).then(function () {
+
+Promise.all(ids.map(function (x) { return api('admin/external', { method: 'POST', body: { op: 'goods.del', id: x } }); })).then(function (reses) {
+S.sel = {};
+var okIds = ids.filter(function (x, i) { return reses[i] && reses[i].ok; });
+var failN = ids.length - okIds.length;
+if (!failN) {
 S.goods = S.goods.filter(function (g) { return ids.indexOf(Number(g.id)) < 0; });
-S.sel = {}; render(); toast('已删除 ' + ids.length + ' 条', 'success');
+render(); toast('已删除 ' + ids.length + ' 条', 'success');
+} else if (okIds.length) {
+
+S.goods = S.goods.filter(function (g) { return okIds.indexOf(Number(g.id)) < 0; });
+render(); toast('已删除 ' + okIds.length + ' 条，' + failN + ' 条没删掉', 'error');
+} else {
+render(); toast('一条都没删掉，请重试', 'error');
+}
+}).catch(function () {
+
+render(); toast(window.T('netFail'), 'error');
 });
 });
 return;
@@ -621,6 +636,9 @@ S.platforms = S.platforms.filter(function (x) { return Number(x.id) !== Number(p
 if (Number(S.curPf) === Number(p.id)) S.curPf = 0;
 loadGoods(); toast('已删除', 'success');
 } else toast((r && r.msg) || '没删掉，请重试', 'error');
+}).catch(function () {
+
+toast(window.T('netFail'), 'error');
 });
 });
 }

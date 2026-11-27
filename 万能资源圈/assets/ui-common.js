@@ -513,7 +513,14 @@ return arr;
 
 window.__saveImage = function (src) {
 try {
-fetch(src).then(function (r) { return r.blob(); }).then(function (blob) {
+
+fetch(src).then(function (r) {
+if (!r.ok) throw new Error('HTTP ' + r.status);
+var ct = (r.headers.get('content-type') || '').toLowerCase();
+if (ct.indexOf('image/') !== 0) throw new Error('not an image: ' + ct);
+return r.blob();
+}).then(function (blob) {
+if (!blob || !blob.size) throw new Error('empty blob');
 var u = URL.createObjectURL(blob);
 var a = document.createElement('a');
 a.href = u;
@@ -522,7 +529,8 @@ document.body.appendChild(a); a.click(); a.remove();
 setTimeout(function () { URL.revokeObjectURL(u); }, 3000);
 if (window.showToast) window.showToast('图片已保存', 'success');
 }).catch(function () {
-if (window.showToast) window.showToast('图片保存失败', 'error');
+
+if (window.showToast) window.showToast('图片已失效，保存失败', 'error');
 });
 } catch (e) {
 if (window.showToast) window.showToast('图片保存失败', 'error');

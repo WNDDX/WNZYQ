@@ -1786,6 +1786,7 @@ try { renderAnnList(); if (stateAnn.curId) selectAnnItem(stateAnn.curId); else {
 try { renderAnnList(); var _sel0 = (stateAnn.curId && stateAnn.list.some(function (x) { return x.id === stateAnn.curId; })) ? stateAnn.curId : ((stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]).id); stateAnn._draftRestored = false; selectAnnItem(_sel0); } catch (e) { if (window.__silent) window.__silent(e); }
 if (stateAnn._stashed) { stateAnn._stashed = false; }
 }
+
 if (!stateAnn.loaded) {
 api('admin/settings').then(function (res) {
 if (res && res.ok) {
@@ -1875,6 +1876,8 @@ try { window.__clearEditingDraft(); } catch (e) { if (window.__silent) window.__
 
 annBtn.disabled = false;
 if (window.__btnIdle) window.__btnIdle(annBtn); else { annBtn.textContent = _annBtnText; }
+
+stateAnn._draftRestored = false;
 document.getElementById('annMask').classList.remove('open');
 } else { annBtn.disabled = false; annBtn.textContent = _annBtnText; toast(res.msg || '保存失败', 'error'); }
 }).catch(function () {

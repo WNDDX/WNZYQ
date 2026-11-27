@@ -457,8 +457,17 @@ return { lines: lines, bad: bad, badRes: badRes, badCat: badCat, badVar: badVar,
 
 function apiCall(path, opts) {
 opts = opts || {};
-return fetch('/api/' + path, { method: opts.method || 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: opts.body })
-.then(function (r) { return r.json(); });
+
+if (!window.WNApi || !window.WNApi.request) {
+
+return Promise.resolve({ ok: false, msg: '公共脚本未加载，请刷新页面重试' });
+}
+return window.WNApi.request('/api/' + path, {
+method: opts.method || 'GET',
+body: opts.body,
+headers: { 'Content-Type': 'application/json' },
+credentials: 'same-origin'
+});
 }
 
 

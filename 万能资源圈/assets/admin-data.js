@@ -1346,9 +1346,14 @@ this.classList.remove('status-online', 'status-hidden'); this.classList.add(nowH
 this.title = '点击切换为' + (nowHidden ? '显示' : '隐藏（资源页不显示）');
 api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ is_hidden: nowHidden }) }).then(function (res) {
 catStatusBtn.disabled = false;
-if (!res.ok) { c.is_hidden = prev; toast(res.msg || '更新失败', 'error'); } else { clearCache(); }
+
+if (!res.ok) {
+c.is_hidden = prev; renderCategories(state.categories);
+toast(res.msg || '更新失败，已还原', 'error');
+} else { clearCache(); }
 }).catch(function () {
 catStatusBtn.disabled = false;
+c.is_hidden = prev; renderCategories(state.categories);
 toast('更新失败，请重试', 'error');
 });
 }); meta.appendChild(catStatusBtn);
@@ -1623,6 +1628,8 @@ if (dragged.parent_id !== target.parent_id) { toast('只能同级排序', 'error
 var sameLevel = list.filter(function (c) { return c.parent_id === dragged.parent_id; }).sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
 var di = sameLevel.indexOf(dragged); var ti = sameLevel.indexOf(target); if (di < 0 || ti < 0) return;
 sameLevel.splice(di, 1); sameLevel.splice(ti > di ? ti - 1 : ti, 0, dragged);
+
+var prevSorts = sameLevel.map(function (c) { return { ref: c, sort: c.sort }; });
 var changed = []; sameLevel.forEach(function (c, i) { if (Number(c.sort) !== i) { c.sort = i; changed.push(c); } });
 if (!changed.length) return;
 __reorderBusy = true;
@@ -1632,6 +1639,12 @@ var _cflip = (window.__motion && __motion.flipSnap && _clEl) ? __motion.flipSnap
 var seq = changed.map(function (c) { return api('admin/categories/' + c.id, { method: 'PUT', body: JSON.stringify({ sort: c.sort }) }); });
 Promise.all(seq).then(function (reses) {
 __reorderBusy = false;
+
+var _revertSort = function () {
+prevSorts.forEach(function (x) { x.ref.sort = x.sort; });
+renderCategories(state.categories);
+try { if (_cflip) _cflip(); } catch (e5) { if (window.__silent) window.__silent(e5); }
+};
 if (reses.every(function (r) { return r && r.ok; })) {
 toast('排序已更新', 'success'); clearCache();
 state.categories = orderCats(state.categories);
@@ -1639,10 +1652,11 @@ renderCategories(state.categories);
 try { if (_cflip) _cflip(); } catch (e4) { if (window.__silent) window.__silent(e4); }
 silentSyncCategories();
 }
-else toast('排序没保存', 'error');
+else { _revertSort(); toast('排序没保存，已还原', 'error'); }
 }).catch(function () {
 __reorderBusy = false;
-toast('排序没保存，请重试', 'error');
+_revertSort();
+toast('排序没保存，已还原', 'error');
 });
 }
 
