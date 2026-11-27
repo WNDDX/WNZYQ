@@ -3445,7 +3445,7 @@ else document.addEventListener('DOMContentLoaded', boot, { once: true });
 window.__maskDraft = window.__maskDraft || {};
 window.__draftKeep = false;
 (function () {
-var SELF_MANAGED = { editMask: 1 };
+var SELF_MANAGED = { editMask: 1, modalMask: 1 };
 function keyOf(mask) {
 if (!mask) return '';
 if (mask.id) return 'id:' + mask.id;
@@ -3516,12 +3516,15 @@ return d;
 };
 window.__maskDraftDrop = function (mask) {
 if (!mask) return;
+mask.__dGen = (mask.__dGen || 0) + 1;
 var k = keyOf(mask);
 if (k) delete window.__maskDraft[k];
 setTimeout(function () { if (mask.classList.contains('open')) return; try { blank(mask); } catch (e) {} }, 30);
 };
 window.__maskDraftApply = function (mask) {
 if (!mask || SELF_MANAGED[mask.id]) return;
+var gen = mask.__dGen = (mask.__dGen || 0) + 1;
+mask.__dguard = 0;
 var d = window.__maskDraft[keyOf(mask)];
 if (!d) return;
 if (!mask.__dwired) {
@@ -3531,6 +3534,7 @@ mask.addEventListener('change', function () { mask.__dguard = 1; }, true);
 }
 [80, 320, 900].forEach(function (ms) {
 setTimeout(function () {
+if (mask.__dGen !== gen) return;
 if (!mask.__dguard && mask.classList.contains('open')) restore(mask, d);
 }, ms);
 });
