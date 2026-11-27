@@ -485,8 +485,7 @@ var btn = document.getElementById('exportBtn');
 
 if (btn && btn.__busy) return;
 if (btn) {
-if (window.__btnBusy) { window.__btnBusy(btn, '导出中'); btn.disabled = true; }
-else { btn.disabled = true; btn.textContent = '导出中'; }
+if (window.__btnBusy) { window.__btnBusy(btn, '导出中'); btn.disabled = true; } else { btn.disabled = true; btn.textContent = '导出中'; }
 }
 toast('正在准备导出', 'info');
 

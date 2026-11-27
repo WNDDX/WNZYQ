@@ -1267,7 +1267,7 @@ var warn = (subtree > 0)
 : '删除后该账号立即无法登录，其新增的内容按分类范围保留。';
 usAsk('删除账号', '确认删除「' + esc(u.username) + '」？<br>' + warn +
 '<br>账号会进入<b>回收站点</b>保留 60 天，期间可以恢复。', { okText: '删除' }, function (v, done, fail) {
-usersCall('DELETE', null, function () { if (window.showToast) window.showToast('已移入回收站点，60 天内可恢复', 'success'); done(); renderUsersList(); }, fail, '/api/admin/users?id=' + u.id);
+usersCall('DELETE', null, function () { if (window.showToast) window.showToast('已移入回收站，可恢复', 'success'); done(); renderUsersList(); }, fail, '/api/admin/users?id=' + u.id);
 });
 }
 
@@ -2600,14 +2600,14 @@ cb.addEventListener('click', function () {
 if (pending > 0) {
 
 cb.disabled = true; if (window.__btnBusy) window.__btnBusy(cb, '正在清理');
-if (cmsg) cmsg.textContent = '正在删除 ' + pending + ' 个文件…';
+if (cmsg) cmsg.textContent = '正在删除 ' + pending + ' 个文件';
 fetch('/api/admin/global-cleanup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 .then(function (r) { return r.json(); }).then(function (d) {
 if (!d || !d.ok) { if (cmsg) cmsg.textContent = (d && d.msg) || '清理失败'; reset(); return; }
 
 if (d.skipped) {
 if (cmsg) cmsg.textContent = d.msg || '刚清理过（60 秒内），这次没有重复执行';
-if (window.showToast) window.showToast('刚清理过，60 秒内不重复执行', 'info');
+if (window.showToast) window.showToast('刚清理过，稍后再试', 'info');
 reset(); return;
 }
 
