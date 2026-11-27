@@ -528,10 +528,17 @@ document.addEventListener('click', function (e) {
 var closeBtn = e.target.closest('.modal-close-x, .modal-close[data-close]');
 if (closeBtn && closeBtn.dataset.close) {
 var mask = document.getElementById(closeBtn.dataset.close);
-if (closeBtn.dataset.close === 'editMask') { try { clearDraft(); } catch (e) { if (window.__silent) window.__silent(e); } }
-if (closeBtn.dataset.close === 'catMask') { catDraftPending = false; catDraftFor = null; }
-if (closeBtn.dataset.close === 'variantMask') { variantDraftPending = false; variantDraftFor = null; }
-if (closeBtn.dataset.close === 'annMask') { try { window.__annDiscard(); } catch (e) { if (window.__silent) window.__silent(e); } }
+
+if (closeBtn.dataset.close === 'editMask') { if (!window.__draftKeep) { try { clearDraft(); } catch (e) { if (window.__silent) window.__silent(e); } } }
+if (closeBtn.dataset.close === 'catMask') { if (!window.__draftKeep) { catDraftPending = false; catDraftFor = null; } }
+if (closeBtn.dataset.close === 'variantMask') { if (!window.__draftKeep) { variantDraftPending = false; variantDraftFor = null; } }
+if (closeBtn.dataset.close === 'annMask') {
+
+try {
+if (window.__draftKeep && window.__annStash) window.__annStash();
+else window.__annDiscard();
+} catch (e) { if (window.__silent) window.__silent(e); }
+}
 
 if (closeBtn.dataset.close === 'pwdMask') { var _o=document.getElementById('oldPwd'),_n=document.getElementById('newPwd'),_c=document.getElementById('confirmPwd'); if(_o)_o.value=''; if(_n)_n.value=''; if(_c)_c.value=''; }
 if (mask) {
@@ -939,7 +946,19 @@ if (!_annMaskOpen) document.getElementById('setAnnouncement').innerHTML = saniti
 if (_annMaskOpen && typeof flushAnnEdit === 'function') flushAnnEdit();
 
 
-if (stateAnn._draftRestored) {
+var _holdList = false;
+try {
+var _annMaskEl = document.getElementById('annMask');
+var _kit = window.__modalKit;
+_holdList = !!(stateAnn._draftRestored
+|| stateAnn._stashed
+|| (_kit && _kit.stack
+? _kit.stack.indexOf(_annMaskEl) >= 0
+: (_annMaskEl && _annMaskEl.classList.contains('open'))));
+} catch (eH) { _holdList = false; }
+
+if (!(stateAnn.list && stateAnn.list.length)) _holdList = false;
+if (_holdList) {
 
 } else {
 stateAnn.raw = window.parseAnnouncements(s, { sortLevel: true });

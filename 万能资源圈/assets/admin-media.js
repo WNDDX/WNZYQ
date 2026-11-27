@@ -1621,7 +1621,9 @@ handle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="curren
 var txt = document.createElement('input'); txt.type = 'text'; txt.className = 'ann-title-input'; txt.readOnly = a.level === 1;
 
 txt.value = a.level === 1 ? '公告' : (a.title || '');
-txt.addEventListener('click', function (e) { e.stopPropagation(); });
+
+txt.addEventListener('click', function (e) { e.stopPropagation(); annSelectLight(a.id); });
+txt.addEventListener('focus', function () { annSelectLight(a.id); });
 txt.addEventListener('input', function () { a.title = this.value; });
 txt.addEventListener('change', function () { if (!this.value.trim()) { this.value = a.title = '（未命名公告）'; } if (annEditLabel) annEditLabel.textContent = '编辑公告：' + a.title; });
 var sortEl = document.createElement('span'); sortEl.style.cssText = 'color:var(--text-faint);font-size:12px;min-width:40px;text-align:left;flex-shrink:0;'; sortEl.textContent = '排序：' + (idx + 1);
@@ -1724,6 +1726,18 @@ if (annEditLabel) annEditLabel.textContent = '编辑公告：' + (a.title || '�
 var _idxA = -1; for (var _ii = 0; _ii < stateAnn.list.length; _ii++) { if (stateAnn.list[_ii].id === id) { _idxA = _ii; break; } }
 document.querySelectorAll('.ann-item').forEach(function (el) { el.classList.toggle('ann-cur', Number(el.dataset.idx) === _idxA); });
 }
+
+function annSelectLight(id) {
+if (!id || String(stateAnn.curId) === String(id)) return;
+var a = stateAnn.list.find(function (x) { return String(x.id) === String(id); });
+if (!a) return;
+try { flushAnnEdit(); } catch (e0) { if (window.__silent) window.__silent(e0); }
+stateAnn.curId = a.id;
+if (annEditor) annEditor.innerHTML = a.content || '';
+if (annEditLabel) annEditLabel.textContent = '编辑公告：' + (a.title || '（未命名）');
+var _ix = -1; for (var _k = 0; _k < stateAnn.list.length; _k++) { if (String(stateAnn.list[_k].id) === String(a.id)) { _ix = _k; break; } }
+document.querySelectorAll('.ann-item').forEach(function (el) { el.classList.toggle('ann-cur', Number(el.dataset.idx) === _ix); });
+}
 function clearAnnEdit() {
 flushAnnEdit();
 stateAnn.curId = null;
@@ -1783,23 +1797,41 @@ try { _draftRestored = window.__restoreEditingDraft(); } catch (e) { if (window.
 if (_draftRestored && stateAnn.list && stateAnn.list.length) {
 try { renderAnnList(); if (stateAnn.curId) selectAnnItem(stateAnn.curId); else { var _dl0 = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; if (_dl0) selectAnnItem(_dl0.id); } } catch (e) { if (window.__silent) window.__silent(e); }
 } else if (stateAnn.loaded && stateAnn.list.length) {
-try { renderAnnList(); var _sel0 = (stateAnn.curId && stateAnn.list.some(function (x) { return x.id === stateAnn.curId; })) ? stateAnn.curId : ((stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]).id); stateAnn._draftRestored = false; selectAnnItem(_sel0); } catch (e) { if (window.__silent) window.__silent(e); }
-if (stateAnn._stashed) { stateAnn._stashed = false; }
+try { renderAnnList(); var _sel0 = (stateAnn.curId && stateAnn.list.some(function (x) { return x.id === stateAnn.curId; })) ? stateAnn.curId : ((stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]).id); selectAnnItem(_sel0); } catch (e) { if (window.__silent) window.__silent(e); }
+
 }
 
 if (!stateAnn.loaded) {
 api('admin/settings').then(function (res) {
 if (res && res.ok) {
 
+var _annMaskEl2 = document.getElementById('annMask');
+var _kit2 = window.__modalKit;
+var _heldHere = !!(stateAnn._draftRestored || stateAnn._stashed
+|| (_kit2 && _kit2.stack ? _kit2.stack.indexOf(_annMaskEl2) >= 0
+: (_annMaskEl2 && _annMaskEl2.classList.contains('open'))));
+
+if (!(stateAnn.list && stateAnn.list.length)) _heldHere = false;
+
+if (!_heldHere) {
+
 stateAnn.raw = window.parseAnnouncements(res.settings || {}, { sortLevel: true });
 stateAnn.list = stateAnn.raw.filter(function (x) { return !x.deleted; });
-if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 }); stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
+if (!stateAnn.list.some(function (x) { return x.level === 1; })) stateAnn.list.unshift({ id: 'def', title: '公告', content: (res.settings || {}).announcement || '', hidden: 0, sort: 0, level: 1 });
+stateAnn._backup = JSON.parse(JSON.stringify(stateAnn.list));
+}
+
 stateAnn.loaded = true;
 document.getElementById('annMode').value = (res.settings || {}).announcement_mode || 'always';
 syncSelectDisplay(document.getElementById('annMode'));
 if (window.__annModeHint) window.__annModeHint();
 stateAnn._modeSaved = (res.settings || {}).announcement_mode || 'always';
-if (stateAnn.list.length) { var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0]; renderAnnList(); selectAnnItem(_defAnn.id); } else { renderAnnList(); clearAnnEdit(); }
+if (stateAnn.list.length) {
+
+var _defAnn = stateAnn.list.find(function (x) { return x.level === 1; }) || stateAnn.list[0];
+if (_heldHere) { renderAnnList(); if (stateAnn.curId) selectAnnItem(stateAnn.curId); else selectAnnItem(_defAnn.id); }
+else { renderAnnList(); selectAnnItem(_defAnn.id); }
+} else { renderAnnList(); clearAnnEdit(); }
 }
 }).catch(function () {});
 }
@@ -1851,6 +1883,7 @@ var _annBtnText = annBtn.textContent;
 annBtn.disabled = true;
 if (window.__btnBusy) window.__btnBusy(annBtn, '确定中');
 flushAnnEdit();
+
 
 var _annOut = (stateAnn.raw || []).filter(function (x) { return x.deleted; }).concat(stateAnn.list);
 var data = {
