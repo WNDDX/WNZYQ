@@ -2561,6 +2561,8 @@ mask.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-la
 
 '<button type="button" class="export-btn" id="rsClean">清理无用文件</button></div>' +
 '<p class="imp-lead" id="rsCleanMsg" style="min-height:20px;margin:2px 0 0"></p>' +
+
+'<div class="imp-lead" id="rsCleanList" style="display:none;max-height:132px;overflow:auto;font-size:12px;line-height:1.7;margin:0 0 4px"></div>' +
 '<label for="rsConfirm">输入当前超级管理员密码以确认</label>' +
 '<input class="input" id="rsConfirm" type="password" autocomplete="current-password" placeholder="当前密码" aria-label="输入当前超级管理员密码以确认">' +
 '<p class="imp-lead" id="rsErr" style="color:var(--danger,#d33);min-height:20px;margin:4px 0 0"></p>' +
@@ -2590,23 +2592,71 @@ go.disabled = String(inp.value).length < 6;
 (function () {
 var cb = mask.querySelector('#rsClean');
 var cmsg = mask.querySelector('#rsCleanMsg');
+var clist = mask.querySelector('#rsCleanList');
 if (!cb) return;
 var pending = 0;
+
+var esc = function (s) { return (window.escapeHtml ? window.escapeHtml(s) : String(s)); };
+var setDanger = function (on) {
+try {
+if (on) {
+cb.style.background = 'var(--danger, #d33)';
+cb.style.borderColor = 'var(--danger, #d33)';
+cb.style.color = '#fff';
+} else {
+cb.style.background = '';
+cb.style.borderColor = '';
+cb.style.color = '';
+}
+} catch (e) { if (window.__silent) window.__silent(e); }
+};
+var renderList = function (sample, total) {
+if (!clist) return;
+var keys = Array.isArray(sample) ? sample : [];
+if (!keys.length) { clist.style.display = 'none'; clist.innerHTML = ''; return; }
+var html = keys.map(function (k) {
+var name = String(k || '').split('/').pop();
+var isThumb = /_t\.webp$/i.test(String(k || ''));
+var tag = isThumb ? '缩略图（跟随原图）' : '未被任何内容引用';
+return '<div>· ' + esc(name) + ' <span style="color:#8a94a0">— ' + tag + '</span></div>';
+}).join('');
+if (typeof total === 'number' && total > keys.length) html += '<div style="color:#8a94a0">…还有 ' + (total - keys.length) + ' 个（本次只列前 ' + keys.length + ' 个）</div>';
+clist.innerHTML = html;
+clist.style.display = 'block';
+};
 var fmt = function (b) {
 if (!b) return '0 B';
 if (b < 1024) return b + ' B';
 if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
 return (b / 1048576).toFixed(2) + ' MB';
 };
+var IDLE_LABEL = '清理无用文件（仅统计，不删除）';
 var reset = function () {
 pending = 0;
-cb.textContent = '清理无用文件';
+cb.textContent = IDLE_LABEL;
+setDanger(false);
+if (clist) { clist.style.display = 'none'; clist.innerHTML = ''; }
 
 if (window.__btnIdle) window.__btnIdle(cb);
 cb.disabled = false;
 };
+cb.textContent = IDLE_LABEL;
 cb.addEventListener('click', function () {
 if (pending > 0) {
+
+if (!cb.__delGo && window.showConfirm) {
+window.showConfirm('永久删除文件',
+'即将永久删除 ' + pending + ' 个文件，删除后不可恢复。确定继续？',
+function (closeConfirm) {
+closeConfirm();
+cb.__delGo = 1;
+try { cb.click(); } catch (e0) { if (window.__silent) window.__silent(e0); }
+cb.__delGo = 0;
+},
+function () { if (cmsg) cmsg.textContent = '已取消，什么都没有删除'; });
+return;
+}
+cb.__delGo = 0;
 
 cb.disabled = true; if (window.__btnBusy) window.__btnBusy(cb, '正在清理');
 if (cmsg) cmsg.textContent = '正在删除 ' + pending + ' 个文件';
@@ -2642,14 +2692,19 @@ if (d && d.ok && d.throttled) { cb.disabled = false; return; }
 if (!d || !d.ok) { if (cmsg) cmsg.textContent = (d && d.msg) || '扫描失败'; cb.disabled = false; return; }
 pending = d.count || 0;
 if (!pending) {
-cb.textContent = '清理无用文件'; cb.disabled = false;
+cb.textContent = IDLE_LABEL; cb.disabled = false; setDanger(false);
+if (clist) { clist.style.display = 'none'; clist.innerHTML = ''; }
 if (cmsg) cmsg.textContent = '没有可清理的无用文件（被引用的文件和 24 小时内新上传的都不会动）';
 return;
 }
 cb.disabled = false;
 
-cb.textContent = '确认清理 ' + pending + ' 个' + (d.bytes ? '（' + fmt(d.bytes) + '）' : '');
-if (cmsg) cmsg.textContent = '扫描到 ' + pending + ' 个没人引用的文件' + (d.bytes ? '，约 ' + fmt(d.bytes) : '') + '。再点一次即删除，删了找不回来。';
+cb.textContent = '永久删除 ' + pending + ' 个（不可恢复）';
+setDanger(true);
+
+if (cmsg) cmsg.textContent = '仅统计完成：扫描到 ' + pending + ' 个没人引用的文件' + (d.bytes ? '，约 ' + fmt(d.bytes) : '') + '。点这颗红键会永久删除、不可恢复，还会再确认一次。';
+
+renderList(d.sample, pending);
 }).catch(function () { if (window.__btnIdle) window.__btnIdle(cb); cb.disabled = false; if (cmsg) cmsg.textContent = '网络没连上，没扫成'; });
 });
 })();
