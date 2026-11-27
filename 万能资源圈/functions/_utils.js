@@ -738,6 +738,18 @@ export async function recordUpload(env, key) {
 }
 
 /* 拉全量内容文本（资源 + 类型 + 设置——公告也存在 settings 里），用于引用核对 */
+/* v705（QA-705 P1 数据安全）：**派生的小图必须算进「被引用」**。
+   `_t.webp` 这个 key 是上传时由 `img` 同请求派生出来的（同目录 uuid_t.webp），
+   **DB 里永远不会出现这个字符串**；而「清理无用文件」只拿 DB 文本做 indexOf 判引用 →
+   所有「在用的缩略图」都会被判成孤儿（线上实测：30 个对象里 14 个候选，5/5 样本全是活资源的
+   thumb，`p.thumb` 正指着它们）。点第二次真删 → 前后台封面立刻 404。
+   这里在拼完 DB 文本后，把文本里出现的所有 `/img/images/YYYY/MM/uuid.ext` 按**同一派生规则**
+   再拼一份 `_t.webp` 进去。派生规则与服务端 upload-image.js、前端 __thumbOf 保持一致：
+   只把扩展名换成 `_t.webp`（png/jpg/jpeg/webp/gif）。
+   正向副作用：封面被替换后，旧图的小图不再被任何一行派生出来 → 终于能被正常清掉
+   （原来它永远留在桶里，是这个盲区的另一面）。 */
+const IMG_PATH_RE = /\/img\/(images\/\d{4}\/\d{2}\/[0-9a-fA-F-]{36})\.(png|jpe?g|webp|gif)/g;
+
 export async function buildContentText(env) {
   const parts = [];
   try {
@@ -752,7 +764,14 @@ export async function buildContentText(env) {
     const { results } = await env.DB.prepare('SELECT "value" FROM settings').all();
     for (const r of (results || [])) parts.push(r.value);
   } catch (e) { return null; }
-  return parts.filter(Boolean).join('\n');
+  const text = parts.filter(Boolean).join('\n');
+  /* 把派生小图补进「引用文本」（见上面 v705 说明） */
+  const derived = new Set();
+  try {
+    text.replace(IMG_PATH_RE, function (m, base) { derived.add('/img/' + base + '_t.webp'); return m; });
+  } catch (e) { /* 派生失败就不补：宁可多留（清理时更保守），绝不因此误删 */ }
+  if (!derived.size) return text;
+  return text + '\n' + Array.from(derived).join('\n');
 }
 
 /* 引用核对：文件是否仍被任何内容引用。核对失败一律当作被引用（宁可保留，绝不误删） */
