@@ -2620,7 +2620,7 @@ var isThumb = /_t\.webp$/i.test(String(k || ''));
 var tag = isThumb ? '缩略图（跟随原图）' : '未被任何内容引用';
 return '<div>· ' + esc(name) + ' <span style="color:#8a94a0">— ' + tag + '</span></div>';
 }).join('');
-if (typeof total === 'number' && total > keys.length) html += '<div style="color:#8a94a0">…还有 ' + (total - keys.length) + ' 个（本次只列前 ' + keys.length + ' 个）</div>';
+if (typeof total === 'number' && total > keys.length) html += '<div style="color:#8a94a0">另有 ' + (total - keys.length) + ' 个（本次只列前 ' + keys.length + ' 个）</div>';
 clist.innerHTML = html;
 clist.style.display = 'block';
 };

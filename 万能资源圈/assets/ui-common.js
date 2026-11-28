@@ -3523,7 +3523,7 @@ setTimeout(function () { if (mask.classList.contains('open')) return; try { blan
 };
 window.__maskDraftApply = function (mask) {
 if (!mask || SELF_MANAGED[mask.id]) return;
-var gen = mask.__dGen = (mask.__dGen || 0) + 1;
+var gen = mask.__dGen || 0;
 mask.__dguard = 0;
 var d = window.__maskDraft[keyOf(mask)];
 if (!d) return;
@@ -3534,22 +3534,53 @@ mask.addEventListener('change', function () { mask.__dguard = 1; }, true);
 }
 [80, 320, 900].forEach(function (ms) {
 setTimeout(function () {
-if (mask.__dGen !== gen) return;
+if ((mask.__dGen || 0) !== gen) return;
 if (!mask.__dguard && mask.classList.contains('open')) restore(mask, d);
 }, ms);
 });
 };
-if (window.MutationObserver && document.body) {
+function bootDraftObserver() {
+if (!window.MutationObserver || !document.body) return;
 try {
 new MutationObserver(function (list) {
 for (var i = 0; i < list.length; i++) {
-var el = list[i].target;
+var rec = list[i];
+if (rec.type === 'attributes') {
+var el = rec.target;
 if (!el || !el.classList || !el.classList.contains('modal-mask')) continue;
-if (el.classList.contains('open')) window.__maskDraftApply(el);
+var wasOpen = /(^|\s)open(\s|$)/.test(rec.oldValue || '');
+if (!wasOpen && el.classList.contains('open')) {
+el.__dGen = (el.__dGen || 0) + 1;
+window.__maskDraftApply(el);
 }
-}).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+continue;
+}
+var added = rec.addedNodes || [];
+for (var k = 0; k < added.length; k++) {
+var nd = added[k];
+if (!nd || nd.nodeType !== 1) continue;
+if (nd.classList && nd.classList.contains('modal-mask') && nd.classList.contains('open')) {
+nd.__dGen = (nd.__dGen || 0) + 1;
+window.__maskDraftApply(nd);
+}
+if (nd.querySelectorAll) {
+var inner = nd.querySelectorAll('.modal-mask.open');
+for (var q = 0; q < inner.length; q++) {
+var im = inner[q];
+im.__dGen = (im.__dGen || 0) + 1;
+window.__maskDraftApply(im);
+}
+}
+}
+}
+}).observe(document.body, {
+subtree: true, attributes: true, attributeFilter: ['class'],
+attributeOldValue: true, childList: true,
+});
 } catch (e) {}
 }
+if (document.body) bootDraftObserver();
+else if (document.addEventListener) document.addEventListener('DOMContentLoaded', bootDraftObserver, { once: true });
 })();
 window.__closeMaskTop = function (mask, opts) {
 if (!mask || !mask.classList) return false;
